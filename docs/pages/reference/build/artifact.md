@@ -90,6 +90,7 @@ Read about working with _assembly instructions_ in the corresponding [article]({
 ```yaml
 artifact: <artifact_name>
 from: <image>
+fromLatest: <false || true>
 fromCacheVersion: <version>
 fromImage: <image_name>
 fromImageArtifact: <artifact_name>

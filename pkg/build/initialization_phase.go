@@ -10,8 +10,10 @@ import (
 	"strings"
 
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
@@ -73,24 +75,52 @@ func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Im
 	imageName := imageBaseConfig.Name
 	imageArtifact := imageInterfaceConfig.IsArtifact()
 
-	from, fromImageName := getFromAndFromImageName(imageBaseConfig)
+	from, fromImageName, fromLatest := getFromFields(imageBaseConfig)
 
 	image.name = imageName
-	image.baseImageName = from
+
+	if from != "" {
+		image.baseImageName = from
+
+		var baseImageRepoErr error
+		baseImageRepoId, exist := c.baseImagesRepoIdsCache[from]
+		if !exist {
+			processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", from)
+			if err := logboek.LogSecondaryProcessInline(processMsg, func() error {
+				baseImageRepoId, baseImageRepoErr = docker_registry.ImageId(from)
+				if fromLatest {
+					return fmt.Errorf("can not get base image id from registry (%s): %s", from, baseImageRepoErr)
+				}
+
+				return nil
+			}); err != nil {
+				return nil, err
+			}
+		} else {
+			baseImageRepoErr, _ = c.baseImagesRepoErrCache[from]
+		}
+
+		image.baseImageRepoId = baseImageRepoId
+		image.baseImageRepoErr = baseImageRepoErr
+
+		c.baseImagesRepoIdsCache[from] = baseImageRepoId
+		c.baseImagesRepoErrCache[from] = baseImageRepoErr
+	}
+
+	image.baseImageLatest = fromLatest
+
 	image.baseImageImageName = fromImageName
 	image.isArtifact = imageArtifact
 
-	stages, err := generateStages(imageInterfaceConfig, c)
+	err := initStages(image, imageInterfaceConfig, c)
 	if err != nil {
 		return nil, err
 	}
 
-	image.SetStages(stages)
-
 	return image, nil
 }
 
-func getFromAndFromImageName(imageBaseConfig *config.ImageBase) (string, string) {
+func getFromFields(imageBaseConfig *config.ImageBase) (string, string, bool) {
 	var from string
 	var fromImageName string
 
@@ -107,7 +137,7 @@ func getFromAndFromImageName(imageBaseConfig *config.ImageBase) (string, string)
 		}
 	}
 
-	return from, fromImageName
+	return from, fromImageName, imageBaseConfig.FromLatest
 }
 
 func getImageConfigsInOrder(imageConfigs []*config.Image, c *Conveyor) []config.ImageInterface {
@@ -163,7 +193,7 @@ func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
 	return true
 }
 
-func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]stage.Interface, error) {
+func initStages(image *Image, imageInterfaceConfig config.ImageInterface, c *Conveyor) error {
 	var stages []stage.Interface
 
 	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
@@ -192,12 +222,12 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 
 	gitMappings, err := generateGitMappings(imageBaseConfig, c)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	gitMappingsExist := len(gitMappings) != 0
 
-	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateImportsBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
@@ -229,7 +259,9 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 		}
 	}
 
-	return stages, nil
+	image.SetStages(stages)
+
+	return nil
 }
 
 func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
