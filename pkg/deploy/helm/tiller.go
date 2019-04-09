@@ -35,6 +35,9 @@ var (
 	tillerSettings      = tiller_env.New()
 	helmSettings        helm_env.EnvSettings
 
+	WerfTemplateEngine     = NewWerfEngine()
+	WerfTemplateEngineName = "werfGoTpl"
+
 	defaultTimeout           = int64((24 * time.Hour).Seconds())
 	defaultReleaseHistoryMax = int32(256)
 
@@ -78,6 +81,7 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 	*namespacePtr = helmSettings.TillerNamespace
 
 	tillerSettings.KubeClient = kubeClient
+	tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
 
 	clientset, err := kubeClient.KubernetesClientSet()
 	if err != nil {

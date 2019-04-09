@@ -3,6 +3,8 @@ package common
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
@@ -89,6 +91,60 @@ func GetTillerStorage(tillerStorage string) (string, error) {
 	default:
 		return "", fmt.Errorf("bad --tiller-storage value %s. Use one of %s or %s", tillerStorage, helm.ConfigMapStorage, helm.SecretStorage)
 	}
+}
+
+func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
+	extraAnnotations := map[string]string{}
+	var addAnnotations []string
+
+	if *cmdData.AddAnnotations != nil {
+		addAnnotations = append(addAnnotations, *cmdData.AddAnnotations...)
+	}
+
+	for _, keyValue := range os.Environ() {
+		parts := strings.SplitN(keyValue, "=", 2)
+		if strings.HasPrefix(parts[0], "WERF_ADD_ANNOTATION") {
+			addAnnotations = append(addAnnotations, parts[1])
+		}
+	}
+
+	for _, addAnnotation := range addAnnotations {
+		parts := strings.Split(addAnnotation, "=")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("bad --add-annotation value %s", addAnnotation)
+		}
+
+		extraAnnotations[parts[0]] = parts[1]
+	}
+
+	return extraAnnotations, nil
+}
+
+func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
+	extraLabels := map[string]string{}
+	var addLabels []string
+
+	if *cmdData.AddLabels != nil {
+		addLabels = append(addLabels, *cmdData.AddLabels...)
+	}
+
+	for _, keyValue := range os.Environ() {
+		parts := strings.SplitN(keyValue, "=", 2)
+		if strings.HasPrefix(parts[0], "WERF_ADD_LABEL") {
+			addLabels = append(addLabels, parts[1])
+		}
+	}
+
+	for _, addLabel := range addLabels {
+		parts := strings.Split(addLabel, "=")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("bad --add-label value %s", addLabel)
+		}
+
+		extraLabels[parts[0]] = parts[1]
+	}
+
+	return extraLabels, nil
 }
 
 func renderDeployParamTemplate(templateName, templateText string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {

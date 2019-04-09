@@ -14,6 +14,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/secret"
+	"github.com/flant/werf/pkg/werf"
 )
 
 const (
@@ -47,11 +48,13 @@ func LoadWerfChart(werfChartDir string) (*WerfChart, error) {
 }
 
 type WerfChart struct {
-	Name      string   `yaml:"Name"`
-	ChartDir  string   `yaml:"ChartDir"`
-	Values    []string `yaml:"Values"`
-	Set       []string `yaml:"Set"`
-	SetString []string `yaml:"SetString"`
+	Name             string            `yaml:"Name"`
+	ChartDir         string            `yaml:"ChartDir"`
+	Values           []string          `yaml:"Values"`
+	Set              []string          `yaml:"Set"`
+	SetString        []string          `yaml:"SetString"`
+	ExtraAnnotations map[string]string `yaml:"ExtraAnnotations"`
+	ExtraLabels      map[string]string `yaml:"ExtraLabels"`
 
 	moreValuesCounter uint `yaml:"moreValuesCounter"`
 }
@@ -156,12 +159,61 @@ func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.C
 	})
 }
 
+func (chart *WerfChart) MergeExtraAnnotations(extraAnnotations map[string]string) {
+	for annoName, annoValue := range extraAnnotations {
+		chart.ExtraAnnotations[annoName] = annoValue
+	}
+}
+
+func (chart *WerfChart) MergeExtraLabels(extraLabels map[string]string) {
+	for labelName, labelValue := range extraLabels {
+		chart.ExtraLabels[labelName] = labelValue
+	}
+}
+
+func (chart *WerfChart) LogExtraAnnotations() {
+	if len(chart.ExtraAnnotations) == 0 {
+		return
+	}
+
+	res, _ := yaml.Marshal(chart.ExtraAnnotations)
+
+	annotations := strings.TrimRight(string(res), "\n")
+	logboek.LogInfoF("Using extra annotations:\n%s", logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
+	logboek.LogLn()
+	logboek.OptionalLnModeOn()
+}
+
+func (chart *WerfChart) LogExtraLabels() {
+	if len(chart.ExtraLabels) == 0 {
+		return
+	}
+
+	res, _ := yaml.Marshal(chart.ExtraLabels)
+
+	labels := strings.TrimRight(string(res), "\n")
+	logboek.LogInfoF("Using extra labels:\n%s", logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
+	logboek.LogLn()
+	logboek.OptionalLnModeOn()
+}
+
 type ChartConfig struct {
 	Name string `json:"name"`
 }
 
-func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secret.Manager) (*WerfChart, error) {
-	werfChart := &WerfChart{ChartDir: targetDir}
+func CreateNewWerfChart(projectName, projectDir string, targetDir, env string, m secret.Manager) (*WerfChart, error) {
+	werfChart := &WerfChart{}
+	werfChart.ChartDir = targetDir
+	werfChart.ExtraAnnotations = map[string]string{
+		"werf.io/version":      werf.Version,
+		"project.werf.io/name": projectName,
+	}
+
+	if env != "" {
+		werfChart.ExtraAnnotations["project.werf.io/env"] = env
+	}
+
+	werfChart.ExtraLabels = map[string]string{}
 
 	projectHelmDir := filepath.Join(projectDir, ".helm")
 	err := copy.Copy(projectHelmDir, targetDir)
@@ -182,7 +234,7 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secr
 		return nil, fmt.Errorf("unable to create %s: %s", targetChartFile, err)
 	}
 
-	chartData := fmt.Sprintf("name: %s\nversion: 0.1.0\n", werfChart.Name)
+	chartData := fmt.Sprintf("name: %s\nversion: 0.1.0\nengine: %s\n", werfChart.Name, helm.WerfTemplateEngineName)
 
 	_, err = f.Write([]byte(chartData))
 	if err != nil {

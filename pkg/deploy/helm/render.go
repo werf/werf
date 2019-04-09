@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/getter"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/helm/pkg/strvals"
 	"k8s.io/helm/pkg/tiller"
 	"k8s.io/helm/pkg/timeconv"
+	"k8s.io/helm/pkg/version"
 )
 
 var (
@@ -59,7 +61,7 @@ func Render(out io.Writer, chartPath, releaseName, namespace string, values, set
 		return err
 	}
 
-	renderOpts := renderutil.Options{
+	renderOpts := renderOptions{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			Name:      releaseName,
 			IsInstall: false,
@@ -70,7 +72,7 @@ func Render(out io.Writer, chartPath, releaseName, namespace string, values, set
 		KubeVersion: defaultKubeVersion,
 	}
 
-	renderedTemplates, err := renderutil.Render(c, config, renderOpts)
+	renderedTemplates, err := render(c, config, renderOpts)
 	if err != nil {
 		return err
 	}
@@ -197,4 +199,56 @@ func readFile(filePath, CertFile, KeyFile, CAFile string) ([]byte, error) {
 	}
 	data, err := getterIns.Get(filePath)
 	return data.Bytes(), err
+}
+
+// Options are options for this simple local render
+type renderOptions struct {
+	ReleaseOptions chartutil.ReleaseOptions
+	KubeVersion    string
+}
+
+func render(c *chart.Chart, config *chart.Config, opts renderOptions) (map[string]string, error) {
+	if req, err := chartutil.LoadRequirements(c); err == nil {
+		if err := renderutil.CheckDependencies(c, req); err != nil {
+			return nil, err
+		}
+	} else if err != chartutil.ErrRequirementsNotFound {
+		return nil, fmt.Errorf("cannot load requirements: %v", err)
+	}
+
+	err := chartutil.ProcessRequirementsEnabled(c, config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = chartutil.ProcessRequirementsImportValues(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set up engine.
+	renderer := tillerSettings.EngineYard[c.Metadata.Engine]
+
+	caps := &chartutil.Capabilities{
+		APIVersions:   chartutil.DefaultVersionSet,
+		KubeVersion:   chartutil.DefaultKubeVersion,
+		TillerVersion: version.GetVersionProto(),
+	}
+
+	if opts.KubeVersion != "" {
+		kv, verErr := semver.NewVersion(opts.KubeVersion)
+		if verErr != nil {
+			return nil, fmt.Errorf("could not parse a kubernetes version: %v", verErr)
+		}
+		caps.KubeVersion.Major = fmt.Sprint(kv.Major())
+		caps.KubeVersion.Minor = fmt.Sprint(kv.Minor())
+		caps.KubeVersion.GitVersion = fmt.Sprintf("v%d.%d.0", kv.Major(), kv.Minor())
+	}
+
+	vals, err := chartutil.ToRenderValuesCaps(c, config, opts.ReleaseOptions, caps)
+	if err != nil {
+		return nil, err
+	}
+
+	return renderer.Render(c, vals)
 }

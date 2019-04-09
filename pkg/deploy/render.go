@@ -13,11 +13,13 @@ import (
 )
 
 type RenderOptions struct {
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
-	Env          string
+	Values               []string
+	SecretValues         []string
+	Set                  []string
+	SetString            []string
+	Env                  string
+	UserExtraAnnotations map[string]string
+	UserExtraLabels      map[string]string
 }
 
 func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
@@ -40,11 +42,16 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
+
+	werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
+	werfChart.MergeExtraLabels(opts.UserExtraLabels)
+	werfChart.LogExtraAnnotations()
+	werfChart.LogExtraLabels()
 
 	out := &bytes.Buffer{}
 
@@ -52,16 +59,17 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		ShowNotes: false,
 	}
 
-	if err := helm.Render(
-		out,
-		werfChart.ChartDir,
-		releaseName,
-		namespace,
-		append(werfChart.Values, opts.Values...),
-		append(werfChart.Set, opts.Set...),
-		append(werfChart.SetString, opts.SetString...),
-		renderOptions,
-	); err != nil {
+	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+		return helm.Render(
+			out,
+			werfChart.ChartDir,
+			releaseName,
+			namespace,
+			append(werfChart.Values, opts.Values...),
+			append(werfChart.Set, opts.Set...),
+			append(werfChart.SetString, opts.SetString...),
+			renderOptions)
+	}); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", ".helm")
 		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)

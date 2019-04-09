@@ -74,6 +74,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupAddAnnotations(&CommonCmdData, cmd)
+	common.SetupAddLabels(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -199,6 +201,16 @@ func runDeploy() error {
 		return err
 	}
 
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	userExtraLabels, err := common.GetUserExtraLabels(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	common.LogKubeContext(kube.Context)
 	logboek.LogServiceF("Using tiller namespace: %s\n", *CommonCmdData.TillerNamespace)
 	logboek.LogServiceF("Using tiller storage: %s\n", tillerStorage)
@@ -206,11 +218,13 @@ func runDeploy() error {
 	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
 	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, deploy.DeployOptions{
-		Set:          *CommonCmdData.Set,
-		SetString:    *CommonCmdData.SetString,
-		Values:       *CommonCmdData.Values,
-		SecretValues: *CommonCmdData.SecretValues,
-		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
-		Env:          *CommonCmdData.Environment,
+		Set:                  *CommonCmdData.Set,
+		SetString:            *CommonCmdData.SetString,
+		Values:               *CommonCmdData.Values,
+		SecretValues:         *CommonCmdData.SecretValues,
+		Timeout:              time.Duration(CmdData.Timeout) * time.Second,
+		Env:                  *CommonCmdData.Environment,
+		UserExtraAnnotations: userExtraAnnotations,
+		UserExtraLabels:      userExtraLabels,
 	})
 }

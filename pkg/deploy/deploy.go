@@ -14,12 +14,14 @@ import (
 )
 
 type DeployOptions struct {
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
-	Timeout      time.Duration
-	Env          string
+	Values               []string
+	SecretValues         []string
+	Set                  []string
+	SetString            []string
+	Timeout              time.Duration
+	Env                  string
+	UserExtraAnnotations map[string]string
+	UserExtraLabels      map[string]string
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
@@ -39,23 +41,28 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	logboek.LogInfoF("Using service values:\n%s", serviceValuesRaw)
 	logboek.OptionalLnModeOn()
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	logboek.OptionalLnModeOn()
-	err = werfChart.Deploy(release, namespace, helm.ChartOptions{
-		Timeout: opts.Timeout,
-		ChartValuesOptions: helm.ChartValuesOptions{
-			Set:       opts.Set,
-			SetString: opts.SetString,
-			Values:    opts.Values,
-		},
-	})
+	werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
+	werfChart.MergeExtraLabels(opts.UserExtraLabels)
+	werfChart.LogExtraAnnotations()
+	werfChart.LogExtraLabels()
 
-	if err != nil {
+	logboek.OptionalLnModeOn()
+	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+		return werfChart.Deploy(release, namespace, helm.ChartOptions{
+			Timeout: opts.Timeout,
+			ChartValuesOptions: helm.ChartValuesOptions{
+				Set:       opts.Set,
+				SetString: opts.SetString,
+				Values:    opts.Values,
+			},
+		})
+	}); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", ".helm")
 		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)

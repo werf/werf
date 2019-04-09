@@ -6,6 +6,9 @@ import (
 	"gopkg.in/yaml.v2"
 	"strings"
 
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/engine"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/releaseutil"
 
 	"github.com/flant/werf/pkg/util"
@@ -46,15 +49,18 @@ func (templates ChartTemplates) ByKind(kind string) []Template {
 }
 
 type Template struct {
-	Version  string `yaml:"apiVersion"`
+	Version  string `yaml:"apiVersion,omitempty"`
 	Kind     string `yaml:"kind,omitempty"`
 	Metadata struct {
-		Name        string            `yaml:"name"`
-		Namespace   string            `yaml:"namespace"`
-		Annotations map[string]string `yaml:"annotations"`
-		UID         string            `yaml:"uid"`
+		Name        string                 `yaml:"name,omitempty"`
+		Namespace   string                 `yaml:"namespace,omitempty"`
+		Annotations map[string]string      `yaml:"annotations,omitempty"`
+		Labels      map[string]string      `yaml:"labels,omitempty"`
+		UID         string                 `yaml:"uid,omitempty"`
+		OtherFields map[string]interface{} `yaml:",inline"`
 	} `yaml:"metadata,omitempty"`
-	Status string `yaml:"status,omitempty"`
+	Status      string                 `yaml:"status,omitempty"`
+	OtherFields map[string]interface{} `yaml:",inline"`
 }
 
 func (t Template) Namespace(namespace string) string {
@@ -140,4 +146,82 @@ func parseTemplates(rawTemplates string) (ChartTemplates, error) {
 	}
 
 	return templates, nil
+}
+
+type WerfEngine struct {
+	*engine.Engine
+
+	ExtraAnnotations map[string]string
+	ExtraLabels      map[string]string
+}
+
+func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[string]string, error) {
+	templates, err := e.Engine.Render(chrt, values)
+	if err != nil {
+		return nil, err
+	}
+
+	for fileName, fileContent := range templates {
+		if fileContent == "" {
+			continue
+		}
+
+		if strings.HasSuffix(fileName, "/NOTES.txt") {
+			continue
+		}
+
+		var resultManifests []string
+		for _, manifest := range releaseutil.SplitManifests(fileContent) {
+			var t Template
+			err := yaml.Unmarshal([]byte(manifest), &t)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(t.Metadata.Annotations) == 0 {
+				t.Metadata.Annotations = map[string]string{}
+			}
+
+			for annoName, annoValue := range e.ExtraAnnotations {
+				t.Metadata.Annotations[annoName] = annoValue
+			}
+
+			if len(t.Metadata.Labels) == 0 {
+				t.Metadata.Labels = map[string]string{}
+			}
+
+			for labelName, labelValue := range e.ExtraLabels {
+				t.Metadata.Labels[labelName] = labelValue
+			}
+
+			res, err := yaml.Marshal(t)
+			if err != nil {
+				return nil, err
+			}
+
+			resultManifests = append(resultManifests, string(res))
+		}
+
+		templates[fileName] = strings.Join(resultManifests, "---\n")
+	}
+
+	return templates, nil
+}
+
+func NewWerfEngine() *WerfEngine {
+	return &WerfEngine{
+		Engine:           engine.New(),
+		ExtraAnnotations: map[string]string{},
+		ExtraLabels:      map[string]string{},
+	}
+}
+
+func WithExtra(extraAnnotations, extraLabels map[string]string, f func() error) error {
+	WerfTemplateEngine.ExtraAnnotations = extraAnnotations
+	WerfTemplateEngine.ExtraLabels = extraLabels
+	err := f()
+	WerfTemplateEngine.ExtraAnnotations = map[string]string{}
+	WerfTemplateEngine.ExtraLabels = map[string]string{}
+
+	return err
 }
