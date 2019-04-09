@@ -60,7 +60,22 @@ func (c *container) RmIfExist() error {
 	}
 
 	if exist {
-		return docker.CliRm(c.Name)
+		inspect, err := docker.ContainerInspect(c.Name)
+		if err != nil {
+			return err
+		}
+
+		if err := docker.CliRm(c.Name); err != nil {
+			return err
+		}
+
+		for _, m := range inspect.Mounts {
+			if m.Type == "volume" {
+				if err := docker.VolumeRm(m.Name, true); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
