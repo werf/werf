@@ -9,6 +9,7 @@ import (
 
 	yaml "gopkg.in/flant/yaml.v2"
 
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -46,12 +47,24 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 	}
 	writeFile(filepath.Join(stageWorkDir, "dump_config.json"), string(data))
 
-	// PYTHONPATH content
+	// Ansible-playbook starter: setup python path without PYTHONPATH environment var
+	ioutil.WriteFile(
+		filepath.Join(stageWorkDir, "ansible-playbook"),
+		[]byte(fmt.Sprintf(
+			`#!%s
+
+import sys
+sys.path.append("%s")
+
+execfile("%s")
+`, stapel.PythonBinPath(), filepath.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
+		os.FileMode(0777),
+	)
+
 	stageWorkDirLib := filepath.Join(stageWorkDir, "lib")
 	if err := mkdirP(stageWorkDirLib); err != nil {
 		return err
 	}
-
 
 	// crypt.py hack
 	// TODO should be in stapel image
@@ -59,7 +72,6 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 
 	// sitecustomize with mocks
 	writeFile(filepath.Join(stageWorkDirLib, "sitecustomize.py"), b.assetsSiteCustomizePy())
-
 
 	callbackPackageDir := filepath.Join(stageWorkDirLib, "callback")
 	if err := mkdirP(callbackPackageDir); err != nil {
