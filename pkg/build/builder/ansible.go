@@ -64,7 +64,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		map[string]string{
 			"ANSIBLE_CONFIG":              filepath.Join(b.containerWorkDir(), "ansible.cfg"),
 			"WERF_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
-			"PYTHONPATH":                  filepath.Join(b.containerWorkDir(), "lib"),
+			"PYTHONPATH":                  "",
 			"LOGBOEK_SO_PATH":             filepath.Join(b.containerWorkDir(), "lib", "werf", ".logboek.so"),
 			"PYTHONIOENCODING":            "utf-8",
 			"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.SystemPATH(),
@@ -93,7 +93,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
 
 	commandParts := []string{
-		stapel.AnsiblePlaybookBinPath(),
+		filepath.Join(b.containerWorkDir(), "ansible-playbook"),
 		filepath.Join(b.containerWorkDir(), "playbook.yml"),
 	}
 
