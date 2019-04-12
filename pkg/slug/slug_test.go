@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	servicePartSize = len(util.MurmurHash()) + len(slugSeparator)
+	servicePartSize = len(util.MurmurHash("stub")) + len(slugSeparator)
 )
 
 func TestSlug(t *testing.T) {
@@ -30,12 +30,12 @@ func TestSlug(t *testing.T) {
 		{
 			name:   "notEqualWithSluggedData",
 			data:   "A",
-			result: "a-cef7dc54",
+			result: "a-54dcf7ce",
 		},
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", slugMaxSize+1),
-			result: strings.Repeat("x", slugMaxSize-servicePartSize) + "-2ff0e227",
+			result: strings.Repeat("x", slugMaxSize-servicePartSize) + "-27e2f02f",
 		},
 	}
 
@@ -44,6 +44,10 @@ func TestSlug(t *testing.T) {
 			result := Slug(test.data)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
+			}
+
+			if len(result) > slugMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", slugMaxSize, len(result))
 			}
 		})
 	}
@@ -63,17 +67,17 @@ func TestDockerTag(t *testing.T) {
 		{
 			name:   "notMatchRegexp_startWithDash",
 			data:   "-data",
-			result: "data-6ed871a8",
+			result: "data-a871d86e",
 		},
 		{
 			name:   "notMatchRegexp_unsupportedChar",
 			data:   "da/ta",
-			result: "da-ta-f896fa0a",
+			result: "da-ta-afa96f8",
 		},
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", dockerTagMaxSize+1),
-			result: strings.Repeat("x", dockerTagMaxSize-servicePartSize) + "-eb70ca8c",
+			result: strings.Repeat("x", dockerTagMaxSize-servicePartSize) + "-8cca70eb",
 		},
 	}
 
@@ -82,6 +86,10 @@ func TestDockerTag(t *testing.T) {
 			result := DockerTag(test.data)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
+			}
+
+			if len(result) > dockerTagMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", dockerTagMaxSize, len(result))
 			}
 		})
 	}
@@ -106,17 +114,17 @@ func TestHelmRelease(t *testing.T) {
 		{
 			name:   "notMatchRegexp_startWithDash",
 			data:   "-data",
-			result: "data-6ed871a8",
+			result: "data-a871d86e",
 		},
 		{
 			name:   "notMatchRegexp_unsupportedChar",
 			data:   "da/ta",
-			result: "da-ta-f896fa0a",
+			result: "da-ta-afa96f8",
 		},
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", helmReleaseMaxSize+1),
-			result: strings.Repeat("x", helmReleaseMaxSize-servicePartSize) + "-b9dfc518",
+			result: strings.Repeat("x", helmReleaseMaxSize-servicePartSize) + "-18c5dfb9",
 		},
 	}
 
@@ -125,6 +133,10 @@ func TestHelmRelease(t *testing.T) {
 			result := HelmRelease(test.data)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
+			}
+
+			if len(result) > helmReleaseMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", helmReleaseMaxSize, len(result))
 			}
 		})
 	}
@@ -149,12 +161,12 @@ func TestKubernetesNamespace(t *testing.T) {
 		{
 			name:   "notMatchRegexp_unsupportedChar",
 			data:   "da_ta",
-			result: "da-ta-149d333b",
+			result: "da-ta-3b339d14",
 		},
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", dnsLabelMaxSize+1),
-			result: strings.Repeat("x", dnsLabelMaxSize-servicePartSize) + "-cdefd4af",
+			result: strings.Repeat("x", dnsLabelMaxSize-servicePartSize) + "-afd4efcd",
 		},
 	}
 
@@ -163,6 +175,10 @@ func TestKubernetesNamespace(t *testing.T) {
 			result := KubernetesNamespace(test.data)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
+			}
+
+			if len(result) > dnsLabelMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", dnsLabelMaxSize, len(result))
 			}
 		})
 	}
