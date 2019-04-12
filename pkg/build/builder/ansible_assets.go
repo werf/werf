@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	yaml "gopkg.in/flant/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"

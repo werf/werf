@@ -13,7 +13,18 @@ import (
 func Login(username, password, repo string) error {
 	var outb, errb bytes.Buffer
 
-	loginCli := command.NewDockerCli(nil, &outb, &errb, false)
+	cliOpts := []command.DockerCliOption{
+		command.WithInputStream(nil),
+		command.WithOutputStream(&outb),
+		command.WithErrorStream(&errb),
+		command.WithContentTrust(false),
+	}
+
+	loginCli, err := command.NewDockerCli(cliOpts...)
+	if err != nil {
+		return err
+	}
+
 	opts := flags.NewClientOptions()
 	if err := loginCli.Initialize(opts); err != nil {
 		return err
@@ -24,7 +35,7 @@ func Login(username, password, repo string) error {
 	cmd.SilenceUsage = true
 	cmd.SetArgs([]string{"--username", username, "--password", password, repo})
 
-	err := cmd.Execute()
+	err = cmd.Execute()
 	if Debug() {
 		fmt.Fprintf(logboek.GetOutStream(), "Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 	}

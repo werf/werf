@@ -52,13 +52,26 @@ func ServerVersion() (*types.Version, error) {
 func setDockerClient() error {
 	stdIn, _, _ := term.StdStreams()
 
-	cli = command.NewDockerCli(stdIn, logboek.GetOutStream(), logboek.GetErrStream(), false)
-	cli.Out().SetIsTerminal(logboek.IsTerminal())
+	cliOpts := []command.DockerCliOption{
+		command.WithInputStream(stdIn),
+		command.WithOutputStream(logboek.GetOutStream()),
+		command.WithErrorStream(logboek.GetErrStream()),
+		command.WithContentTrust(false),
+	}
 
-	opts := flags.NewClientOptions()
-	if err := cli.Initialize(opts); err != nil {
+	newCli, err := command.NewDockerCli(cliOpts...)
+	if err != nil {
 		return err
 	}
+
+	newCli.Out().SetIsTerminal(logboek.IsTerminal())
+
+	opts := flags.NewClientOptions()
+	if err := newCli.Initialize(opts); err != nil {
+		return err
+	}
+
+	cli = newCli
 
 	return nil
 }

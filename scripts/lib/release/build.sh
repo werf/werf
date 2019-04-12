@@ -1,9 +1,25 @@
-go_get() {
+go_mod_download() {
+    VERSION=$1
+
     for os in linux darwin windows ; do
         for arch in amd64 ; do
-            export GOOS=$os
-            export GOARCH=$arch
-            source $GOPATH/src/github.com/flant/werf/go-get.sh
+            echo "# Downloading go modules for GOOS=$os GOARCH=$arch"
+
+            n=0
+            until [ $n -gt 5 ]
+            do
+                ( GOOS=$os GOARCH=$arch go mod download ) && break || true
+                n=$[$n+1]
+
+                if [ ! $n -gt 5 ] ; then
+                    echo "[$n] Retrying modules downloading"
+                fi
+            done
+
+            if [ $n -gt 5 ] ; then
+                echo "Exiting due to 'go mod download' failures"
+                exit 1
+            fi
         done
     done
 }
@@ -40,8 +56,5 @@ go_build() {
 build_binaries() {
     VERSION=$1
 
-    # git checkout -f $VERSION || (echo "$0: git checkout error" && exit 2)
-
-    ( go_get ) || ( exit 1 )
     ( go_build $VERSION ) || ( exit 1 )
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/flant/werf/pkg/stapel"
 
 	ghodssYaml "github.com/ghodss/yaml"
-	"gopkg.in/flant/yaml.v2"
 	"gopkg.in/oleiade/reflections.v1"
+	"gopkg.in/yaml.v2"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/util"

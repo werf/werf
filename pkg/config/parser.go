@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
-	"gopkg.in/flant/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
