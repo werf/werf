@@ -118,14 +118,20 @@ Loop:
 func repoImagesCleanupByNonexistentGitPrimitive(repoImages []docker_registry.RepoImage, options ImagesCleanupOptions) ([]docker_registry.RepoImage, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []docker_registry.RepoImage
 
-	gitTags, err := options.LocalGit.TagsList()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get local git tags list: %s", err)
-	}
+	gitTags := []string{}
+	gitBranches := []string{}
 
-	gitBranches, err := options.LocalGit.RemoteBranchesList()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get local git branches list: %s", err)
+	if options.LocalGit != nil {
+		var err error
+		gitTags, err = options.LocalGit.TagsList()
+		if err != nil {
+			return nil, fmt.Errorf("cannot get local git tags list: %s", err)
+		}
+
+		gitBranches, err = options.LocalGit.RemoteBranchesList()
+		if err != nil {
+			return nil, fmt.Errorf("cannot get local git branches list: %s", err)
+		}
 	}
 
 Loop:
@@ -154,12 +160,18 @@ Loop:
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
 		case string(tag_strategy.GitCommit):
-			exist, err := options.LocalGit.IsCommitExists(repoImage.Tag)
-			if err != nil {
-				if strings.HasPrefix(err.Error(), "bad commit hash") {
-					exist = false
-				} else {
-					return nil, err
+			exist := false
+
+			if options.LocalGit != nil {
+				var err error
+
+				exist, err = options.LocalGit.IsCommitExists(repoImage.Tag)
+				if err != nil {
+					if strings.HasPrefix(err.Error(), "bad commit hash") {
+						exist = false
+					} else {
+						return nil, err
+					}
 				}
 			}
 
@@ -171,7 +183,7 @@ Loop:
 
 	if len(nonexistentGitTagRepoImages) != 0 {
 		logboek.LogServiceLn("Removed tags by nonexistent git-tag policy:")
-		if err = logboek.WithIndent(func() error {
+		if err := logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
@@ -183,7 +195,7 @@ Loop:
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
 		logboek.LogServiceLn("Removed tags by nonexistent git-branch policy:")
-		if err = logboek.WithIndent(func() error {
+		if err := logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
@@ -195,7 +207,7 @@ Loop:
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
 		logboek.LogServiceLn("Removed tags by nonexistent git-commit policy:")
-		if err = logboek.WithIndent(func() error {
+		if err := logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
