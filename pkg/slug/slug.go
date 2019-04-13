@@ -110,7 +110,7 @@ func slug(data string, maxSize int) string {
 
 	var slugParts []string
 	if sluggedData != "" {
-		croppedSluggedData := cropSluggedData(sluggedData, maxSize)
+		croppedSluggedData := cropSluggedData(sluggedData, murmurHash, maxSize)
 		if strings.HasPrefix(croppedSluggedData, "-") {
 			slugParts = append(slugParts, croppedSluggedData[:len(croppedSluggedData)-1])
 		} else {
@@ -124,9 +124,9 @@ func slug(data string, maxSize int) string {
 	return consistentUniqSlug
 }
 
-func cropSluggedData(data string, maxSize int) string {
+func cropSluggedData(data string, hash string, maxSize int) string {
 	var index int
-	maxLength := maxSize - len(util.MurmurHash()) - len(slugSeparator)
+	maxLength := maxSize - len(hash) - len(slugSeparator)
 	if len(data) > maxLength {
 		index = maxLength
 	} else {
