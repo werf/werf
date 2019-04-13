@@ -141,7 +141,7 @@ func runCleanup() error {
 		DryRun:        *CommonCmdData.DryRun,
 	}
 
-	var localGitRepo *git_repo.Local
+	var localGitRepo cleaning.GitRepo
 	gitDir := path.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
