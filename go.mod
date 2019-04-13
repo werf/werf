@@ -56,7 +56,8 @@ require (
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190127180048-001ef3873924
-	github.com/flant/kubedog v0.1.1-0.20190411203634-4dbfef0ffa12
+	github.com/flant/helm v2.8.0-rc.1.0.20190415101935-09abf0b0087a+incompatible
+	github.com/flant/kubedog v0.1.1-0.20190414170322-0b964109a3d7
 	github.com/flant/logboek v0.0.0-20190320160836-03b04a37bad0
 	github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
@@ -166,7 +167,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190315093550-53c4693659ed
 	k8s.io/apimachinery v0.0.0-20190409092423-760d1845f48b
 	k8s.io/apiserver v0.0.0-20190313205120-8b27c41bdbb1
-	k8s.io/cli-runtime v0.0.0-20190409093718-11d55751678d // indirect
+	k8s.io/cli-runtime v0.0.0-20190409093718-11d55751678d
 	k8s.io/client-go v0.0.0-20190411052641-7a6b4715b709
 	k8s.io/cloud-provider v0.0.0-20190323031113-9c9d72d1bf90
 	k8s.io/helm v2.10.0-rc.2.0.20190411155143-0664ef5c44fe+incompatible

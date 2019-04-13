@@ -11,14 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/kubedog/pkg/tracker"
-	"github.com/flant/kubedog/pkg/trackers/rollout"
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/util"
@@ -168,18 +164,15 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 					return fmt.Errorf("unable to get helm templates from release %s revision %d: %s", releaseName, revision, err)
 				}
 
-				watchHookTypes := []string{"pre-rollback", "post-rollback"}
-
-				deployFunc := func(startJobHooksWatcher chan bool) (string, error) {
+				deployFunc := func() (string, error) {
 					logboek.LogServiceF("Running helm rollback...\n")
 					logboek.OptionalLnModeOn()
-
-					startJobHooksWatcher <- true
 
 					releaseRollbackOpts := ReleaseRollbackOptions{
 						releaseRollbackOptions: releaseRollbackOptions{
 							Timeout:       int64(opts.Timeout),
 							CleanupOnFail: true,
+							Wait:          true,
 							DryRun:        opts.DryRun,
 						},
 					}
@@ -199,7 +192,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
 				if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-					return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
+					return runDeployProcess(releaseName, namespace, opts, templates, deployFunc)
 				}); err != nil {
 					return err
 				}
@@ -222,25 +215,17 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		return err
 	}
 
-	var watchHookTypes []string
+	var deployFunc func() (string, error)
 	if releaseState.IsExists {
-		watchHookTypes = []string{"pre-upgrade", "post-upgrade"}
-	} else {
-		watchHookTypes = []string{"pre-install", "post-install"}
-	}
-
-	var deployFunc func(chan bool) (string, error)
-	if releaseState.IsExists {
-		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
+		deployFunc = func() (string, error) {
 			logboek.LogServiceF("Running helm upgrade...\n")
 			logboek.OptionalLnModeOn()
-
-			startJobHooksWatcher <- true
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
 					Timeout:       int64(opts.Timeout),
 					CleanupOnFail: true,
+					Wait:          true,
 					DryRun:        opts.DryRun,
 				},
 				Debug: opts.Debug,
@@ -276,15 +261,14 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 			return out.String(), nil
 		}
 	} else {
-		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
+		deployFunc = func() (string, error) {
 			logboek.LogServiceF("Running helm install...\n")
 			logboek.OptionalLnModeOn()
-
-			startJobHooksWatcher <- true
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
 					Timeout: int64(opts.Timeout),
+					Wait:    true,
 					DryRun:  opts.DryRun,
 				},
 				Debug: opts.Debug,
@@ -314,7 +298,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 	logProcessMsg := fmt.Sprintf("Running deploy release %s", releaseName)
 	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-		return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
+		return runDeployProcess(releaseName, namespace, opts, templates, deployFunc)
 	})
 }
 
@@ -333,24 +317,13 @@ func latestDeployedReleaseRevision(releaseName string) (int32, error) {
 	return 0, ErrNoDeployedReleaseRevisionFound
 }
 
-func runDeployProcess(releaseName, namespace string, opts ChartOptions, templates ChartTemplates, watchHookTypes []string, deployFunc func(chan bool) (string, error)) error {
+func runDeployProcess(releaseName, namespace string, opts ChartOptions, templates ChartTemplates, deployFunc func() (string, error)) error {
 	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
 		return fmt.Errorf("unable to remove helm hooks by werf/recreate policy: %s", err)
 	}
 
-	deployStartTime := time.Now()
-
-	ctx := context.Background()
-	ctx, cancelJobHooksWatcher := context.WithCancel(ctx)
-	jobHooksWatcherDone, startJobHooksWatcher, err := watchJobHooks(ctx, templates, watchHookTypes, deployStartTime, namespace, opts)
+	helmOutput, err := deployFunc()
 	if err != nil {
-		return fmt.Errorf("watching job hooks failed: %s", err)
-	}
-
-	helmOutput, err := deployFunc(startJobHooksWatcher)
-	if err != nil {
-		cancelJobHooksWatcher()
-		<-jobHooksWatcherDone
 		return err
 	}
 
@@ -358,56 +331,7 @@ func runDeployProcess(releaseName, namespace string, opts ChartOptions, template
 		return err
 	}
 
-	<-jobHooksWatcherDone
-
 	logboek.LogInfoF(logboek.FitText(helmOutput, logboek.FitTextOptions{MaxWidth: 120}))
-
-	if err := logboek.WithFittedStreamsOutputOn(func() error {
-		if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func trackPods(templates ChartTemplates, deployStartTime time.Time, namespace string, opts ChartOptions) error {
-	for _, template := range templates.Pods() {
-		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			continue
-		}
-
-		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
-			continue
-		}
-
-		logProcessMsg := fmt.Sprintf("Tracking po/%s", template.Metadata.Name)
-		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-			return rollout.TrackPodTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
-		}); err != nil {
-			return err
-		}
-	}
 
 	return nil
 }
@@ -423,129 +347,6 @@ func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string)
 	}
 
 	return nil
-}
-
-func trackDeployments(templates ChartTemplates, deployStartTime time.Time, namespace string, opts ChartOptions) error {
-	for _, template := range templates.Deployments() {
-		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			continue
-		}
-
-		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
-			continue
-		}
-
-		logProcessMsg := fmt.Sprintf("Tracking deploy/%s", template.Metadata.Name)
-		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-			return rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func trackStatefulSets(templates ChartTemplates, deployStartTime time.Time, namespace string, opts ChartOptions) error {
-	for _, template := range templates.StatefulSets() {
-		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			continue
-		}
-
-		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
-			continue
-		}
-
-		logProcessMsg := fmt.Sprintf("Tracking sts/%s", template.Metadata.Name)
-		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-			return rollout.TrackStatefulSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func trackDaemonSets(templates ChartTemplates, deployStartTime time.Time, namespace string, opts ChartOptions) error {
-	for _, template := range templates.DaemonSets() {
-		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			continue
-		}
-
-		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
-			continue
-		}
-
-		logProcessMsg := fmt.Sprintf("Tracking ds/%s", template.Metadata.Name)
-		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-			return rollout.TrackDaemonSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func trackJobs(templates ChartTemplates, deployStartTime time.Time, namespace string, opts ChartOptions) error {
-	for _, template := range templates.Jobs() {
-		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			continue
-		}
-
-		if template.Metadata.Annotations[TrackAnnoName] == string(TrackTillDone) {
-			logProcessMsg := fmt.Sprintf("Tracking jobs/%s", template.Metadata.Name)
-			if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-				return rollout.TrackJobTillDone(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
-			}); err != nil {
-				return err
-			}
-		} else {
-			// TODO: https://github.com/flant/werf/issues/1143
-			// till_ready by default
-			// if werf.io/track=false -- no track at all
-		}
-	}
-
-	return nil
-}
-
-func watchJobHooks(ctx context.Context, templates ChartTemplates, hookTypes []string, deployStartTime time.Time, namespace string, opts ChartOptions) (chan bool, chan bool, error) {
-	jobHooksWatcherDone := make(chan bool)
-	startJobHooksWatcher := make(chan bool)
-
-	jobHooksToTrack, err := jobHooksToTrack(templates, hookTypes)
-	if err != nil {
-		return jobHooksWatcherDone, startJobHooksWatcher, err
-	}
-
-	go func() {
-		<-startJobHooksWatcher
-
-		for _, template := range jobHooksToTrack {
-			var jobNamespace string
-			if template.Metadata.Namespace != "" {
-				jobNamespace = template.Metadata.Namespace
-			} else {
-				jobNamespace = namespace
-			}
-
-			loggerProcessMsg := fmt.Sprintf("Tracking helm hook jobs/%s", template.Metadata.Name)
-			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
-				return logboek.WithFittedStreamsOutputOn(func() error {
-					return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime, ParentContext: ctx})
-				})
-			}); err != nil {
-				logboek.LogErrorF("ERROR: %s\n", err)
-				break
-			}
-		}
-
-		jobHooksWatcherDone <- true
-	}()
-
-	return jobHooksWatcherDone, startJobHooksWatcher, nil
 }
 
 type ReleaseState struct {

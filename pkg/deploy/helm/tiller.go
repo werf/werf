@@ -12,22 +12,22 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/flant/helm/pkg/chartutil"
+	"github.com/flant/helm/pkg/helm"
+	helm_env "github.com/flant/helm/pkg/helm/environment"
+	"github.com/flant/helm/pkg/kube"
+	"github.com/flant/helm/pkg/proto/hapi/chart"
+	"github.com/flant/helm/pkg/proto/hapi/release"
+	"github.com/flant/helm/pkg/proto/hapi/services"
+	"github.com/flant/helm/pkg/renderutil"
+	"github.com/flant/helm/pkg/storage"
+	"github.com/flant/helm/pkg/storage/driver"
+	"github.com/flant/helm/pkg/tiller"
+	tiller_env "github.com/flant/helm/pkg/tiller/environment"
+	"github.com/flant/helm/pkg/timeconv"
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/helm"
-	helm_env "k8s.io/helm/pkg/helm/environment"
-	"k8s.io/helm/pkg/kube"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/proto/hapi/release"
-	"k8s.io/helm/pkg/proto/hapi/services"
-	"k8s.io/helm/pkg/renderutil"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
-	"k8s.io/helm/pkg/tiller"
-	tiller_env "k8s.io/helm/pkg/tiller/environment"
-	"k8s.io/helm/pkg/timeconv"
 )
 
 var (
@@ -79,6 +79,8 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 
 	namespacePtr := configFlags.FieldByName("Namespace").Interface().(*string)
 	*namespacePtr = helmSettings.TillerNamespace
+
+	kubeClient.SetResourcesWaiter(&ResourcesWaiter{Client: kubeClient})
 
 	tillerSettings.KubeClient = kubeClient
 	tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
@@ -322,6 +324,7 @@ func ReleaseRollback(out io.Writer, releaseName string, revision int32, opts Rel
 
 type releaseInstallOptions struct {
 	Timeout int64
+	Wait    bool
 	DryRun  bool
 }
 
@@ -347,6 +350,7 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 		Name:      releaseName,
 		Namespace: namespace,
 		Values:    values,
+		Wait:      opts.Wait,
 		DryRun:    opts.DryRun,
 		Timeout:   timeout,
 	}
@@ -362,6 +366,7 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 type releaseUpdateOptions struct {
 	Timeout       int64
 	CleanupOnFail bool
+	Wait          bool
 	DryRun        bool
 }
 
@@ -388,6 +393,7 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 		Values:        values,
 		Timeout:       timeout,
 		CleanupOnFail: opts.CleanupOnFail,
+		Wait:          opts.Wait,
 		DryRun:        opts.DryRun,
 	}
 
@@ -402,6 +408,7 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 type releaseRollbackOptions struct {
 	Timeout       int64
 	CleanupOnFail bool
+	Wait          bool
 	DryRun        bool
 }
 
@@ -417,6 +424,7 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 		Version:       revision,
 		Timeout:       timeout,
 		CleanupOnFail: opts.CleanupOnFail,
+		Wait:          opts.Wait,
 		DryRun:        opts.DryRun,
 	}
 
