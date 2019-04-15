@@ -214,6 +214,10 @@ func validateChartEngine(cf *chart.Metadata) error {
 		return nil
 	}
 
+	if cf.Engine == WerfTemplateEngineName {
+		return nil
+	}
+
 	keys := make([]string, 0, len(chart.Metadata_Engine_value))
 	for engine := range chart.Metadata_Engine_value {
 		str := strings.ToLower(engine)
