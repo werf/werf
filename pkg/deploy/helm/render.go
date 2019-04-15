@@ -10,16 +10,16 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/flant/helm/pkg/chartutil"
+	"github.com/flant/helm/pkg/getter"
+	"github.com/flant/helm/pkg/manifest"
+	"github.com/flant/helm/pkg/proto/hapi/chart"
+	"github.com/flant/helm/pkg/renderutil"
+	"github.com/flant/helm/pkg/strvals"
+	"github.com/flant/helm/pkg/tiller"
+	"github.com/flant/helm/pkg/timeconv"
+	"github.com/flant/helm/pkg/version"
 	"github.com/ghodss/yaml"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/getter"
-	"k8s.io/helm/pkg/manifest"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/renderutil"
-	"k8s.io/helm/pkg/strvals"
-	"k8s.io/helm/pkg/tiller"
-	"k8s.io/helm/pkg/timeconv"
-	"k8s.io/helm/pkg/version"
 )
 
 var (

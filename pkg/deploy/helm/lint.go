@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/lint"
-	"k8s.io/helm/pkg/lint/support"
+	"github.com/flant/helm/pkg/chartutil"
+	"github.com/flant/helm/pkg/lint"
+	"github.com/flant/helm/pkg/lint/support"
 )
 
 type LintOptions struct {
