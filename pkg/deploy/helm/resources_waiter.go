@@ -16,6 +16,7 @@ import (
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -32,60 +33,94 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
 		case *v1.Pod:
-			specs.Pods = append(specs.Pods, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Pods = append(specs.Pods, *spec)
+			}
 		case *appsv1.Deployment:
-			specs.Deployments = append(specs.Deployments, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Deployments = append(specs.Deployments, *spec)
+			}
 		case *appsv1beta1.Deployment:
-			specs.Deployments = append(specs.Deployments, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Deployments = append(specs.Deployments, *spec)
+			}
 		case *appsv1beta2.Deployment:
-			specs.Deployments = append(specs.Deployments, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Deployments = append(specs.Deployments, *spec)
+			}
 		case *extensions.Deployment:
-			specs.Deployments = append(specs.Deployments, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Deployments = append(specs.Deployments, *spec)
+			}
 		case *extensions.DaemonSet:
-			specs.DaemonSets = append(specs.DaemonSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.DaemonSets = append(specs.DaemonSets, *spec)
+			}
 		case *appsv1.DaemonSet:
-			specs.DaemonSets = append(specs.DaemonSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.DaemonSets = append(specs.DaemonSets, *spec)
+			}
 		case *appsv1beta2.DaemonSet:
-			specs.DaemonSets = append(specs.DaemonSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.DaemonSets = append(specs.DaemonSets, *spec)
+			}
+
 		case *appsv1.StatefulSet:
-			specs.StatefulSets = append(specs.StatefulSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.StatefulSets = append(specs.StatefulSets, *spec)
+			}
 		case *appsv1beta1.StatefulSet:
-			specs.StatefulSets = append(specs.StatefulSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.StatefulSets = append(specs.StatefulSets, *spec)
+			}
 		case *appsv1beta2.StatefulSet:
-			specs.StatefulSets = append(specs.StatefulSets, multitrack.MultitrackSpec{
-				ResourceName: value.Name,
-				Namespace:    value.Namespace,
-			})
+			spec, err := makeMultitrackSpec(&value.ObjectMeta)
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.StatefulSets = append(specs.StatefulSets, *spec)
+			}
 		case *v1.ReplicationController:
 		case *extensions.ReplicaSet:
 		case *appsv1beta2.ReplicaSet:
@@ -98,6 +133,17 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	return logboek.LogSecondaryProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
 		return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{})
 	})
+}
+
+func makeMultitrackSpec(objMeta *metav1.ObjectMeta) (*multitrack.MultitrackSpec, error) {
+	if objMeta.Annotations[TrackAnnoName] == string(TrackDisabled) {
+		return nil, nil
+	}
+
+	return &multitrack.MultitrackSpec{
+		ResourceName: objMeta.Name,
+		Namespace:    objMeta.Namespace,
+	}, nil
 }
 
 func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reader, timeout time.Duration) error {
