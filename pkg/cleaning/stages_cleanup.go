@@ -18,8 +18,11 @@ import (
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 
 type StagesCleanupOptions struct {
-	CommonRepoOptions    CommonRepoOptions
-	CommonProjectOptions CommonProjectOptions
+	ProjectName   string
+	ImagesRepo    string
+	StagesStorage string
+	ImagesNames   []string
+	DryRun        bool
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
@@ -29,29 +32,42 @@ func StagesCleanup(options StagesCleanupOptions) error {
 }
 
 func stagesCleanup(options StagesCleanupOptions) error {
-	options.CommonProjectOptions.CommonOptions.SkipUsedImages = true
-	options.CommonProjectOptions.CommonOptions.RmiForce = false
-	options.CommonProjectOptions.CommonOptions.RmForce = false
+	commonProjectOptions := CommonProjectOptions{
+		ProjectName: options.ProjectName,
+		CommonOptions: CommonOptions{
+			SkipUsedImages: true,
+			RmiForce:       false,
+			RmForce:        false,
+			DryRun:         options.DryRun,
+		},
+	}
 
-	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", options.CommonProjectOptions.ProjectName)
+	commonRepoOptions := CommonRepoOptions{
+		ImagesRepo:    options.ImagesRepo,
+		StagesStorage: options.StagesStorage,
+		ImagesNames:   options.ImagesNames,
+		DryRun:        options.DryRun,
+	}
+
+	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", commonProjectOptions.ProjectName)
 	return lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		repoImages, err := repoImages(options.CommonRepoOptions)
+		repoImages, err := repoImages(commonRepoOptions)
 		if err != nil {
 			return err
 		}
 
 		if len(repoImages) != 0 {
-			if options.CommonRepoOptions.StagesStorage == localStagesStorage {
-				if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
+			if commonRepoOptions.StagesStorage == localStagesStorage {
+				if err := projectImageStagesSyncByRepoImages(repoImages, commonProjectOptions); err != nil {
 					return err
 				}
 			} else {
-				if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+				if err := repoImageStagesSyncByRepoImages(repoImages, commonRepoOptions); err != nil {
 					return err
 				}
 			}
 		} else {
-			if err := projectStagesPurge(options.CommonProjectOptions); err != nil {
+			if err := projectStagesPurge(commonProjectOptions); err != nil {
 				return err
 			}
 		}
@@ -84,33 +100,6 @@ func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, opt
 
 	err = repoImagesRemove(repoImageStages, options)
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func repoImageStagesSyncByCacheVersion(options CommonRepoOptions) error {
-	repoImageStages, err := repoImageStagesImages(options)
-	if err != nil {
-		return err
-	}
-
-	var repoImagesToDelete []docker_registry.RepoImage
-	for _, repoImageStage := range repoImageStages {
-		labels, err := repoImageLabels(repoImageStage)
-		if err != nil {
-			return err
-		}
-
-		version, ok := labels[image.WerfCacheVersionLabel]
-		if !ok || (version != build.BuildCacheVersion) {
-			logboek.LogServiceF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
-			repoImagesToDelete = append(repoImagesToDelete, repoImageStage)
-		}
-	}
-
-	if err := repoImagesRemove(repoImagesToDelete, options); err != nil {
 		return err
 	}
 
@@ -292,7 +281,7 @@ func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage 
 	var err error
 	for label, value := range imageStage.Labels {
 		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
-			imageStages, err = exceptImageStagesBySignarute(imageStages, value, commonProjectOptions)
+			imageStages, err = exceptImageStagesBySignature(imageStages, value, commonProjectOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -311,7 +300,7 @@ func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage 
 	return imageStages, nil
 }
 
-func exceptImageStagesBySignarute(imageStages []types.ImageSummary, signature string, options CommonProjectOptions) ([]types.ImageSummary, error) {
+func exceptImageStagesBySignature(imageStages []types.ImageSummary, signature string, options CommonProjectOptions) ([]types.ImageSummary, error) {
 	imageStage := findImageStageBySignature(imageStages, signature, options)
 	if imageStage == nil {
 		return imageStages, nil
@@ -360,8 +349,4 @@ func projectImageStages(options CommonProjectOptions) ([]types.ImageSummary, err
 	}
 
 	return images, nil
-}
-
-func projectImageStagesSyncByCacheVersion(options CommonProjectOptions) error {
-	return werfImageStagesFlushByCacheVersion(projectImageStageFilterSet(options), options.CommonOptions)
 }

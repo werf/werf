@@ -1,20 +1,16 @@
 package cleaning
 
 type PurgeOptions struct {
-	CommonRepoOptions    CommonRepoOptions
-	CommonProjectOptions CommonProjectOptions
+	ImagesPurgeOptions
+	StagesPurgeOptions
 }
 
 func Purge(options PurgeOptions) error {
-	options.CommonProjectOptions.CommonOptions.SkipUsedImages = false
-	options.CommonProjectOptions.CommonOptions.RmiForce = true
-	options.CommonProjectOptions.CommonOptions.RmForce = false
-
-	if err := ImagesPurge(options.CommonRepoOptions); err != nil {
+	if err := ImagesPurge(options.ImagesPurgeOptions); err != nil {
 		return err
 	}
 
-	if err := StagesPurge(options.CommonProjectOptions); err != nil {
+	if err := StagesPurge(options.StagesPurgeOptions); err != nil {
 		return err
 	}
 

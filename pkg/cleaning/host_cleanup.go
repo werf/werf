@@ -14,26 +14,33 @@ import (
 	"github.com/flant/werf/pkg/tmp_manager"
 )
 
-func HostCleanup(options CommonOptions) error {
-	options.SkipUsedImages = true
-	options.RmiForce = false
-	options.RmForce = true
+type HostCleanupOptions struct {
+	DryRun bool
+}
+
+func HostCleanup(options HostCleanupOptions) error {
+	commonOptions := CommonOptions{
+		SkipUsedImages: true,
+		RmiForce:       false,
+		RmForce:        true,
+		DryRun:         options.DryRun,
+	}
 
 	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if err := logboek.LogSecondaryProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
-			return safeContainersCleanup(options)
+			return safeContainersCleanup(commonOptions)
 		}); err != nil {
 			return err
 		}
 
 		if err := logboek.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
-			return safeDanglingImagesCleanup(options)
+			return safeDanglingImagesCleanup(commonOptions)
 		}); err != nil {
 			return nil
 		}
 
 		return lock.WithLock("gc", lock.LockOptions{}, func() error {
-			if err := tmp_manager.GC(options.DryRun); err != nil {
+			if err := tmp_manager.GC(commonOptions.DryRun); err != nil {
 				return fmt.Errorf("tmp files gc failed: %s", err)
 			}
 

@@ -2,19 +2,31 @@ package cleaning
 
 import "github.com/flant/logboek"
 
-func ImagesPurge(options CommonRepoOptions) error {
+type ImagesPurgeOptions struct {
+	ImagesRepo  string
+	ImagesNames []string
+	DryRun      bool
+}
+
+func ImagesPurge(options ImagesPurgeOptions) error {
 	return logboek.LogProcess("Running images purge", logboek.LogProcessOptions{}, func() error {
 		return imagesPurge(options)
 	})
 }
 
-func imagesPurge(options CommonRepoOptions) error {
-	imageImages, err := repoImages(options)
+func imagesPurge(options ImagesPurgeOptions) error {
+	commonRepoOptions := CommonRepoOptions{
+		ImagesRepo:  options.ImagesRepo,
+		ImagesNames: options.ImagesNames,
+		DryRun:      options.DryRun,
+	}
+
+	imageImages, err := repoImages(commonRepoOptions)
 	if err != nil {
 		return err
 	}
 
-	err = repoImagesRemove(imageImages, options)
+	err = repoImagesRemove(imageImages, commonRepoOptions)
 	if err != nil {
 		return err
 	}

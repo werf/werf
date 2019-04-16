@@ -82,8 +82,8 @@ func runGC() error {
 	}
 
 	logboek.OptionalLnModeOn()
-	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
-	if err := cleaning.HostCleanup(commonOptions); err != nil {
+	hostCleanupOptions := cleaning.HostCleanupOptions{DryRun: *CommonCmdData.DryRun}
+	if err := cleaning.HostCleanup(hostCleanupOptions); err != nil {
 		return err
 	}
 

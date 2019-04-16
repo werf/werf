@@ -15,6 +15,7 @@ import (
 )
 
 var CmdData struct {
+	Force bool
 }
 
 var CommonCmdData common.CmdData
@@ -55,6 +56,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
+	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
 }
@@ -105,20 +107,21 @@ func runPurge() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
-	commonRepoOptions := cleaning.CommonRepoOptions{
+	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
-	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
+	stagesPurgeOptions := cleaning.StagesPurgeOptions{
+		ProjectName:                   projectName,
+		RmContainersThatUseWerfImages: CmdData.Force,
+		DryRun:                        *CommonCmdData.DryRun,
 	}
 
 	purgeOptions := cleaning.PurgeOptions{
-		CommonRepoOptions:    commonRepoOptions,
-		CommonProjectOptions: commonProjectOptions,
+		ImagesPurgeOptions: imagesPurgeOptions,
+		StagesPurgeOptions: stagesPurgeOptions,
 	}
 
 	logboek.OptionalLnModeOn()

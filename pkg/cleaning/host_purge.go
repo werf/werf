@@ -19,11 +19,12 @@ type HostPurgeOptions struct {
 }
 
 func HostPurge(options HostPurgeOptions) error {
-	var commonOptions CommonOptions
-	commonOptions.RmiForce = true
-	commonOptions.RmForce = true
-	commonOptions.RmContainersThatUseWerfImages = options.RmContainersThatUseWerfImages
-	commonOptions.DryRun = options.DryRun
+	commonOptions := CommonOptions{
+		RmiForce:                      true,
+		RmForce:                       true,
+		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
+		DryRun:                        options.DryRun,
+	}
 
 	if err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
@@ -59,30 +60,6 @@ func HostPurge(options HostPurgeOptions) error {
 		return deleteStapel(commonOptions.DryRun)
 	}); err != nil {
 		return fmt.Errorf("stapel delete failed: %s", err)
-	}
-
-	return nil
-}
-
-func ResetDevModeCache(options CommonOptions) error {
-	filterSet := filters.NewArgs()
-	filterSet.Add("label", "werf-dev-mode")
-	if err := werfContainersFlushByFilterSet(filterSet, options); err != nil {
-		return err
-	}
-
-	filterSet = filters.NewArgs()
-	filterSet.Add("label", "werf-dev-mode")
-	if err := werfImagesFlushByFilterSet(filterSet, options); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func ResetCacheVersion(options CommonOptions) error {
-	if err := werfImageStagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
-		return err
 	}
 
 	return nil

@@ -94,14 +94,14 @@ func runPurge() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
-	commonRepoOptions := cleaning.CommonRepoOptions{
+	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	logboek.OptionalLnModeOn()
-	if err := cleaning.ImagesPurge(commonRepoOptions); err != nil {
+	if err := cleaning.ImagesPurge(imagesPurgeOptions); err != nil {
 		return err
 	}
 
