@@ -197,16 +197,21 @@ func runRun() error {
 		}
 	}()
 
-	if !werfConfig.HasImage(CmdData.ImageName) {
-		return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(CmdData.ImageName, false))
+	imageName := CmdData.ImageName
+	if imageName == "" && len(werfConfig.Images) == 1 {
+		imageName = werfConfig.Images[0].Name
 	}
 
-	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	if !werfConfig.HasImage(imageName) {
+		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
+	}
+
+	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	if err = c.ShouldBeBuilt(); err != nil {
 		return err
 	}
 
-	dockerImageName := c.GetImageLatestStageImageName(CmdData.ImageName)
+	dockerImageName := c.GetImageLatestStageImageName(imageName)
 	var dockerRunArgs []string
 	dockerRunArgs = append(dockerRunArgs, CmdData.DockerOptions...)
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)
