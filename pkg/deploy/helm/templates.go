@@ -189,7 +189,7 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 
 			var resultManifestContent string
 			if t.IsEmpty() {
-				resultManifestContent = manifest
+				resultManifestContent = manifestContent
 			} else {
 				if len(t.Metadata.Annotations) == 0 {
 					t.Metadata.Annotations = map[string]string{}

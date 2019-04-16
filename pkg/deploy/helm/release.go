@@ -172,7 +172,6 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 						releaseRollbackOptions: releaseRollbackOptions{
 							Timeout:       int64(opts.Timeout),
 							CleanupOnFail: true,
-							Wait:          true,
 							DryRun:        opts.DryRun,
 						},
 					}
