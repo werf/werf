@@ -1,8 +1,6 @@
 package build
 
 import (
-	"fmt"
-
 	"github.com/fatih/color"
 
 	"github.com/flant/logboek"
@@ -111,20 +109,20 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		return nil
 	}
 
-	return logboek.LogProcess("Pulling base image", logboek.LogProcessOptions{}, func() error {
-		if i.baseImage.IsExists() {
-			if i.baseImageRepoId == "" || i.baseImageRepoId == i.baseImage.ID() {
-				if i.baseImageRepoId == "" {
-					logboek.LogErrorF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), i.baseImageRepoErr)
-					logboek.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-				}
-
-				return nil
+	if i.baseImage.IsExists() {
+		if i.baseImageRepoId == "" || i.baseImageRepoId == i.baseImage.ID() {
+			if i.baseImageRepoId == "" {
+				logboek.LogErrorF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), i.baseImageRepoErr)
+				logboek.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
 			}
-		}
 
+			return nil
+		}
+	}
+
+	return logboek.LogProcess("Pulling base image", logboek.LogProcessOptions{}, func() error {
 		if err := i.baseImage.Pull(); err != nil {
-			return fmt.Errorf("image %s pull failed: %s", i.baseImage.Name(), err)
+			return err
 		}
 
 		if err := i.baseImage.SyncDockerState(); err != nil {
