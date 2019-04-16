@@ -72,6 +72,14 @@ func (t Template) Namespace(namespace string) string {
 	return namespace
 }
 
+func (t Template) IsEmpty() bool {
+	if t.Version == "" || t.Kind == "" {
+		return true
+	}
+
+	return false
+}
+
 func GetTemplatesFromRevision(releaseName string, revision int32) (ChartTemplates, error) {
 	rawTemplates, err := getRawTemplatesFromRevision(releaseName, revision)
 	if err != nil {
@@ -179,31 +187,38 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 				return nil, fmt.Errorf("parsing file %s failed: %s\n\n%s\n", fileName, err, util.NumerateLines(manifestContent, 1))
 			}
 
-			if len(t.Metadata.Annotations) == 0 {
-				t.Metadata.Annotations = map[string]string{}
+			var resultManifestContent string
+			if t.IsEmpty() {
+				resultManifestContent = manifest
+			} else {
+				if len(t.Metadata.Annotations) == 0 {
+					t.Metadata.Annotations = map[string]string{}
+				}
+
+				for annoName, annoValue := range e.ExtraAnnotations {
+					t.Metadata.Annotations[annoName] = annoValue
+				}
+
+				if len(t.Metadata.Labels) == 0 {
+					t.Metadata.Labels = map[string]string{}
+				}
+
+				for labelName, labelValue := range e.ExtraLabels {
+					t.Metadata.Labels[labelName] = labelValue
+				}
+
+				res, err := yaml.Marshal(t)
+				if err != nil {
+					return nil, err
+				}
+
+				resultManifestContent = string(res)
 			}
 
-			for annoName, annoValue := range e.ExtraAnnotations {
-				t.Metadata.Annotations[annoName] = annoValue
-			}
-
-			if len(t.Metadata.Labels) == 0 {
-				t.Metadata.Labels = map[string]string{}
-			}
-
-			for labelName, labelValue := range e.ExtraLabels {
-				t.Metadata.Labels[labelName] = labelValue
-			}
-
-			res, err := yaml.Marshal(t)
-			if err != nil {
-				return nil, err
-			}
-
-			resultManifests = append(resultManifests, string(res))
+			resultManifests = append(resultManifests, resultManifestContent)
 		}
 
-		templates[fileName] = strings.Join(resultManifests, "---\n")
+		templates[fileName] = strings.Join(resultManifests, "\n---\n")
 	}
 
 	return templates, nil
