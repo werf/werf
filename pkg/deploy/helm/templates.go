@@ -172,11 +172,11 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 		}
 
 		var resultManifests []string
-		for _, manifest := range releaseutil.SplitManifests(fileContent) {
+		for _, manifestContent := range releaseutil.SplitManifests(fileContent) {
 			var t Template
-			err := yaml.Unmarshal([]byte(manifest), &t)
+			err := yaml.Unmarshal([]byte(manifestContent), &t)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("parsing file %s failed: %s\n\n%s\n", fileName, err, util.NumerateLines(manifestContent, 1))
 			}
 
 			if len(t.Metadata.Annotations) == 0 {

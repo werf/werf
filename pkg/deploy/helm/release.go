@@ -203,7 +203,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 			templates, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.Set, opts.SetString)
 			return err
 		}); err != nil {
-			return fmt.Errorf("unable to get templates of chart %s: %s", chartPath, err)
+			return err
 		}
 
 		return nil
