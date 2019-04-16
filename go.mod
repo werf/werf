@@ -58,7 +58,7 @@ require (
 	github.com/flant/go-containerregistry v0.0.0-20190127180048-001ef3873924
 	github.com/flant/helm v2.8.0-rc.1.0.20190415101935-09abf0b0087a+incompatible
 	github.com/flant/kubedog v0.1.1-0.20190416211428-97025c950a1d
-	github.com/flant/logboek v0.0.0-20190320160836-03b04a37bad0
+	github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d
 	github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.0
@@ -97,8 +97,6 @@ require (
 	github.com/juju/ratelimit v0.0.0-20170523012141-5b9ff8664717
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
-	github.com/mattn/go-colorable v0.1.1 // indirect
-	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mattn/go-runewidth v0.0.1
 	github.com/mattn/go-shellwords v1.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -146,11 +144,11 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
-	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
+	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
 	golang.org/x/net v0.0.0-20190327091125-710a502c58a2
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190312061237-fead79001313
+	golang.org/x/sys v0.0.0-20190415145633-3fd5a3612ccd
 	golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/appengine v1.5.0
