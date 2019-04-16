@@ -3,17 +3,19 @@ package cmd_factory
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
@@ -91,6 +93,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
+	}
+
+	for _, imageToProcess := range imagesToProcess {
+		if !werfConfig.HasImage(imageToProcess) {
+			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
+		}
 	}
 
 	projectName := werfConfig.Meta.Project
