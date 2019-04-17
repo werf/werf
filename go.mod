@@ -59,7 +59,7 @@ require (
 	github.com/flant/helm v2.8.0-rc.1.0.20190415101935-09abf0b0087a+incompatible
 	github.com/flant/kubedog v0.1.1-0.20190416211428-97025c950a1d
 	github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d
-	github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749
+	github.com/flant/logboek_py v0.0.0-20190417102745-2d46cc7fd4e4
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/jsonpointer v0.19.0
