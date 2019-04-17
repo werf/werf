@@ -34,6 +34,7 @@ var (
 	tillerReleaseServer = &tiller.ReleaseServer{}
 	tillerSettings      = tiller_env.New()
 	helmSettings        helm_env.EnvSettings
+	resourcesWaiter     *ResourcesWaiter
 
 	WerfTemplateEngine     = NewWerfEngine()
 	WerfTemplateEngineName = "werfGoTpl"
@@ -80,7 +81,8 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 	namespacePtr := configFlags.FieldByName("Namespace").Interface().(*string)
 	*namespacePtr = helmSettings.TillerNamespace
 
-	kubeClient.SetResourcesWaiter(&ResourcesWaiter{Client: kubeClient})
+	resourcesWaiter = &ResourcesWaiter{Client: kubeClient}
+	kubeClient.SetResourcesWaiter(resourcesWaiter)
 
 	tillerSettings.KubeClient = kubeClient
 	tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
