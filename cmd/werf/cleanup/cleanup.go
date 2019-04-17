@@ -134,13 +134,6 @@ func runCleanup() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
-	commonRepoOptions := cleaning.CommonRepoOptions{
-		ImagesRepo:    imagesRepo,
-		StagesStorage: stagesRepo,
-		ImagesNames:   imagesNames,
-		DryRun:        *CommonCmdData.DryRun,
-	}
-
 	var localGitRepo cleaning.GitRepo
 	gitDir := path.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
@@ -162,13 +155,12 @@ func runCleanup() error {
 		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
 	}
 
-	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
-	}
-
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
-		CommonRepoOptions: commonRepoOptions,
+		CommonRepoOptions: cleaning.CommonRepoOptions{
+			ImagesRepo:  imagesRepo,
+			ImagesNames: imagesNames,
+			DryRun:      *CommonCmdData.DryRun,
+		},
 		LocalGit:          localGitRepo,
 		KubernetesClients: kubernetesClients,
 		WithoutKube:       CmdData.WithoutKube,
@@ -176,8 +168,11 @@ func runCleanup() error {
 	}
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		CommonRepoOptions:    commonRepoOptions,
-		CommonProjectOptions: commonProjectOptions,
+		ProjectName:   projectName,
+		ImagesRepo:    imagesRepo,
+		StagesStorage: stagesRepo,
+		ImagesNames:   imagesNames,
+		DryRun:        *CommonCmdData.DryRun,
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{

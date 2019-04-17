@@ -57,7 +57,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
-	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, "Remove containers that use werf docker images")
+	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
 }

@@ -66,6 +66,10 @@ type CmdData struct {
 	LogTerminalWidth *int64
 }
 
+const (
+	CleaningCommandsForceOptionDescription = "Remove containers that are based on deleting werf docker images"
+)
+
 func GetLongCommandDescription(text string) string {
 	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
 }

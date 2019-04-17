@@ -122,12 +122,6 @@ func runCleanup() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
-	commonRepoOptions := cleaning.CommonRepoOptions{
-		ImagesRepo:  imagesRepo,
-		ImagesNames: imagesNames,
-		DryRun:      *CommonCmdData.DryRun,
-	}
-
 	var localRepo cleaning.GitRepo
 	gitDir := path.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
@@ -150,7 +144,11 @@ func runCleanup() error {
 	}
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
-		CommonRepoOptions: commonRepoOptions,
+		CommonRepoOptions: cleaning.CommonRepoOptions{
+			ImagesRepo:  imagesRepo,
+			ImagesNames: imagesNames,
+			DryRun:      *CommonCmdData.DryRun,
+		},
 		LocalGit:          localRepo,
 		KubernetesClients: kubernetesClients,
 		WithoutKube:       CmdData.WithoutKube,

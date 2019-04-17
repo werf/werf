@@ -15,6 +15,7 @@ import (
 )
 
 var CmdData struct {
+	Force bool
 }
 
 var CommonCmdData common.CmdData
@@ -51,6 +52,7 @@ func NewCmd() *cobra.Command {
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
+	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
 }
@@ -91,13 +93,14 @@ func runPurge() error {
 		return err
 	}
 
-	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
+	stagesPurgeOptions := cleaning.StagesPurgeOptions{
+		ProjectName:                   projectName,
+		DryRun:                        *CommonCmdData.DryRun,
+		RmContainersThatUseWerfImages: CmdData.Force,
 	}
 
 	logboek.OptionalLnModeOn()
-	if err := cleaning.StagesPurge(commonProjectOptions); err != nil {
+	if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
 		return err
 	}
 

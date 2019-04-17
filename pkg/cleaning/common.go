@@ -9,7 +9,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
 )
@@ -20,34 +19,6 @@ type CommonOptions struct {
 	RmiForce                      bool
 	SkipUsedImages                bool
 	RmContainersThatUseWerfImages bool
-}
-
-func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
-	werfCacheVersionLabel := fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, build.BuildCacheVersion)
-	filterSet.Add("label", werfCacheVersionLabel)
-	images, err := werfImagesByFilterSet(filters.NewArgs())
-	if err != nil {
-		return err
-	}
-
-	var imagesToDelete []types.ImageSummary
-	for _, img := range images {
-		version, ok := img.Labels[image.WerfCacheVersionLabel]
-		if !ok || version != build.BuildCacheVersion {
-			imagesToDelete = append(imagesToDelete, img)
-		}
-	}
-
-	imagesToDelete, err = processUsedImages(imagesToDelete, options)
-	if err != nil {
-		return err
-	}
-
-	if err := imagesRemove(imagesToDelete, options); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
@@ -152,7 +123,7 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 				} else if options.RmContainersThatUseWerfImages {
 					containersToRemove = append(containersToRemove, container)
 				} else {
-					return nil, fmt.Errorf("cannot remove image %s used by container %s", logImageName(img), logContainerName(container))
+					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(img), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
 				}
 			}
 		}

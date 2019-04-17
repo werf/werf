@@ -17,20 +17,6 @@ type CommonProjectOptions struct {
 	CommonOptions CommonOptions
 }
 
-func projectCleanup(options CommonProjectOptions) error {
-	if err := werfContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
-		return err
-	}
-
-	filterSet := projectFilterSet(options)
-	filterSet.Add("dangling", "true")
-	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func projectImageStageFilterSet(options CommonProjectOptions) filters.Args {
 	filterSet := projectFilterSet(options)
 	filterSet.Add("reference", stageCacheReference(options))

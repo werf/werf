@@ -104,26 +104,17 @@ func runSync() error {
 		return err
 	}
 
-	var imageNames []string
+	var imagesNames []string
 	for _, image := range werfConfig.Images {
-		imageNames = append(imageNames, image.Name)
-	}
-
-	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
-	}
-
-	commonRepoOptions := cleaning.CommonRepoOptions{
-		ImagesRepo:    imagesRepo,
-		StagesStorage: stagesRepo,
-		ImagesNames:   imageNames,
-		DryRun:        *CommonCmdData.DryRun,
+		imagesNames = append(imagesNames, image.Name)
 	}
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		CommonRepoOptions:    commonRepoOptions,
-		CommonProjectOptions: commonProjectOptions,
+		ProjectName:   projectName,
+		ImagesRepo:    imagesRepo,
+		StagesStorage: stagesRepo,
+		ImagesNames:   imagesNames,
+		DryRun:        *CommonCmdData.DryRun,
 	}
 
 	logboek.OptionalLnModeOn()

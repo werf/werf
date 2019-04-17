@@ -1,24 +1,32 @@
 package cleaning
 
 import (
-	"fmt"
-
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/image"
 )
 
-func StagesPurge(options CommonProjectOptions) error {
+type StagesPurgeOptions struct {
+	ProjectName                   string
+	DryRun                        bool
+	RmContainersThatUseWerfImages bool
+}
+
+func StagesPurge(options StagesPurgeOptions) error {
 	return logboek.LogProcess("Running stages purge", logboek.LogProcessOptions{}, func() error {
 		return stagesPurge(options)
 	})
 }
 
-func stagesPurge(options CommonProjectOptions) error {
-	options.CommonOptions.SkipUsedImages = false
-	options.CommonOptions.RmiForce = true
-	options.CommonOptions.RmForce = false
+func stagesPurge(options StagesPurgeOptions) error {
+	var commonProjectOptions CommonProjectOptions
+	commonProjectOptions.ProjectName = options.ProjectName
+	commonProjectOptions.CommonOptions = CommonOptions{
+		RmiForce:                      true,
+		RmForce:                       false,
+		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
+		DryRun:                        options.DryRun,
+	}
 
-	if err := projectStagesPurge(options); err != nil {
+	if err := projectStagesPurge(commonProjectOptions); err != nil {
 		return err
 	}
 
@@ -26,43 +34,6 @@ func stagesPurge(options CommonProjectOptions) error {
 }
 
 func projectStagesPurge(options CommonProjectOptions) error {
-	images, err := werfImagesByFilterSet(projectImageStageFilterSet(options))
-	if err != nil {
-		return err
-	}
-
-	if err := imagesRemove(images, options.CommonOptions); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func repoImageStagesFlush(options CommonRepoOptions) error {
-	imageStagesImages, err := repoImageStagesImages(options)
-	if err != nil {
-		return err
-	}
-
-	err = repoImagesRemove(imageStagesImages, options)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func projectImagesFlush(options CommonProjectOptions) error {
-	filterSet := projectFilterSet(options)
-	filterSet.Add("label", fmt.Sprintf("%s=true", image.WerfImageLabel))
-	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func projectImageStagesFlush(options CommonProjectOptions) error {
 	if err := werfImagesFlushByFilterSet(projectImageStageFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
