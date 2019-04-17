@@ -153,15 +153,11 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 }
 
 func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.ChartOptions) error {
-	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, helm.ChartOptions{
-		ChartValuesOptions: helm.ChartValuesOptions{
-			Set:       append(chart.Set, opts.Set...),
-			SetString: append(chart.SetString, opts.SetString...),
-			Values:    append(chart.Values, opts.Values...),
-		},
-		DryRun: opts.DryRun,
-		Debug:  opts.Debug,
-	})
+	opts.Set = append(chart.Set, opts.Set...)
+	opts.SetString = append(chart.SetString, opts.SetString...)
+	opts.Values = append(chart.Values, opts.Values...)
+
+	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, opts)
 }
 
 func (chart *WerfChart) MergeExtraAnnotations(extraAnnotations map[string]string) {

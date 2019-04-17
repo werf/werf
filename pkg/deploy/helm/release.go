@@ -6,8 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -170,7 +168,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 					releaseRollbackOpts := ReleaseRollbackOptions{
 						releaseRollbackOptions: releaseRollbackOptions{
-							Timeout:       int64(opts.Timeout),
+							Timeout:       int64(opts.Timeout / time.Second),
 							CleanupOnFail: true,
 							DryRun:        opts.DryRun,
 						},
@@ -222,7 +220,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
-					Timeout:       int64(opts.Timeout),
+					Timeout:       int64(opts.Timeout / time.Second),
 					CleanupOnFail: true,
 					Wait:          true,
 					DryRun:        opts.DryRun,
@@ -266,7 +264,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
-					Timeout: int64(opts.Timeout),
+					Timeout: int64(opts.Timeout / time.Second),
 					Wait:    true,
 					DryRun:  opts.DryRun,
 				},
@@ -317,6 +315,12 @@ func latestDeployedReleaseRevision(releaseName string) (int32, error) {
 }
 
 func runDeployProcess(releaseName, namespace string, opts ChartOptions, templates ChartTemplates, deployFunc func() (string, error)) error {
+	oldLogsFromTime := resourcesWaiter.LogsFromTime
+	resourcesWaiter.LogsFromTime = time.Now()
+	defer func() {
+		resourcesWaiter.LogsFromTime = oldLogsFromTime
+	}()
+
 	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
 		return fmt.Errorf("unable to remove helm hooks by werf/recreate policy: %s", err)
 	}
@@ -469,55 +473,6 @@ func removeJob(jobName string, namespace string) error {
 	}
 
 	return nil
-}
-
-func jobHooksToTrack(templates ChartTemplates, hookTypes []string) ([]Template, error) {
-	var jobHooksToTrack []Template
-	jobHooksByType := make(map[string][]Template)
-
-	for _, template := range templates.Jobs() {
-		if anno, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
-			if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
-				continue
-			}
-
-			for _, hookType := range strings.Split(anno, ",") {
-				if _, ok := jobHooksByType[hookType]; !ok {
-					jobHooksByType[hookType] = []Template{}
-				}
-				jobHooksByType[hookType] = append(jobHooksByType[hookType], template)
-			}
-		}
-	}
-
-	for _, templates := range jobHooksByType {
-		sort.Slice(templates, func(i, j int) bool {
-			toWeight := func(t Template) int {
-				val, ok := t.Metadata.Annotations[HelmHookWeightAnnoName]
-				if !ok {
-					return 0
-				}
-
-				i, err := strconv.Atoi(val)
-				if err != nil {
-					logboek.LogErrorF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
-					return 0
-				}
-
-				return i
-			}
-
-			return toWeight(templates[i]) < toWeight(templates[j])
-		})
-	}
-
-	for _, hookType := range hookTypes {
-		if templates, ok := jobHooksByType[hookType]; ok {
-			jobHooksToTrack = append(jobHooksToTrack, templates...)
-		}
-	}
-
-	return jobHooksToTrack, nil
 }
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {

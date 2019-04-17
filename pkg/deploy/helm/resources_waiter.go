@@ -24,7 +24,8 @@ import (
 )
 
 type ResourcesWaiter struct {
-	Client *helmKube.Client
+	Client       *helmKube.Client
+	LogsFromTime time.Time
 }
 
 func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
@@ -131,7 +132,12 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	}
 
 	return logboek.LogSecondaryProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
-		return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{})
+		return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
+			Options: tracker.Options{
+				Timeout:      timeout,
+				LogsFromTime: waiter.LogsFromTime,
+			},
+		})
 	})
 }
 
