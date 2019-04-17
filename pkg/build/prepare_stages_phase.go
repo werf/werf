@@ -37,7 +37,7 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 
 	err = image.PrepareBaseImage(c)
 	if err != nil {
-		return fmt.Errorf("error preparing base image %s of image %s: %s", image.GetBaseImage().Name(), image.GetName(), err)
+		return fmt.Errorf("prepare base image %s failed: %s", image.GetBaseImage().Name(), err)
 	}
 
 	prevImage = image.baseImage
