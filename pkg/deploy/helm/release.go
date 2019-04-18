@@ -314,7 +314,7 @@ func latestDeployedReleaseRevision(releaseName string) (int32, error) {
 	return 0, ErrNoDeployedReleaseRevisionFound
 }
 
-func runDeployProcess(releaseName, namespace string, opts ChartOptions, templates ChartTemplates, deployFunc func() (string, error)) error {
+func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates ChartTemplates, deployFunc func() (string, error)) error {
 	oldLogsFromTime := resourcesWaiter.LogsFromTime
 	resourcesWaiter.LogsFromTime = time.Now()
 	defer func() {
@@ -386,7 +386,7 @@ func getReleaseState(releaseName string) (ReleaseState, error) {
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
 			return ReleaseState{}, err
 		}
-	} else if releaseState.StatusCode == "FAILED" || releaseState.StatusCode == "PENDING_INSTALL" {
+	} else if releaseState.StatusCode == "FAILED" || releaseState.StatusCode == "PENDING_INSTALL" || releaseState.StatusCode == "DELETING" {
 		releaseState.IsExists = true
 
 		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
@@ -398,7 +398,7 @@ func getReleaseState(releaseName string) (ReleaseState, error) {
 		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return ReleaseState{}, err
 		} else if exist {
-			logboek.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseState.StatusCode)
+			logboek.LogErrorF("WARNING: Will not purge helm release %s: expected FAILED, DELETING or PENDING_INSTALL release status, got %s\n", releaseName, releaseState.StatusCode)
 		}
 
 		releaseState.IsExists = true
