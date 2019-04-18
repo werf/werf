@@ -32,15 +32,15 @@ type CmdData struct {
 	TagGitTag    *string
 	TagGitCommit *string
 
-	Environment     *string
-	Release         *string
-	Namespace       *string
-	AddAnnotations  *[]string
-	AddLabels       *[]string
-	KubeContext     *string
-	KubeConfig      *string
-	TillerNamespace *string
-	TillerStorage   *string
+	Environment                 *string
+	Release                     *string
+	Namespace                   *string
+	AddAnnotations              *[]string
+	AddLabels                   *[]string
+	KubeContext                 *string
+	KubeConfig                  *string
+	HelmReleaseStorageNamespace *string
+	HelmReleaseStorageType      *string
 
 	Set             *[]string
 	SetString       *[]string
@@ -157,13 +157,13 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
 }
 
-func SetupTillerNamespace(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.TillerNamespace = new(string)
+func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HelmReleaseStorageNamespace = new(string)
 
 	defaultValues := []string{
-		os.Getenv("WERF_TILLER_NAMESPACE"),
+		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
 		os.Getenv("TILLER_NAMESPACE"),
-		helm.DefaultTillerNamespace,
+		helm.DefaultReleaseStorageNamespace,
 	}
 
 	var defaultValue string
@@ -174,18 +174,18 @@ func SetupTillerNamespace(cmdData *CmdData, cmd *cobra.Command) {
 		}
 	}
 
-	cmd.Flags().StringVarP(cmdData.TillerNamespace, "tiller-namespace", "", defaultValue, fmt.Sprintf("tiller namespace (default $WERF_TILLER_NAMESPACE, $TILLER_NAMESPACE or %s)", helm.DefaultTillerNamespace))
+	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageNamespace, "helm-release-storage-namespace", "", defaultValue, fmt.Sprintf("Helm release storage namespace (same as --tiller-namespace for regular helm, default $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or '%s')", helm.DefaultReleaseStorageNamespace))
 }
 
-func SetupTillerStorage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.TillerStorage = new(string)
+func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HelmReleaseStorageType = new(string)
 
-	defaultValue := os.Getenv("WERF_TILLER_STORAGE")
+	defaultValue := os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE")
 	if defaultValue == "" {
 		defaultValue = helm.ConfigMapStorage
 	}
 
-	cmd.Flags().StringVarP(cmdData.TillerStorage, "tiller-storage", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of %[1]s or %[2]s (default $WERF_TILLER_STORAGE or %[1]s)", helm.ConfigMapStorage, helm.SecretStorage))
+	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {

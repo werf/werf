@@ -23,8 +23,13 @@ import (
 	"github.com/flant/helm/pkg/tiller"
 	tiller_env "github.com/flant/helm/pkg/tiller/environment"
 	"github.com/flant/helm/pkg/timeconv"
+	"github.com/flant/logboek"
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
+
+	corev1 "k8s.io/api/core/v1"
+	kubeErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -34,6 +39,7 @@ var (
 	tillerSettings      = tiller_env.New()
 	helmSettings        helm_env.EnvSettings
 	resourcesWaiter     *ResourcesWaiter
+	releaseLogMessages  []string
 
 	WerfTemplateEngine     = NewWerfEngine()
 	WerfTemplateEngineName = "werfGoTpl"
@@ -41,7 +47,7 @@ var (
 	defaultTimeout           = int64((24 * time.Hour).Seconds())
 	defaultReleaseHistoryMax = int32(256)
 
-	DefaultTillerNamespace = "kube-system"
+	DefaultReleaseStorageNamespace = "kube-system"
 
 	ConfigMapStorage = "configmap"
 	SecretStorage    = "secret"
@@ -49,23 +55,23 @@ var (
 	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
-func Init(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) error {
-	if err := initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage); err != nil {
+func Init(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
+	if err := initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) error {
+func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
 	helmSettings.KubeConfig = kubeConfig
 	helmSettings.KubeContext = kubeContext
-	helmSettings.TillerNamespace = tillerNamespace
+	helmSettings.TillerNamespace = helmReleaseStorageNamespace
 
 	configFlags := genericclioptions.NewConfigFlags(true)
 	configFlags.Context = &helmSettings.KubeContext
 	configFlags.KubeConfig = &helmSettings.KubeConfig
-	configFlags.Namespace = &helmSettings.TillerNamespace
+	configFlags.Namespace = &helmReleaseStorageNamespace
 
 	kubeClient := kube.New(configFlags)
 
@@ -80,16 +86,49 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 		return err
 	}
 
-	switch tillerStorage {
+	if _, err := clientset.CoreV1().Namespaces().Get(helmReleaseStorageNamespace, metav1.GetOptions{}); err != nil {
+		if kubeErrors.IsNotFound(err) {
+			if _, err := clientset.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: helmReleaseStorageNamespace}}); err != nil {
+				return fmt.Errorf("unable to create helm release storage namespace '%s': %s", helmReleaseStorageNamespace, err)
+			}
+			logboek.LogInfoF("Created helm release storage namespace '%s'\n", helmReleaseStorageNamespace)
+		} else {
+			return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", helmReleaseStorageNamespace, err)
+		}
+	}
+
+	switch helmReleaseStorageType {
 	case ConfigMapStorage:
-		cfgmaps := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(helmSettings.TillerNamespace))
+		cfgmaps := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(helmReleaseStorageNamespace))
+		cfgmaps.Log = func(f string, args ...interface{}) {
+			msg := fmt.Sprintf(fmt.Sprintf("ConfigMaps release storage driver: %s", f), args...)
+			releaseLogMessages = append(releaseLogMessages, msg)
+		}
 		tillerSettings.Releases = storage.Init(cfgmaps)
+		tillerSettings.Releases.Log = func(f string, args ...interface{}) {
+			msg := fmt.Sprintf(fmt.Sprintf("Release storage: %s", f), args...)
+			releaseLogMessages = append(releaseLogMessages, msg)
+		}
 	case SecretStorage:
-		secrets := driver.NewSecrets(clientset.CoreV1().Secrets(helmSettings.TillerNamespace))
+		secrets := driver.NewSecrets(clientset.CoreV1().Secrets(helmReleaseStorageNamespace))
+		secrets.Log = func(f string, args ...interface{}) {
+			msg := fmt.Sprintf(fmt.Sprintf("Secrets release storage driver: %s", f), args...)
+			releaseLogMessages = append(releaseLogMessages, msg)
+		}
 		tillerSettings.Releases = storage.Init(secrets)
+		tillerSettings.Releases.Log = func(f string, args ...interface{}) {
+			msg := fmt.Sprintf(fmt.Sprintf("Release storage: %s", f), args...)
+			releaseLogMessages = append(releaseLogMessages, msg)
+		}
+	default:
+		return fmt.Errorf("unknown helm release storage type '%s'", helmReleaseStorageType)
 	}
 
 	tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, clientset, false)
+	tillerReleaseServer.Log = func(f string, args ...interface{}) {
+		msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
+		releaseLogMessages = append(releaseLogMessages, msg)
+	}
 
 	return nil
 }
@@ -160,6 +199,9 @@ type releaseDeleteOptions struct {
 }
 
 func releaseDelete(releaseName string, opts releaseDeleteOptions) error {
+	releaseLogMessages = nil
+	defer func() { releaseLogMessages = nil }()
+
 	timeout := opts.Timeout
 	if opts.Timeout == 0 {
 		timeout = defaultTimeout
@@ -174,6 +216,9 @@ func releaseDelete(releaseName string, opts releaseDeleteOptions) error {
 
 	_, err := tillerReleaseServer.UninstallRelease(ctx, req)
 	if err != nil {
+		for _, msg := range releaseLogMessages {
+			logboek.LogInfoF("%s\n", msg)
+		}
 		return err
 	}
 
@@ -319,6 +364,9 @@ type releaseInstallOptions struct {
 }
 
 func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *chart.Config, opts releaseInstallOptions) (*services.InstallReleaseResponse, error) {
+	releaseLogMessages = nil
+	defer func() { releaseLogMessages = nil }()
+
 	timeout := opts.Timeout
 	if opts.Timeout == 0 {
 		timeout = defaultTimeout
@@ -347,6 +395,9 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 
 	resp, err := tillerReleaseServer.InstallRelease(ctx, req)
 	if err != nil {
+		for _, msg := range releaseLogMessages {
+			logboek.LogInfoF("%s\n", msg)
+		}
 		return nil, err
 	}
 
@@ -361,6 +412,9 @@ type releaseUpdateOptions struct {
 }
 
 func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config, opts releaseUpdateOptions) (*services.UpdateReleaseResponse, error) {
+	releaseLogMessages = nil
+	defer func() { releaseLogMessages = nil }()
+
 	timeout := opts.Timeout
 	if opts.Timeout == 0 {
 		timeout = defaultTimeout
@@ -389,6 +443,9 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 
 	resp, err := tillerReleaseServer.UpdateRelease(ctx, req)
 	if err != nil {
+		for _, msg := range releaseLogMessages {
+			logboek.LogInfoF("%s\n", msg)
+		}
 		return nil, err
 	}
 
@@ -403,6 +460,9 @@ type releaseRollbackOptions struct {
 }
 
 func releaseRollback(releaseName string, revision int32, opts releaseRollbackOptions) (*services.RollbackReleaseResponse, error) {
+	releaseLogMessages = nil
+	defer func() { releaseLogMessages = nil }()
+
 	timeout := opts.Timeout
 	if opts.Timeout == 0 {
 		timeout = defaultTimeout
@@ -420,6 +480,9 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 
 	resp, err := tillerReleaseServer.RollbackRelease(ctx, req)
 	if err != nil {
+		for _, msg := range releaseLogMessages {
+			logboek.LogInfoF("%s\n", msg)
+		}
 		return nil, err
 	}
 
