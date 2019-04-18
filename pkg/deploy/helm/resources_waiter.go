@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	helmKube "github.com/flant/helm/pkg/kube"
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
 	"github.com/flant/kubedog/pkg/trackers/rollout"
@@ -21,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/kubernetes/scheme"
+	helmKube "k8s.io/helm/pkg/kube"
 )
 
 type ResourcesWaiter struct {

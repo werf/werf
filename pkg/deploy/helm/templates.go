@@ -7,10 +7,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/helm/pkg/chartutil"
-	"github.com/flant/helm/pkg/engine"
-	"github.com/flant/helm/pkg/proto/hapi/chart"
-	"github.com/flant/helm/pkg/releaseutil"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/engine"
+	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/releaseutil"
 
 	"github.com/flant/werf/pkg/util"
 )

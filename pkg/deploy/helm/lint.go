@@ -12,10 +12,10 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/asaskevich/govalidator"
 
-	"github.com/flant/helm/pkg/chartutil"
-	"github.com/flant/helm/pkg/lint/rules"
-	"github.com/flant/helm/pkg/lint/support"
-	"github.com/flant/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/lint/rules"
+	"k8s.io/helm/pkg/lint/support"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 type LintOptions struct {

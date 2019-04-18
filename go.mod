@@ -56,7 +56,6 @@ require (
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190127180048-001ef3873924
-	github.com/flant/helm v2.8.0-rc.1.0.20190415101935-09abf0b0087a+incompatible
 	github.com/flant/kubedog v0.1.1-0.20190417204920-09198de63ce6
 	github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d
 	github.com/flant/logboek_py v0.0.0-20190417102745-2d46cc7fd4e4
@@ -168,7 +167,7 @@ require (
 	k8s.io/cli-runtime v0.0.0-20190409093718-11d55751678d
 	k8s.io/client-go v0.0.0-20190411052641-7a6b4715b709
 	k8s.io/cloud-provider v0.0.0-20190323031113-9c9d72d1bf90
-	k8s.io/helm v2.10.0-rc.2.0.20190411155143-0664ef5c44fe+incompatible
+	k8s.io/helm v2.10.0-rc.2.0.20190418064201-ae17f3199e51+incompatible
 	k8s.io/klog v0.2.0
 	k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
 	k8s.io/kubernetes v1.14.1
@@ -177,3 +176,5 @@ require (
 	sigs.k8s.io/yaml v1.1.0
 	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc
 )
+
+replace k8s.io/helm => github.com/flant/helm v2.8.0-rc.1.0.20190418161113-f1668578bc15+incompatible
