@@ -84,12 +84,12 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	return renderedNamespace, nil
 }
 
-func GetTillerStorage(tillerStorage string) (string, error) {
-	switch tillerStorage {
+func GetHelmReleaseStorageType(helmReleaseStorageType string) (string, error) {
+	switch helmReleaseStorageType {
 	case helm.ConfigMapStorage, helm.SecretStorage:
-		return tillerStorage, nil
+		return helmReleaseStorageType, nil
 	default:
-		return "", fmt.Errorf("bad --tiller-storage value %s. Use one of %s or %s", tillerStorage, helm.ConfigMapStorage, helm.SecretStorage)
+		return "", fmt.Errorf("bad --helm-release-storage-type value '%s'. Use one of '%s' or '%s'", helmReleaseStorageType, helm.ConfigMapStorage, helm.SecretStorage)
 	}
 }
 

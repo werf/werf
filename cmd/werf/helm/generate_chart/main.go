@@ -55,8 +55,8 @@ Werf will generate additional values files, templates Chart.yaml and other files
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupTillerNamespace(&CommonCmdData, cmd)
-	common.SetupTillerStorage(&CommonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
 
 	common.SetupSecretValues(&CommonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
@@ -78,12 +78,12 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
 		return err
 	}
 

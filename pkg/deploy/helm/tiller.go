@@ -41,7 +41,7 @@ var (
 	defaultTimeout           = int64((24 * time.Hour).Seconds())
 	defaultReleaseHistoryMax = int32(256)
 
-	DefaultTillerNamespace = "kube-system"
+	DefaultReleaseStorageNamespace = "kube-system"
 
 	ConfigMapStorage = "configmap"
 	SecretStorage    = "secret"
@@ -49,18 +49,18 @@ var (
 	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
-func Init(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) error {
-	if err := initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage); err != nil {
+func Init(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
+	if err := initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) error {
+func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
 	helmSettings.KubeConfig = kubeConfig
 	helmSettings.KubeContext = kubeContext
-	helmSettings.TillerNamespace = tillerNamespace
+	helmSettings.TillerNamespace = helmReleaseStorageNamespace
 
 	configFlags := genericclioptions.NewConfigFlags(true)
 	configFlags.Context = &helmSettings.KubeContext
@@ -80,7 +80,7 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 		return err
 	}
 
-	switch tillerStorage {
+	switch helmReleaseStorageType {
 	case ConfigMapStorage:
 		cfgmaps := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(helmSettings.TillerNamespace))
 		tillerSettings.Releases = storage.Init(cfgmaps)

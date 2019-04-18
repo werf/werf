@@ -79,8 +79,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupTillerNamespace(&CommonCmdData, cmd)
-	common.SetupTillerStorage(&CommonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
@@ -114,12 +114,12 @@ func runDeploy() error {
 		return err
 	}
 
-	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
 		return err
 	}
 
@@ -213,8 +213,8 @@ func runDeploy() error {
 	}
 
 	common.LogKubeContext(kube.Context)
-	logboek.LogServiceF("Using tiller namespace: %s\n", *CommonCmdData.TillerNamespace)
-	logboek.LogServiceF("Using tiller storage: %s\n", tillerStorage)
+	logboek.LogServiceF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
+	logboek.LogServiceF("Using helm release storage type: %s\n", helmReleaseStorageType)
 	logboek.LogServiceF("Using helm release name: %s\n", release)
 	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
