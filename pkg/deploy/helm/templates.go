@@ -187,6 +187,14 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 				return nil, fmt.Errorf("parsing file %s failed: %s\n\n%s\n", fileName, err, util.NumerateLines(manifestContent, 1))
 			}
 
+			var h map[string]interface{}
+			_ = yaml.Unmarshal([]byte(manifestContent), &h)
+
+			manifestContentIsEmpty := len(h) == 0
+			if manifestContentIsEmpty {
+				continue
+			}
+
 			var resultManifestContent string
 			if t.IsEmpty() {
 				resultManifestContent = manifestContent
