@@ -4,13 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"regexp"
 	"strings"
 	"text/tabwriter"
 	"text/template"
 	"time"
-	"unsafe"
 
 	"github.com/flant/helm/pkg/chartutil"
 	"github.com/flant/helm/pkg/helm"
@@ -28,6 +26,7 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 var (
@@ -63,23 +62,12 @@ func initTiller(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) 
 	helmSettings.KubeContext = kubeContext
 	helmSettings.TillerNamespace = tillerNamespace
 
-	kubeClient := kube.New(nil)
-	factory := reflect.ValueOf(kubeClient.Factory)
-	factoryImpl := reflect.ValueOf(factory.Interface()).Elem()
+	configFlags := genericclioptions.NewConfigFlags(true)
+	configFlags.Context = &helmSettings.KubeContext
+	configFlags.KubeConfig = &helmSettings.KubeConfig
+	configFlags.Namespace = &helmSettings.TillerNamespace
 
-	clientGetterPrivate := factoryImpl.FieldByName("clientGetter")
-	clientGetter := reflect.NewAt(clientGetterPrivate.Type(), unsafe.Pointer(clientGetterPrivate.UnsafeAddr())).Elem()
-
-	configFlags := reflect.ValueOf(clientGetter.Interface()).Elem()
-
-	contextPtr := configFlags.FieldByName("Context").Interface().(*string)
-	*contextPtr = helmSettings.KubeContext
-
-	kubeConfigPtr := configFlags.FieldByName("KubeConfig").Interface().(*string)
-	*kubeConfigPtr = helmSettings.KubeConfig
-
-	namespacePtr := configFlags.FieldByName("Namespace").Interface().(*string)
-	*namespacePtr = helmSettings.TillerNamespace
+	kubeClient := kube.New(configFlags)
 
 	resourcesWaiter = &ResourcesWaiter{Client: kubeClient}
 	kubeClient.SetResourcesWaiter(resourcesWaiter)
