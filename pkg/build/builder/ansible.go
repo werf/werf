@@ -28,8 +28,8 @@ type Extra struct {
 	TmpPath           string
 }
 
-func NewAnsibleBuilder(config *config.Ansible, path *Extra) *Ansible {
-	return &Ansible{config: config, extra: path}
+func NewAnsibleBuilder(config *config.Ansible, extra *Extra) *Ansible {
+	return &Ansible{config: config, extra: extra}
 }
 
 func (b *Ansible) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeInstall") }
