@@ -159,7 +159,7 @@ func generateGitlabEnvs() error {
 	printHeader("DEPLOY", true)
 	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
-	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_REPOSITORY_URL")))
+	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL")))
 
 	cleanupConfig, err := getCleanupConfig()
 	if err != nil {
