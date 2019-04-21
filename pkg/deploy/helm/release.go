@@ -177,17 +177,25 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 				watchHookTypes := []string{"pre-rollback", "post-rollback"}
 
 				deployFunc := func(startJobHooksWatcher chan bool) (string, error) {
-					logboek.LogServiceF("Running helm rollback command...\n")
-					logboek.OptionalLnModeOn()
-
 					startJobHooksWatcher <- true
 
-					output, err := rollbackRelease(releaseName, revision, namespace, opts)
+					var err error
+					for i := 0; i < 5; i++ {
+						var output string
+
+						logboek.LogServiceF("Running helm rollback command (%d try)...\n", i+1)
+
+						output, err = rollbackRelease(releaseName, revision, namespace, opts)
+						if err == nil {
+							return output, nil
+						}
+					}
+
 					if err != nil {
 						return "", fmt.Errorf("helm release %s rollback to revision %d failed: %s", releaseName, revision, err)
 					}
 
-					return output, nil
+					panic("unexpected")
 				}
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
