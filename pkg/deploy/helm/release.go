@@ -177,22 +177,30 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 				watchHookTypes := []string{"pre-rollback", "post-rollback"}
 
 				deployFunc := func(startJobHooksWatcher chan bool) (string, error) {
-					logboek.LogServiceF("Running helm rollback command...\n")
-					logboek.OptionalLnModeOn()
-
 					startJobHooksWatcher <- true
 
-					output, err := rollbackRelease(releaseName, revision, namespace, opts)
+					var err error
+					for i := 0; i < 5; i++ {
+						var output string
+
+						logboek.LogServiceF("Running helm rollback command (%d try)...\n", i+1)
+
+						output, err = rollbackRelease(releaseName, revision, namespace, opts)
+						if err == nil {
+							return output, nil
+						}
+					}
+
 					if err != nil {
 						return "", fmt.Errorf("helm release %s rollback to revision %d failed: %s", releaseName, revision, err)
 					}
 
-					return output, nil
+					panic("unexpected")
 				}
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
 				if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-					return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
+					return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc, runDeployProcessOptions{DisableTrack: true})
 				}); err != nil {
 					return err
 				}
@@ -259,22 +267,34 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 
 	logProcessMsg := fmt.Sprintf("Running deploy release %s", releaseName)
 	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-		return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
+		return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc, runDeployProcessOptions{})
 	})
 }
 
-func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, templates ChartTemplates, watchHookTypes []string, deployFunc func(chan bool) (string, error)) error {
+type runDeployProcessOptions struct {
+	DisableTrack bool
+}
+
+func runDeployProcess(releaseName, namespace string, chartOpts HelmChartOptions, templates ChartTemplates, watchHookTypes []string, deployFunc func(chan bool) (string, error), opts runDeployProcessOptions) error {
 	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
 		return fmt.Errorf("unable to remove helm hooks by werf/recreate policy: %s", err)
 	}
 
 	deployStartTime := time.Now()
-
 	ctx := context.Background()
 	ctx, cancelJobHooksWatcher := context.WithCancel(ctx)
-	jobHooksWatcherDone, startJobHooksWatcher, err := watchJobHooks(ctx, templates, watchHookTypes, deployStartTime, namespace, opts)
-	if err != nil {
-		return fmt.Errorf("watching job hooks failed: %s", err)
+
+	jobHooksWatcherDone := make(chan bool, 1)
+	startJobHooksWatcher := make(chan bool, 1)
+
+	if opts.DisableTrack {
+		jobHooksWatcherDone <- true
+	} else {
+		var err error
+		jobHooksWatcherDone, startJobHooksWatcher, err = watchJobHooks(ctx, templates, watchHookTypes, deployStartTime, namespace, chartOpts)
+		if err != nil {
+			return fmt.Errorf("watching job hooks failed: %s", err)
+		}
 	}
 
 	helmOutput, err := deployFunc(startJobHooksWatcher)
@@ -293,30 +313,32 @@ func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, temp
 	logboek.LogInfoLn(logboek.FitText(helmOutput, logboek.FitTextOptions{MaxWidth: 120}))
 	logboek.OptionalLnModeOn()
 
-	if err := logboek.WithFittedStreamsOutputOn(func() error {
-		if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
+	if !opts.DisableTrack {
+		if err := logboek.WithFittedStreamsOutputOn(func() error {
+			if err := trackPods(templates, deployStartTime, namespace, chartOpts); err != nil {
+				return err
+			}
+
+			if err := trackDeployments(templates, deployStartTime, namespace, chartOpts); err != nil {
+				return err
+			}
+
+			if err := trackStatefulSets(templates, deployStartTime, namespace, chartOpts); err != nil {
+				return err
+			}
+
+			if err := trackDaemonSets(templates, deployStartTime, namespace, chartOpts); err != nil {
+				return err
+			}
+
+			if err := trackJobs(templates, deployStartTime, namespace, chartOpts); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
 			return err
 		}
-
-		if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return err
 	}
 
 	return nil
@@ -503,8 +525,8 @@ func trackJobs(templates ChartTemplates, deployStartTime time.Time, namespace st
 }
 
 func watchJobHooks(ctx context.Context, templates ChartTemplates, hookTypes []string, deployStartTime time.Time, namespace string, opts HelmChartOptions) (chan bool, chan bool, error) {
-	jobHooksWatcherDone := make(chan bool)
-	startJobHooksWatcher := make(chan bool)
+	jobHooksWatcherDone := make(chan bool, 1)
+	startJobHooksWatcher := make(chan bool, 1)
 
 	jobHooksToTrack, err := jobHooksToTrack(templates, hookTypes)
 	if err != nil {
