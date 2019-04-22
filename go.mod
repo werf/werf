@@ -177,4 +177,4 @@ require (
 	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc
 )
 
-replace k8s.io/helm => github.com/flant/helm v2.8.0-rc.1.0.20190418161113-f1668578bc15+incompatible
+replace k8s.io/helm => github.com/flant/helm v2.8.0-rc.1.0.20190422110815-d72b277ac847+incompatible

@@ -74,6 +74,10 @@ func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleas
 	configFlags.Namespace = &helmReleaseStorageNamespace
 
 	kubeClient := kube.New(configFlags)
+	kubeClient.Log = func(f string, args ...interface{}) {
+		msg := fmt.Sprintf(fmt.Sprintf("Kube client: %s", f), args...)
+		releaseLogMessages = append(releaseLogMessages, msg)
+	}
 
 	resourcesWaiter = &ResourcesWaiter{Client: kubeClient}
 	kubeClient.SetResourcesWaiter(resourcesWaiter)
@@ -171,13 +175,22 @@ type releaseStatusOptions struct {
 }
 
 func releaseStatus(releaseName string, opts releaseStatusOptions) (*services.GetReleaseStatusResponse, error) {
+	releaseLogMessages = nil
+	defer func() { releaseLogMessages = nil }()
+
 	ctx := helm.NewContext()
 	req := &services.GetReleaseStatusRequest{
 		Name:    releaseName,
 		Version: opts.Version,
 	}
 
-	return tillerReleaseServer.GetReleaseStatus(ctx, req)
+	res, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
+	if err != nil {
+		for _, msg := range releaseLogMessages {
+			logboek.LogInfoF("%s\n", msg)
+		}
+	}
+	return res, err
 }
 
 type releaseStatusCodeOptions struct {
