@@ -163,9 +163,6 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				}
 
 				deployFunc := func() (string, error) {
-					logboek.LogServiceF("Running helm rollback...\n")
-					logboek.OptionalLnModeOn()
-
 					releaseRollbackOpts := ReleaseRollbackOptions{
 						releaseRollbackOptions: releaseRollbackOptions{
 							Timeout:       int64(opts.Timeout / time.Second),
@@ -174,17 +171,30 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 						},
 					}
 
-					out := &bytes.Buffer{}
-					if err := ReleaseRollback(
-						out,
-						releaseName,
-						revision,
-						releaseRollbackOpts,
-					); err != nil {
-						return "", fmt.Errorf("helm release %s rollback to revision %d failed: %s", releaseName, revision, err)
+					var err error
+
+					for i := 0; i < 5; i++ {
+						out := &bytes.Buffer{}
+
+						logboek.LogServiceF("Running helm rollback (%d try)...\n", i+1)
+
+						err = ReleaseRollback(
+							out,
+							releaseName,
+							revision,
+							releaseRollbackOpts,
+						)
+
+						if err == nil {
+							return out.String(), nil
+						}
 					}
 
-					return out.String(), nil
+					if err != nil {
+						return "", fmt.Errorf("helm release %s rollback to revision %d have failed: %s", releaseName, revision, err)
+					}
+
+					panic("unexpected")
 				}
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
@@ -216,7 +226,6 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	if releaseState.IsExists {
 		deployFunc = func() (string, error) {
 			logboek.LogServiceF("Running helm upgrade...\n")
-			logboek.OptionalLnModeOn()
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
@@ -260,7 +269,6 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	} else {
 		deployFunc = func() (string, error) {
 			logboek.LogServiceF("Running helm install...\n")
-			logboek.OptionalLnModeOn()
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
