@@ -1,3 +1,6 @@
+export GO111MODULE=on
+export CGO_ENABLED=0
+
 go_mod_download() {
     VERSION=$1
 
