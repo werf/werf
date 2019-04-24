@@ -49,6 +49,17 @@ werf deploy [options]
 {{ header }} Options
 
 ```bash
+      --add-annotation=[]:
+            Add annotation to deploying resources (can specify multiple).
+            Format: annoName=annoValue.
+            Also can be specified in $WERF_ADD_ANNOTATION* (e.g. 
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1", 
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+      --add-label=[]:
+            Add label to deploying resources (can specify multiple).
+            Format: labelName=labelValue.
+            Also can be specified in $WERF_ADD_LABEL* (e.g. 
+            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
@@ -58,6 +69,12 @@ werf deploy [options]
             storage and images repo
       --env='':
             Use specified environment (default $WERF_ENV)
+      --helm-release-storage-namespace='kube-system':
+            Helm release storage namespace (same as --tiller-namespace for regular helm, default 
+            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
+      --helm-release-storage-type='configmap':
+            helm storage driver to use. One of 'configmap' or 'secret' (default 
+            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for deploy
       --home-dir='':

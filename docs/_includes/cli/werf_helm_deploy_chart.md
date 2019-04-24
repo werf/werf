@@ -26,6 +26,12 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --helm-release-storage-namespace='kube-system':
+            Helm release storage namespace (same as --tiller-namespace for regular helm, default 
+            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
+      --helm-release-storage-type='configmap':
+            helm storage driver to use. One of 'configmap' or 'secret' (default 
+            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for deploy-chart
       --home-dir='':

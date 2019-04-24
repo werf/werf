@@ -42,6 +42,12 @@ werf dismiss [options]
             ~/.docker (in the order of priority).
       --env='':
             Use specified environment (default $WERF_ENV)
+      --helm-release-storage-namespace='kube-system':
+            Helm release storage namespace (same as --tiller-namespace for regular helm, default 
+            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
+      --helm-release-storage-type='configmap':
+            helm storage driver to use. One of 'configmap' or 'secret' (default 
+            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for dismiss
       --home-dir='':
