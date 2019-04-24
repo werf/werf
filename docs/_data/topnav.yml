@@ -6,7 +6,7 @@ topnav:
 
   - title: How To
     directory: /how_to/
-    url: /how_to/installation.html
+    url: /how_to/getting_started.html
 
   - title: Reference
     directory: /reference/
@@ -22,5 +22,9 @@ topnav:
   - title: GitHub
     external_url: https://github.com/flant/werf
 
-  - title: Telegram
+  - title: Telegram (RU)
     external_url: https://t.me/werf_ru
+
+  - title: Slack (EN)
+    external_url: https://cloud-native.slack.com/messages/CHY2THYUU
+
