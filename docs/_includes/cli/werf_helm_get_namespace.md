@@ -3,12 +3,12 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print Helm Release name that will be used in current configuration with specified params
+Print Kubernetes Namespace that will be used in current configuration with specified params
 
 {{ header }} Syntax
 
 ```bash
-werf meta get-helm-release [options]
+werf helm get-namespace [options]
 ```
 
 {{ header }} Options
@@ -22,7 +22,7 @@ werf meta get-helm-release [options]
       --env='':
             Use specified environment (default $WERF_ENV)
   -h, --help=false:
-            help for get-helm-release
+            help for get-namespace
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --tmp-dir='':

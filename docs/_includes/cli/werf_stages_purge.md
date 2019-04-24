@@ -23,6 +23,8 @@ werf stages purge [options]
             stages storage.
       --dry-run=false:
             Indicate what the command would do without actually doing that
+      --force=false:
+            Remove containers that are based on deleting werf docker images
   -h, --help=false:
             help for purge
       --home-dir='':
