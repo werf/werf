@@ -8,7 +8,7 @@ Print Helm Release name that will be used in current configuration with specifie
 {{ header }} Syntax
 
 ```bash
-werf helm get-helm-release [options]
+werf helm get-release [options]
 ```
 
 {{ header }} Options
@@ -22,7 +22,7 @@ werf helm get-helm-release [options]
       --env='':
             Use specified environment (default $WERF_ENV)
   -h, --help=false:
-            help for get-helm-release
+            help for get-release
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --tmp-dir='':
