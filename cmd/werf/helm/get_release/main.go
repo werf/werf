@@ -14,7 +14,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "get-helm-release",
+		Use:                   "get-release",
 		DisableFlagsInUseLine: true,
 		Short:                 "Print Helm Release name that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {

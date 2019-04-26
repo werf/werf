@@ -37,15 +37,6 @@ entries:
         - title: ci_env
           url: /cli/toolbox/ci_env.html
 
-        - title: meta
-          sfi:
-
-            - title: get-helm-release
-              url: /cli/toolbox/meta/get_helm_release.html
-
-            - title: get-namespace
-              url: /cli/toolbox/meta/get_namespace.html
-
     - title: Lowlevel Management Commands
       sf:
 
