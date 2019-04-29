@@ -106,7 +106,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 		}
 
 		secretDirectory := filepath.Join(helmChartPath, "secret")
-		isSecretDirectoryExist, err := util.FileExists(defaultSecretValuesPath)
+		isSecretDirectoryExist, err := util.FileExists(secretDirectory)
 		if err != nil {
 			return err
 		}
