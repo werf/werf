@@ -22,13 +22,20 @@ import (
 type TrackAnno string
 
 const (
-	TrackAnnoName          = "werf.io/track"
+	TrackAnnoName                    = "werf.io/track"
+	FailModeAnnoName                 = "werf.io/fail-mode"
+	AllowFailuresCountAnnoName       = "werf.io/allow-failures-count"
+	LogWatchRegexAnnoName            = "werf.io/log-watch-regex"
+	ContainerLogWatchRegexAnnoPrefix = "werf.io/log-watch-regex-for-"
+	ShowLogsUntilAnnoName            = "werf.io/show-logs-until"
+	SkipLogsForContainersAnnoName    = "werf.io/skip-logs-for-containers"
+	ShowLogsOnlyForContainers        = "werf.io/show-logs-only-for-containers"
+
+	TrackAnnoEnabledValue  TrackAnno = "true"
+	TrackAnnoDisabledValue TrackAnno = "false"
+
 	HelmHookAnnoName       = "helm.sh/hook"
 	HelmHookWeightAnnoName = "helm.sh/hook-weight"
-
-	TrackDisabled  TrackAnno = "false"
-	TrackTillDone  TrackAnno = "till_done"
-	TrackTillReady TrackAnno = "till_ready"
 )
 
 func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
