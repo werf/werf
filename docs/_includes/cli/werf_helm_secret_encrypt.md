@@ -31,7 +31,7 @@ werf helm secret encrypt [options]
                     set secret key in CI-system. 
                     
                     Secret key also can be defined in files:
-                    * ~/.werf/.global_secret_key (globally),
+                    * ~/.werf/global_secret_key (globally),
                     * .werf_secret_key (per project)
 ```
 

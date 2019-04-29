@@ -23,7 +23,7 @@ var envDescription = map[Env]string{
 	WerfSecretKey: `Use specified secret key to extract secrets for the deploy. Recommended way to set secret key in CI-system. 
 
 Secret key also can be defined in files:
-* ~/.werf/.global_secret_key (globally),
+* ~/.werf/global_secret_key (globally),
 * .werf_secret_key (per project)`,
 	WerfOldSecretKey: "Use specified old secret key to rotate secrets",
 }
