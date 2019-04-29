@@ -51,13 +51,7 @@ go_build() {
         done
     done
 
-    cd $RELEASE_BUILD_DIR/$VERSION/
-    sha256sum werf-* > SHA256SUMS
-    cd -
-}
-
-build_binaries() {
-    VERSION=$1
-
-    ( go_build $VERSION ) || ( exit 1 )
+    cd $RELEASE_BUILD_DIR/$VERSION/ && \
+      sha256sum werf-* > SHA256SUMS && \
+      cd -
 }
