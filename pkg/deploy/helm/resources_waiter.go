@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -160,13 +161,18 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		return err
 	}
 
+TrackHooks:
 	for _, info := range infos {
 		name := info.Name
 		namespace := info.Namespace
 		kind := info.Mapping.GroupVersionKind.Kind
 
-		switch kind {
-		case "Job":
+		switch value := asVersioned(info).(type) {
+		case *batchv1.Job:
+			if value.ObjectMeta.Annotations[TrackAnnoName] == string(TrackDisabled) {
+				continue TrackHooks
+			}
+
 			loggerProcessMsg := fmt.Sprintf("Waiting for helm hook job/%s termination", name)
 			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return logboek.WithFittedStreamsOutputOn(func() error {
