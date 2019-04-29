@@ -17,6 +17,7 @@ import (
 
 var CmdData struct {
 	WithNamespace bool
+	WithHooks     bool
 }
 
 var CommonCmdData common.CmdData
@@ -68,6 +69,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
+	cmd.Flags().BoolVarP(&CmdData.WithHooks, "with-hooks", "", true, "Delete Helm Release hooks getting from existing revisions")
 
 	return cmd
 }
@@ -134,5 +136,6 @@ func runDismiss() error {
 
 	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,
+		WithHooks:     CmdData.WithHooks,
 	})
 }

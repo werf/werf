@@ -66,6 +66,8 @@ werf dismiss [options]
             deploy.helmRelease custom template from werf.yaml)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --with-hooks=true:
+            Delete Helm Release hooks getting from existing revisions
       --with-namespace=false:
             Delete Kubernetes Namespace after purging Helm Release
 ```

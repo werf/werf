@@ -143,10 +143,9 @@ func parseTemplates(rawTemplates string) (ChartTemplates, error) {
 	var templates ChartTemplates
 
 	for _, doc := range releaseutil.SplitManifests(rawTemplates) {
-		var t Template
-		err := yaml.Unmarshal([]byte(doc), &t)
+		t, err := parseTemplate(doc)
 		if err != nil {
-			return nil, fmt.Errorf("%s\n\n%s\n", err, util.NumerateLines(doc, 1))
+			return nil, err
 		}
 
 		if t.Metadata.Name != "" {
@@ -155,6 +154,16 @@ func parseTemplates(rawTemplates string) (ChartTemplates, error) {
 	}
 
 	return templates, nil
+}
+
+func parseTemplate(rawTemplate string) (Template, error) {
+	var t Template
+	err := yaml.Unmarshal([]byte(rawTemplate), &t)
+	if err != nil {
+		return Template{}, fmt.Errorf("%s\n\n%s\n", err, util.NumerateLines(rawTemplate, 1))
+	}
+
+	return t, nil
 }
 
 type WerfEngine struct {

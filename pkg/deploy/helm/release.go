@@ -31,13 +31,13 @@ const (
 	TrackTillReady TrackAnno = "till_ready"
 )
 
-func PurgeHelmRelease(releaseName, namespace string, withNamespace bool) error {
+func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	return withLockedHelmRelease(releaseName, func() error {
-		return doPurgeHelmRelease(releaseName, namespace, withNamespace)
+		return doPurgeHelmRelease(releaseName, namespace, withNamespace, withHooks)
 	})
 }
 
-func doPurgeHelmRelease(releaseName, namespace string, withNamespace bool) error {
+func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
 	if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
@@ -56,6 +56,59 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace bool) error
 
 	if err := validateHelmReleaseNamespace(releaseName, namespace); err != nil {
 		return err
+	}
+
+	if withHooks {
+		resp, err := releaseHistory(releaseName, releaseHistoryOptions{Max: 1})
+		if err != nil {
+			return err
+		}
+
+		resp, err = releaseHistory(releaseName, releaseHistoryOptions{Max: resp.Releases[0].Version})
+		if err != nil {
+			return err
+		}
+
+		deletedHooks := map[string]bool{}
+		msg := fmt.Sprintf("Deleting helm hooks getting from existing release %s revisions (%d)", releaseName, len(resp.Releases))
+		if err := logboek.LogSecondaryProcess(msg, logboek.LogProcessOptions{}, func() error {
+			for _, rev := range resp.Releases {
+				revHooksToDelete := map[string]Template{}
+				for _, h := range rev.Hooks {
+					t, err := parseTemplate(h.Manifest)
+					if err != nil {
+						logboek.LogErrorF("WARNING: Parsing helm hook %s manifest failed: %s", h.Name, err)
+						continue
+					}
+
+					hookName := t.Metadata.Name
+					hookNamespace := t.Namespace(rev.Namespace)
+					hookId := hookName + hookNamespace
+					if _, exist := deletedHooks[hookId]; !exist {
+						revHooksToDelete[hookId] = t
+					}
+				}
+
+				if len(revHooksToDelete) != 0 {
+					msg := fmt.Sprintf("Processing helm hooks getting from revision %d", rev.Version)
+					_ = logboek.LogSecondaryProcess(msg, logboek.LogProcessOptions{}, func() error {
+						for hookId, hookTemplate := range revHooksToDelete {
+							deletedHooks[hookId] = true
+
+							if err := removeReleaseNamespacedResource(hookTemplate, rev.Namespace); err != nil {
+								logboek.LogErrorF("WARNING: Deleting helm hook %s %s failed: %s", hookTemplate.Metadata.Name, err)
+							}
+						}
+
+						return nil
+					})
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
 
 	msg := fmt.Sprintf("Deleting helm release %s", releaseName)
@@ -111,7 +164,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 	preDeployFunc := func() error {
 		logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			releaseState, err = getReleaseState(releaseName)
 			return err
 		}); err != nil {
@@ -348,12 +401,18 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 }
 
 func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
-	for _, jobTemplate := range getHooksJobsToRecreate(templates.Jobs()) {
-		logProcessMsg := fmt.Sprintf("Deleting helm hook jobs/%s (werf/recreate)", jobTemplate.Metadata.Name)
-		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
-			return removeJob(jobTemplate.Metadata.Name, jobTemplate.Namespace(namespace))
+	jobsToDelete := getHooksJobsToRecreate(templates.Jobs())
+	if len(jobsToDelete) != 0 {
+		if err := logboek.LogSecondaryProcess("Applying helm hooks recreation policy (werf.io/recreate annotation)", logboek.LogProcessOptions{}, func() error {
+			for _, jobTemplate := range jobsToDelete {
+				if err := removeReleaseNamespacedResource(jobTemplate, namespace); err != nil {
+					return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
+				}
+			}
+
+			return nil
 		}); err != nil {
-			return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
+			return err
 		}
 	}
 
@@ -438,10 +497,22 @@ func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
 	return res
 }
 
-func removeJob(jobName string, namespace string) error {
-	isJobExist := func(name string, namespace string) (bool, error) {
-		options := metav1.GetOptions{}
-		_, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(name, options)
+func removeReleaseNamespacedResource(template Template, releaseNamespace string) error {
+	resourceName := template.Metadata.Name
+	resourceKing := template.Kind
+	return removeNamespacedResource(resourceName, resourceKing, template.Namespace(releaseNamespace))
+}
+
+func removeNamespacedResource(name, kind, namespace string) error {
+	groupVersionResource, err := kube.GroupVersionResourceByKind(kind)
+	if err != nil {
+		return err
+	}
+
+	res := kube.DynamicClient.Resource(groupVersionResource).Namespace(namespace)
+
+	isExist := func() (bool, error) {
+		_, err := res.Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -453,34 +524,37 @@ func removeJob(jobName string, namespace string) error {
 		return true, nil
 	}
 
-	exist, err := isJobExist(jobName, namespace)
+	exist, err := isExist()
 	if err != nil {
 		return err
 	} else if !exist {
 		return nil
 	}
 
-	deletePropagation := metav1.DeletePropagationForeground
-	deleteOptions := &metav1.DeleteOptions{
-		PropagationPolicy: &deletePropagation,
-	}
-	err = kube.Kubernetes.BatchV1().Jobs(namespace).Delete(jobName, deleteOptions)
-	if err != nil {
-		return err
-	}
-
-	for {
-		exist, err := isJobExist(jobName, namespace)
+	logProcessMsg := fmt.Sprintf("Deleting %s/%s from namespace %s", groupVersionResource.Resource, name, namespace)
+	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+		deletePropagation := metav1.DeletePropagationForeground
+		deleteOptions := &metav1.DeleteOptions{
+			PropagationPolicy: &deletePropagation,
+		}
+		err = res.Delete(name, deleteOptions)
 		if err != nil {
 			return err
-		} else if !exist {
-			break
 		}
 
-		time.Sleep(500 * time.Millisecond)
-	}
+		for {
+			exist, err := isExist()
+			if err != nil {
+				return err
+			} else if !exist {
+				break
+			}
 
-	return nil
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		return nil
+	})
 }
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {
