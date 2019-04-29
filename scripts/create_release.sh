@@ -36,7 +36,7 @@ docker run --rm \
     --volume $(pwd):/werf \
     --workdir /werf \
     flant/werf-builder:1.0.0 \
-    bash -ec "source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && build_binaries $VERSION"
+    bash -ec "set -e; source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_build $VERSION"
 
 ( publish_binaries $VERSION ) || ( echo "Failed to publish release binaries!" 1>&2 && exit 1 )
 ( sign_binaries $VERSION ) || ( echo "Failed to sign release binaries!" 1>&2 && exit 1 )
