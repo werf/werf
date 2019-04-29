@@ -58,7 +58,7 @@ func (repo *Local) Checksum(opts ChecksumOptions) (Checksum, error) {
 }
 
 func (repo *Local) IsCommitExists(commit string) (bool, error) {
-	return repo.isCommitExists(repo.Path, commit)
+	return repo.isCommitExists(repo.Path, repo.GitDir, commit)
 }
 
 func (repo *Local) TagsList() ([]string, error) {
