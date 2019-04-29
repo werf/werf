@@ -287,7 +287,7 @@ func (repo *Remote) Checksum(opts ChecksumOptions) (Checksum, error) {
 }
 
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {
-	return repo.isCommitExists(repo.ClonePath, commit)
+	return repo.isCommitExists(repo.ClonePath, repo.ClonePath, commit)
 }
 
 func (repo *Remote) getWorkTreeDir() (string, error) {
