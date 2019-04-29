@@ -58,7 +58,7 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 			return nil, err
 		}
 
-		homeWerfSecretKeyPath := filepath.Join(werf.GetHomeDir(), ".werf_secret_key")
+		homeWerfSecretKeyPath := filepath.Join(werf.GetHomeDir(), ".global_secret_key")
 
 		werfSecretKeyPaths = []string{
 			projectWerfSecretKeyPath,

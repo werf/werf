@@ -32,7 +32,7 @@ var CommonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build-and-publish [IMAGE_NAME...]",
-		Short: "Build stages then publish images into images repo",
+		Short: "Build stages and publish images",
 		Long: common.GetLongCommandDescription(`Build stages and final images using each specified tag with the tagging strategy and push into images repo.
 
 Command combines 'werf stages build' and 'werf images publish'.
