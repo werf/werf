@@ -46,7 +46,7 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 
 func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-	if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+	if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
