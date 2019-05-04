@@ -28,32 +28,33 @@ from: alpine
 
 _Base image_ can be declared with `from`, `fromImage` or `fromImageArtifact` directive.
 
-## from and fromCacheVersion
+## from, fromLatest
 
-The `from` directive sets the name and tag of a _base image_ to build _from_ stage. If absent, tag defaults to `latest`.
+The `from` directive defines the name and tag of a _base image_. If absent, tag defaults to `latest`.
 
 ```yaml
 from: <image>[:<tag>]
 ```
 
-On _from_ stage, _from image_ is pulled from a repository and saved in the [_stages cache_]({{ site.baseurl }}/reference/build/stages.html). If _from_ stage is using cache image won't be pulled.
+By default, the assembly process does not depend on actual _base image_ digest in the repository, only on _from_ directive value. 
+Thus, changing _base image_ locally or in the repository does not matter if _from_ stage is already exists in _stages storage_.
 
-Pay attention, _from_ stage depends on a variable of _from_ directive, not on _from image_ digest or something else.
-
-If you have, e.g., _from image_ `alpine:latest`, and need to rebuild _image_ with the actual latest alpine image you should set _fromCacheVersion_ (`fromCacheVersion: <arbitrary string>`) and delete existent _from image_ from local docker or manually pull it.
-
-If you want always build image with actual latest _from image_ you should automate this process outside of werf and use a particular environment variable for `fromCacheVersion` (e.g., the variable with _from image_ digest).
-
-{% raw %}
+If you want always build the image with actual _base image_ you should use _fromLatest_ directive. 
+_fromLatest_ directive allows connecting the assembly process with the _base image_ digest getting from the repository.
 ```yaml
-from: "alpine:latest"
-fromCacheVersion: {{ env "FROM_IMAGE_DIGEST" }}
+fromLatest: true
 ```
-{% endraw %}
+
+> Pay attention, werf uses actual _base image_ digest as extra _from_ stage dependency if _fromLatest_ is true. 
+Therefore, using this directive implies not reproducible signatures:
+after changing _base image_ in repository, all previously built stages, also like related images, become not usable. 
+The problem might occur:
+- between jobs of one pipeline (e.g. build and deploy) or 
+- when you rerun the previous job (e.g. deploy)
 
 ## fromImage and fromImageArtifact
 
-Besides using docker image from a repository, _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
@@ -63,8 +64,16 @@ fromImageArtifact: <artifact name>
 If a _base image_ is specific to a particular application,
 it is reasonable to store its description with _images_ and _artifacts_ which are used it as opposed to storing the _base image_ in a registry.
 
-Also, this method can be helpful if the stages of _stage conveyor_ are not enough for building an image. You can design your _stage conveyor_.
+Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=1629&amp;h=1435" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=850&amp;h=673">
 </a>
+
+## fromCacheVersion
+
+The `fromCacheVersion` directive allows to manage image reassembly.
+
+```yaml
+fromCacheVersion: <arbitrary string>
+```
