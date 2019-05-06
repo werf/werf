@@ -221,7 +221,7 @@ These commands transform into this command for _user stage assembly container_:
 bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLWVzc2VudGlhbCBnKysgbGliY3VybDQK | base64 --decode)'
 ```
 
-`bash` and `base64` binaries are stored in _werfdeps volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`bash` and `base64` binaries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
 
 ## Ansible
 
@@ -270,7 +270,7 @@ into the _user stage assembly container_:
 - use sudo for privilege escalation (no need to use `become` in tasks)
 
 `hosts` is an inventory file and contains the only localhost. Also, there are some
-ansible_* settings, i.e., the path to python in werfdeps.
+ansible_* settings, i.e., the path to python in stapel.
 
 `playbook.yml` is a playbook with all tasks from one _user stage_. For example,
 `werf.yaml` with _install_ stage like this:
@@ -313,7 +313,7 @@ $ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
 $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
 
-`ansible` and `python` binaries and libraries are stored in _werfdeps/ansible volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`ansible` and `python` binaries and libraries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
 
 ### Supported modules
 
