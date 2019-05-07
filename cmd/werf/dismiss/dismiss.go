@@ -10,6 +10,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
@@ -88,7 +89,15 @@ func runDismiss() error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
+	deployInitOptions := deploy.InitOptions{
+		HelmInitOptions: helm.InitOptions{
+			KubeConfig:                  *CommonCmdData.KubeConfig,
+			KubeContext:                 *CommonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			HelmReleaseStorageType:      helmReleaseStorageType,
+		},
+	}
+	if err := deploy.Init(deployInitOptions); err != nil {
 		return err
 	}
 

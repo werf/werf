@@ -2,9 +2,16 @@ package deploy
 
 import "github.com/flant/werf/pkg/deploy/helm"
 
-func Init(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
-	if err := helm.Init(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
-		return err
+type InitOptions struct {
+	HelmInitOptions helm.InitOptions
+	WithoutHelm     bool
+}
+
+func Init(options InitOptions) error {
+	if !options.WithoutHelm {
+		if err := helm.Init(options.HelmInitOptions); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -48,11 +48,6 @@ These values includes project name, docker images ids and other`),
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
@@ -72,12 +67,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
+	if err := deploy.Init(deploy.InitOptions{WithoutHelm: true}); err != nil {
 		return err
 	}
 

@@ -84,7 +84,15 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
+	deployInitOptions := deploy.InitOptions{
+		HelmInitOptions: helm.InitOptions{
+			KubeConfig:                  *CommonCmdData.KubeConfig,
+			KubeContext:                 *CommonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			HelmReleaseStorageType:      helmReleaseStorageType,
+		},
+	}
+	if err := deploy.Init(deployInitOptions); err != nil {
 		return err
 	}
 
