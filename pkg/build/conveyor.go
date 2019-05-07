@@ -23,6 +23,7 @@ type Conveyor struct {
 	buildingGitStageNameByImageName map[string]stage.StageName
 	remoteGitRepos                  map[string]*git_repo.Remote
 	imagesBySignature               map[string]image.ImageInterface
+	globalLocks                     []string
 
 	tmpDir string
 }
@@ -65,6 +66,54 @@ func (c *Conveyor) ReInitRuntimeFields() {
 	c.remoteGitRepos = make(map[string]*git_repo.Remote)
 
 	c.tmpDir = filepath.Join(c.baseTmpDir, string(util.GenerateConsistentRandomString(10)))
+
+	c.globalLocks = nil
+}
+
+func (c *Conveyor) AcquireGlobalLock(name string, opts lock.LockOptions) error {
+	for _, lockName := range c.globalLocks {
+		if lockName == name {
+			return nil
+		}
+	}
+
+	c.globalLocks = append(c.globalLocks, name)
+	if err := lock.Lock(name, opts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Conveyor) ReleaseGlobalLock(name string) error {
+	ind := -1
+	for i, lockName := range c.globalLocks {
+		if lockName == name {
+			ind = i
+			break
+		}
+	}
+
+	if ind > 0 {
+		if err := lock.Unlock(name); err != nil {
+			return err
+		}
+		c.globalLocks = append(c.globalLocks[:ind], c.globalLocks[ind+1:]...)
+	}
+
+	return nil
+}
+
+func (c *Conveyor) ReleaseAllGlobalLocks() error {
+	for len(c.globalLocks) > 0 {
+		var lockName string
+		lockName, c.globalLocks = c.globalLocks[0], c.globalLocks[1:]
+		if err := lock.Unlock(lockName); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type Phase interface {
@@ -75,6 +124,7 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 restart:
 	if err := c.buildStages(stageRepo, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
+			c.ReleaseAllGlobalLocks()
 			c.ReInitRuntimeFields()
 			goto restart
 		}
@@ -90,7 +140,7 @@ func (c *Conveyor) buildStages(stageRepo string, opts BuildStagesOptions) error 
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewSignaturesPhase(true))
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
@@ -118,7 +168,7 @@ type PublishImagesOptions struct {
 func (c *Conveyor) ShouldBeBuilt() error {
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewSignaturesPhase(false))
 	phases = append(phases, NewShouldBeBuiltPhase())
 
 	return c.runPhases(phases)
@@ -129,7 +179,7 @@ func (c *Conveyor) PublishImages(imagesRepo string, opts PublishImagesOptions) e
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewSignaturesPhase(false))
 	phases = append(phases, NewShouldBeBuiltPhase())
 	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts))
 
@@ -166,7 +216,7 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewSignaturesPhase(true))
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
@@ -188,6 +238,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 		err := phase.Run(c)
 
 		if err != nil {
+			c.ReleaseAllGlobalLocks()
 			return err
 		}
 	}
