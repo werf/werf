@@ -1,34 +1,30 @@
-<nav class="breadcrumbs bootstrap hidden-sm-down">
-   <ol class="breadcrumb list-unstyled" vocab="http://schema.org/" typeof="BreadcrumbList">
-
-      {% for crumb in breadcrumbs %} 
-         {% if forloop.first and site.breadcrumbs.root.image %}
-         <li class="breadcrumb-item breadcrumb-item-icon" property="itemListElement" typeof="ListItem">
-            <a property="item" typeof="WebPage" href="{{ crumb.url | relative_url }}">
-               <span class="icon" property="name">{% include nav-breadcrumb-icon.svg %}</span>
-               <meta property="position" content="{{ crumb.position }}" />
-            </a>
-         </li>
-         {% continue %} 
-      {% endif %} 
-      {% if forloop.last %}
-      <li class="breadcrumb-item" property="itemListElement" typeof="ListItem">
-         <span property="name">{{ crumb.title }}</span>
-         <meta property="position" content="{{ crumb.position }}" />
-      </li>
-      {% continue %} {% endif %}
-      <li class="breadcrumb-item" property="itemListElement" typeof="ListItem">
-         <a property="item" typeof="WebPage" href="{{ crumb.url | relative_url }}">
-            <span property="name">{{ crumb.title }}</span>
-            <meta property="position" content="{{ crumb.position }}" />
-         </a>
-      </li>
+<ol class="breadcrumb">
+   <li><a class="fa fa-home fa-lg" href="{{ site.baseurl }}/">&nbsp;</a></li>
+   {% capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
+   {% assign splitted_url_parts = page_url_without_index_html | split: '/' %}
+   {% capture forLoopMaxInt %}{{ splitted_url_parts.size | minus:1 }}{% endcapture %}
+   {% for i in (1..forLoopMaxInt) %}
+      {% capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}/index.html{% endcapture %}
+      {% capture current_breadcrumb_md_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}/{% endcapture %}
+      {% capture next_prepender %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
+      {% for breadcrumb_page in site.pages %}
+         {% if current_breadcrumb_url == breadcrumb_page.url or current_breadcrumb_md_url == breadcrumb_page.url  %}
+         {% assign j = forLoopMaxInt | plus: 0 %}
+               <li>
+                  {% capture breadcrumb_page_page_url_without_index_html %}{{ breadcrumb_page.url | remove: "index.html" }}{% endcapture %}
+                  {% if i == j %}
+                     {{breadcrumb_page.title}}
+                  {% else %}
+                     <a href="{{ site.baseurl }}{{breadcrumb_page_page_url_without_index_html}}">{{breadcrumb_page.title}}</a>
+                  {% endif %}
+               </li>
+         {% endif %}
       {% endfor %}
-
-   </ol>
-</nav>
-
-
+   {% endfor %}
+   {% if splitted_url_parts.last contains '.html' %}
+   <li>{{page.title}}</li>
+   {% endif %}
+</ol>
 
 <!-- This is an example of CSS. Maybe you want to implement the css code into your main css file or modify it as you want -->
 <style>
@@ -38,11 +34,11 @@
       /* Additions: image integration */
    }
 
-   nav.breadcrumbs.bootstrap ol {
+   ol.breadcrumb {
       margin-left: 0
    }
 
-   nav.breadcrumbs.bootstrap .breadcrumb {
+   .breadcrumb {
       font-size: 1rem;
       padding: 0.75rem 1rem;
       margin-bottom: 1rem;
@@ -51,42 +47,10 @@
       border-radius: 0.25rem;
    }
 
-   nav.breadcrumbs.bootstrap .breadcrumb::after {
+   .breadcrumb::after {
       content: "";
       display: table;
       clear: both;
    }
 
-   nav.breadcrumbs.bootstrap .breadcrumb-item {
-      float: left;
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb-item+.breadcrumb-item::before {
-      display: inline-block;
-      padding-right: 0.5rem;
-      padding-left: 0.5rem;
-      color: #818a91;
-      content: "/";
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb-item+.breadcrumb-item:hover::before {
-      text-decoration: underline;
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb-item+.breadcrumb-item:hover::before {
-      text-decoration: none;
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb-item-active {
-      color: #818a91;
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb .icon {
-      display: inline-block;
-   }
-
-   nav.breadcrumbs.bootstrap .breadcrumb .icon svg {
-      height: 0.8rem;
-      width: 0.8rem;
-   }
 </style>
