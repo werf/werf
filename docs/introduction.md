@@ -1,8 +1,6 @@
 ---
-title: Introduction
-sidebar: how_to
+title: Main page
 permalink: /
 ---
 
-{% include README.md %}
-
+Здесь будет главная страница. Такая вся красивая и свёрстанная.
