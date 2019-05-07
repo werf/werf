@@ -2,18 +2,28 @@ package builder
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
-	reflections "gopkg.in/oleiade/reflections.v1"
+	"gopkg.in/oleiade/reflections.v1"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
 
-type Shell struct{ config *config.Shell }
+const scriptFileName = "script.sh"
 
-func NewShellBuilder(config *config.Shell) *Shell {
-	return &Shell{config}
+type Shell struct {
+	config *config.Shell
+	extra  *Extra
+}
+
+func NewShellBuilder(config *config.Shell, extra *Extra) *Shell {
+	return &Shell{config: config, extra: extra}
 }
 
 func (b *Shell) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeInstall") }
@@ -36,7 +46,28 @@ func (b *Shell) isEmptyStage(userStageName string) bool {
 }
 
 func (b *Shell) stage(userStageName string, container Container) error {
-	container.AddRunCommands(b.stageCommands(userStageName)...)
+	stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
+	if err != nil {
+		return err
+	}
+
+	container.AddVolume(
+		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
+	)
+
+	stageHostTmpScriptFilePath := path.Join(stageHostTmpDir, scriptFileName)
+	containerTmpScriptFilePath := path.Join(b.containerTmpDir(), scriptFileName)
+
+	var scriptLines []string
+	scriptLines = append(scriptLines, fmt.Sprintf("#!%s -e", stapel.BashBinPath()))
+	scriptLines = append(scriptLines, "")
+	scriptLines = append(scriptLines, b.stageCommands(userStageName)...)
+
+	if err := writeExecutableFile(stageHostTmpScriptFilePath, strings.Join(scriptLines, "\n")+"\n"); err != nil {
+		return err
+	}
+
+	container.AddServiceRunCommands(containerTmpScriptFilePath)
 	return nil
 }
 
@@ -103,4 +134,22 @@ func (b *Shell) configFieldValue(fieldName string) interface{} {
 	}
 
 	return value
+}
+
+func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
+	p := filepath.Join(b.extra.TmpPath, fmt.Sprintf("shell-%s", userStageName))
+
+	if err := mkdirP(p); err != nil {
+		return "", err
+	}
+
+	return p, nil
+}
+
+func (b *Shell) containerTmpDir() string {
+	return filepath.Join(b.extra.ContainerWerfPath, "shell")
+}
+
+func writeExecutableFile(path string, content string) error {
+	return ioutil.WriteFile(path, []byte(content), os.FileMode(0667))
 }

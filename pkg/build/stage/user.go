@@ -8,10 +8,10 @@ import (
 
 func getBuilder(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
 	var b builder.Builder
+	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
-		b = builder.NewShellBuilder(imageBaseConfig.Shell)
+		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra)
 	} else if imageBaseConfig.Ansible != nil {
-		extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra)
 	}
 
