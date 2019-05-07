@@ -1,26 +1,24 @@
 ## Topnav single links
 ## if you want to list an external url, use external_url instead of url. the theme will apply a different link base.
 topnav:
-- title: Topnav
-  items:
-
-  - title: How To
-    directory: /how_to/
-    url: /how_to/installation.html
-
-  - title: Reference
-    directory: /reference/
-    url: /reference/config.html
-
-  - title: CLI
-    directory: /cli/
-    url: /cli/main/build.html
-
-  - title: Publications
+  - title: About
+    url: /
+  - title: Documentation
+    directory: /docs/
+    url: /docs/
+    folderitems:
+    - title: How To
+      directory: /docs/how_to/
+      url: /docs/how_to/
+    - title: Reference
+      directory: /docs/reference/
+      url: /docs/reference/
+    - title: CLI
+      directory: /docs/cli/
+      url: /docs/cli/
+  - title: Community
+    url: /community.html
+  - title: Publications (Ru)
     url: /publications.html
-
   - title: GitHub
     external_url: https://github.com/flant/werf
-
-  - title: Telegram
-    external_url: https://t.me/werf_ru

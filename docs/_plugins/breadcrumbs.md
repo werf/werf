@@ -1,0 +1,1 @@
+Использован плагин отсюда: https://github.com/git-no/jekyll-breadcrumbs

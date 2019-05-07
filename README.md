@@ -106,11 +106,11 @@ go get github.com/flant/werf/cmd/werf
 
 ## Docs and support
 
-[Official documentation](https://werf.io)
+[Official documentation](https://werf.io/docs/)
 
 ### Getting started
 
-[Make your first werf application](https://werf.io/how_to/getting_started.html)!
+[Make your first werf application](https://werf.io/docs/how_to/getting_started.html)!
 
 ## Backward Compatibility Promise
 
