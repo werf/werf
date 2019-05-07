@@ -32,22 +32,12 @@ werf helm lint [options]
             ~/.docker (in the order of priority).
       --env='':
             Use specified environment (default $WERF_ENV)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default 
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default 
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for lint
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false:
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
-      --kube-config='':
-            Kubernetes config file path
-      --kube-context='':
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
