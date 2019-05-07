@@ -1,7 +1,10 @@
-<ol class="breadcrumb">
-   <li><a class="fa fa-home fa-lg" href="{{ site.baseurl }}/">&nbsp;</a></li>
+<ol class="breadcrumbs">
+   <li><a href="{{ site.baseurl }}/">Home</a></li>
    {% capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
    {% assign splitted_url_parts = page_url_without_index_html | split: '/' %}
+   {% assign docs_chapters = "how_to,reference,cli" | split: "," %}
+   {% if docs_chapters contains splitted_url_parts[1] %}<li><a href="{{ site.base_url }}/documentation.html">Documentation</a></li>
+   {% endif %}
    {% capture forLoopMaxInt %}{{ splitted_url_parts.size | minus:1 }}{% endcapture %}
    {% for i in (1..forLoopMaxInt) %}
       {% capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}/index.html{% endcapture %}
@@ -25,32 +28,3 @@
    <li>{{page.title}}</li>
    {% endif %}
 </ol>
-
-<!-- This is an example of CSS. Maybe you want to implement the css code into your main css file or modify it as you want -->
-<style>
-   nav.breadcrumbs.bootstrap {
-      /* from Twitter Bootstrap 4 */
-      /* If you already use Twitter, you do not need these css lines above, cause they already in Twitter Bootstrap */
-      /* Additions: image integration */
-   }
-
-   ol.breadcrumb {
-      margin-left: 0
-   }
-
-   .breadcrumb {
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
-      margin-bottom: 1rem;
-      list-style: none;
-      background-color: #f1f2ed;
-      border-radius: 0.25rem;
-   }
-
-   .breadcrumb::after {
-      content: "";
-      display: table;
-      clear: both;
-   }
-
-</style>

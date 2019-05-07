@@ -4,22 +4,22 @@ entries:
   f:
 
   - title: Getting started
-    url: /docs/how_to/getting_started.html
+    url: /how_to/getting_started.html
 
   - title: Deploy into kubernetes
-    url: /docs/how_to/deploy_into_kubernetes.html
+    url: /how_to/deploy_into_kubernetes.html
 
   - title: Gitlab CI/CD integration
-    url: /docs/how_to/gitlab_ci_cd_integration.html
+    url: /how_to/gitlab_ci_cd_integration.html
 
   - title: Advanced build
     sf:
 
     - title: Building multiple images
-      url: /docs/how_to/multi_images.html
+      url: /how_to/multi_images.html
 
     - title: Using mounts
-      url: /docs/how_to/mounts.html
+      url: /how_to/mounts.html
 
     - title: Using artifacts
-      url: /docs/how_to/artifacts.html
+      url: /how_to/artifacts.html

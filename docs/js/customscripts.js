@@ -3,13 +3,11 @@ $('#mysidebar').height($(".nav").height());
 
 
 $( document ).ready(function() {
-
-    //this script says, if the height of the viewport is greater than 800px, then insert affix class, which makes the nav bar float in a fixed
-    // position as your scroll. if you have a lot of nav items, this height may not work for you.
-    var h = $(window).height();
-    //console.log (h);
-    if (h > 800) {
-        $( "#mysidebar" ).attr("class", "nav affix");
+    var wh = $(window).height();
+    var sh = $("#mysidebar").height();
+    
+    if (sh + 100 > wh) {
+        $( "#mysidebar" ).parent().addClass("layout-sidebar__sidebar_a");
     }
     // activate tooltips. although this is a bootstrap js function, it must be activated this way in your theme.
     $('[data-toggle="tooltip"]').tooltip({
@@ -52,4 +50,91 @@ $(function() {
             return $this.find("a[data-toggle=tab]:first, a[data-toggle=pill]:first").tab("show");
         }
     });
+});
+
+// Load versions and append them to topnavbar
+$( document ).ready(function() {
+  $.getJSON('/latest/js/channels.json').success(function(resp){
+    var releasesInfo = resp;
+
+    var match = document.location.href.match(/(v[^/]*|master|latest)/);
+    var currentRelease, currentChannel;
+    if (match) {
+      currentRelease = match[1];
+      currentChannel = releasesInfo.releases[currentRelease] && releasesInfo.releases[currentRelease][0];
+      if ((currentRelease == 'master') || (currentRelease == 'latest')) { currentChannel = currentRelease; };
+    }
+
+    console.log('releasesInfo: ',releasesInfo)
+    console.log('currentRelease: ',currentRelease)
+    console.log('currentChannel: ',currentChannel )
+
+
+    if (!( currentRelease in releasesInfo['releases'] )) {
+      $('#outdatedWarning').addClass('active');
+    };
+
+    var menu = $('#doc-versions-menu');
+    menu.addClass('header__menu-item header__menu-item_parent');
+    var toggler = $('<a href="#">');
+    // toggler.addClass('dropdown-toggle');
+    toggler.append(currentChannel || 'Versions');
+    // toggler.append($('<b class="caret">'));
+
+    menu.html(toggler);
+    var submenu = $('<ul class="header__submenu">');
+    $.each(releasesInfo.orderedReleases, function(i, release) {
+      var link = $('<a href="/' + release + '">');
+      link.append(release);
+      if (releasesInfo.releases[release]) {
+        $.each(releasesInfo.releases[release], function(j, channel){
+          link.append('&nbsp; / ');
+          link.append(channel);
+        });
+      };
+      var item = $('<li class="header__submenu-item">');
+      // if (release == currentRelease)
+      //   item.addClass('dropdownActive');
+      item.html(link);
+      submenu.append(item);
+    });
+    menu.append(submenu);
+  });
+
+  // Update github counters 
+  $( document ).ready(function() {
+    $.get("https://api.github.com/repos/flant/werf", function(data) {
+      $(".gh_counter").each(function( index ) {
+        $(this).text(data.stargazers_count)
+      });
+    });
+  });
+
+  $( document ).ready(function() {
+    var $header = $('.header');
+    function updateHeader() {
+      if ($(document).scrollTop() == 0) {
+        $header.removeClass('header_active');
+      } else {
+        $header.addClass('header_active');
+      }
+    }
+    $(window).scroll(function() {
+      updateHeader();
+    });
+    updateHeader();
+  });
+
+  $( document ).ready(function() {
+    $('.header__menu-icon_search').on('click tap', function() {
+      $('.topsearch').toggleClass('topsearch_active');
+      $('.header').toggleClass('header_search');
+      if ($('.topsearch').hasClass('topsearch_active')) {
+        $('.topsearch__input').focus();
+      } else {
+        $('.topsearch__input').blur();
+      }
+    });
+  });
+
 });

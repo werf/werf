@@ -54,12 +54,16 @@
 
 </head>
 <body>
-{% include topnav.html %}
+  <div class="page">
+    <div class="page__content">
+      {% include topnav.html %}
 
-<!-- Page Content -->
-<div class="container">
-{{ content }}
-</div>
+      <!-- Page Content -->
+      {{ content }}
+    </div>
+
+    {% include footer.html %}
+  </div>
 
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript" >
