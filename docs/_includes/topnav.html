@@ -18,16 +18,31 @@
 {% assign topnav = site.data[page.topnav] %}
 {% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
 
-                {% for entry in topnav.topnav %}
-                {% for item in entry.items %}
-                {% if item.external_url %}
-                <li><a href="{{ item.external_url }}" target="_blank">{{item.title}}</a></li>
-                {% elsif page.url contains item.url or page.url contains item.directory %}
-                <li class="active"><a href="{{ site.baseurl }}{{ item.url }}">{{item.title}}</a></li>
-                {% else %}
-                <li><a href="{{ site.baseurl }}{{ item.url }}">{{item.title}}</a></li>
-                {% endif %}
-                {% endfor %}
+                    {% for folder in topnav.topnav %}
+                         {% comment %} 
+                         Notice: 
+                            Liquid engine is very poor in working with boolean logic.
+                            Also, somehow, it can not check equality of folder.url == '/' and page.url=='/' - something buggy here.
+                            That's why below lines of li class are such ugly.
+                         {% endcomment %}
+                        <li 
+                            {% if folder.url.size>1 and page.url contains folder.url %}class="active"{% endif %}
+                            {% if folder.url.size<2 and page.url.size<2 %}class="active"{% endif %}>
+                            <a href="{{ folder.url }}">{{ folder.title }}</a>   
+                            {% if folder.folderitems %}
+                            <ul>
+                                {% for folderitem in folder.folderitems %}
+                                    {% if folderitem.external_url %}
+                                        <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
+                                    {% elsif page.url contains folderitem.url %}
+                                        <li class="dropdownActive"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                    {% else %}
+                                        <li><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </li>
                 {% endfor %}
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
