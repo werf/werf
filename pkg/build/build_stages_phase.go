@@ -8,7 +8,6 @@ import (
 
 	"github.com/flant/logboek"
 	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
 )
 
 func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStagesPhase {
@@ -48,44 +47,10 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 }
 
 func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
-	var acquiredLocks []string
-
-	unlockLock := func() {
-		var lockName string
-		lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
-		lock.Unlock(lockName)
-	}
-
-	unlockLocks := func() {
-		for len(acquiredLocks) > 0 {
-			unlockLock()
-		}
-	}
-
-	defer unlockLocks()
-
-	// lock
-	for _, stage := range image.GetStages() {
-		img := stage.GetImage()
-		if img.IsExists() {
-			continue
-		}
-
-		imageLockName := imagePkg.ImageLockName(img.Name())
-		if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
-			return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
-		}
-
-		acquiredLocks = append(acquiredLocks, imageLockName)
-
-		if err := img.SyncDockerState(); err != nil {
-			return err
-		}
-	}
-
-	// build
 	stages := image.GetStages()
+
 	var prevStageImageSize int64
+
 	for _, s := range stages {
 		img := s.GetImage()
 
@@ -149,7 +114,10 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			return err
 		}
 
-		unlockLock()
+		imageLockName := imagePkg.ImageLockName(img.Name())
+		if err := c.ReleaseGlobalLock(imageLockName); err != nil {
+			return fmt.Errorf("failed to unlock %s: %s", imageLockName, err)
+		}
 
 		prevStageImageSize = img.Inspect().Size
 	}
