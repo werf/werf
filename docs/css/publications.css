@@ -137,7 +137,7 @@
 }
 
 .timeline{
-  --timelineMainColor: #248ec2;
+  --timelineMainColor: #0066FF;
   font-size: 16px;
 }
 
@@ -178,7 +178,6 @@ body{
   font-size: 1.6rem;
   color: #222;
 
-  background-color: #f0f0f0;
   margin: 0;
   -webkit-overflow-scrolling: touch;
   overflow-y: scroll;
@@ -192,32 +191,6 @@ p{
 
 p:last-child{
   margin-bottom: 0;
-}
-
-.page{
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-.page__demo{
-  flex-grow: 1;
-}
-
-.main-container{
-  max-width: 960px;
-  padding-left: 2rem;
-  padding-right: 2rem;
-
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.page__container{
-  padding-top: 30px;
-  padding-bottom: 30px;
-  max-width: 800px;
 }
 
 .footer{

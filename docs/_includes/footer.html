@@ -1,9 +1,14 @@
-<footer>
-            <div class="row">
-                <div class="col-lg-12 footer">
-               &copy;{{ site.time | date: "%Y"  }} {{site.company_name}}. All rights reserved. <br />
-{% if page.last_updated %}<span>Page last updated:</span> {{page.last_updated}}<br/>{% endif %} Site last generated: {{ site.time | date: "%b %-d, %Y"  }} <br />
-<p><img src="{{ site.baseurl }}/images/company_logo.png" alt="Company logo"/></p>
-                </div>
-            </div>
-</footer>
+<div class="footer">
+    <div class="footer__credits">
+        Made with <span class="page__icon page__icon_heart"></span> by <a href="https://flant.com" target="_blank">Flant</a>
+    </div>
+    <div class="footer__github">
+        <span class="page__icon page__icon_github footer__github-icon"></span>
+        <a href="#" class="footer__github-counter">
+            <span class="footer__github-counter-num"><span class="gh_counter">563</span> Stars</span>
+        </a>
+    </div>
+    <div class="footer__gen">
+        Site last generated: {{ site.time | date: "%b %-d, %Y"  }}
+    </div>
+</div>

@@ -1,13 +1,14 @@
 ---
 layout: default
 ---
-<div class="col-lg-12">&nbsp;</div>
-<!-- Content Row -->
-<div class="row">
-  <div class="col-md-3">
-    {% include sidebar.html %}
-  </div>
-  <div class="col-md-9 offset-md-3">
-    {{ content }}
+<div class="page__container">
+  {% include nav-breadcrumbs.html %}
+  <div class="layout-sidebar">
+    <div class="layout-sidebar__sidebar">
+      {% include sidebar.html %}
+    </div>
+    <div class="layout-sidebar__content">
+      {{ content }}
+    </div>
   </div>
 </div>

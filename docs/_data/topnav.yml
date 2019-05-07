@@ -4,21 +4,20 @@ topnav:
   - title: About
     url: /
   - title: Documentation
-    directory: /docs/
-    url: /docs/
+    url: /documentation.html
     folderitems:
     - title: How To
-      directory: /docs/how_to/
-      url: /docs/how_to/
+      directory: /how_to/
+      url: /how_to/
     - title: Reference
-      directory: /docs/reference/
-      url: /docs/reference/
+      directory: /reference/
+      url: /reference/
     - title: CLI
-      directory: /docs/cli/
-      url: /docs/cli/
-  - title: Community
-    url: /community.html
-  - title: Publications (Ru)
+      directory: /cli/
+      url: /cli/
+  # - title: Community
+  #   url: /community.html
+  - title: Publications <span>(ru)</span>
     url: /publications.html
-  - title: GitHub
-    external_url: https://github.com/flant/werf
+  # - title: GitHub
+  #   external_url: https://github.com/flant/werf

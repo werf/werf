@@ -1,50 +1,45 @@
-<!-- Navigation -->
-<nav class="navbar navbar-inverse navbar-static-top">
-    <div class="container topnavlinks">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="fa fa-home fa-lg navbar-brand" href="{{ site.baseurl }}/">&nbsp;<span class="projectTitle"> {{site.topnav_title}}</span></a>
-        </div>
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+<div class="header">
+    <div class="page__container">
+        <div class="header__content">
+            <a href="{{ site.baseurl }}/">
+                <img src="{{ site.baseurl }}/images/werf-logo.svg" alt="werf"/>
+            </a>
+
+            <ul class="header__menu">
                 <!-- toggle sidebar button -->
                 <!-- entries without drop-downs appear here -->
 
-{% assign topnav = site.data[page.topnav] %}
-{% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
+        {% assign topnav = site.data[page.topnav] %}
+        {% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
 
                     {% for folder in topnav.topnav %}
-                         {% comment %} 
-                         Notice: 
+                        {% comment %}
+                        Notice:
                             Liquid engine is very poor in working with boolean logic.
                             Also, somehow, it can not check equality of folder.url == '/' and page.url=='/' - something buggy here.
                             That's why below lines of li class are such ugly.
-                         {% endcomment %}
-                        <li 
-                            {% if folder.url.size>1 and page.url contains folder.url %}class="active"{% endif %}
-                            {% if folder.url.size<2 and page.url.size<2 %}class="active"{% endif %}>
-                            <a href="{{ folder.url }}">{{ folder.title }}</a>   
+                        {% endcomment %}
+                        <li class="header__menu-item
+                            {% if folder.folderitems %}header__menu-item_parent{% endif %}
+                            {% if folder.url.size>1 and page.url contains folder.url %}header__menu-item_active{% endif %}
+                            {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
+                            <a href="{{ folder.url }}">{{ folder.title }}</a>
                             {% if folder.folderitems %}
-                            <ul>
+                            <ul class="header__submenu">
                                 {% for folderitem in folder.folderitems %}
                                     {% if folderitem.external_url %}
-                                        <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
+                                        <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
                                     {% elsif page.url contains folderitem.url %}
-                                        <li class="dropdownActive"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                        <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
                                     {% else %}
-                                        <li><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                        <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
                             {% endif %}
                         </li>
                 {% endfor %}
-                <!-- entries with drop-downs appear here --> 
+                <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 {% for entry in topnav_dropdowns %}
                 {% for folder in entry.folders %}
@@ -64,8 +59,23 @@
                 </li>
                 {% endfor %}
                 {% endfor %}
+                <li id="doc-versions-menu"></li>
+                <li class="header__menu-icon"><a href="https://t.me/werf_ru" target="_blank" class="page__icon page__icon_telegram"></a></li>
+                <li class="header__menu-icon"><a href="https://cloud-native.slack.com/messages/CHY2THYUU" target="_blank" class="page__icon page__icon_slack"></a></li>
+                <li class="header__menu-icon"><a href="https://github.com/flant/werf" target="_blank" class="page__icon page__icon_github"></a></li>
+                <li class="header__menu-icon header__menu-icon_search"><a href="javascript:0;" class="page__icon page__icon_search"></a></li>
             </ul>
         </div>
-        </div>
-        <!-- /.container -->
-</nav>
+    </div>
+</div>
+<div class="header-dummy"></div>
+<div class="topsearch">
+    <div class="page__container">
+        <form action="https://www.google.com/search" class="topsearch__form" method="get" name="searchform" target="_blank">
+            <input name="sitesearch" type="hidden" value="werf.io">
+            <input autocomplete="on" class="page__input topsearch__input" name="q" placeholder="Documentation search" required="required"  type="text">
+            <button type="submit" class="page__icon page__icon_search topsearch__btn"></button>
+        </form>
+    </div>
+</div>
+

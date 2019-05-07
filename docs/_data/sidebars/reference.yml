@@ -4,100 +4,100 @@ entries:
   f:
 
   - title: Config
-    url: /docs/reference/config.html
+    url: /reference/config.html
 
   - title: Build
     sf:
 
     - title: Stages
-      url: /docs/reference/build/stages.html
+      url: /reference/build/stages.html
 
     - title: Assembly process
-      url: /docs/reference/build/assembly_process.html
+      url: /reference/build/assembly_process.html
 
     - title: Image configuration
       sfi:
 
       - title: Naming (required)
-        url: /docs/reference/build/naming.html
+        url: /reference/build/naming.html
 
       - title: Base image (required)
-        url: /docs/reference/build/base_image.html
+        url: /reference/build/base_image.html
 
       - title: Adding docker instructions
-        url: /docs/reference/build/docker_directive.html
+        url: /reference/build/docker_directive.html
 
       - title: Adding source code from git repositories
-        url: /docs/reference/build/git_directive.html
+        url: /reference/build/git_directive.html
 
       - title: Running assembly instructions
-        url: /docs/reference/build/assembly_instructions.html
+        url: /reference/build/assembly_instructions.html
 
       - title: Reducing image size and speeding up a build by mounts
-        url: /docs/reference/build/mount_directive.html
+        url: /reference/build/mount_directive.html
 
       - title: Importing from images and artifacts
-        url: /docs/reference/build/import_directive.html
+        url: /reference/build/import_directive.html
 
       - title: All directives
-        url: /docs/reference/build/image_directives.html
+        url: /reference/build/image_directives.html
 
     - title: Artifact configuration
-      url: /docs/reference/build/artifact.html
+      url: /reference/build/artifact.html
 
     - title: Developer tools
       sfi:
 
       - title: Stage introspection
-        url: /docs/reference/build/stage_introspection.html
+        url: /reference/build/stage_introspection.html
 
       - title: Caching each instruction separately with asLayers
-        url: /docs/reference/build/as_layers.html
+        url: /reference/build/as_layers.html
 
   - title: Registry
     fi:
 
     - title: Authorization
-      url: /docs/reference/registry/authorization.html
+      url: /reference/registry/authorization.html
 
     - title: Image naming
-      url: /docs/reference/registry/image_naming.html
+      url: /reference/registry/image_naming.html
 
     #- title: Tag
-    #  url: /docs/reference/registry/tag.html
+    #  url: /reference/registry/tag.html
 
     - title: Publish
-      url: /docs/reference/registry/publish.html
+      url: /reference/registry/publish.html
 
     #    - title: Pull
-    #      url: /docs/reference/registry/pull.html
+    #      url: /reference/registry/pull.html
 
     - title: Cleaning
-      url: /docs/reference/registry/cleaning.html
+      url: /reference/registry/cleaning.html
 
   - title: Deploy
     fi:
 
     - title: Deploy to kubernetes
-      url: /docs/reference/deploy/deploy_to_kubernetes.html
+      url: /reference/deploy/deploy_to_kubernetes.html
 
     - title: Working with secrets
-      url: /docs/reference/deploy/secrets.html
+      url: /reference/deploy/secrets.html
 
     - title: Chart configuration
-      url: /docs/reference/deploy/chart_configuration.html
+      url: /reference/deploy/chart_configuration.html
 
     - title: Track Kubernetes resources
-      url: /docs/reference/deploy/track_kubernetes_resources.html
+      url: /reference/deploy/track_kubernetes_resources.html
 
     - title: Minikube
-      url: /docs/reference/deploy/minikube.html
+      url: /reference/deploy/minikube.html
 
   - title: Toolbox
     fi:
 
     - title: Slug
-      url: /docs/reference/toolbox/slug.html
+      url: /reference/toolbox/slug.html
 
     - title: SSH
-      url: /docs/reference/toolbox/ssh.html
+      url: /reference/toolbox/ssh.html

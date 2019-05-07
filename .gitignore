@@ -5,6 +5,7 @@
 /.idea
 
 /docs/vendor
+/docs/.ruby-version
 
 /stapel/*/omnibus/build
 /stapel/*/omnibus/vendor
