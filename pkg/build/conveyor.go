@@ -77,10 +77,11 @@ func (c *Conveyor) AcquireGlobalLock(name string, opts lock.LockOptions) error {
 		}
 	}
 
-	c.globalLocks = append(c.globalLocks, name)
 	if err := lock.Lock(name, opts); err != nil {
 		return err
 	}
+
+	c.globalLocks = append(c.globalLocks, name)
 
 	return nil
 }
@@ -94,7 +95,7 @@ func (c *Conveyor) ReleaseGlobalLock(name string) error {
 		}
 	}
 
-	if ind > 0 {
+	if ind >= 0 {
 		if err := lock.Unlock(name); err != nil {
 			return err
 		}
