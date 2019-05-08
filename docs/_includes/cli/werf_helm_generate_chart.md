@@ -37,12 +37,6 @@ werf helm generate-chart PATH [options]
             storage and images repo
       --env='':
             Use specified environment (default $WERF_ENV)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default 
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default 
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for generate-chart
       --home-dir='':
@@ -53,10 +47,6 @@ werf helm generate-chart PATH [options]
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
             Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
-      --kube-config='':
-            Kubernetes config file path
-      --kube-context='':
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
             deploy.namespace custom template from werf.yaml)

@@ -55,23 +55,36 @@ var (
 	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
-func Init(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
-	if err := initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
-		return err
-	}
+type InitOptions struct {
+	KubeConfig                  string
+	KubeContext                 string
+	HelmReleaseStorageNamespace string
+	HelmReleaseStorageType      string
 
-	return nil
+	WithoutKube bool
 }
 
-func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleaseStorageType string) error {
-	helmSettings.KubeConfig = kubeConfig
-	helmSettings.KubeContext = kubeContext
-	helmSettings.TillerNamespace = helmReleaseStorageNamespace
+func Init(options InitOptions) error {
+	if options.WithoutKube {
+		tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
+
+		tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, nil, false)
+		tillerReleaseServer.Log = func(f string, args ...interface{}) {
+			msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
+			releaseLogMessages = append(releaseLogMessages, msg)
+		}
+
+		return nil
+	}
+
+	helmSettings.KubeConfig = options.KubeConfig
+	helmSettings.KubeContext = options.KubeContext
+	helmSettings.TillerNamespace = options.HelmReleaseStorageNamespace
 
 	configFlags := genericclioptions.NewConfigFlags(true)
 	configFlags.Context = &helmSettings.KubeContext
 	configFlags.KubeConfig = &helmSettings.KubeConfig
-	configFlags.Namespace = &helmReleaseStorageNamespace
+	configFlags.Namespace = &options.HelmReleaseStorageNamespace
 
 	kubeClient := kube.New(configFlags)
 	kubeClient.Log = func(f string, args ...interface{}) {
@@ -90,20 +103,20 @@ func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleas
 		return err
 	}
 
-	if _, err := clientset.CoreV1().Namespaces().Get(helmReleaseStorageNamespace, metav1.GetOptions{}); err != nil {
+	if _, err := clientset.CoreV1().Namespaces().Get(options.HelmReleaseStorageNamespace, metav1.GetOptions{}); err != nil {
 		if kubeErrors.IsNotFound(err) {
-			if _, err := clientset.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: helmReleaseStorageNamespace}}); err != nil {
-				return fmt.Errorf("unable to create helm release storage namespace '%s': %s", helmReleaseStorageNamespace, err)
+			if _, err := clientset.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: options.HelmReleaseStorageNamespace}}); err != nil {
+				return fmt.Errorf("unable to create helm release storage namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 			}
-			logboek.LogInfoF("Created helm release storage namespace '%s'\n", helmReleaseStorageNamespace)
+			logboek.LogInfoF("Created helm release storage namespace '%s'\n", options.HelmReleaseStorageNamespace)
 		} else {
-			return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", helmReleaseStorageNamespace, err)
+			return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 		}
 	}
 
-	switch helmReleaseStorageType {
+	switch options.HelmReleaseStorageType {
 	case ConfigMapStorage:
-		cfgmaps := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(helmReleaseStorageNamespace))
+		cfgmaps := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(options.HelmReleaseStorageNamespace))
 		cfgmaps.Log = func(f string, args ...interface{}) {
 			msg := fmt.Sprintf(fmt.Sprintf("ConfigMaps release storage driver: %s", f), args...)
 			releaseLogMessages = append(releaseLogMessages, msg)
@@ -114,7 +127,7 @@ func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleas
 			releaseLogMessages = append(releaseLogMessages, msg)
 		}
 	case SecretStorage:
-		secrets := driver.NewSecrets(clientset.CoreV1().Secrets(helmReleaseStorageNamespace))
+		secrets := driver.NewSecrets(clientset.CoreV1().Secrets(options.HelmReleaseStorageNamespace))
 		secrets.Log = func(f string, args ...interface{}) {
 			msg := fmt.Sprintf(fmt.Sprintf("Secrets release storage driver: %s", f), args...)
 			releaseLogMessages = append(releaseLogMessages, msg)
@@ -125,7 +138,7 @@ func initTiller(kubeConfig, kubeContext, helmReleaseStorageNamespace, helmReleas
 			releaseLogMessages = append(releaseLogMessages, msg)
 		}
 	default:
-		return fmt.Errorf("unknown helm release storage type '%s'", helmReleaseStorageType)
+		return fmt.Errorf("unknown helm release storage type '%s'", options.HelmReleaseStorageType)
 	}
 
 	tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, clientset, false)

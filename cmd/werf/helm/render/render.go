@@ -3,14 +3,17 @@ package render
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var CommonCmdData common.CmdData
@@ -37,11 +40,6 @@ func NewCmd() *cobra.Command {
 	common.SetupAddAnnotations(&CommonCmdData, cmd)
 	common.SetupAddLabels(&CommonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-
 	common.SetupSet(&CommonCmdData, cmd)
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
@@ -64,12 +62,7 @@ func runRender() error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType); err != nil {
+	if err := deploy.Init(deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
 		return err
 	}
 
