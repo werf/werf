@@ -7,6 +7,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -17,11 +18,13 @@ const (
 	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s"
 )
 
-func NewSignaturesPhase() *SignaturesPhase {
-	return &SignaturesPhase{}
+func NewSignaturesPhase(lockImages bool) *SignaturesPhase {
+	return &SignaturesPhase{LockImages: lockImages}
 }
 
-type SignaturesPhase struct{}
+type SignaturesPhase struct {
+	LockImages bool
+}
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
 	return logboek.LogProcess("Calculating signatures", logboek.LogProcessOptions{}, func() error {
@@ -95,6 +98,17 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 		if err = i.SyncDockerState(); err != nil {
 			return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+		}
+
+		if p.LockImages {
+			imageLockName := imagePkg.ImageLockName(i.Name())
+			if err := c.AcquireGlobalLock(imageLockName, lock.LockOptions{}); err != nil {
+				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
+			}
+
+			if err = i.SyncDockerState(); err != nil {
+				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+			}
 		}
 
 		if err = s.AfterImageSyncDockerStateHook(c); err != nil {
