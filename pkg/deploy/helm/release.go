@@ -1,7 +1,6 @@
 package helm
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path"
@@ -219,7 +218,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 					return fmt.Errorf("unable to get helm templates from release %s revision %d: %s", releaseName, revision, err)
 				}
 
-				deployFunc := func() (string, error) {
+				deployFunc := func() error {
 					releaseRollbackOpts := ReleaseRollbackOptions{
 						releaseRollbackOptions: releaseRollbackOptions{
 							Timeout:       int64(opts.Timeout / time.Second),
@@ -231,24 +230,21 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 					var err error
 
 					for i := 0; i < 5; i++ {
-						out := &bytes.Buffer{}
-
 						logboek.LogF("Running helm rollback (%d try)...\n", i+1)
 
 						err = ReleaseRollback(
-							out,
 							releaseName,
 							revision,
 							releaseRollbackOpts,
 						)
 
 						if err == nil {
-							return out.String(), nil
+							return nil
 						}
 					}
 
 					if err != nil {
-						return "", fmt.Errorf("helm release %s rollback to revision %d have failed: %s", releaseName, revision, err)
+						return fmt.Errorf("helm release %s rollback to revision %d have failed: %s", releaseName, revision, err)
 					}
 
 					panic("unexpected")
@@ -280,9 +276,9 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		return err
 	}
 
-	var deployFunc func() (string, error)
+	var deployFunc func() error
 	if releaseState.IsExists {
-		deployFunc = func() (string, error) {
+		deployFunc = func() error {
 			logboek.LogF("Running helm upgrade...\n")
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
@@ -295,9 +291,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				Debug: opts.Debug,
 			}
 
-			out := &bytes.Buffer{}
 			if err := ReleaseUpdate(
-				out,
 				chartPath,
 				releaseName,
 				opts.Values,
@@ -309,23 +303,23 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 					logboek.LogErrorF("WARNING: Helm release %s is in improper state: %s\n", releaseName, err.Error())
 
 					if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-						return "", err
+						return err
 					}
 
 					logboek.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`\n", releaseName)
 				}
 
-				return "", fmt.Errorf("helm release %s upgrade failed: %s", releaseName, err)
+				return fmt.Errorf("helm release %s upgrade failed: %s", releaseName, err)
 			}
 
 			if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
-				return "", err
+				return err
 			}
 
-			return out.String(), nil
+			return nil
 		}
 	} else {
-		deployFunc = func() (string, error) {
+		deployFunc = func() error {
 			logboek.LogF("Running helm install...\n")
 
 			releaseInstallOpts := ReleaseInstallOptions{
@@ -337,9 +331,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				Debug: opts.Debug,
 			}
 
-			out := &bytes.Buffer{}
 			if err := ReleaseInstall(
-				out,
 				chartPath,
 				releaseName,
 				namespace,
@@ -349,13 +341,13 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				releaseInstallOpts,
 			); err != nil {
 				if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-					return "", err
+					return err
 				}
 
-				return "", fmt.Errorf("helm release %s install failed: %s", releaseName, err)
+				return fmt.Errorf("helm release %s install failed: %s", releaseName, err)
 			}
 
-			return out.String(), nil
+			return nil
 		}
 	}
 
@@ -381,7 +373,7 @@ func latestDeployedReleaseRevision(releaseName string) (int32, error) {
 	return 0, ErrNoDeployedReleaseRevisionFound
 }
 
-func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates ChartTemplates, deployFunc func() (string, error)) error {
+func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates ChartTemplates, deployFunc func() error) error {
 	oldLogsFromTime := resourcesWaiter.LogsFromTime
 	resourcesWaiter.LogsFromTime = time.Now()
 	defer func() {
@@ -392,16 +384,13 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 		return fmt.Errorf("unable to remove helm hooks by werf/recreate policy: %s", err)
 	}
 
-	helmOutput, err := deployFunc()
-	if err != nil {
+	if err := deployFunc(); err != nil {
 		return err
 	}
 
 	if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
 		return err
 	}
-
-	logboek.LogInfoF(logboek.FitText(helmOutput, logboek.FitTextOptions{MaxWidth: 120}))
 
 	return nil
 }
