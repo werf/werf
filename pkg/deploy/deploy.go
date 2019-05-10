@@ -6,11 +6,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ghodss/yaml"
+
+	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/ghodss/yaml"
 )
 
 type DeployOptions struct {
@@ -25,35 +29,60 @@ type DeployOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
-	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
+func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+	var logBlockErr error
+	var werfChart *werf_chart.WerfChart
 
-	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
-	if err != nil {
-		return err
-	}
+	logboek.LogBlock("Deploy options", logboek.LogBlockOptions{}, func() {
+		if kube.Context != "" {
+			logboek.LogF("Using kube context: %s\n", kube.Context)
+		}
+		logboek.LogF("Using helm release storage namespace: %s\n", helmReleaseStorageNamespace)
+		logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
+		logboek.LogF("Using helm release name: %s\n", release)
+		logboek.LogF("Using kubernetes namespace: %s\n", namespace)
+		logboek.LogLn()
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
-	if err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
-	}
+		images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 
-	serviceValuesRaw, _ := yaml.Marshal(serviceValues)
-	logboek.LogInfoF("Using service values:\n%s", serviceValuesRaw)
+		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
+		if err != nil {
+			logBlockErr = err
+			return
+		}
+
+		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		if err != nil {
+			logBlockErr = fmt.Errorf("error creating service values: %s", err)
+			return
+		}
+
+		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
+		logboek.LogLn()
+		logboek.LogLn("Using service values:")
+		logboek.LogLn(logboek.FitText(string(serviceValuesRaw), logboek.FitTextOptions{ExtraIndentWidth: 2}))
+
+		werfChart, err = PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
+		if err != nil {
+			logBlockErr = err
+			return
+		}
+
+		werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
+		werfChart.MergeExtraLabels(opts.UserExtraLabels)
+		werfChart.LogExtraAnnotations()
+		werfChart.LogExtraLabels()
+	})
 	logboek.LogOptionalLn()
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
-	if err != nil {
-		return err
+	if werfChart != nil {
+		defer ReleaseTmpWerfChart(werfChart.ChartDir)
 	}
-	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
-	werfChart.MergeExtraLabels(opts.UserExtraLabels)
-	werfChart.LogExtraAnnotations()
-	werfChart.LogExtraLabels()
+	if logBlockErr != nil {
+		return logBlockErr
+	}
 
-	logboek.LogOptionalLn()
 	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,
