@@ -27,13 +27,13 @@ func HostCleanup(options HostCleanupOptions) error {
 	}
 
 	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if err := logboek.LogSecondaryProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeContainersCleanup(commonOptions)
 		}); err != nil {
 			return err
 		}
 
-		if err := logboek.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeDanglingImagesCleanup(commonOptions)
 		}); err != nil {
 			return nil

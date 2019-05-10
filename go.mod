@@ -57,7 +57,7 @@ require (
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190127180048-001ef3873924
 	github.com/flant/kubedog v0.1.1-0.20190507123714-9af0b4bc430c
-	github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d
+	github.com/flant/logboek v0.1.1
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.0
@@ -143,12 +143,12 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
-	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
-	golang.org/x/net v0.0.0-20190327091125-710a502c58a2
+	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529
+	golang.org/x/net v0.0.0-20190509222800-a4d6f7feada5
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190415145633-3fd5a3612ccd
-	golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20190509141414-a5b02f93d862
+	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/appengine v1.5.0
 	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8

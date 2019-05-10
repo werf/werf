@@ -144,7 +144,7 @@ func runGenerateChart(targetPath string) error {
 	targetPath = util.ExpandPath(targetPath)
 
 	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
-		logboek.LogServiceF("Removing existing %s\n", targetPath)
+		logboek.LogF("Removing existing %s\n", targetPath)
 		err = os.RemoveAll(targetPath)
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func runGenerateChart(targetPath string) error {
 		return fmt.Errorf("unable to save werf chart: %s", err)
 	}
 
-	logboek.LogServiceF("Generated werf chart: %s\n", targetPath)
+	logboek.LogF("Generated werf chart: %s\n", targetPath)
 
 	return nil
 }

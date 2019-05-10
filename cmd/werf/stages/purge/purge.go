@@ -99,7 +99,7 @@ func runPurge() error {
 		RmContainersThatUseWerfImages: CmdData.Force,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
 		return err
 	}

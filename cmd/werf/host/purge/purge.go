@@ -79,7 +79,7 @@ func runReset() error {
 		return err
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	hostPurgeOptions := cleaning.HostPurgeOptions{DryRun: *CommonCmdData.DryRun, RmContainersThatUseWerfImages: CmdData.Force}
 	if err := cleaning.HostPurge(hostPurgeOptions); err != nil {
 		return err

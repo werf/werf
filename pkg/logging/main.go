@@ -30,8 +30,8 @@ func DisableLogColor() {
 	logboek.DisableLogColor()
 }
 
-func SetTerminalWidth(value int) {
-	logboek.SetTerminalWidth(value)
+func SetWidth(value int) {
+	logboek.SetWidth(value)
 }
 
 func DisablePrettyLog() {

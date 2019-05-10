@@ -124,7 +124,7 @@ func runPurge() error {
 		StagesPurgeOptions: stagesPurgeOptions,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.Purge(purgeOptions); err != nil {
 		return err
 	}

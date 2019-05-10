@@ -78,7 +78,7 @@ func (gp *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Arch
 		cwd = "/"
 	}
 
-	err := logboek.LogSecondaryProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), cwd), logboek.LogProcessOptions{}, func() error {
+	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), cwd), logboek.LogProcessOptions{}, func() error {
 		archive, err := gp.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -104,7 +104,8 @@ func (gp *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 		cwd = "/"
 	}
 
-	err := logboek.LogSecondaryProcessInline(fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
+	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd)
+	err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		patch, err := gp.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err

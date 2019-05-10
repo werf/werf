@@ -27,7 +27,8 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) (err error) {
-	return logboek.LogProcess("Determining of stages", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Determining of stages", logProcessOptions, func() error {
 		return p.run(c)
 	})
 }
@@ -86,7 +87,7 @@ func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Im
 		baseImageRepoId, exist := c.baseImagesRepoIdsCache[from]
 		if !exist {
 			processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", from)
-			if err := logboek.LogSecondaryProcessInline(processMsg, func() error {
+			if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
 				baseImageRepoId, baseImageRepoErr = docker_registry.ImageId(from)
 				if fromLatest {
 					return fmt.Errorf("can not get base image id from registry (%s): %s", from, baseImageRepoErr)
@@ -298,7 +299,7 @@ func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*sta
 				ClonePath: clonePath,
 			}
 
-			if err := logboek.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LogProcessOptions{}, func() error {
+			if err := logboek.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
@@ -313,7 +314,7 @@ func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*sta
 	var res []*stage.GitMapping
 
 	if len(gitMappings) != 0 {
-		err := logboek.LogSecondaryProcess(fmt.Sprintf("Initializing git mappings"), logboek.LogProcessOptions{}, func() error {
+		err := logboek.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LogProcessOptions{}, func() error {
 			nonEmptyGitMappings, err := getNonEmptyGitMappings(gitMappings)
 			if err != nil {
 				return err
@@ -336,7 +337,7 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 	var nonEmptyGitMappings []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
-		if err := logboek.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
 				logboek.IndentUp()
 				logboek.IndentUp()

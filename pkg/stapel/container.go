@@ -29,7 +29,7 @@ func (c *container) CreateIfNotExist() error {
 
 	if !exist {
 		err := lock.WithLock(fmt.Sprintf("stapel.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			return logboek.LogSecondaryProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logboek.LogProcessOptions{}, func() error {
+			return logboek.LogProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logboek.LogProcessOptions{}, func() error {
 				exist, err := docker.ContainerExist(c.Name)
 				if err != nil {
 					return err

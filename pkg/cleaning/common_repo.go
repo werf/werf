@@ -17,7 +17,7 @@ type CommonRepoOptions struct {
 func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
 	var repoImages []docker_registry.RepoImage
 
-	if err := logboek.LogSecondaryProcessInline("Getting repo images", func() error {
+	if err := logboek.LogProcessInline("Getting repo images", logboek.LogProcessInlineOptions{}, func() error {
 		for _, imageName := range options.ImagesNames {
 			namelessImage := imageName == ""
 
@@ -41,7 +41,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 		return nil, err
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 
 	return repoImages, nil
 }
@@ -87,15 +87,12 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 	}
 
 	reference := strings.Join([]string{image.Repository, digest.String()}, "@")
-	if err != nil {
-		return err
-	}
-
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
+
 	logboek.LogInfoF("  tag: %s\n", image.Tag)
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 
 	return nil
 }

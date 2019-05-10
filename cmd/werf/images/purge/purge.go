@@ -100,7 +100,7 @@ func runPurge() error {
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.ImagesPurge(imagesPurgeOptions); err != nil {
 		return err
 	}

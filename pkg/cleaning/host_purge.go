@@ -26,7 +26,7 @@ func HostPurge(options HostPurgeOptions) error {
 		DryRun:                        options.DryRun,
 	}
 
-	if err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func HostPurge(options HostPurgeOptions) error {
 		return err
 	}
 
-	if err := logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfImagesFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
 			return err
 		}
@@ -50,13 +50,13 @@ func HostPurge(options HostPurgeOptions) error {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	if err := logboek.LogSecondaryProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
 		return purgeHomeWerfFiles(commonOptions.DryRun)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogSecondaryProcess("Deleting stapel", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Deleting stapel", logboek.LogProcessOptions{}, func() error {
 		return deleteStapel(commonOptions.DryRun)
 	}); err != nil {
 		return fmt.Errorf("stapel delete failed: %s", err)

@@ -9,7 +9,8 @@ type ImagesPurgeOptions struct {
 }
 
 func ImagesPurge(options ImagesPurgeOptions) error {
-	return logboek.LogProcess("Running images purge", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Running images purge", logProcessOptions, func() error {
 		return imagesPurge(options)
 	})
 }
