@@ -45,15 +45,14 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 }
 
 func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
-	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-	if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Checking release existence", logboek.LogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
-				return fmt.Errorf("helm release %s is not found", releaseName)
+				return fmt.Errorf("release %s is not found", releaseName)
 			}
 
-			return fmt.Errorf("failed to check release status: %s", err)
+			return fmt.Errorf("release status failed: %s", err)
 		}
 
 		return nil
@@ -77,7 +76,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 		}
 
 		deletedHooks := map[string]bool{}
-		msg := fmt.Sprintf("Deleting helm hooks getting from existing release %s revisions (%d)", releaseName, len(resp.Releases))
+		msg := fmt.Sprintf("Deleting helm hooks getting from existing release revisions (%d)", len(resp.Releases))
 		if err := logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 			for _, rev := range resp.Releases {
 				revHooksToDelete := map[string]Template{}
@@ -118,16 +117,15 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 		}
 	}
 
-	msg := fmt.Sprintf("Deleting helm release %s", releaseName)
-	if err := logboek.LogProcessInline(msg, logboek.LogProcessInlineOptions{}, func() error {
+	if err := logboek.LogProcessInline("Deleting release", logboek.LogProcessInlineOptions{}, func() error {
 		return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
 	}); err != nil {
-		return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
+		return fmt.Errorf("release delete failed: %s", err)
 	}
 
 	if withNamespace {
 		if err := removeResource(namespace, "Namespace", ""); err != nil {
-			return fmt.Errorf("delete namespace %s: %s", namespace, err)
+			return fmt.Errorf("delete namespace %s failed: %s", namespace, err)
 		}
 		logboek.LogOptionalLn()
 	}
@@ -517,7 +515,7 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 	}
 
 	if resp.Release.Namespace != namespace {
-		return fmt.Errorf("existing helm release is deployed in namespace %s (not in %s): check --namespace option value", resp.Release.Namespace, namespace)
+		return fmt.Errorf("existing release is deployed in namespace %s (not in %s): check --namespace option value", resp.Release.Namespace, namespace)
 	}
 
 	return nil
