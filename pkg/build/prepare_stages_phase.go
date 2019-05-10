@@ -15,7 +15,8 @@ func NewPrepareStagesPhase() *PrepareStagesPhase {
 type PrepareStagesPhase struct{}
 
 func (p *PrepareStagesPhase) Run(c *Conveyor) error {
-	return logboek.LogProcess("Preparing stages build instructions", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Preparing stages build instructions", logProcessOptions, func() error {
 		return p.run(c)
 	})
 }

@@ -250,7 +250,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 }
 
 func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
-	logboek.LogServiceF("Using work tree %s\n", workTreeDir)
+	logboek.LogF("Using work tree %s\n", workTreeDir)
 
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -453,7 +453,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 			if len(res) == 0 {
 				checksum.NoMatchPaths = append(checksum.NoMatchPaths, pathPattern)
 				if debugChecksum() {
-					logboek.LogServiceF("Ignore checksum path pattern '%s': no matches found\n", pathPattern)
+					logboek.LogF("Ignore checksum path pattern '%s': no matches found\n", pathPattern)
 				}
 			}
 
@@ -528,7 +528,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 						return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
 					}
 
-					logboek.LogServiceF("Added file '%s' to resulting checksum with content checksum: %s\n", fullPath, contentHash)
+					logboek.LogF("Added file '%s' to resulting checksum with content checksum: %s\n", fullPath, contentHash)
 				}
 			} else if stat.Mode()&os.ModeSymlink != 0 {
 				linkname, err := os.Readlink(fullPath)
@@ -542,7 +542,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 				}
 
 				if debugChecksum() {
-					logboek.LogServiceF("Added symlink '%s' -> '%s' to resulting checksum\n", fullPath, linkname)
+					logboek.LogF("Added symlink '%s' -> '%s' to resulting checksum\n", fullPath, linkname)
 				}
 			}
 		}
@@ -555,7 +555,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 	}
 
 	if debugChecksum() {
-		logboek.LogServiceF("Calculated checksum %s\n", checksum.String())
+		logboek.LogF("Calculated checksum %s\n", checksum.String())
 	}
 
 	return checksum, nil

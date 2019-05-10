@@ -240,7 +240,7 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 
 	for _, phase := range phases {
 		err := phase.Run(c)

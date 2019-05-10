@@ -117,7 +117,7 @@ func runSync() error {
 		DryRun:        *CommonCmdData.DryRun,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
 		return err
 	}

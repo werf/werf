@@ -120,7 +120,8 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		}
 	}
 
-	return logboek.LogProcess("Pulling base image", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Pulling base image", logProcessOptions, func() error {
 		if err := i.baseImage.Pull(); err != nil {
 			return err
 		}

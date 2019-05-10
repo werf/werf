@@ -12,7 +12,7 @@ import (
 )
 
 func Purge(dryRun bool) error {
-	return logboek.LogSecondaryProcess("Running purge for tmp data", logboek.LogProcessOptions{}, func() error { return purge(dryRun) })
+	return logboek.LogProcess("Running purge for tmp data", logboek.LogProcessOptions{}, func() error { return purge(dryRun) })
 }
 
 func purge(dryRun bool) error {

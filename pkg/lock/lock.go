@@ -85,7 +85,7 @@ func WithLock(name string, opts LockOptions, f func() error) error {
 
 func onWait(name string, doWait func() error) error {
 	logProcessMsg := fmt.Sprintf("Waiting for locked resource '%s'", name)
-	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		return doWait()
 	})
 }

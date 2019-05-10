@@ -40,7 +40,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 
 	serviceValuesRaw, _ := yaml.Marshal(serviceValues)
 	logboek.LogInfoF("Using service values:\n%s", serviceValuesRaw)
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
@@ -53,7 +53,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	werfChart.LogExtraAnnotations()
 	werfChart.LogExtraLabels()
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,

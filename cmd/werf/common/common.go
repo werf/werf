@@ -265,7 +265,7 @@ func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
 * $WERF_LOG_TERMINAL_WIDTH
-* interactive terminal width or %d`, logboek.DefaultTerminalWidth))
+* interactive terminal width or %d`, logboek.DefaultWidth))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -473,13 +473,13 @@ func GetNamespace(namespaceOption string) string {
 
 func LogKubeContext(kubeContext string) {
 	if kubeContext != "" {
-		logboek.LogServiceF("Using kube context: %s\n", kubeContext)
+		logboek.LogF("Using kube context: %s\n", kubeContext)
 	}
 }
 
 func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 	if *cmdData.LogProjectDir {
-		logboek.LogServiceF("Using project dir: %s\n", projectDir)
+		logboek.LogF("Using project dir: %s\n", projectDir)
 	}
 }
 
@@ -523,7 +523,7 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 			return fmt.Errorf("--log-terminal-width parameter (%d) can not be negative", value)
 		}
 
-		logging.SetTerminalWidth(int(value))
+		logging.SetWidth(int(value))
 	} else {
 		pInt64, err := getInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
 		if err != nil {
@@ -538,7 +538,7 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 			return fmt.Errorf("WERF_LOG_TERMINAL_WIDTH value (%s) can not be negative", os.Getenv("WERF_LOG_TERMINAL_WIDTH"))
 		}
 
-		logging.SetTerminalWidth(int(*pInt64))
+		logging.SetWidth(int(*pInt64))
 	}
 
 	return nil
@@ -555,7 +555,7 @@ func ValidateArgumentCount(expectedCount int, args []string, cmd *cobra.Command)
 
 func PrintHelp(cmd *cobra.Command) {
 	_ = cmd.Help()
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 }
 
 func LogRunningTime(f func() error) error {
@@ -568,7 +568,7 @@ func LogRunningTime(f func() error) error {
 }
 
 func LogVersion() {
-	logboek.LogServiceF("Version: %s\n", werf.Version)
+	logboek.LogF("Version: %s\n", werf.Version)
 }
 
 func LogError(format string, a ...interface{}) {

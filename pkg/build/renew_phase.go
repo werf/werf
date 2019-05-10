@@ -21,7 +21,7 @@ type RenewPhase struct{}
 func (p *RenewPhase) Run(c *Conveyor) error {
 	var resErr error
 
-	logProcessOptions := logboek.LogProcessOptions{}
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
 	err := logboek.LogProcess("Checking invalid stages cache", logProcessOptions, func() error {
 		err := p.run(c)
 
@@ -53,7 +53,7 @@ func (p *RenewPhase) run(c *Conveyor) error {
 				} else if stageShouldBeReset || shouldResetAllNextStages {
 					conveyorShouldBeReset = true
 
-					logboek.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
+					logboek.LogF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
 
 					if err := img.Untag(); err != nil {
 						return err

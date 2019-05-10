@@ -79,7 +79,7 @@ func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.TerminalContentWidth())
+	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
 	fromImageId, err := c.image.fromImage.MustGetId()

@@ -201,7 +201,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 
 		if debugArchive() {
-			logboek.LogServiceF("Added archive file '%s'\n", path)
+			logboek.LogF("Added archive file '%s'\n", path)
 		}
 
 		return nil

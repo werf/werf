@@ -180,7 +180,7 @@ func runCleanup() error {
 		ImagesCleanupOptions: imagesCleanupOptions,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.Cleanup(cleanupOptions); err != nil {
 		return err
 	}

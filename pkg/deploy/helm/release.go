@@ -46,7 +46,7 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 
 func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-	if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
@@ -78,7 +78,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 
 		deletedHooks := map[string]bool{}
 		msg := fmt.Sprintf("Deleting helm hooks getting from existing release %s revisions (%d)", releaseName, len(resp.Releases))
-		if err := logboek.LogSecondaryProcess(msg, logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 			for _, rev := range resp.Releases {
 				revHooksToDelete := map[string]Template{}
 				for _, h := range rev.Hooks {
@@ -98,7 +98,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 
 				if len(revHooksToDelete) != 0 {
 					msg := fmt.Sprintf("Processing helm hooks getting from revision %d", rev.Version)
-					_ = logboek.LogSecondaryProcess(msg, logboek.LogProcessOptions{}, func() error {
+					_ = logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 						for hookId, hookTemplate := range revHooksToDelete {
 							deletedHooks[hookId] = true
 
@@ -119,7 +119,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 	}
 
 	msg := fmt.Sprintf("Deleting helm release %s", releaseName)
-	if err := logboek.LogSecondaryProcessInline(msg, func() error {
+	if err := logboek.LogProcessInline(msg, logboek.LogProcessInlineOptions{}, func() error {
 		return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
 	}); err != nil {
 		return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
@@ -127,13 +127,13 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 
 	if withNamespace {
 		logProcessMsg := fmt.Sprintf("Deleting kubernetes namespace %s", namespace)
-		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+		if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 			return kube.Kubernetes.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
 		}); err != nil {
 			return fmt.Errorf("failed to delete namespace %s: %s", namespace, err)
 		}
 
-		logboek.OptionalLnModeOn()
+		logboek.LogOptionalLn()
 	}
 
 	return nil
@@ -171,7 +171,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 	preDeployFunc := func() error {
 		logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			releaseState, err = getReleaseState(releaseName)
 			return err
 		}); err != nil {
@@ -180,7 +180,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 		if releaseState.PurgeNeeded {
 			logProcessMsg := fmt.Sprintf("Purging failed release %s", releaseName)
-			if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+			if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 				return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
 			}); err != nil {
 				return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
@@ -202,7 +202,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		if releaseState.IsExists && releaseState.StatusCode == "FAILED" {
 			var revision int32
 			logProcessMsg := fmt.Sprintf("Getting latest deployed release %s revision", releaseName)
-			if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+			if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 				revision, err = latestDeployedReleaseRevision(releaseName)
 				if err != nil && err != ErrNoDeployedReleaseRevisionFound {
 					return err
@@ -215,7 +215,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 			if err != ErrNoDeployedReleaseRevisionFound {
 				logProcessMsg := fmt.Sprintf("Getting templates from release %s revision %d", releaseName, revision)
-				if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+				if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 					templates, err = GetTemplatesFromRevision(releaseName, revision)
 					return err
 				}); err != nil {
@@ -236,7 +236,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 					for i := 0; i < 5; i++ {
 						out := &bytes.Buffer{}
 
-						logboek.LogServiceF("Running helm rollback (%d try)...\n", i+1)
+						logboek.LogF("Running helm rollback (%d try)...\n", i+1)
 
 						err = ReleaseRollback(
 							out,
@@ -258,7 +258,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				}
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
-				if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+				if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 					return runDeployProcess(releaseName, namespace, opts, templates, deployFunc)
 				}); err != nil {
 					return err
@@ -266,7 +266,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 			}
 		}
 
-		if err := logboek.LogSecondaryProcessInline("Getting chart templates", func() error {
+		if err := logboek.LogProcessInline("Getting chart templates", logboek.LogProcessInlineOptions{}, func() error {
 			templates, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.Set, opts.SetString)
 			return err
 		}); err != nil {
@@ -276,7 +276,8 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		return nil
 	}
 
-	if err := logboek.LogProcess("Running pre-deploy", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	if err := logboek.LogProcess("Running pre-deploy", logProcessOptions, func() error {
 		return preDeployFunc()
 	}); err != nil {
 		return err
@@ -285,7 +286,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	var deployFunc func() (string, error)
 	if releaseState.IsExists {
 		deployFunc = func() (string, error) {
-			logboek.LogServiceF("Running helm upgrade...\n")
+			logboek.LogF("Running helm upgrade...\n")
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
@@ -328,7 +329,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		}
 	} else {
 		deployFunc = func() (string, error) {
-			logboek.LogServiceF("Running helm install...\n")
+			logboek.LogF("Running helm install...\n")
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
@@ -362,7 +363,8 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	}
 
 	logProcessMsg := fmt.Sprintf("Running deploy release %s", releaseName)
-	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+	logProcessOptions = logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess(logProcessMsg, logProcessOptions, func() error {
 		return runDeployProcess(releaseName, namespace, opts, templates, deployFunc)
 	})
 }
@@ -410,7 +412,7 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
 	jobsToDelete := getHooksJobsToRecreate(templates.Jobs())
 	if len(jobsToDelete) != 0 {
-		if err := logboek.LogSecondaryProcess("Applying helm hooks recreation policy (werf.io/recreate annotation)", logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess("Applying helm hooks recreation policy (werf.io/recreate annotation)", logboek.LogProcessOptions{}, func() error {
 			for _, jobTemplate := range jobsToDelete {
 				if err := removeReleaseNamespacedResource(jobTemplate, namespace); err != nil {
 					return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
@@ -539,7 +541,7 @@ func removeNamespacedResource(name, kind, namespace string) error {
 	}
 
 	logProcessMsg := fmt.Sprintf("Deleting %s/%s from namespace %s", groupVersionResource.Resource, name, namespace)
-	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		deletePropagation := metav1.DeletePropagationForeground
 		deleteOptions := &metav1.DeleteOptions{
 			PropagationPolicy: &deletePropagation,

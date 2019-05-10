@@ -24,7 +24,8 @@ type BuildStagesPhase struct {
 }
 
 func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
-	return logboek.LogProcess("Building stages", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Building stages", logProcessOptions, func() error {
 		return p.run(c)
 	})
 }
@@ -61,7 +62,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
-			logboek.OptionalLnModeOn()
+			logboek.LogOptionalLn()
 
 			prevStageImageSize = img.Inspect().Size
 
@@ -81,7 +82,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 		}
 
-		logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
+		logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
 		err := logboek.LogProcess(fmt.Sprintf("Building %s", s.LogDetailedName()), logProcessOptions, func() (err error) {
 			if err := s.PreRunHook(c); err != nil {
 				return fmt.Errorf("%s preRunHook failed: %s", s.LogDetailedName(), err)

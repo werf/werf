@@ -135,7 +135,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 		}
 	}
 
-	return logboek.LogSecondaryProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
 		return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
 			Options: tracker.Options{
 				Timeout:      timeout,
@@ -279,7 +279,7 @@ TrackHooks:
 			}
 
 			loggerProcessMsg := fmt.Sprintf("Waiting for helm hook job/%s termination", name)
-			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
+			if err := logboek.LogProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return logboek.WithFittedStreamsOutputOn(func() error {
 					return rollout.TrackJobTillDone(name, namespace, kube.Kubernetes, tracker.Options{Timeout: timeout, LogsFromTime: watchStartTime})
 				})

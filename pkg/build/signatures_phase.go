@@ -27,7 +27,8 @@ type SignaturesPhase struct {
 }
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
-	return logboek.LogProcess("Calculating signatures", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Calculating signatures", logProcessOptions, func() error {
 		return logboek.WithoutIndent(func() error { return p.run(c) })
 	})
 }

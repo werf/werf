@@ -35,7 +35,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	logboek.LogServiceF("Using werf config render file: %s\n", werfConfigRenderPath)
+	logboek.LogF("Using werf config render file: %s\n", werfConfigRenderPath)
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {

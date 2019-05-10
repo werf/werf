@@ -138,10 +138,10 @@ func runDismiss() error {
 		return err
 	}
 
-	logboek.LogServiceF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
-	logboek.LogServiceF("Using helm release storage type: %s\n", helmReleaseStorageType)
-	logboek.LogServiceF("Using helm release name: %s\n", release)
-	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
+	logboek.LogF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
+	logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
+	logboek.LogF("Using helm release name: %s\n", release)
+	logboek.LogF("Using kubernetes namespace: %s\n", namespace)
 
 	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,

@@ -14,7 +14,8 @@ func NewShouldBeBuiltPhase() *ShouldBeBuiltPhase {
 }
 
 func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
-	return logboek.LogProcess("Checking built stages cache", logboek.LogProcessOptions{}, func() error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Checking built stages cache", logProcessOptions, func() error {
 		return p.run(c)
 	})
 }

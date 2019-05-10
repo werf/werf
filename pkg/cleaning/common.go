@@ -155,7 +155,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 	for _, container := range containers {
 		if options.DryRun {
 			logboek.LogLn(logContainerName(container))
-			logboek.OptionalLnModeOn()
+			logboek.LogOptionalLn()
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
 				return err
@@ -170,7 +170,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
 			logboek.LogLn(strings.Join(references, "\n"))
-			logboek.OptionalLnModeOn()
+			logboek.LogOptionalLn()
 		} else {
 			var args []string
 

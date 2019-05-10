@@ -155,7 +155,7 @@ func runCleanup() error {
 		Policies:          policies,
 	}
 
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 	if err := cleaning.ImagesCleanup(imagesCleanupOptions); err != nil {
 		return err
 	}

@@ -182,7 +182,7 @@ func (chart *WerfChart) LogExtraAnnotations() {
 	annotations := strings.TrimRight(string(res), "\n")
 	logboek.LogInfoF("Using extra annotations:\n%s", logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
 	logboek.LogLn()
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 }
 
 func (chart *WerfChart) LogExtraLabels() {
@@ -195,7 +195,7 @@ func (chart *WerfChart) LogExtraLabels() {
 	labels := strings.TrimRight(string(res), "\n")
 	logboek.LogInfoF("Using extra labels:\n%s", logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
 	logboek.LogLn()
-	logboek.OptionalLnModeOn()
+	logboek.LogOptionalLn()
 }
 
 type ChartConfig struct {

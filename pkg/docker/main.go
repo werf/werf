@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/term"
 	"github.com/flant/logboek"
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
 )
 
@@ -64,7 +65,7 @@ func setDockerClient() error {
 		return err
 	}
 
-	newCli.Out().SetIsTerminal(logboek.IsTerminal())
+	newCli.Out().SetIsTerminal(terminal.IsTerminal(int(os.Stdout.Fd())))
 
 	opts := flags.NewClientOptions()
 	if err := newCli.Initialize(opts); err != nil {
