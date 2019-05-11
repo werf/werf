@@ -11,6 +11,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
@@ -126,13 +127,9 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 	}
 
 	if withNamespace {
-		logProcessMsg := fmt.Sprintf("Deleting kubernetes namespace %s", namespace)
-		if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
-			return kube.Kubernetes.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
-		}); err != nil {
-			return fmt.Errorf("failed to delete namespace %s: %s", namespace, err)
+		if err := removeResource(namespace, "Namespace", ""); err != nil {
+			return fmt.Errorf("delete namespace %s: %s", namespace, err)
 		}
-
 		logboek.LogOptionalLn()
 	}
 
@@ -509,16 +506,24 @@ func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
 func removeReleaseNamespacedResource(template Template, releaseNamespace string) error {
 	resourceName := template.Metadata.Name
 	resourceKing := template.Kind
-	return removeNamespacedResource(resourceName, resourceKing, template.Namespace(releaseNamespace))
+	return removeResource(resourceName, resourceKing, template.Namespace(releaseNamespace))
 }
 
-func removeNamespacedResource(name, kind, namespace string) error {
+// Not namespaced resource specifies without namespace
+func removeResource(name, kind, namespace string) error {
+	isNamespacedResource := namespace != ""
+
 	groupVersionResource, err := kube.GroupVersionResourceByKind(kind)
 	if err != nil {
 		return err
 	}
 
-	res := kube.DynamicClient.Resource(groupVersionResource).Namespace(namespace)
+	var res dynamic.ResourceInterface
+	if isNamespacedResource {
+		res = kube.DynamicClient.Resource(groupVersionResource).Namespace(namespace)
+	} else {
+		res = kube.DynamicClient.Resource(groupVersionResource)
+	}
 
 	isExist := func() (bool, error) {
 		_, err := res.Get(name, metav1.GetOptions{})
@@ -540,7 +545,13 @@ func removeNamespacedResource(name, kind, namespace string) error {
 		return nil
 	}
 
-	logProcessMsg := fmt.Sprintf("Deleting %s/%s from namespace %s", groupVersionResource.Resource, name, namespace)
+	var logProcessMsg string
+	if isNamespacedResource {
+		logProcessMsg = fmt.Sprintf("Deleting %s/%s from namespace %s", groupVersionResource.Resource, name, namespace)
+	} else {
+		logProcessMsg = fmt.Sprintf("Deleting %s/%s", groupVersionResource.Resource, name)
+	}
+
 	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		deletePropagation := metav1.DeletePropagationForeground
 		deleteOptions := &metav1.DeleteOptions{
