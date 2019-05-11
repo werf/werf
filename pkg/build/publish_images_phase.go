@@ -107,18 +107,16 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 
 			stageImage := c.GetStageImage(stage.GetImage().Name())
 
-			infoSectionFunc := func(err error) {
-				if err == nil {
-					_ = logboek.WithIndent(func() error {
-						logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
-						logboek.LogInfoF("      image: %s\n", stageImageName)
+			successInfoSectionFunc := func() {
+				_ = logboek.WithIndent(func() error {
+					logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
+					logboek.LogInfoF("      image: %s\n", stageImageName)
 
-						return nil
-					})
-				}
+					return nil
+				})
 			}
 
-			logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
+			logProcessOptions := logboek.LogProcessOptions{SuccessInfoSectionFunc: successInfoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
 			return logboek.LogProcess(fmt.Sprintf("Publishing %s", stage.Name()), logProcessOptions, func() error {
 				if err := stageImage.Export(stageImageName); err != nil {
 					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
@@ -238,17 +236,15 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:       "true",
 					})
 
-					infoSectionFunc := func(err error) {
-						if err == nil {
-							_ = logboek.WithIndent(func() error {
-								logboek.LogInfoF("images-repo: %s\n", imageRepository)
-								logboek.LogInfoF("      image: %s\n", imageName)
+					successInfoSectionFunc := func() {
+						_ = logboek.WithIndent(func() error {
+							logboek.LogInfoF("images-repo: %s\n", imageRepository)
+							logboek.LogInfoF("      image: %s\n", imageName)
 
-								return nil
-							})
-						}
+							return nil
+						})
 					}
-					logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
+					logProcessOptions := logboek.LogProcessOptions{SuccessInfoSectionFunc: successInfoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
 					return logboek.LogProcess(fmt.Sprintf("Publishing %s", tagLogName), logProcessOptions, func() error {
 						if err := logboek.LogProcess("Building final image with meta information", logboek.LogProcessOptions{}, func() error {
 							if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
