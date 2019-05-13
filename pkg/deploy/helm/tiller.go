@@ -359,9 +359,7 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 
 	resp, err := tillerReleaseServer.InstallRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
@@ -407,9 +405,7 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 
 	resp, err := tillerReleaseServer.UpdateRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
@@ -444,11 +440,20 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 
 	resp, err := tillerReleaseServer.RollbackRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
 	return resp, nil
+}
+
+func displayReleaseLogMessages() {
+	logboek.LogBlock("Debug info", logboek.LogBlockOptions{}, func() {
+		for _, msg := range releaseLogMessages {
+			_ = logboek.WithFittedStreamsOutputOn(func() error {
+				_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
+				return nil
+			})
+		}
+	})
 }
