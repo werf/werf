@@ -3,35 +3,27 @@ package helm
 import (
 	"errors"
 	"fmt"
-	"io"
-	"regexp"
 	"strings"
-	"text/tabwriter"
-	"text/template"
 	"time"
-
-	"github.com/flant/logboek"
-	"github.com/gosuri/uitable"
-	"github.com/gosuri/uitable/util/strutil"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/helm"
-	helm_env "k8s.io/helm/pkg/helm/environment"
-	"k8s.io/helm/pkg/kube"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/proto/hapi/release"
-	"k8s.io/helm/pkg/proto/hapi/services"
-	"k8s.io/helm/pkg/renderutil"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
-	"k8s.io/helm/pkg/tiller"
-	tiller_env "k8s.io/helm/pkg/tiller/environment"
-	"k8s.io/helm/pkg/timeconv"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/helm"
+	helm_env "k8s.io/helm/pkg/helm/environment"
+	"k8s.io/helm/pkg/kube"
+	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/proto/hapi/services"
+	"k8s.io/helm/pkg/renderutil"
+	"k8s.io/helm/pkg/storage"
+	"k8s.io/helm/pkg/storage/driver"
+	"k8s.io/helm/pkg/tiller"
+	tiller_env "k8s.io/helm/pkg/tiller/environment"
+
+	"github.com/flant/logboek"
 )
 
 var (
@@ -52,7 +44,7 @@ var (
 	ConfigMapStorage = "configmap"
 	SecretStorage    = "secret"
 
-	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
+	ErrNoSuccessfullyDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
 type InitOptions struct {
@@ -206,19 +198,6 @@ func releaseStatus(releaseName string, opts releaseStatusOptions) (*services.Get
 	return res, err
 }
 
-type releaseStatusCodeOptions struct {
-	releaseStatusOptions
-}
-
-func releaseStatusCode(releaseName string, opts releaseStatusCodeOptions) (string, error) {
-	resp, err := releaseStatus(releaseName, opts.releaseStatusOptions)
-	if err != nil {
-		return "", err
-	}
-
-	return resp.Info.Status.Code.String(), nil
-}
-
 type releaseDeleteOptions struct {
 	Purge   bool
 	Timeout int64
@@ -261,7 +240,7 @@ type ReleaseInstallOptions struct {
 	Debug bool
 }
 
-func ReleaseInstall(out io.Writer, chartPath, releaseName, namespace string, values, set, setString []string, opts ReleaseInstallOptions) error {
+func ReleaseInstall(chartPath, releaseName, namespace string, values, set, setString []string, opts ReleaseInstallOptions) error {
 	rawVals, err := vals(values, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
@@ -288,36 +267,10 @@ func ReleaseInstall(out io.Writer, chartPath, releaseName, namespace string, val
 		return fmt.Errorf("cannot load requirements: %v", err)
 	}
 
-	resp, err := releaseInstall(loadedChart, releaseName, namespace, &chart.Config{Raw: string(rawVals)}, opts.releaseInstallOptions)
+	_, err = releaseInstall(loadedChart, releaseName, namespace, &chart.Config{Raw: string(rawVals)}, opts.releaseInstallOptions)
 	if err != nil {
 		return err
 	}
-
-	rel := resp.GetRelease()
-	if rel == nil {
-		return nil
-	}
-
-	if err := printRelease(out, rel, opts.DryRun); err != nil {
-		return err
-	}
-
-	// If this is a dry run, we can't display status.
-	if opts.DryRun {
-		// This is special casing to avoid breaking backward compatibility:
-		if resp.Release.Info.Description != "Dry run complete" {
-			fmt.Fprintf(out, "WARNING: %s\n", resp.Release.Info.Description)
-		}
-
-		return nil
-	}
-
-	// Print the status like status command does
-	status, err := releaseStatus(releaseName, releaseStatusOptions{})
-	if err != nil {
-		return err
-	}
-	printStatus(out, status)
 
 	return nil
 }
@@ -328,7 +281,7 @@ type ReleaseUpdateOptions struct {
 	Debug bool
 }
 
-func ReleaseUpdate(out io.Writer, chartPath, releaseName string, values, set, setString []string, opts ReleaseUpdateOptions) error {
+func ReleaseUpdate(chartPath, releaseName string, values, set, setString []string, opts ReleaseUpdateOptions) error {
 	rawVals, err := vals(values, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
@@ -348,23 +301,10 @@ func ReleaseUpdate(out io.Writer, chartPath, releaseName string, values, set, se
 		return err
 	}
 
-	resp, err := releaseUpdate(loadedChart, releaseName, &chart.Config{Raw: string(rawVals)}, opts.releaseUpdateOptions)
-	if err != nil {
-		return fmt.Errorf("UPGRADE FAILED: %v", err)
-	}
-
-	if opts.Debug {
-		printRelease(out, resp.Release, opts.DryRun)
-	}
-
-	fmt.Fprintf(out, "Release %q has been upgraded. Happy Helming!\n", releaseName)
-
-	// Print the status like status command does
-	status, err := releaseStatus(releaseName, releaseStatusOptions{})
+	_, err = releaseUpdate(loadedChart, releaseName, &chart.Config{Raw: string(rawVals)}, opts.releaseUpdateOptions)
 	if err != nil {
 		return err
 	}
-	printStatus(out, status)
 
 	return nil
 }
@@ -373,12 +313,10 @@ type ReleaseRollbackOptions struct {
 	releaseRollbackOptions
 }
 
-func ReleaseRollback(out io.Writer, releaseName string, revision int32, opts ReleaseRollbackOptions) error {
+func ReleaseRollback(releaseName string, revision int32, opts ReleaseRollbackOptions) error {
 	if _, err := releaseRollback(releaseName, revision, opts.releaseRollbackOptions); err != nil {
 		return err
 	}
-
-	fmt.Fprintf(out, "Rollback was a success! Happy Helming!\n")
 
 	return nil
 }
@@ -421,9 +359,7 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 
 	resp, err := tillerReleaseServer.InstallRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
@@ -469,9 +405,7 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 
 	resp, err := tillerReleaseServer.UpdateRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
@@ -506,109 +440,20 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 
 	resp, err := tillerReleaseServer.RollbackRelease(ctx, req)
 	if err != nil {
-		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
-		}
+		displayReleaseLogMessages()
 		return nil, err
 	}
 
 	return resp, nil
 }
 
-var printReleaseTemplate = `REVISION: {{.Release.Version}}
-RELEASED: {{.ReleaseDate}}
-CHART: {{.Release.Chart.Metadata.Name}}-{{.Release.Chart.Metadata.Version}}
-USER-SUPPLIED VALUES:
-{{.Release.Config.Raw}}
-COMPUTED VALUES:
-{{.ComputedValues}}
-HOOKS:
-{{- range .Release.Hooks }}
----
-# {{.Name}}
-{{.Manifest}}
-{{- end }}
-MANIFEST:
-{{.Release.Manifest}}
-`
-
-func printRelease(out io.Writer, rel *release.Release, debug bool) error {
-	if rel == nil {
-		return nil
-	}
-
-	fmt.Fprintf(out, "NAME:   %s\n", rel.Name)
-	if debug {
-		cfg, err := chartutil.CoalesceValues(rel.Chart, rel.Config)
-		if err != nil {
-			return err
+func displayReleaseLogMessages() {
+	logboek.LogBlock("Debug info", logboek.LogBlockOptions{}, func() {
+		for _, msg := range releaseLogMessages {
+			_ = logboek.WithFittedStreamsOutputOn(func() error {
+				_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
+				return nil
+			})
 		}
-		cfgStr, err := cfg.YAML()
-		if err != nil {
-			return err
-		}
-
-		data := map[string]interface{}{
-			"Release":        rel,
-			"ComputedValues": cfgStr,
-			"ReleaseDate":    timeconv.Format(rel.Info.LastDeployed, time.ANSIC),
-		}
-
-		return tpl(printReleaseTemplate, data, out)
-	}
-
-	return nil
-}
-
-func tpl(t string, vals map[string]interface{}, out io.Writer) error {
-	tt, err := template.New("_").Parse(t)
-	if err != nil {
-		return err
-	}
-	return tt.Execute(out, vals)
-}
-
-// PrintStatus prints out the status of a release. Shared because also used by
-// install / upgrade
-func printStatus(out io.Writer, resp *services.GetReleaseStatusResponse) {
-	if resp.Info.LastDeployed != nil {
-		fmt.Fprintf(out, "LAST DEPLOYED: %s\n", timeconv.String(resp.Info.LastDeployed))
-	}
-	fmt.Fprintf(out, "NAMESPACE: %s\n", resp.Namespace)
-	fmt.Fprintf(out, "STATUS: %s\n", resp.Info.Status.Code)
-	fmt.Fprintf(out, "\n")
-	if len(resp.Info.Status.Resources) > 0 {
-		re := regexp.MustCompile("  +")
-
-		w := tabwriter.NewWriter(out, 0, 0, 2, ' ', tabwriter.TabIndent)
-		fmt.Fprintf(w, "RESOURCES:\n%s\n", re.ReplaceAllString(resp.Info.Status.Resources, "\t"))
-		w.Flush()
-	}
-	if resp.Info.Status.LastTestSuiteRun != nil {
-		lastRun := resp.Info.Status.LastTestSuiteRun
-		fmt.Fprintf(out, "TEST SUITE:\n%s\n%s\n\n%s\n",
-			fmt.Sprintf("Last Started: %s", timeconv.String(lastRun.StartedAt)),
-			fmt.Sprintf("Last Completed: %s", timeconv.String(lastRun.CompletedAt)),
-			formatTestResults(lastRun.Results))
-	}
-
-	if len(resp.Info.Status.Notes) > 0 {
-		fmt.Fprintf(out, "NOTES:\n%s\n", resp.Info.Status.Notes)
-	}
-}
-
-func formatTestResults(results []*release.TestRun) string {
-	tbl := uitable.New()
-	tbl.MaxColWidth = 50
-	tbl.AddRow("TEST", "STATUS", "INFO", "STARTED", "COMPLETED")
-	for i := 0; i < len(results); i++ {
-		r := results[i]
-		n := r.Name
-		s := strutil.PadRight(r.Status.String(), 10, ' ')
-		i := r.Info
-		ts := timeconv.String(r.StartedAt)
-		tc := timeconv.String(r.CompletedAt)
-		tbl.AddRow(n, s, i, ts, tc)
-	}
-	return tbl.String()
+	})
 }

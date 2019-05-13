@@ -221,13 +221,7 @@ func runDeploy() error {
 		return err
 	}
 
-	common.LogKubeContext(kube.Context)
-	logboek.LogF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
-	logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
-	logboek.LogF("Using helm release name: %s\n", release)
-	logboek.LogF("Using kubernetes namespace: %s\n", namespace)
-
-	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *CommonCmdData.Set,
 		SetString:            *CommonCmdData.SetString,
 		Values:               *CommonCmdData.Values,

@@ -180,7 +180,8 @@ func (chart *WerfChart) LogExtraAnnotations() {
 	res, _ := yaml.Marshal(chart.ExtraAnnotations)
 
 	annotations := strings.TrimRight(string(res), "\n")
-	logboek.LogInfoF("Using extra annotations:\n%s", logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
+	logboek.LogLn("Using extra annotations:")
+	logboek.LogF(logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
 	logboek.LogLn()
 	logboek.LogOptionalLn()
 }
@@ -193,7 +194,8 @@ func (chart *WerfChart) LogExtraLabels() {
 	res, _ := yaml.Marshal(chart.ExtraLabels)
 
 	labels := strings.TrimRight(string(res), "\n")
-	logboek.LogInfoF("Using extra labels:\n%s", logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
+	logboek.LogLn("Using extra labels:")
+	logboek.LogF(logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
 	logboek.LogLn()
 	logboek.LogOptionalLn()
 }
