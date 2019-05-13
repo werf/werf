@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,14 +29,9 @@ func Lint(out io.Writer, chartPath, namespace string, values, set, setString []s
 		lowestTolerance = support.ErrorSev
 	}
 
-	rvals, err := vals(values, set, setString, []string{}, "", "", "")
-	if err != nil {
-		return err
-	}
-
 	var total int
 	var failures int
-	if linter, err := lintChart(chartPath, rvals, namespace, opts.Strict); err != nil {
+	if linter, err := lintChart(chartPath, namespace, values, set, setString, opts.Strict); err != nil {
 		fmt.Fprintln(out, "==> Skipping", chartPath)
 		fmt.Fprintln(out, err)
 		if err == errors.New("no chart found for linting (missing Chart.yaml)") {
@@ -71,35 +65,12 @@ func Lint(out io.Writer, chartPath, namespace string, values, set, setString []s
 	return nil
 }
 
-func lintChart(path string, vals []byte, namespace string, strict bool) (support.Linter, error) {
-	var chartPath string
+func lintChart(chartPath string, namespace string, values, set, setString []string, strict bool) (support.Linter, error) {
 	linter := support.Linter{}
 
-	if strings.HasSuffix(path, ".tgz") {
-		tempDir, err := ioutil.TempDir("", "helm-lint")
-		if err != nil {
-			return linter, err
-		}
-		defer os.RemoveAll(tempDir)
-
-		file, err := os.Open(path)
-		if err != nil {
-			return linter, err
-		}
-		defer file.Close()
-
-		if err = chartutil.Expand(tempDir, file); err != nil {
-			return linter, err
-		}
-
-		lastHyphenIndex := strings.LastIndex(filepath.Base(path), "-")
-		if lastHyphenIndex <= 0 {
-			return linter, fmt.Errorf("unable to parse chart archive %q, missing '-'", filepath.Base(path))
-		}
-		base := filepath.Base(path)[:lastHyphenIndex]
-		chartPath = filepath.Join(tempDir, base)
-	} else {
-		chartPath = path
+	rvals, err := vals(values, set, setString, []string{}, "", "", "")
+	if err != nil {
+		return linter, err
 	}
 
 	// Guard: Error out of this is not a chart.
@@ -107,21 +78,62 @@ func lintChart(path string, vals []byte, namespace string, strict bool) (support
 		return linter, errors.New("no chart found for linting (missing Chart.yaml)")
 	}
 
-	return lintByRules(chartPath, vals, namespace, strict), nil
-}
-
-func lintByRules(basedir string, values []byte, namespace string, strict bool) support.Linter {
 	// Using abs path to get directory context
-	chartDir, _ := filepath.Abs(basedir)
+	chartDir, _ := filepath.Abs(chartPath)
 
-	linter := support.Linter{ChartDir: chartDir}
-	LintChartfileRules(&linter)
+	linter.ChartDir = chartDir
+
+	lintChartfileRules(&linter)
 	rules.Values(&linter)
-	rules.Templates(&linter, values, namespace, strict)
-	return linter
+	rules.Templates(&linter, rvals, namespace, strict)
+	templatesRules(&linter, chartPath, namespace, values, set, setString)
+
+	return linter, nil
 }
 
-func LintChartfileRules(linter *support.Linter) {
+func templatesRules(linter *support.Linter, chartPath, namespace string, values, set, setString []string) {
+	supportedWerfAnnotations := []string{
+		TrackAnnoName,
+		FailModeAnnoName,
+		AllowFailuresCountAnnoName,
+		LogWatchRegexAnnoName,
+		ShowLogsUntilAnnoName,
+		SkipLogsForContainersAnnoName,
+		ShowLogsOnlyForContainers,
+	}
+
+	templates, _ := GetTemplatesFromChart(chartPath, "RELEASE_NAME", namespace, values, set, setString)
+
+	for _, template := range templates {
+		metadataName := template.Metadata.Name
+		kind := strings.ToLower(template.Kind)
+
+		_, err := prepareMultitrackSpec(metadataName, kind, template.Namespace(namespace), template.Metadata.Annotations)
+		if err != nil {
+			linter.RunLinterRule(support.WarningSev, "templates/", err)
+		}
+
+	templateAnnotationsLoop:
+		for annoName := range template.Metadata.Annotations {
+			if strings.HasPrefix(annoName, "werf.io/") {
+				for _, supportedAnnoName := range supportedWerfAnnotations {
+					if annoName == supportedAnnoName {
+						continue templateAnnotationsLoop
+					}
+				}
+
+				if strings.HasPrefix(annoName, LogWatchRegexForAnnoPrefix) {
+					continue templateAnnotationsLoop
+				}
+
+				err := fmt.Errorf("%s/%s with unknown werf annotation %s", kind, metadataName, annoName)
+				linter.RunLinterRule(support.WarningSev, "templates/", err)
+			}
+		}
+	}
+}
+
+func lintChartfileRules(linter *support.Linter) {
 	chartFileName := "Chart.yaml"
 	chartPath := filepath.Join(linter.ChartDir, chartFileName)
 

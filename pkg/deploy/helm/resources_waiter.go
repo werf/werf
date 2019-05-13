@@ -155,16 +155,16 @@ func makeMultitrackSpec(objMeta *metav1.ObjectMeta, kind string) (*multitrack.Mu
 	return multitrackSpec, nil
 }
 
-func prepareMultitrackSpec(resourceName, kind, namespace string, annotations map[string]string) (*multitrack.MultitrackSpec, error) {
+func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, annotations map[string]string) (*multitrack.MultitrackSpec, error) {
 	multitrackSpec := &multitrack.MultitrackSpec{
-		ResourceName:                 resourceName,
+		ResourceName:                 metadataName,
 		Namespace:                    namespace,
 		LogWatchRegexByContainerName: map[string]*regexp.Regexp{},
 	}
 
 mainLoop:
 	for annoName, annoValue := range annotations {
-		invalidAnnoValueError := fmt.Errorf("%s/%s annotation %s with invalid value %s", kind, resourceName, annoName, annoValue)
+		invalidAnnoValueError := fmt.Errorf("%s/%s annotation %s with invalid value %s", resourceNameOrKind, metadataName, annoName, annoValue)
 
 		switch annoName {
 		case TrackAnnoName:
@@ -242,8 +242,8 @@ mainLoop:
 
 			multitrackSpec.ShowLogsOnlyForContainers = containerNames
 		default:
-			if strings.HasPrefix(annoName, ContainerLogWatchRegexAnnoPrefix) {
-				if containerName := strings.TrimPrefix(annoName, ContainerLogWatchRegexAnnoPrefix); containerName != "" {
+			if strings.HasPrefix(annoName, LogWatchRegexForAnnoPrefix) {
+				if containerName := strings.TrimPrefix(annoName, LogWatchRegexForAnnoPrefix); containerName != "" {
 					regexpValue, err := regexp.Compile(annoValue)
 					if err != nil {
 						return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
