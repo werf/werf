@@ -80,7 +80,7 @@ func (t Template) IsEmpty() bool {
 	return false
 }
 
-func GetTemplatesFromRevision(releaseName string, revision int32) (ChartTemplates, error) {
+func GetTemplatesFromReleaseRevision(releaseName string, revision int32) (ChartTemplates, error) {
 	rawTemplates, err := getRawTemplatesFromRevision(releaseName, revision)
 	if err != nil {
 		return nil, err

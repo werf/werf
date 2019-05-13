@@ -44,7 +44,7 @@ var (
 	ConfigMapStorage = "configmap"
 	SecretStorage    = "secret"
 
-	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
+	ErrNoSuccessfullyDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
 type InitOptions struct {
@@ -198,19 +198,6 @@ func releaseStatus(releaseName string, opts releaseStatusOptions) (*services.Get
 	return res, err
 }
 
-type releaseStatusCodeOptions struct {
-	releaseStatusOptions
-}
-
-func releaseStatusCode(releaseName string, opts releaseStatusCodeOptions) (string, error) {
-	resp, err := releaseStatus(releaseName, opts.releaseStatusOptions)
-	if err != nil {
-		return "", err
-	}
-
-	return resp.Info.Status.Code.String(), nil
-}
-
 type releaseDeleteOptions struct {
 	Purge   bool
 	Timeout int64
@@ -316,7 +303,7 @@ func ReleaseUpdate(chartPath, releaseName string, values, set, setString []strin
 
 	_, err = releaseUpdate(loadedChart, releaseName, &chart.Config{Raw: string(rawVals)}, opts.releaseUpdateOptions)
 	if err != nil {
-		return fmt.Errorf("UPGRADE FAILED: %v", err)
+		return err
 	}
 
 	return nil
