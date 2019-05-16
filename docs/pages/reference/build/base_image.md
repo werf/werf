@@ -9,7 +9,7 @@ summary: |
   </a>
 
   <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
-  <span class="s">fromLatest</span><span class="pi">:</span> <span class="s">&lt;false || true&gt;</span>
+  <span class="s">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="s">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="s">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
   <span class="s">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span></code></pre>

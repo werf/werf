@@ -105,7 +105,7 @@ docker:
   - <onbuild>
   WORKDIR: <workdir>
   USER: <user>
-asLayers: <false || true>
+asLayers: <bool>
 ---
 artifact: <artifact_name>
 from: <image>
@@ -197,4 +197,4 @@ mount:
   to: <absolute_path>
 - fromPath: <absolute_path>
   to: <absolute_path>
-asLayers: <false || true>
+asLayers: <bool>
