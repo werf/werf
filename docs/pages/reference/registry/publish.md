@@ -5,23 +5,26 @@ permalink: reference/registry/publish.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Docker images should be pushed into the docker registry for further usage in most cases. The usage includes these demands:
+<!--Docker images should be pushed into the docker registry for further usage in most cases. The usage includes these demands:-->
 
-1. Using an image to run an application (for example in kubernetes). These images will be referred to as **images for running**.
-2. Using an existing old image version from a docker registry as a cache to build a new image version. Usually, it is default behavior. However, some additional actions may be required to organize a build environment with multiple build hosts or build hosts with no persistent local storage. These images will be referred to as **distributed images cache**.
+<!--1. Using an image to run an application (for example in kubernetes). These images will be referred to as **images for running**.-->
+<!--2. Using an existing old image version from a docker registry as a cache to build a new image version. Usually, it is default behavior. However, some additional actions may be required to organize a build environment with multiple build hosts or build hosts with no persistent local storage. These images will be referred to as **distributed images cache**.-->
 
-## What can be published
+<!--## What can be published-->
 
-The result of werf [build commands]({{ site.baseurl }}/cli/build/build.html) is a stages cache related to images defined in the `werf.yaml` config. Werf can be used to publish either:
+<!--The result of werf [build commands]({{ site.baseurl }}/cli/build/build.html) is a _stages_ in _stages storage_ related to images defined in the `werf.yaml` config. -->
+<!--Werf can be used to publish either:-->
 
-* Images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a image from a docker registry, you don't receive stages cache for this image.
-* Images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.
+<!--* Images. These can only be used as _images for running_. -->
+<!--These images are not suitable for _distributed images cache_, because werf build algorithm implies creating separate images for _stages_. -->
+<!--When you pull a image from a docker registry, you do not receive _stages_ for this image.-->
+<!--* Images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.-->
 
-Werf pushes image into a docker registry with a so-called [**image publish procedure**](#image-publish-procedure). Also, werf pushes stages cache of all images from config with a so-called [**stages publish procedure**](#stages-publish-procedure).
+<!--Werf pushes image into a docker registry with a so-called [**image publish procedure**](#image-publish-procedure). Also, werf pushes stages cache of all images from config with a so-called [**stages publish procedure**](#stages-publish-procedure).-->
 
-Before digging into these algorithms, it is helpful to see how to publish images using Docker.
+<!--Before digging into these algorithms, it is helpful to see how to publish images using Docker.-->
 
-### Standard publish procedure
+<!--### Standard publish procedure-->
 
 Normally in the Docker world to publish an already built arbitrary docker image, the following steps are required in general:
 
@@ -34,7 +37,7 @@ Normally in the Docker world to publish an already built arbitrary docker image,
 
 This process will be referred to as **standard publish procedure**. There is a docker command for each of these steps, and usually, they are performed by calling corresponding docker commands.
 
-### Image publish procedure
+## Image publish procedure
 
 To publish a image from the config werf implements the **image publish procedure**. It consists of the following steps:
 
@@ -46,19 +49,19 @@ All of these steps are performed with a single werf publish command, which will 
 
 The result of this procedure is a image named by the [image naming]({{ site.baseurl }}/reference/registry/image_naming.html) rules pushed into the docker registry.
 
-### Stages publish procedure
+<!--### Stages publish procedure-->
 
-To publish stages cache of a image from the config werf implements the **stages publish procedure**. It consists of the following steps:
+<!--To publish stages cache of a image from the config werf implements the **stages publish procedure**. It consists of the following steps:-->
 
- 1. Create temporary image names aliases for all docker images in stages cache, so that:
-     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter)).
-     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).
- 2. Push images by newly created aliases into docker registry.
- 3. Delete temporary image names aliases.
+<!-- 1. Create temporary image names aliases for all docker images in stages cache, so that:-->
+<!--     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter)).-->
+<!--     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).-->
+<!-- 2. Push images by newly created aliases into docker registry.-->
+<!-- 3. Delete temporary image names aliases.-->
 
-All of these steps are also performed with a single werf command, which will be described below.
+<!--All of these steps are also performed with a single werf command, which will be described below.-->
 
-The result of this procedure is multiple images from stages cache of image pushed into the docker registry.
+<!--The result of this procedure is multiple images from stages cache of image pushed into the docker registry.-->
 
 ## Publish command
 

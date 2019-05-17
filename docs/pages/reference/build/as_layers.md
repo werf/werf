@@ -25,4 +25,4 @@ Switching between assembly mode is only governed by the _asLayers directive_. Ot
 
 _asLayers_ directive allows caching of individual instructions. If `--introspect-error` and `--introspect-before-error` introspection options are used, users may retrieve the environment before or after execution of a problem instruction.
 
-> It is important not to use this instruction in the course of regular assembly of images: this mode generates an excessive number of docker images and is not intended for incremental assembly (due to a longer timeout and greater size of _stages cache_).
+> It is important not to use this instruction in the course of regular assembly of images: this mode generates an excessive number of docker images and is not intended for incremental assembly (due to a longer timeout and greater size of _stages_).
