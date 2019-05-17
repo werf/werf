@@ -34,7 +34,7 @@ entries:
         - title: slugify
           url: /cli/toolbox/slugify.html
 
-        - title: ci_env
+        - title: ci-env
           url: /cli/toolbox/ci_env.html
 
     - title: Lowlevel Management Commands
