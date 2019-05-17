@@ -180,12 +180,6 @@ table th[class*="col-"] {
     float: none;
 }
 
-
-table td:first-child {
-    width: 150px;
-    /*font-weight:bold;*/
-}
-
 table.boldFirstColumn td:first-child {
     font-weight: bold;
 }
