@@ -373,7 +373,7 @@ Build sequence for these commits may be represented as follows:
 | Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | --- | files as in commit No. 2 |
 | Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | --- | files as in commit No. 3 |
 
-A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer werf provides another intermediary stage — _gitCache_.
+A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total _stages_ size. To prevent the growth of the last layer werf provides another intermediary stage — _gitCache_.
 How does werf work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
 
 - Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git mappings_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
@@ -384,7 +384,7 @@ How does werf work with these three stages? Now we are going to need more commit
 - Build of commit No. 6. The size of the patch between `1` and `6` exceeds 1 MiB. Now _gitCache_ stage layer is modified.
 - Build of commit No. 7. The layer of the _gitLatestPatch_ stage is modified by applying the patch between `6` and `7`.
 
-This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _gitCache_ stage, and only patches with moderate size are applied in the layer for the last _gitLatestPatch_ stage. This algorithm reduces the size of the _stages cache_.
+This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _gitCache_ stage, and only patches with moderate size are applied in the layer for the last _gitLatestPatch_ stage. This algorithm reduces the size of _stages_.
 
 | | gitArchive | gitCache | gitLatestPatch |
 |---|:---:|:---:|:---:|
@@ -400,7 +400,7 @@ This means that as commits are added starting from the moment the first build is
 
 ### Rebuild of gitArchive stage
 
-For various reasons, you may want to reset the _gitArchive_ stage, for example, to decrease the size of the _stages cache_ and the image.
+For various reasons, you may want to reset the _gitArchive_ stage, for example, to decrease the size of _stages_ and the image.
 
 To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _gitArchive_ stage. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _gitCache_ stage. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _gitArchive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _git stages_.
 
