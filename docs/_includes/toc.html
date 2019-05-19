@@ -6,8 +6,10 @@ $( document ).ready(function() {
 
 $('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
 
+if ($('#toc').is(':empty')) { $('#toc').hide(); }
+
 /* this offset helps account for the space taken up by the floating toolbar. */
-$('#toc').on('click', 'a', function() {
+$('#toc').on('click tap', 'a', function() {
   var target = $(this.getAttribute('href'))
     , scroll_target = target.offset().top
 

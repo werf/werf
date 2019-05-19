@@ -18,6 +18,11 @@ kramdown:
  hard_wrap: false
  syntax_highlighter: rouge
 
+breadcrumbs:
+  root:
+    hide: false  # show breadcrumbs on root/home page
+    image: false # Show image or title text
+
 collections:
   tooltips:
     output: false

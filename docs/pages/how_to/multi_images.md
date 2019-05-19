@@ -218,8 +218,9 @@ git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 
 To build an application with all of its components create the following `werf.yaml` **in the root folder** of the repository:
 
-<details markdown="1">
-<summary>The complete <b><i>werf.yaml</i></b> file...</summary>
+<div class="details active">
+<a href="javascript:0;" class="details__summary">The complete <i>werf.yaml</i> file...</a>
+<div class="details__content" markdown="1">
 
 {% raw %}
 ```yaml
@@ -358,7 +359,8 @@ git:
 ```
 {% endraw %}
 
-</details>
+</div>
+</div>
 
 ## Step 3: Create SSL certificates
 

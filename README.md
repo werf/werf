@@ -100,7 +100,7 @@ go get github.com/flant/werf/cmd/werf
 
 ## Docs and support
 
-[Official documentation](https://werf.io)
+[Official documentation](https://werf.io/)
 
 ### Getting started
 

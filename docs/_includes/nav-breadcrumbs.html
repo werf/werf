@@ -1,0 +1,30 @@
+<ol class="breadcrumbs">
+   <li><a href="{{ site.baseurl }}/">Home</a></li>
+   {% capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
+   {% assign splitted_url_parts = page_url_without_index_html | split: '/' %}
+   {% assign docs_chapters = "how_to,reference,cli" | split: "," %}
+   {% if docs_chapters contains splitted_url_parts[1] %}<li><a href="{{ site.base_url }}/documentation.html">Documentation</a></li>
+   {% endif %}
+   {% capture forLoopMaxInt %}{{ splitted_url_parts.size | minus:1 }}{% endcapture %}
+   {% for i in (1..forLoopMaxInt) %}
+      {% capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}/index.html{% endcapture %}
+      {% capture current_breadcrumb_md_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}/{% endcapture %}
+      {% capture next_prepender %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
+      {% for breadcrumb_page in site.pages %}
+         {% if current_breadcrumb_url == breadcrumb_page.url or current_breadcrumb_md_url == breadcrumb_page.url  %}
+         {% assign j = forLoopMaxInt | plus: 0 %}
+               <li>
+                  {% capture breadcrumb_page_page_url_without_index_html %}{{ breadcrumb_page.url | remove: "index.html" }}{% endcapture %}
+                  {% if i == j %}
+                     {{breadcrumb_page.title}}
+                  {% else %}
+                     <a href="{{ site.baseurl }}{{breadcrumb_page_page_url_without_index_html}}">{{breadcrumb_page.title}}</a>
+                  {% endif %}
+               </li>
+         {% endif %}
+      {% endfor %}
+   {% endfor %}
+   {% if splitted_url_parts.last contains '.html' %}
+   <li>{{page.title}}</li>
+   {% endif %}
+</ol>

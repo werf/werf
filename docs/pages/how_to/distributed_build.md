@@ -219,8 +219,9 @@ Both stages start only by schedules. You can define schedule in `CI/CD` —> `Sc
 
 To build the application create the following `.gitlab-ci.yml` **in the root folder** of the repository:
 
-<details markdown="1">
-<summary>The complete <b><i>.gitlab-ci.yml</i></b> file...</summary>
+<div class="details active">
+<a href="javascript:0;" class="details__summary">The complete <i>.gitlab-ci.yml</i> file...</a>
+<div class="details__content" markdown="1">
 
 {% raw %}
 ```yaml
@@ -336,7 +337,8 @@ Cleanup builder:
 ```
 {% endraw %}
 
-</details>
+</div>
+</div>
 
 With the added `.gitlab-ci.yml`, you can build the application on any runner with such werf advantages as using stages cache.
 

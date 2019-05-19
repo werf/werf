@@ -65,12 +65,6 @@ body {
 .gi-4x{font-size: 4em;}
 .gi-5x{font-size: 5em;}
 
-
-
-
-
-.breadcrumb > .active {color: #777 !important;}
-
 /* make room for the nav bar */
 h1[id],
 h2[id],
@@ -421,9 +415,9 @@ span.projectTitle {
     font-weight: bold;
 }
 
-.footer {
+/* .footer {
     text-align: right;
-}
+} */
 
 .footerMeta {
     background-color: whitesmoke;
@@ -844,13 +838,13 @@ span.soft {
     }
 }
 
-@media (max-width: 990px) {
+/* @media (max-width: 990px) {
     #mysidebar {
         position: relative;
     }
-}
+} */
 
-@media (min-width: 1000px) {
+/* @media (min-width: 1000px) {
   ul#mysidebar {
     width: 225px;
     margin-top: 40px;
@@ -859,14 +853,14 @@ span.soft {
   a.dropdown-toggle, .navbar-inverse .navbar-nav > li > a {
     margin-left: 10px;
   }
-}
+} */
 
-@media (max-width: 900px) {
+/* @media (max-width: 900px) {
 
     ul#mysidebar {
         max-width: 100%;
     }
-}
+} */
 
 .col-md-9 img {
     max-width: 100%;

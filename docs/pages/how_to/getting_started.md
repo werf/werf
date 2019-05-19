@@ -46,12 +46,12 @@ To implement these steps and requirements with werf we will add a special file c
 
 2.  In the project root directory create a `werf.yaml` with the following contents:
 
-    <div class="tab">
-      <button class="tablinks active" onclick="openTab(event, 'Ansible')">Ansible</button>
-      <button class="tablinks" onclick="openTab(event, 'Shell')">Shell</button>
+    <div class="tabs">
+      <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'Ansible')">Ansible</a>
+      <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'Shell')">Shell</a>
     </div>
 
-    <div id="Ansible" class="tabcontent active" markdown="1">
+    <div id="Ansible" class="tabs__content active" markdown="1">
     {% raw %}
     ```yaml
     project: symfony-demo
@@ -149,7 +149,7 @@ To implement these steps and requirements with werf we will add a special file c
     {% endraw %}
     </div>
 
-    <div id="Shell" class="tabcontent" markdown="1">
+    <div id="Shell" class="tabs__content" markdown="1">
     {% raw %}
     ```yaml
     project: symfony-demo

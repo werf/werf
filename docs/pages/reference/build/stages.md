@@ -24,18 +24,18 @@ A ***stage*** is a logically grouped set of config instructions, as well as the 
 
 The werf assembly process is a sequential build of _stages_. Werf uses different _stage conveyor_ for assembling a particular type of build object. A ***stage conveyor*** is a statically defined sequence of _stages_. The set of _stages_ and their order is predetermined.
 
-<div class="tab">
-  <button class="tablinks active" onclick="openTab(event, 'image')">Image</button>
-  <button class="tablinks" onclick="openTab(event, 'artifact')">Artifact</button>
+<div class="tabs">
+  <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'image')">Image</a>
+  <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'artifact')">Artifact</a>
 </div>
 
-<div id="image" class="tabcontent active">
+<div id="image" class="tabs__content active">
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=2000&amp;h=881" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=821&amp;h=362" >
 </a>
 </div>
 
-<div id="artifact" class="tabcontent">
+<div id="artifact" class="tabs__content">
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
 </a>
