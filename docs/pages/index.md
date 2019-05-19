@@ -8,7 +8,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Content based<br/>
+                Content-based<br/>
                 delivery tool
             </h1>
             <div class="welcome__subtitle">
@@ -52,7 +52,7 @@ layout: default
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                Fully compatible with Helm. Easy RBAC definition. Control deploy process behaviour with annotations. Waits for resources readiness. Prints logs and errors. Easy debug of problems without additional kubectl invocations.
+                Fully compatible with Helm. Easy RBAC definition. Control deploy process behavior with annotations. Waits for resources readiness. Prints logs and errors. Easy debug of problems without additional kubectl invocations.
             </div>
         </li>
         <li class="intro-extra__item">
@@ -60,7 +60,7 @@ layout: default
                 Lifecycle management
             </div>
             <div class="intro-extra__item-text">
-                Automatic image naming. Policy based registry cleanup. Debug and diagnostic instruments.
+                Automatic image naming. Policy-based registry cleanup. Debug and diagnostic instruments.
             </div>
         </li>
     </ul>
@@ -164,7 +164,7 @@ layout: default
                 Complete documentation
             </div>
             <div class="documentation__info-text">
-                Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture as well as CLI commands.
+                Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
             </div>
         </div>
         <div class="documentation__btns">
