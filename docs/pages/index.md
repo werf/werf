@@ -69,7 +69,7 @@ layout: default
 <div class="stats">
     <div class="page__container">
         <div class="stats__content">
-            <div class="stats__title">Active development & intergation</div>
+            <div class="stats__title">Active development & integration</div>
             <ul class="stats__list">
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">4</div>
