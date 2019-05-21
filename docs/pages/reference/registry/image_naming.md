@@ -5,29 +5,28 @@ permalink: reference/registry/image_naming.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
-Werf builds and tags docker images to run and push in a registry. For tagging images werf uses a `REPO` and image tag parameters (`--tag-*`) in the following commands:
+Werf builds and tags docker images to run and push in a registry. For tagging images werf uses a [_images repo_](#images-repo) and image tag parameters (`--tag-*`) in the following commands:
 * [Publish commands]({{ site.baseurl }}/reference/registry/publish.html)
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html)
 * [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy)
 
 ## Werf tag procedure
-
 In a Docker world a tag is a creating an alias name for existent docker image.
 
 In Werf world tagging creates **a new image layer** with the specified name. Werf stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
 
-## `--images-repo REPO` option
+## Images repo
 
-For all commands related to a docker registry, werf uses a single option named `--images-repo REPO`. 
+The _images repo_ is Docker Repo to store images, can be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
 
-Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
+Using _images repo_ werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
-* If werf project contains nameless image, werf uses `REPO` as docker repository.
-* Otherwise, werf constructs docker repository name for each image by following template `REPO/IMAGE_NAME`.
+* If werf project contains nameless image, werf uses _images repo_ as docker repository.
+* Otherwise, werf constructs docker repository name for each image by following template `IMAGES_REPO/IMAGE_NAME`.
 
-E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
+E.g., if there is unnamed image in a `werf.yaml` config and _images repo_ is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
 * `myregistry.myorg.com/sys/backend/server` for `server` image;
 * `myregistry.myorg.com/sys/backend/worker` for `worker` image.
 

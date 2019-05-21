@@ -1,258 +1,281 @@
 entries:
-- name: from
-  type: "app artifact"
-  signatures:
-  - name: from <image>
-    dependence:
-    - from-werf-image
-  - name: from <cache_version>
-    dependence:
-    - from-werf-cache-version
-  - name: mount
-    dependence:
-    - from-werf-to
-  werf_base: "docker.from &lt;image&gt;[, cache_version: &lt;cache_version&gt;]<br />mount &lt;to&gt;"
-- name: before_install
-  type: "app artifact"
-  signatures:
-  - name: from.signature
-    dependence:
-    - from-signature
-  - name: before_install.context
-    dependence:
-    - before-install-context
-  context_shell:
-  - name: before install <cmd>
-    dependence:
-    - before-install-werf-cmd
-  context_chef:
-  - name: реклама
-    dependence:
-    - before-install-werf
-  werf_shell: "shell.before_install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
-- name: before_install_artifact
-  type: "app artifact"
-  signatures:
-  - name: before_install_signature
-    dependence:
-    - before-install-signature
-  - name: before install artifacts signatures
-  - name: before install artifacts parameters
-    dependence:
-    - before-install-artifact-werf
-  werf_base: "artifact &lt;where_to_add&gt;, before: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: git_artifact_archive
-  type: "app artifact"
-  signatures:
-  - name: before_install_artifact.signature
-    dependence:
-    - before-install-artifact-signature
-  - name: git artifacts parameters
-    dependence:
-    - git-artifact-archive-werf
-  werf_base: "git_artifact.local &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />git_artifact.remote &lt;url&gt;, &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: git_artifact_pre_install_patch
-  type: "app artifact"
-  signatures:
-  - name: git_artifact_archive.signature
-    dependence:
-    - git-artifact-archive-signature
-  - name: install.context
-    dependence:
-    - install-context
-- name: install
-  type: "app artifact"
-  signatures:
-  - name: git_artifact_pre_install_patch.signature
-    dependence:
-    - git-artifact-pre-install-patch-signature
-  context_base:
-  - name: install git dependencies
-  context_shell:
-  - name: install <cmd>
-    dependence:
-    - install-werf-cmd
-  context_chef:
-  - name: реклама
-    dependence:
-    - install-werf-mod
-    - install-werf-recipe
-  werf_shell: "shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
-- name: git_artifact_post_install_patch
-  type: "app artifact"
-  signatures:
-  - name: install.signature
-    dependence:
-    - install-signature
-  - name: before_setup.context
-    dependence:
-    - before-setup-context
-- name: after_install_artifact
-  type: "app artifact"
-  signatures:
-  - name: git_artifact_post_install_patch.signature
-    dependence:
-    - git-artifact-post-install-patch-signature
-  - name: after install artifacts signatures
-  - name: after install artifacts parameters
-    dependence:
-    - after-install-artifact-werf
-  werf_base: "artifact &lt;where_to_add&gt;, after: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: before_setup
-  type: "app artifact"
-  signatures:
-  - name: after_install_artifact.signature
-    dependence:
-    - after-install-artifact-signature
-  context_base:
-  - name: before_setup git dependencies
-  context_shell:
-  - name: before_setup <cmd>
-    dependence:
-    - before_setup-werf-cmd
-  context_chef:
-  - name: реклама
-    dependence:
-    - before_setup-werf
-  werf_shell: shell.before_setup <cmd&gt;[, <cmd&gt; ...]
-  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
-- name: before_setup_artifact
-  type: "app artifact"
-  signatures:
-  - name: before_setup.signature
-    dependence:
-    - before-setup-signature
-  - name: before setup artifacts signatures
-  - name: before setup artifacts parameters
-    dependence:
-    - before-setup-artifact-werf
-  werf_base: "artifact &lt;where_to_add&gt;, before: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: git_artifact_pre_setup_patch
-  type: "app artifact"
-  signatures:
-  - name: before_setup_artifact.signature
-    dependence:
-    - before-setup-artifact-signature
-  - name: setup.context
-    dependence:
-    - setup-context
-- name: setup
-  type: "app artifact"
-  signatures:
-  - name: git_artifact_pre_setup_patch.signature
-    dependence:
-    - git-artifact-pre-setup-patch-signature
-  context_base:
-  - name: setup git dependencies
-  context_shell:
-  - name: setup <cmd>
-    dependence:
-    - setup-werf-cmd
-  context_chef:
-  - name: реклама
-    dependence:
-    - setup-werf-mod
-    - setup-werf-recipe
-  werf_shell: "shell.setup &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
-- name: git_artifact_post_setup_patch
-  type: "app"
-  signatures:
-  - name: setup.signature
-    dependence:
-    - setup-signature
-  - name: git artifacts patch size
-- name: after_setup_artifact
-  type: "app"
-  signatures:
-  - name: git_artifact_post_setup_patch.signature
-    dependence:
-    - git-artifact-post-setup-patch-signature
-  - name: after setup artifacts signatures
-  - name: after setup artifacts parameters
-    dependence:
-    - after-setup-artifact-werf
-  werf_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: after_setup_artifact (not app)
-  type: "artifact"
-  signatures:
-  - name: setup.signature
-    dependence:
-    - setup-signature
-  - name: after setup artifacts signatures
-  - name: after setup artifacts parameters
-    dependence:
-    - after-setup-artifact-not-app-werf
-  werf_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: git_artifact_latest_patch
-  type: "app"
-  signatures:
-  - name: after_setup_artifact.signature
-    dependence:
-    - after-setup-artifact-signature
-  - name: git artifacts latest patches
-- name: docker_instructions
-  type: "app"
-  signatures:
-  - name: git_artifact_latest_patch.signature
-    dependence:
-    - git-artifact-latest-patch-signature
-  - name: docker instructions
-    dependence:
-    - docker-instructions-werf
-  werf_base: "docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
-- name: import_artifact
-  type: "scratch"
-  signatures:
-  - name: import artifact artifacts signatures
-  - name: import artifact artifacts parameters
-    dependence:
-    - import-artifact-werf-where-to-add
-    - import-artifact-werf-cwd
-    - import-artifact-werf-paths
-    - import-artifact-werf-exclude-paths
-    - import-artifact-werf-owner
-    - import-artifact-werf-group
-  - name: docker instructions
-    dependence:
-    - import-artifact-werf-cmd
-    - import-artifact-werf-arg
-    - import-artifact-werf-env-name
-    - import-artifact-werf-env-value
-    - import-artifact-werf-expose
-    - import-artifact-werf-label-key
-    - import-artifact-werf-label-value
-    - import-artifact-werf-user
-    - import-artifact-werf-volume
-    - import-artifact-werf-path-26
-  werf_base: "artifact &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
-- name: git_artifact_artifact_patch
-  type: "artifact"
-  signatures:
-  - name: after_setup_artifact.signature
-    dependence:
-    - after-setup-artifact-not-app-signature
-  - name: build_artifact.context
-    dependence:
-    - build-artifact-context
-- name: build_artifact
-  type: "artifact"
-  signatures:
-  - name: git_artifact_artifact_patch.signature
-    dependence:
-    - git-artifact-artifact-patch-signature
-  context_base:
-  - name: build artifact git dependencies
-  context_shell:
-  - name: shell.build_artifact <cmd>
-    dependence:
-    - build-artifact-werf-cmd
-  context_chef:
-  - name: реклама
-    dependence:
-    - build_artifact-werf-mod
-    - build_artifact-werf-recipe
-  werf_shell: "shell.build_artifact &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+  - name: from
+    type: "image artifact"
+    dependencies:
+      - from
+      - or from image id
+      - or from artifact id
+      - "actual digest from registry (if fromLatest: true)"
+      - fromCacheVersion
+      - mounts
+    references:
+      - name: "Base image"
+        link: "https://werf.io/reference/build/base_image.html"
+      - name: "Reducing image size and speeding up a build by mounts"
+        link: "https://werf.io/reference/build/mount_directive.html"
+    werf_config: |
+      from: <image[:<tag>]>
+      fromLatest: <bool>
+      fromCacheVersion: <arbitrary string>
+      fromImage: <image name>
+      fromImageArtifact: <artifact name>
+      mount:
+      - from: build_dir
+        to: <absolute path>
+      - from: tmp_dir
+        to: <absolute path>
+      - fromPath: <absolute path>
+        to: <absolute path>
+  - name: beforeInstall
+    type: "image artifact"
+    dependencies:
+      - beforeInstall bash commands or ansible tasks
+      - cacheVersion
+      - beforeInstallCacheVersion
+    references:
+      - name: "Running assembly instructions"
+        link: "https://werf.io/reference/build/assembly_instructions.html"
+    werf_config: |
+      shell:
+        beforeInstall:
+        - <bash command>
+        cacheVersion: <arbitrary string>
+        beforeInstallCacheVersion: <arbitrary string>
+
+      or
+
+      ansible:
+        beforeInstall:
+        - <task>
+        cacheVersion: <arbitrary string>
+        beforeInstallCacheVersion: <arbitrary string>
+  - name: importsBeforeInstall
+    type: "image artifact"
+    dependencies:
+      - imports before install
+    references:
+      - name: "Importing from images and artifacts"
+        link: "https://werf.io/reference/build/import_directive.html"
+    werf_config: |
+      import:
+      - artifact: <artifact name>
+        before: install
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+  - name: gitArchive
+    type: "image artifact"
+    dependencies:
+      - git mappings
+    references:
+      - name: "Adding source code from git repositories"
+        link: "https://werf.io/reference/build/git_directive.html"
+    werf_config: |
+      git:
+      - add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+      - url: <git repo url>
+        branch: <branch name>
+        commit: <commit>
+        tag: <tag>
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+  - name: install
+    type: "image artifact"
+    dependencies:
+      - install bash commands or ansible tasks
+      - installCacheVersion
+      - git files hashsum by install stageDependency
+    references:
+      - name: "Running assembly instructions"
+        link: "https://werf.io/reference/build/assembly_instructions.html"
+      - name: "Dependency on git repo changes"
+        link: "https://werf.io/reference/build/assembly_instructions.html#dependency-on-git-repo-changes"
+    werf_config: |
+      git:
+      - stageDependencies:
+          install:
+          - <relative path or glob>
+
+      shell:
+        install:
+        - <bash command>
+        installCacheVersion: <arbitrary string>
+
+      or
+
+      ansible:
+        install:
+        - <task>
+        installCacheVersion: <arbitrary string>
+  - name: importsAfterInstall
+    type: "image artifact"
+    dependencies:
+      - imports after install
+    werf_config: |
+      import:
+      - artifact: <artifact name>
+        after: install
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+    references:
+      - name: "Importing from images and artifacts"
+        link: "https://werf.io/reference/build/import_directive.html"
+  - name: beforeSetup
+    type: "image artifact"
+    dependencies:
+      - beforeSetup bash commands or ansible tasks
+      - beforeSetupCacheVersion
+      - git files hashsum by beforeSetup stageDependency
+    references:
+      - name: "Running assembly instructions"
+        link: "https://werf.io/reference/build/assembly_instructions.html"
+      - name: "Dependency on git repo changes"
+        link: "https://werf.io/reference/build/assembly_instructions.html#dependency-on-git-repo-changes"
+    werf_config: |
+      git:
+      - stageDependencies:
+          beforeSetup:
+          - <relative path or glob>
+
+      shell:
+        beforeSetup:
+        - <bash command>
+        beforeSetupCacheVersion: <arbitrary string>
+
+      or
+
+      ansible:
+        beforeSetup:
+        - <task>
+        beforeSetupCacheVersion: <arbitrary string>
+  - name: importsBeforeSetup
+    type: "image artifact"
+    dependencies:
+      - imports before setup
+    werf_config: |
+      import:
+      - artifact: <artifact name>
+        before: setup
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+    references:
+      - name: "Importing from images and artifacts"
+        link: "https://werf.io/reference/build/import_directive.html"
+  - name: setup
+    type: "image artifact"
+    dependencies:
+      - setup bash commands or ansible tasks
+      - setupCacheVersion
+      - git files hashsum by setup stageDependency
+    references:
+      - name: "Running assembly instructions"
+        link: "https://werf.io/reference/build/assembly_instructions.html"
+      - name: "Dependency on git repo changes"
+        link: "https://werf.io/reference/build/assembly_instructions.html#dependency-on-git-repo-changes"
+    werf_config: |
+      git:
+      - stageDependencies:
+          setup:
+          - <relative path or glob>
+
+      shell:
+        setup:
+        - <bash command>
+        setupCacheVersion: <arbitrary string>
+
+      or
+
+      ansible:
+        setup:
+        - <task>
+        setupCacheVersion: <arbitrary string>
+  - name: gitCache
+    type: "image"
+    dependencies:
+      - size of git diff between last used commit and actual
+    references:
+      - name: "More details: gitArchive, gitCache, gitLatestPatch"
+        link: "https://werf.io/reference/build/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+  - name: importsAfterSetup
+    type: "image artifact"
+    dependencies:
+      - imports after setup
+    werf_config: |
+      import:
+      - artifact: <artifact name>
+        after: setup
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+    references:
+      - name: "Importing from images and artifacts"
+        link: "https://werf.io/reference/build/import_directive.html"
+  - name: gitLatestPatch
+    type: "image"
+    dependencies:
+      - presence of git diff changes between last used commit and actual
+    references:
+      - name: "More details: gitArchive, gitCache, gitLatestPatch"
+        link: "https://werf.io/reference/build/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+  - name: dockerInstructions
+    type: "image"
+    dependencies:
+      - docker instructions
+    references:
+      - name: Adding docker instructions
+        link: "https://werf.io/reference/build/docker_directive.html"
+    werf_config: |
+      docker:
+        VOLUME:
+        - <volume>
+        EXPOSE:
+        - <expose>
+        ENV:
+          <env name>: <env value>
+        LABEL:
+          <label name>: <label value>
+        ENTRYPOINT:
+        - <entrypoint>
+        CMD:
+        - <cmd>
+        ONBUILD:
+        - <onbuild>
+        WORKDIR: <workdir>
+        USER: <user>
+        STOPSIGNAL: <stopsignal>
+        HEALTHCHECK: <healthcheck>

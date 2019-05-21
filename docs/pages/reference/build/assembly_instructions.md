@@ -58,7 +58,7 @@ summary: |
 
 ## What is user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages_and_images.html) with _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Werf
 defines 4 _user stages_ and executes them in this order: _beforeInstall_, _install_,
 _beforeSetup_ and _setup_. Assembly instructions from one stage are executed to
@@ -422,7 +422,7 @@ src: {{`{{item}}`}}
 ## User stages dependencies
 
 One of the werf features is an ability to define dependencies for _stage_ rebuild.
-As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages.html), _stages_ are built one by one, and each _stage_ has
+As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages_and_images.html), _stages_ are built one by one, and each _stage_ has
 a calculated _stage signature_. _Signatures_ have various dependencies. When
 dependencies are changed, the _stage signature_ is changed, and werf rebuild this _stage_ and
 all following _stages_.
