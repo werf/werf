@@ -5,7 +5,7 @@ permalink: reference/deploy/deploy_to_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf uses [Helm](https://helm.sh/) Kubernetes package manager to deploy applications into kubernetes. Before using Werf for deploy you should install Helm and its back-end Tiller, [see installation for details]({{ site.baseurl }}/how_to/installation.html).
+Werf uses [Helm](https://helm.sh/) Kubernetes package manager to deploy applications into kubernetes. Before using Werf for deploy you should install Werf [dependencies]({{ site.baseurl }}/#install-dependencies).
 
 ## Helm chart
 

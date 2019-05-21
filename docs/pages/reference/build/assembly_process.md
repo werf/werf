@@ -15,4 +15,4 @@ Multiple build commands can run at the same time on the same host. When building
 
 When another build process is holding a lock for a stage, werf waits until this process releases a lock. Then werf proceeds to the next stage.
 
-The reason is no need to build the same stage multiple times. Werf build process can wait until another process finishes build and puts _stage_ into the _stages cache_.
+The reason is no need to build the same stage multiple times. Werf build process can wait until another process finishes build and puts _stage_ into the _stages storage_.

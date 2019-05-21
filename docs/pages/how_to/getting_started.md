@@ -47,8 +47,8 @@ To implement these steps and requirements with werf we will add a special file c
 2.  In the project root directory create a `werf.yaml` with the following contents:
 
     <div class="tabs">
-      <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'Ansible')">Ansible</a>
-      <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'Shell')">Shell</a>
+      <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'Ansible')">Ansible</a>
+      <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'Shell')">Shell</a>
     </div>
 
     <div id="Ansible" class="tabs__content active" markdown="1">

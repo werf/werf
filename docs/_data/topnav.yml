@@ -15,9 +15,5 @@ topnav:
     - title: CLI
       directory: /cli/
       url: /cli/
-  # - title: Community
-  #   url: /community.html
   - title: Publications <span>(ru)</span>
     url: /publications.html
-  # - title: GitHub
-  #   external_url: https://github.com/flant/werf

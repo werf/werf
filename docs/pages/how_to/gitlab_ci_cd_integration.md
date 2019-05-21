@@ -61,7 +61,7 @@ On the Werf node, you need to install and set up GitLab runner. Follow these ste
    ```
 
 1. [Install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl (of course if they are not already installed).
-1. Install [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) including Helm.
+1. Install [Werf dependencies]({{ site.baseurl }}/#install-dependencies).
 1. Install [`Multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
    ```

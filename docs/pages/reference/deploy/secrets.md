@@ -43,7 +43,7 @@ Using the `.werf_secret_key` file is much safer and more convenient, because:
 
 The `.helm/secret-values.yaml` file is designed for storing secret values.
 
-It is decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). If no encryption key is available at the moment of werf launch, the values are decoded into empty strings.
+It is decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md).
 
 This is what a file containing encrypted values may look like:
 ```yaml
@@ -68,7 +68,7 @@ mysql:
 
 ## Secret file encryption
 
-Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `werf_secret_file` method (that generates werf `_werf_helpers.tpl` in the deployment process), you can get decrypted file content in a template (the method returns an empty string if no encryption key is available).
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `werf_secret_file` method (that generates werf `_werf_helpers.tpl` in the deployment process), you can get decrypted file content in a template.
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
