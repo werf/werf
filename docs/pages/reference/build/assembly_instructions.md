@@ -8,8 +8,8 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'shell')">Shell</a>
-    <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'ansible')">Ansible</a>
+    <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+    <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
   </div>
 
   <div id="shell" class="tabs__content active">
@@ -58,7 +58,7 @@ summary: |
 
 ## What is user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages_and_images.html) with _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Werf
 defines 4 _user stages_ and executes them in this order: _beforeInstall_, _install_,
 _beforeSetup_ and _setup_. Assembly instructions from one stage are executed to
@@ -221,7 +221,7 @@ These commands transform into this command for _user stage assembly container_:
 bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLWVzc2VudGlhbCBnKysgbGliY3VybDQK | base64 --decode)'
 ```
 
-`bash` and `base64` binaries are stored in _werfdeps volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`bash` and `base64` binaries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
 
 ## Ansible
 
@@ -270,7 +270,7 @@ into the _user stage assembly container_:
 - use sudo for privilege escalation (no need to use `become` in tasks)
 
 `hosts` is an inventory file and contains the only localhost. Also, there are some
-ansible_* settings, i.e., the path to python in werfdeps.
+ansible_* settings, i.e., the path to python in stapel.
 
 `playbook.yml` is a playbook with all tasks from one _user stage_. For example,
 `werf.yaml` with _install_ stage like this:
@@ -313,7 +313,7 @@ $ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
 $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
 
-`ansible` and `python` binaries and libraries are stored in _werfdeps/ansible volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`ansible` and `python` binaries and libraries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
 
 ### Supported modules
 
@@ -422,7 +422,7 @@ src: {{`{{item}}`}}
 ## User stages dependencies
 
 One of the werf features is an ability to define dependencies for _stage_ rebuild.
-As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages.html), _stages_ are built one by one, and each _stage_ has
+As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages_and_images.html), _stages_ are built one by one, and each _stage_ has
 a calculated _stage signature_. _Signatures_ have various dependencies. When
 dependencies are changed, the _stage signature_ is changed, and werf rebuild this _stage_ and
 all following _stages_.

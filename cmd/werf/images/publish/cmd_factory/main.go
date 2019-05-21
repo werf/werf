@@ -19,7 +19,7 @@ import (
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "publish [IMAGE_NAME...]",
-		Short: "Build images and push into images repo.",
+		Short: "Build final images from stages and push into images repo",
 		Long: common.GetLongCommandDescription(`Build final images using each specified tag with the tagging strategy and push into images repo.
 
 New docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://werf.io/reference/registry/image_naming.html.

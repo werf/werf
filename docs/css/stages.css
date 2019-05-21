@@ -1,85 +1,73 @@
 /* colors */
 div.stage-base { background-color: #cfe2f3; }
-div.stage-tips { background-color: darkseagreen; }
-div.signature { background-color: #6fa8dc; }
-div.context { background-color: #a4c2f4; }
-div.werf_config { background-color: #efefef; }
-div.werf_config > div { background-color: #cccccc; }
-div.signature > div:hover, div.context > div:hover { background-color: #3d85c6; }
-div.werf_config span > span:hover { background-color: grey; }
-div.stages .dependence { background-color: yellow; }
-div.stages .inverse-dependence { background-color: orange; }
-div.signature > div, div.stages div.signature.dependence > div, div.context > div, div.stages div.context.dependence > div { background-color: #9fc5e8; }
+
+div.dependencies {
+  background-color: #6fa8dc;
+}
+
+div.stage {
+  background-color: #efefef;
+}
+
+div.dependencies > div {
+  background-color: #9fc5e8;
+}
+
+div.werf-config div.highlight {
+  background: none;
+}
 
 /* display */
 div.stage > div.stage-body { display: flex; }
 div.stage > div.stage-body > div { display: inline-block; }
-div.stage > div.stage-body > div.werf_config div > span { display: block }
+
+div.stage > div.stage-body > div.werf-config div > span {
+  display: block
+}
 .hidden { display: none }
-div.stage-tips div { display: none }
-div.stage-base > div, div.werf_config span > span { cursor: pointer }
 
-/* other */
-div.stages { font-size: 12px; }
-div.stage > div.stage-body div, div.stage-tips > div {
-  padding: 5px 10px;
-}
-
-div.stage > div.stage-body div {
-  margin-bottom: 5px;
-  border: 1px solid;
-}
-
-div.stage > div.stage-body > div {
-  width: 50%;
+/* margin and padding */
+div.werf-config pre.highlight {
   margin: 0;
 }
 
-div.signature > div, div.context > div {
-  padding: 2px 10px;
+div.stage > div.stage-body > div {
+  padding: 20px;
 }
 
-div.werf_config {
+div.werf-config > div, div.dependencies > div {
+  margin: 22px 0;
+}
+
+div.dependencies > div {
+  margin: 8px;
+  padding: 4px 14px;
+}
+
+div.references > ul {
+  margin: 5px 0;
+}
+
+div.references > ul > li {
+  margin: 0;
+  padding: 0;
+}
+
+/* other */
+div.stage-base {
+  width: 45%
+}
+
+div.werf-config {
   float: right;
+  width: 55%;
 }
 
-/* radio */
-label {
-  display: inline-block;
-  cursor: pointer;
-  position: relative;
-  padding-left: 25px;
-  margin-right: 15px;
-  font-size: 13px;
+div.stage-base > p {
+  font-weight: bold;
+  margin: 0;
 }
 
-input[type=radio] {
-  display: none;
-}
-
-label:before {
-  content: "";
-  display: inline-block;
-
-  width: 16px;
-  height: 16px;
-
-  margin-right: 10px;
-  position: absolute;
-  left: 0;
-  bottom: 1px;
-  background-color: #aaa;
-  box-shadow: inset 0px 2px 3px 0px rgba(0, 0, 0, .3), 0px 1px 0px 0px rgba(255, 255, 255, .8);
-}
-
-.radio label:before {
-  border-radius: 8px;
-}
-
-input[type=radio]:checked + label:before {
-  content: "\2022";
-  color: #f3f3f3;
-  font-size: 30px;
-  text-align: center;
-  line-height: 18px;
+div.stage-body, div.stage-body div.dependencies {
+  border: 1px solid;
 }

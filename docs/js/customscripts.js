@@ -54,7 +54,7 @@ $(function() {
 
 // Load versions and append them to topnavbar
 $( document ).ready(function() {
-  $.getJSON('/latest/js/channels.json').success(function(resp){
+    $.getJSON('/assets/channels.json').success(function (resp) {
     var releasesInfo = resp;
 
     var match = document.location.href.match(/(v[^/]*|master|latest)/);
@@ -62,19 +62,20 @@ $( document ).ready(function() {
     if (match) {
       currentRelease = match[1];
       currentChannel = releasesInfo.releases[currentRelease] && releasesInfo.releases[currentRelease][0];
-      if ((currentRelease == 'master') || (currentRelease == 'latest')) { currentChannel = currentRelease; };
+        if ((currentRelease == 'master') || (currentRelease == 'latest')) {
+            currentChannel = currentRelease;
+        }
     }
 
-    console.log('releasesInfo: ',releasesInfo)
-    console.log('currentRelease: ',currentRelease)
-    console.log('currentChannel: ',currentChannel )
+        console.log('releasesInfo: ', releasesInfo);
+        console.log('currentRelease: ', currentRelease);
+        console.log('currentChannel: ', currentChannel);
 
 
     if (!( currentRelease in releasesInfo['releases'] )) {
       $('#outdatedWarning').addClass('active');
-    };
-
-    var menu = $('#doc-versions-menu');
+    }
+        var menu = $('#doc-versions-menu');
     menu.addClass('header__menu-item header__menu-item_parent');
     var toggler = $('<a href="#">');
     // toggler.addClass('dropdown-toggle');
@@ -91,8 +92,8 @@ $( document ).ready(function() {
           link.append('&nbsp; / ');
           link.append(channel);
         });
-      };
-      var item = $('<li class="header__submenu-item">');
+      }
+        var item = $('<li class="header__submenu-item">');
       // if (release == currentRelease)
       //   item.addClass('dropdownActive');
       item.html(link);

@@ -29,7 +29,7 @@ _Base image_ can be declared with `from`, `fromImage` or `fromImageArtifact` dir
 
 ## from and fromCacheVersion
 
-The `from` directive sets the name and tag of a _base image_ to build _from_ stage. If absent, tag defaults to `latest`.
+The `from` directive defines the name and tag of a _base image_. If absent, tag defaults to `latest`.
 
 ```yaml
 from: <image>[:<tag>]
@@ -52,7 +52,7 @@ fromCacheVersion: {{ env "FROM_IMAGE_DIGEST" }}
 
 ## fromImage and fromImageArtifact
 
-Besides using docker image from a repository, _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
@@ -62,7 +62,7 @@ fromImageArtifact: <artifact name>
 If a _base image_ is specific to a particular application,
 it is reasonable to store its description with _images_ and _artifacts_ which are used it as opposed to storing the _base image_ in a registry.
 
-Also, this method can be helpful if the stages of _stage conveyor_ are not enough for building an image. You can design your _stage conveyor_.
+Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=1629&amp;h=1435" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=850&amp;h=673">

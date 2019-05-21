@@ -45,12 +45,8 @@ ansible:
   beforeInstall:
   - name: Install essential utils
     apt:
-      name: "{{`{{ item }}`}}"
+      name: ['curl','git','tree']
       update_cache: yes
-    with_items:
-    - curl
-    - git
-    - tree
   - name: Download the Go tarball
     get_url:
       url: {{ .GoDlPath }}{{ .GoTarball }}
@@ -63,12 +59,8 @@ ansible:
       copy: no
   - name: Install additional packages
     apt:
-      name: "{{`{{ item }}`}}"
+      name: ['gcc','sqlite3','libsqlite3-dev']
       update_cache: yes
-    with_items:
-    - gcc
-    - sqlite3
-    - libsqlite3-dev
   install:
   - name: Getting packages
     shell: |
@@ -146,7 +138,7 @@ There are often a lot of useless files in the image. In our example application,
 
 [APT](https://wiki.debian.org/Apt) saves the package list in the `/var/lib/apt/lists/` directory and also saves packages in the `/var/cache/apt/` directory when installs them. So, it is useful to store `/var/cache/apt/` outside the image and share it between builds. The `/var/lib/apt/lists/` directory depends on the status of the installed packages, and it's no good to share it between builds, but it is useful to store it outside the image to reduce its size.
 
-To optimize using APT cache add the following directives to `go-booking` image in the config:
+To optimize using APT cache add the following directives to the `go-booking` image in the config:
 
 ```yaml
 mount:
@@ -160,18 +152,16 @@ Read more about mount directives [here]({{ site.baseurl }}/reference/build/mount
 
 The `/var/lib/apt/lists` directory is filling in the build-time, but in the image, it is empty.
 
-The `/var/cache/apt/` directory is caching in the `~/.werf/builds/booking/mount` directory but in the image, it is empty. Mounts work only during werf assembly process. So, if you change stages instructions and rebuild your project, the `/var/cache/apt/` will already contain packages downloaded earlier.
+The `/var/cache/apt/` directory is caching in the `~/.werf/shared_context/mounts/projects/hotel-booking/var-cache-apt-cf3c1428/` directory but in the image, it is empty. Mounts work only during werf assembly process. So, if you change stages instructions and rebuild your project, the `/var/cache/apt/` will already contain packages downloaded earlier.
 
-Official Ubuntu image contains special hooks that remove APT cache after image build. To disable these hooks, add the following task to a beforeInstall stage of the config:
+Official Ubuntu image contains special hooks that remove APT cache after image build. To disable these hooks, add the following task to a ***beforeInstall*** stage of the config:
 
 ```yaml
-ansible:
-  beforeInstall:
-  - name: Disable docker hook for apt-cache deletion
-    shell: |
-      set -e
-      sed -i -e "s/DPkg::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
-      sed -i -e "s/APT::Update::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
+- name: Disable docker hook for apt-cache deletion
+  shell: |
+    set -e
+    sed -i -e "s/DPkg::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
+    sed -i -e "s/APT::Update::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
 ```
 
 ### Optimizing builds
@@ -219,19 +209,15 @@ mount:
   to: /usr/local/go
 ansible:
   beforeInstall:
-  - name: Disable docker hook for apt cache deletion
+  - name: Disable docker hook for apt-cache deletion
     shell: |
       set -e
       sed -i -e "s/DPkg::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
       sed -i -e "s/APT::Update::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
   - name: Install essential utils
     apt:
-      name: "{{`{{ item }}`}}"
+      name: ['curl','git','tree']
       update_cache: yes
-    with_items:
-    - curl
-    - git
-    - tree
   - name: Download the Go tarball
     get_url:
       url: {{ .GoDlPath }}{{ .GoTarball }}
@@ -244,12 +230,8 @@ ansible:
       copy: no
   - name: Install additional packages
     apt:
-      name: "{{`{{ item }}`}}"
+      name: ['gcc','sqlite3','libsqlite3-dev']
       update_cache: yes
-    with_items:
-    - gcc
-    - sqlite3
-    - libsqlite3-dev
   install:
   - name: Getting packages
     shell: |
@@ -322,9 +304,7 @@ image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes
 
 ### Analysis
 
-Werf store stages cache for project in `~/.werf/local_cache` and `~/.werf/shared_context` directory. Contents of directories mounted with `from: build_dir` parameter are placed in the `~/.werf/shared_context/mounts/projects/<project>/` directory.
-
-Analyze the structure of the `~/.werf/shared_context/mounts/projects/hotel-booking` directory. Execute the following command:
+The `~/.werf/shared_context/mounts/projects/hotel-booking/` path contains directories mounted with `from: build_dir` directives in the `werf.yaml` file. Execute the following command to analyze:
 
 ```bash
 tree -L 3 ~/.werf/shared_context/mounts/projects/hotel-booking

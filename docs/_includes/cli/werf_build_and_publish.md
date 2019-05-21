@@ -13,7 +13,7 @@ built for each tag of each image from werf.yaml. Images will be pushed into dock
 names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: 
 https://werf.io/reference/registry/image_naming.html.
 
-The result of build-and-publish command is a stages cache for images and named images pushed into 
+The result of build-and-publish command is stages in stages storage and named images pushed into 
 the docker repo.
 
 If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only 
@@ -94,7 +94,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages.html
+            More info about stages: https://werf.io/reference/build/stages_and_images.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
             multiple times to produce multiple images with the specified tags.

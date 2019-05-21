@@ -30,9 +30,9 @@ summary: |
   </div>
 ---
 
-Docker can build images by [Dockerfile](https://docs.docker.com/engine/reference/builder/) instructions. These instructions can be divided into two groups: build-time instructions and other instructions that effect on a running built image and a built image in general.  
+Docker can build images by [Dockerfile](https://docs.docker.com/engine/reference/builder/) instructions. These instructions can be divided into two groups: build-time instructions and other instructions that effect on an image manifest.  
 
-Build-time instructions don't make sense in a werf build process, therefore, werf supports only following instructions:
+Build-time instructions do not make sense in a werf build process. Therefore, werf supports only following instructions:
 
 * `USER` to set the user and the group to use when running the image (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
 * `WORKDIR` to set the working directory (read more [here](https://docs.docker.com/engine/reference/builder/#workdir)).
@@ -46,9 +46,9 @@ Build-time instructions don't make sense in a werf build process, therefore, wer
 * `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
-These instructions can be defined in the config `docker` section.
+These instructions can be specified in the `docker` config directive.
 
-Here are the example of using docker instructions:
+Here is an example of using docker instructions:
 
 ```yaml
 docker:
@@ -60,8 +60,9 @@ docker:
     LC_ALL: en_US.UTF-8
 ```
 
-Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a werf build process in general, they simply will be applied on a result image. 
+Defined docker instructions are applied on the last stage called `docker_instructions`. 
+Thus, instructions do not affect other stages, ones just will be applied to a built image.
 
 If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/reference/build/base_image.html) with these variables.
 
-> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/reference/build/assembly_instructions.html#what-is-user-stages) instructions.
+> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/reference/build/assembly_instructions.html#what-is-user-stages) instructions

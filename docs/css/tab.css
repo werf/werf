@@ -15,7 +15,8 @@
   font-stretch: normal;
   letter-spacing: normal;
   box-sizing: border-box;
-  margin-right: 10px;
+  margin: 10px;
+  margin-left: 0;
 }
 
 .tabs__btn:not(.active) {

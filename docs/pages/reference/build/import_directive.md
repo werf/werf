@@ -24,15 +24,14 @@ summary: |
   </code></pre></div></div>
 ---
 
-The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.
-
-To solve such problems, the Docker community suggests doing the installation of tools, the assembly, and removal of tools in one step.
+The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them. 
+To solve such problems, Docker community suggests doing the installation of tools, the assembly, and removal in one step.
 
 ```
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> To obtain a similar effect when using werf, it is sufficient to describe the instructions in one _user stage_. For example, the _shell assembly instructions_ for the _install stage_ (similarly for _ansible_):
+> To obtain a similar effect when using werf, it is sufficient describing the instructions in one _user stage_. For example, _shell assembly instructions_ for the _install stage_ (similarly for _ansible_):
 ```yaml
 shell:
   install:
@@ -42,9 +41,9 @@ shell:
   - "remove-source"
 ```
 
-However, with this method, it isn't possible to use caching and need to install toolkit regularly.
+However, with this method, it is not possible using a cache, so toolkit installation runs each time.
 
-Another solution is to use multi-stage builds, which are supported starting with Docker 17.05.
+Another solution is using multi-stage builds, which are supported starting with Docker 17.05.
 
 ```
 FROM node:latest AS storefront
@@ -70,32 +69,36 @@ ENTRYPOINT ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
 CMD ["--spring.profiles.active=postgres"]
 ```
 
-The meaning of such an approach is as follows, describe several auxiliary images, and selectively copy artifacts from one image to another, leaving behind everything you don’t want in the final image.
+The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
 
-We suggest the same but using [_images_]({{ site.baseurl }}/reference/config.html#image-config-section) and [_artifacts_]({{ site.baseurl }}/reference/config.html#artifact-config-section).
+We suggest the same, but using [_images_]({{ site.baseurl }}/reference/config.html#image-config-section) and [_artifacts_]({{ site.baseurl }}/reference/config.html#artifact-config-section).
 
-> Why doesn't werf use multi-stage? Historically, _imports_ appeared much earlier than Docker multi-stage, and werf gives more flexibility working with auxiliary images.
+> Why is werf not using multi-stage? 
+* Historically, _imports_ appeared much earlier than Docker multi-stage, and 
+* Werf gives more flexibility working with auxiliary images
 
 Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/reference/config.html#image-config-section) or [_artifact_]({{ site.baseurl }}/reference/config.html#artifact-config-section])). `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
 - `add: <absolute path>`: _source path_, absolute file or folder path in _source image_ for copying.
-- `to: <absolute path>`: _destination path_, absolute path in _destination image_. In case of absence, _destination path_ equals _source path_ from `add` directive.
-- `before: <install || setup>` or `after: <install || setup>`: _destination image stage_, stage importing files during _destination image_ build. At present only _install_ and _setup_ stages are supported.
+- `to: <absolute path>`: _destination path_, absolute path in _destination image_. In case of absence, _destination path_ equals _source path_ (from `add` directive).
+- `before: <install || setup>` or `after: <install || setup>`: _destination image stage_, stage for importing files. At present, only _install_ and _setup_ stages are supported.
 
 ```yaml
 import:
 - artifact: application-assets
   add: /app/public/assets
+  to: /var/www/site/assets
   after: install
 - image: frontend
   add: /app/assets
   after: setup
 ```
 
-As in the case of adding _git mappings_, masks are supported for including and excluding files from the specified path, and you can also specify the rights for the imported resources. Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
+As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path. 
+You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`. 
+Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
 
-> Import paths and _git mappings_ should not overlap with each other.
-
+> Import paths and _git mappings_ must not overlap with each other.
 
 Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/reference/build/artifact.html).

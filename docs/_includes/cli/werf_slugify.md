@@ -28,7 +28,7 @@ werf slugify STRING [options]
 
   # The result has been trimmed to fit maximum bytes limit:
   $ werf slugify -f helm-release looooooooooooooooooooooooooooooooooooooooooong_string
-  looooooooooooooooooooooooooooooooooooooooooong-stri-b150a895
+  looooooooooooooooooooooooooooooooooooooooooo-b150a895
 
   $ werf slugify -f docker-tag helo/ehlo
   helo-ehlo-b6f6ab1f
