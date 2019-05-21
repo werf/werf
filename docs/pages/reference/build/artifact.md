@@ -90,13 +90,13 @@ Read about working with _assembly instructions_ in the corresponding [article]({
 ```yaml
 artifact: <artifact_name>
 from: <image>
-fromLatest: <false || true>
+fromLatest: <bool>
 fromCacheVersion: <version>
 fromImage: <image_name>
 fromImageArtifact: <artifact_name>
 git:
 # local git
-  add: <absolute_path>
+- add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
   group: <group>
@@ -179,5 +179,5 @@ import:
   - <relative path or glob>
   excludePaths:
   - <relative path or glob>
-asLayers: <false || true>
+asLayers: <bool>
 ```

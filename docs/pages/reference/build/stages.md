@@ -25,8 +25,8 @@ A ***stage*** is a logically grouped set of config instructions, as well as the 
 The werf assembly process is a sequential build of _stages_. Werf uses different _stage conveyor_ for assembling a particular type of build object. A ***stage conveyor*** is a statically defined sequence of _stages_. The set of _stages_ and their order is predetermined.
 
 <div class="tabs">
-  <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'image')">Image</a>
-  <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'artifact')">Artifact</a>
+  <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image')">Image</a>
+  <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'artifact')">Artifact</a>
 </div>
 
 <div id="image" class="tabs__content active">

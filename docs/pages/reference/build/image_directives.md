@@ -8,13 +8,13 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ```yaml
 image: <image name... || ~>
 from: <image[:<tag>]>
-fromLatest: <false || true>
+fromLatest: <bool>
 fromCacheVersion: <arbitrary string>
 fromImage: <image name>
 fromImageArtifact: <artifact name>
 git:
 # local git
-  add: <absolute path>
+- add: <absolute path>
   to: <absolute path>
   owner: <owner>
   group: <group>
@@ -115,5 +115,5 @@ docker:
   USER: <user>
   STOPSIGNAL: <stopsignal>
   HEALTHCHECK: <healthcheck>
-asLayers: <false || true>
+asLayers: <bool>
 ```
