@@ -9,8 +9,8 @@ entries:
   - title: Build
     sf:
 
-    - title: Stages
-      url: /reference/build/stages.html
+      - title: Stages and Images
+        url: /reference/build/stages_and_images.html
 
     - title: Assembly process
       url: /reference/build/assembly_process.html

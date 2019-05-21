@@ -18,19 +18,6 @@ In Werf world tagging creates **a new image layer** with the specified name. Wer
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
 
-## `--images-repo REPO` option
-
-For all commands related to a docker registry, werf uses a single option named `--images-repo REPO`. 
-
-Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
-
-* If werf project contains nameless image, werf uses `REPO` as docker repository.
-* Otherwise, werf constructs docker repository name for each image by following template `REPO/IMAGE_NAME`.
-
-E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
-* `myregistry.myorg.com/sys/backend/server` for `server` image;
-* `myregistry.myorg.com/sys/backend/worker` for `worker` image.
-
 ## Image tag parameters
 
 | option                    | description                          |
