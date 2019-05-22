@@ -400,6 +400,7 @@ html, body, .page {
     background-repeat: no-repeat;
     background-position: center 15px;
     background-image: url('../images/backgrounds/features.svg');
+    z-index: 2;
 }
 
 .features__title {
@@ -646,6 +647,8 @@ html, body, .page {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    z-index: 2;
 }
 
 .footer__credits {
