@@ -8,7 +8,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Content-based<br/>
+                Content based<br/>
                 delivery tool
             </h1>
             <div class="welcome__subtitle">
@@ -52,7 +52,7 @@ layout: default
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                Fully compatible with Helm. Easy RBAC definition. Control deploy process behavior with annotations. Waits for resources readiness. Prints logs and errors. Easy debug of problems without additional kubectl invocations.
+                Full compatibility with Helm. Easy RBAC definition. Control of the deployment process with annotations. Control of resources readiness. Logging and error reporting. Easy debugging of problems without unnecessary kubectl invocations.
             </div>
         </li>
         <li class="intro-extra__item">
@@ -60,7 +60,7 @@ layout: default
                 Lifecycle management
             </div>
             <div class="intro-extra__item-text">
-                Automatic image naming. Policy-based registry cleanup. Debug and diagnostic instruments.
+                Automatic image naming. Policy based registry cleanup. Debugging and diagnostic tools.
             </div>
         </li>
     </ul>
@@ -79,12 +79,12 @@ layout: default
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">1200</div>
                     <div class="stats__list-item-title">installations</div>
-                    <div class="stats__list-item-subtitle">on both big and small projects</div>
+                    <div class="stats__list-item-subtitle">as part of both large and small projects</div>
                 </li>
                 <li class="stats__list-item">
                     <div class="stats__list-item-num gh_counter">563</div>
                     <div class="stats__list-item-title">stars on GitHub</div>
-                    <div class="stats__list-item-subtitle">make it more ;)</div>
+                    <div class="stats__list-item-subtitle">let’s make it more ;)</div>
                 </li>
             </ul>
         </div>
@@ -102,13 +102,13 @@ layout: default
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_changes"></div>
-                <div class="features__list-item-title">Fast changes delivery</div>
-                <div class="features__list-item-text">Don’t waste time on unchanged image parts. Optimize your building process and fasten deployment.</div>
+                <div class="features__list-item-title">Rapid delivery of changes</div>
+                <div class="features__list-item-text">Don’t waste time on unchanged image parts. Optimize your building process and speed up deployment.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
-                <div class="features__list-item-text">Build multiple images from single configuration file, share common configuration parts using go-templates.</div>
+                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using go-templates.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>
@@ -118,11 +118,11 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_ansible"></div>
                 <div class="features__list-item-title">Build images with <span>Ansible</span></div>
-                <div class="features__list-item-text">Use powerful and popular infrastructure-as-a-code tool.</div>
+                <div class="features__list-item-text">Use the powerful and popular infrastructure-as-a-code tool.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_debug"></div>
-                <div class="features__list-item-title">Advanced tools for debugging build process</div>
+                <div class="features__list-item-title">Advanced tools for debugging the build process</div>
                 <div class="features__list-item-text">In the process of assembling, you can access a certain stage using introspection options.</div>
             </li>
             <li class="features__list-item"></li>
@@ -172,7 +172,7 @@ layout: default
                 Get Werf
             </a>
             <a href="{{ site.baseurl }}/how_to/" class="page__btn page__btn_o documentation__btn">
-                Starter's guide
+                Starters guide
             </a>
             <a href="{{ site.baseurl }}/cli/" class="page__btn page__btn_o documentation__btn">
                 Explore CLI

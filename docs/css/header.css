@@ -47,7 +47,7 @@
     align-items: flex-end;
     justify-content: flex-start;
     position: relative;
-    top: -3px;
+    top: -10px;
 }
 
 .header__menu-item {

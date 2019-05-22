@@ -173,12 +173,16 @@
 }
 
 #toc > ul > li::before {
-    content: '■';
+    content: '';
+    display: block;
+    background: #00122c;
+    width: 6px;
+    height: 6px;
     position: absolute;
     left: 15px;
-    top: 0px;
-    display: block;
-    color: #00122c;
+    top: 12px;
+    border: none;
+    border-radius: 0px;
 }
 
 #toc ul ul {
@@ -199,12 +203,16 @@
 }
 
 #toc ul ul > li::before {
-    content: '–';
+    content: '';
+    display: block;
+    background: #00122c;
+    width: 8px;
+    height: 1px;
     position: absolute;
     left: 5px;
-    top: 12px;
-    line-height: 6px;
-    color: #00122c;
+    top: 15px;
+    border: none;
+    border-radius: 0px;
 }
 
 #toc ul ul ul {
@@ -225,12 +233,16 @@
 }
 
 #toc ul ul ul li::before {
-    content: '–';
+    content: '';
+    display: block;
+    background: #00122c;
+    width: 6px;
+    height: 1px;
     position: absolute;
-    left: 5px;
-    top: 12px;
-    line-height: 6px;
-    color: #00122c;
+    left: 7px;
+    top: 15px;
+    border: none;
+    border-radius: 0px;
 }
 
 .docs b, .docs strong {
@@ -261,14 +273,20 @@
     line-height: 1.5;
     letter-spacing: -0.3px;
     margin: 0;
-    padding: 0 0 0 30px;
+    padding: 0;
     list-style-type: none;
     /* color: #00122c; */
 }
 
-.docs ul li, .docs ol li {
+.docs ul li {
     padding-bottom: 10px;
+    padding-left: 30px;
     position: relative;
+}
+
+.docs ol li {
+    padding-bottom: 10px;
+    margin-left: 30px;
 }
 
 .docs ul li:last-child, .docs ol li:last-child {
@@ -280,12 +298,15 @@
 }
 
 .docs ul > li::before {
-    content: '●';
+    content: '';
     display: block;
+    background: #0066FF;
+    width: 6px;
+    height: 6px;
+    border-radius: 6px;
     position: absolute;
-    top: 0px;
-    left: -15px;
-    color: #0066FF;
+    left: 15px;
+    top: 7px;
 }
 
 .docs ol {
@@ -293,21 +314,27 @@
 }
 
 .docs ul ul > li::before, .docs ol ol > li::before {
-    content: '○';
+    content: '';
     display: block;
+    border: 1px solid #0066FF;
+    background: transparent;
+    width: 5px;
+    height: 5px;
+    border-radius: 6px;
     position: absolute;
-    top: 0px;
-    left: -15px;
-    color: #0066FF;
+    left: 15px;
+    top: 6px;
 }
 
 .docs ul ul ul li::before, .docs ol ol ol li::before {
-    content: '■';
+    content: '';
     display: block;
+    background: #0066FF;
+    width: 4px;
+    height: 4px;
     position: absolute;
-    top: 0px;
-    left: -15px;
-    color: #0066FF;
+    left: 15px;
+    top: 8px;
 }
 
 .docs h1, .docs h2, .docs h3, .docs h4, .docs h5, .docs h6 {

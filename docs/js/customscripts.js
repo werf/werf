@@ -136,6 +136,13 @@ $( document ).ready(function() {
         $('.topsearch__input').blur();
       }
     });
+
+    $('body').on('click tap', function(e) {
+      if ($(e.target).closest('.topsearch').length === 0 && $(e.target).closest('.header').length === 0) {
+        $('.header').toggleClass('header_search');
+        $('.topsearch').removeClass('topsearch_active');
+      }
+    });
   });
 
 });
