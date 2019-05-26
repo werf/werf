@@ -219,7 +219,7 @@ git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 To build an application with all of its components create the following `werf.yaml` **in the root folder** of the repository:
 
 <div class="details active">
-<a href="javascript:0;" class="details__summary">The complete <i>werf.yaml</i> file...</a>
+<a href="javascript:void(0)" class="details__summary">The complete <i>werf.yaml</i> file...</a>
 <div class="details__content" markdown="1">
 
 {% raw %}

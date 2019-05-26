@@ -109,7 +109,7 @@ Part of the configuration can be moved in ***separate template files*** and then
 Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
 
 <div class="details active">
-<a href="javascript:0;" class="details__summary">werf.yaml</a>
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
@@ -136,7 +136,7 @@ ansible:
 </div>
 
 <div class="details">
-<a href="javascript:0;" class="details__summary">.werf/ansible/components.tmpl</a>
+<a href="javascript:void(0)" class="details__summary">.werf/ansible/components.tmpl</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
@@ -202,7 +202,7 @@ ansible:
 If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in [include](#include) function.
 
 <div class="details active">
-<a href="javascript:0;" class="details__summary">werf.yaml</a>
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
@@ -239,7 +239,7 @@ docker:
 </div>
 
 <div class="details">
-<a href="javascript:0;" class="details__summary">.werf/artifact/appserver.tmpl</a>
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/appserver.tmpl</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
@@ -261,7 +261,7 @@ shell:
 </div>
 
 <div class="details active">
-<a href="javascript:0;" class="details__summary">.werf/artifact/storefront.tmpl</a>
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/storefront.tmpl</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
