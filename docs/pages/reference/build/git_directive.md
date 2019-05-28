@@ -8,8 +8,8 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'local')">Local</a>
-    <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'remote')">Remote</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'local')">Local</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'remote')">Remote</a>
   </div>
 
   <div id="local" class="tabs__content active">

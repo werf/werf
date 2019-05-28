@@ -18,8 +18,8 @@ Each _stage_ relates to one Docker image.
 The werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. Werf uses different _stage conveyor_ for assembling a particular type of build object.
 
 <div class="tabs">
-  <a href="javascript:0;" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image')">Image</a>
-  <a href="javascript:0;" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'artifact')">Artifact</a>
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image')">Image</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'artifact')">Artifact</a>
 </div>
 
 <div id="image" class="tabs__content active">
@@ -57,8 +57,8 @@ Changing these dependencies affects on a _signature_, stages reassembling.
 The tables bellow represent image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_ and contain relevant references for more information.
 
 <div class="tabs">
-  <a href="javascript:0;" id="image-dependencies" class="tabs__btn dependencies-btn">Image</a>
-  <a href="javascript:0;" id="artifact-dependencies" class="tabs__btn dependencies-btn">Artifact</a>
+  <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn">Image</a>
+  <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Artifact</a>
 </div>
 
 <div id="dependencies">

@@ -220,7 +220,7 @@ Both stages start only by schedules. You can define schedule in `CI/CD` —> `Sc
 To build the application create the following `.gitlab-ci.yml` **in the root folder** of the repository:
 
 <div class="details active">
-<a href="javascript:0;" class="details__summary">The complete <i>.gitlab-ci.yml</i> file...</a>
+<a href="javascript:void(0)" class="details__summary">The complete <i>.gitlab-ci.yml</i> file...</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
