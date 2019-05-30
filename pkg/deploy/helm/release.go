@@ -623,7 +623,7 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
 	var res ReleaseStatus
 
-	helmStatusStdout, _, helmStatusErr := HelmCmd("status", releaseName)
+	helmStatusStdout, helmStatusStderr, helmStatusErr := HelmCmd("status", releaseName)
 	if helmStatusErr == nil {
 		statusLinePrefix := "STATUS: "
 		scanner := bufio.NewScanner(strings.NewReader(helmStatusStdout))
@@ -636,11 +636,13 @@ func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
 		}
 	}
 
-	if helmStatusErr != nil {
+	if helmStatusErr != nil && strings.HasSuffix(helmStatusStderr, fmt.Sprintf("release: \"%s\" not found", releaseName)) {
 		res.IsExists = false
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
 			return ReleaseStatus{}, err
 		}
+	} else if helmStatusErr != nil {
+		return ReleaseStatus{}, fmt.Errorf("helm status cmd failed: %s:\n%s\n%s", helmStatusErr, helmStatusStdout, helmStatusStderr)
 	} else if res.Status != "" && (res.Status == "FAILED" || res.Status == "PENDING_INSTALL") {
 		res.IsExists = true
 
