@@ -623,7 +623,7 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
 	var res ReleaseStatus
 
-	helmStatusStdout, helmStatusStderr, helmStatusErr := HelmCmd("status", releaseName)
+	helmStatusStdout, helmStatusStderr, helmStatusErr := HelmCmd("statu", releaseName)
 	if helmStatusErr == nil {
 		statusLinePrefix := "STATUS: "
 		scanner := bufio.NewScanner(strings.NewReader(helmStatusStdout))
