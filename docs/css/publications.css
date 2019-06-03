@@ -29,6 +29,7 @@
   padding: .5rem 1.5rem;
   color: var(--uiTimelineSecondaryColor);
   background-color: var(--uiTimelineMainColor);
+  font-size: 0.9em;
 
   position: absolute;
   left: 0;
@@ -68,7 +69,7 @@
 }
 
 .timeline__day{
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   display: block;
 }
@@ -141,87 +142,18 @@
   font-size: 16px;
 }
 
-@media screen and (min-width: 768px){
+.timeline__content * { max-width: 100% }
 
-  html{
-    font-size: 62.5%;
-  }
-}
-
-@media screen and (max-width: 767px){
-
-  html{
-    font-size: 55%;
-  }
-}
-
-/*
-* demo page
-*/
-
-@media screen and (min-width: 768px){
-
-  html{
-    font-size: 62.5%;
-  }
-}
-
-@media screen and (max-width: 767px){
-
-  html{
-    font-size: 50%;
-  }
-}
-
-body{
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Open Sans, Ubuntu, Fira Sans, Helvetica Neue, sans-serif;
-  font-size: 1.6rem;
-  color: #222;
-
-  margin: 0;
-  -webkit-overflow-scrolling: touch;
-  overflow-y: scroll;
-}
-
-p{
+.timeline__content p{
   margin-top: 0;
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
-p:last-child{
+.timeline__content p:last-child{
   margin-bottom: 0;
 }
 
-.footer{
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  text-align: center;
-  font-size: 1.4rem;
+.timeline__content > a:first-child {
+  font-weight: bold
 }
-
-.footer__link{
-  text-decoration: none;
-  color: inherit;
-}
-
-@media screen and (min-width: 361px){
-
-  .footer__container{
-    display: flex;
-    justify-content: space-between;
-  }
-}
-
-@media screen and (max-width: 360px){
-
-  .melnik909{
-    display: none;
-  }
-}
-
-/* extra */
-
-.page a[href^="http://"]:after, .page a[href^="https://"]:after { display: none }
-.timeline__content * { max-width: 100% }
-.timeline__content > a:first-child { font-weight: bold }

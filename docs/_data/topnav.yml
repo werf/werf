@@ -15,5 +15,5 @@ topnav:
     - title: CLI
       directory: /cli/
       url: /cli/
-  - title: Publications <span>(ru)</span>
+  - title: Publications
     url: /publications.html
