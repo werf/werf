@@ -90,7 +90,7 @@ func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommi
 	var foundCommit *object.Commit
 
 	err = commitIter.ForEach(func(c *object.Commit) error {
-		if regexObj.Match([]byte(c.Message)) {
+		if c != nil && regexObj.Match([]byte(c.Message)) {
 			foundCommit = c
 			return storer.ErrStop
 		}
@@ -98,9 +98,14 @@ func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommi
 		return nil
 	})
 
+	if err != nil {
+		return "", err
+	}
+
 	if foundCommit != nil {
 		return foundCommit.Hash.String(), nil
 	}
+
 	return "", nil
 }
 
