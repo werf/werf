@@ -216,12 +216,21 @@ beforeInstall:
 - apt-get install -y build-essential g++ libcurl4
 ```
 
-These commands transform into this command for _user stage assembly container_:
-```shell
-bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLWVzc2VudGlhbCBnKysgbGliY3VybDQK | base64 --decode)'
-```
+Werf performs _user stage_ commands as follows:
+- generates temporary script on host machine
 
-`bash` and `base64` binaries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
+    ```bash
+    #!/.werf/stapel/embedded/bin/bash -e
+    
+    apt-get update
+    apt-get install -y build-essential g++ libcurl4
+    ```
+
+- mounts to corresponding _user stage assembly container_ as `/.werf/shell/script.sh`, and
+- runs the script.
+
+> `bash` binary is stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same)
+
 
 ## Ansible
 
