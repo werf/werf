@@ -51,6 +51,7 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170208215640-dcef7f557305
+	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/evanphx/json-patch v0.0.0-20190203023257-5858425f7550
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
@@ -61,6 +62,7 @@ require (
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.0
+	github.com/gliderlabs/ssh v0.1.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.0
 	github.com/go-openapi/jsonreference v0.19.0
 	github.com/go-openapi/spec v0.17.2
@@ -72,7 +74,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20160516000752-02826c3e7903
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0
-	github.com/google/go-cmp v0.2.0
+	github.com/google/go-cmp v0.3.0
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/google/shlex v0.0.0-20150127133951-6f45313302b9
 	github.com/google/uuid v1.0.0
@@ -94,12 +96,14 @@ require (
 	github.com/jaguilar/vt100 v0.0.0-20150826170717-2703a27b14ea
 	github.com/json-iterator/go v1.1.6
 	github.com/juju/ratelimit v0.0.0-20170523012141-5b9ff8664717
+	github.com/kr/pty v1.1.4 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
 	github.com/mattn/go-runewidth v0.0.1
 	github.com/mattn/go-shellwords v1.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/miekg/pkcs11 v0.0.0-20180208123018-5f6e0d0dad6f
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
@@ -131,6 +135,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8
 	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245
@@ -140,16 +145,18 @@ require (
 	github.com/uber/jaeger-client-go v0.0.0-20180103221425-e02c85f9069e
 	github.com/uber/jaeger-lib v1.2.1
 	github.com/urfave/cli v0.0.0-20171014202726-7bc6a0acffa5
+	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
-	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529
-	golang.org/x/net v0.0.0-20190509222800-a4d6f7feada5
+	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
+	golang.org/x/net v0.0.0-20190603091049-60506f45cf65
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190509141414-a5b02f93d862
+	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	golang.org/x/tools v0.0.0-20190602112858-2de7f9bf822c // indirect
 	google.golang.org/appengine v1.5.0
 	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 	google.golang.org/grpc v1.18.0
@@ -157,7 +164,9 @@ require (
 	gopkg.in/ini.v1 v1.42.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/square/go-jose.v2 v2.0.0-20180411045311-89060dee6a84
-	gopkg.in/src-d/go-git.v4 v4.10.0
+	gopkg.in/src-d/go-billy.v4 v4.3.0 // indirect
+	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
+	gopkg.in/src-d/go-git.v4 v4.11.0
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190409092523-d687e77c8ae9
