@@ -104,13 +104,14 @@ func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Im
 		image.baseImageRepoId = baseImageRepoId
 		image.baseImageRepoErr = baseImageRepoErr
 
+		image.baseImageLatest = fromLatest
+
 		c.baseImagesRepoIdsCache[from] = baseImageRepoId
 		c.baseImagesRepoErrCache[from] = baseImageRepoErr
+	} else {
+		image.baseImageImageName = fromImageName
 	}
 
-	image.baseImageLatest = fromLatest
-
-	image.baseImageImageName = fromImageName
 	image.isArtifact = imageArtifact
 
 	err := initStages(image, imageInterfaceConfig, c)
