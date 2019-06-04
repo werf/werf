@@ -74,7 +74,7 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _ imagePkg.ImageInterface) (string, error) {
+func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
 

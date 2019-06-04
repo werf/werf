@@ -9,7 +9,7 @@ type Interface interface {
 	IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error)
 	ShouldBeReset(builtImage image.ImageInterface) (bool, error)
 
-	GetDependencies(c Conveyor, prevImage image.ImageInterface) (string, error)
+	GetDependencies(c Conveyor, prevImage image.ImageInterface, prevBuiltImage image.ImageInterface) (string, error)
 
 	PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error
 
