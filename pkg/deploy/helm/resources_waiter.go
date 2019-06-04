@@ -288,7 +288,7 @@ TrackHooks:
 			}
 
 		default:
-			return fmt.Errorf("helm hook kind '%s' not supported yet, only Job hooks can be used for now", kind)
+			logboek.LogErrorF("WARNING: Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
 		}
 	}
 
