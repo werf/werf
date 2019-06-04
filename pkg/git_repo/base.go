@@ -366,16 +366,29 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
 
-	tags, err := repository.TagObjects()
+	tags, err := repository.Tags()
 	if err != nil {
 		return nil, err
 	}
 
 	res := make([]string, 0)
-	err = tags.ForEach(func(t *object.Tag) error {
-		res = append(res, t.Name)
+
+	if err := tags.ForEach(func(ref *plumbing.Reference) error {
+		obj, err := repository.TagObject(ref.Hash())
+		switch err {
+		case nil:
+			res = append(res, obj.Name)
+		case plumbing.ErrObjectNotFound:
+			res = append(res, strings.TrimPrefix(ref.Name().String(), "refs/tags/"))
+		default:
+			// Some other error
+			return err
+		}
+
 		return nil
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }
