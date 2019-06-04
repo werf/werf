@@ -31,7 +31,7 @@ type GitArchiveStage struct {
 	ContainerArchivesDir string
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())

@@ -25,7 +25,7 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
+func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
 	return s.builder.BeforeInstallChecksum(), nil
 }
 

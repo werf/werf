@@ -74,7 +74,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 			continue
 		}
 
-		stageDependencies, err := s.GetDependencies(c, prevImage)
+		stageDependencies, err := s.GetDependencies(c, prevImage, prevBuiltImage)
 		if err != nil {
 			return err
 		}

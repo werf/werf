@@ -46,7 +46,7 @@ type ImportsStage struct {
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(c Conveyor, _ imagePkg.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {

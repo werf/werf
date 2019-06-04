@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"fmt"
+
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
@@ -17,24 +19,26 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
+func (s *GitCacheStage) GetDependencies(_ Conveyor, _, prevBuiltImage image.ImageInterface) (string, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevImage)
-		if commit != "" {
-			exist, err := gitMapping.GitRepo().IsCommitExists(commit)
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage)
+		if commit == "" {
+			return "", fmt.Errorf("invalid stage image: can not find git commit in stage image labels: delete stage image %s manually and retry the build", prevBuiltImage.Name())
+		}
+
+		exist, err := gitMapping.GitRepo().IsCommitExists(commit)
+		if err != nil {
+			return "", err
+		}
+
+		if exist {
+			patchSize, err := gitMapping.PatchSize(commit)
 			if err != nil {
 				return "", err
 			}
 
-			if exist {
-				patchSize, err := gitMapping.PatchSize(commit)
-				if err != nil {
-					return "", err
-				}
-
-				size += patchSize
-			}
+			size += patchSize
 		}
 	}
 
