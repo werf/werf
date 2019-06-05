@@ -35,7 +35,7 @@ type FromStage struct {
 	cacheVersion          string
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(_ Conveyor, prevImage, _ image.ImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {

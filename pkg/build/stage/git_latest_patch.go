@@ -42,7 +42,7 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {
