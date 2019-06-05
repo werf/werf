@@ -108,7 +108,7 @@ func templatesRules(linter *support.Linter, chartPath, namespace string, values,
 		metadataName := template.Metadata.Name
 		kind := strings.ToLower(template.Kind)
 
-		_, err := prepareMultitrackSpec(metadataName, kind, template.Namespace(namespace), template.Metadata.Annotations)
+		_, err := prepareMultitrackSpec(metadataName, kind, template.Namespace(namespace), template.Metadata.Annotations, nil)
 		if err != nil {
 			linter.RunLinterRule(support.WarningSev, "templates/", err)
 		}
