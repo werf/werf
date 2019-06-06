@@ -3,6 +3,7 @@ package stage
 import (
 	"fmt"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -67,8 +68,12 @@ func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface)
 
 func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface) error {
 	for _, elm := range s.imports {
-		importFromContainerTmpPath := s.importContainerTmpPath(elm)
-		command := generateSafeCp(importFromContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
+		importContainerTmpPath := s.importContainerTmpPath(elm)
+
+		artifactTmpPath := filepath.Join(importContainerTmpPath, filepath.Base(elm.Add))
+
+		command := generateSafeCp(artifactTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
+
 		importImageTmpDir, importImageContainerTmpDir := s.importImageTmpDirs(elm)
 		volume := fmt.Sprintf("%s:%s:ro", importImageTmpDir, importImageContainerTmpDir)
 
@@ -105,7 +110,9 @@ func (s *ImportsStage) PreRunHook(c Conveyor) error {
 func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 	importContainerTmpPath := s.importContainerTmpPath(i)
 
-	imageCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
+	artifactTmpPath := filepath.Join(importContainerTmpPath, filepath.Base(i.Add))
+
+	imageCommand := generateSafeCp(i.Add, artifactTmpPath, "", "", []string{}, []string{})
 
 	stapelContainerName, err := stapel.GetOrCreateContainer()
 	if err != nil {
