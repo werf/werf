@@ -338,6 +338,10 @@ docker:
   CMD: ["/home/payment/process.sh"]
 ansible:
   beforeInstall:
+  - name: "Install shadow utils"
+    package:
+      name: shadow
+      state: present
   - name: "Create payment user"
     user:
       name: payment
@@ -393,10 +397,10 @@ sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 To run the application images, execute the following commands from the root folder of the project:
 
 ```bash
-werf run --stages-storage :local --docker-options="-d --rm --name payment_gw" payment_gw  &&
-werf run --stages-storage :local --docker-options="-d --rm --name database -p 5432:5432" database &&
-werf run --stages-storage :local --docker-options="-d --rm --name app -p 8080:8080 --link database:database" app &&
-werf run --stages-storage :local --docker-options="-d --rm --name reverse_proxy -p 80:80 -p 443:443 --link app:appserver" reverse_proxy
+werf run --stages-storage :local --docker-options="-d --name payment_gw" payment_gw  &&
+werf run --stages-storage :local --docker-options="-d --name database -p 5432:5432" database &&
+werf run --stages-storage :local --docker-options="-d --name app -p 8080:8080 --link database:database" app &&
+werf run --stages-storage :local --docker-options="-d --name reverse_proxy -p 80:80 -p 443:443 --link app:appserver" reverse_proxy
 ```
 
 Check that all containers are running, by executing:
