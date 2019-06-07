@@ -56,7 +56,7 @@ import:
   after: install
 - artifact: appserver
   add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
-  to: /app
+  to: /app/AtSea-0.0.1-SNAPSHOT.jar
   after: install
 ```
 
@@ -284,7 +284,7 @@ import:
   after: install
 - artifact: appserver
   add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
-  to: /app
+  to: /app/AtSea-0.0.1-SNAPSHOT.jar
   after: install
 ---
 image: reverse_proxy
