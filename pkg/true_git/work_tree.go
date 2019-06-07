@@ -44,11 +44,6 @@ func prepareWorkTree(gitDir, workTreeDir string, commit string, withSubmodules b
 	if withSubmodules {
 		var err error
 
-		err = deinitSubmodules(gitDir, workTreeDir)
-		if err != nil {
-			return fmt.Errorf("cannot deinit submodules: %s", err)
-		}
-
 		err = syncSubmodules(gitDir, workTreeDir)
 		if err != nil {
 			return fmt.Errorf("cannot sync submodules: %s", err)
