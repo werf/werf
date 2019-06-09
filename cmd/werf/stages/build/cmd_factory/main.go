@@ -2,6 +2,8 @@ package cmd_factory
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -17,6 +19,9 @@ import (
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
+
+	"github.com/GoogleContainerTools/kaniko/pkg/config"
+	"github.com/GoogleContainerTools/kaniko/pkg/executor"
 )
 
 type CmdData struct {
@@ -155,6 +160,29 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 
 	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err
+	}
+
+	dockerfileExists := true
+	dockerfilePath := filepath.Join(projectDir, "Dockerfile")
+	_, err = os.Stat(dockerfilePath)
+	if os.IsNotExist(err) {
+		dockerfileExists = false
+	} else if err != nil {
+		return fmt.Errorf("error accessing %s: %s", err)
+	}
+
+	if dockerfileExists {
+		opts := &config.KanikoOptions{
+			DockerfilePath: dockerfilePath,
+			SnapshotMode:   "full",
+		}
+
+		image, err := executor.DoBuild(opts)
+		if err != nil {
+			return fmt.Errorf("kaniko build failed: %s", err)
+		}
+
+		_ = image
 	}
 
 	return nil

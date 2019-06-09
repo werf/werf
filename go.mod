@@ -6,7 +6,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Azure/go-autorest v11.1.0+incompatible
 	github.com/BurntSushi/toml v0.3.1
-	github.com/GoogleContainerTools/kaniko v0.9.0 // indirect
+	github.com/GoogleContainerTools/kaniko v0.9.0
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
 	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.3.1
