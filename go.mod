@@ -2,9 +2,11 @@ module github.com/flant/werf
 
 require (
 	cloud.google.com/go v0.34.0
+	github.com/Azure/azure-sdk-for-go v19.1.0+incompatible
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Azure/go-autorest v11.1.0+incompatible
 	github.com/BurntSushi/toml v0.3.1
+	github.com/GoogleContainerTools/kaniko v0.9.0 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
 	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.3.1
@@ -16,8 +18,9 @@ require (
 	github.com/PuerkitoBio/purell v1.1.0
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
-	github.com/apache/thrift v0.0.0-20161221203622-b2a4d4ae21c7
+	github.com/apache/thrift v0.12.0
 	github.com/asaskevich/govalidator v0.0.0-20160518190739-766470278477
+	github.com/aws/aws-sdk-go v1.19.46 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 	github.com/bmatcuk/doublestar v1.1.1
 	github.com/boltdb/bolt v0.0.0-20170131192018-e9cf4fae01b5
@@ -61,6 +64,8 @@ require (
 	github.com/flant/logboek v0.1.2-0.20190510224211-cc0baab1bc76
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
+	github.com/genuinetools/amicontained v0.4.3 // indirect
+	github.com/genuinetools/pkg v0.0.0-20181022210355-2fcf164d37cb // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/gliderlabs/ssh v0.1.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.0
@@ -75,18 +80,20 @@ require (
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
+	github.com/google/go-containerregistry v0.0.0-20190531175139-2687bd5ba651 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/google/shlex v0.0.0-20150127133951-6f45313302b9
 	github.com/google/uuid v1.0.0
 	github.com/googleapis/gnostic v0.2.0
 	github.com/gophercloud/gophercloud v0.0.0-20190126172459-c818fa66e4c8
-	github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/mux v1.7.1
 	github.com/gosuri/uitable v0.0.0-20160404203958-36ee7e946282
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20170616101206-0c1b191dbfe5
-	github.com/grpc-ecosystem/grpc-gateway v0.0.0-20170714172803-1a03ca3bad1e
+	github.com/grpc-ecosystem/grpc-gateway v1.8.5
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
+	github.com/hashicorp/go-memdb v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.1.0
 	github.com/hashicorp/golang-lru v0.5.1
 	github.com/howeyc/gopass v0.0.0-20160826175423-3ca23474a7c7
@@ -96,6 +103,7 @@ require (
 	github.com/jaguilar/vt100 v0.0.0-20150826170717-2703a27b14ea
 	github.com/json-iterator/go v1.1.6
 	github.com/juju/ratelimit v0.0.0-20170523012141-5b9ff8664717
+	github.com/karrick/godirwalk v1.10.3 // indirect
 	github.com/kr/pty v1.1.4 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
@@ -116,6 +124,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opencontainers/runc v1.0.1-0.20190307181833-2b18fe1d885e
 	github.com/opencontainers/runtime-spec v1.0.1
+	github.com/opencontainers/selinux v1.2.2 // indirect
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20171029140428-b1a47cfbdd75
 	github.com/opentracing/opentracing-go v0.0.0-20171003133519-1361b9cd60be
 	github.com/otiai10/copy v1.0.1
@@ -123,10 +132,10 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.2.1
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/prometheus/client_golang v0.9.1
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
+	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
+	github.com/prometheus/client_model v0.0.0-20190115171406-56726106282f
 	github.com/prometheus/common v0.2.0
-	github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d
+	github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1
 	github.com/russross/blackfriday v0.0.0-20160531111224-1d6b8e9301e7
 	github.com/satori/go.uuid v1.2.0
 	github.com/seccomp/libseccomp-golang v0.0.0-20160531183505-32f571b70023
@@ -145,6 +154,7 @@ require (
 	github.com/uber/jaeger-client-go v0.0.0-20180103221425-e02c85f9069e
 	github.com/uber/jaeger-lib v1.2.1
 	github.com/urfave/cli v0.0.0-20171014202726-7bc6a0acffa5
+	github.com/vbatts/tar-split v0.11.1 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
@@ -158,8 +168,8 @@ require (
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	golang.org/x/tools v0.0.0-20190602112858-2de7f9bf822c // indirect
 	google.golang.org/appengine v1.5.0
-	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
-	google.golang.org/grpc v1.18.0
+	google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19
+	google.golang.org/grpc v1.19.1
 	gopkg.in/inf.v0 v0.9.1
 	gopkg.in/ini.v1 v1.42.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
