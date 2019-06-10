@@ -19,6 +19,7 @@ import (
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
+	"github.com/sirupsen/logrus"
 
 	"github.com/GoogleContainerTools/kaniko/pkg/config"
 	"github.com/GoogleContainerTools/kaniko/pkg/executor"
@@ -172,9 +173,21 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 
 	if dockerfileExists {
+		// constants.RootDir = "/home/distorhead/.werf/kaniko/root"
+		// constants.WorkspaceDir = "/home/distorhead/.werf/kaniko/workspaces/myworkspace"
+		// constants.KanikoDir = "/home/distorhead/.werf/kaniko/kaniko"
+		// constants.DockerfilePath = "/home/distorhead/.werf/kaniko/kaniko/Dockerfile"
+		// constants.BuildContextDir = "/home/distorhead/.werf/kaniko/kaniko/buildcontext"
+		// constants.KanikoIntermediateStagesDir = "/home/distorhead/.werf/kaniko/kaniko/stages"
+		// constants.DefaultHOMEValue = "/home/distorhead"
+		// constants.RootUser = "distorhead"
+
+		logrus.SetLevel(logrus.DebugLevel)
+
 		opts := &config.KanikoOptions{
 			DockerfilePath: dockerfilePath,
 			SnapshotMode:   "full",
+			SrcContext:     ".",
 		}
 
 		image, err := executor.DoBuild(opts)
