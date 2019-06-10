@@ -41,7 +41,6 @@ bintray_upload_file_into_version() {
 
     curlResponse=$(mktemp)
     status=$(curl -s -w %{http_code} -o $curlResponse \
-        --header "X-Bintray-Publish: 1" \
         --header "Content-type: application/binary" \
         --request PUT \
         --user $BINTRAY_AUTH \
@@ -65,3 +64,29 @@ bintray_upload_file_into_version() {
 
     return $ret
 }
+
+bintray_publish_files_in_version() {
+    local VERSION=$1
+
+    curlResponse=$(mktemp)
+    status=$(curl -s -w '%{http_code}' -o "$curlResponse" \
+        --request POST \
+        --user "$BINTRAY_AUTH" \
+        --header "Content-type: application/json" \
+        "https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/${VERSION}/publish"
+    )
+
+    echo "Bintray publish files in version ${VERSION}: curl return status $status with response"
+    cat "$curlResponse"
+    echo
+    rm "$curlResponse"
+
+    ret=0
+    if [ "x$(echo "$status" | cut -c1)" != "x2" ]
+    then
+      ret=1
+    fi
+
+    return $ret
+}
+

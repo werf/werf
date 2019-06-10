@@ -40,4 +40,5 @@ docker run --rm \
 
 ( publish_binaries $VERSION ) || ( echo "Failed to publish release binaries!" 1>&2 && exit 1 )
 ( sign_binaries $VERSION ) || ( echo "Failed to sign release binaries!" 1>&2 && exit 1 )
+( bintray_publish_files_in_version "$VERSION" ) || ( echo "Failed to publish uploaded files in version $VERSION" 1>&2 && exit 1 )
 ( create_github_release $VERSION ) || ( echo "Failed to create github release!" 1>&2 && exit 1 )
