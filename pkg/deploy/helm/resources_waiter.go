@@ -43,10 +43,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
 		case *v1.Pod:
-			defaultAllowFailuresCount := new(int)
-			*defaultAllowFailuresCount = 1
-
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, defaultAllowFailuresCount, "po")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "po")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -54,7 +51,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Pods = append(specs.Pods, *spec)
 			}
 		case *appsv1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -62,7 +59,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -70,7 +67,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta2.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -78,7 +75,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -86,10 +83,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.DaemonSet:
-			defaultAllowFailuresCount := new(int)
-			*defaultAllowFailuresCount = 1
-
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, defaultAllowFailuresCount, "ds")
+			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -97,10 +93,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.DaemonSet:
-			defaultAllowFailuresCount := new(int)
-			*defaultAllowFailuresCount = 1
-
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, defaultAllowFailuresCount, "ds")
+			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -108,10 +103,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1beta2.DaemonSet:
-			defaultAllowFailuresCount := new(int)
-			*defaultAllowFailuresCount = 1
-
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, defaultAllowFailuresCount, "ds")
+			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -119,7 +113,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -127,7 +121,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -135,7 +129,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta2.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, castInt32ToInt(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -161,8 +155,8 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	})
 }
 
-func makeMultitrackSpec(objMeta *metav1.ObjectMeta, defaultAllowFailuresCount *int, kind string) (*multitrack.MultitrackSpec, error) {
-	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, defaultAllowFailuresCount)
+func makeMultitrackSpec(objMeta *metav1.ObjectMeta, allowFailuresCountMultiplier int, kind string) (*multitrack.MultitrackSpec, error) {
+	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, allowFailuresCountMultiplier)
 	if err != nil {
 		logboek.LogErrorF("WARNING: %s\n", err)
 		return nil, nil
@@ -171,12 +165,16 @@ func makeMultitrackSpec(objMeta *metav1.ObjectMeta, defaultAllowFailuresCount *i
 	return multitrackSpec, nil
 }
 
-func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, annotations map[string]string, defaultAllowFailuresCount *int) (*multitrack.MultitrackSpec, error) {
+func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, annotations map[string]string, allowFailuresCountMultiplier int) (*multitrack.MultitrackSpec, error) {
+	defaultAllowFailuresCount := new(int)
+	// Allow 1 fail per replica by default
+	*defaultAllowFailuresCount = 1 * allowFailuresCountMultiplier
+
 	multitrackSpec := &multitrack.MultitrackSpec{
-		ResourceName:                 metadataName,
-		Namespace:                    namespace,
-		LogWatchRegexByContainerName: map[string]*regexp.Regexp{},
-		AllowFailuresCount:           defaultAllowFailuresCount,
+		ResourceName:            metadataName,
+		Namespace:               namespace,
+		LogRegexByContainerName: map[string]*regexp.Regexp{},
+		AllowFailuresCount:      defaultAllowFailuresCount,
 	}
 
 mainLoop:
@@ -184,20 +182,9 @@ mainLoop:
 		invalidAnnoValueError := fmt.Errorf("%s/%s annotation %s with invalid value %s", resourceNameOrKind, metadataName, annoName, annoValue)
 
 		switch annoName {
-		case TrackAnnoName:
-			trackValue := TrackAnno(annoValue)
-			values := []TrackAnno{TrackAnnoEnabledValue, TrackAnnoDisabledValue}
-			for _, value := range values {
-				if value == trackValue {
-					if value == TrackAnnoDisabledValue {
-						return nil, nil
-					}
+		case SkipLogsAnnoName, SkipEventsAnnoName:
+			return nil, fmt.Errorf("%s/%s annotation %s not supported yet", resourceNameOrKind, metadataName, annoName)
 
-					continue mainLoop
-				}
-			}
-
-			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
 		case FailModeAnnoName:
 			failModeValue := multitrack.FailMode(annoValue)
 			values := []multitrack.FailMode{multitrack.IgnoreAndContinueDeployProcess, multitrack.FailWholeDeployProcessImmediately, multitrack.HopeUntilEndOfDeployProcess}
@@ -209,20 +196,22 @@ mainLoop:
 			}
 
 			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
-		case AllowFailuresCountAnnoName:
+		case FailuresAllowedPerReplicaAnnoName:
 			intValue, err := strconv.Atoi(annoValue)
 			if err != nil || intValue <= 0 {
 				return nil, fmt.Errorf("%s: positive integer expected", invalidAnnoValueError)
 			}
 
-			multitrackSpec.AllowFailuresCount = &intValue
-		case LogWatchRegexAnnoName:
+			allowFailuresCount := new(int)
+			*allowFailuresCount = intValue * allowFailuresCountMultiplier
+			multitrackSpec.AllowFailuresCount = allowFailuresCount
+		case LogRegexAnnoName:
 			regexpValue, err := regexp.Compile(annoValue)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
 			}
 
-			multitrackSpec.LogWatchRegex = regexpValue
+			multitrackSpec.LogRegex = regexpValue
 		case ShowLogsUntilAnnoName:
 			deployConditionValue := multitrack.DeployCondition(annoValue)
 			values := []multitrack.DeployCondition{multitrack.ControllerIsReady, multitrack.PodIsReady, multitrack.EndOfDeploy}
@@ -259,14 +248,14 @@ mainLoop:
 
 			multitrackSpec.ShowLogsOnlyForContainers = containerNames
 		default:
-			if strings.HasPrefix(annoName, LogWatchRegexForAnnoPrefix) {
-				if containerName := strings.TrimPrefix(annoName, LogWatchRegexForAnnoPrefix); containerName != "" {
+			if strings.HasPrefix(annoName, LogRegexForAnnoPrefix) {
+				if containerName := strings.TrimPrefix(annoName, LogRegexForAnnoPrefix); containerName != "" {
 					regexpValue, err := regexp.Compile(annoValue)
 					if err != nil {
 						return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
 					}
 
-					multitrackSpec.LogWatchRegexByContainerName[containerName] = regexpValue
+					multitrackSpec.LogRegexByContainerName[containerName] = regexpValue
 				}
 			}
 		}
@@ -283,18 +272,13 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		return err
 	}
 
-TrackHooks:
 	for _, info := range infos {
 		name := info.Name
 		namespace := info.Namespace
 		kind := info.Mapping.GroupVersionKind.Kind
 
-		switch value := asVersioned(info).(type) {
+		switch asVersioned(info).(type) {
 		case *batchv1.Job:
-			if value.ObjectMeta.Annotations[TrackAnnoName] == string(TrackAnnoDisabledValue) {
-				continue TrackHooks
-			}
-
 			loggerProcessMsg := fmt.Sprintf("Waiting for helm hook job/%s termination", name)
 			if err := logboek.LogProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return logboek.WithFittedStreamsOutputOn(func() error {

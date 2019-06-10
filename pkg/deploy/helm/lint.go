@@ -93,13 +93,13 @@ func lintChart(chartPath string, namespace string, values, set, setString []stri
 
 func templatesRules(linter *support.Linter, chartPath, namespace string, values, set, setString []string) {
 	supportedWerfAnnotations := []string{
-		TrackAnnoName,
 		FailModeAnnoName,
-		AllowFailuresCountAnnoName,
-		LogWatchRegexAnnoName,
-		ShowLogsUntilAnnoName,
+		FailuresAllowedPerReplicaAnnoName,
+		LogRegexAnnoName,
 		SkipLogsForContainersAnnoName,
 		ShowLogsOnlyForContainers,
+		ShowLogsUntilAnnoName,
+		RecreateAnnoName,
 	}
 
 	templates, _ := GetTemplatesFromChart(chartPath, "RELEASE_NAME", namespace, values, set, setString)
@@ -108,7 +108,7 @@ func templatesRules(linter *support.Linter, chartPath, namespace string, values,
 		metadataName := template.Metadata.Name
 		kind := strings.ToLower(template.Kind)
 
-		_, err := prepareMultitrackSpec(metadataName, kind, template.Namespace(namespace), template.Metadata.Annotations, nil)
+		_, err := prepareMultitrackSpec(metadataName, kind, template.Namespace(namespace), template.Metadata.Annotations, 1)
 		if err != nil {
 			linter.RunLinterRule(support.WarningSev, "templates/", err)
 		}
@@ -122,7 +122,7 @@ func templatesRules(linter *support.Linter, chartPath, namespace string, values,
 					}
 				}
 
-				if strings.HasPrefix(annoName, LogWatchRegexForAnnoPrefix) {
+				if strings.HasPrefix(annoName, LogRegexForAnnoPrefix) {
 					continue templateAnnotationsLoop
 				}
 
