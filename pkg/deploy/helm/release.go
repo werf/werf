@@ -19,20 +19,21 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-type TrackAnno string
-
 const (
-	TrackAnnoName                 = "werf.io/track"
-	FailModeAnnoName              = "werf.io/fail-mode"
-	AllowFailuresCountAnnoName    = "werf.io/allow-failures-count"
-	LogWatchRegexAnnoName         = "werf.io/log-watch-regex"
-	LogWatchRegexForAnnoPrefix    = "werf.io/log-watch-regex-for-"
-	ShowLogsUntilAnnoName         = "werf.io/show-logs-until"
+	FailModeAnnoName                  = "werf.io/fail-mode"
+	FailuresAllowedPerReplicaAnnoName = "werf.io/failures-allowed-per-replica"
+
+	LogRegexAnnoName      = "werf.io/log-regex"
+	LogRegexForAnnoPrefix = "werf.io/log-regex-for-"
+
+	SkipLogsAnnoName              = "werf.io/skip-logs"
 	SkipLogsForContainersAnnoName = "werf.io/skip-logs-for-containers"
 	ShowLogsOnlyForContainers     = "werf.io/show-logs-only-for-containers"
+	ShowLogsUntilAnnoName         = "werf.io/show-logs-until"
 
-	TrackAnnoEnabledValue  TrackAnno = "true"
-	TrackAnnoDisabledValue TrackAnno = "false"
+	SkipEventsAnnoName = "werf.io/skip-events"
+
+	RecreateAnnoName = "werf.io/recreate"
 
 	HelmHookAnnoName       = "helm.sh/hook"
 	HelmHookWeightAnnoName = "helm.sh/hook-weight"
@@ -529,7 +530,7 @@ func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
 			continue
 		}
 
-		value, ok := template.Metadata.Annotations["werf/recreate"]
+		value, ok := template.Metadata.Annotations[RecreateAnnoName]
 		if ok && (value == "0" || value == "false") {
 			continue
 		}
