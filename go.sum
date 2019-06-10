@@ -138,6 +138,12 @@ github.com/flant/kubedog v0.1.1-0.20190506115034-1829d08606c7 h1:1ypFARuP3pqm5dM
 github.com/flant/kubedog v0.1.1-0.20190506115034-1829d08606c7/go.mod h1:qtLb5mYkdjwERvJrYmykc0Jb9/0D3uozR+IkfL3vwvE=
 github.com/flant/kubedog v0.1.1-0.20190507123714-9af0b4bc430c h1:MGiCVVkhSTB29ayXhKrpAbGgdlVUuepqPl6VlQXMb14=
 github.com/flant/kubedog v0.1.1-0.20190507123714-9af0b4bc430c/go.mod h1:c5ymAMyG46OLaryM5GfWx4FNEy+yXHsXhePf1mCIncY=
+github.com/flant/kubedog v0.2.1-0.20190610135546-22d0708d0608 h1:wBBL/8oAdIw2aTq7zWenrNwvI8G2y9wjuL72LEt1TeA=
+github.com/flant/kubedog v0.2.1-0.20190610135546-22d0708d0608/go.mod h1:c5ymAMyG46OLaryM5GfWx4FNEy+yXHsXhePf1mCIncY=
+github.com/flant/kubedog v0.2.1-0.20190610140226-9aab5e33d67f h1:DfKUvyuKt6hWJx0AN89n73jhwRy8VcqkKFSLz6HQuyA=
+github.com/flant/kubedog v0.2.1-0.20190610140226-9aab5e33d67f/go.mod h1:c5ymAMyG46OLaryM5GfWx4FNEy+yXHsXhePf1mCIncY=
+github.com/flant/kubedog v0.2.1-0.20190610141209-2381e647eb44 h1:Ks6cM1EkzZzSNyFW8RJuAz0nT3szyxsd/YxCyCZpISA=
+github.com/flant/kubedog v0.2.1-0.20190610141209-2381e647eb44/go.mod h1:c5ymAMyG46OLaryM5GfWx4FNEy+yXHsXhePf1mCIncY=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d h1:Ac8Sy63eGzp5FCtQSTh+37c1o8GdGQlmoFHnLtjrPgg=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d/go.mod h1:WirgB39yMTvPGKqrAE3zlsG/02of4rr5lXh1EiwO5P0=
 github.com/flant/logboek v0.1.1 h1:aRipTu0N1UCxd20ckorxAlE/NpxXIPNv7mS9mB4rlGA=

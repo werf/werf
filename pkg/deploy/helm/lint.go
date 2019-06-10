@@ -98,7 +98,6 @@ func templatesRules(linter *support.Linter, chartPath, namespace string, values,
 		LogRegexAnnoName,
 		SkipLogsForContainersAnnoName,
 		ShowLogsOnlyForContainers,
-		ShowLogsUntilAnnoName,
 		RecreateAnnoName,
 	}
 
