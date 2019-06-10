@@ -182,7 +182,7 @@ mainLoop:
 		invalidAnnoValueError := fmt.Errorf("%s/%s annotation %s with invalid value %s", resourceNameOrKind, metadataName, annoName, annoValue)
 
 		switch annoName {
-		case SkipLogsAnnoName, SkipEventsAnnoName:
+		case SkipLogsAnnoName, SkipEventsAnnoName, ShowLogsUntilAnnoName:
 			return nil, fmt.Errorf("%s/%s annotation %s not supported yet", resourceNameOrKind, metadataName, annoName)
 
 		case FailModeAnnoName:
@@ -212,17 +212,17 @@ mainLoop:
 			}
 
 			multitrackSpec.LogRegex = regexpValue
-		case ShowLogsUntilAnnoName:
-			deployConditionValue := multitrack.DeployCondition(annoValue)
-			values := []multitrack.DeployCondition{multitrack.ControllerIsReady, multitrack.PodIsReady, multitrack.EndOfDeploy}
-			for _, value := range values {
-				if value == deployConditionValue {
-					multitrackSpec.ShowLogsUntil = deployConditionValue
-					continue mainLoop
-				}
-			}
+		// case ShowLogsUntilAnnoName:
+		// 	deployConditionValue := multitrack.DeployCondition(annoValue)
+		// 	values := []multitrack.DeployCondition{multitrack.ControllerIsReady, multitrack.PodIsReady, multitrack.EndOfDeploy}
+		// 	for _, value := range values {
+		// 		if value == deployConditionValue {
+		// 			multitrackSpec.ShowLogsUntil = deployConditionValue
+		// 			continue mainLoop
+		// 		}
+		// 	}
 
-			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
+		// 	return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
 		case SkipLogsForContainersAnnoName:
 			var containerNames []string
 			for _, v := range strings.Split(annoValue, ",") {
