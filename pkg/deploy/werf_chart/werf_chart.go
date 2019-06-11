@@ -8,7 +8,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"github.com/otiai10/copy"
 
@@ -208,20 +207,9 @@ type ChartConfig struct {
 func CreateNewWerfChart(projectName, projectDir string, targetDir, env string, m secret.Manager) (*WerfChart, error) {
 	werfChart := &WerfChart{}
 	werfChart.ChartDir = targetDir
-
-	strippedVersion := ""
-	vObj, err := semver.NewVersion(werf.Version)
-	if err == nil {
-		channel := strings.Split(vObj.Prerelease(), ".")[0]
-		strippedVersion = fmt.Sprintf("%d.%d %s", vObj.Major(), vObj.Minor(), channel)
-	}
-
 	werfChart.ExtraAnnotations = map[string]string{
+		"werf.io/version":      werf.Version,
 		"project.werf.io/name": projectName,
-	}
-
-	if strippedVersion != "" {
-		werfChart.ExtraAnnotations["werf.io/version"] = strippedVersion
 	}
 
 	if env != "" {
@@ -231,7 +219,8 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir, env string, m
 	werfChart.ExtraLabels = map[string]string{}
 
 	projectHelmDir := filepath.Join(projectDir, ".helm")
-	if err := copy.Copy(projectHelmDir, targetDir); err != nil {
+	err := copy.Copy(projectHelmDir, targetDir)
+	if err != nil {
 		return nil, fmt.Errorf("unable to copy project helm dir %s into %s: %s", projectHelmDir, targetDir, err)
 	}
 
