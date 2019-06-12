@@ -34,20 +34,7 @@ func (p *InitializationPhase) Run(c *Conveyor) (err error) {
 }
 
 func (p *InitializationPhase) run(c *Conveyor) error {
-	imagesInOrder, err := generateImagesInOrder(c.werfConfig.Images, c)
-	if err != nil {
-		return err
-	}
-
-	c.imagesInOrder = imagesInOrder
-
-	return nil
-}
-
-func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image, error) {
-	var images []*Image
-
-	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
+	imagesInterfaceConfigs := getImageConfigsInOrder(c.werfConfig.Images, c)
 	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
 		imageName := logging.ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
 		err := logboek.LogProcess(imageName, logboek.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
@@ -56,17 +43,29 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 				return err
 			}
 
-			images = append(images, image)
+			c.imagesInOrder = append(c.imagesInOrder, image)
 
 			return nil
 		})
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return images, nil
+	for _, imageFromDockerfileConfig := range c.werfConfig.ImagesFromDockerfile {
+		image := &ImageFromDockerfile{}
+		image.name = imageFromDockerfileConfig.Name
+
+		image.context = imageFromDockerfileConfig.Context
+		image.target = imageFromDockerfileConfig.Target
+		image.dockerfile = imageFromDockerfileConfig.Dockerfile
+		image.args = imageFromDockerfileConfig.Args
+
+		c.imageFromDockerfile = append(c.imageFromDockerfile, image)
+	}
+
+	return nil
 }
 
 func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Image, error) {

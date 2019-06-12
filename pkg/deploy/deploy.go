@@ -43,7 +43,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 		logboek.LogF("Using kubernetes namespace: %s\n", namespace)
 		logboek.LogLn()
 
-		images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
+		images := GetImagesInfoGetters(werfConfig.Images, werfConfig.ImagesFromDockerfile, imagesRepo, tag, false)
 
 		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {

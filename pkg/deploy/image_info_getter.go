@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/docker_registry"
 )
 
@@ -34,25 +33,25 @@ func (d *ImageInfoGetterStub) GetImageId() (string, error) {
 }
 
 type ImageInfo struct {
-	Config          *config.Image
+	Name            string
 	WithoutRegistry bool
 	ImagesRepo      string
 	Tag             string
 }
 
 func (d *ImageInfo) IsNameless() bool {
-	return d.Config.Name == ""
+	return d.Name == ""
 }
 
 func (d *ImageInfo) GetName() string {
-	return d.Config.Name
+	return d.Name
 }
 
 func (d *ImageInfo) GetImageName() string {
-	if d.Config.Name == "" {
+	if d.Name == "" {
 		return fmt.Sprintf("%s:%s", d.ImagesRepo, d.Tag)
 	}
-	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Config.Name, d.Tag)
+	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Name, d.Tag)
 }
 
 func (d *ImageInfo) GetImageId() (string, error) {

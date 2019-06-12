@@ -94,6 +94,10 @@ func runPurge() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
+	for _, image := range werfConfig.ImagesFromDockerfile {
+		imageNames = append(imageNames, image.Name)
+	}
+
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,

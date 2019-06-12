@@ -169,10 +169,12 @@ func runDeploy() error {
 	var imagesRepo string
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
-	if len(werfConfig.Images) != 0 {
-		_, err = common.GetStagesRepo(&CommonCmdData)
-		if err != nil {
-			return err
+	if len(werfConfig.Images) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+		if len(werfConfig.Images) != 0 {
+			_, err = common.GetStagesRepo(&CommonCmdData)
+			if err != nil {
+				return err
+			}
 		}
 
 		imagesRepo, err = common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)

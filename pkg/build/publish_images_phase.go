@@ -3,12 +3,13 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
+
+	"github.com/flant/logboek"
 )
 
 const RepoImageStageTagFormat = "image-stage-%s"
