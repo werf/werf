@@ -134,6 +134,10 @@ func runCleanup() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
+	for _, image := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, image.Name)
+	}
+
 	var localGitRepo cleaning.GitRepo
 	gitDir := path.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {

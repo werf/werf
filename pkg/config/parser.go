@@ -47,7 +47,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	meta, rawImages, err := splitByMetaAndRawImages(docs)
+	meta, rawImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +74,15 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	images, err := splitByImages(rawImages)
+	images, imagesFromDockerfile, err := splitByImages(rawImages, rawImagesFromDockerfile)
 	if err != nil {
 		return nil, err
 	}
 
 	werfConfig := &WerfConfig{
-		Meta:   meta,
-		Images: images,
+		Meta:                 meta,
+		Images:               images,
+		ImagesFromDockerfile: imagesFromDockerfile,
 	}
 
 	return werfConfig, nil
@@ -400,20 +401,29 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByImages(rawImages []*rawImage) ([]*Image, error) {
+func splitByImages(rawImages []*rawImage, rawImagesFromDockerfile []*rawImageFromDockerfile) ([]*Image, []*ImageFromDockerfile, error) {
 	var images []*Image
+	var imagesFromDockerfile []*ImageFromDockerfile
 	var artifacts []*ImageArtifact
+
+	for _, rawImageFromDockerfile := range rawImagesFromDockerfile {
+		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(); err != nil {
+			return nil, nil, err
+		} else {
+			imagesFromDockerfile = append(imagesFromDockerfile, sameImages...)
+		}
+	}
 
 	for _, rawImage := range rawImages {
 		if rawImage.imageType() == "images" {
 			if sameImages, err := rawImage.toImageDirectives(); err != nil {
-				return nil, err
+				return nil, nil, err
 			} else {
 				images = append(images, sameImages...)
 			}
 		} else {
 			if imageArtifact, err := rawImage.toImageArtifactDirective(); err != nil {
-				return nil, err
+				return nil, nil, err
 			} else {
 				artifacts = append(artifacts, imageArtifact)
 			}
@@ -421,26 +431,26 @@ func splitByImages(rawImages []*rawImage) ([]*Image, error) {
 	}
 
 	if err := exportsAutoExcluding(images, artifacts); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := validateImagesNames(images, artifacts); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := associateImportsArtifacts(images, artifacts); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := associateImagesFrom(images, artifacts); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := validateInfiniteLoopBetweenRelatedImages(images, artifacts); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return images, nil
+	return images, imagesFromDockerfile, nil
 }
 
 func validateInfiniteLoopBetweenRelatedImages(images []*Image, artifacts []*ImageArtifact) error {
@@ -577,8 +587,9 @@ func associateImageFrom(image ImageInterface, images []*Image, artifacts []*Imag
 	}
 }
 
-func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
+func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, []*rawImageFromDockerfile, error) {
 	var rawImages []*rawImage
+	var rawImagesFromDockerfile []*rawImageFromDockerfile
 	var resultMeta *Meta
 
 	parentStack = util.NewStack()
@@ -586,35 +597,43 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
 		var raw map[string]interface{}
 		err := yaml.Unmarshal(doc.Content, &raw)
 		if err != nil {
-			return nil, nil, newYamlUnmarshalError(err, doc)
+			return nil, nil, nil, newYamlUnmarshalError(err, doc)
 		}
 
 		if isMetaDoc(raw) {
 			if resultMeta != nil {
-				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta config section definition"), doc)
+				return nil, nil, nil, newYamlUnmarshalError(errors.New("duplicate meta config section definition"), doc)
 			}
 
 			rawMeta := &rawMeta{doc: doc}
 			err := yaml.Unmarshal(doc.Content, &rawMeta)
 			if err != nil {
-				return nil, nil, newYamlUnmarshalError(err, doc)
+				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
 
 			resultMeta = rawMeta.toMeta()
+		} else if isImageFromDockerfileDoc(raw) {
+			imageFromDockerfile := &rawImageFromDockerfile{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &imageFromDockerfile)
+			if err != nil {
+				return nil, nil, nil, newYamlUnmarshalError(err, doc)
+			}
+
+			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
 		} else if isImageDoc(raw) {
 			image := &rawImage{doc: doc}
 			err := yaml.Unmarshal(doc.Content, &image)
 			if err != nil {
-				return nil, nil, newYamlUnmarshalError(err, doc)
+				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
 
 			rawImages = append(rawImages, image)
 		} else {
-			return nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
+			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
 		}
 	}
 
-	return resultMeta, rawImages, nil
+	return resultMeta, rawImages, rawImagesFromDockerfile, nil
 }
 
 func isMetaDoc(h map[string]interface{}) bool {
@@ -629,6 +648,14 @@ func isImageDoc(h map[string]interface{}) bool {
 	if _, ok := h["image"]; ok {
 		return true
 	} else if _, ok := h["artifact"]; ok {
+		return true
+	}
+
+	return false
+}
+
+func isImageFromDockerfileDoc(h map[string]interface{}) bool {
+	if _, ok := h["dockerfile"]; ok {
 		return true
 	}
 

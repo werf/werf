@@ -92,3 +92,17 @@ func CliRmi(args ...string) error {
 
 	return nil
 }
+
+func CliBuild(args ...string) error {
+	cmd := image.NewBuildCommand(cli)
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+	cmd.SetArgs(args)
+
+	err := cmd.Execute()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

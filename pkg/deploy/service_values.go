@@ -21,11 +21,16 @@ type ImageInfoGetter interface {
 	GetImageId() (string, error)
 }
 
-func GetImagesInfoGetters(configImages []*config.Image, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
+func GetImagesInfoGetters(configImages []*config.Image, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
 	var images []ImageInfoGetter
 
 	for _, image := range configImages {
-		d := &ImageInfo{Config: image, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		images = append(images, d)
+	}
+
+	for _, image := range configImagesFromDockerfile {
+		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
 		images = append(images, d)
 	}
 

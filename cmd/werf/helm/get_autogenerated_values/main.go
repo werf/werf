@@ -123,7 +123,7 @@ func runGetServiceValues() error {
 		}
 	}()
 
-	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
+	images := deploy.GetImagesInfoGetters(werfConfig.Images, werfConfig.ImagesFromDockerfile, imagesRepo, tag, withoutRepo)
 
 	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
