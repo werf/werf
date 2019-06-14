@@ -353,15 +353,17 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		}
 
 		if options.hasLimit && int64(len(notExpiredRepoImages)) > options.limit {
+			excessImagesByLimit := notExpiredRepoImages[:int64(len(notExpiredRepoImages))-options.limit]
+
 			logboek.LogF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.limit)
 			if err := logboek.WithIndent(func() error {
-				return repoImagesRemove(notExpiredRepoImages[options.limit:], options.commonRepoOptions)
+				return repoImagesRemove(excessImagesByLimit, options.commonRepoOptions)
 			}); err != nil {
 				return nil, err
 			}
 			logboek.LogOptionalLn()
 
-			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.limit:]...)
+			repoImages = exceptRepoImages(repoImages, excessImagesByLimit...)
 		}
 	}
 
