@@ -122,7 +122,13 @@ func list(reference string) ([]string, error) {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
 	}
 
-	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport()))
+	auth, err := authn.DefaultKeychain.Resolve(repo.Registry)
+	if err != nil {
+		return nil, fmt.Errorf("getting creds for %q: %v", repo, err)
+	}
+
+	tags, err := remote.List(repo, auth, getHttpTransport())
+
 	if err != nil {
 		return nil, fmt.Errorf("reading tags for %q: %v", repo, err)
 	}
@@ -173,13 +179,13 @@ func ImageDelete(reference string) error {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	if err := remote.Delete(r, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport())); err != nil {
-		if strings.Contains(err.Error(), "UNAUTHORIZED") {
-			auth, err := authn.DefaultKeychain.Resolve(r.Context().Registry)
-			if err != nil {
-				return fmt.Errorf("getting creds for %q: %v", r, err)
-			}
+	auth, err := authn.DefaultKeychain.Resolve(r.Context().Registry)
+	if err != nil {
+		return fmt.Errorf("getting creds for %q: %v", r, err)
+	}
 
+	if err := remote.Delete(r, auth, getHttpTransport()); err != nil {
+		if strings.Contains(err.Error(), "UNAUTHORIZED") {
 			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, getHttpTransport()); gitlabRegistryDeleteErr != nil {
 				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
 					return fmt.Errorf("deleting image %q: %v", r, err)
