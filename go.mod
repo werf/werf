@@ -56,7 +56,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
 	github.com/fatih/color v1.7.0
-	github.com/flant/go-containerregistry v0.0.0-20190603132110-751ebe52f174
+	github.com/flant/go-containerregistry v0.0.0-20190127180048-001ef3873924
 	github.com/flant/kubedog v0.2.1-0.20190610141209-2381e647eb44
 	github.com/flant/logboek v0.1.2-0.20190510224211-cc0baab1bc76
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
