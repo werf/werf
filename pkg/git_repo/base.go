@@ -77,7 +77,7 @@ func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommi
 
 	commitObj, err := repository.CommitObject(headHash)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("cannot find head commit %s: %s", headCommit, err)
 	}
 
 	commitIter := object.NewCommitIterBSF(commitObj, nil, nil)
@@ -98,8 +98,8 @@ func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommi
 		return nil
 	})
 
-	if err != nil {
-		return "", err
+	if err != nil && err != plumbing.ErrObjectNotFound {
+		return "", fmt.Errorf("failed to traverse repository: %s", err)
 	}
 
 	if foundCommit != nil {
