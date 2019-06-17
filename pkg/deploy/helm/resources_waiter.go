@@ -281,9 +281,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		case *batchv1.Job:
 			loggerProcessMsg := fmt.Sprintf("Waiting for helm hook job/%s termination", name)
 			if err := logboek.LogProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
-				return logboek.WithFittedStreamsOutputOn(func() error {
-					return rollout.TrackJobTillDone(name, namespace, kube.Kubernetes, tracker.Options{Timeout: timeout, LogsFromTime: watchStartTime})
-				})
+				return rollout.TrackJobTillDone(name, namespace, kube.Kubernetes, tracker.Options{Timeout: timeout, LogsFromTime: watchStartTime})
 			}); err != nil {
 				return err
 			}

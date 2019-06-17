@@ -450,10 +450,7 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 func displayReleaseLogMessages() {
 	logboek.LogBlock("Debug info", logboek.LogBlockOptions{}, func() {
 		for _, msg := range releaseLogMessages {
-			_ = logboek.WithFittedStreamsOutputOn(func() error {
-				_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
-				return nil
-			})
+			_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
 		}
 	})
 }
