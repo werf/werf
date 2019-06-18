@@ -89,19 +89,9 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			}
 
 			if err := logboek.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
-				if err := logboek.WithFittedStreamsOutputOn(func() error {
-					if err := img.Build(p.ImageBuildOptions); err != nil {
-						return fmt.Errorf("failed to build %s: %s", img.Name(), err)
-					}
-
-					return nil
-				}); err != nil {
-					return err
-				}
-
-				return nil
+				return img.Build(p.ImageBuildOptions)
 			}); err != nil {
-				return err
+				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 
 			if err := img.SaveInCache(); err != nil {
