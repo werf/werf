@@ -58,7 +58,7 @@ require (
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190603132110-751ebe52f174
 	github.com/flant/kubedog v0.2.1-0.20190610141209-2381e647eb44
-	github.com/flant/logboek v0.2.0
+	github.com/flant/logboek v0.2.2
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.0
