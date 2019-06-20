@@ -80,5 +80,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 	image.Target = c.Target
 	image.Args = c.Args
 
+	image.raw = c
+
 	return image, nil
 }

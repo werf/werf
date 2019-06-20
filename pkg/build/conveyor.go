@@ -17,8 +17,7 @@ import (
 type Conveyor struct {
 	*conveyorPermanentFields
 
-	imagesInOrder       []*Image
-	imageFromDockerfile []*ImageFromDockerfile
+	imagesInOrder []*Image
 
 	stageImages                     map[string]*image.StageImage
 	buildingGitStageNameByImageName map[string]stage.StageName
@@ -225,18 +224,11 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-
-	if len(c.werfConfig.Images) != 0 {
-		phases = append(phases, NewSignaturesPhase(true))
-		phases = append(phases, NewRenewPhase())
-		phases = append(phases, NewPrepareStagesPhase())
-		phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
-		phases = append(phases, NewPublishImagesPhase(imagesRepo, opts.PublishImagesOptions))
-	}
-
-	if len(c.werfConfig.ImagesFromDockerfile) != 0 {
-		phases = append(phases, NewBuildAndPublishImagesFromDockerfilePhase(imagesRepo, opts.PublishImagesOptions))
-	}
+	phases = append(phases, NewSignaturesPhase(true))
+	phases = append(phases, NewRenewPhase())
+	phases = append(phases, NewPrepareStagesPhase())
+	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
+	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts.PublishImagesOptions))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {

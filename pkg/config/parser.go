@@ -74,15 +74,9 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	images, imagesFromDockerfile, err := splitByImages(rawImages, rawImagesFromDockerfile)
+	werfConfig, err := prepareWerfConfig(rawImages, rawImagesFromDockerfile, meta)
 	if err != nil {
 		return nil, err
-	}
-
-	werfConfig := &WerfConfig{
-		Meta:                 meta,
-		Images:               images,
-		ImagesFromDockerfile: imagesFromDockerfile,
 	}
 
 	return werfConfig, nil
@@ -401,14 +395,14 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByImages(rawImages []*rawImage, rawImagesFromDockerfile []*rawImageFromDockerfile) ([]*Image, []*ImageFromDockerfile, error) {
+func prepareWerfConfig(rawImages []*rawImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
 	var images []*Image
 	var imagesFromDockerfile []*ImageFromDockerfile
 	var artifacts []*ImageArtifact
 
 	for _, rawImageFromDockerfile := range rawImagesFromDockerfile {
 		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(); err != nil {
-			return nil, nil, err
+			return nil, err
 		} else {
 			imagesFromDockerfile = append(imagesFromDockerfile, sameImages...)
 		}
@@ -417,174 +411,47 @@ func splitByImages(rawImages []*rawImage, rawImagesFromDockerfile []*rawImageFro
 	for _, rawImage := range rawImages {
 		if rawImage.imageType() == "images" {
 			if sameImages, err := rawImage.toImageDirectives(); err != nil {
-				return nil, nil, err
+				return nil, err
 			} else {
 				images = append(images, sameImages...)
 			}
 		} else {
-			if imageArtifact, err := rawImage.toImageArtifactDirective(); err != nil {
-				return nil, nil, err
+			if imageArtifacts, err := rawImage.toImageArtifactDirectives(); err != nil {
+				return nil, err
 			} else {
-				artifacts = append(artifacts, imageArtifact)
+				artifacts = append(artifacts, imageArtifacts...)
 			}
 		}
 	}
 
-	if err := exportsAutoExcluding(images, artifacts); err != nil {
-		return nil, nil, err
+	werfConfig := &WerfConfig{
+		Meta:                 meta,
+		Images:               images,
+		ImagesFromDockerfile: imagesFromDockerfile,
+		Artifacts:            artifacts,
 	}
 
-	if err := validateImagesNames(images, artifacts); err != nil {
-		return nil, nil, err
+	if err := werfConfig.validateImagesNames(); err != nil {
+		return nil, err
 	}
 
-	if err := associateImportsArtifacts(images, artifacts); err != nil {
-		return nil, nil, err
+	if err := werfConfig.associateImportsArtifacts(); err != nil {
+		return nil, err
 	}
 
-	if err := associateImagesFrom(images, artifacts); err != nil {
-		return nil, nil, err
+	if err := werfConfig.exportsAutoExcluding(); err != nil {
+		return nil, err
 	}
 
-	if err := validateInfiniteLoopBetweenRelatedImages(images, artifacts); err != nil {
-		return nil, nil, err
+	if err := werfConfig.associateImagesFrom(); err != nil {
+		return nil, err
 	}
 
-	return images, imagesFromDockerfile, nil
-}
-
-func validateInfiniteLoopBetweenRelatedImages(images []*Image, artifacts []*ImageArtifact) error {
-	for _, image := range images {
-		if err := image.validateInfiniteLoop(); err != nil {
-			return err
-		}
+	if err := werfConfig.validateInfiniteLoopBetweenRelatedImages(); err != nil {
+		return nil, err
 	}
 
-	for _, artifact := range artifacts {
-		if err := artifact.validateInfiniteLoop(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func exportsAutoExcluding(images []*Image, artifacts []*ImageArtifact) error {
-	for _, image := range images {
-		if err := image.exportsAutoExcluding(); err != nil {
-			return err
-		}
-	}
-
-	for _, artifact := range artifacts {
-		if err := artifact.exportsAutoExcluding(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateImagesNames(images []*Image, artifacts []*ImageArtifact) error {
-	existByImageName := map[string]bool{}
-
-	imageByName := map[string]*Image{}
-	for _, image := range images {
-		name := image.Name
-
-		if name == "" && len(images) > 1 {
-			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.raw.doc)))
-		}
-
-		if d, ok := imageByName[name]; ok {
-			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(image.raw.doc)))
-		} else {
-			imageByName[name] = image
-			existByImageName[name] = true
-		}
-	}
-
-	imageArtifactByName := map[string]*ImageArtifact{}
-	for _, artifact := range artifacts {
-		name := artifact.Name
-
-		if a, ok := imageArtifactByName[name]; ok {
-			return newConfigError(fmt.Sprintf("conflict between artifacts names!\n\n%s%s\n", dumpConfigDoc(a.raw.doc), dumpConfigDoc(artifact.raw.doc)))
-		} else {
-			imageArtifactByName[name] = artifact
-		}
-
-		if exist, ok := existByImageName[name]; ok && exist {
-			d := imageByName[name]
-
-			return newConfigError(fmt.Sprintf("conflict between image and artifact names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(artifact.raw.doc)))
-		} else {
-			imageArtifactByName[name] = artifact
-		}
-	}
-
-	return nil
-}
-
-func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) error {
-	var artifactImports []*Import
-
-	for _, image := range images {
-		for _, relatedImageInterface := range relatedImageImages(image) {
-			switch relatedImageInterface.(type) {
-			case *Image:
-				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
-			case *ImageArtifact:
-				artifactImports = append(artifactImports, relatedImageInterface.(*ImageArtifact).Import...)
-			}
-		}
-	}
-
-	for _, artifactImage := range artifacts {
-		for _, relatedImageInterface := range relatedImageImages(artifactImage) {
-			switch relatedImageInterface.(type) {
-			case *Image:
-				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
-			case *ImageArtifact:
-				artifactImports = append(artifactImports, relatedImageInterface.(*ImageArtifact).Import...)
-			}
-		}
-	}
-
-	for _, artifactImport := range artifactImports {
-		if err := artifactImport.associateImportImage(images, artifacts); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func associateImagesFrom(images []*Image, artifacts []*ImageArtifact) error {
-	for _, image := range images {
-		if err := associateImageFrom(headImage(image), images, artifacts); err != nil {
-			return err
-		}
-	}
-
-	for _, image := range artifacts {
-		if err := associateImageFrom(headImage(image), images, artifacts); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func associateImageFrom(image ImageInterface, images []*Image, artifacts []*ImageArtifact) error {
-	switch image.(type) {
-	case *Image:
-		return image.(*Image).associateFrom(images, artifacts)
-	case *ImageArtifact:
-		return image.(*ImageArtifact).associateFrom(images, artifacts)
-	default:
-		panic("runtime error")
-	}
+	return werfConfig, nil
 }
 
 func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, []*rawImageFromDockerfile, error) {

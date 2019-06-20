@@ -89,13 +89,9 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			}
 
 			if err := logboek.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
-				return img.Build(p.ImageBuildOptions)
+				return s.Build(p.ImageBuildOptions)
 			}); err != nil {
-				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
-			}
-
-			if err := img.SaveInCache(); err != nil {
-				return fmt.Errorf("failed to save in cache image %s: %s", img.Name(), err)
+				return err
 			}
 
 			return nil

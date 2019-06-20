@@ -5,27 +5,23 @@ import (
 )
 
 type ImageBase struct {
-	Name              string
-	From              string
-	FromLatest        bool
-	FromImage         *Image
-	FromImageArtifact *ImageArtifact
-	FromCacheVersion  string
-	Git               *GitManager
-	Shell             *Shell
-	Ansible           *Ansible
-	Mount             []*Mount
-	Import            []*Import
+	Name                  string
+	From                  string
+	FromLatest            bool
+	FromImageName         string
+	FromImageArtifactName string
+	FromCacheVersion      string
+	Git                   *GitManager
+	Shell                 *Shell
+	Ansible               *Ansible
+	Mount                 []*Mount
+	Import                []*Import
 
 	raw *rawImage
 }
 
-func (c *ImageBase) fromImage() *Image {
-	return c.FromImage
-}
-
-func (c *ImageBase) fromImageArtifact() *ImageArtifact {
-	return c.FromImageArtifact
+func (c *ImageBase) GetName() string {
+	return c.Name
 }
 
 func (c *ImageBase) imports() []*Import {
@@ -76,60 +72,8 @@ func (c *ImageBase) exports() []autoExcludeExport {
 	return exports
 }
 
-func (c *ImageBase) associateFrom(images []*Image, artifacts []*ImageArtifact) error {
-	if c.FromImage != nil || c.FromImageArtifact != nil { // asLayers
-		return nil
-	}
-
-	if c.raw.FromImage != "" {
-		fromImageName := c.raw.FromImage
-
-		if fromImageName == c.Name {
-			return newDetailedConfigError(fmt.Sprintf("cannot use own image name as `fromImage` directive value!"), nil, c.raw.doc)
-		}
-
-		if image := imageByName(images, fromImageName); image != nil {
-			c.FromImage = image
-		} else {
-			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", fromImageName), c.raw, c.raw.doc)
-		}
-	} else if c.raw.FromImageArtifact != "" {
-		fromImageArtifactName := c.raw.FromImageArtifact
-
-		if fromImageArtifactName == c.Name {
-			return newDetailedConfigError(fmt.Sprintf("cannot use own image name as `fromImageArtifact` directive value!"), nil, c.raw.doc)
-		}
-
-		if imageArtifact := imageArtifactByName(artifacts, fromImageArtifactName); imageArtifact != nil {
-			c.FromImageArtifact = imageArtifact
-		} else {
-			return newDetailedConfigError(fmt.Sprintf("no such image artifact `%s`!", fromImageArtifactName), c.raw, c.raw.doc)
-		}
-	}
-
-	return nil
-}
-
-func imageByName(images []*Image, name string) *Image {
-	for _, image := range images {
-		if image.Name == name {
-			return image
-		}
-	}
-	return nil
-}
-
-func imageArtifactByName(images []*ImageArtifact, name string) *ImageArtifact {
-	for _, image := range images {
-		if image.Name == name {
-			return image
-		}
-	}
-	return nil
-}
-
 func (c *ImageBase) validate() error {
-	if c.From == "" && c.raw.FromImage == "" && c.raw.FromImageArtifact == "" && c.FromImage == nil && c.FromImageArtifact == nil {
+	if c.From == "" && c.raw.FromImage == "" && c.raw.FromImageArtifact == "" && c.FromImageName == "" && c.FromImageArtifactName == "" {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromImageArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}
 

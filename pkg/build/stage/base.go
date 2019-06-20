@@ -29,6 +29,8 @@ const (
 	GitCache             StageName = "gitCache"
 	GitLatestPatch       StageName = "gitLatestPatch"
 	DockerInstructions   StageName = "dockerInstructions"
+
+	Dockerfile StageName = "dockerfile"
 )
 
 type NewBaseStageOptions struct {
@@ -304,6 +306,18 @@ func (s *BaseStage) SetGitMappings(gitMappings []*GitMapping) {
 
 func (s *BaseStage) GetGitMappings() []*GitMapping {
 	return s.gitMappings
+}
+
+func (s *BaseStage) Build(options imagePkg.BuildOptions) error {
+	if err := s.image.Build(options); err != nil {
+		return fmt.Errorf("failed to build %s: %s", s.image.Name(), err)
+	}
+
+	if err := s.image.SaveInCache(); err != nil {
+		return fmt.Errorf("failed to save in cache image %s: %s", s.image.Name(), err)
+	}
+
+	return nil
 }
 
 func mergeMounts(a, b map[string][]string) map[string][]string {

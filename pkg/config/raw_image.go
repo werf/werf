@@ -99,41 +99,49 @@ func (c *rawImage) imageType() string {
 
 func (c *rawImage) toImageDirectives() (images []*Image, err error) {
 	for _, imageName := range c.Images {
-		if image, err := c.toImageDirective(imageName); err != nil {
+		if imageImages, err := c.toImageDirectiveGroup(imageName); err != nil {
 			return nil, err
 		} else {
-			images = append(images, image)
+			images = append(images, imageImages...)
 		}
 	}
 
 	return images, nil
 }
 
-func (c *rawImage) toImageArtifactDirective() (imageArtifact *ImageArtifact, err error) {
-	imageArtifact = &ImageArtifact{}
+func (c *rawImage) toImageArtifactDirectives() (imageArtifacts []*ImageArtifact, err error) {
 	if c.AsLayers {
-		if imageArtifact, err = c.toImageArtifactAsLayersDirective(); err != nil {
+		if imageArtifactLayers, err := c.toImageArtifactAsLayersDirective(); err != nil {
 			return nil, err
+		} else {
+			imageArtifacts = append(imageArtifacts, imageArtifactLayers...)
 		}
 	} else {
+		imageArtifact := &ImageArtifact{}
 		if imageArtifact.ImageBase, err = c.toImageBaseDirective(c.Artifact); err != nil {
 			return nil, err
 		}
+
+		imageArtifacts = append(imageArtifacts, imageArtifact)
 	}
 
-	if err := c.validateArtifactImageDirective(imageArtifact); err != nil {
-		return nil, err
+	for _, imageArtifact := range imageArtifacts {
+		if err := c.validateArtifactImageDirective(imageArtifact); err != nil {
+			return nil, err
+		}
 	}
 
-	return imageArtifact, nil
+	return imageArtifacts, nil
 }
 
-func (c *rawImage) toImageDirective(name string) (image *Image, err error) {
-	image = &Image{}
+func (c *rawImage) toImageDirectiveGroup(name string) (images []*Image, err error) {
+	image := &Image{}
 
 	if c.AsLayers {
-		if image, err = c.toImageAsLayersDirective(name); err != nil {
+		if imageLayers, err := c.toImageAsLayersDirective(name); err != nil {
 			return nil, err
+		} else {
+			images = append(images, imageLayers...)
 		}
 	} else {
 		if imageBase, err := c.toImageBaseDirective(name); err != nil {
@@ -149,54 +157,61 @@ func (c *rawImage) toImageDirective(name string) (image *Image, err error) {
 				image.Docker = docker
 			}
 		}
+
+		images = append(images, image)
 	}
 
-	if err := c.validateImageDirective(image); err != nil {
-		return nil, err
+	for _, image := range images {
+		if err := c.validateImageDirective(image); err != nil {
+			return nil, err
+		}
 	}
 
 	return
 }
 
-func (c *rawImage) toImageAsLayersDirective(name string) (image *Image, err error) {
+func (c *rawImage) toImageAsLayersDirective(name string) (imageLayers []*Image, err error) {
+	image := &Image{}
+
 	imageBaseLayers, err := c.toImageBaseLayersDirectives(name)
 	if err != nil {
 		return nil, err
 	}
 
-	var layers []*Image
 	for _, imageBaseLayer := range imageBaseLayers {
 		layer := &Image{}
 		layer.ImageBase = imageBaseLayer
-		layers = append(layers, layer)
+		imageLayers = append(imageLayers, layer)
 	}
 
 	if image, err = c.toImageTopLayerDirective(name); err != nil {
 		return nil, err
 	} else {
-		layers = append(layers, image)
+		imageLayers = append(imageLayers, image)
 	}
 
 	var prevImageLayer *Image
-	for _, imageLayer := range layers {
+	for _, layer := range imageLayers {
 		if prevImageLayer == nil {
-			imageLayer.From = c.From
-			imageLayer.FromLatest = c.FromLatest
-			imageLayer.FromCacheVersion = c.FromCacheVersion
+			layer.From = c.From
+			layer.FromImageName = c.FromImage
+			layer.FromImageArtifactName = c.FromImageArtifact
+			layer.FromLatest = c.FromLatest
+			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
-			imageLayer.FromImage = prevImageLayer
+			layer.FromImageName = prevImageLayer.Name
 		}
-		prevImageLayer = imageLayer
+		prevImageLayer = layer
 	}
 
 	if err = c.validateImageBaseDirective(prevImageLayer.ImageBase); err != nil {
 		return nil, err
 	} else {
-		return prevImageLayer, nil
+		return imageLayers, nil
 	}
 }
 
-func (c *rawImage) toImageBaseLayersDirectives(name string) (layers []*ImageBase, err error) {
+func (c *rawImage) toImageBaseLayersDirectives(name string) (imageLayers []*ImageBase, err error) {
 	var shell *Shell
 	var ansible *Ansible
 	if c.RawShell != nil {
@@ -215,83 +230,83 @@ func (c *rawImage) toImageBaseLayersDirectives(name string) (layers []*ImageBase
 		if beforeInstallShellLayers, err := c.toImageBaseShellLayersDirectivesByStage(name, shell.BeforeInstall, "beforeInstall"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, beforeInstallShellLayers...)
+			imageLayers = append(imageLayers, beforeInstallShellLayers...)
 		}
 	} else if ansible != nil {
 		if beforeInstallAnsibleLayers, err := c.toImageBaseAnsibleLayersDirectivesByStage(name, ansible.BeforeInstall, "beforeInstall"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, beforeInstallAnsibleLayers...)
+			imageLayers = append(imageLayers, beforeInstallAnsibleLayers...)
 		}
 	}
 
 	if gitLayer, err := c.toImageBaseGitLayerDirective(name); err != nil {
 		return nil, err
 	} else if gitLayer != nil {
-		layers = append(layers, gitLayer)
+		imageLayers = append(imageLayers, gitLayer)
 	}
 
 	if importsLayers, err := c.toImageBaseImportsLayerDirectiveByBeforeAndAfter(name, "install", ""); err != nil {
 		return nil, err
 	} else if importsLayers != nil {
-		layers = append(layers, importsLayers)
+		imageLayers = append(imageLayers, importsLayers)
 	}
 
 	if shell != nil {
 		if installShellLayers, err := c.toImageBaseShellLayersDirectivesByStage(name, shell.Install, "install"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, installShellLayers...)
+			imageLayers = append(imageLayers, installShellLayers...)
 		}
 	} else if ansible != nil {
 		if installAnsibleLayers, err := c.toImageBaseAnsibleLayersDirectivesByStage(name, ansible.Install, "install"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, installAnsibleLayers...)
+			imageLayers = append(imageLayers, installAnsibleLayers...)
 		}
 	}
 
 	if importsLayer, err := c.toImageBaseImportsLayerDirectiveByBeforeAndAfter(name, "", "install"); err != nil {
 		return nil, err
 	} else if importsLayer != nil {
-		layers = append(layers, importsLayer)
+		imageLayers = append(imageLayers, importsLayer)
 	}
 
 	if shell != nil {
 		if beforeSetupShellLayers, err := c.toImageBaseShellLayersDirectivesByStage(name, shell.BeforeSetup, "beforeSetup"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, beforeSetupShellLayers...)
+			imageLayers = append(imageLayers, beforeSetupShellLayers...)
 		}
 	} else if ansible != nil {
 		if beforeSetupAnsibleLayers, err := c.toImageBaseAnsibleLayersDirectivesByStage(name, ansible.BeforeSetup, "beforeSetup"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, beforeSetupAnsibleLayers...)
+			imageLayers = append(imageLayers, beforeSetupAnsibleLayers...)
 		}
 	}
 
 	if importsLayer, err := c.toImageBaseImportsLayerDirectiveByBeforeAndAfter(name, "setup", ""); err != nil {
 		return nil, err
 	} else if importsLayer != nil {
-		layers = append(layers, importsLayer)
+		imageLayers = append(imageLayers, importsLayer)
 	}
 
 	if shell != nil {
 		if setupShellLayers, err := c.toImageBaseShellLayersDirectivesByStage(name, shell.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, setupShellLayers...)
+			imageLayers = append(imageLayers, setupShellLayers...)
 		}
 	} else if ansible != nil {
 		if setupAnsibleLayers, err := c.toImageBaseAnsibleLayersDirectivesByStage(name, ansible.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
-			layers = append(layers, setupAnsibleLayers...)
+			imageLayers = append(imageLayers, setupAnsibleLayers...)
 		}
 	}
 
-	return layers, nil
+	return imageLayers, nil
 }
 
 func (c *rawImage) toImageBaseShellLayersDirectivesByStage(name string, commands []string, stage string) (imageLayers []*ImageBase, err error) {
@@ -312,7 +327,7 @@ func (c *rawImage) toImageBaseShellLayersDirectivesByStage(name string, commands
 	return imageLayers, nil
 }
 
-func (c *rawImage) toImageBaseAnsibleLayersDirectivesByStage(name string, tasks []*AnsibleTask, stage string) (layers []*ImageBase, err error) {
+func (c *rawImage) toImageBaseAnsibleLayersDirectivesByStage(name string, tasks []*AnsibleTask, stage string) (imageLayers []*ImageBase, err error) {
 	for ind, task := range tasks {
 		layerName := fmt.Sprintf("%s-%d", strings.ToLower(stage), ind)
 		if name != "" {
@@ -323,11 +338,11 @@ func (c *rawImage) toImageBaseAnsibleLayersDirectivesByStage(name string, tasks 
 			return nil, err
 		} else {
 			layer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
-			layers = append(layers, layer)
+			imageLayers = append(imageLayers, layer)
 		}
 	}
 
-	return layers, nil
+	return imageLayers, nil
 }
 
 func (c *rawImage) toImageLayerDirective(layerName string) (image *Image, err error) {
@@ -367,33 +382,36 @@ func (c *rawImage) validateImageDirective(image *Image) (err error) {
 	return nil
 }
 
-func (c *rawImage) toImageArtifactAsLayersDirective() (imageArtifactLayer *ImageArtifact, err error) {
+func (c *rawImage) toImageArtifactAsLayersDirective() (imageArtifactLayers []*ImageArtifact, err error) {
+	imageArtifactLayer := &ImageArtifact{}
+
 	imageBaseLayers, err := c.toImageBaseLayersDirectives(c.Artifact)
 	if err != nil {
 		return nil, err
 	}
 
-	var layers []*ImageArtifact
 	for _, imageBaseLayer := range imageBaseLayers {
 		layer := &ImageArtifact{}
 		layer.ImageBase = imageBaseLayer
-		layers = append(layers, layer)
+		imageArtifactLayers = append(imageArtifactLayers, layer)
 	}
 
 	if imageArtifactLayer, err = c.toImageArtifactTopLayerDirective(); err != nil {
 		return nil, err
 	} else {
-		layers = append(layers, imageArtifactLayer)
+		imageArtifactLayers = append(imageArtifactLayers, imageArtifactLayer)
 	}
 
 	var prevImageLayer *ImageArtifact
-	for _, layer := range layers {
+	for _, layer := range imageArtifactLayers {
 		if prevImageLayer == nil {
 			layer.From = c.From
+			layer.FromImageName = c.FromImage
+			layer.FromImageArtifactName = c.FromImageArtifact
 			layer.FromLatest = c.FromLatest
 			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
-			layer.FromImageArtifact = prevImageLayer
+			layer.FromImageArtifactName = prevImageLayer.Name
 		}
 
 		prevImageLayer = layer
@@ -402,7 +420,7 @@ func (c *rawImage) toImageArtifactAsLayersDirective() (imageArtifactLayer *Image
 	if err = c.validateImageBaseDirective(prevImageLayer.ImageBase); err != nil {
 		return nil, err
 	} else {
-		return prevImageLayer, nil
+		return imageArtifactLayers, nil
 	}
 }
 
@@ -588,6 +606,8 @@ func (c *rawImage) toImageBaseDirective(name string) (imageBase *ImageBase, err 
 	}
 
 	imageBase.From = c.From
+	imageBase.FromImageName = c.FromImage
+	imageBase.FromImageArtifactName = c.FromImageArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
 

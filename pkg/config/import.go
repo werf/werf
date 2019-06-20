@@ -11,9 +11,6 @@ type Import struct {
 	Before       string
 	After        string
 
-	Image         *Image
-	ImageArtifact *ImageArtifact
-
 	raw *rawImport
 }
 
@@ -28,6 +25,8 @@ func (c *Import) validate() error {
 
 	if c.ArtifactName == "" && c.ImageName == "" {
 		return newDetailedConfigError("artifact name `artifact: NAME` or image name `image: NAME` required for import!", c.raw, c.raw.rawImage.doc)
+	} else if c.ArtifactName != "" && c.ImageName != "" {
+		return newDetailedConfigError("specify only one artifact name using `artifact: NAME` or image name using `image: NAME` for import!", c.raw, c.raw.rawImage.doc)
 	} else if c.Before != "" && c.After != "" {
 		return newDetailedConfigError("specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawImage.doc)
 	} else if c.Before == "" && c.After == "" {
@@ -42,31 +41,4 @@ func (c *Import) validate() error {
 
 func checkInvalidRelation(rel string) bool {
 	return !(rel == "install" || rel == "setup")
-}
-
-func (c *Import) associateImportImage(images []*Image, artifacts []*ImageArtifact) error {
-	if c.ImageName != "" {
-		if image := imageByName(images, c.ImageName); image != nil {
-			c.Image = image
-		} else {
-			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", c.ImageName), c.raw, c.raw.rawImage.doc)
-		}
-	} else {
-		if imageArtifact := artifactByName(artifacts, c.ArtifactName); imageArtifact != nil {
-			c.ImageArtifact = imageArtifact
-		} else {
-			return newDetailedConfigError(fmt.Sprintf("no such artifact `%s`!", c.ArtifactName), c.raw, c.raw.rawImage.doc)
-		}
-	}
-
-	return nil
-}
-
-func artifactByName(artifacts []*ImageArtifact, name string) *ImageArtifact {
-	for _, artifact := range artifacts {
-		if artifact.Name == name {
-			return artifact
-		}
-	}
-	return nil
 }

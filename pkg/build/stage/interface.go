@@ -15,6 +15,7 @@ type Interface interface {
 
 	AfterImageSyncDockerStateHook(Conveyor) error
 	PreRunHook(Conveyor) error
+	Build(options image.BuildOptions) error
 
 	SetSignature(signature string)
 	GetSignature() string
