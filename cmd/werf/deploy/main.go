@@ -166,9 +166,14 @@ func runDeploy() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	var imagesRepo string
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
+	tag, tagStrategy, err = common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
+	if err != nil {
+		return err
+	}
+
+	var imagesRepo string
 	if len(werfConfig.Images) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		if len(werfConfig.Images) != 0 {
 			_, err = common.GetStagesRepo(&CommonCmdData)
@@ -178,11 +183,6 @@ func runDeploy() error {
 		}
 
 		imagesRepo, err = common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
-		if err != nil {
-			return err
-		}
-
-		tag, tagStrategy, err = common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
 		if err != nil {
 			return err
 		}
