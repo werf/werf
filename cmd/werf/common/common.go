@@ -452,13 +452,17 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
-	if *cmdData.Dir != "" {
-		return *cmdData.Dir, nil
-	}
-
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return "", err
+	}
+
+	if *cmdData.Dir != "" {
+		if path.IsAbs(*cmdData.Dir) {
+			return *cmdData.Dir, nil
+		} else {
+			return path.Clean(path.Join(currentDir, *cmdData.Dir)), nil
+		}
 	}
 
 	return currentDir, nil
