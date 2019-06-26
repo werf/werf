@@ -40,7 +40,16 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
-	for _, image := range c.imagesInOrder {
+	var imagesToPublish []*Image
+	if len(c.imageNamesToProcess) == 0 {
+		imagesToPublish = c.imagesInOrder
+	} else {
+		for _, imageName := range c.imageNamesToProcess {
+			imagesToPublish = append(imagesToPublish, c.GetImage(imageName))
+		}
+	}
+
+	for _, image := range imagesToPublish {
 		if image.isArtifact { // FIXME: distributed stages
 			continue
 		}
