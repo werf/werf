@@ -295,7 +295,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 				specs.Jobs = append(specs.Jobs, *spec)
 			}
 
-			return logboek.LogProcess("Waiting for helm hook job/%s termination", logboek.LogProcessOptions{}, func() error {
+			return logboek.LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name), logboek.LogProcessOptions{}, func() error {
 				return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
 					Options: tracker.Options{
 						Timeout:      timeout,
