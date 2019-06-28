@@ -207,8 +207,8 @@ mainLoop:
 			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
 		case FailuresAllowedPerReplicaAnnoName:
 			intValue, err := strconv.Atoi(annoValue)
-			if err != nil || intValue <= 0 {
-				return nil, fmt.Errorf("%s: positive integer expected", invalidAnnoValueError)
+			if err != nil || intValue < 0 {
+				return nil, fmt.Errorf("%s: positive or zero integer expected", invalidAnnoValueError)
 			}
 
 			allowFailuresCount := new(int)
