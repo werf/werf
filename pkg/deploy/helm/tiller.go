@@ -3,8 +3,17 @@ package helm
 import (
 	"errors"
 	"fmt"
+	"io"
+	"regexp"
 	"strings"
+	"text/tabwriter"
 	"time"
+
+	"github.com/gosuri/uitable"
+	"github.com/gosuri/uitable/util/strutil"
+	"k8s.io/helm/pkg/proto/hapi/release"
+
+	"k8s.io/helm/pkg/timeconv"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -272,7 +281,7 @@ func ReleaseInstall(chartPath, releaseName, namespace string, values, set, setSt
 		return err
 	}
 
-	return nil
+	return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
 }
 
 type ReleaseUpdateOptions struct {
@@ -306,7 +315,7 @@ func ReleaseUpdate(chartPath, releaseName string, values, set, setString []strin
 		return err
 	}
 
-	return nil
+	return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
 }
 
 type ReleaseRollbackOptions struct {
@@ -453,4 +462,62 @@ func displayReleaseLogMessages() {
 			_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
 		}
 	})
+}
+
+func fprintReleaseStatus(out io.Writer, releaseName string) error {
+	ctx := helm.NewContext()
+	req := &services.GetReleaseStatusRequest{Name: releaseName}
+
+	status, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
+	if err != nil {
+		fmt.Errorf("error getting release %v status: %s", releaseName, err)
+	}
+
+	fmt.Fprintf(out, "NAME: %s\n", releaseName)
+	printStatus(out, status)
+
+	return nil
+}
+
+func printStatus(out io.Writer, res *services.GetReleaseStatusResponse) {
+	if res.Info.LastDeployed != nil {
+		fmt.Fprintf(out, "LAST DEPLOYED: %s\n", timeconv.String(res.Info.LastDeployed))
+	}
+	fmt.Fprintf(out, "NAMESPACE: %s\n", res.Namespace)
+	fmt.Fprintf(out, "STATUS: %s\n", res.Info.Status.Code)
+	fmt.Fprintf(out, "\n")
+	if len(res.Info.Status.Resources) > 0 {
+		re := regexp.MustCompile("  +")
+
+		w := tabwriter.NewWriter(out, 0, 0, 2, ' ', tabwriter.TabIndent)
+		fmt.Fprintf(w, "RESOURCES:\n%s\n", re.ReplaceAllString(res.Info.Status.Resources, "\t"))
+		w.Flush()
+	}
+	if res.Info.Status.LastTestSuiteRun != nil {
+		lastRun := res.Info.Status.LastTestSuiteRun
+		fmt.Fprintf(out, "TEST SUITE:\n%s\n%s\n\n%s\n",
+			fmt.Sprintf("Last Started: %s", timeconv.String(lastRun.StartedAt)),
+			fmt.Sprintf("Last Completed: %s", timeconv.String(lastRun.CompletedAt)),
+			formatTestResults(lastRun.Results))
+	}
+
+	if len(res.Info.Status.Notes) > 0 {
+		fmt.Fprintf(out, "NOTES:\n%s\n", res.Info.Status.Notes)
+	}
+}
+
+func formatTestResults(results []*release.TestRun) string {
+	tbl := uitable.New()
+	tbl.MaxColWidth = 50
+	tbl.AddRow("TEST", "STATUS", "INFO", "STARTED", "COMPLETED")
+	for i := 0; i < len(results); i++ {
+		r := results[i]
+		n := r.Name
+		s := strutil.PadRight(r.Status.String(), 10, ' ')
+		i := r.Info
+		ts := timeconv.String(r.StartedAt)
+		tc := timeconv.String(r.CompletedAt)
+		tbl.AddRow(n, s, i, ts, tc)
+	}
+	return tbl.String()
 }
