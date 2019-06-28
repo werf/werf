@@ -10,7 +10,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
-	"github.com/flant/kubedog/pkg/trackers/rollout"
 	"github.com/flant/kubedog/pkg/trackers/rollout/multitrack"
 	"github.com/flant/logboek"
 	appsv1 "k8s.io/api/apps/v1"
@@ -42,14 +41,16 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
-		case *v1.Pod:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "po")
-			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
-			}
-			if spec != nil {
-				specs.Pods = append(specs.Pods, *spec)
-			}
+		// TODO
+		//case *v1.Pod:
+		//	spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "po")
+		//	if err != nil {
+		//		return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+		//	}
+		//	if spec != nil {
+		//		specs.Pods = append(specs.Pods, *spec)
+		//	}
+
 		case *appsv1.Deployment:
 			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
@@ -136,6 +137,14 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 			if spec != nil {
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
+		case *batchv1.Job:
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "job")
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Jobs = append(specs.Jobs, *spec)
+			}
 		case *v1.ReplicationController:
 		case *extensions.ReplicaSet:
 		case *appsv1beta2.ReplicaSet:
@@ -198,8 +207,8 @@ mainLoop:
 			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
 		case FailuresAllowedPerReplicaAnnoName:
 			intValue, err := strconv.Atoi(annoValue)
-			if err != nil || intValue <= 0 {
-				return nil, fmt.Errorf("%s: positive integer expected", invalidAnnoValueError)
+			if err != nil || intValue < 0 {
+				return nil, fmt.Errorf("%s: positive or zero integer expected", invalidAnnoValueError)
 			}
 
 			allowFailuresCount := new(int)
@@ -265,8 +274,6 @@ mainLoop:
 }
 
 func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reader, timeout time.Duration) error {
-	watchStartTime := time.Now()
-
 	infos, err := waiter.Client.BuildUnstructured(namespace, reader)
 	if err != nil {
 		return err
@@ -274,17 +281,28 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 
 	for _, info := range infos {
 		name := info.Name
-		namespace := info.Namespace
 		kind := info.Mapping.GroupVersionKind.Kind
 
-		switch asVersioned(info).(type) {
+		switch value := asVersioned(info).(type) {
 		case *batchv1.Job:
-			loggerProcessMsg := fmt.Sprintf("Waiting for helm hook job/%s termination", name)
-			if err := logboek.LogProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
-				return rollout.TrackJobTillDone(name, namespace, kube.Kubernetes, tracker.Options{Timeout: timeout, LogsFromTime: watchStartTime})
-			}); err != nil {
-				return err
+			specs := multitrack.MultitrackSpecs{}
+
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "job")
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
+			if spec != nil {
+				specs.Jobs = append(specs.Jobs, *spec)
+			}
+
+			return logboek.LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name), logboek.LogProcessOptions{}, func() error {
+				return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
+					Options: tracker.Options{
+						Timeout:      timeout,
+						LogsFromTime: waiter.LogsFromTime,
+					},
+				})
+			})
 
 		default:
 			logboek.LogErrorF("WARNING: Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
