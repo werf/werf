@@ -1,8 +1,6 @@
 package build
 
 import (
-	"fmt"
-
 	"github.com/fatih/color"
 
 	"github.com/flant/logboek"
@@ -12,59 +10,8 @@ import (
 	"github.com/flant/werf/pkg/logging"
 )
 
-type ImageBase struct {
-	name string
-}
-
-func (i *ImageBase) GetName() string {
-	return i.name
-}
-
-func (i *ImageBase) GetLogName() string {
-	return logging.ImageLogName(i.name, false)
-}
-
-func (i *ImageBase) LogDetailedName() string {
-	return logging.ImageLogProcessName(i.name, false)
-}
-
-func (i *ImageBase) LogProcessColorizeFunc() func(...interface{}) string {
-	return ImageLogProcessColorizeFunc(false)
-}
-
-type ImageFromDockerfile struct {
-	ImageBase
-
-	context    string
-	target     string
-	dockerfile string
-	args       map[string]interface{}
-}
-
-func (i *ImageFromDockerfile) DockerBuildArgs() []string {
-	var result []string
-
-	if i.dockerfile != "" {
-		result = append(result, fmt.Sprintf("--file=%s", i.dockerfile))
-	}
-
-	if i.target != "" {
-		result = append(result, fmt.Sprintf("--target=%s", i.target))
-	}
-
-	if len(i.args) != 0 {
-		for key, value := range i.args {
-			result = append(result, fmt.Sprintf("--build-arg=%s=%v", key, value))
-		}
-	}
-
-	result = append(result, i.context)
-
-	return result
-}
-
 type Image struct {
-	ImageBase
+	name string
 
 	baseImageName      string
 	baseImageImageName string
@@ -132,6 +79,10 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 
 func (i *Image) LatestStage() stage.Interface {
 	return i.stages[len(i.stages)-1]
+}
+
+func (i *Image) GetName() string {
+	return i.name
 }
 
 func (i *Image) SetupBaseImage(c *Conveyor) {

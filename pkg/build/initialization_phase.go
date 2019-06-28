@@ -1,13 +1,22 @@
 package build
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
+
+	"github.com/docker/cli/cli/command/image/build"
+	"github.com/docker/docker/pkg/fileutils"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/flant/logboek"
 
@@ -17,6 +26,7 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -34,11 +44,31 @@ func (p *InitializationPhase) Run(c *Conveyor) (err error) {
 }
 
 func (p *InitializationPhase) run(c *Conveyor) error {
-	imagesInterfaceConfigs := getImageConfigsInOrder(c.werfConfig.Images, c)
-	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
-		imageName := logging.ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
-		err := logboek.LogProcess(imageName, logboek.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
-			image, err := generateImage(imageInterfaceConfig, c)
+	imagesInterfaces := getImageConfigsInOrder(c)
+	for _, imageInterfaceConfig := range imagesInterfaces {
+		var image *Image
+		var imageLogName string
+		var colorizeMsgFunc func(...interface{}) string
+
+		switch imageConfig := imageInterfaceConfig.(type) {
+		case config.WerfImageInterface:
+			imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
+			colorizeMsgFunc = ImageLogProcessColorizeFunc(imageConfig.IsArtifact())
+		case *config.ImageFromDockerfile:
+			imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
+			colorizeMsgFunc = ImageLogProcessColorizeFunc(false)
+		}
+
+		err := logboek.LogProcess(imageLogName, logboek.LogProcessOptions{ColorizeMsgFunc: colorizeMsgFunc}, func() error {
+			var err error
+
+			switch imageConfig := imageInterfaceConfig.(type) {
+			case config.WerfImageInterface:
+				image, err = prepareImageBasedOnWerfImageConfig(imageConfig, c)
+			case *config.ImageFromDockerfile:
+				image, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
+			}
+
 			if err != nil {
 				return err
 			}
@@ -53,22 +83,10 @@ func (p *InitializationPhase) run(c *Conveyor) error {
 		}
 	}
 
-	for _, imageFromDockerfileConfig := range c.werfConfig.ImagesFromDockerfile {
-		image := &ImageFromDockerfile{}
-		image.name = imageFromDockerfileConfig.Name
-
-		image.context = imageFromDockerfileConfig.Context
-		image.target = imageFromDockerfileConfig.Target
-		image.dockerfile = imageFromDockerfileConfig.Dockerfile
-		image.args = imageFromDockerfileConfig.Args
-
-		c.imageFromDockerfile = append(c.imageFromDockerfile, image)
-	}
-
 	return nil
 }
 
-func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Image, error) {
+func prepareImageBasedOnWerfImageConfig(imageInterfaceConfig config.WerfImageInterface, c *Conveyor) (*Image, error) {
 	image := &Image{}
 
 	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
@@ -80,33 +98,9 @@ func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Im
 	image.name = imageName
 
 	if from != "" {
-		image.baseImageName = from
-
-		var baseImageRepoErr error
-		baseImageRepoId, exist := c.baseImagesRepoIdsCache[from]
-		if !exist {
-			processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", from)
-			if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
-				baseImageRepoId, baseImageRepoErr = docker_registry.ImageId(from)
-				if fromLatest {
-					return fmt.Errorf("can not get base image id from registry (%s): %s", from, baseImageRepoErr)
-				}
-
-				return nil
-			}); err != nil {
-				return nil, err
-			}
-		} else {
-			baseImageRepoErr, _ = c.baseImagesRepoErrCache[from]
+		if err := handleImageFromName(from, fromLatest, image, c); err != nil {
+			return nil, err
 		}
-
-		image.baseImageRepoId = baseImageRepoId
-		image.baseImageRepoErr = baseImageRepoErr
-
-		image.baseImageLatest = fromLatest
-
-		c.baseImagesRepoIdsCache[from] = baseImageRepoId
-		c.baseImagesRepoErrCache[from] = baseImageRepoErr
 	} else {
 		image.baseImageImageName = fromImageName
 	}
@@ -121,30 +115,65 @@ func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Im
 	return image, nil
 }
 
+func handleImageFromName(from string, fromLatest bool, image *Image, c *Conveyor) error {
+	image.baseImageName = from
+
+	var baseImageRepoErr error
+	baseImageRepoId, exist := c.baseImagesRepoIdsCache[from]
+	if !exist {
+		processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", from)
+		if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
+			baseImageRepoId, baseImageRepoErr = docker_registry.ImageId(from)
+			if fromLatest {
+				return fmt.Errorf("can not get base image id from registry (%s): %s", from, baseImageRepoErr)
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+	} else {
+		baseImageRepoErr, _ = c.baseImagesRepoErrCache[from]
+	}
+
+	image.baseImageRepoId = baseImageRepoId
+	image.baseImageRepoErr = baseImageRepoErr
+
+	image.baseImageLatest = fromLatest
+
+	c.baseImagesRepoIdsCache[from] = baseImageRepoId
+	c.baseImagesRepoErrCache[from] = baseImageRepoErr
+
+	return nil
+}
+
 func getFromFields(imageBaseConfig *config.ImageBase) (string, string, bool) {
 	var from string
 	var fromImageName string
 
 	if imageBaseConfig.From != "" {
 		from = imageBaseConfig.From
-	} else {
-		fromImage := imageBaseConfig.FromImage
-		fromImageArtifact := imageBaseConfig.FromImageArtifact
-
-		if fromImage != nil {
-			fromImageName = fromImage.Name
-		} else {
-			fromImageName = fromImageArtifact.Name
-		}
+	} else if imageBaseConfig.FromImageName != "" {
+		fromImageName = imageBaseConfig.FromImageName
+	} else if imageBaseConfig.FromImageArtifactName != "" {
+		fromImageName = imageBaseConfig.FromImageArtifactName
 	}
 
 	return from, fromImageName, imageBaseConfig.FromLatest
 }
 
-func getImageConfigsInOrder(imageConfigs []*config.Image, c *Conveyor) []config.ImageInterface {
+func getImageConfigsInOrder(c *Conveyor) []config.ImageInterface {
 	var images []config.ImageInterface
-	for _, image := range getImageConfigToProcess(imageConfigs, c) {
-		imagesInBuildOrder := image.ImageTree()
+	for _, imageInterf := range getImageConfigsToProcess(c) {
+		var imagesInBuildOrder []config.ImageInterface
+
+		switch image := imageInterf.(type) {
+		case *config.Image:
+			imagesInBuildOrder = c.werfConfig.ImageTree(image)
+		case *config.ImageFromDockerfile:
+			imagesInBuildOrder = append(imagesInBuildOrder, image)
+		}
+
 		for i := 0; i < len(imagesInBuildOrder); i++ {
 			if isNotInArr(images, imagesInBuildOrder[i]) {
 				images = append(images, imagesInBuildOrder[i])
@@ -155,16 +184,16 @@ func getImageConfigsInOrder(imageConfigs []*config.Image, c *Conveyor) []config.
 	return images
 }
 
-func getImageConfigToProcess(imageConfigs []*config.Image, c *Conveyor) []*config.Image {
-	var imageConfigsToProcess []*config.Image
+func getImageConfigsToProcess(c *Conveyor) []config.ImageInterface {
+	var imageConfigsToProcess []config.ImageInterface
 
 	if len(c.imageNamesToProcess) == 0 {
-		imageConfigsToProcess = imageConfigs
+		imageConfigsToProcess = c.werfConfig.GetAllImages()
 	} else {
 		for _, imageName := range c.imageNamesToProcess {
-			imageToProcess := getImageConfigByName(imageConfigs, imageName)
+			imageToProcess := c.werfConfig.GetImage(imageName)
 			if imageToProcess == nil {
-				logboek.LogErrorF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
+				logboek.LogErrorF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
 			} else {
 				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
@@ -172,16 +201,6 @@ func getImageConfigToProcess(imageConfigs []*config.Image, c *Conveyor) []*confi
 	}
 
 	return imageConfigsToProcess
-}
-
-func getImageConfigByName(imageConfigs []*config.Image, name string) *config.Image {
-	for _, image := range imageConfigs {
-		if image.Name == name {
-			return image
-		}
-	}
-
-	return nil
 }
 
 func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
@@ -194,7 +213,7 @@ func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
 	return true
 }
 
-func initStages(image *Image, imageInterfaceConfig config.ImageInterface, c *Conveyor) error {
+func initStages(image *Image, imageInterfaceConfig config.WerfImageInterface, c *Conveyor) error {
 	var stages []stage.Interface
 
 	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
@@ -537,4 +556,162 @@ func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Inte
 	}
 
 	return stages
+}
+
+func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor) (*Image, error) {
+	image := &Image{}
+	image.name = imageFromDockerfileConfig.Name
+
+	contextDir := path.Join(c.projectDir, imageFromDockerfileConfig.Context)
+
+	rel, err := filepath.Rel(c.projectDir, contextDir)
+	if err != nil || strings.HasPrefix(rel, "../") {
+		return nil, fmt.Errorf("unsupported context folder %s.\nOnly context folder specified inside project directory %s supported", contextDir, c.projectDir)
+	}
+
+	exist, err := util.DirExists(contextDir)
+	if err != nil {
+		return nil, err
+	} else if !exist {
+		return nil, fmt.Errorf("context folder %s is not found", contextDir)
+	}
+
+	dockerfilePath := path.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
+	rel, err = filepath.Rel(c.projectDir, dockerfilePath)
+	if err != nil || strings.HasPrefix(rel, "../") {
+		return nil, fmt.Errorf("unsupported dockerfile %s.\n Only dockerfile specified inside project directory %s supported", dockerfilePath, c.projectDir)
+	}
+
+	exist, err = util.FileExists(dockerfilePath)
+	if err != nil {
+		return nil, err
+	} else if !exist {
+		return nil, fmt.Errorf("dockerfile %s is not found", dockerfilePath)
+	}
+
+	dockerignorePatterns, err := build.ReadDockerignore(contextDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var dockerignorePatternsWithContextPrefix []string
+	for _, pattern := range dockerignorePatterns {
+		var resultPattern string
+		if strings.HasPrefix(pattern, "!") {
+			resultPattern = "!" + path.Join(contextDir, pattern[1:])
+		} else {
+			resultPattern = path.Join(contextDir, pattern)
+		}
+
+		dockerignorePatternsWithContextPrefix = append(dockerignorePatternsWithContextPrefix, resultPattern)
+	}
+
+	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatternsWithContextPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadFile(dockerfilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := parser.Parse(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	if err != nil {
+		return nil, err
+	}
+
+	resolveDockerStagesFromValue(dockerStages)
+
+	dockerTargetIndex, err := getDockerTargetStageIndex(dockerStages, imageFromDockerfileConfig.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	dockerTargetStage := dockerStages[dockerTargetIndex]
+
+	dockerArgsHash := map[string]string{}
+	var dockerMetaArgsString []string
+	for _, arg := range dockerMetaArgs {
+		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", arg.Key, arg.ValueString()))
+		dockerArgsHash[arg.Key] = arg.ValueString()
+	}
+
+	for key, valueInterf := range imageFromDockerfileConfig.Args {
+		value := fmt.Sprintf("%v", valueInterf)
+		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%v", key, value))
+		dockerArgsHash[key] = value
+	}
+
+	shlex := shell.NewLex(parser.DefaultEscapeToken)
+	resolvedBaseName, err := shlex.ProcessWord(dockerTargetStage.BaseName, dockerMetaArgsString)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := handleImageFromName(resolvedBaseName, false, image, c); err != nil {
+		return nil, err
+	}
+
+	baseStageOptions := &stage.NewBaseStageOptions{
+		ImageName:   imageFromDockerfileConfig.Name,
+		ProjectName: c.werfConfig.Meta.Project,
+	}
+
+	dockerfileStage := stage.GenerateDockerfileStage(
+		dockerfilePath,
+		imageFromDockerfileConfig.Target,
+		contextDir,
+		dockerignorePatternMatcher,
+		imageFromDockerfileConfig.Args,
+		dockerStages,
+		dockerArgsHash,
+		dockerTargetIndex,
+		baseStageOptions)
+
+	image.stages = append(image.stages, dockerfileStage)
+
+	logboek.LogInfoF("Using stage %s\n", dockerfileStage.Name())
+
+	return image, nil
+}
+
+func resolveDockerStagesFromValue(stages []instructions.Stage) {
+	nameToIndex := make(map[string]string)
+	for i, s := range stages {
+		index := strconv.Itoa(i)
+		if s.Name != index {
+			nameToIndex[s.Name] = index
+		}
+		for _, cmd := range s.Commands {
+			switch c := cmd.(type) {
+			case *instructions.CopyCommand:
+				if c.From != "" {
+					if val, ok := nameToIndex[c.From]; ok {
+						c.From = val
+					}
+
+				}
+			}
+		}
+	}
+}
+
+func getDockerTargetStageIndex(dockerStages []instructions.Stage, dockerTargetStage string) (int, error) {
+	if dockerTargetStage == "" {
+		return len(dockerStages) - 1, nil
+	}
+
+	for i, s := range dockerStages {
+		if s.Name == dockerTargetStage {
+			return i, nil
+		}
+	}
+
+	return -1, fmt.Errorf("%s is not a valid target build stage", dockerTargetStage)
 }
