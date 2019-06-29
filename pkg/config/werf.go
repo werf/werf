@@ -272,7 +272,7 @@ func (c *WerfConfig) ImageTree(interf ImageInterface) (tree []ImageInterface) {
 			if imp.ImageName != "" {
 				tree = append(tree, c.ImageTree(c.GetImage(imp.ImageName))...)
 			} else if imp.ArtifactName != "" {
-				tree = append(tree, c.ImageTree(c.GetImage(imp.ArtifactName))...)
+				tree = append(tree, c.ImageTree(c.GetArtifact(imp.ArtifactName))...)
 			}
 		}
 	case *ImageFromDockerfile:
