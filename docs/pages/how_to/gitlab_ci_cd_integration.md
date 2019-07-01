@@ -57,7 +57,7 @@ On the Werf node, you need to install and set up GitLab runner. Follow these ste
 1. Add the `gitlab-runner` user into the `docker` group.
 
    ```bash
-   sudo usermod -Ga docker gitlab-runner
+   sudo usermod -aG docker gitlab-runner
    ```
 
 1. [Install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl (of course if they are not already installed).
