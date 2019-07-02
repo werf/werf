@@ -298,7 +298,7 @@ The following steps could describe the processing of a YAML configuration file:
 
 Go templates are available within YAML configuration. The following functions are supported:
 
-* [Built-in Go template functions](https://golang.org/pkg/text/template/#hdr-Functions) and other language features. E.g. using common variable:
+* [Built-in Go template functions](https://golang.org/pkg/text/template/#hdr-Functions) and other language features. E.g. using common variable:<a id="go-templates" href="#go-templates" class="anchorjs-link " aria-label="Anchor link for: go templates" data-anchorjs-icon=""></a>
 
   {% raw %}
   ```yaml
@@ -316,7 +316,7 @@ Go templates are available within YAML configuration. The following functions ar
   ```
   {% endraw %}
 
-* [Sprig functions](http://masterminds.github.io/sprig/). E.g. using environment variable:
+* [Sprig functions](http://masterminds.github.io/sprig/). E.g. using environment variable:<a id="sprig-functions" href="#sprig-functions" class="anchorjs-link " aria-label="Anchor link for: sprig functions" data-anchorjs-icon=""></a>
 
   {% raw %}
   ```yaml

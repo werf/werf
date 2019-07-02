@@ -410,7 +410,7 @@ docker ps
 
 You should see running containers with names: reverse_proxy, app, database, payment_gw and registry.
 
-Wait for about 30 seconds or a bit more for all the containers to be ready, then open the [atseashop.com](http://atseashop.com) in your browser. You will be redirected by NGINX to `https://atseashop.com` and you will get a warning message from your browser about the security of the connection, because there is a self-signed certificate used in the example. You need to add an exception to open the [https://atseashop.com](atseashop.com) page.
+Wait for about 30 seconds or a bit more for all the containers to be ready, then open the [atseashop.com](http://atseashop.com) in your browser. You will be redirected by NGINX to `https://atseashop.com` and you will get a warning message from your browser about the security of the connection, because there is a self-signed certificate used in the example. You need to add an exception to open the `https://atseashop.com` page.
 
 ## Stopping the application
 

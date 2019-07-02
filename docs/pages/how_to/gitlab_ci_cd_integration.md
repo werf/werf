@@ -61,10 +61,10 @@ On the Werf node, you need to install and set up GitLab runner. Follow these ste
    ```
 
 1. [Install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl (of course if they are not already installed).
-1. Install [Werf dependencies]({{ site.baseurl }}/#install-dependencies).
-1. Install [`Multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+1. Install [Werf dependencies]({{ site.baseurl }}/how_to/getting_started.html#requirements).
+1. Install [Multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
-   ```
+   ```bash
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
@@ -290,7 +290,7 @@ Cleanup stage will start only by schedule. You can define schedule in `CI/CD` â€
    - `werf cleanup` also uses a temporary configuration file from DOCKER_CONFIG.
 
 
-## Complete `.gitlab-ci.yml` file
+## Complete .gitlab-ci.yml file
 
 ```yaml
 stages:

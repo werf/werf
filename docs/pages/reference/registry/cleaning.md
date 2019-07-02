@@ -14,9 +14,9 @@ Otherwise, it will be filled with **stale images**.
 
 Werf has an efficient multi-level images cleaning. There are following cleaning approaches:
 
-1. [**Cleaning by policies**](#cleaning_by_policies)
-2. [**Manual cleaning**](#manual_cleaning)
-3. [**Host cleaning**](#host_cleaning)
+1. [**Cleaning by policies**](#cleaning-by-policies)
+2. [**Manual cleaning**](#manual-cleaning)
+3. [**Host cleaning**](#host-cleaning)
 
 ## Cleaning by policies
 
@@ -25,10 +25,10 @@ It implies regular gradual cleaning according to cleaning policies.
 This is the safest way of cleaning because it does not affect your production environment.
 
 The cleaning by policies method includes the steps in the following order:
-1. [**Cleanup images repo**](#cleanup_images_repo) cleans _images repo_ from stale images according to the cleaning policies.
-2. [**Cleanup stages storage**](#cleanup_stages_storage) performs syncing _stages storage_ with _images repo_.
+1. [**Cleanup images repo**](#cleanup-images-repo) cleans _images repo_ from stale images according to the cleaning policies.
+2. [**Cleanup stages storage**](#cleanup-stages-storage) performs syncing _stages storage_ with _images repo_.
 
-These steps are combined in one top-level command [**cleanup**](#cleanup_command).  
+These steps are combined in one top-level command [**cleanup**](#cleanup-command).  
 
 A _images repo_ is the primary source of information about actual and stale images. 
 Therefore, it is essential to clean _images repo_ on the first step and only then _stages storage_.
@@ -114,10 +114,10 @@ In general it suitable for forced images removal.
 
 The manual cleaning approach includes the following options:
 
-* [**Purge images repo**](#images_purge_command). Deleting images of the **current project** in _images repo_.
-* [**Purge stages storage**](#stages_purge_command). Deleting stages of the **current project** in _stages storage_ or _images repo_.
+* [**Purge images repo**](#images-purge-command). Deleting images of the **current project** in _images repo_.
+* [**Purge stages storage**](#stages-purge-command). Deleting stages of the **current project** in _stages storage_ or _images repo_.
 
-These steps are combined in one top-level command [**purge**](#purge_command).
+These steps are combined in one top-level command [**purge**](#purge-command).
 
 ### Images purge command
 
@@ -135,8 +135,8 @@ These steps are combined in one top-level command [**purge**](#purge_command).
 
 There are following commands to cleanup host machine:
 
-* [Cleanup host machine](#host_cleanup_command). Cleanup old unused werf cache and data of **all projects** on host machine.
-* [Purge host machine](#host_purge_command). Purge werf _images_, _stages_, cache and other data of **all projects** on host machine.
+* [Cleanup host machine](#host-cleanup-command). Cleanup old unused werf cache and data of **all projects** on host machine.
+* [Purge host machine](#host-purge-command). Purge werf _images_, _stages_, cache and other data of **all projects** on host machine.
 
 ### Host cleanup command
 

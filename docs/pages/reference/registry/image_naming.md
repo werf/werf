@@ -8,12 +8,12 @@ author: Artem Kladov <artem.kladov@flant.com>
 Werf builds and tags docker images to run and push in a registry. For tagging images werf uses a [_images repo_](#images-repo) and image tag parameters (`--tag-*`) in the following commands:
 * [Publish commands]({{ site.baseurl }}/reference/registry/publish.html)
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html)
-* [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy)
+* [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#deploy-command)
 
 ## Werf tag procedure
 In a Docker world a tag is a creating an alias name for existent docker image.
 
-In Werf world tagging creates **a new image layer** with the specified name. Werf stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
+In Werf world tagging creates **a new image layer** with the specified name. Werf stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#deploy-command) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
 

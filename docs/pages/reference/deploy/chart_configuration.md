@@ -49,7 +49,7 @@ Werf provides the following additional templates to be used:
 * `werf_container_image`
 * `werf_container_env`
 
-### The `werf_container_image` template
+### The werf_container_image template
 
 This replaced the werf `image` template that was previously used in outdated versions. The template generates `image` and `imagePullPolicy` keys for the pod container.
 
@@ -72,7 +72,7 @@ An example of using a template in case a single unnamed image exists in the conf
 * `tuple . | include "werf_container_image" | indent <N-spaces>`
 * `include "werf_container_image" . | indent <N-spaces>` (additional simplified entry format)
 
-### The `werf_container_env` template
+### The werf_container_env template
 
 Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container. Image id will be set to real value only if `.Values.global.werf.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
 

@@ -55,7 +55,6 @@ It is designed to make engineer's work fast end efficient.
 
    To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-
 ## Install Werf
 
 ### Way 1 (recommended): using Multiwerf
@@ -74,7 +73,7 @@ source <(multiwerf use 1.0 beta)
 
 ### Way 2: download binary
 
-The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion).
+The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion)
 
 ##### MacOS
 
@@ -94,7 +93,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 
 ##### Windows
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-windows-amd64-v1.0.1-beta.4.exe).
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-windows-amd64-v1.0.1-beta.4.exe)
 
 ### Way 3: from source
 
