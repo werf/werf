@@ -4,7 +4,7 @@ sidebar: reference
 permalink: reference/registry/pull.html
 ---
 
-Werf does not have own pull command to download images from docker registry. Regular [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
+Werf does not have own pull command to download images from docker registry. Regular [docker pull](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
 
 There is a need to use existing old images as a cache to build new images to speed up the builds. This is default behavior when there is a single werf build host with persistent local storage of images. No special actions required from the werf user in such case.
 

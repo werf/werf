@@ -181,7 +181,7 @@ Add the following to mount directives into config:
   to: /usr/local/go
 ```
 
-### Complete `werf.yaml` config
+### Complete werf.yaml config
 
 {% raw %}
 ```yaml

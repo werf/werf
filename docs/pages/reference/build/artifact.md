@@ -20,7 +20,7 @@ Using artifacts, you can independently assemble an unlimited number of component
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
-Importing _resources_ from _artifacts_ are described in [import directive]({{ site.baseurl }}/reference/build/import_directive.html) in _destination image_ config section ([_image_]({{ site.baseurl }}/reference/config.html#image-config-section) or [_artifact_]({{ site.baseurl }}/reference/config.html#artifact-config-section])).
+Importing _resources_ from _artifacts_ are described in [import directive]({{ site.baseurl }}/reference/build/import_directive.html) in _destination image_ config section ([_image_]({{ site.baseurl }}/reference/config.html#image-config-section) or [_artifact_]({{ site.baseurl }}/reference/config.html#artifact-config-section)).
 
 ## Configuration
 
