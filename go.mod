@@ -75,6 +75,7 @@ require (
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
+	github.com/google/go-containerregistry v0.0.0-20190623150931-ca8b66cb1b79
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/google/shlex v0.0.0-20150127133951-6f45313302b9
 	github.com/google/uuid v1.0.0
