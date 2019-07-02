@@ -580,7 +580,11 @@ func LogError(format string, a ...interface{}) {
 		msg := fmt.Sprintf(format, a...)
 		msg = strings.TrimSuffix(msg, "\n")
 
-		logboek.LogErrorLn(msg)
+		_ = logboek.WithFitMode(false, func() error {
+			logboek.LogErrorLn(msg)
+
+			return nil
+		})
 
 		return nil
 	})

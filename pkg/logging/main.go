@@ -17,6 +17,8 @@ func Init() error {
 		return err
 	}
 
+	logboek.EnableFitMode()
+
 	log.SetOutput(logboek.GetOutStream())
 
 	return nil
