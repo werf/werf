@@ -555,10 +555,16 @@ For each _user stage_ werf creates a list of matched files and calculates a chec
 - `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
 - `\` — escapes the next metacharacter
 
-Mask that starts with `*` or `**` patterns should be escaped with quotes in `werf.yaml` file:
+Mask that starts with `*` is treated as anchor name by yaml parser. So mask with `*` or `**` patterns at the beginning should be quoted:
 
-- `"*.rb"` — with double quotes
-- `'**/*'` — with single quotes
+```
+# * at the beginning of mask, so use double quotes
+- "*.rb"
+# single quotes also work
+- '**/*'
+# no star at the beggining, no quoting needed
+- src/**/*.js
+```
 
 Werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
 
