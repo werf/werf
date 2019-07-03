@@ -138,6 +138,8 @@ github.com/flant/logboek v0.2.2/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQK
 github.com/flant/logboek v0.2.3-0.20190626194023-1580e4b6b6d9/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.3-0.20190628182634-89c518c5772a h1:jii1y/Oc5k9S5IeqPpQnapJsblRpctYASN9ys5oWXOQ=
 github.com/flant/logboek v0.2.3-0.20190628182634-89c518c5772a/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
+github.com/flant/logboek v0.2.3 h1:NVc6TEXQeW0NEg0frSEvtw/fL7phnOnfjvjuJktLEUM=
+github.com/flant/logboek v0.2.3/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749 h1:q6lc47E5qPFETfyppT7Szju/Bwl0T6PnPsO1ZnDkfV4=
 github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749/go.mod h1:7FnuYuo97GpZfkkUrZR2FQypBZVixdiAm/g/Do428/4=
 github.com/flant/logboek_py v0.0.0-20190417102745-2d46cc7fd4e4 h1:68u/IHGBi0Uc21kKP433mh2QnvyOAhsxrOQWmmtxSlI=
