@@ -99,7 +99,11 @@ func runGenerateChart(targetPath string) error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	imagesRepo := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+	imagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	withoutRepo := true
 	if imagesRepo != "" {
 		withoutRepo = false

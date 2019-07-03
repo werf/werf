@@ -71,7 +71,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 
 			if !image.isArtifact {
 				if err := p.pushImage(c, image); err != nil {
-					return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
+					return fmt.Errorf("unable to push image %s: %s", image.LogName(), err)
 				}
 			}
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -423,19 +424,24 @@ func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
-	return GetOptionalImagesRepo(projectName, cmdData), nil
+	return GetOptionalImagesRepo(projectName, cmdData)
 }
 
-func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
+func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	repoOption := *cmdData.ImagesRepo
 
 	if repoOption == ":minikube" {
-		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
+		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName), nil
 	} else if repoOption != "" {
-		return repoOption
+
+		if _, err := name.NewRepository(repoOption, name.WeakValidation); err != nil {
+			return "", fmt.Errorf("%s.\nThe registry domain defaults to Docker Hub. Do not forget to specify project repository name, REGISTRY_DOMAIN/REPOSITORY_NAME, if you do not use Docker Hub.", err)
+		}
+
+		return repoOption, nil
 	}
 
-	return ""
+	return "", nil
 }
 
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
