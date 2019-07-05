@@ -31,26 +31,11 @@ type ResourcesWaiter struct {
 	LogsFromTime time.Time
 }
 
-func castInt32ToInt(value *int32) *int {
-	t := int(*value)
-	return &t
-}
-
 func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
 	specs := multitrack.MultitrackSpecs{}
 
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
-		// TODO
-		//case *v1.Pod:
-		//	spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "po")
-		//	if err != nil {
-		//		return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
-		//	}
-		//	if spec != nil {
-		//		specs.Pods = append(specs.Pods, *spec)
-		//	}
-
 		case *appsv1.Deployment:
 			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
 			if err != nil {
@@ -191,9 +176,33 @@ mainLoop:
 		invalidAnnoValueError := fmt.Errorf("%s/%s annotation %s with invalid value %s", resourceNameOrKind, metadataName, annoName, annoValue)
 
 		switch annoName {
-		case SkipLogsAnnoName, SkipEventsAnnoName, ShowLogsUntilAnnoName:
+		case ShowLogsUntilAnnoName:
 			return nil, fmt.Errorf("%s/%s annotation %s not supported yet", resourceNameOrKind, metadataName, annoName)
+		case SkipLogsAnnoName:
+			boolValue, err := strconv.ParseBool(annoValue)
+			if err != nil {
+				return nil, fmt.Errorf("%s: bool expected: %s", invalidAnnoValueError, err)
+			}
 
+			multitrackSpec.SkipLogs = boolValue
+		case ShowEventsAnnoName:
+			boolValue, err := strconv.ParseBool(annoValue)
+			if err != nil {
+				return nil, fmt.Errorf("%s: bool expected: %s", invalidAnnoValueError, err)
+			}
+
+			multitrackSpec.ShowServiceMessages = boolValue
+		case TrackTerminationModeAnnoName:
+			trackTerminationModeValue := multitrack.TrackTerminationMode(annoValue)
+			values := []multitrack.TrackTerminationMode{multitrack.WaitUntilResourceReady, multitrack.NonBlocking}
+			for _, value := range values {
+				if value == trackTerminationModeValue {
+					multitrackSpec.TrackTerminationMode = trackTerminationModeValue
+					continue mainLoop
+				}
+			}
+
+			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
 		case FailModeAnnoName:
 			failModeValue := multitrack.FailMode(annoValue)
 			values := []multitrack.FailMode{multitrack.IgnoreAndContinueDeployProcess, multitrack.FailWholeDeployProcessImmediately, multitrack.HopeUntilEndOfDeployProcess}

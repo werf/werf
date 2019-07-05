@@ -20,6 +20,8 @@ import (
 )
 
 const (
+	TrackTerminationModeAnnoName = "werf.io/track-termination-mode"
+
 	FailModeAnnoName                  = "werf.io/fail-mode"
 	FailuresAllowedPerReplicaAnnoName = "werf.io/failures-allowed-per-replica"
 
@@ -31,12 +33,11 @@ const (
 	ShowLogsOnlyForContainers     = "werf.io/show-logs-only-for-containers"
 	ShowLogsUntilAnnoName         = "werf.io/show-logs-until"
 
-	SkipEventsAnnoName = "werf.io/skip-events"
+	ShowEventsAnnoName = "werf.io/show-service-messages"
 
 	RecreateAnnoName = "werf.io/recreate"
 
-	HelmHookAnnoName       = "helm.sh/hook"
-	HelmHookWeightAnnoName = "helm.sh/hook-weight"
+	HelmHookAnnoName = "helm.sh/hook"
 )
 
 func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
