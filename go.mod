@@ -57,7 +57,7 @@ require (
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190603132110-751ebe52f174
-	github.com/flant/kubedog v0.3.1
+	github.com/flant/kubedog v0.3.2-0.20190705191623-8ef411601078
 	github.com/flant/logboek v0.2.4-0.20190702173639-9a253aa21697
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
