@@ -10,11 +10,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/flant/go-containerregistry/pkg/authn"
+	"github.com/flant/go-containerregistry/pkg/name"
+	v1 "github.com/flant/go-containerregistry/pkg/v1"
+	"github.com/flant/go-containerregistry/pkg/v1/remote"
+	"github.com/flant/go-containerregistry/pkg/v1/remote/transport"
 )
 
 type RepoImage struct {
@@ -130,13 +130,7 @@ func Tags(reference string) ([]string, error) {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
 	}
 
-	auth, err := authn.DefaultKeychain.Resolve(repo.Registry)
-	if err != nil {
-		return nil, fmt.Errorf("getting creds for %q: %v", repo, err)
-	}
-
-	tags, err := remote.List(repo, auth, getHttpTransport())
-
+	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport()))
 	if err != nil {
 		return nil, fmt.Errorf("reading tags for %q: %v", repo, err)
 	}
@@ -187,13 +181,13 @@ func ImageDelete(reference string) error {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	auth, err := authn.DefaultKeychain.Resolve(r.Context().Registry)
-	if err != nil {
-		return fmt.Errorf("getting creds for %q: %v", r, err)
-	}
-
-	if err := remote.Delete(r, auth, getHttpTransport()); err != nil {
+	if err := remote.Delete(r, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport())); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
+			auth, err := authn.DefaultKeychain.Resolve(r.Context().Registry)
+			if err != nil {
+				return fmt.Errorf("getting creds for %q: %v", r, err)
+			}
+
 			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, getHttpTransport()); gitlabRegistryDeleteErr != nil {
 				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
 					return fmt.Errorf("deleting image %q: %v", r, err)
