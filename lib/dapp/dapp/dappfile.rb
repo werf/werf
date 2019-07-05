@@ -92,7 +92,7 @@ module Dapp
           end
         end
 
-        cmd_res = shellout "#{dappfile_yml_bin_path} -dappfile #{dappfile_path}"
+        cmd_res = shellout dappfile_yml_bin_path, "-dappfile", dappfile_path
 
         raw_json_response = nil
         if cmd_res.exitstatus == 0
