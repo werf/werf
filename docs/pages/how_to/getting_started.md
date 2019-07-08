@@ -22,8 +22,8 @@ Also, we will check that the application works and push the image in a docker re
 
 ## Requirements
 
-* Minimal knowledge of [docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
+* Installed Docker and [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
 
