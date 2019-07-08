@@ -22,7 +22,7 @@ werf helm secret file encrypt [FILE_PATH] [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to 
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
                     Secret key also can be defined in files:
