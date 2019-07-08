@@ -14,7 +14,7 @@ werf helm lint [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to 
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
                     Secret key also can be defined in files:
@@ -28,7 +28,7 @@ werf helm lint [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
-            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority).
       --env='':
             Use specified environment (default $WERF_ENV)
@@ -41,10 +41,10 @@ werf helm lint [options]
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
-            Set helm values on the command line (can specify multiple or separate values with 
+            Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2)
       --set-string=[]:
-            Set STRING helm values on the command line (can specify multiple or separate values 
+            Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)

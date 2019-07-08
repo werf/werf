@@ -3,14 +3,16 @@ package docs
 import (
 	"bytes"
 	"fmt"
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/templates"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"mvdan.cc/xurls"
+
+	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/cmd/werf/common/templates"
 )
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
@@ -70,7 +72,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 {% endif %}
 `)
 
-	buf.WriteString(long + "\n\n")
+	buf.WriteString(replaceLinks(long) + "\n\n")
 
 	if cmd.Runnable() {
 		buf.WriteString("{{ header }} Syntax\n\n")
@@ -92,6 +94,15 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+func replaceLinks(s string) string {
+	links := xurls.Relaxed.FindAllString(s, -1)
+	for _, link := range links {
+		s = strings.Replace(s, link, fmt.Sprintf("[%[1]s](%[1]s)", link), -1)
+	}
+
+	return s
 }
 
 // GenMarkdownTree will generate a markdown page for this command and all

@@ -5,10 +5,10 @@
 {% endif %}
 Build stages for images described in the werf.yaml.
 
-The result of build command are built stages pushed into the specified stages storage (or locally 
+The result of build command are built stages pushed into the specified stages storage (or locally   
 in the case when --stages-storage=:local).
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images stages from 
+If one or more IMAGE_NAME parameters specified, werf will build only these images stages from       
 werf.yaml
 
 {{ header }} Syntax
@@ -46,9 +46,9 @@ werf build [IMAGE_NAME...] [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
-            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority).
-            Command needs granted permissions to read, pull and push images into the specified 
+            Command needs granted permissions to read, pull and push images into the specified      
             stages storage, to pull base images.
   -h, --help=false:
             help for build
@@ -63,11 +63,11 @@ werf build [IMAGE_NAME...] [options]
             Introspect failed stage in the state, right after running failed assembly instruction
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a 
+            Supported on, off and auto (based on the stdout's file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:
-            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or 
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
@@ -78,10 +78,10 @@ werf build [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 
+            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
             use multiple keys.
   -s, --stages-storage='':
-            Docker Repo to store stages or :local for non-distributed build (only :local is 
+            Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/reference/build/stages_and_images.html
       --tmp-dir='':

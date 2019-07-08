@@ -48,7 +48,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
   $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
 
   # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
-  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject`,
+  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom tag`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),

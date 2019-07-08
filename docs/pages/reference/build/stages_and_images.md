@@ -54,7 +54,9 @@ It means that the _stage conveyor_, can be reduced to several _stages_ or even t
 Most _stage dependencies_ are specified in werf.yaml, others relate to a runtime.
 Changing these dependencies affects on a _signature_, stages reassembling.
 
-The tables below represent image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_ and contain relevant references for more information.
+Tables below represent image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_. 
+Each row describes dependencies for certain stage. 
+Left column consists of short descriptions of dependencies, right includes related `werf.yaml` directives and contains relevant references for more information.
 
 <div class="tabs">
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn">Image</a>
