@@ -1,4 +1,3 @@
-
 .breadcrumbs {
     opacity: 0.3;
     font-size: 14px;
@@ -575,4 +574,17 @@
 
 .docs img {
     max-width: 100%;
+}
+
+.docs .clickable-header {
+    cursor: pointer;
+}
+
+.docs a.anchorjs-link {
+    font-family: anchorjs-icons;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 1;
+    padding-left: 0.375em;
 }
