@@ -7,7 +7,7 @@ Build final images using each specified tag with the tagging strategy and push i
 
 New docker layer with service info about tagging strategy will be built for each tag of each image 
 from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. 
-See more info about images naming: https://werf.io/reference/registry/image_naming.html.
+See more info about images naming: [https://werf.io/reference/registry/image_naming.html](https://werf.io/reference/registry/image_naming.html).
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.
 
