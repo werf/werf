@@ -1,4 +1,17 @@
 entries:
+  - name: dockerfile
+    type: "image-from-dockerfile"
+    dependencies:
+      - target dockerfile instructions
+      - hashsum of files related with ADD and COPY dockerfile instructions
+      - args used in target dockerfile instructions
+    werf_config: |
+      image: <image name... || ~>
+      dockerfile: <relative path>
+      context: <relative path>
+      target: <docker stage name>
+      args:
+        <build arg name>: <value>
   - name: from
     type: "image artifact"
     dependencies:

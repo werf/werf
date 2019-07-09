@@ -18,17 +18,24 @@ Each _stage_ relates to one Docker image.
 The werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. Werf uses different _stage conveyor_ for assembling a particular type of build object.
 
 <div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image')">Image</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'artifact')">Artifact</a>
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image-from-dockerfile-tab')">Image from Dockerfile</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image-tab')">Image</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'artifact-tab')">Artifact</a>
 </div>
 
-<div id="image" class="tabs__content active">
+<div id="image-from-dockerfile-tab" class="tabs__content active">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=821&amp;h=59">
+</a>
+</div>
+
+<div id="image-tab" class="tabs__content">
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=2000&amp;h=881" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=821&amp;h=362" >
 </a>
 </div>
 
-<div id="artifact" class="tabs__content">
+<div id="artifact-tab" class="tabs__content">
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
 </a>
@@ -54,11 +61,12 @@ It means that the _stage conveyor_, can be reduced to several _stages_ or even t
 Most _stage dependencies_ are specified in werf.yaml, others relate to a runtime.
 Changing these dependencies affects on a _signature_, stages reassembling.
 
-Tables below represent image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_. 
+Tables below represent image from Dockerfile, image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_. 
 Each row describes dependencies for certain stage. 
 Left column consists of short descriptions of dependencies, right includes related `werf.yaml` directives and contains relevant references for more information.
 
 <div class="tabs">
+  <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn">Image from Dockerfile</a>
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn">Image</a>
   <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Artifact</a>
 </div>
@@ -111,15 +119,23 @@ Left column consists of short descriptions of dependencies, right includes relat
 <script src="{{ site.baseurl }}/js/jquery-3.1.0.min.js"></script>
 <script>
 function application() {
-  if ($("a[id=image-dependencies]").hasClass('active')) {
+  if ($("a[id=image-from-dockerfile-dependencies]").hasClass('active')) {
+    $(".image").addClass('hidden')
+    $(".artifact").addClass('hidden')
+    $(".image-from-dockerfile").removeClass('hidden')
+  }
+  else if ($("a[id=image-dependencies]").hasClass('active')) {
+    $(".image-from-dockerfile").addClass('hidden')
     $(".artifact").addClass('hidden')
     $(".image").removeClass('hidden')
   }
   else if ($("a[id=artifact-dependencies]").hasClass('active')) {
+    $(".image-from-dockerfile").addClass('hidden')
     $(".image").addClass('hidden')
     $(".artifact").removeClass('hidden')
   }
   else {
+    $(".image-from-dockerfile").addClass('hidden')
     $(".image").addClass('hidden')
     $(".artifact").addClass('hidden')
   }
