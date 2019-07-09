@@ -14,21 +14,21 @@ summary: |
 
   <div id="local" class="tabs__content active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+  <span class="pi">-</span> <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
     <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
     <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
     <span class="s">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
     <span class="s">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
     <span class="s">stageDependencies</span><span class="pi">:</span>
       <span class="s">install</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
       <span class="s">beforeSetup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
       <span class="s">setup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span></code></pre>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span></code></pre>
     </div>
   </div>
 
@@ -38,21 +38,21 @@ summary: |
     <span class="s">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
     <span class="s">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="s">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
-    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
     <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
     <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
     <span class="s">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
     <span class="s">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
     <span class="s">stageDependencies</span><span class="pi">:</span>
       <span class="s">install</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
       <span class="s">beforeSetup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
       <span class="s">setup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span></code></pre>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span></code></pre>
       </div>
   </div>
 ---

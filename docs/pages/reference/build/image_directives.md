@@ -14,41 +14,41 @@ fromImage: <image name>
 fromImageArtifact: <artifact name>
 git:
 # local git
-- add: <absolute path>
-  to: <absolute path>
+- add: <absolute path in git repository>
+  to: <absolute path inside image>
   owner: <owner>
   group: <group>
   includePaths:
-  - <relative path or glob>
+  - <path or glob relative to path in add>
   excludePaths:
-  - <relative path or glob>
+  - <path or glob relative to path in add>
   stageDependencies:
     install:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
     beforeSetup:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
     setup:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
 # remote git
 - url: <git repo url>
   branch: <branch name>
   commit: <commit>
   tag: <tag>
-  add: <absolute path>
-  to: <absolute path>
+  add: <absolute path in git repository>
+  to: <absolute path inside image>
   owner: <owner>
   group: <group>
   includePaths:
-  - <relative path or glob>
+  - <path or glob relative to path in add>
   excludePaths:
-  - <relative path or glob>
+  - <path or glob relative to path in add>
   stageDependencies:
     install:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
     beforeSetup:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
     setup:
-    - <relative path or glob>
+    - <path or glob relative to path in add>
 shell:
   beforeInstall:
   - <bash command>
