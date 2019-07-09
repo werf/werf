@@ -15,6 +15,9 @@ entries:
         - title: Assembly process
           url: /reference/build/assembly_process.html
 
+        - title: Image from Dockerfile configuration
+          url: /reference/build/image_from_dockerfile.html
+
         - title: Image configuration
           sfi:
 
