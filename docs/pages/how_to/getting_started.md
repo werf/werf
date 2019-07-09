@@ -104,10 +104,11 @@ To implement these steps and requirements with werf we will add a special file c
           update_cache: yes
       - name: "Install PHP and modules"
         apt:
-          name: "{{`{{ item }}`}}"
+          name: "{{`{{packages}}`}}"
           state: present
           update_cache: yes
-        with_items:
+        vars:
+          packages:
           - php7.2
           - php7.2-sqlite3
           - php7.2-xml
