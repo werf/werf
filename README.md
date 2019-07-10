@@ -45,6 +45,21 @@ It is designed to make engineer's work fast end efficient.
 * Tools for cleaning both local and remote Docker registry caches.
 * Deploying to **Kubernetes** via [helm](https://helm.sh/), the Kubernetes package manager.
 
+# Roadmap
+
+## Goals
+- Feature complete version of werf which works well in an environment with a **single dedicated persistent host** to run all werf operations (build, deploy and cleanup).
+- Proven approaches and recipes for most popular CI systems.
+- Building images completely **in userspace**, a container or Kubernetes cluster.
+
+## Steps
+- Use [3-way-merge](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation) during helm release upgrade [#1616](https://github.com/flant/werf/issues/1616).
+- Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
+- Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
+- Distributed builds [#1614](https://github.com/flant/werf/issues/1614).
+- Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
+- Userspace builds without Docker daemon (as in [kaniko](https://github.com/GoogleContainerTools/kaniko)) [#1618](https://github.com/flant/werf/issues/1618).
+
 # Installation
 
 ## Install Dependencies
