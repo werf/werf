@@ -1,7 +1,7 @@
 <div class="header">
     <div class="page__container">
         <div class="header__content">
-            <a href="{{ site.baseurl }}/">
+            <a href="/">
                 <img src="{{ site.baseurl }}/images/werf-logo.svg" alt="werf"/>
             </a>
 
@@ -25,17 +25,19 @@
                             {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
                             <a href="{{ folder.url }}">{{ folder.title }}</a>
                             {% if folder.folderitems %}
-                            <ul class="header__submenu">
-                                {% for folderitem in folder.folderitems %}
-                                    {% if folderitem.external_url %}
-                                        <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-                                    {% elsif page.url contains folderitem.url %}
-                                        <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                                    {% else %}
-                                        <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
+                            <div class="header__submenu-container">
+                                <ul class="header__submenu">
+                                    {% for folderitem in folder.folderitems %}
+                                        {% if folderitem.external_url %}
+                                            <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
+                                        {% elsif page.url contains folderitem.url %}
+                                            <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                        {% else %}
+                                            <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
                             {% endif %}
                         </li>
                 {% endfor %}
