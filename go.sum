@@ -128,6 +128,10 @@ github.com/flant/kubedog v0.3.2-0.20190708094157-908f81024339 h1:rqo6MZBU0P0Nrvq
 github.com/flant/kubedog v0.3.2-0.20190708094157-908f81024339/go.mod h1:DLJbePxciQ6hzMJoypKUqXBnT9ng9BLZuFIUUP6iSCw=
 github.com/flant/kubedog v0.3.2-0.20190709052644-457aa65cd4f9 h1:nvymlEp4AdQd5YDyYp9QEQdqoG8hhpHJ9ulyNqhMZyQ=
 github.com/flant/kubedog v0.3.2-0.20190709052644-457aa65cd4f9/go.mod h1:DLJbePxciQ6hzMJoypKUqXBnT9ng9BLZuFIUUP6iSCw=
+github.com/flant/kubedog v0.3.3-0.20190711164531-41b664e7e627 h1:FBzwhhOJfc7Bzmed4aGgpMyQLYf7OXEWl+mWzkppYkQ=
+github.com/flant/kubedog v0.3.3-0.20190711164531-41b664e7e627/go.mod h1:0LD/urEFxlW8NPBSzT2Q2xLEudyHqzNyaHGQIdlRgro=
+github.com/flant/kubedog v0.3.3-0.20190711172847-6fd9ec111cab h1:8bBh2vdoUIYUF+r/MUZs5pB4pDmYurNQWr4uowE3d9U=
+github.com/flant/kubedog v0.3.3-0.20190711172847-6fd9ec111cab/go.mod h1:TGrekULARWOasToePgl7GlIAHx65tgMVysS9L1KA/uQ=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d/go.mod h1:WirgB39yMTvPGKqrAE3zlsG/02of4rr5lXh1EiwO5P0=
 github.com/flant/logboek v0.2.2 h1:SlJG9/ojsTyfjkRSAxnWZCULWoejEM3fDZXkkOFKSCk=
 github.com/flant/logboek v0.2.2/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
@@ -136,6 +140,10 @@ github.com/flant/logboek v0.2.3-0.20190628182634-89c518c5772a h1:jii1y/Oc5k9S5Ie
 github.com/flant/logboek v0.2.3-0.20190628182634-89c518c5772a/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.4-0.20190702173639-9a253aa21697 h1:LxPW3KfHxVqnI+hqpwzAl+T0L7cjfMksXuQ6ghQgsM4=
 github.com/flant/logboek v0.2.4-0.20190702173639-9a253aa21697/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
+github.com/flant/logboek v0.2.4 h1:sxl8QZY9RvweFsSzV6R9TJZ38jpjO8+80LaeUkoTWjk=
+github.com/flant/logboek v0.2.4/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
+github.com/flant/logboek v0.2.5 h1:QA48apvBjow2K7uvFTOBr7Fp6g6lQOv4JYUs8JJK5tA=
+github.com/flant/logboek v0.2.5/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749 h1:q6lc47E5qPFETfyppT7Szju/Bwl0T6PnPsO1ZnDkfV4=
 github.com/flant/logboek_py v0.0.0-20190321143033-3cdc4ca12749/go.mod h1:7FnuYuo97GpZfkkUrZR2FQypBZVixdiAm/g/Do428/4=
 github.com/flant/logboek_py v0.0.0-20190417102745-2d46cc7fd4e4 h1:68u/IHGBi0Uc21kKP433mh2QnvyOAhsxrOQWmmtxSlI=
