@@ -1,6 +1,10 @@
 package stage
 
 import (
+	"os"
+
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/build/builder"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/util"
@@ -39,8 +43,20 @@ func (s *UserStage) getStageDependenciesChecksum(name StageName) (string, error)
 			return "", err
 		}
 
+		if debugUserStageChecksum() {
+			logboek.LogHighlightF("DEBUG: %s stage git mapping %s checksum %v\n", name, gitMapping.Name, checksum)
+		}
+
 		args = append(args, checksum)
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func debugUserStageChecksum() bool {
+	if os.Getenv("WERF_DEBUG_USER_STAGE_CHECKSUM") == "1" {
+		return true
+	}
+
+	return false
 }

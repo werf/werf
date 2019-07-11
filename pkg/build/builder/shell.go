@@ -10,6 +10,8 @@ import (
 
 	"gopkg.in/oleiade/reflections.v1"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
@@ -76,7 +78,14 @@ func (b *Shell) stageChecksum(userStageName string) string {
 
 	checksumArgs = append(checksumArgs, b.stageCommands(userStageName)...)
 
+	if debugUserStageChecksum() {
+		logboek.LogHighlightF("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
+	}
+
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
+		if debugUserStageChecksum() {
+			logboek.LogHighlightF("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
+		}
 		checksumArgs = append(checksumArgs, stageVersionChecksum)
 	}
 
