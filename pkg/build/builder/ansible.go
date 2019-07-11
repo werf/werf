@@ -8,13 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/stapel"
-
 	ghodssYaml "github.com/ghodss/yaml"
 	"gopkg.in/oleiade/reflections.v1"
 	"gopkg.in/yaml.v2"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -123,7 +124,15 @@ func (b *Ansible) stageChecksum(userStageName string) string {
 		checksumArgs = append(checksumArgs, string(jsonOutput))
 	}
 
+	if debugUserStageChecksum() {
+		logboek.LogHighlightF("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
+	}
+
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
+		if debugUserStageChecksum() {
+			logboek.LogHighlightF("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
+		}
+
 		checksumArgs = append(checksumArgs, stageVersionChecksum)
 	}
 
