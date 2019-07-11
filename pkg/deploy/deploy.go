@@ -41,7 +41,6 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 		logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
 		logboek.LogF("Using helm release name: %s\n", release)
 		logboek.LogF("Using kubernetes namespace: %s\n", namespace)
-		logboek.LogLn()
 
 		images := GetImagesInfoGetters(werfConfig.Images, werfConfig.ImagesFromDockerfile, imagesRepo, tag, false)
 
