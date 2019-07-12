@@ -25,11 +25,11 @@ It is designed to make engineer's work fast end efficient.
 **Contents**
 
 - [Features](#features)
-- [Requirements and Installation](#requirements-and-installation)
+- [Installation](#installation)
   - [Install Dependencies](#install-dependencies)
   - [Install werf](#install-werf)
-- [Docs and Support](#docs-and-support)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
+- [Docs and Support](#docs-and-support)
 - [License](#license)
 
 # Features
@@ -101,15 +101,7 @@ Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-windows
 go get github.com/flant/werf/cmd/werf
 ```
 
-## Docs and support
-
-[Official documentation](https://werf.io/)
-
-### Getting started
-
-[Make your first werf application](https://werf.io/how_to/getting_started.html)!
-
-## Backward Compatibility Promise
+# Backward Compatibility Promise
 
 > _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
 
@@ -139,6 +131,14 @@ Version without prerelease part is considered to be from a stable channel.
 - `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features, but are unstable.
   We do **not guarantee** backward compatibility between `alpha` releases.
 
-## License
+# Docs and support
+
+[Official documentation](https://werf.io/)
+
+## Getting started
+
+[Make your first werf application](https://werf.io/how_to/getting_started.html)!
+
+# License
 
 Apache License 2.0, see [LICENSE](LICENSE).
