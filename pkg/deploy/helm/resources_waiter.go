@@ -123,7 +123,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *batchv1.Job:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "job")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 0, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -296,7 +296,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		case *batchv1.Job:
 			specs := multitrack.MultitrackSpecs{}
 
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 1, "job")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, 0, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
