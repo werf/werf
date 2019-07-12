@@ -32,7 +32,7 @@ werf deploy [options]
   $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
 
   # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
-  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom x
+  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom tag
 ```
 
 {{ header }} Environments
