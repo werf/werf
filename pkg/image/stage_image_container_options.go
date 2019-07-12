@@ -178,7 +178,7 @@ func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
 	if len(co.Entrypoint) == 1 {
 		args = append(args, fmt.Sprintf("--entrypoint=%s", co.Entrypoint[0]))
 	} else if len(co.Entrypoint) != 0 {
-		return nil, fmt.Errorf("`Entrypoint` value `%v` isn't supported in run command (only string)", co.Entrypoint)
+		return nil, fmt.Errorf("`ENTRYPOINT` value `%v` isn't supported in run command (only string)", co.Entrypoint)
 	}
 
 	return args, nil
@@ -188,11 +188,11 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	var args []string
 
 	for _, volume := range co.Volume {
-		args = append(args, fmt.Sprintf("Volume %s", volume))
+		args = append(args, fmt.Sprintf("VOLUME %s", volume))
 	}
 
 	for _, expose := range co.Expose {
-		args = append(args, fmt.Sprintf("Expose %s", expose))
+		args = append(args, fmt.Sprintf("EXPOSE %s", expose))
 	}
 
 	for key, value := range co.Env {
@@ -200,27 +200,27 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	}
 
 	for key, value := range co.Label {
-		args = append(args, fmt.Sprintf("Label %s=%v", key, value))
+		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
 	}
 
 	if len(co.Cmd) != 0 {
-		args = append(args, fmt.Sprintf("Cmd [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
+		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
 	}
 
 	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("Onbuild %s", strings.Join(co.Onbuild, " ")))
+		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
 	}
 
 	if co.Workdir != "" {
-		args = append(args, fmt.Sprintf("Workdir %s", co.Workdir))
+		args = append(args, fmt.Sprintf("WORKDIR %s", co.Workdir))
 	}
 
 	if co.User != "" {
-		args = append(args, fmt.Sprintf("User %s", co.User))
+		args = append(args, fmt.Sprintf("USER %s", co.User))
 	}
 
 	if len(co.Entrypoint) != 0 {
-		args = append(args, fmt.Sprintf("Entrypoint [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+		args = append(args, fmt.Sprintf("ENTRYPOINT [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
 	}
 
 	if co.StopSignal != "" {
@@ -238,11 +238,11 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
-		args = append(args, fmt.Sprintf("Volume %s", volume))
+		args = append(args, fmt.Sprintf("VOLUME %s", volume))
 	}
 
 	for _, expose := range co.Expose {
-		args = append(args, fmt.Sprintf("Expose %s", expose))
+		args = append(args, fmt.Sprintf("EXPOSE %s", expose))
 	}
 
 	for key, value := range co.Env {
@@ -250,7 +250,7 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	}
 
 	for key, value := range co.Label {
-		args = append(args, fmt.Sprintf("Label %s=%v", key, value))
+		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
 	}
 
 	if len(co.Cmd) == 0 {
@@ -258,21 +258,21 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
-		args = append(args, fmt.Sprintf("Cmd %s", cmd))
+		args = append(args, fmt.Sprintf("CMD %s", cmd))
 	} else if len(co.Cmd) != 0 {
-		args = append(args, fmt.Sprintf("Cmd [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
+		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
 	}
 
 	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("Onbuild %s", strings.Join(co.Onbuild, " ")))
+		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
 	}
 
 	if co.Workdir != "" {
-		args = append(args, fmt.Sprintf("Workdir %s", co.Workdir))
+		args = append(args, fmt.Sprintf("WORKDIR %s", co.Workdir))
 	}
 
 	if co.User != "" {
-		args = append(args, fmt.Sprintf("User %s", co.User))
+		args = append(args, fmt.Sprintf("USER %s", co.User))
 	}
 
 	if len(co.Entrypoint) == 0 {
@@ -280,9 +280,9 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
-		args = append(args, fmt.Sprintf("Entrypoint %s", entrypoint))
+		args = append(args, fmt.Sprintf("ENTRYPOINT %s", entrypoint))
 	} else if len(co.Entrypoint) != 0 {
-		args = append(args, fmt.Sprintf("Entrypoint [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+		args = append(args, fmt.Sprintf("ENTRYPOINT [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
 	}
 
 	if co.StopSignal != "" {
