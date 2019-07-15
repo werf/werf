@@ -265,7 +265,9 @@ func (c *StageImageContainer) introspect() error {
 	}
 
 	if err := docker.CliRun(runArgs...); err != nil {
-		return err
+		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+			return err
+		}
 	}
 
 	return nil
@@ -278,10 +280,23 @@ func (c *StageImageContainer) introspectBefore() error {
 	}
 
 	if err := docker.CliRun(runArgs...); err != nil {
-		return err
+		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+			return err
+		}
 	}
 
 	return nil
+}
+
+// https://docs.docker.com/engine/reference/run/#exit-status
+func IsStartContainerErr(err error) bool {
+	for _, code := range []string{"125", "126", "127"} {
+		if strings.HasPrefix(err.Error(), fmt.Sprintf("Code: %s", code)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *StageImageContainer) commit() (string, error) {
