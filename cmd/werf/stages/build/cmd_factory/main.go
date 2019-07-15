@@ -2,7 +2,6 @@ package cmd_factory
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -75,6 +74,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
+	common.SetupIntrospectStage(commonCmdData, cmd)
+
 	common.SetupLogOptions(commonCmdData, cmd)
 	common.SetupLogProjectDir(commonCmdData, cmd)
 
@@ -144,11 +145,17 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		}
 	}()
 
+	introspectOptions, err := common.GetIntrospectOptions(commonCmdData, werfConfig)
+	if err != nil {
+		return err
+	}
+
 	opts := build.BuildStagesOptions{
 		ImageBuildOptions: image.BuildOptions{
 			IntrospectAfterError:  cmdData.IntrospectAfterError,
 			IntrospectBeforeError: cmdData.IntrospectBeforeError,
 		},
+		IntrospectOptions: introspectOptions,
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)

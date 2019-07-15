@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"os"
 
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/net/context"
+
+	"github.com/flant/logboek"
+
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/term"
-	"github.com/flant/logboek"
-	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -50,11 +51,18 @@ func ServerVersion() (*types.Version, error) {
 	return &version, nil
 }
 
-func setDockerClient() error {
-	stdIn, _, _ := term.StdStreams()
+type customReadCloser struct {
+	*os.File
+}
 
+// ignore closing stdin after interactive mode, e.g. docker run -ti
+func (r customReadCloser) Close() error {
+	return nil
+}
+
+func setDockerClient() error {
 	cliOpts := []command.DockerCliOption{
-		command.WithInputStream(stdIn),
+		command.WithInputStream(customReadCloser{os.Stdin}),
 		command.WithOutputStream(logboek.GetOutStream()),
 		command.WithErrorStream(logboek.GetErrStream()),
 		command.WithContentTrust(false),
@@ -66,6 +74,7 @@ func setDockerClient() error {
 	}
 
 	newCli.Out().SetIsTerminal(terminal.IsTerminal(int(os.Stdout.Fd())))
+	newCli.In().SetIsTerminal(terminal.IsTerminal(int(os.Stdin.Fd())))
 
 	opts := flags.NewClientOptions()
 	if err := newCli.Initialize(opts); err != nil {
