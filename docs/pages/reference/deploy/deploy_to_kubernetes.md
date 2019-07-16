@@ -9,7 +9,7 @@ Werf uses [Helm](https://helm.sh/) Kubernetes package manager to deploy applicat
 
 ## Helm chart
 
-The `.helm` directory in the project root describes a helm chart. Helm chart provides a description of the application configuration and application component used to release into the kubernetes cluster using the helm toolset. The chart for werf, i.e. `.helm` folder, has the following structure:
+The `.helm` directory in the project root describes a helm chart. Helm chart provides a description of the application configuration and application component used to release into the kubernetes cluster using the helm toolset. The chart for Werf, i.e. `.helm` folder, has the following structure:
 
 ```
 .helm/
@@ -61,9 +61,9 @@ Environment is a required parameter for deploy and should be specified either wi
 
 ### Integration with Gitlab
 
-Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). Werf will detect current environment for the pipeline in gitlab and use it as environment parameter.
+Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). Werf will detect current environment for the pipeline in GitLab and use it as environment parameter.
 
-`CI_ENVIRONMENT_SLUG` gitlab variable used in Werf to determine environment name in gitlab pipeline.
+`CI_ENVIRONMENT_SLUG` GitLab variable used in Werf to determine environment name in GitLab pipeline.
 
 ## Multiple Kubernetes clusters
 

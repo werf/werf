@@ -15,7 +15,7 @@ To begin, you'll need the following:
 * Kubernetes cluster and the kubectl CLI tool configured to communicate with the cluster;
 * Server with GitLab above 10.x version (or account on [SaaS GitLab](https://gitlab.com/));
 * Docker registry (GitLab embedded or somewhere else);
-* An application you can successfully build and deploy with werf;
+* An application you can successfully build and deploy with Werf.
 
 ## Infrastructure
 
