@@ -1,7 +1,7 @@
 ---
-title: Getting started
+title: Building application
 sidebar: how_to
-permalink: how_to/getting_started.html
+permalink: how_to/building_application.html
 author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ---
 
