@@ -10,8 +10,8 @@ Command combines 'werf stages build' and 'werf images publish'.
 
 After stages has been built, new docker layer with service info about tagging strategy will be      
 built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the    
-names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming:                                
-[https://werf.io/reference/registry/image_naming.html](https://werf.io/reference/registry/image_naming.html).
+names IMAGES_REPO/IMAGE_NAME:TAG. See more info about publish process:                              
+[https://werf.io/reference/registry/publish.html](https://werf.io/reference/registry/publish.html).
 
 The result of build-and-publish command is stages in stages storage and named images pushed into    
 the docker repo.
@@ -35,7 +35,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
   $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch
 
   # Build and publish with enabled drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf --stages-storage :local build-and-publish --introspect-error --images-repo :minikube --tag-git-branch mybranch
+  $ werf build-and-publish --stages-storage :local --introspect-error --images-repo :minikube --tag-git-branch mybranch
 
   # Set --stages-storage default value using $WERF_STAGES_STORAGE param and --images-repo default value using $WERF_IMAGE_REPO param
   $ export WERF_STAGES_STORAGE=:local
@@ -56,9 +56,9 @@ werf build-and-publish [IMAGE_NAME...] [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
-            stages storage, to push images into the specified images repo, to pull base images.
+            stages storage, to push images into the specified images repo, to pull base images
   -h, --help=false:
             help for build-and-publish
       --home-dir='':
@@ -90,14 +90,14 @@ werf build-and-publish [IMAGE_NAME...] [options]
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
-            use multiple keys.
+            use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/reference/build/stages_and_images.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
-            multiple times to produce multiple images with the specified tags.
+            multiple times to produce multiple images with the specified tags
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be      
             enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)

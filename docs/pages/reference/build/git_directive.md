@@ -319,7 +319,7 @@ git:
 
 `https` access may require login and password.
 
-For example, login and password from gitlab ci variables:
+For example, login and password from GitLab CI variables:
 
 {% raw %}
 ```yaml
@@ -332,7 +332,7 @@ In this example, the [env](http://masterminds.github.io/sprig/os.html) method fr
 
 ### git, ssh
 
-Werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by github, bitbucket, gitlab, gogs, gitolite, etc. Most often the repository address looks as follows:
+Werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by GitHub, Bitbucket, GitLab, Gogs, Gitolite, etc. Most often the repository address looks as follows:
 
 ```yaml
 git:

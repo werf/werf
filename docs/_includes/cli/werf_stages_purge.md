@@ -18,9 +18,9 @@ werf stages purge [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and delete images from the specified    
-            stages storage.
+            stages storage
       --dry-run=false:
             Indicate what the command would do without actually doing that
       --force=false:

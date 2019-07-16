@@ -26,7 +26,7 @@ werf host cleanup [options]
 ```bash
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
       --dry-run=false:
             Indicate what the command would do without actually doing that
   -h, --help=false:

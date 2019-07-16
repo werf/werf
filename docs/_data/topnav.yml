@@ -3,6 +3,8 @@
 topnav:
   - title: About
     url: /
+  - title: Installation
+    url: /how_to/installation.html
   - title: Documentation
     url: /documentation.html
     folderitems:

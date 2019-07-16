@@ -2,6 +2,8 @@
 
 entries:
   f:
+    - title: Installation
+      url: /how_to/installation.html
 
     - title: Getting started
       url: /how_to/getting_started.html

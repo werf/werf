@@ -21,7 +21,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
    * Accessible from kubernetes nodes to pull images from the registry.
 
- * Installed [Werf dependencies]({{ site.baseurl }}/how_to/getting_started.html#requirements) on the host system.
+ * Installed [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) on the host system.
 
  * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 

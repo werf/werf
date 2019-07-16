@@ -15,7 +15,7 @@ Stages are steps in the assembly process, building blocks for constructing image
 A ***stage*** is built from a logically grouped set of config instructions, taking into account the assembly conditions and rules.
 Each _stage_ relates to one Docker image.
 
-The werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. Werf uses different _stage conveyor_ for assembling a particular type of build object.
+The Werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. Werf uses different _stage conveyor_ for assembling a particular type of build object.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'image-from-dockerfile-tab')">Image from Dockerfile</a>
@@ -41,7 +41,7 @@ The werf assembly process assumes a sequential build of stages using _stage conv
 </a>
 </div>
 
-**All works with _stages_ are done by werf, and you only need to write config correctly.**
+**All works with _stages_ are done by Werf, and you only need to write config correctly.**
 
 For every _stage_ at each build, Werf calculates build stage identifier called _stage signature_.
 Each _stage_ is assembled in an ***assembly container*** based on the previous _stage_, and saved in [stages storage](#stages-storage).
@@ -58,7 +58,7 @@ It means that the _stage conveyor_, can be reduced to several _stages_ or even t
 
 ## Stage dependencies
 
-Most _stage dependencies_ are specified in werf.yaml, others relate to a runtime.
+Most _stage dependencies_ are specified in `werf.yaml`, others relate to a runtime.
 Changing these dependencies affects on a _signature_, stages reassembling.
 
 Tables below represent image from Dockerfile, image and [artifact]({{ site.baseurl }}/reference/build/artifact.html) _stages dependencies_. 

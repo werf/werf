@@ -23,11 +23,12 @@ Also, we will check that the application works and push the image in a docker re
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed Docker and [multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) on the host system.
+* Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
-### Select werf version
+### Select Werf version
 
-This command should be run prior running any werf command in your shell session:
+This command should be run prior running any Werf command in your shell session:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -35,7 +36,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Step 1: Add a config
 
-To implement these steps and requirements with werf we will add a special file called `werf.yaml` to the application's source code.
+To implement these steps and requirements with Werf we will add a special file called `werf.yaml` to the application's source code.
 
 1. Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
 

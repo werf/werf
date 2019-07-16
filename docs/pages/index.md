@@ -31,7 +31,7 @@ layout: default
                     A missing part of CI/CD<br/> systems
                 </div>
                 <div class="intro__text">
-                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in gitlab, jenkins, travis, circleci, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
+                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
                 </div>
             </div>
     </div>

@@ -15,7 +15,9 @@ In this article, we will build an example GO application. Then we will optimize 
 
 ## Requirements
 
-* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) on the host system.
+
+* Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
 
