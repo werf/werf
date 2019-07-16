@@ -49,7 +49,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
   $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch
 
   # Build and publish with enabled drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf --stages-storage :local build-and-publish --introspect-error --images-repo :minikube --tag-git-branch mybranch
+  $ werf build-and-publish --stages-storage :local --introspect-error --images-repo :minikube --tag-git-branch mybranch
 
   # Set --stages-storage default value using $WERF_STAGES_STORAGE param and --images-repo default value using $WERF_IMAGE_REPO param
   $ export WERF_STAGES_STORAGE=:local
@@ -81,7 +81,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images.")
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)

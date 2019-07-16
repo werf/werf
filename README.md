@@ -27,7 +27,7 @@ It is designed to make engineer's work fast end efficient.
 - [Features](#features)
 - [Installation](#installation)
   - [Install Dependencies](#install-dependencies)
-  - [Install werf](#install-werf)
+  - [Install Werf](#install-werf)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
 - [Docs and Support](#docs-and-support)
 - [License](#license)
@@ -82,7 +82,7 @@ It is designed to make engineer's work fast end efficient.
 - Fail CI pipeline fast when problem detected.
   - Early resources failures detection during deploy process without need to wait full timeout.
 - Full compatibility with Helm 2.
-- Ability to limit deploy user access using RBAC definition (tiller is compiled into werf and run from the deploy user outside of cluster).
+- Ability to limit deploy user access using RBAC definition (Tiller is compiled into Werf and run from the deploy user outside of cluster).
 - Parallel deploys on a single host (using file locks).
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
 - Allow continuous delivery of new images tagged by the same name (by git branch for example).
@@ -96,36 +96,52 @@ It is designed to make engineer's work fast end efficient.
 
 ## Install Dependencies
 
-1. [Git command line utility](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+### Docker
+   
+[Docker CE installation guide](https://docs.docker.com/install/).
 
-   Minimal required version is 1.9.0.
+Manage Docker as a non-root user. Create the **docker** group and add your user to the group: 
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
 
-   To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
+### Git command line utility
 
+[Git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+
+- Minimal required version is 1.9.0.
+- To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
+   
 ## Install Werf
 
-### Way 1 (recommended): using Multiwerf
+### Method 1 (recommended): using Multiwerf
 
 [Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
-* downloads werf binary builds;
+* downloads Werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
-* automatically updates werf binary (can be disabled).
+* automatically updates Werf binary (can be disabled).
 
-```
+```bash
 mkdir ~/bin
 cd ~/bin
+
+## add ~/bin in PATH if not there
+echo  ‘export PATH=$PATH:$HOME/bin’ >> ~/.bashrc 
+exec bash
+
 curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 source <(multiwerf use 1.0 beta)
 ```
 
-### Way 2: download binary
+### Method 2: download binary
 
 The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion)
 
 ##### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-darwin-amd64-v1.0.1-beta.4 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-darwin-amd64-v1.0.3-beta.6 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -133,16 +149,16 @@ sudo mv /tmp/werf /usr/local/bin/werf
 ##### Linux
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-linux-amd64-v1.0.1-beta.4 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-linux-amd64-v1.0.3-beta.6 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
 ##### Windows
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.1-beta.4/werf-windows-amd64-v1.0.1-beta.4.exe)
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-windows-amd64-v1.0.3-beta.6.exe)
 
-### Way 3: from source
+### Method 3: from source
 
 ```
 go get github.com/flant/werf/cmd/werf
@@ -150,17 +166,17 @@ go get github.com/flant/werf/cmd/werf
 
 # Backward Compatibility Promise
 
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
+> _Note:_ This promise was introduced with Werf 1.0 and does not apply to previous versions or to dapp releases.
 
 Werf is versioned with [Semantic Versioning](https://semver.org). This means that major releases (1.0, 2.0) are
-allowed to break backward compatibility. In case of werf this means that update to the next major release _may_
+allowed to break backward compatibility. In case of Werf this means that update to the next major release _may_
 require to do a full re-deploy of applications or to perform other non-scriptable actions.
 
 Minor releases (1.1, 1.2, etc.) may introduce new "big" features, but must do so without significant backward compatibility breaks with major branch (1.x).
-In case of werf this means that update to the next minor release is mostly smooth, but _may_ require to run a provided upgrade script.
+In case of Werf this means that update to the next minor release is mostly smooth, but _may_ require to run a provided upgrade script.
 
 Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility with minor branch (1.1.x).
-In case of werf this means that update to the next patch release should be smooth and can be done automatically.
+In case of Werf this means that update to the next patch release should be smooth and can be done automatically.
 
 Patch releases are divided to channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
 Version without prerelease part is considered to be from a stable channel.
@@ -180,12 +196,10 @@ Version without prerelease part is considered to be from a stable channel.
 
 # Docs and support
 
-[Official documentation](https://werf.io/)
+[Make your first Werf application](https://werf.io/how_to/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-## Getting started
-
-[Make your first werf application](https://werf.io/how_to/getting_started.html)!
+Werf’s developers are always in contact with community though [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_ru)
 
 # License
 
-Apache License 2.0, see [LICENSE](LICENSE).
+Apache License 2.0, see [LICENSE](LICENSE)
