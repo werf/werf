@@ -47,7 +47,7 @@
 - Fail CI pipeline fast when problem detected.
   - Early resources failures detection during deploy process without need to wait full timeout.
 - Full compatibility with Helm 2.
-- Ability to limit deploy user access using RBAC definition (tiller is compiled into werf and run from the deploy user outside of cluster).
+- Ability to limit deploy user access using RBAC definition (Tiller is compiled into Werf and run from the deploy user outside of cluster).
 - Parallel deploys on a single host (using file locks).
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
 - Allow continuous delivery of new images tagged by the same name (by git branch for example).

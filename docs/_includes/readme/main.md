@@ -27,7 +27,7 @@ It is designed to make engineer's work fast end efficient.
 - [Features](#features)
 - [Installation](#installation)
   - [Install Dependencies](#install-dependencies)
-  - [Install werf](#install-werf)
+  - [Install Werf](#install-werf)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
 - [Docs and Support](#docs-and-support)
 - [License](#license)

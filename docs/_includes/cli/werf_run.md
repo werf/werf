@@ -15,16 +15,16 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 
 ```bash
   # Run specified image
-  $ werf --stages-storage :local run application
+  $ werf run --stages-storage :local application
 
   # Run image with predefined docker run options and command for debug
-  $ werf --stages-storage :local run --shell
+  $ werf run --stages-storage :local --shell
 
   # Run image with specified docker run options and command
-  $ werf --stages-storage :local run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+  $ werf run --stages-storage :local --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
-  $ werf --stages-storage :local run --shell --dry-run
+  $ werf run --stages-storage :local --shell --dry-run
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh
 ```
 
@@ -37,9 +37,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified stages     
-            storage.
+            storage
       --docker-options='':
             Define docker run options
       --dry-run=false:
@@ -70,7 +70,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
-            use multiple keys.
+            use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).

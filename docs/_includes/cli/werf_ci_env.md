@@ -16,7 +16,7 @@ werf ci-env CI_SYSTEM [options]
 {{ header }} Examples
 
 ```bash
-  # Load generated werf environment variables on GitLab job runner
+  # Load generated werf environment variables on gitlab job runner
   $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
 ```
 
@@ -25,9 +25,9 @@ werf ci-env CI_SYSTEM [options]
 ```bash
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
-            Command will copy specified or default (~/.docker) config to the new temporary config   
-            and may perform additional logins into new config.
+            ~/.docker (in the order of priority)
+            Command will copy specified or default (~/.docker) config to the temporary directory    
+            and may perform additional login with new config
   -h, --help=false:
             help for ci-env
       --home-dir='':

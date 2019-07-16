@@ -29,10 +29,10 @@ werf deploy [options]
 
 ```bash
   # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging strategy; helm release name and namespace will be named as 'myproject-dev'
-  $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
+  $ werf deploy --stages-storage :local --env dev --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
 
   # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
-  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom tag
+  $ werf deploy --stages-storage :local --release myrelease --namespace myns --images-repo registry.mydomain.com/myproject --tag-custom tag
 ```
 
 {{ header }} Environments
@@ -64,7 +64,7 @@ werf deploy [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified stages     
             storage and images repo
       --env='':
@@ -121,14 +121,14 @@ werf deploy [options]
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
-            use multiple keys.
+            use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/reference/build/stages_and_images.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
-            multiple times to produce multiple images with the specified tags.
+            multiple times to produce multiple images with the specified tags
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be      
             enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
