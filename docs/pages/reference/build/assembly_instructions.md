@@ -524,6 +524,12 @@ As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPat
 
 _install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 
+> During image build process source codes are updated **only within one stage**, subsequent stages are based on this stage and use actualized files. First build adds sources on _gitArchive_ stage. Any other build updates sources on _gitCache_, _gitLatestPatch_ or on one of the following user stages: _install_, _beforeSetup_ and _setup_. 
+<br />
+<br />
+This stage is shown in _Calculation signature phase_
+![git files actualized on specific stage]({{ site.baseurl }}/images/build/git_mapping_updated_on_stage.png)
+
 _User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
 
 ```yaml
