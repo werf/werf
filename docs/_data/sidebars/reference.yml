@@ -63,13 +63,10 @@ entries:
         - title: Authorization
           url: /reference/registry/authorization.html
 
-        - title: Image naming
-          url: /reference/registry/image_naming.html
-
         #- title: Tag
         #  url: /reference/registry/tag.html
 
-        - title: Publish
+        - title: Publish procedure
           url: /reference/registry/publish.html
 
         #    - title: Pull
