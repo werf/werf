@@ -145,17 +145,17 @@ $( document ).ready(function() {
 
 
 $(document).ready(function() {
-    var adjustAnchor = function() {
-        var $anchor = $(':target'), fixedElementHeight = 120;
-        if ($anchor.length > 0) {
-          $('html, body').stop().animate({
-            scrollTop: $anchor.offset().top - fixedElementHeight
-          }, 200);
-        }
-    };
-    $(window).on('hashchange load', function() {
-        adjustAnchor();
-    });
+  var adjustAnchor = function() {
+      var $anchor = $(':target'), fixedElementHeight = 120;
+      if ($anchor.length > 0) {
+        $('html, body').stop().animate({
+          scrollTop: $anchor.offset().top - fixedElementHeight
+        }, 200);
+      }
+  };
+  $(window).on('hashchange load', function() {
+      adjustAnchor();
+  });
 });
 
 $(document).ready(function(){

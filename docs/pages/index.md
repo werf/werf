@@ -28,10 +28,10 @@ layout: default
             <div class="intro__image"></div>
             <div class="intro__content">
                 <div class="intro__title">
-                    A missing part of CI/CD<br/> systems
+                    A missing part of a CI/CD<br/> systems
                 </div>
                 <div class="intro__text">
-                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in gitlab, jenkins, travis, circleci, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
+                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis CI, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
                 </div>
             </div>
     </div>
@@ -44,7 +44,7 @@ layout: default
                 Advanced image builder
             </div>
             <div class="intro-extra__item-text">
-                Rebuild images incrementally basing on git history. Build images with Ansible tasks. Push the cache to the remote registry.
+                Rebuild images incrementally basing on&nbsp;git history. Build images with&nbsp;Ansible tasks. Push the&nbsp;cache to&nbsp;the&nbsp;remote registry.
             </div>
         </li>
         <li class="intro-extra__item">
@@ -52,15 +52,15 @@ layout: default
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                Full compatibility with Helm. Easy RBAC definition. Control of the deployment process with annotations. Control of resources readiness. Logging and error reporting. Easy debugging of problems without unnecessary kubectl invocations.
+                Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
             </div>
         </li>
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
-                Lifecycle management
+                Image Lifecycle Management
             </div>
             <div class="intro-extra__item-text">
-                Automatic image naming. Policy based registry cleanup. Debugging and diagnostic tools.
+                Building images by&nbsp;familiar Dockerfile instructions or&nbsp;our syntax, which allows based on&nbsp;git history, so-called incremental assembly, and&nbsp;using Ansible tasks. Pushing into a&nbsp;registry by&nbsp;specific tag strategy and&nbsp;cleaning a&nbsp;registry from&nbsp;unused images based on&nbsp;policies.
             </div>
         </li>
     </ul>
