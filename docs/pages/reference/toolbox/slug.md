@@ -1,7 +1,7 @@
 ---
 title: Slug
-sidebar: reference
-permalink: reference/toolbox/slug.html
+sidebar: documentation
+permalink: documentation/reference/toolbox/slug.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

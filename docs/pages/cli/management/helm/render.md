@@ -1,7 +1,7 @@
 ---
 title: werf helm render
-sidebar: cli
-permalink: cli/management/helm/render.html
+sidebar: documentation
+permalink: documentation/cli/management/helm/render.html
 ---
 
 {% include /cli/werf_helm_render.md %}

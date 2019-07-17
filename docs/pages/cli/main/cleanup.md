@@ -1,7 +1,7 @@
 ---
 title: werf cleanup
-sidebar: cli
-permalink: cli/main/cleanup.html
+sidebar: documentation
+permalink: documentation/cli/main/cleanup.html
 ---
 
 {% include /cli/werf_cleanup.md %}
