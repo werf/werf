@@ -196,7 +196,7 @@ Version without prerelease part is considered to be from a stable channel.
 
 # Docs and support
 
-[Make your first Werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
+[Make your first Werf application](https://werf.io/how_to/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
 Werf’s developers are always in contact with community though Slack and Telegram. Join us!
 
