@@ -40,5 +40,4 @@ defaults:
       topnav: topnav
 
 sidebars:
-- how_to
-- reference
+- documentation

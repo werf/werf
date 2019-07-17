@@ -15,7 +15,7 @@ type Shell struct {
 }
 
 func (c *Shell) GetDumpConfigSection() string {
-	return dumpConfigDoc(c.raw.rawImage.doc)
+	return dumpConfigDoc(c.raw.rawStapelImage.doc)
 }
 
 func (c *Shell) validate() error {

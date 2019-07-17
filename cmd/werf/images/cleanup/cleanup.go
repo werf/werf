@@ -118,7 +118,7 @@ func runCleanup() error {
 	}
 
 	var imagesNames []string
-	for _, image := range werfConfig.Images {
+	for _, image := range werfConfig.StapelImages {
 		imagesNames = append(imagesNames, image.Name)
 	}
 

@@ -1,7 +1,7 @@
 ---
 title: werf version
-sidebar: cli
-permalink: cli/other/version.html
+sidebar: documentation
+permalink: documentation/cli/other/version.html
 ---
 
 {% include /cli/werf_version.md %}

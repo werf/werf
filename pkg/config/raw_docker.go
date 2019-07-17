@@ -15,14 +15,14 @@ type rawDocker struct {
 	StopSignal  interface{}       `yaml:"STOPSIGNAL,omitempty"`
 	HealthCheck string            `yaml:"HEALTHCHECK,omitempty"`
 
-	rawImage *rawImage `yaml:"-"` // parent
+	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *rawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawImage); ok {
-		c.rawImage = parent
+	if parent, ok := parentStack.Peek().(*rawStapelImage); ok {
+		c.rawStapelImage = parent
 	}
 
 	type plain rawDocker
@@ -30,7 +30,7 @@ func (c *rawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawStapelImage.doc); err != nil {
 		return err
 	}
 
@@ -40,13 +40,13 @@ func (c *rawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	docker = &Docker{}
 
-	if volume, err := InterfaceToStringArray(c.Volume, c, c.rawImage.doc); err != nil {
+	if volume, err := InterfaceToStringArray(c.Volume, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Volume = volume
 	}
 
-	if expose, err := InterfaceToStringArray(c.Expose, c, c.rawImage.doc); err != nil {
+	if expose, err := InterfaceToStringArray(c.Expose, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Expose = expose
@@ -55,13 +55,13 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	docker.Env = c.Env
 	docker.Label = c.Label
 
-	if cmd, err := InterfaceToStringArray(c.Cmd, c, c.rawImage.doc); err != nil {
+	if cmd, err := InterfaceToStringArray(c.Cmd, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Cmd = cmd
 	}
 
-	if onbuild, err := InterfaceToStringArray(c.Onbuild, c, c.rawImage.doc); err != nil {
+	if onbuild, err := InterfaceToStringArray(c.Onbuild, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Onbuild = onbuild
@@ -70,7 +70,7 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	docker.Workdir = c.Workdir
 	docker.User = c.User
 
-	if entrypoint, err := InterfaceToStringArray(c.Entrypoint, c, c.rawImage.doc); err != nil {
+	if entrypoint, err := InterfaceToStringArray(c.Entrypoint, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Entrypoint = entrypoint

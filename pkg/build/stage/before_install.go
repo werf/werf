@@ -6,7 +6,7 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
-func GenerateBeforeInstallStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+func GenerateBeforeInstallStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeInstallEmpty() {
 		return newBeforeInstallStage(b, baseStageOptions)

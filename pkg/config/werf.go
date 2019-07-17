@@ -8,9 +8,9 @@ import (
 
 type WerfConfig struct {
 	Meta                 *Meta
-	Images               []*Image
+	StapelImages         []*StapelImage
 	ImagesFromDockerfile []*ImageFromDockerfile
-	Artifacts            []*ImageArtifact
+	Artifacts            []*StapelImageArtifact
 }
 
 func (c *WerfConfig) HasImage(imageName string) bool {
@@ -24,7 +24,7 @@ func (c *WerfConfig) HasImage(imageName string) bool {
 func (c *WerfConfig) GetAllImages() []ImageInterface {
 	var images []ImageInterface
 
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		images = append(images, image)
 	}
 
@@ -36,7 +36,7 @@ func (c *WerfConfig) GetAllImages() []ImageInterface {
 }
 
 func (c *WerfConfig) GetImage(imageName string) ImageInterface {
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		if image.Name == imageName {
 			return image
 		}
@@ -51,7 +51,7 @@ func (c *WerfConfig) GetImage(imageName string) ImageInterface {
 	return nil
 }
 
-func (c *WerfConfig) GetArtifact(imageName string) *ImageArtifact {
+func (c *WerfConfig) GetArtifact(imageName string) *StapelImageArtifact {
 	for _, artifact := range c.Artifacts {
 		if artifact.Name == imageName {
 			return artifact
@@ -62,7 +62,7 @@ func (c *WerfConfig) GetArtifact(imageName string) *ImageArtifact {
 }
 
 func (c *WerfConfig) exportsAutoExcluding() error {
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		if err := image.exportsAutoExcluding(); err != nil {
 			return err
 		}
@@ -79,15 +79,15 @@ func (c *WerfConfig) exportsAutoExcluding() error {
 
 func (c *WerfConfig) validateImagesNames() error {
 	imageByName := map[string]ImageInterface{}
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		name := image.Name
 
-		if name == "" && (len(c.Images) > 1 || len(c.ImagesFromDockerfile) > 1) {
+		if name == "" && (len(c.StapelImages) > 1 || len(c.ImagesFromDockerfile) > 1) {
 			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.raw.doc)))
 		}
 
 		if d, ok := imageByName[name]; ok {
-			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.(*Image).raw.doc), dumpConfigDoc(image.raw.doc)))
+			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.(*StapelImage).raw.doc), dumpConfigDoc(image.raw.doc)))
 		} else {
 			imageByName[name] = image
 		}
@@ -96,14 +96,14 @@ func (c *WerfConfig) validateImagesNames() error {
 	for _, image := range c.ImagesFromDockerfile {
 		name := image.Name
 
-		if name == "" && (len(c.Images) > 1 || len(c.ImagesFromDockerfile) > 1) {
+		if name == "" && (len(c.StapelImages) > 1 || len(c.ImagesFromDockerfile) > 1) {
 			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.raw.doc)))
 		}
 
 		if d, ok := imageByName[name]; ok {
 			var doc string
 			switch i := d.(type) {
-			case *Image:
+			case *StapelImage:
 				doc = dumpConfigDoc(i.raw.doc)
 			case *ImageFromDockerfile:
 				doc = dumpConfigDoc(i.raw.doc)
@@ -115,7 +115,7 @@ func (c *WerfConfig) validateImagesNames() error {
 		}
 	}
 
-	imageArtifactByName := map[string]*ImageArtifact{}
+	imageArtifactByName := map[string]*StapelImageArtifact{}
 	for _, artifact := range c.Artifacts {
 		name := artifact.Name
 
@@ -128,7 +128,7 @@ func (c *WerfConfig) validateImagesNames() error {
 		if iInterface, exist := imageByName[name]; exist {
 			var doc string
 			switch i := iInterface.(type) {
-			case *Image:
+			case *StapelImage:
 				doc = dumpConfigDoc(i.raw.doc)
 			case *ImageFromDockerfile:
 				doc = dumpConfigDoc(i.raw.doc)
@@ -146,7 +146,7 @@ func (c *WerfConfig) associateImportsArtifacts() error {
 	var relatedImageImages []ImageInterface
 	var artifactImports []*Import
 
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		relatedImageImages = append(relatedImageImages, c.relatedImageImages(image)...)
 	}
 
@@ -156,10 +156,10 @@ func (c *WerfConfig) associateImportsArtifacts() error {
 
 	for _, relatedImageInterface := range relatedImageImages {
 		switch relatedImageInterface.(type) {
-		case *Image:
-			artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
-		case *ImageArtifact:
-			artifactImports = append(artifactImports, relatedImageInterface.(*ImageArtifact).Import...)
+		case *StapelImage:
+			artifactImports = append(artifactImports, relatedImageInterface.(*StapelImage).Import...)
+		case *StapelImageArtifact:
+			artifactImports = append(artifactImports, relatedImageInterface.(*StapelImageArtifact).Import...)
 		}
 	}
 
@@ -178,17 +178,17 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 			var imageName string
 
 			switch image := interf.(type) {
-			case *Image:
+			case *StapelImage:
 				imageName = image.Name
 			case *ImageFromDockerfile:
 				imageName = image.Name
 			}
 
-			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", imageName), i.raw, i.raw.rawImage.doc)
+			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", imageName), i.raw, i.raw.rawStapelImage.doc)
 		}
 	} else if i.ArtifactName != "" {
 		if imageArtifact := c.GetArtifact(i.ArtifactName); imageArtifact == nil {
-			return newDetailedConfigError(fmt.Sprintf("no such artifact `%s`!", i.ArtifactName), i.raw, i.raw.rawImage.doc)
+			return newDetailedConfigError(fmt.Sprintf("no such artifact `%s`!", i.ArtifactName), i.raw, i.raw.rawStapelImage.doc)
 		}
 	}
 
@@ -196,14 +196,14 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 }
 
 func (c *WerfConfig) associateImagesFrom() error {
-	for _, image := range c.Images {
-		if err := c.validateImageFrom(image.ImageBase); err != nil {
+	for _, image := range c.StapelImages {
+		if err := c.validateImageFrom(image.StapelImageBase); err != nil {
 			return err
 		}
 	}
 
 	for _, image := range c.Artifacts {
-		if err := c.validateImageFrom(image.ImageBase); err != nil {
+		if err := c.validateImageFrom(image.StapelImageBase); err != nil {
 			return err
 		}
 	}
@@ -211,7 +211,7 @@ func (c *WerfConfig) associateImagesFrom() error {
 	return nil
 }
 
-func (c *WerfConfig) validateImageFrom(i *ImageBase) error {
+func (c *WerfConfig) validateImageFrom(i *StapelImageBase) error {
 	if i.raw.FromImage != "" {
 		fromImageName := i.raw.FromImage
 
@@ -240,7 +240,7 @@ func (c *WerfConfig) validateImageFrom(i *ImageBase) error {
 func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	var imageAndArtifactNames []string
 
-	for _, image := range c.Images {
+	for _, image := range c.StapelImages {
 		imageAndArtifactNames = append(imageAndArtifactNames, image.Name)
 	}
 
@@ -259,7 +259,7 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 
 func (c *WerfConfig) ImageTree(interf ImageInterface) (tree []ImageInterface) {
 	switch i := interf.(type) {
-	case WerfImageInterface:
+	case StapelImageInterface:
 		if i.ImageBaseConfig().FromImageName != "" {
 			tree = append(tree, c.ImageTree(c.GetImage(i.ImageBaseConfig().FromImageName))...)
 		}
@@ -284,7 +284,7 @@ func (c *WerfConfig) ImageTree(interf ImageInterface) (tree []ImageInterface) {
 func (c *WerfConfig) relatedImageImages(interf ImageInterface) (images []ImageInterface) {
 	images = append(images, interf)
 	switch i := interf.(type) {
-	case WerfImageInterface:
+	case StapelImageInterface:
 		if i.ImageBaseConfig().FromImageName != "" {
 			images = append(images, c.relatedImageImages(c.GetImage(i.ImageBaseConfig().FromImageName))...)
 		}
@@ -306,13 +306,13 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageOrArtifactName string, image
 	}
 	imageNameStack = append(imageNameStack, imageOrArtifactName)
 
-	var image WerfImageInterface
+	var image StapelImageInterface
 	interf := c.GetImage(imageOrArtifactName)
 	if interf != nil {
 		switch i := interf.(type) {
 		case *ImageFromDockerfile:
 			return nil, imageNameStack
-		case *Image:
+		case *StapelImage:
 			image = i
 		}
 	} else {
@@ -346,7 +346,7 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageOrArtifactName string, image
 			switch i := c.GetImage(imp.ImageName).(type) {
 			case *ImageFromDockerfile:
 				importImageName = i.Name
-			case *Image:
+			case *StapelImage:
 				importImageName = i.Name
 			}
 

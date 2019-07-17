@@ -21,7 +21,7 @@ type ImageInfoGetter interface {
 	GetImageId() (string, error)
 }
 
-func GetImagesInfoGetters(configImages []*config.Image, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
+func GetImagesInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
 	var images []ImageInfoGetter
 
 	for _, image := range configImages {

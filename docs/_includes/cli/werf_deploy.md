@@ -17,7 +17,7 @@ Environment is a required param for the deploy by default, because it is needed 
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to       
-change it: [https://werf.io/reference/deploy/deploy_to_kubernetes.html](https://werf.io/reference/deploy/deploy_to_kubernetes.html)
+change it: [https://werf.io/documentation/reference/deploy_process/deploy_to_kubernetes.html](https://werf.io/documentation/reference/deploy_process/deploy_to_kubernetes.html)
 
 {{ header }} Syntax
 
@@ -120,12 +120,12 @@ werf deploy [options]
             with commas: key1=val1,key2=val2)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
-            use multiple keys
+            https://werf.io/documentation/reference/toolbox/ssh.html). Option can be specified      
+            multiple times to use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages_and_images.html
+            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
             multiple times to produce multiple images with the specified tags

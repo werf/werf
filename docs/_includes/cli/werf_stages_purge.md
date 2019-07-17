@@ -49,7 +49,7 @@ werf stages purge [options]
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages_and_images.html
+            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

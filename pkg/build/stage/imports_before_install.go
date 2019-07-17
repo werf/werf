@@ -2,7 +2,7 @@ package stage
 
 import "github.com/flant/werf/pkg/config"
 
-func GenerateImportsBeforeInstallStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *ImportsBeforeInstallStage {
+func GenerateImportsBeforeInstallStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *ImportsBeforeInstallStage {
 	imports := getImports(imageBaseConfig, &getImportsOptions{Before: Install})
 	if len(imports) != 0 {
 		return newImportsBeforeInstallStage(imports, baseStageOptions)

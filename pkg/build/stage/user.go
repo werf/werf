@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func getBuilder(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
+func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
 	var b builder.Builder
 	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
