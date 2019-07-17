@@ -47,7 +47,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	meta, rawImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
+	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	werfConfig, err := prepareWerfConfig(rawImages, rawImagesFromDockerfile, meta)
+	werfConfig, err := prepareWerfConfig(rawStapelImages, rawImagesFromDockerfile, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -395,10 +395,10 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func prepareWerfConfig(rawImages []*rawImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
-	var images []*Image
+func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
+	var stapelImages []*StapelImage
 	var imagesFromDockerfile []*ImageFromDockerfile
-	var artifacts []*ImageArtifact
+	var artifacts []*StapelImageArtifact
 
 	for _, rawImageFromDockerfile := range rawImagesFromDockerfile {
 		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(); err != nil {
@@ -409,14 +409,14 @@ func prepareWerfConfig(rawImages []*rawImage, rawImagesFromDockerfile []*rawImag
 	}
 
 	for _, rawImage := range rawImages {
-		if rawImage.imageType() == "images" {
-			if sameImages, err := rawImage.toImageDirectives(); err != nil {
+		if rawImage.stapelImageType() == "images" {
+			if sameImages, err := rawImage.toStapelImageDirectives(); err != nil {
 				return nil, err
 			} else {
-				images = append(images, sameImages...)
+				stapelImages = append(stapelImages, sameImages...)
 			}
 		} else {
-			if imageArtifacts, err := rawImage.toImageArtifactDirectives(); err != nil {
+			if imageArtifacts, err := rawImage.toStapelImageArtifactDirectives(); err != nil {
 				return nil, err
 			} else {
 				artifacts = append(artifacts, imageArtifacts...)
@@ -426,7 +426,7 @@ func prepareWerfConfig(rawImages []*rawImage, rawImagesFromDockerfile []*rawImag
 
 	werfConfig := &WerfConfig{
 		Meta:                 meta,
-		Images:               images,
+		StapelImages:         stapelImages,
 		ImagesFromDockerfile: imagesFromDockerfile,
 		Artifacts:            artifacts,
 	}
@@ -454,8 +454,8 @@ func prepareWerfConfig(rawImages []*rawImage, rawImagesFromDockerfile []*rawImag
 	return werfConfig, nil
 }
 
-func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, []*rawImageFromDockerfile, error) {
-	var rawImages []*rawImage
+func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImageFromDockerfile, error) {
+	var rawStapelImages []*rawStapelImage
 	var rawImagesFromDockerfile []*rawImageFromDockerfile
 	var resultMeta *Meta
 
@@ -488,19 +488,19 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, []*rawImageFromDo
 
 			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
 		} else if isImageDoc(raw) {
-			image := &rawImage{doc: doc}
+			image := &rawStapelImage{doc: doc}
 			err := yaml.Unmarshal(doc.Content, &image)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
 
-			rawImages = append(rawImages, image)
+			rawStapelImages = append(rawStapelImages, image)
 		} else {
 			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
 		}
 	}
 
-	return resultMeta, rawImages, rawImagesFromDockerfile, nil
+	return resultMeta, rawStapelImages, rawImagesFromDockerfile, nil
 }
 
 func isMetaDoc(h map[string]interface{}) bool {

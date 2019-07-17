@@ -8,7 +8,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateDockerInstructionsStage(imageConfig *config.Image, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
+func GenerateDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
 	if imageConfig.Docker != nil {
 		return newDockerInstructionsStage(imageConfig.Docker, baseStageOptions)
 	}

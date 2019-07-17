@@ -7,7 +7,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateSetupStage(imageBaseConfig *config.ImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
+func GenerateSetupStage(imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsSetupEmpty() {
 		return newSetupStage(b, gitPatchStageOptions, baseStageOptions)

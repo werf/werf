@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type ImageBase struct {
+type StapelImageBase struct {
 	Name                  string
 	From                  string
 	FromLatest            bool
@@ -17,26 +17,26 @@ type ImageBase struct {
 	Mount                 []*Mount
 	Import                []*Import
 
-	raw *rawImage
+	raw *rawStapelImage
 }
 
-func (c *ImageBase) GetName() string {
+func (c *StapelImageBase) GetName() string {
 	return c.Name
 }
 
-func (c *ImageBase) imports() []*Import {
+func (c *StapelImageBase) imports() []*Import {
 	return c.Import
 }
 
-func (c *ImageBase) ImageBaseConfig() *ImageBase {
+func (c *StapelImageBase) ImageBaseConfig() *StapelImageBase {
 	return c
 }
 
-func (c *ImageBase) IsArtifact() bool {
+func (c *StapelImageBase) IsArtifact() bool {
 	return false
 }
 
-func (c *ImageBase) exportsAutoExcluding() error {
+func (c *StapelImageBase) exportsAutoExcluding() error {
 	for _, exp1 := range c.exports() {
 		for _, exp2 := range c.exports() {
 			if exp1 == exp2 {
@@ -53,7 +53,7 @@ func (c *ImageBase) exportsAutoExcluding() error {
 	return nil
 }
 
-func (c *ImageBase) exports() []autoExcludeExport {
+func (c *StapelImageBase) exports() []autoExcludeExport {
 	var exports []autoExcludeExport
 	if c.Git != nil {
 		for _, git := range c.Git.Local {
@@ -72,7 +72,7 @@ func (c *ImageBase) exports() []autoExcludeExport {
 	return exports
 }
 
-func (c *ImageBase) validate() error {
+func (c *StapelImageBase) validate() error {
 	if c.From == "" && c.raw.FromImage == "" && c.raw.FromImageArtifact == "" && c.FromImageName == "" && c.FromImageArtifactName == "" {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromImageArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}

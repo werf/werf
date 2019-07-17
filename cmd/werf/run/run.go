@@ -198,8 +198,8 @@ func runRun() error {
 	}()
 
 	imageName := CmdData.ImageName
-	if imageName == "" && len(werfConfig.Images) == 1 {
-		imageName = werfConfig.Images[0].Name
+	if imageName == "" && len(werfConfig.StapelImages) == 1 {
+		imageName = werfConfig.StapelImages[0].Name
 	}
 
 	if !werfConfig.HasImage(imageName) {

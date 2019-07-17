@@ -51,7 +51,7 @@ func (p *InitializationPhase) run(c *Conveyor) error {
 		var colorizeMsgFunc func(...interface{}) string
 
 		switch imageConfig := imageInterfaceConfig.(type) {
-		case config.WerfImageInterface:
+		case config.StapelImageInterface:
 			imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
 			colorizeMsgFunc = ImageLogProcessColorizeFunc(imageConfig.IsArtifact())
 		case *config.ImageFromDockerfile:
@@ -63,8 +63,8 @@ func (p *InitializationPhase) run(c *Conveyor) error {
 			var err error
 
 			switch imageConfig := imageInterfaceConfig.(type) {
-			case config.WerfImageInterface:
-				image, err = prepareImageBasedOnWerfImageConfig(imageConfig, c)
+			case config.StapelImageInterface:
+				image, err = prepareImageBasedOnStapelImageConfig(imageConfig, c)
 			case *config.ImageFromDockerfile:
 				image, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
 			}
@@ -86,7 +86,7 @@ func (p *InitializationPhase) run(c *Conveyor) error {
 	return nil
 }
 
-func prepareImageBasedOnWerfImageConfig(imageInterfaceConfig config.WerfImageInterface, c *Conveyor) (*Image, error) {
+func prepareImageBasedOnStapelImageConfig(imageInterfaceConfig config.StapelImageInterface, c *Conveyor) (*Image, error) {
 	image := &Image{}
 
 	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
@@ -147,7 +147,7 @@ func handleImageFromName(from string, fromLatest bool, image *Image, c *Conveyor
 	return nil
 }
 
-func getFromFields(imageBaseConfig *config.ImageBase) (string, string, bool) {
+func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, bool) {
 	var from string
 	var fromImageName string
 
@@ -168,7 +168,7 @@ func getImageConfigsInOrder(c *Conveyor) []config.ImageInterface {
 		var imagesInBuildOrder []config.ImageInterface
 
 		switch image := imageInterf.(type) {
-		case *config.Image:
+		case *config.StapelImage:
 			imagesInBuildOrder = c.werfConfig.ImageTree(image)
 		case *config.ImageFromDockerfile:
 			imagesInBuildOrder = append(imagesInBuildOrder, image)
@@ -213,7 +213,7 @@ func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
 	return true
 }
 
-func initStages(image *Image, imageInterfaceConfig config.WerfImageInterface, c *Conveyor) error {
+func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) error {
 	var stages []stage.Interface
 
 	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
@@ -268,7 +268,7 @@ func initStages(image *Image, imageInterfaceConfig config.WerfImageInterface, c 
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 		}
 
-		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.Image), baseStageOptions))
+		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.StapelImage), baseStageOptions))
 	}
 
 	if len(gitMappings) != 0 {
@@ -284,7 +284,7 @@ func initStages(image *Image, imageInterfaceConfig config.WerfImageInterface, c 
 	return nil
 }
 
-func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
+func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
 	var gitMappings []*stage.GitMapping
 
 	var localGitRepo *git_repo.Local
