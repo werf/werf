@@ -78,7 +78,7 @@ werf build --stages-storage :local
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking"  go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -183,7 +183,7 @@ docker stop go-booking
 
 Run the modified application by executing the following command:
 ```bash
-werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:

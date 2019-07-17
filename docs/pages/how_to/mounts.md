@@ -93,7 +93,7 @@ werf build --stages-storage :local
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -270,7 +270,7 @@ docker stop go-booking
 
 Run the modified application by executing the following command:
 ```bash
-werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -356,4 +356,4 @@ The total size difference between images with and without using mounts is about 
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
 * Using [werf artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
-  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `werf --stages-storage :local --docker-options="--rm" run go-booking -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.
+  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `werf run --stages-storage :local --docker-options="--rm" go-booking -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.

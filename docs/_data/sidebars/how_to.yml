@@ -8,6 +8,9 @@ entries:
     - title: Getting started
       url: /how_to/getting_started.html
 
+    - title: Building application
+      url: /how_to/building_application.html
+
     - title: Deploy into kubernetes
       url: /how_to/deploy_into_kubernetes.html
 
