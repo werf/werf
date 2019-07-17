@@ -171,10 +171,10 @@ layout: default
             <a href="https://github.com/flant/werf" target="_blank" class="page__btn page__btn_b documentation__btn">
                 Get Werf
             </a>
-            <a href="{{ site.baseurl }}/documentation/guides/" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ site.baseurl }}/documentation/guides/getting_started.html" class="page__btn page__btn_o documentation__btn">
                 Starters guide
             </a>
-            <a href="{{ site.baseurl }}/documentation/cli/" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
                 Explore CLI
             </a>
         </div>

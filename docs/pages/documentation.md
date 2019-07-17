@@ -35,7 +35,7 @@ Other section articles give detailed information about [Image from Dockerfile]({
 
 * [Build process]({{ site.baseurl }}/documentation/reference/build_process.html).
 * [Publish process]({{ site.baseurl }}/documentation/reference/publish_process.html).
-* [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_to_kubernetes.html).
+* [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 * [Cleanup process]({{ site.baseurl }}/documentation/reference/cleanup_process.html).
 
 Each article describes a certain process: process composition, available options and features. 

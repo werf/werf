@@ -43,7 +43,7 @@ Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_V
 
 #### Project name
 
-`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html)). This is single required field of meta configuration.
+`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)). This is single required field of meta configuration.
 
 Project name should be unique within group of projects that shares build hosts and deployed into the same kubernetes cluster (i.e. unique across all groups within the same gitlab).
 

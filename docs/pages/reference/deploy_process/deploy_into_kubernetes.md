@@ -1,13 +1,13 @@
 ---
 title: Deploy into kubernetes
-sidebar: reference
-permalink: reference/deploy_into_kubernetes.html
+sidebar: documentation
+permalink: documentation/reference/deploy_process/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 Werf is a compatible alternative to [Helm 2](https://helm.sh), which uses improved deploy process.
 
-Werf has 2 main commands to work with kubernetes: [deploy]({{ site.baseurl }}/cli/werf_deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/cli/werf_dismiss.html)  — to uninstall app from cluster. 
+Werf has 2 main commands to work with kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster. 
 
 Deployed resources are tracked with different configurable modes, logs and kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. Werf can set arbitrary annotations and labels to all kubernetes resources of the project being deployed.
 
@@ -168,7 +168,7 @@ spec:
 
 Secret files are useful to store sensitive data such as certificates and private keys directly in the project repo.
 
-Secret files are placed in the directory `.helm/secret`. User can create arbitrary files structure in this directory. To encrypt your files [see article about secrets](...).
+Secret files are placed in the directory `.helm/secret`. User can create arbitrary files structure in this directory. To encrypt your files [see article about secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-file-encryption).
 
 ##### werf_secret_file
 
@@ -415,7 +415,7 @@ Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.htm
 
 ### Release name
 
-By default release name will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ env ]]` refers to the specified or detected environment.
+By default release name will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) and `[[ env ]]` refers to the specified or detected environment.
 
 For example for project named `symfony-demo` there will be following Helm Release names depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -424,7 +424,7 @@ For example for project named `symfony-demo` there will be following Helm Releas
 
 Release name could be redefined by deploy option `--release NAME`. In that case Werf will use specified name as is.
 
-Custom release name template can also be defined in the [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) of `werf.yaml`:
+Custom release name template can also be defined in the [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) of `werf.yaml`:
 
 ```yaml
 project: PROJECT_NAME
@@ -437,9 +437,9 @@ deploy:
 
 #### Release name slug
 
-Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Helm Release name.
+Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Helm Release name.
 
-This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.helmReleaseSlug`:
+This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) option `deploy.helmReleaseSlug`:
 
 ```
 project: PROJECT_NAME
@@ -452,7 +452,7 @@ Werf will not apply release slug procedure for the release name specified with `
 
 ### Kubernetes namespace
 
-By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ env ]]` refers to the determined environment.
+By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) and `[[ env ]]` refers to the determined environment.
 
 For example for project named `symfony-demo` there will be following Kubernetes Namespaces depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -461,7 +461,7 @@ For example for project named `symfony-demo` there will be following Kubernetes 
 
 Kubernetes Namespace could be redefined by deploy option `--namespace NAMESPACE`. In that case Werf will use specified name as is.
 
-Custom Kubernetes Namespace template can also be defined in the [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) of `werf.yaml`:
+Custom Kubernetes Namespace template can also be defined in the [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) of `werf.yaml`:
 
 ```yaml
 project: PROJECT_NAME
@@ -474,9 +474,9 @@ deploy:
 
 #### Kubernetes namespace slug
 
-Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Kubernetes Namespace.
+Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Kubernetes Namespace.
 
-This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.namespaceSlug`:
+This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) option `deploy.namespaceSlug`:
 
 ```
 project: PROJECT_NAME

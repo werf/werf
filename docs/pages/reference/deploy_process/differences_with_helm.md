@@ -1,17 +1,17 @@
 ---
 title: Differences with Helm
-sidebar: reference
-permalink: reference/differences_with_helm.html
+sidebar: documentation
+permalink: documentation/reference/deploy_process/differences_with_helm.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 ## Builtin Helm client and Tiller
 
-Helm 2 uses server component called [tiller](https://helm.sh/docs/glossary/#tiller). The tiller manages [releases]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#release): creates, updates, deletes and lists them.
+Helm 2 uses server component called [tiller](https://helm.sh/docs/glossary/#tiller). The tiller manages [releases]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#release): creates, updates, deletes and lists them.
 
 In the werf tiller is built into main werf deploy process. Thus it runs in the user space without need to connect to tiller server.
 
-Yet werf is [fully compatible]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#helm-compatibility-notice) with already existing helm 2 installations.
+Yet werf is [fully compatible]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#helm-compatibility-notice) with already existing helm 2 installations.
 
 This architecture gives werf following advantages.
 
@@ -37,7 +37,7 @@ With pure helm user has only the ability to wait for resources using `--wait` fl
 
 Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
 
-And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#resource-tracking-configuration).
+And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#resource-tracking-configuration).
 
 Werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
 
@@ -49,7 +49,7 @@ User can pass any additional annotations and labels to werf deploy invocation an
 
 This feature opens possibilities for grouping resources by project name, url, etc. for example in monitoring task.
 
-See [deploy essentials for more info]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#annotate-and-label-chart-resources).
+See [deploy essentials for more info]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#annotate-and-label-chart-resources).
 
 Helm does not have this ability and will not have in the near future: https://github.com/helm/helm/pull/2631.
 
@@ -59,8 +59,8 @@ During werf deploy a temporary helm chart is created.
 
 This chart contains:
 
-* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#templates).
-* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/reference/working_with_secrets.html).
+* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#templates).
+* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html).
 
 The temporary chart then to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
 
@@ -80,11 +80,11 @@ Helm does not use any locks, so parallel deploys may lead to unexpected results.
 
 ## Builtin secrets support
 
-Werf has a builtin tools and abilities to work with secret files and secret values to store sensitive data right in the project repo. See [deploy essentials]({{ site.baseurl }}/reference/deploy_to_kubernetes.html) and [working with secrets]({{ site.baseurl }}/reference/working_with_secrets.html) for more info.
+Werf has a builtin tools and abilities to work with secret files and secret values to store sensitive data right in the project repo. See [deploy essentials]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) and [working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html) for more info.
 
 ## Integration with built images
 
-Werf extends helm with special templates functions such as `werf_container_image` and `werf_container_env` to generate images names for the images built with werf builder. See [deploy essentials for more info]({{ site.baseurl }}/reference/deploy_to_kubernetes.html).
+Werf extends helm with special templates functions such as `werf_container_image` and `werf_container_env` to generate images names for the images built with werf builder. See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 
 Thus werf makes it super easy for the user to integrate custom built images into user templates: werf does the work of generating "the right" docker images names and tags, and werf makes sure that image will be pulled when it is necessary for kubernetes to pull new image version.
 
@@ -92,6 +92,6 @@ Using pure helm user need to invent own system of passing actual images names us
 
 ## Fixed helm chart path in the project
 
-Werf requires [chart]({{ site.baseurl }}/reference/deploy_to_kubernetes.html#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
+Werf requires [chart]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
 
 Helm does not define a static place in the project where helm chart should be stored.
