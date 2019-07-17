@@ -62,17 +62,14 @@ entries:
       - title: Deploy Process
         sfi:
 
-          - title: Deploy to kubernetes
-            url: /documentation/reference/deploy_process/deploy_to_kubernetes.html
+          - title: Deploy into kubernetes
+            url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
 
           - title: Working with secrets
-            url: /documentation/reference/deploy_process/secrets.html
+            url: /documentation/reference/deploy_process/working_with_secrets.html
 
-          - title: Chart configuration
-            url: /documentation/reference/deploy_process/chart_configuration.html
-
-          - title: Track Kubernetes resources
-            url: /documentation/reference/deploy_process/track_kubernetes_resources.html
+          - title: Differences with Helm
+            url: /documentation/reference/deploy_process/differences_with_helm.html
 
       - title: Cleanup Process
         url: /documentation/reference/cleanup_process.html
