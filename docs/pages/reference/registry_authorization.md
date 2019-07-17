@@ -11,7 +11,7 @@ Thus, need to authorize in Docker registry:
 * [Build command]({{ site.baseurl }}/documentation/reference/build_process.html#build-command) pull base images from Docker registry.
 * [Publish commands]({{ site.baseurl }}/documentation/reference/publish_process.html) used to create and update images in Docker registry.
 * [Cleaning commands]({{ site.baseurl }}/documentation/reference/cleanup_process.html) used to delete images from Docker registry.
-* [Deploy commands]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#deploy-command) need to access _images_ from Docker registry and _stages_ which could also be stored in registry.
+* [Deploy commands]({{ site.baseurl }}/documentation/cli/main/deploy.html) need to access _images_ from Docker registry and _stages_ which could also be stored in registry.
 
 These commands do not perform authorization and use defined _Docker config_ working with Docker registry.
 By default, werf uses the same _docker config_ as Docker utility does (defined in `$DOCKER_CONFIG`).

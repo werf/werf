@@ -43,7 +43,7 @@ docker rmi REPO:TAG
 
 To publish an image from the config Werf implements another logic:
 
-1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#deploy-command) and [cleaning]({{ site.baseurl }}/documentation/reference/cleanup_process.html) processes.
+1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning]({{ site.baseurl }}/documentation/reference/cleanup_process.html) processes.
 2. Push newly created image into docker registry.
 3. Delete temporary image created in the 1'st step.
 

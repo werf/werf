@@ -13,7 +13,7 @@ summary: |
 
 ***Artifact*** is a special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
-_Artifact_ cannot be [tagged like _image_]({{ site.baseurl }}/documentation/reference/registry/image_naming.html#werf-tag-procedure) and used as standalone application.
+_Artifact_ cannot be [tagged like _image_]({{ site.baseurl }}/documentation/reference/publish_process.html) and used as standalone application.
 
 Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
 
