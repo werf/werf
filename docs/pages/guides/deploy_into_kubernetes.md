@@ -222,9 +222,9 @@ With this command werf will create all kubernetes resources using helm and watch
 
 [Environment]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#environment) `--env` is a required param needed to generate helm release name and kubernetes namespace.
 
-Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/documentation/configuration/overview.html#meta-configuration-doc) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#helm-release-name).
+Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#helm-release-name).
 
-Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/documentation/configuration/overview.html#meta-configuration-doc) `myapp` and specified environment `dev`. Check docs for details about [kubernetes namespace generation]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#kubernetes-namespace).
+Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` and specified environment `dev`. Check docs for details about [kubernetes namespace generation]({{ site.baseurl }}/documentation/reference/deploy/deploy_to_kubernetes.html#kubernetes-namespace).
 
 ## Check your application
 

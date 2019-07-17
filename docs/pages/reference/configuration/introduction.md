@@ -1,7 +1,7 @@
 ---
-title: Overview
+title: Introduction
 sidebar: documentation
-permalink: documentation/configuration/overview.html
+permalink: documentation/configuration/introduction.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

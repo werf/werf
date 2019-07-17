@@ -20,11 +20,11 @@ Using artifacts, you can independently assemble an unlimited number of component
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
-Importing _resources_ from _artifacts_ are described in [import directive]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/configuration/overview.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/configuration/overview.html#artifact-config-section)).
+Importing _resources_ from _artifacts_ are described in [import directive]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)).
 
 ## Configuration
 
-The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate [artifact config section]({{ site.baseurl }}/documentation/configuration/overview.html#artifact-config-section).
+The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate [artifact config section]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section).
 
 The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) and [mounts]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html), and also [imports]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) remain unchanged.
 
