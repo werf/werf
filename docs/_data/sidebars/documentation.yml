@@ -2,14 +2,14 @@
 
 entries:
   f:
-    - title: Intro
+    - title: Overview
       url: /documentation/index.html
 
     - title: Configuration
       sf:
 
-        - title: Overview
-          url: /documentation/configuration/overview.html
+        - title: Introduction
+          url: /documentation/configuration/introduction.html
 
         - title: Image from Dockerfile configuration
           url: /documentation/configuration/image_from_dockerfile.html

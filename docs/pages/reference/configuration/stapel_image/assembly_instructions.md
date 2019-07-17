@@ -631,7 +631,7 @@ This image can be used as base image for multiple applications if images from hu
 
 ### External dependency example
 
-_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/documentation/configuration/overview.html#go-templates) to define _user stage_ dependency on files, not in the git tree.
+_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates) to define _user stage_ dependency on files, not in the git tree.
 
 {% raw %}
 ```yaml

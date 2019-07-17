@@ -83,7 +83,7 @@ Add a special file called `werf.yaml` to the source code and define application 
 ## What's next?
 
 Firstly, you can plunge into the relevant documentation:
-* [Werf configuration file]({{ site.base_url}}/documentation/configuration/overview.html).
+* [Werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
 * [Image from Dockerfile: complete directive list]({{ site.base_url}}/documentation/configuration/image_from_dockerfile.html).
 * [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
 * [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).
