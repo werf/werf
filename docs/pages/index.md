@@ -41,26 +41,18 @@ layout: default
     <ul class="intro-extra">
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
-                Advanced image builder
-            </div>
-            <div class="intro-extra__item-text">
-                Rebuild images incrementally basing on&nbsp;git history. Build images with&nbsp;Ansible tasks. Push the&nbsp;cache to&nbsp;the&nbsp;remote registry.
-            </div>
-        </li>
-        <li class="intro-extra__item">
-            <div class="intro-extra__item-title">
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
                 Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
             </div>
-        </li>
+        </li>        
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
                 Image Lifecycle Management
             </div>
             <div class="intro-extra__item-text">
-                Building images by&nbsp;familiar Dockerfile instructions or&nbsp;our syntax, which allows based on&nbsp;git history, so-called incremental assembly, and&nbsp;using Ansible tasks. Pushing into a&nbsp;registry by&nbsp;specific tag strategy and&nbsp;cleaning a&nbsp;registry from&nbsp;unused images based on&nbsp;policies.
+                Build images with&nbsp;Dockerfile or&nbsp;with&nbsp;our syntax to&nbsp;take advantage of&nbsp;incremental rebuilds based on&nbsp;git history and&nbsp;carefully crafted tools. Pushing into a&nbsp;registry by&nbsp;specific tag strategy and&nbsp;cleaning a&nbsp;registry from unused images based on&nbsp;policies.
             </div>
         </li>
     </ul>
@@ -96,19 +88,19 @@ layout: default
         <div class="features__title">Full delivery cycle</div>
         <ul class="features__list">
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
-                <div class="features__list-item-title">Complete application lifecycle management</div>
-                <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
-            </li>
-            <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_changes"></div>
-                <div class="features__list-item-title">Rapid delivery of changes</div>
-                <div class="features__list-item-text">Don’t waste time on unchanged image parts. Optimize your building process and speed up deployment.</div>
+                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-title">Easy to start</div>
+                <div class="features__list-item-text">Remain regular build process with Dockerfile. Take your project and put into werf easily right now.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
                 <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using go-templates.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
+                <div class="features__list-item-title">Complete application lifecycle management</div>
+                <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>

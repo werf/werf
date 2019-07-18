@@ -248,7 +248,7 @@ html, body, .page {
 
 .intro-extra {
     list-style-type: none;
-    margin: 180px 0 0 0;
+    margin: 50px 0 0 0;
     padding: 0px;
     display: flex;
     flex-direction: row;
@@ -257,7 +257,7 @@ html, body, .page {
 }
 
 .intro-extra__item {
-    width: 360px;
+    width: 560px;
 }
 
 .intro-extra__item-title {
@@ -267,7 +267,6 @@ html, body, .page {
     font-stretch: normal;
     line-height: normal;
     letter-spacing: normal;
-    text-align: center;
     color: #00122c;
     margin-bottom: 17px;
 }
@@ -280,9 +279,7 @@ html, body, .page {
     font-stretch: normal;
     line-height: 1.5;
     letter-spacing: -0.3px;
-    text-align: center;
     color: #00122c;
-    width: 280px;
     margin: 0 auto;
 }
 
@@ -444,8 +441,8 @@ html, body, .page {
     background-image: url('../images/icons/feature-lifecycle.svg');
 }
 
-.features__list-item-icon_changes {
-    background-image: url('../images/icons/feature-changes.svg');
+.features__list-item-icon_easy {
+    background-image: url('../images/icons/feature-easy.svg');
 }
 
 .features__list-item-icon_config {
