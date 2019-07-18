@@ -7,14 +7,14 @@ type rawMount struct {
 	From     string `yaml:"from,omitempty"`
 	FromPath string `yaml:"fromPath,omitempty"`
 
-	rawImage *rawImage `yaml:"-"` // parent
+	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *rawMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawImage); ok {
-		c.rawImage = parent
+	if parent, ok := parentStack.Peek().(*rawStapelImage); ok {
+		c.rawStapelImage = parent
 	}
 
 	type plain rawMount
@@ -22,7 +22,7 @@ func (c *rawMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawStapelImage.doc); err != nil {
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (c *rawMount) toDirective() (mount *Mount, err error) {
 
 func (c *rawMount) validateDirective(mount *Mount) (err error) {
 	if c.From != "" && c.FromPath != "" {
-		return newDetailedConfigError(fmt.Sprintf("cannot use `from: %s` and `fromPath: %s` at the same time for mount!", c.From, c.FromPath), c, c.rawImage.doc)
+		return newDetailedConfigError(fmt.Sprintf("cannot use `from: %s` and `fromPath: %s` at the same time for mount!", c.From, c.FromPath), c, c.rawStapelImage.doc)
 	}
 
 	if err := mount.validate(); err != nil {

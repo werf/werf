@@ -31,7 +31,7 @@ werf cleanup [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and delete images from the specified    
             stages storage and images repo
       --dry-run=false:
@@ -40,20 +40,20 @@ werf cleanup [options]
             Keep images published with the git-commit tagging strategy in the images repo for the   
             specified maximum days since image published. Republished image will be kept specified  
             maximum days since new publication date. No days limit by default, -1 disables the      
-            limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS.
+            limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS
       --git-commit-strategy-limit=-1:
             Keep max number of images published with the git-commit tagging strategy in the images  
             repo. No limit by default, -1 disables the limit. Value can be specified by the         
-            $WERF_GIT_COMMIT_STRATEGY_LIMIT.
+            $WERF_GIT_COMMIT_STRATEGY_LIMIT
       --git-tag-strategy-expiry-days=-1:
             Keep images published with the git-tag tagging strategy in the images repo for the      
             specified maximum days since image published. Republished image will be kept specified  
             maximum days since new publication date. No days limit by default, -1 disables the      
-            limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS.
+            limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS
       --git-tag-strategy-limit=-1:
             Keep max number of images published with the git-tag tagging strategy in the images     
             repo. No limit by default, -1 disables the limit. Value can be specified by the         
-            $WERF_GIT_TAG_STRATEGY_LIMIT.
+            $WERF_GIT_TAG_STRATEGY_LIMIT
   -h, --help=false:
             help for cleanup
       --home-dir='':
@@ -84,7 +84,7 @@ werf cleanup [options]
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages_and_images.html
+            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --without-kube=false:

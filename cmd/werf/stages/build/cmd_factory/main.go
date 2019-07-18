@@ -38,7 +38,7 @@ func NewCmdWithData(cmdData *CmdData, commonCmdData *common.CmdData) *cobra.Comm
   $ werf stages build --stages-storage :local backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf --stages-storage :local build --introspect-error
+  $ werf build --stages-storage :local --introspect-error
 
   # Set --stages-storage default value using $WERF_STAGES_STORAGE param
   $ export WERF_STAGES_STORAGE=:local
@@ -72,7 +72,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
-	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images.")
+	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)

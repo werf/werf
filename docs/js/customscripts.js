@@ -84,18 +84,18 @@ $( document ).ready(function() {
       if (!((channel == 'master') || (channel == 'latest'))) { channel = 'v' + channel.replace(' ','-'); };
       var link = $('<a href="/' + channel + '">');
       if (releasesInfo.releases[release]) {
-        $.each(releasesInfo.releases[release], function(j, channel){
-          link.append('<span class="header__submenu-item-channel">' + channel + '</span>');
-        });
+        link.append('<span class="header__submenu-item-channel">' + releasesInfo.releases[release][0] + '</span>');
       }
       if (!((channel == 'master') || (channel == 'latest'))) {
         link.append('<span class="header__submenu-item-release"> – ' + release + '</span>');
       };
       var item = $('<li class="header__submenu-item">');
       item.html(link);
-      submenu.append(item);
+      if ( ( release !=  currentRelease) ) {
+          submenu.append(item);
+      };
     });
-    menu.append($('<div class="header__submenu-container">').append(submenu));
+    if ((submenu[0]) && (submenu[0].children) && (submenu[0].children.length)) { menu.append($('<div class="header__submenu-container">').append(submenu)); };
   });
 
   // Update github counters 

@@ -1,24 +1,50 @@
 ---
-title: Documentation
-permalink: documentation.html
-layout: page-nosidebar
+title: Overview
+permalink: documentation/index.html
+sidebar: documentation
 ---
 
-Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
+Documentation of Werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
 
+We recommend to start discovering from our **Guides** section:
 
-If you are a developer and want to learn **how to build applications using Werf** — [start here](how_to/getting_started.html).
+- [Installation]({{ site.baseurl }}/documentation/guides/installation.html) describes Werf dependencies and different installation methods.
+- [Getting started]({{ site.baseurl }}/documentation/guides/getting_started.html) helps to start using Werf with regular Dockerfile. Take your project and put into Werf easily just now.
+- [Deploying into Kubernetes]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html) is a short example of application deployment.
+- [Gitlab CI/CD integration]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) is all about integration with GitLab: build, publish, deployment and scheduled registry cleanup.
+- Advanced build section is about our image description syntax to take advantage of incremental rebuilds based on git history and other carefully crafted tools. Recommend to start reading from [First application guide]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html). 
 
-If you want to understand how to configure application and environment for **deploying to Kubernetes using Werf** — [start here](how_to/deploy_into_kubernetes.html).
+The next step is **Configuration** section.
 
-If you want to understand how to set **CI/CD process with Werf** — [start here](how_to/gitlab_ci_cd_integration.html) to understand build, deployment and scheduled registry cleanup.
+To use Werf an application should be configured in `werf.yaml` file. 
+This configuration includes:
 
-[Other guides](howto/) describe **advanced cases**, you shall discover on futher working with Werf.
+1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
+2. Definition of the images to be built.
 
-Want to **install Werf**? [README.md in github repository](https://github.com/flant/werf/blob/master/README.md) will help you.
+In [Overview]({{ site.baseurl }}/documentation/configuration/introduction.html) article you can find information about:
 
-If you have already begun using Werf and trying to understand **common rules, available directives specification and werf architecture details**, read [the Reference section](reference/).
+* Structure and config sections.
+* Organization approaches.
+* Config processing steps.
+* Supported Go templates functions.
 
-Werf is a CLI utility, so if you want to find description of both **basic commands needed to provide the CI/CD process and service commands that provide advanced functionality** — use [Command Line Interface section](cli/).
+Other section articles give detailed information about [Image from Dockerfile]({{ site.baseurl }}/documentation/configuration/image_from_dockerfile.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
 
-Can not **find something**? Try using google using search icon in menu.
+**Reference** section is dedicated to Werf main processes:
+
+* [Build process]({{ site.baseurl }}/documentation/reference/build_process.html).
+* [Publish process]({{ site.baseurl }}/documentation/reference/publish_process.html).
+* [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+* [Cleanup process]({{ site.baseurl }}/documentation/reference/cleanup_process.html).
+
+Each article describes a certain process: process composition, available options and features. 
+
+Also, this section includes articles with base primitives and general tools:
+
+* [Stages and images]({{ site.baseurl }}/documentation/reference/stages_and_images.html).
+* [Registry Authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+* [Local Development]({{ site.baseurl }}/documentation/reference/local_development/installing_minikube.html).
+* [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+
+Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use **CLI Commands** section.

@@ -92,7 +92,7 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys.")
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys")
 }
 
 func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
@@ -101,10 +101,10 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.GitCommitStrategyLimit = new(int64)
 	cmdData.GitCommitStrategyExpiryDays = new(int64)
 
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT.")
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS.")
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT")
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS")
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT")
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -113,7 +113,7 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitTag = new(string)
 	cmdData.TagGitCommit = new(string)
 
-	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", []string{}, "Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used multiple times to produce multiple images with the specified tags.")
+	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", []string{}, "Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used multiple times to produce multiple images with the specified tags")
 	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)")
 	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
 	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
@@ -191,7 +191,7 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/reference/build/stages_and_images.html")
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -217,7 +217,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 
 	cmdData.DockerConfig = new(string)
 
-	desc := "Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or ~/.docker (in the order of priority)."
+	desc := "Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or ~/.docker (in the order of priority)"
 
 	if extraDesc != "" {
 		desc += "\n"
@@ -435,7 +435,7 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 	} else if repoOption != "" {
 
 		if _, err := name.NewRepository(repoOption, name.WeakValidation); err != nil {
-			return "", fmt.Errorf("%s.\nThe registry domain defaults to Docker Hub. Do not forget to specify project repository name, REGISTRY_DOMAIN/REPOSITORY_NAME, if you do not use Docker Hub.", err)
+			return "", fmt.Errorf("%s.\nThe registry domain defaults to Docker Hub. Do not forget to specify project repository name, REGISTRY_DOMAIN/REPOSITORY_NAME, if you do not use Docker Hub", err)
 		}
 
 		return repoOption, nil

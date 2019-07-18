@@ -25,9 +25,9 @@ werf purge [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to delete images from the specified stages storage    
-            and images repo.
+            and images repo
       --dry-run=false:
             Indicate what the command would do without actually doing that
       --force=false:
@@ -58,7 +58,7 @@ werf purge [options]
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages_and_images.html
+            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

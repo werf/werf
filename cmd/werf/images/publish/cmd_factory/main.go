@@ -24,7 +24,7 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 		Short: "Build final images from stages and push into images repo",
 		Long: common.GetLongCommandDescription(`Build final images using each specified tag with the tagging strategy and push into images repo.
 
-New docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://werf.io/reference/registry/image_naming.html.
+New docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about publish process: https://werf.io/documentation/reference/publish_process.html.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.`),
 		Example: `  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging strategy
@@ -53,7 +53,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo.")
+	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo")
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)

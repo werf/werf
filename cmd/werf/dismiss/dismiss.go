@@ -33,15 +33,15 @@ Helm Release will be purged and optionally Kubernetes Namespace.
 
 Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
-Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/reference/deploy/deploy_to_kubernetes.html`),
+Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html`),
 		Example: `  # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
-  $ werf dismiss --env dev --stages-storage :local
+  $ werf dismiss --env dev
 
   # Dismiss project with namespace
-  $ werf dismiss --env my-feature-branch --stages-storage :local --with-namespace
+  $ werf dismiss --env my-feature-branch --with-namespace
 
   # Dismiss project using specified helm release name and namespace
-  $ werf dismiss --release myrelease --namespace myns --stages-storage :local`,
+  $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

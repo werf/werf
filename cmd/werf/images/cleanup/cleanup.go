@@ -48,7 +48,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 	common.SetupImagesCleanupPolicies(&CommonCmdData, cmd)
 
@@ -118,7 +118,7 @@ func runCleanup() error {
 	}
 
 	var imagesNames []string
-	for _, image := range werfConfig.Images {
+	for _, image := range werfConfig.StapelImages {
 		imagesNames = append(imagesNames, image.Name)
 	}
 

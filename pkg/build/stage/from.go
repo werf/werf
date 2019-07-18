@@ -11,7 +11,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateFromStage(imageBaseConfig *config.ImageBase, baseImageRepoId string, baseStageOptions *NewBaseStageOptions) *FromStage {
+func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId string, baseStageOptions *NewBaseStageOptions) *FromStage {
 	var baseImageRepoIdOrNone string
 	if imageBaseConfig.FromLatest {
 		baseImageRepoIdOrNone = baseImageRepoId

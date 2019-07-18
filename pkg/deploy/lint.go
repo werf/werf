@@ -37,7 +37,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
-	images := GetImagesInfoGetters(werfConfig.Images, werfConfig.ImagesFromDockerfile, imagesRepo, tag, true)
+	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepo, tag, true)
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {

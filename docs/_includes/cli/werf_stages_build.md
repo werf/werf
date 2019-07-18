@@ -27,7 +27,7 @@ werf stages build [IMAGE_NAME...] [options]
   $ werf stages build --stages-storage :local backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf --stages-storage :local build --introspect-error
+  $ werf build --stages-storage :local --introspect-error
 
   # Set --stages-storage default value using $WERF_STAGES_STORAGE param
   $ export WERF_STAGES_STORAGE=:local
@@ -47,9 +47,9 @@ werf stages build [IMAGE_NAME...] [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
-            stages storage, to pull base images.
+            stages storage, to pull base images
   -h, --help=false:
             help for build
       --home-dir='':
@@ -78,12 +78,12 @@ werf stages build [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to  
-            use multiple keys.
+            https://werf.io/documentation/reference/toolbox/ssh.html). Option can be specified      
+            multiple times to use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/reference/build/stages_and_images.html
+            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

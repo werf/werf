@@ -3,17 +3,9 @@
 topnav:
   - title: About
     url: /
+  - title: Installation
+    url: /documentation/guides/installation.html
   - title: Documentation
-    url: /documentation.html
-    folderitems:
-    - title: How To
-      directory: /how_to/
-      url: /how_to/
-    - title: Reference
-      directory: /reference/
-      url: /reference/
-    - title: CLI
-      directory: /cli/
-      url: /cli/
+    url: /documentation/
   - title: Publications
     url: /publications.html

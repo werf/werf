@@ -11,7 +11,7 @@ Environment is a required param for the dismiss by default, because it is needed
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it:                  
-[https://werf.io/reference/deploy/deploy_to_kubernetes.html](https://werf.io/reference/deploy/deploy_to_kubernetes.html)
+[https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html](https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html)
 
 {{ header }} Syntax
 
@@ -23,13 +23,13 @@ werf dismiss [options]
 
 ```bash
   # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
-  $ werf dismiss --env dev --stages-storage :local
+  $ werf dismiss --env dev
 
   # Dismiss project with namespace
-  $ werf dismiss --env my-feature-branch --stages-storage :local --with-namespace
+  $ werf dismiss --env my-feature-branch --with-namespace
 
   # Dismiss project using specified helm release name and namespace
-  $ werf dismiss --release myrelease --namespace myns --stages-storage :local
+  $ werf dismiss --release myrelease --namespace myns
 ```
 
 {{ header }} Options
@@ -39,7 +39,7 @@ werf dismiss [options]
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority).
+            ~/.docker (in the order of priority)
       --env='':
             Use specified environment (default $WERF_ENV)
       --helm-release-storage-namespace='kube-system':

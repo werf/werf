@@ -38,16 +38,16 @@ func NewCmd() *cobra.Command {
 		Short:                 "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
-  $ werf --stages-storage :local run application
+  $ werf run --stages-storage :local application
 
   # Run image with predefined docker run options and command for debug
-  $ werf --stages-storage :local run --shell
+  $ werf run --stages-storage :local --shell
 
   # Run image with specified docker run options and command
-  $ werf --stages-storage :local run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+  $ werf run --stages-storage :local --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
-  $ werf --stages-storage :local run --shell --dry-run
+  $ werf run --stages-storage :local --shell --dry-run
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
@@ -97,7 +97,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
@@ -198,8 +198,8 @@ func runRun() error {
 	}()
 
 	imageName := CmdData.ImageName
-	if imageName == "" && len(werfConfig.Images) == 1 {
-		imageName = werfConfig.Images[0].Name
+	if imageName == "" && len(werfConfig.StapelImages) == 1 {
+		imageName = werfConfig.StapelImages[0].Name
 	}
 
 	if !werfConfig.HasImage(imageName) {

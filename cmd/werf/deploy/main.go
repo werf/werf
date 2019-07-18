@@ -43,12 +43,12 @@ Helm chart directory .helm should exists and contain valid Helm chart.
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/reference/deploy/deploy_to_kubernetes.html`),
+Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html`),
 		Example: `  # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging strategy; helm release name and namespace will be named as 'myproject-dev'
-  $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
+  $ werf deploy --stages-storage :local --env dev --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
 
   # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
-  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom tag`,
+  $ werf deploy --stages-storage :local --release myrelease --namespace myns --images-repo registry.mydomain.com/myproject --tag-custom tag`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
@@ -169,8 +169,8 @@ func runDeploy() error {
 	var imagesRepo string
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
-	if len(werfConfig.Images) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		if len(werfConfig.Images) != 0 {
+	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+		if len(werfConfig.StapelImages) != 0 {
 			_, err = common.GetStagesRepo(&CommonCmdData)
 			if err != nil {
 				return err

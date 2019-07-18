@@ -11,14 +11,14 @@ type rawShell struct {
 	BeforeSetupCacheVersion   string      `yaml:"beforeSetupCacheVersion,omitempty"`
 	SetupCacheVersion         string      `yaml:"setupCacheVersion,omitempty"`
 
-	rawImage *rawImage `yaml:"-"` // parent
+	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *rawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawImage); ok {
-		c.rawImage = parent
+	if parent, ok := parentStack.Peek().(*rawStapelImage); ok {
+		c.rawStapelImage = parent
 	}
 
 	type plain rawShell
@@ -26,7 +26,7 @@ func (c *rawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawStapelImage.doc); err != nil {
 		return err
 	}
 
@@ -41,25 +41,25 @@ func (c *rawShell) toDirective() (shell *Shell, err error) {
 	shell.BeforeSetupCacheVersion = c.BeforeSetupCacheVersion
 	shell.SetupCacheVersion = c.SetupCacheVersion
 
-	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.rawImage.doc); err != nil {
+	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		shell.BeforeInstall = beforeInstall
 	}
 
-	if install, err := InterfaceToStringArray(c.Install, c, c.rawImage.doc); err != nil {
+	if install, err := InterfaceToStringArray(c.Install, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		shell.Install = install
 	}
 
-	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.rawImage.doc); err != nil {
+	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		shell.BeforeSetup = beforeSetup
 	}
 
-	if setup, err := InterfaceToStringArray(c.Setup, c, c.rawImage.doc); err != nil {
+	if setup, err := InterfaceToStringArray(c.Setup, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		shell.Setup = setup

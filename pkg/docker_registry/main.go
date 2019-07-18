@@ -173,21 +173,21 @@ func ImageDelete(reference string) error {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	if err := remote.Delete(r, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport())); err != nil {
-		if strings.Contains(err.Error(), "UNAUTHORIZED") {
-			auth, err := authn.DefaultKeychain.Resolve(r.Context().Registry)
-			if err != nil {
-				return fmt.Errorf("getting creds for %q: %v", r, err)
+	if deleteErr := remote.Delete(r, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(getHttpTransport())); deleteErr != nil {
+		if strings.Contains(deleteErr.Error(), "UNAUTHORIZED") {
+			auth, authErr := authn.DefaultKeychain.Resolve(r.Context().Registry)
+			if authErr != nil {
+				return fmt.Errorf("getting creds for %q: %v", r, authErr)
 			}
 
 			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, getHttpTransport()); gitlabRegistryDeleteErr != nil {
 				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
-					return fmt.Errorf("deleting image %q: %v", r, err)
+					return fmt.Errorf("deleting image %q: %v", r, deleteErr)
 				}
 				return fmt.Errorf("deleting image %q: %v", r, gitlabRegistryDeleteErr)
 			}
 		} else {
-			return fmt.Errorf("deleting image %q: %v", r, err)
+			return fmt.Errorf("deleting image %q: %v", r, deleteErr)
 		}
 	}
 

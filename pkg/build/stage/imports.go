@@ -21,7 +21,7 @@ type getImportsOptions struct {
 	After  StageName
 }
 
-func getImports(imageBaseConfig *config.ImageBase, options *getImportsOptions) []*config.Import {
+func getImports(imageBaseConfig *config.StapelImageBase, options *getImportsOptions) []*config.Import {
 	var imports []*config.Import
 	for _, elm := range imageBaseConfig.Import {
 		if options.Before != "" && elm.Before != "" && elm.Before == string(options.Before) {

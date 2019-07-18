@@ -13,7 +13,7 @@ type rawGit struct {
 	Commit               string                `yaml:"commit,omitempty"`
 	RawStageDependencies *rawStageDependencies `yaml:"stageDependencies,omitempty"`
 
-	rawImage *rawImage `yaml:"-"` // parent
+	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -23,7 +23,7 @@ func (c *rawGit) configSection() interface{} {
 }
 
 func (c *rawGit) doc() *doc {
-	return c.rawImage.doc
+	return c.rawStapelImage.doc
 }
 
 func (c *rawGit) gitType() string {
@@ -35,8 +35,8 @@ func (c *rawGit) gitType() string {
 
 func (c *rawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.rawGitExport = newRawGitExport()
-	if parent, ok := parentStack.Peek().(*rawImage); ok {
-		c.rawImage = parent
+	if parent, ok := parentStack.Peek().(*rawStapelImage); ok {
+		c.rawStapelImage = parent
 	}
 
 	parentStack.Push(c)
@@ -49,7 +49,7 @@ func (c *rawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.rawGitExport.inlinedIntoRaw(c)
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawStapelImage.doc); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (c *rawGit) toGitLocalDirective() (gitLocal *GitLocal, err error) {
 
 func (c *rawGit) validateGitLocalDirective(gitLocal *GitLocal) (err error) {
 	if c.Branch != "" || c.Commit != "" || c.Tag != "" {
-		return newDetailedConfigError("specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.rawImage.doc)
+		return newDetailedConfigError("specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.rawStapelImage.doc)
 	}
 
 	if err := gitLocal.validate(); err != nil {
@@ -133,7 +133,7 @@ func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote.Url = c.Url
 
 	if url, err := c.getNameFromUrl(); err != nil {
-		return nil, newDetailedConfigError(err.Error(), c, c.rawImage.doc)
+		return nil, newDetailedConfigError(err.Error(), c, c.rawStapelImage.doc)
 	} else {
 		gitRemote.Name = url
 	}
