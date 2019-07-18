@@ -22,10 +22,10 @@
 - Distributed builds (coming soon) [#1614](https://github.com/flant/werf/issues/1614).
 - Advanced build with Stapel:
   - Incremental rebuilds based on git history.
-  - Building image based on another defined one.
   - Building images with Ansible tasks or Shell scripts.
   - Sharing a common cache between builds using mounts.
   - Reducing image size by detaching source data and build tools.
+- Building one image from config on the top of another image from the same config.
 - Debug tools for build process inspection.
 - Detailed output.
 
