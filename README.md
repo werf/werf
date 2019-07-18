@@ -11,6 +11,8 @@
 </p>
 ___
 
+<!-- WERF DOCS PARTIAL BEGIN: Overview -->
+
 Werf (previously known as Dapp) is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
 
 It helps DevOps engineers generate and deploy images by linking together:
@@ -21,6 +23,8 @@ It helps DevOps engineers generate and deploy images by linking together:
 
 Werf simplifies development of build scripts, reduces commit build time and automates deployment.
 It is designed to make engineer's work fast end efficient.
+
+<!-- WERF DOCS PARTIAL END -->
 
 **Contents**
 
@@ -33,6 +37,8 @@ It is designed to make engineer's work fast end efficient.
 - [License](#license)
 
 # Features
+
+<!-- WERF DOCS PARTIAL BEGIN: Features -->
 
 - Complete application lifecycle management: build and publish images, deploy application into Kubernetes and cleanup unused images by policies.
 - Application build and deploy specification (as many components as needed) completely described in one git repository with source code (single source of truth).
@@ -92,7 +98,11 @@ It is designed to make engineer's work fast end efficient.
 - Local and Docker registry cleaning by customizable policies.
 - Keeping images that used in Kubernetes clusters. Werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
+<!-- WERF DOCS PARTIAL END -->
+
 # Installation
+
+<!-- WERF DOCS PARTIAL BEGIN: Installation -->
 
 ## Install Dependencies
 
@@ -126,7 +136,7 @@ sudo usermod -aG docker $USER
 mkdir ~/bin
 cd ~/bin
 
-## add ~/bin in PATH if not there
+# add ~/bin in PATH if not there
 echo  ‘export PATH=$PATH:$HOME/bin’ >> ~/.bashrc 
 exec bash
 
@@ -164,7 +174,11 @@ Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-windows
 go get github.com/flant/werf/cmd/werf
 ```
 
+<!-- WERF DOCS PARTIAL END -->
+
 # Backward Compatibility Promise
+
+<!-- WERF DOCS PARTIAL BEGIN: Backward Compatibility Promise -->
 
 > _Note:_ This promise was introduced with Werf 1.0 and does not apply to previous versions or to dapp releases.
 
@@ -194,7 +208,11 @@ Version without prerelease part is considered to be from a stable channel.
 - `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features, but are unstable.
   We do **not guarantee** backward compatibility between `alpha` releases.
 
+<!-- WERF DOCS PARTIAL END -->
+
 # Docs and support
+
+<!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
 [Make your first Werf application](https://werf.io/how_to/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
@@ -205,6 +223,10 @@ Werf’s developers are always in contact with community though Slack and Telegr
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
 
+<!-- WERF DOCS PARTIAL END -->
+
 # License
+
+<!-- WERF DOCS PARTIAL BEGIN: License -->
 
 Apache License 2.0, see [LICENSE](LICENSE)
