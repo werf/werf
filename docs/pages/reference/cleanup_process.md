@@ -28,7 +28,7 @@ The cleaning by policies method includes the steps in the following order:
 1. [**Cleanup images repo**](#cleanup-images-repo) cleans _images repo_ from stale images according to the cleaning policies.
 2. [**Cleanup stages storage**](#cleanup-stages-storage) performs syncing _stages storage_ with _images repo_.
 
-These steps are combined in one top-level command [**cleanup**](#cleanup-command).  
+These steps are combined in one top-level command [cleanup]({{ site.baseurl }}/documentation/cli/main/cleanup.html).  
 
 A _images repo_ is the primary source of information about actual and stale images. 
 Therefore, it is essential to clean _images repo_ on the first step and only then _stages storage_.
@@ -86,24 +86,12 @@ The functionality can be disabled by option `--without-kube`.
 
 Werf gets information about kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
 
-#### Images cleanup command
-
-{% include /cli/werf_images_cleanup.md header="######" %}
-
 ### Cleanup stages storage
 
-Executing a _stages storage cleanup_ is necessary to update it according to a _images repo_. 
+Executing a [stages storage cleanup command]({{ site.baseurl }}/documentation/cli/management/stages/cleanup.html) is necessary to update it according to a _images repo_. 
 On this step, werf deletes _stages_ which do not relate to _images_ currently existing in the _images repo_.
 
-If the _images cleanup_, — the first step of cleaning by policies, — was skipped, then _stages storage cleanup_ makes no sense.
-
-#### Stages cleanup command
-
-{% include /cli/werf_stages_cleanup.md header="######" %}
-
-### Cleanup command
-
-{% include /cli/werf_cleanup.md header="####" %}
+> If the [images cleanup command]({{ site.baseurl }}/documentation/cli/management/images/cleanup.html), — the first step of cleaning by policies, — was skipped, then [stages storage cleanup]({{ site.baseurl }}/documentation/cli/management/stages/cleanup.html) makes no sense.
 
 ## Manual cleaning
 
@@ -114,34 +102,14 @@ In general it suitable for forced images removal.
 
 The manual cleaning approach includes the following options:
 
-* [**Purge images repo**](#images-purge-command). Deleting images of the **current project** in _images repo_.
-* [**Purge stages storage**](#stages-purge-command). Deleting stages of the **current project** in _stages storage_ or _images repo_.
+* [Purge images repo command]({{ site.baseurl }}/documentation/cli/management/images/purge.html). Deleting images of the **current project** in _images repo_.
+* [Purge stages storage command]({{ site.baseurl }}/documentation/cli/management/stages/purge.html). Deleting stages of the **current project** in _stages storage_ or _images repo_.
 
-These steps are combined in one top-level command [**purge**](#purge-command).
-
-### Images purge command
-
-{% include /cli/werf_images_purge.md header="####" %}
-
-### Stages purge command
-
-{% include /cli/werf_stages_purge.md header="####" %}
-
-### Purge command
-
-{% include /cli/werf_purge.md header="####" %}
+These steps are combined in one top-level command [purge]({{ site.baseurl }}/documentation/cli/main/purge.html).
 
 ## Host cleaning
 
 There are following commands to cleanup host machine:
 
-* [Cleanup host machine](#host-cleanup-command). Cleanup old unused werf cache and data of **all projects** on host machine.
-* [Purge host machine](#host-purge-command). Purge werf _images_, _stages_, cache and other data of **all projects** on host machine.
-
-### Host cleanup command
-
-{% include /cli/werf_host_cleanup.md header="####" %}
-
-### Host purge command
-
-{% include /cli/werf_host_purge.md header="####" %}
+* [Cleanup host machine command]({{ site.baseurl }}/documentation/cli/management/host/cleanup.html). Cleanup old unused werf cache and data of **all projects** on host machine.
+* [Purge host machine command]({{ site.baseurl }}/documentation/cli/management/host/purge.html). Purge werf _images_, _stages_, cache and other data of **all projects** on host machine.
