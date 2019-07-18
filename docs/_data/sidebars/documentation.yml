@@ -11,8 +11,8 @@ entries:
         - title: Introduction
           url: /documentation/configuration/introduction.html
 
-        - title: Image from Dockerfile
-          url: /documentation/configuration/image_from_dockerfile.html
+        - title: Dockerfile Image
+          url: /documentation/configuration/dockerfile_image.html
 
         - title: Stapel Image
           sfi:
@@ -43,6 +43,9 @@ entries:
 
         - title: Stapel Artifact
           url: /documentation/configuration/stapel_artifact.html
+
+        - title: Deploy into Kubernetes
+          url: /documentation/configuration/deploy_into_kubernetes.html
 
     - title: Reference
       sf:

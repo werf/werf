@@ -172,3 +172,7 @@ The _stages storage_ cleanup is only based on the related images in _images repo
 
 Werf creates _images_ using _stages storage_.
 Currently, _images_ can only be created in a [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and be saved in [_images repo_]({{ site.baseurl }}/documentation/reference/publish_process.html#images-repo).
+
+Images should be defined in the werf configuration file `werf.yaml`.
+
+[See more info about build process]({{ site.baseurl }}/documentation/reference/build_process.html)).
