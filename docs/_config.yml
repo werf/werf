@@ -5,9 +5,9 @@ site_title: Werf Documentation
 company_name: Flant
 
 exclude:
-  - .idea/
-  - .gitignore
-  - vendor
+- .idea/
+- .gitignore
+- vendor
 
 highlighter: rouge
 
@@ -28,16 +28,15 @@ collections:
     output: false
 
 defaults:
-  -
-    scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "page"
-      comments: true
-      search: true
-      sidebar: sidebar
-      topnav: topnav
+- scope:
+    path: ""
+    type: "pages"
+  values:
+    layout: "page"
+    comments: true
+    search: true
+    sidebar: sidebar
+    topnav: topnav
 
 sidebars:
 - documentation
