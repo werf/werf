@@ -11,8 +11,8 @@ entries:
         - title: Introduction
           url: /documentation/configuration/introduction.html
 
-        - title: Image from Dockerfile
-          url: /documentation/configuration/image_from_dockerfile.html
+        - title: Dockerfile Image
+          url: /documentation/configuration/dockerfile_image.html
 
         - title: Stapel Image
           sfi:

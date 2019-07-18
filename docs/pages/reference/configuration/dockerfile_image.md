@@ -1,7 +1,7 @@
 ---
-title: Image from Dockerfile
+title: Dockerfile Image
 sidebar: documentation
-permalink: documentation/configuration/image_from_dockerfile.html
+permalink: documentation/configuration/dockerfile_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
     <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
