@@ -36,20 +36,18 @@ docker rmi REPO:TAG
 
  1. Get a name or an id of the local built image.
  2. Create new temporary image name alias for this image, which consists of two parts:
-     - [docker repository name](https://docs.docker.com/glossary/?term=repository) with embedded docker registry address;
+     - [docker repository name](https://docs.docker.com/glossary/?term=repository) with embedded Docker registry address;
      - [docker tag name](https://docs.docker.com/glossary/?term=tag).
- 3. Push image by newly created alias into docker registry.
+ 3. Push image by newly created alias into Docker registry.
  4. Delete temporary image name alias.
 
 To publish an image from the config Werf implements another logic:
 
 1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning]({{ site.baseurl }}/documentation/reference/cleanup_process.html) processes.
-2. Push newly created image into docker registry.
+2. Push newly created image into Docker registry.
 3. Delete temporary image created in the 1'st step.
 
-All of these steps are performed with a single werf publish command, which will be described below.
-
-The result of this procedure is an image named by the image naming rules pushed into the docker registry.
+The result of this procedure is an image named by the image naming rules pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
 <!--### Stages publish procedure-->
 
@@ -69,12 +67,12 @@ The result of this procedure is an image named by the image naming rules pushed 
 
 The _images repo_ is Docker Repo to store images, can be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
 
-Using _images repo_ werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
+Using _images repo_ werf constructs a [Docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
-* If werf project contains nameless image, werf uses _images repo_ as docker repository.
-* Otherwise, werf constructs docker repository name for each image by following template `IMAGES_REPO/IMAGE_NAME`.
+* If werf project contains nameless image, werf uses _images repo_ as Docker repository.
+* Otherwise, werf constructs Docker repository name for each image by following template `IMAGES_REPO/IMAGE_NAME`.
 
-E.g., if there is unnamed image in a `werf.yaml` config and _images repo_ is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
+E.g., if there is unnamed image in a `werf.yaml` config and _images repo_ is `myregistry.myorg.com/sys/backend` then the Docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then Docker repository names are:
 * `myregistry.myorg.com/sys/backend/server` for `server` image;
 * `myregistry.myorg.com/sys/backend/worker` for `worker` image.
 
@@ -158,11 +156,3 @@ The command produces 6 image names for each image name and each tag-parameter (t
 * `registry.hello.com/web/core/system/frontend:feature-using-cache`
 * `registry.hello.com/web/core/system/backend:my-test-branch`
 * `registry.hello.com/web/core/system/frontend:my-test-branch`
-
-## Publish command
-
-{% include /cli/werf_publish.md %}
-
-## Build and publish command
-
-{% include /cli/werf_build_and_publish.md %}
