@@ -11,10 +11,10 @@ entries:
         - title: Introduction
           url: /documentation/configuration/introduction.html
 
-        - title: Image from Dockerfile configuration
+        - title: Image from Dockerfile
           url: /documentation/configuration/image_from_dockerfile.html
 
-        - title: Stapel Image configuration
+        - title: Stapel Image
           sfi:
 
             - title: Naming (required)
@@ -41,7 +41,7 @@ entries:
             - title: All directives
               url: /documentation/configuration/stapel_image/image_directives.html
 
-        - title: Stapel Artifact configuration
+        - title: Stapel Artifact
           url: /documentation/configuration/stapel_artifact.html
 
     - title: Reference
@@ -73,6 +73,15 @@ entries:
 
       - title: Cleanup Process
         url: /documentation/reference/cleanup_process.html
+
+      - title: Plugging into CI/CD
+        sfi:
+
+          - title: Overview
+            url: /documentation/reference/plugging_into_cicd/overview.html
+
+          - title: Gitlab CI
+            url: /documentation/reference/plugging_into_cicd/gitlab_ci.html
 
       - title: Local Development
         sfi:
