@@ -14,14 +14,11 @@ The idea is that sensitive data must be stored in a repository served by an appl
 A key is required for encryption and decryption of data. There are two locations from which werf can read the key:
 * from the `WERF_SECRET_KEY` environment variable
 * from a special `.werf_secret_key` file in the project root
+* from `~/.werf/global_secret_key` (globally)
 
-> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. `werf helm secret generate-secret-key` command returns AES-128 encryption key.
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html) returns AES-128 encryption key.
 
-You can promptly generate a key using the `werf helm secret generate-secret-key` command.
-
-### werf helm secret generate-secret-key command
-
-{% include /cli/werf_helm_secret_generate_secret_key.md header="####" %}
+You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html).
 
 ### Working with the WERF_SECRET_KEY environment variable
 
@@ -54,17 +51,9 @@ mysql:
   db: 1000db50be293432129acb741de54209a33bf479ae2e0f53462b5053c30da7584e31a589f5206cfa4a8e249d20
 ```
 
-### werf helm secret values edit command
-
-{% include /cli/werf_helm_secret_values_edit.md header="####" %}
-
-### werf helm secret values encrypt command
-
-{% include /cli/werf_helm_secret_values_encrypt.md header="####" %}
-
-### werf helm secret values decrypt command
-
-{% include /cli/werf_helm_secret_values_decrypt.md header="####" %}
+- [werf helm secret values edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/edit.html)
+- [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/encrypt.html)
+- [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/decrypt.html)
 
 ## Secret file encryption
 
@@ -82,20 +71,10 @@ data:
 ```
 {% endraw %}
 
-### werf helm secret file edit command
-
-{% include /cli/werf_helm_secret_file_edit.md header="####" %}
-
-### werf helm secret file encrypt command
-
-{% include /cli/werf_helm_secret_file_encrypt.md header="####" %}
-
-### werf helm secret file decrypt command
-
-{% include /cli/werf_helm_secret_file_decrypt.md header="####" %}
+- [werf helm secret file edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/edit.html)
+- [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/encrypt.html)
+- [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/decrypt.html)
 
 ## Secret key rotation
 
-### werf helm secret rotate secret key command
-
-{% include /cli/werf_helm_secret_rotate_secret_key.md header="####" %}
+To regenerate secret files and values with new secret key use [werf helm secret rotate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/rotate_secret_key.html).

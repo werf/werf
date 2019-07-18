@@ -60,7 +60,7 @@ During werf deploy a temporary helm chart is created.
 This chart contains:
 
 * Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes#templates).
-* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html).
+* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
 
 The temporary chart then to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
 
