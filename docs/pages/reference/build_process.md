@@ -9,7 +9,7 @@ Build process is a step required by werf to build images defined in the werf con
 
 ## Dockerfile image
 
-Werf uses Dockerfile as a main way to describe how to build an image. Image built with Dockerfile will be referred to as **dockerfile image** ([more info about dockerfile image]({{ site.baseurl }}/documentation/configuration/image_from_dockerfile.html)).
+Werf uses Dockerfile as a main way to describe how to build an image. Image built with Dockerfile will be referred to as **dockerfile image** ([more info about dockerfile image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
 
 ### How dockerfile image built
 

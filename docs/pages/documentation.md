@@ -29,7 +29,7 @@ In [Overview]({{ site.baseurl }}/documentation/configuration/introduction.html) 
 * Config processing steps.
 * Supported Go templates functions.
 
-Other section articles give detailed information about [Image from Dockerfile]({{ site.baseurl }}/documentation/configuration/image_from_dockerfile.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
+Other section articles give detailed information about [Image from Dockerfile]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
 
 **Reference** section is dedicated to Werf main processes:
 
