@@ -124,6 +124,7 @@ An example of using a template in case a single unnamed image exists in the conf
 
 To specify image named `backend` from `werf.yaml`:
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -142,9 +143,11 @@ spec:
         env:
 {{ tuple "backend" . | include "werf_container_env" | indent 8 }}
 ``` 
+{% endraw %}
 
 To specify single unnamed image from `werf.yaml`:
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -163,6 +166,7 @@ spec:
         env:
 {{ include "werf_container_env" . | indent 8 }}
 ``` 
+{% endraw %}
 
 #### Secret files
 
@@ -176,6 +180,7 @@ Secret files are placed in the directory `.helm/secret`. User can create arbitra
 
 For example to read `.helm/secret/backend-saml/stage/tls.key` and `.helm/secret/backend-saml/stage/tls.crt` files decrypted content into templates:
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -186,14 +191,17 @@ data:
   tls.crt: {{ tuple "backend-saml/stage/tls.crt" . | include "werf_secret_file" | b64enc }}
   tls.key: {{ tuple "backend-saml/stage/tls.key" . | include "werf_secret_file" | b64enc }}
 ```
+{% endraw %}
 
 Note that `backend-saml/stage/` — is an arbitrary files structure, user can place all files into single directory `.helm/secret` or create subdirectories on own needs.
 
 #### Builtin templates and params
 
+{% raw %}
  * `{{ .Chart.Name }}` — contains project name from `werf.yaml` config.
  * `{{ .Release.Name }}` — contains [release name](#release).
  * `{{ .Files.Get }}` — fucnction to read file content into templates, requires file path argument. Path should be relative to `.helm` directory (files outside `.helm` cannot be used).
+{% endraw %}
 
 ### Values
 
@@ -308,9 +316,11 @@ During deploy process werf merges all of user defined regular, user defined secr
 
 To access values from chart templates following syntax is used:
 
+{% raw %}
 ```yaml
 {{ .Values.key.key.arraykey[INDEX].key }}
 ```
+{% endraw %}
 
 `.Values` object contains [merged result values](#merge-result-values) map.
 
@@ -335,9 +345,11 @@ mysubchart:
 
 In the `mysubchart` these values should be specified without `mysubchart` key:
 
+{% raw %}
 ```yaml
 {{ .Values.key1.key2[0].key3 }}
 ```
+{% endraw %}
 
 Global values defined by the special toplevel values key `global` will also be available in the subcharts:
 
@@ -351,9 +363,11 @@ global:
 
 In the subcharts these values should be specified as always:
 
+{% raw %}
 ```yaml
 {{ .Values.global.database.mysql.user }}
 ```
+{% endraw %}
 
 Only values by keys `mysubchart` and `global` will be available in the subchart `mysubchart`.
 
