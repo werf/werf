@@ -144,25 +144,26 @@ $( document ).ready(function() {
 });
 
 
-$( document ).ready(function() {
-    var adjustAnchor = function() {
+$(document).ready(function() {
+  var adjustAnchor = function() {
+      var $anchor = $(':target'), fixedElementHeight = 120;
+      if ($anchor.length > 0) {
+        $('html, body').stop().animate({
+          scrollTop: $anchor.offset().top - fixedElementHeight
+        }, 200);
+      }
+  };
+  $(window).on('hashchange load', function() {
+      adjustAnchor();
+  });
+});
 
-        var $anchor = $(':target'),
-            fixedElementHeight = 120;
-
-        if ($anchor.length > 0) {
-
-            $('html, body')
-                .stop()
-                .animate({
-                    scrollTop: $anchor.offset().top - fixedElementHeight
-                }, 200);
-
-        }
-
-    };
-
-    $(window).on('hashchange load', function() {
-        adjustAnchor();
-    });
+$(document).ready(function(){
+  // waint untill fonts are loaded
+  setTimeout(function() {
+    $('.publications__list').masonry({
+      itemSelector: '.publications__post',
+      columnWidth: '.publications__sizer'
+    })
+  }, 500)
 });

@@ -28,10 +28,10 @@ layout: default
             <div class="intro__image"></div>
             <div class="intro__content">
                 <div class="intro__title">
-                    A missing part of CI/CD<br/> systems
+                    A missing part of a CI/CD<br/> systems
                 </div>
                 <div class="intro__text">
-                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
+                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis CI, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
                 </div>
             </div>
     </div>
@@ -41,26 +41,18 @@ layout: default
     <ul class="intro-extra">
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
-                Advanced image builder
-            </div>
-            <div class="intro-extra__item-text">
-                Rebuild images incrementally basing on git history. Build images with Ansible tasks. Push the cache to the remote registry.
-            </div>
-        </li>
-        <li class="intro-extra__item">
-            <div class="intro-extra__item-title">
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                Full compatibility with Helm. Easy RBAC definition. Control of the deployment process with annotations. Control of resources readiness. Logging and error reporting. Easy debugging of problems without unnecessary kubectl invocations.
+                Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
             </div>
-        </li>
+        </li>        
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
-                Lifecycle management
+                Image Lifecycle Management
             </div>
             <div class="intro-extra__item-text">
-                Automatic image naming. Policy based registry cleanup. Debugging and diagnostic tools.
+                Build images with&nbsp;Dockerfile or&nbsp;with&nbsp;our syntax to&nbsp;take advantage of&nbsp;incremental rebuilds based on&nbsp;git history and&nbsp;carefully crafted tools. Pushing into a&nbsp;registry by&nbsp;specific tag strategy and&nbsp;cleaning a&nbsp;registry from unused images based on&nbsp;policies.
             </div>
         </li>
     </ul>
@@ -96,19 +88,19 @@ layout: default
         <div class="features__title">Full delivery cycle</div>
         <ul class="features__list">
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
-                <div class="features__list-item-title">Complete application lifecycle management</div>
-                <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
-            </li>
-            <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_changes"></div>
-                <div class="features__list-item-title">Rapid delivery of changes</div>
-                <div class="features__list-item-text">Don’t waste time on unchanged image parts. Optimize your building process and speed up deployment.</div>
+                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-title">Easy to start</div>
+                <div class="features__list-item-text">Remain regular build process with Dockerfile. Take your project and put into werf easily right now.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
                 <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using go-templates.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
+                <div class="features__list-item-title">Complete application lifecycle management</div>
+                <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>

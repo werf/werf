@@ -22,6 +22,7 @@
                         <li class="header__menu-item
                             {% if folder.folderitems %}header__menu-item_parent{% endif %}
                             {% if folder.url.size>1 and page.url contains folder.url %}header__menu-item_active{% endif %}
+                            {% if folder.url.size>1 and page.url == '/publications_ru.html' and folder.url == '/publications.html' %}header__menu-item_active{% endif %}
                             {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
                             <a href="{{ folder.url }}">{{ folder.title }}</a>
                             {% if folder.folderitems %}
