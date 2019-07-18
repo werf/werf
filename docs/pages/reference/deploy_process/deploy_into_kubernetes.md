@@ -438,31 +438,13 @@ For example for project named `symfony-demo` there will be following Helm Releas
 
 Release name could be redefined by deploy option `--release NAME`. In that case Werf will use specified name as is.
 
-Custom release name template can also be defined in the [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) of `werf.yaml`:
-
-```yaml
-project: PROJECT_NAME
-configVersion: 1
-deploy:
-  helmRelease: TEMPLATE
-```
-
-`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support.
+Custom release name can also be defined in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#release-name).
 
 #### Release name slug
 
 Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Helm Release name.
 
-This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) option `deploy.helmReleaseSlug`:
-
-```
-project: PROJECT_NAME
-configVersion: 1
-deploy:
-  helmReleaseSlug: false
-```
-
-Werf will not apply release slug procedure for the release name specified with `--release NAME` option.
+This is default behaviour, which can be disabled by [setting `deploy.helmReleaseSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#release-name).
 
 ### Kubernetes namespace
 
@@ -475,31 +457,13 @@ For example for project named `symfony-demo` there will be following Kubernetes 
 
 Kubernetes Namespace could be redefined by deploy option `--namespace NAMESPACE`. In that case Werf will use specified name as is.
 
-Custom Kubernetes Namespace template can also be defined in the [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) of `werf.yaml`:
-
-```yaml
-project: PROJECT_NAME
-configVersion: 1
-deploy:
-  namespace: TEMPLATE
-```
-
-`deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support.
+Custom Kubernetes Namespace can also be defined in the werf.yaml configuration [by setting `deploy.namespace`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace).
 
 #### Kubernetes namespace slug
 
 Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm), which generates unique valid Kubernetes Namespace.
 
-This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) option `deploy.namespaceSlug`:
-
-```
-project: PROJECT_NAME
-configVersion: 1
-deploy:
-  namespaceSlug: false
-```
-
-Werf will not apply namespace slug procedure for the namespace specified with `--namespace NAMESPACE` option.
+This is default behaviour, which can be disabled by [setting `deploy.namespaceSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace).
 
 ## Deploy process
 
