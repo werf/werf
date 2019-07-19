@@ -489,6 +489,13 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 		for _, path := range paths {
 			fullPath := filepath.Join(workTreeDir, path)
 
+			if filepath.Base(path) == ".git" {
+				if debugChecksum() {
+					logboek.LogF("Filter out service git path %s from checksum calculation\n", fullPath)
+				}
+				continue
+			}
+
 			if !pathFilter.IsFilePathValid(path) {
 				if debugChecksum() {
 					fmt.Fprintf(logboek.GetOutStream(), "Excluded file `%s` from resulting checksum by path filter %s\n", fullPath, pathFilter.String())
@@ -500,6 +507,9 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 			if err != nil {
 				return fmt.Errorf("error calculating checksum of path `%s`: %s", path, err)
 			}
+			if debugChecksum() {
+				logboek.LogF("Added file path '%s' to resulting checksum\n", path)
+			}
 
 			stat, err := os.Lstat(fullPath)
 			// file should exist after being scanned
@@ -510,6 +520,9 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 			_, err = checksum.Hash.Write([]byte(fmt.Sprintf("%o", stat.Mode())))
 			if err != nil {
 				return fmt.Errorf("error calculating checksum of file `%s` mode: %s", fullPath, err)
+			}
+			if debugChecksum() {
+				logboek.LogF("Added file %s mode %o to resulting checksum\n", fullPath, stat.Mode())
 			}
 
 			if stat.Mode().IsRegular() {
