@@ -69,14 +69,9 @@ $( document ).ready(function() {
     }
 
     var menu = $('#doc-versions-menu');
-    menu.addClass('header__menu-item header__menu-item_parent');
-    var toggler = $('<a href="#">');
-    toggler.append(currentChannel || 'Versions');
-    if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'latest'))) {
-      toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
-    }
 
-    menu.html(toggler);
+    var toggler;
+    
     var submenu = $('<ul class="header__submenu">');
     $.each(releasesInfo.orderedReleases, function(i, release) {
       if (!(releasesInfo.releases[release])) { releasesInfo.releases[release] = [release] };
@@ -95,7 +90,22 @@ $( document ).ready(function() {
           submenu.append(item);
       };
     });
-    if ((submenu[0]) && (submenu[0].children) && (submenu[0].children.length)) { menu.append($('<div class="header__submenu-container">').append(submenu)); };
+
+    if ((submenu[0]) && (submenu[0].children) && (submenu[0].children.length)) {       
+      menu.append($('<div class="header__submenu-container">').append(submenu)); 
+      menu.addClass('header__menu-item header__menu-item_parent');
+      toggler = $('<a href="#">');
+    } else {
+      menu.addClass('header__menu-item'); 
+      toggler = $('<span class="header__menu-item-static">');
+    };
+
+    toggler.append(currentChannel || 'Versions');
+    if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'latest'))) {
+      toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
+    }
+    menu.prepend(toggler);
+    $('.header__menu').addClass('header__menu_active')
   });
 
   // Update github counters 

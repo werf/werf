@@ -28,7 +28,7 @@ layout: default
             <div class="intro__image"></div>
             <div class="intro__content">
                 <div class="intro__title">
-                    A missing part of a CI/CD<br/> systems
+                    A missing part of a CI/CD<br/> system
                 </div>
                 <div class="intro__text">
                     The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis CI, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
@@ -61,7 +61,7 @@ layout: default
 <div class="stats">
     <div class="page__container">
         <div class="stats__content">
-            <div class="stats__title">Active development & integration</div>
+            <div class="stats__title">Active development & adoption</div>
             <ul class="stats__list">
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">4</div>
