@@ -19,6 +19,9 @@
 /documentation/reference/local_development:
   title: Local Development
   url: /documentation/reference/local_development/installing_minikube.html
+/documentation/reference/toolbox:
+  title: Toolbox
+  url: /documentation/reference/toolbox/slug.html
 /documentation/guides:
   title: Guides
   url: /documentation/guides/installation.html
