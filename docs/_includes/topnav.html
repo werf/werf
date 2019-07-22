@@ -27,7 +27,11 @@
                             {% if folder.url.size>1 and page.url == '/publications_ru.html' 
                             and folder.url == '/publications.html' %}header__menu-item_active{% endif %}
                             {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
+                            {% if folder.title == 'Documentation' %}
+                            <a href="{{ site.baseurl}}{{ folder.url }}">{{ folder.title }}</a>
+                            {% else %}
                             <a href="{{ folder.url }}">{{ folder.title }}</a>
+                            {% endif %}
                             {% if folder.folderitems %}
                             <div class="header__submenu-container">
                                 <ul class="header__submenu">
