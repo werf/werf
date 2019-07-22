@@ -74,7 +74,7 @@ layout: default
                     <div class="stats__list-item-subtitle">of large and small projects</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num gh_counter">563</div>
+                    <div class="stats__list-item-num gh_counter">1010</div>
                     <div class="stats__list-item-title">stars on GitHub</div>
                     <div class="stats__list-item-subtitle">let’s make it more ;)</div>
                 </li>
@@ -142,6 +142,79 @@ layout: default
                     <span class="page__icon page__icon_slack"></span>
                     Join via Slack
                 </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="roadmap">
+    <div class="page__container">
+        <div class="roadmap__title">
+            Roadmap
+        </div>
+        <div class="roadmap__content">
+            <div class="roadmap__goals">
+                <div class="roadmap__goals-content">
+                    <div class="roadmap__goals-title">Goals</div>
+                    <ul class="roadmap__goals-list">
+                        <li class="roadmap__goals-list-item">
+                            Feature complete version of werf which works well in an environment with a single dedicated persistent host to run all werf operations (build, deploy and cleanup).
+                        </li>
+                        <li class="roadmap__goals-list-item">
+                            Proven approaches and recipes <br/>
+                            for most popular CI systems.
+                        </li>
+                        <li class="roadmap__goals-list-item">
+                            Building images completely in userspace, <br/>
+                            a container or Kubernetes cluster.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="roadmap__steps">
+                <div class="roadmap__steps-content">
+                    <div class="roadmap__steps-title">Steps</div>
+                    <ul class="roadmap__steps-list">
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1616">
+                            <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Use <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during helm release upgrade.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1184">
+                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Content addressable tagging scheme.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1617">
+                            <a href="https://github.com/flant/werf/issues/1617" class="roadmap__steps-list-item-issue" target="_blank">#1617</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Proven approaches and recipes<br/>
+                                for most popular CI systems.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1614">
+                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Distributed builds.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1606">
+                            <a href="https://github.com/flant/werf/issues/1606" class="roadmap__steps-list-item-issue" target="_blank">#1606</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Helm 3 support.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1618">
+                            <a href="https://github.com/flant/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Userspace builds without Docker daemon<br/>
+                                (as in <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">kaniko</a>).
+                            </span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

@@ -1,6 +1,7 @@
 body {
     margin: 0;
     min-width: 1200px;
+    overflow-y: scroll;
 }
 
 .page {
@@ -493,6 +494,215 @@ html, body, .page {
     letter-spacing: -0.3px;
     text-align: center;
     color: #00122c;
+}
+
+.roadmap {
+    padding-top: 200px;
+}
+
+.roadmap__content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.roadmap__title {
+    position: relative;
+    font-size: 36px;
+    font-weight: 500;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    text-align: center;
+    color: #00122c;
+    margin-bottom: 25px;
+}
+
+.roadmap__title::before {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    top: -120px;
+    left: 50%;
+    margin-left: -58px;
+    width: 100px;
+    height: 130px;
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-image: url('../images/illustrations/goals.svg');
+}
+
+.roadmap__goals {
+    width: 560px;
+}
+
+.roadmap__goals-title {
+    font-size: 24px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    color: #00122c;
+    margin-bottom: 20px;
+}
+
+.roadmap__goals-content {
+    position: relative;
+    z-index: 2;
+    border-radius: 10px;
+    background: #FFFFFF;
+    box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
+    padding: 40px 60px 40px 40px;
+}
+
+.roadmap__goals-list {
+    box-sizing: border-box;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.roadmap__goals-list-item {
+    width: 100%;
+    opacity: 0.7;
+    font-size: 16px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    color: #00122c;
+    margin-top: 15px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.roadmap__goals-list-item::before {
+    content: '';
+    display: block;
+    background: #0066FF;
+    width: 6px;
+    height: 6px;
+    border-radius: 6px;
+    position: absolute;
+    left: 5px;
+    top: 8px;
+}
+
+.roadmap__goals-list-item:first-child {
+    margin-top: 0px;
+}
+
+.roadmap__steps {
+    width: 560px;
+}
+
+.roadmap__steps-title {
+    font-size: 24px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    color: #00122c;
+    margin-bottom: 20px;
+}
+
+.roadmap__steps-content {
+    position: relative;
+    z-index: 2;
+    border-radius: 10px;
+    background: #FFFFFF;
+    box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
+    padding: 40px;
+}
+
+.roadmap__steps-list {
+    box-sizing: border-box;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.roadmap__steps-list-item {
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: row;
+}
+
+.roadmap__steps-list-item_closed {
+    text-decoration: line-through;
+}
+
+.roadmap__steps-list-item_closed .roadmap__steps-list-item-issue, 
+.roadmap__steps-list-item_closed .roadmap__steps-list-item-text {
+    opacity: 0.3;
+}
+
+.roadmap__steps-list-item_closed::after {
+    content: '';
+    display: inline-block;   
+    width: 24px;
+    height: 24px;
+    margin-left: 10px;
+    position: relative;
+    top: -5px;
+    align-self: center;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-image: url('../images/icons/check.svg');
+}
+
+.roadmap__steps-list-item:first-child {
+    margin-top: 0px;
+}
+
+.roadmap__steps-list-item-issue {
+    font-size: 16px;
+    font-weight: 500;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    color: #00122c;
+    text-decoration: none;
+    opacity: 0.4;
+    width: 55px;
+}
+
+.roadmap__steps-list-item-issue:hover {
+    text-decoration: underline;
+}
+
+.roadmap__steps-list-item-text {
+    opacity: 0.7;
+    font-size: 16px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    color: #00122c;
+}
+
+.roadmap__steps-list-item-text a {
+    color: #0166FF;
+    text-decoration: none;
+}
+
+.roadmap__steps-list-item-text a:hover {
+    text-decoration: underline;
 }
 
 .community {

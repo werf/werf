@@ -9,8 +9,8 @@
                 <!-- toggle sidebar button -->
                 <!-- entries without drop-downs appear here -->
 
-        {% assign topnav = site.data[page.topnav] %}
-        {% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
+                {% assign topnav = site.data[page.topnav] %}
+                {% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
 
                     {% for folder in topnav.topnav %}
                         {% comment %}
@@ -21,10 +21,17 @@
                         {% endcomment %}
                         <li class="header__menu-item
                             {% if folder.folderitems %}header__menu-item_parent{% endif %}
-                            {% if folder.url.size>1 and page.url contains folder.url %}header__menu-item_active{% endif %}
-                            {% if folder.url.size>1 and page.url == '/publications_ru.html' and folder.url == '/publications.html' %}header__menu-item_active{% endif %}
+                            {% if folder.url.size>1 and page.url == folder.url %}header__menu-item_active{% endif %}
+                            {% if folder.url.size>1 and page.url != folder.url and page.url contains folder.url 
+                            and page.url != '/documentation/guides/installation.html' %}header__menu-item_active{% endif %}
+                            {% if folder.url.size>1 and page.url == '/publications_ru.html' 
+                            and folder.url == '/publications.html' %}header__menu-item_active{% endif %}
                             {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
+                            {% if folder.title == 'Documentation' %}
+                            <a href="{{ site.baseurl}}{{ folder.url }}">{{ folder.title }}</a>
+                            {% else %}
                             <a href="{{ folder.url }}">{{ folder.title }}</a>
+                            {% endif %}
                             {% if folder.folderitems %}
                             <div class="header__submenu-container">
                                 <ul class="header__submenu">

@@ -48,6 +48,12 @@
     justify-content: flex-start;
     position: relative;
     top: -10px;
+    opacity: 0;
+    transition: all 0.5s ease-out;
+}
+
+.header__menu.header__menu_active {
+    opacity: 1;
 }
 
 .header__menu-item {
@@ -84,7 +90,7 @@
     filter: brightness(1);
 }
 
-.header__menu-item a {
+.header__menu-item a, .header__menu-item span.header__menu-item-static {
     color: #000;
     text-decoration: none;
 }
@@ -97,7 +103,7 @@
     color: #0066FF;
 }
 
-.header__menu-item_parent > a {
+.header__menu-item_parent > a, .header__menu-item span.header__menu-item-static {
     display: flex;
     flex-direction: row;
     align-items: center;
