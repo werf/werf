@@ -82,7 +82,7 @@ mount:
   to: <absolute path>
 - from: tmp_dir
   to: <absolute path>
-- fromPath: <absolute path>
+- fromPath: <absolute or relative path>
   to: <absolute path>
 import:
 - artifact: <artifact name>

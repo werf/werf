@@ -34,10 +34,10 @@ entries:
       fromImageArtifact: <artifact name>
       mount:
       - from: build_dir
-        to: <absolute path>
+        to: <absolute or relative path>
       - from: tmp_dir
         to: <absolute path>
-      - fromPath: <absolute path>
+      - fromPath: <absolute or relative path>
         to: <absolute path>
   - name: beforeInstall
     type: "image artifact"
