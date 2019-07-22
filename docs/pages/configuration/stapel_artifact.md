@@ -164,7 +164,7 @@ mount:
   to: <absolute_path>
 - from: tmp_dir
   to: <absolute_path>
-- fromPath: <absolute_path>
+- fromPath: <absolute_or_relative_path>
   to: <absolute_path>
 import:
 - artifact: <artifact name>

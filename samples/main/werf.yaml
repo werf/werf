@@ -121,7 +121,7 @@ import:
 #   to: ABSOLUTE_PATH
 # - from: tmp_dir
 #   to: ABSOLUTE_PATH
-# - fromPath: ABSOLUTE_PATH
+# - fromPath: ABSOLUTE_OR_RELATIVE_PATH
 #   to: ABSOLUTE_PATH
 
 ## asLayers is false by default
@@ -190,7 +190,7 @@ ansible:
 #   to: ABSOLUTE_PATH
 # - from: tmp_dir
 #   to: ABSOLUTE_PATH
-# - fromPath: ABSOLUTE_PATH
+# - fromPath: ABSOLUTE_OR_RELATIVE_PATH
 #   to: ABSOLUTE_PATH
 
 ## asLayers is false by default

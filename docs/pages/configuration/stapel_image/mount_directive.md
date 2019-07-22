@@ -13,7 +13,7 @@ summary: |
     <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
   <span class="pi">-</span> <span class="s">from</span><span class="pi">:</span> <span class="s">build_dir</span>
     <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
-  <span class="pi">-</span> <span class="s">fromPath</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
+  <span class="pi">-</span> <span class="s">fromPath</span><span class="pi">:</span> <span class="s">&lt;absolute_or_relative_path&gt;</span>
     <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span></code></pre>
   </div>
 ---

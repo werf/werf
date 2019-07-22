@@ -86,7 +86,7 @@ mount:
   to: <absolute_path>
 - from: tmp_dir
   to: <absolute_path>
-- fromPath: <absolute_path>
+- fromPath: <absolute_or_relative_path>
   to: <absolute_path>
 docker:
   VOLUME:
@@ -195,6 +195,6 @@ mount:
   to: <absolute_path>
 - from: tmp_dir
   to: <absolute_path>
-- fromPath: <absolute_path>
+- fromPath: <absolute_or_relative_path>
   to: <absolute_path>
 asLayers: <bool>
