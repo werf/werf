@@ -1,7 +1,7 @@
 ---
-title: Cleanup process
+title: Cleaning process
 sidebar: documentation
-permalink: documentation/reference/cleanup_process.html
+permalink: documentation/reference/cleaning_process.html
 author: Artem Kladov <artem.kladov@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

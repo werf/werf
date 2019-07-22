@@ -7,23 +7,23 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Builtin Helm client and Tiller
 
-Helm 2 uses server component called [tiller](https://helm.sh/docs/glossary/#tiller). The tiller manages [releases]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#release): creates, updates, deletes and lists them.
+Helm 2 uses server component called [tiller](https://helm.sh/docs/glossary/#tiller). The tiller manages [releases]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release): creates, updates, deletes and lists them.
 
 In the werf tiller is built into main werf deploy process. Thus it runs in the user space without need to connect to tiller server.
 
-Yet werf is [fully compatible]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#helm-compatibility-notice) with already existing helm 2 installations.
+Yet werf is [fully compatible]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#helm-compatibility-notice) with already existing helm 2 installations.
 
 This architecture gives werf following advantages.
 
 ### Ability to implement resources tracking properly
 
-Werf imports helm codebase and redefines key points of helm standard deploy process. These changes making it possible to [track resources with logs](#proper-tracking-of-deployed-resources) without complex architectural solutions such as streaming of logs over grpc when using helm client with tiller server.  
+Werf imports helm codebase and redefines key points of helm standard deploy process. These changes making it possible to [track resources with logs](#proper-tracking-of-deployed-resources) without complex architectural solutions such as streaming of logs over grpc when using helm client with tiller server.
 
 ### Security advantage
 
 Typically Tiller is deployed into cluster with admin permissions. With werf user can setup fine grained access to cluster for example per project namespace.
 
-In contrast to Tiller, releases storage in Werf is not a static configuration of cluster installation. Thus Werf can store releases of each project right in the namespace of the project, so that neighbour projects does not have ability to see other releases if there is no access to these neighbour namespaces.   
+In contrast to Tiller, releases storage in Werf is not a static configuration of cluster installation. Thus Werf can store releases of each project right in the namespace of the project, so that neighbour projects does not have ability to see other releases if there is no access to these neighbour namespaces.
 
 ### Installation advantage
 
@@ -37,7 +37,7 @@ With pure helm user has only the ability to wait for resources using `--wait` fl
 
 Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
 
-And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#resource-tracking-configuration).
+And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
 
 Werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
 
@@ -49,7 +49,7 @@ User can pass any additional annotations and labels to werf deploy invocation an
 
 This feature opens possibilities for grouping resources by project name, url, etc. for example in monitoring task.
 
-See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#annotate-and-label-chart-resources).
+See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotate-and-label-chart-resources).
 
 Helm does not have this ability and will not have in the near future: https://github.com/helm/helm/pull/2631.
 
@@ -59,12 +59,12 @@ During werf deploy a temporary helm chart is created.
 
 This chart contains:
 
-* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#templates).
+* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#templates).
 * Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
 
 The temporary chart then to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
 
-### Chart.yaml is not required 
+### Chart.yaml is not required
 
 Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
 
@@ -92,6 +92,6 @@ Using pure helm user need to invent own system of passing actual images names us
 
 ## Fixed helm chart path in the project
 
-Werf requires [chart]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
+Werf requires [chart]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
 
 Helm does not define a static place in the project where helm chart should be stored.

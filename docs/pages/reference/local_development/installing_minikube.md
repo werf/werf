@@ -1,7 +1,7 @@
 ---
-title: Installing Minikube
+title: Setup Minikube
 sidebar: documentation
-permalink: documentation/reference/local_development/installing_minikube.html
+permalink: documentation/reference/local_development/setup_minikube.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

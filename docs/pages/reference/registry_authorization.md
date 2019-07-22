@@ -9,7 +9,7 @@ There are several categories of commands that work with Docker registry, thus ne
 
 * [During the build process]({{ site.baseurl }}/documentation/reference/build_process.html) werf may pull base images from Docker registry.
 * [During the publish process]({{ site.baseurl }}/documentation/reference/publish_process.html) werf creates and updates images in Docker registry.
-* [During the cleaning process]({{ site.baseurl }}/documentation/reference/cleanup_process.html) werf deletes images from Docker registry.
+* [During the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html) werf deletes images from Docker registry.
 * [During the deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) werf needs to access _images_ from Docker registry and _stages_ which could also be stored in registry.
 
 These commands do not perform authorization and use prepared _docker config_ to work with Docker registry.

@@ -43,7 +43,7 @@ docker rmi REPO:TAG
 
 To publish an image from the config Werf implements another logic:
 
-1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning]({{ site.baseurl }}/documentation/reference/cleanup_process.html) processes.
+1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning]({{ site.baseurl }}/documentation/reference/cleaning_process.html) processes.
 2. Push newly created image into Docker registry.
 3. Delete temporary image created in the 1'st step.
 
@@ -86,7 +86,7 @@ E.g., if there is unnamed image in a `werf.yaml` config and _images repo_ is `my
 | --tag-custom TAG          | arbitrary TAG                        |
 
 Using tag options a user specifies not only tag value but also tagging strategy.
-Tagging strategy affects on [certain policies in cleanup process]({{ site.baseurl }}/documentation/reference/cleanup_process.html#cleanup-policies).
+Tagging strategy affects on [certain policies in cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
 Besides, werf applies [tag slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) transformation rules on all options except `--tag-custom`.
 Thus, these tags satisfy the slug requirements, docker tag format, and a user can use arbitrary git tag and branch name formats.

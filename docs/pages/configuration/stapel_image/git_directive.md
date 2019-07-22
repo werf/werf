@@ -62,7 +62,7 @@ summary: |
 ***Git mapping*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git mapping_ contains the repository address and the version (branch, tag or commit hash).
 
 Werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
-The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-git_archive-gitCache-gitLatestPatch) section.
+The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-gitarchive-gitcache-gitlatestpatch) section.
 
 The configuration of the _git mapping_ supports filtering files, and you can use the set of _git mappings_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git mapping_ configuration — no subsequent `chown` required.
 
@@ -224,17 +224,16 @@ git:
   - '**/*-test.*'
 ```
 
-This is the git mapping configuration that adds `.php` and `.js` files from `/src` except files with `-dev` or `-test` suffixes.
+This is the git mapping configuration that adds `.php` and `.js` files from `/src` except files with suffixes that starts with `-dev.` or `-test.`.
 
 To determine whether the file matches the mask the following algorithm is applied:
-- the path in `add` is concatenated with the mask;
-- an absolute file path inside the repository is taken;
-- two paths are compared with the use of [fnmatch](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch) method with FNM_PATHNAME and FNM_PERIOD flags (`.` is included in the `*`, however `/` is excluded);
-- if fnmatch returns true, then the file is matched, and the algorithm is ended;
-- the path in `add` is concatenated with the mask and with an additional pattern `**/*` ;
-- an absolute file path inside the repository is taken;
-- two paths are compared with the use of fnmatch with FNM_PATHNAME and FNM_DOTMATCH flags (`.` is included in the `*`, however `/` is excluded);
-- if fnmatch returns true, then the file is matched; if false, the file does not match;
+ - take for the check the next absolute file path inside the repository;
+ - compare this path with configured include or exclude path mask or plain path:
+   - the path in `add` is concatenated with the mask or raw path from include or exclude config directive;
+   - two paths are compared with the use of glob patterns: if file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`), the algorithm is ended.
+ - compare this path with configured include or exclude path mask or plain path with additional pattern:
+   - the path in `add` is concatenated with the mask or raw path from include or exclude config directive and concatenated with additional suffix pattern `**/*`;
+   - two paths are compared with the use of glob patterns: if file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`), the algorithm is ended.
 
 > The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
 

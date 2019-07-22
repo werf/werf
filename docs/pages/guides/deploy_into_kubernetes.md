@@ -13,7 +13,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
 ## Requirements
 
- * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/local_development/installing_minikube.html) to set up local minikube instance with docker-registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/local_development/setup_minikube.html) to set up local minikube instance with docker-registry.
 
  * Working docker-registry.
 
@@ -26,8 +26,6 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
  * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
-
- * Minimal knowledge of `helm` and its concepts required (such as chart, templates, release etc.). Helm documentation is available here: <https://docs.helm.sh>.
 
 **NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
 

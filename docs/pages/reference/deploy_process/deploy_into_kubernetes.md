@@ -198,7 +198,7 @@ Note that `backend-saml/stage/` — is an arbitrary files structure, user can pl
 #### Builtin templates and params
 
 {% raw %}
- * `{{ .Chart.Name }}` — contains project name from `werf.yaml` config.
+ * `{{ .Chart.Name }}` — contains [project name] from `werf.yaml` config.
  * `{{ .Release.Name }}` — contains [release name](#release).
  * `{{ .Files.Get }}` — fucnction to read file content into templates, requires file path argument. Path should be relative to `.helm` directory (files outside `.helm` cannot be used).
 {% endraw %}
@@ -257,7 +257,7 @@ global:
       password: 100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123
 ```
 
-Each value like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123` in the secret values map is a werf secret encoded value. Otherwise secret values map is the same as a regular values map. See more info [about secret values generation and working with secrets](#secret-values).
+Each value like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123` in the secret values map is a werf secret encoded value. Otherwise secret values map is the same as a regular values map. See more info [about secret values generation and working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
 
 File `.helm/secret-values.yaml` is the default secret values file. Additional user defined secret values can alternatively be passed via separate secret values files by sepcifying werf options `--secret-values=PATH_TO_FILE` (can be used multiple times to pass multiple files).
 
@@ -418,7 +418,7 @@ Based on the environment werf will determine:
  1. Release name.
  2. Kubernetes namespace.
  
-Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI system, see [more info about integration with CI systems](#TODO). Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
+Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI system, see [more info about plugging werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html). Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
 
 #### Integration with Gitlab
 
@@ -426,10 +426,11 @@ Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.htm
 
 `CI_ENVIRONMENT_SLUG` gitlab variable used in Werf to determine environment name in gitlab pipeline.
 
+See more info about [plugging werf into Gitlab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
 
 ### Release name
 
-By default release name will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) and `[[ env ]]` refers to the specified or detected environment.
+By default release name will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#project-name) and `[[ env ]]` refers to the specified or detected environment.
 
 For example for project named `symfony-demo` there will be following Helm Release names depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;

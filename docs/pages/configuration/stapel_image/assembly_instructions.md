@@ -553,7 +553,7 @@ For each _user stage_ werf creates a list of matched files and calculates a chec
 
 `git.stageDependencies` masks work together with `git.includePaths` and `git.excludePaths` masks. werf considers only files matched with `includePaths` filter and `stageDependencies` masks. Likewise, werf considers only files not matched with `excludePaths` filter and matched with `stageDependencies` masks.
 
-`stageDependencies` masks works like `includePaths` and `excludePaths` filters. Masks are matched with files paths with [fnmatch method](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch). Masks may contain the following patterns:
+`stageDependencies` masks works like `includePaths` and `excludePaths` filters. Masks are matched with files paths and may contain the following glob patterns:
 
 - `*` — matches any file. This pattern includes `.` and excludes `/`
 - `**` — matches directories recursively or files expansively
@@ -574,11 +574,10 @@ Mask that starts with `*` is treated as anchor name by yaml parser. So mask with
 
 Werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
 
-- werf creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters
-- each file path from the list compared to the mask with the use of [fnmatch](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch) with FNM_PATHNAME and FNM_PERIOD flags (`.` is included in the `*`, however `/` is excluded);
-  - if fnmatch returns true, then the file is matched;
+- werf creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters:
+- each file path from the list compared to the mask with the use of glob patterns;
 - if mask matches a directory then this directory content is matched recursively;
-- werf calculates checksum of attributes and content of all matched files;
+- werf calculates checksum of attributes and content of all matched files.
 
 These checksums are calculated in the beginning of the build process before any stage container is ran.
 
