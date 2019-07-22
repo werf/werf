@@ -253,7 +253,7 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stage
 
-Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleanup_process.html).
+Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
 In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
 

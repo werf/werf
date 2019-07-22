@@ -74,8 +74,8 @@ entries:
           - title: Differences with Helm
             url: /documentation/reference/deploy_process/differences_with_helm.html
 
-      - title: Cleanup Process
-        url: /documentation/reference/cleanup_process.html
+      - title: Cleaning Process
+        url: /documentation/reference/cleaning_process.html
 
       - title: Plugging into CI/CD
         sfi:
@@ -89,8 +89,8 @@ entries:
       - title: Local Development
         sfi:
 
-          - title: Installing Minikube
-            url: /documentation/reference/local_development/installing_minikube.html
+          - title: Setup Minikube
+            url: /documentation/reference/local_development/setup_minikube.html
 
           - title: Stage Introspection
             url: /documentation/reference/local_development/stage_introspection.html

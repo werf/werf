@@ -29,14 +29,14 @@ In [Overview]({{ site.baseurl }}/documentation/configuration/introduction.html) 
 * Config processing steps.
 * Supported Go templates functions.
 
-Other section articles give detailed information about [Image from Dockerfile]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
+Other section articles give detailed information about [Dockerfile Image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
 
 **Reference** section is dedicated to Werf main processes:
 
 * [Build process]({{ site.baseurl }}/documentation/reference/build_process.html).
 * [Publish process]({{ site.baseurl }}/documentation/reference/publish_process.html).
 * [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
-* [Cleanup process]({{ site.baseurl }}/documentation/reference/cleanup_process.html).
+* [Cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
 Each article describes a certain process: process composition, available options and features. 
 
@@ -44,7 +44,7 @@ Also, this section includes articles with base primitives and general tools:
 
 * [Stages and images]({{ site.baseurl }}/documentation/reference/stages_and_images.html).
 * [Registry Authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
-* [Local Development]({{ site.baseurl }}/documentation/reference/local_development/installing_minikube.html).
+* [Local Development]({{ site.baseurl }}/documentation/reference/local_development/setup_minikube.html).
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
 Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use **CLI Commands** section.
