@@ -104,7 +104,7 @@ $( document ).ready(function() {
     if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'latest'))) {
       toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
     }
-    menu.prepend(toggler);
+    menu.prepend(toggler);    
     $('.header__menu').addClass('header__menu_active')
   });
 
@@ -115,6 +115,19 @@ $( document ).ready(function() {
         $(this).text(data.stargazers_count)
       });
     });
+  });
+
+  // Update roadmap steps
+  $( document ).ready(function() {
+    $('[data-roadmap-step]').each(function( index ) {
+      var $step = $(this);
+      $.get('https://api.github.com/repos/flant/werf/issues/' + $step.data('roadmap-step'), function(data) {
+        if (data.state == 'closed') {
+          $step.addClass('roadmap__steps-list-item_closed');
+        }
+      });
+    });
+    
   });
 
   $( document ).ready(function() {
