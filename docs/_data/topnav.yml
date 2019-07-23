@@ -7,3 +7,5 @@ topnav:
     url: /documentation/
   - title: Publications
     url: /publications.html
+  - title: Releases
+    url: /releases.html

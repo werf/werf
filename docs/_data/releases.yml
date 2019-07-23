@@ -1,0 +1,861 @@
+releases:
+- url: https://api.github.com/repos/flant/werf/releases/18729295
+  assets_url: https://api.github.com/repos/flant/werf/releases/18729295/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18729295/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.8
+  id: 18729295
+  node_id: MDc6UmVsZWFzZTE4NzI5Mjk1
+  tag_name: v1.0.3-beta.8
+  target_commitish: master
+  name: Werf v1.0.3-beta.8
+  draft: false
+  prerelease: false
+  created_at: "2019-07-19T10:17:39Z"
+  published_at: "2019-07-19T10:24:56Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.8
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.8
+  body: |+
+    # Fixes and docs improvals
+
+     * fix stage 'is not exist in stages storage' when using git submodules and parallel ci builds;
+     * https://werf.io breadcrumbs.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.8/werf-linux-amd64-v1.0.3-beta.8)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.8/werf-darwin-amd64-v1.0.3-beta.8)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.8/werf-windows-amd64-v1.0.3-beta.8.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18712369
+  assets_url: https://api.github.com/repos/flant/werf/releases/18712369/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18712369/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.7
+  id: 18712369
+  node_id: MDc6UmVsZWFzZTE4NzEyMzY5
+  tag_name: v1.0.3-beta.7
+  target_commitish: master
+  name: Werf v1.0.3-beta.7
+  draft: false
+  prerelease: false
+  created_at: "2019-07-18T17:16:06Z"
+  published_at: "2019-07-18T17:28:03Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.7
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.7
+  body: |+
+    # Rework documentaion
+
+     * New werf.io headers structure.
+     * A lot of small improvements over all docs pages.
+     * Dockerfile image is the main way to build images: new Getting Started howto.
+     * Updated and improved README, project roadmap.
+     * Complete deploy reference.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.7/werf-linux-amd64-v1.0.3-beta.7)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.7/werf-darwin-amd64-v1.0.3-beta.7)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.7/werf-windows-amd64-v1.0.3-beta.7.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18595887
+  assets_url: https://api.github.com/repos/flant/werf/releases/18595887/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18595887/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.6
+  id: 18595887
+  node_id: MDc6UmVsZWFzZTE4NTk1ODg3
+  tag_name: v1.0.3-beta.6
+  target_commitish: master
+  name: Werf v1.0.3-beta.6
+  draft: false
+  prerelease: false
+  created_at: "2019-07-13T16:16:25Z"
+  published_at: "2019-07-13T16:23:31Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.6
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.6
+  body: "# Fix unexpected signature change when using stageDependencies with '*' pattern\n
+    \   \nDo not use work tree caching for now in true-git when switching work tree
+    to different commit.\n\n# [docker registry] Fix authentication error without message\n\nError:
+    deleting image \"registry/user/project@sha256\": <nil>\n\n# Installation\n\n[Linux
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-linux-amd64-v1.0.3-beta.6)\n\n[Darwin
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-darwin-amd64-v1.0.3-beta.6)\n\n[Windows
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-windows-amd64-v1.0.3-beta.6.exe)\n\n"
+- url: https://api.github.com/repos/flant/werf/releases/18581115
+  assets_url: https://api.github.com/repos/flant/werf/releases/18581115/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18581115/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.5
+  id: 18581115
+  node_id: MDc6UmVsZWFzZTE4NTgxMTE1
+  tag_name: v1.0.3-beta.5
+  target_commitish: master
+  name: Werf v1.0.3-beta.5
+  draft: false
+  prerelease: false
+  created_at: "2019-07-12T14:30:37Z"
+  published_at: "2019-07-12T14:42:16Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.5
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.5
+  body: |+
+    # Critical fixes
+
+    * Fix Job tracker hangs on Job-error.
+    * Fix 'fatal error: concurrent map read and map write' during deploy.
+
+    # Docs improvements
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.5/werf-linux-amd64-v1.0.3-beta.5)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.5/werf-darwin-amd64-v1.0.3-beta.5)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.5/werf-windows-amd64-v1.0.3-beta.5.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18574868
+  assets_url: https://api.github.com/repos/flant/werf/releases/18574868/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18574868/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.4
+  id: 18574868
+  node_id: MDc6UmVsZWFzZTE4NTc0ODY4
+  tag_name: v1.0.3-beta.4
+  target_commitish: master
+  name: Werf v1.0.3-beta.4
+  draft: false
+  prerelease: false
+  created_at: "2019-07-12T09:58:58Z"
+  published_at: "2019-07-12T10:06:20Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.4
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.4
+  body: |+
+    # Update go-containerregistry to fix 'unsupported Media Type'
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.4/werf-linux-amd64-v1.0.3-beta.4)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.4/werf-darwin-amd64-v1.0.3-beta.4)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.4/werf-windows-amd64-v1.0.3-beta.4.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18560589
+  assets_url: https://api.github.com/repos/flant/werf/releases/18560589/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18560589/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.3
+  id: 18560589
+  node_id: MDc6UmVsZWFzZTE4NTYwNTg5
+  tag_name: v1.0.3-beta.3
+  target_commitish: master
+  name: Werf v1.0.3-beta.3
+  draft: false
+  prerelease: false
+  created_at: "2019-07-11T18:02:25Z"
+  published_at: "2019-07-11T18:11:09Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.3
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.3
+  body: |+
+    # More refined deploy table output for gitlab
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.3/werf-linux-amd64-v1.0.3-beta.3)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.3/werf-darwin-amd64-v1.0.3-beta.3)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.3/werf-windows-amd64-v1.0.3-beta.3.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18559959
+  assets_url: https://api.github.com/repos/flant/werf/releases/18559959/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18559959/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.2
+  id: 18559959
+  node_id: MDc6UmVsZWFzZTE4NTU5OTU5
+  tag_name: v1.0.3-beta.2
+  target_commitish: master
+  name: Werf v1.0.3-beta.2
+  draft: false
+  prerelease: false
+  created_at: "2019-07-11T17:34:28Z"
+  published_at: "2019-07-11T17:44:46Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.2
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.2
+  body: |+
+    # Refine deploy table output for gitlab
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.2/werf-linux-amd64-v1.0.3-beta.2)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.2/werf-darwin-amd64-v1.0.3-beta.2)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.2/werf-windows-amd64-v1.0.3-beta.2.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18553646
+  assets_url: https://api.github.com/repos/flant/werf/releases/18553646/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18553646/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-beta.1
+  id: 18553646
+  node_id: MDc6UmVsZWFzZTE4NTUzNjQ2
+  tag_name: v1.0.3-beta.1
+  target_commitish: master
+  name: Werf v1.0.3-beta.1
+  draft: false
+  prerelease: false
+  created_at: "2019-07-11T13:40:41Z"
+  published_at: "2019-07-11T13:59:16Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-beta.1
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-beta.1
+  body: |+
+    # v1.0.3 alpha becomes beta!
+
+    ### Full Dockerfile compatibility
+
+    To build images using Dockerfiles and use them in the werf ecosystem:
+
+    ```yaml
+    project: my-project
+    configVersion: 1
+    ---
+    image: a
+    dockerfile: ./Dockerfile-a
+    ---
+    image: b
+    dockerfile: ./Dockerfile-b
+    ```
+
+    ### The new deploy "Status Progress" table
+
+    Show Jobs, Deployments, StatefulSets and DaemonSets in the single status progress table with the format similar to "kubectl get ..." tables.
+
+     * Show awaited resources in yellow color.
+     * Show awaited resource fields in yellow color.
+     * Show resources important fields changes.
+     * Show "what resources tracker is waiting for?" for each not ready resource.
+     * Do not show excess kubernetes events and service messages by default for more clean deploy output.
+     * Logs appearance improved.
+     * Logs for the resources are shown only until corresponding pod reaches ready state (except Jobs, for Jobs logs are shown )
+
+    ### New deploy modes annotations (debugged and work properly now!)
+
+     * `"werf.io/show-service-messages": false|true` (default false) — show kubernetes events and other service messages related to the resource.
+     * `"werf.io/fail-mode": FailWholeDeployProcessImmediately|HopeUntilEndOfDeployProcess|IgnoreAndContinueDeployProcess` (default FailWholeDeployProcessImmediately) — specifies how to handle resource failures.
+     * `"werf.io/failures-allowed-per-replica": COUNT` (default 1 per replica) — how many failures to ignore before failing deploy process (dependes also on the selected fail-mode). Debugged, now works properly.
+     * `"werf.io/track-termination-mode": WaitUntilResourceReady|NonBlocking` (default WaitUntilResourceReady) — WaitUntilResourceReady specifies to block whole deploy process tracking till resource is ready, and NonBlocking specifies to track this resource only until there are other resources not ready yet.
+     * `"werf.io/skip-logs": false|true` (default false) — do not show logs for this resource.
+
+    ### Other fixes and updates
+
+    [logging] logboek v0.2.0.
+    * Wrap sentence and long words by default.
+
+    [publish] Publish specific images without related ones.
+
+    Fix "runtime error: invalid memory address or nil pointer dereference" error during build with imported artifacts.
+
+    [Docs] Tiny improvements and fixes.
+
+    More user friendly `--images-repo` param value validation.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.1/werf-linux-amd64-v1.0.3-beta.1)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.1/werf-darwin-amd64-v1.0.3-beta.1)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-beta.1/werf-windows-amd64-v1.0.3-beta.1.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18506187
+  assets_url: https://api.github.com/repos/flant/werf/releases/18506187/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18506187/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.9
+  id: 18506187
+  node_id: MDc6UmVsZWFzZTE4NTA2MTg3
+  tag_name: v1.0.3-alpha.9
+  target_commitish: master
+  name: Werf v1.0.3-alpha.9
+  draft: false
+  prerelease: false
+  created_at: "2019-07-09T19:14:48Z"
+  published_at: "2019-07-09T19:23:00Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.9
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.9
+  body: |+
+    # Update kubedog: fix sts tracker hangs on 1.10 when UpdateStrategy=OnDelete
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.9/werf-linux-amd64-v1.0.3-alpha.9)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.9/werf-darwin-amd64-v1.0.3-alpha.9)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.9/werf-windows-amd64-v1.0.3-alpha.9.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18471504
+  assets_url: https://api.github.com/repos/flant/werf/releases/18471504/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18471504/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.8
+  id: 18471504
+  node_id: MDc6UmVsZWFzZTE4NDcxNTA0
+  tag_name: v1.0.3-alpha.8
+  target_commitish: master
+  name: Werf v1.0.3-alpha.8
+  draft: false
+  prerelease: false
+  created_at: "2019-07-08T13:14:12Z"
+  published_at: "2019-07-08T13:32:33Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.8
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.8
+  body: |+
+    # New deploy tracking modes
+
+    ## `"werf.io/track-termination-mode": WaitUntilResourceReady|NonBlocking`
+
+     *  `WaitUntilResourceReady` (default) tells werf to track resource until it is ready and to block whole deploy process until this condition is satisfied for all of the release resources.
+     * `NonBlocking` mode tells werf to track resource only until all other resources are ready or all remaining resources also have NonBlocking mode enabled.
+
+    ## `"werf.io/show-service-messages": false|true`
+
+    Enables service messages output from kubernetes such as kubernetes events.
+
+    By default service messages are disabled and only will be shown in the end of failed deploy process (for the resources that have failed).
+
+    ## `"werf.io/skip-logs": false|true`
+
+    Allows to suppress logs of all pods and all containers for the specified resource.
+
+    By default all logs will be shown.
+
+    # More fixes and improvements
+
+    * Docs tiny fixes and improvements.
+    * Fix Job deploy tracker does not show logs.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.8/werf-linux-amd64-v1.0.3-alpha.8)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.8/werf-darwin-amd64-v1.0.3-alpha.8)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.8/werf-windows-amd64-v1.0.3-alpha.8.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18387199
+  assets_url: https://api.github.com/repos/flant/werf/releases/18387199/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18387199/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.7
+  id: 18387199
+  node_id: MDc6UmVsZWFzZTE4Mzg3MTk5
+  tag_name: v1.0.3-alpha.7
+  target_commitish: master
+  name: Werf v1.0.3-alpha.7
+  draft: false
+  prerelease: false
+  created_at: "2019-07-03T11:04:44Z"
+  published_at: "2019-07-03T13:11:05Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.7
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.7
+  body: "# Fixes\n\n * Better validation of --images-repo value: improve usage experience.\n
+    * Fixed docs typos.\n\n# Improve multitracker output\n    \n * Do not print excess
+    newlines when resources are ready immediately.\n * Fix multitracker does not show
+    StatefulSet's and DaemonSet's Pods logs.\n * Show logs of all Pods till pod reaches
+    ready state (not configurable for now).\n\n![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/kubedog/kubedog-multitrack-with-output-prefix.gif)\n\n#
+    Installation\n\n[Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.7/werf-linux-amd64-v1.0.3-alpha.7)\n\n[Darwin
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.7/werf-darwin-amd64-v1.0.3-alpha.7)\n\n[Windows
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.7/werf-windows-amd64-v1.0.3-alpha.7.exe)\n\n"
+- url: https://api.github.com/repos/flant/werf/releases/18309363
+  assets_url: https://api.github.com/repos/flant/werf/releases/18309363/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18309363/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.6
+  id: 18309363
+  node_id: MDc6UmVsZWFzZTE4MzA5MzYz
+  tag_name: v1.0.3-alpha.6
+  target_commitish: master
+  name: Werf v1.0.3-alpha.6
+  draft: false
+  prerelease: false
+  created_at: "2019-06-29T11:27:51Z"
+  published_at: "2019-06-29T11:40:31Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.6
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.6
+  body: |+
+    Fix "runtime error: invalid memory address or nil pointer dereference" error during build with imported artifacts
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.6/werf-linux-amd64-v1.0.3-alpha.6)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.6/werf-darwin-amd64-v1.0.3-alpha.6)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.6/werf-windows-amd64-v1.0.3-alpha.6.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18304673
+  assets_url: https://api.github.com/repos/flant/werf/releases/18304673/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18304673/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.5
+  id: 18304673
+  node_id: MDc6UmVsZWFzZTE4MzA0Njcz
+  tag_name: v1.0.3-alpha.5
+  target_commitish: master
+  name: Werf v1.0.3-alpha.5
+  draft: false
+  prerelease: false
+  created_at: "2019-06-28T21:27:18Z"
+  published_at: "2019-06-28T21:32:59Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.5
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.5
+  body: |+
+    # FIX 'ERROR! Unexpected Exception, this is probably a bug: libc.musl-x86_64.so.1: cannot open shared object file: No such file or directory'
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.5/werf-linux-amd64-v1.0.3-alpha.5)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.5/werf-darwin-amd64-v1.0.3-alpha.5)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.5/werf-windows-amd64-v1.0.3-alpha.5.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18303123
+  assets_url: https://api.github.com/repos/flant/werf/releases/18303123/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18303123/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.4
+  id: 18303123
+  node_id: MDc6UmVsZWFzZTE4MzAzMTIz
+  tag_name: v1.0.3-alpha.4
+  target_commitish: master
+  name: Werf v1.0.3-alpha.4
+  draft: false
+  prerelease: false
+  created_at: "2019-06-28T19:41:41Z"
+  published_at: "2019-06-28T20:01:56Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.4
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.4
+  body: "# Solid Dockerfile support\n\n * Build dockerfiles-images specified in werf.yaml
+    as werf-images.\n * Calculate special stage \"dockerfile\" signature to incorporate
+    dockerfile-image into werf-world.\n * Multistaged dockerfiles are supported.\n\n#
+    Deploy improvements\n\n * Track release jobs, show jobs in status-progress, track
+    hook-jobs with status-progress table (using multitrack). \n * Deploy: added helm
+    final release status table as-is without changes.\n * Fix failures-allowed-per-replica=0.\n
+    * Fix all fail-modes: IgnoreAndContinueDeployProcess, FailWholeDeployProcessImmediately,
+    HopeUntilEndOfDeployProcess.\n\n# Other fixes\n\n * [publish] Publish specific
+    images without related ones\n\n# Installation\n\n[Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.4/werf-linux-amd64-v1.0.3-alpha.4)\n\n[Darwin
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.4/werf-darwin-amd64-v1.0.3-alpha.4)\n\n[Windows
+    amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.4/werf-windows-amd64-v1.0.3-alpha.4.exe)\n\n"
+- url: https://api.github.com/repos/flant/werf/releases/18143772
+  assets_url: https://api.github.com/repos/flant/werf/releases/18143772/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18143772/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.3
+  id: 18143772
+  node_id: MDc6UmVsZWFzZTE4MTQzNzcy
+  tag_name: v1.0.3-alpha.3
+  target_commitish: master
+  name: Werf v1.0.3-alpha.3
+  draft: false
+  prerelease: false
+  created_at: "2019-06-21T13:14:56Z"
+  published_at: "2019-06-21T13:24:15Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.3
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.3
+  body: |+
+    # The new deploy status progress table
+
+    * Show Deployments, DaemonSets and StatefulSets.
+    * Show pods statuses for each controller.
+    * Table view instead of raw messages.
+    * Show indicators progressing.
+    * Show messages about 'what werf is waiting for?' for each resource.
+
+    ### Deployment change demo
+
+    ![Deployment change demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/demo-deployment-change.gif)
+
+    ### Deployment change with error demo
+
+    ![Deployment change with error demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/demo-deployment-change-with-error.gif)
+
+    ### Partitioned StatefulSet change demo
+
+    ![Partitioned StatefulSet change demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/demo-sts-partitioned-change.gif)
+
+    # Logging improvements
+
+    [logging] logboek v0.2.0
+    wrap sentence and long word by default
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.3/werf-linux-amd64-v1.0.3-alpha.3)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.3/werf-darwin-amd64-v1.0.3-alpha.3)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.3/werf-windows-amd64-v1.0.3-alpha.3.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18015314
+  assets_url: https://api.github.com/repos/flant/werf/releases/18015314/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18015314/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.2
+  id: 18015314
+  node_id: MDc6UmVsZWFzZTE4MDE1MzE0
+  tag_name: v1.0.3-alpha.2
+  target_commitish: master
+  name: Werf v1.0.3-alpha.2
+  draft: false
+  prerelease: false
+  created_at: "2019-06-15T11:32:43Z"
+  published_at: "2019-06-15T11:39:41Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.2
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.2
+  body: |+
+    # Fixes
+
+    * Fix images repo cleanup limit policy deletes most recent images instead of old images.
+    * Fix 'object not found' error during build.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.2/werf-linux-amd64-v1.0.3-alpha.2)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.2/werf-darwin-amd64-v1.0.3-alpha.2)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.2/werf-windows-amd64-v1.0.3-alpha.2.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/18015265
+  assets_url: https://api.github.com/repos/flant/werf/releases/18015265/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/18015265/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-beta.4
+  id: 18015265
+  node_id: MDc6UmVsZWFzZTE4MDE1MjY1
+  tag_name: v1.0.2-beta.4
+  target_commitish: master
+  name: Werf v1.0.2-beta.4
+  draft: false
+  prerelease: false
+  created_at: "2019-06-15T11:23:01Z"
+  published_at: "2019-06-15T11:29:37Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-beta.4
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-beta.4
+  body: |+
+    # Fix 'object not found' error during build
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.4/werf-linux-amd64-v1.0.2-beta.4)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.4/werf-darwin-amd64-v1.0.2-beta.4)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.4/werf-windows-amd64-v1.0.2-beta.4.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17995254
+  assets_url: https://api.github.com/repos/flant/werf/releases/17995254/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17995254/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-beta.3
+  id: 17995254
+  node_id: MDc6UmVsZWFzZTE3OTk1MjU0
+  tag_name: v1.0.2-beta.3
+  target_commitish: master
+  name: Werf v1.0.2-beta.3
+  draft: false
+  prerelease: false
+  created_at: "2019-06-14T10:51:41Z"
+  published_at: "2019-06-14T10:58:10Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-beta.3
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-beta.3
+  body: |+
+    # Fix images repo cleanup limit policy deletes most recent images instead of old images
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.3/werf-linux-amd64-v1.0.2-beta.3)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.3/werf-darwin-amd64-v1.0.2-beta.3)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.3/werf-windows-amd64-v1.0.2-beta.3.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17993219
+  assets_url: https://api.github.com/repos/flant/werf/releases/17993219/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17993219/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-beta.2
+  id: 17993219
+  node_id: MDc6UmVsZWFzZTE3OTkzMjE5
+  tag_name: v1.0.2-beta.2
+  target_commitish: master
+  name: Werf v1.0.2-beta.2
+  draft: false
+  prerelease: false
+  created_at: "2019-06-14T09:13:42Z"
+  published_at: "2019-06-14T09:20:52Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-beta.2
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-beta.2
+  body: |+
+    # Revert update of google/go-containerregistry which possibly causes docker registry cleanup errors
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.2/werf-linux-amd64-v1.0.2-beta.2)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.2/werf-darwin-amd64-v1.0.2-beta.2)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.2/werf-windows-amd64-v1.0.2-beta.2.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17973450
+  assets_url: https://api.github.com/repos/flant/werf/releases/17973450/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17973450/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.3-alpha.1
+  id: 17973450
+  node_id: MDc6UmVsZWFzZTE3OTczNDUw
+  tag_name: v1.0.3-alpha.1
+  target_commitish: master
+  name: Werf v1.0.3-alpha.1
+  draft: false
+  prerelease: false
+  created_at: "2019-06-13T14:20:56Z"
+  published_at: "2019-06-13T14:27:44Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.3-alpha.1
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.3-alpha.1
+  body: |+
+    # Experimental Dockerfile support
+
+    Dockerfile(s) should be specified in werf.yaml, for each `image` section:
+
+    ```
+    ---
+    image: IMAGE
+    dockerfile: PATH_TO_DOCKERFILE # required
+    context: PATH_TO_CONTEXT # required, will be passed to docker build context path
+    args: # optional, will be passed to `docker build --build-arg=KEY1=VALUE1 --build-arg=KEY2=VALUE2`
+      KEY1: VALUE1
+      KEY2: VALUE2
+    target: TARGET # optional, will be passed to `docker build --target=TARGET`
+    ```
+
+    Minimal config:
+
+    ```
+    configVersion: 1
+    project: myproject
+    ---
+    image: ~
+    dockerfile: Dockerfile
+    context: "."
+    ```
+
+    Config with multiple images:
+
+    ```
+    configVersion: 1
+    project: myproject
+    ---
+    image: backend
+    dockerfile: dockerfiles/backend-Dockerfile
+    context: "."
+    ---
+    image: frontend
+    dockerfile: dockerfiles/frontend-Dockerfile
+    context: "."
+    ```
+
+    IMPORTANT: Only `werf build-and-publish` command will build images from specified Dockerfiles for now (simple `werf build` will be supported soon).
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.1/werf-linux-amd64-v1.0.3-alpha.1)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.1/werf-darwin-amd64-v1.0.3-alpha.1)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.3-alpha.1/werf-windows-amd64-v1.0.3-alpha.1.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17907479
+  assets_url: https://api.github.com/repos/flant/werf/releases/17907479/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17907479/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-beta.1
+  id: 17907479
+  node_id: MDc6UmVsZWFzZTE3OTA3NDc5
+  tag_name: v1.0.2-beta.1
+  target_commitish: master
+  name: Werf v1.0.2-beta.1
+  draft: false
+  prerelease: false
+  created_at: "2019-06-11T09:07:19Z"
+  published_at: "2019-06-11T09:20:12Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-beta.1
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-beta.1
+  body: |+
+    # 1.0.2-alpha becomes 1.0.1-beta
+
+    * Builtin tiller into werf.
+    * Improved deploy status progress reports for deployments and new deploy annotations:
+      * werf.io/fail-mode
+      * werf.io/failures-allowed-per-replica
+      * werf.io/log-regex
+      * werf.io/log-regex-for-CONTAINER
+      * werf.io/skip-logs-for-containers
+      * werf.io/show-logs-only-for-containers
+      * werf.io/recreate
+      * werf.io/skip-logs — not supported yet
+      * werf.io/show-logs-until — not supported yet
+      * werf.io/skip-events — not supported yet
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.1/werf-linux-amd64-v1.0.2-beta.1)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.1/werf-darwin-amd64-v1.0.2-beta.1)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-beta.1/werf-windows-amd64-v1.0.2-beta.1.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17907157
+  assets_url: https://api.github.com/repos/flant/werf/releases/17907157/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17907157/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-alpha.15
+  id: 17907157
+  node_id: MDc6UmVsZWFzZTE3OTA3MTU3
+  tag_name: v1.0.2-alpha.15
+  target_commitish: master
+  name: Werf v1.0.2-alpha.15
+  draft: false
+  prerelease: false
+  created_at: "2019-06-11T08:59:50Z"
+  published_at: "2019-06-11T09:06:45Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-alpha.15
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-alpha.15
+  body: |+
+    Revert "Write stripped version into werf.io/version anno"
+
+    Always write full version of werf into werf.io/version anno.
+
+    Annotation will be updated on every werf update.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.15/werf-linux-amd64-v1.0.2-alpha.15)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.15/werf-darwin-amd64-v1.0.2-alpha.15)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.15/werf-windows-amd64-v1.0.2-alpha.15.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17891367
+  assets_url: https://api.github.com/repos/flant/werf/releases/17891367/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17891367/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-alpha.14
+  id: 17891367
+  node_id: MDc6UmVsZWFzZTE3ODkxMzY3
+  tag_name: v1.0.2-alpha.14
+  target_commitish: master
+  name: Werf v1.0.2-alpha.14
+  draft: false
+  prerelease: false
+  created_at: "2019-06-10T16:10:50Z"
+  published_at: "2019-06-10T16:18:04Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-alpha.14
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-alpha.14
+  body: |+
+    # Write stripped version into werf.io/version anno
+
+    "1.0 alpha" for "v1.0.2-alpha.13" for example.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.14/werf-linux-amd64-v1.0.2-alpha.14)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.14/werf-darwin-amd64-v1.0.2-alpha.14)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.14/werf-windows-amd64-v1.0.2-alpha.14.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17889105
+  assets_url: https://api.github.com/repos/flant/werf/releases/17889105/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17889105/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-alpha.13
+  id: 17889105
+  node_id: MDc6UmVsZWFzZTE3ODg5MTA1
+  tag_name: v1.0.2-alpha.13
+  target_commitish: master
+  name: Werf v1.0.2-alpha.13
+  draft: false
+  prerelease: false
+  created_at: "2019-06-10T14:39:03Z"
+  published_at: "2019-06-10T14:46:53Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-alpha.13
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-alpha.13
+  body: |+
+    # Renamed werf deploy annotations
+
+    * werf.io/fail-mode
+    * werf.io/failures-allowed-per-replica
+    * werf.io/log-regex
+    * werf.io/log-regex-for-CONTAINER
+    * werf.io/skip-logs — not supported yet
+    * werf.io/skip-logs-for-containers
+    * werf.io/show-logs-only-for-containers
+    * werf.io/show-logs-until — not supported yet
+    * werf.io/skip-events — not supported yet
+    * werf.io/recreate
+
+    # Docs
+
+    Fix multi-images howto.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.13/werf-linux-amd64-v1.0.2-alpha.13)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.13/werf-darwin-amd64-v1.0.2-alpha.13)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.13/werf-windows-amd64-v1.0.2-alpha.13.exe)
+
+- url: https://api.github.com/repos/flant/werf/releases/17854460
+  assets_url: https://api.github.com/repos/flant/werf/releases/17854460/assets
+  upload_url: https://uploads.github.com/repos/flant/werf/releases/17854460/assets{?name,label}
+  html_url: https://github.com/flant/werf/releases/tag/v1.0.2-alpha.12
+  id: 17854460
+  node_id: MDc6UmVsZWFzZTE3ODU0NDYw
+  tag_name: v1.0.2-alpha.12
+  target_commitish: master
+  name: Werf v1.0.2-alpha.12
+  draft: false
+  prerelease: false
+  created_at: "2019-06-07T14:37:36Z"
+  published_at: "2019-06-07T14:47:36Z"
+  assets: []
+  tarball_url: https://api.github.com/repos/flant/werf/tarball/v1.0.2-alpha.12
+  zipball_url: https://api.github.com/repos/flant/werf/zipball/v1.0.2-alpha.12
+  body: |+
+    # Fixes
+
+    * Fix submodules 'HTTP Basic: Access denied ... Unable to fetch in submodule path'.
+    * Fix import file from artifact to image directory.
+
+    # Docs
+
+    * Fix image medium.jpeg not found.
+    * Howto multi images small fix: do not autoremove example containers and fix payment_gw image build instructions.
+
+    # Installation
+
+    [Linux amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.12/werf-linux-amd64-v1.0.2-alpha.12)
+
+    [Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.12/werf-darwin-amd64-v1.0.2-alpha.12)
+
+    [Windows amd64](https://dl.bintray.com/flant/werf/v1.0.2-alpha.12/werf-windows-amd64-v1.0.2-alpha.12.exe)
