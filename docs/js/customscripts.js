@@ -190,3 +190,23 @@ $(document).ready(function(){
     })
   }, 500)
 });
+
+$(document).ready(function(){
+  
+  $('h1:contains("Installation")').each(function( index ) {
+    var $title = $(this);
+    var $btn1 = $title.next('p');
+    var $btn2 = $btn1.next('p');
+    var $btn3 = $btn2.next('p');
+    
+    var new_btns = $('<div class="publications__install-btns">');
+    new_btns.append($($btn1.html()).addClass('releases__btn'));
+    new_btns.append($($btn2.html()).addClass('releases__btn'));
+    new_btns.append($($btn3.html()).addClass('releases__btn'));
+
+    $btn1.remove();
+    $btn2.remove();
+    $btn3.remove();
+    $title.after(new_btns);
+  });
+});

@@ -5,14 +5,18 @@ sidebar: documentation
 layout: default
 ---
 
-<link rel="stylesheet" href="{{ site.baseurl }}/css/publications.css">
+<link rel="stylesheet" href="{{ site.baseurl }}/css/releases.css">
 
 {% assign releases = site.data.releases.releases %}
-
-{% for release in releases %}
-
-<h1><a href="{{ release.html_url }}">{{ release.name }}</a></h1>
-{{ release.body | markdownify }}
-<hr>
-
-{% endfor %}
+<div class="main-container page__container releases">
+    {% for release in releases %}
+        <div class="releases__title">
+            <a href="{{ release.html_url }}">
+                {{ release.name }}
+            </a>
+        </div>
+        <div class="releases__body">
+            {{ release.body | markdownify }}
+        </div>
+    {% endfor %}
+</div>
