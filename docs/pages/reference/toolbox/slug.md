@@ -45,6 +45,17 @@ The following steps perform, when werf apply transformations of the text in slug
 * Reducing multiple dashes sequences to one dash.
 * Trimming the length of the data so that result will fit maximum bytes limit.
 
-## Slugify
+## Usage
 
-{% include /cli/werf_slugify.md %}
+Slug can be applied to arbitrary string with [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
+
+Also Werf applies slug automatically when used in CI/CD systems such as Gitlab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
+ * apply slug automatically to params that are derived automatically from CI/CD systems environment;
+ * do not apply slug automatically to params that are specified manually with `--tag-*`, `--release` or `--namespace`, this way params are only validated to confirm with the requirements.
+
+To apply slug to params specified manually with `--tag-*`, `--release` or `--namespace` user should call [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) explicitly, for example:
+
+```
+werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...
+werf deploy --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...
+```

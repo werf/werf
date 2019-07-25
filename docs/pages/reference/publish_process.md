@@ -24,7 +24,21 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 <!--Before digging into these algorithms, it is helpful to see how to publish images using Docker.-->
 
-<!--### Standard publish procedure-->
+<!--### Stages publish procedure-->
+
+<!--To publish stages cache of a image from the config werf implements the **stages publish procedure**. It consists of the following steps:-->
+
+<!-- 1. Create temporary image names aliases for all docker images in stages cache, so that:-->
+<!--     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/documentation/reference/registry/image_naming.html#repo-parameter)).-->
+<!--     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).-->
+<!-- 2. Push images by newly created aliases into docker registry.-->
+<!-- 3. Delete temporary image names aliases.-->
+
+<!--All of these steps are also performed with a single werf command, which will be described below.-->
+
+<!--The result of this procedure is multiple images from stages cache of image pushed into the docker registry.-->
+
+## Images publish procedure
 
 Normally in the Docker world publish process consists of the following steps:
 
@@ -41,118 +55,119 @@ docker rmi REPO:TAG
  3. Push image by newly created alias into Docker registry.
  4. Delete temporary image name alias.
 
-To publish an image from the config Werf implements another logic:
+To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from the config Werf implements another logic:
 
-1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning]({{ site.baseurl }}/documentation/reference/cleaning_process.html) processes.
-2. Push newly created image into Docker registry.
-3. Delete temporary image created in the 1'st step.
+ 1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+ 2. Push newly created image into Docker registry.
+ 3. Delete temporary image created in the 1'st step.
 
-The result of this procedure is an image named by the image naming rules pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
+This procedure will be referred as **images publish procedure**.
 
-<!--### Stages publish procedure-->
+The result of this procedure is an image named by the [*image naming rules*](#image-naming-rules) pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
-<!--To publish stages cache of a image from the config werf implements the **stages publish procedure**. It consists of the following steps:-->
+## Images naming
 
-<!-- 1. Create temporary image names aliases for all docker images in stages cache, so that:-->
-<!--     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/documentation/reference/registry/image_naming.html#repo-parameter)).-->
-<!--     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).-->
-<!-- 2. Push images by newly created aliases into docker registry.-->
-<!-- 3. Delete temporary image names aliases.-->
+During images publish procedure Werf constructs resulting images names using:
+ * _images repo_ param;
+ * image name from werf.yaml;
+ * tag param;
 
-<!--All of these steps are also performed with a single werf command, which will be described below.-->
+Resulting docker image name constructed as [`DOCKER_REPOSITORY`](https://docs.docker.com/glossary/?term=repository)`:`[`TAG`](https://docs.docker.com/engine/reference/commandline/tag).
 
-<!--The result of this procedure is multiple images from stages cache of image pushed into the docker registry.-->
+If werf project contains single nameless image, then _images repo_ used as docker repository without changes. Otherwise werf constructs docker repository name for each image as `IMAGES_REPO/IMAGE_NAME`.
 
-## Images repo
+So resulting docker image name costructed by the following pattern: `IMAGES_REPO[/IMAGE_NAME]:TAG`.
 
-The _images repo_ is Docker Repo to store images, can be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
+_Images repo_ param should be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
 
-Using _images repo_ werf constructs a [Docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
+*Docker tag* is taken from `--tag-*` params:
 
-* If werf project contains nameless image, werf uses _images repo_ as Docker repository.
-* Otherwise, werf constructs Docker repository name for each image by following template `IMAGES_REPO/IMAGE_NAME`.
+| option                     | description                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `--tag-git-tag TAG`        | Use git-tag tagging strategy and tag by the specified git tag                   |
+| `--tag-git-branch BRANCH`  | Use git-branch tagging strategy and tag by the specified git branch             |
+| `--tag-git-commit COMMIT`  | Use git-commit tagging strategy and tag by the specified git commit hash        |
+| `--tag-custom TAG`         | Use custom tagging strategy and tag by the specified arbitrary tag              |
 
-E.g., if there is unnamed image in a `werf.yaml` config and _images repo_ is `myregistry.myorg.com/sys/backend` then the Docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then Docker repository names are:
-* `myregistry.myorg.com/sys/backend/server` for `server` image;
-* `myregistry.myorg.com/sys/backend/worker` for `worker` image.
+All specified tag params text will be validated to confirm with the docker images tag rules. User may want to apply slug algorithm to the specified tag, see [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-## Image tag parameters
-
-| option                    | description                          |
-| ------------------------- | ------------------------------------ |
-| --tag-git-tag TAG         | tag with a slugified TAG             |
-| --tag-git-branch BRANCH   | tag with a slugified BRANCH          |
-| --tag-git-commit COMMIT   | tag with a slugified COMMIT                               |
-| --tag-custom TAG          | arbitrary TAG                        |
-
-Using tag options a user specifies not only tag value but also tagging strategy.
+Also using tag options a user specifies not only tag value but also tagging strategy.
 Tagging strategy affects on [certain policies in cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
-
-Besides, werf applies [tag slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) transformation rules on all options except `--tag-custom`.
-Thus, these tags satisfy the slug requirements, docker tag format, and a user can use arbitrary git tag and branch name formats.
 
 ### Combining parameters
 
-Any combination of tag parameters can be used simultaneously for [publish commands]({{ site.baseurl }}/documentation/reference/publish_process.html). In the result, there is a separate image for each tag parameter of each image in a project.
+Any combination of tag parameters can be used simultaneously in [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). As a result, werf will publish a separate image for each tag parameter of each image in a project.
 
 ## Examples
 
-### Two images
+### Two images for git tag
 
-Given config with 2 images — backend and frontend.
+Given `werf.yaml` with 2 images — `backend` and `frontend`.
 
 The following command:
 
 ```bash
-werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-custom v1.2.0
+werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-tag v1.2.0
 ```
 
 produces the following image names respectively:
-* `registry.hello.com/web/core/system/backend:v1.2.0`;
-* `registry.hello.com/web/core/system/frontend:v1.2.0`.
+ * `registry.hello.com/web/core/system/backend:v1.2.0`;
+ * `registry.hello.com/web/core/system/frontend:v1.2.0`.
 
-### Two images in GitLab job
+### Two images for git branch
 
-Given `werf.yaml` config with 2 images — backend and frontend.
+Given `werf.yaml` with 2 images — `backend` and `frontend`.
 
-The following command runs in GitLab job for git branch named `core/feature/ADD_SETTINGS`:
+The following command:
+
+```bash
+werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch my-feature-x
+```
+
+produces the following image names respectively:
+ * `registry.hello.com/web/core/system/backend:my-feature-x`;
+ * `registry.hello.com/web/core/system/frontend:my-feature-x`.
+
+### Two images for git branch with special chars in name
+
+Given `werf.yaml` with 2 images — `backend` and `frontend`.
+
+The following command:
+
+```bash
+werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch $(werf slugify --format docker-tag "Features/MyFeature#169")
+```
+
+produces the following image names respectively:
+ * `registry.hello.com/web/core/system/backend:features-myfeature169-3167bc8c`;
+ * `registry.hello.com/web/core/system/frontend:features-myfeature169-3167bc8c`.
+
+Note that [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) command will generate a valid docker tag. See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+
+### Two images in Gitlab CI job
+
+Given `werf.yaml` config with 2 images — `backend` and `frontend`.
+
+The following command runs in Gitlab CI job for project named `web/core/system`, in the git branch named `core/feature/ADD_SETTINGS`, docker registry is configured as `registry.hello.com/web/core/system`:
+
 ```bash
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
 
 Image names in the result are:
-* `registry.hello.com/web/core/system/backend:core-feature-add-settings-c3fd80df`
-* `registry.hello.com/web/core/system/frontend:core-feature-add-settings-c3fd80df`
+ * `registry.hello.com/web/core/system/backend:core-feature-add-settings-df80fdc3`;
+ * `registry.hello.com/web/core/system/frontend:core-feature-add-settings-df80fdc3`.
 
-Each image name converts according to [tag slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) rules with appended murmurhash of original string.
+Note that werf automatically applies slug to the result docker image tag: `core/feature/ADD_SETTINGS` will be converted to `core-feature-add-settings-df80fdc3`. This convertation occurs in `werf ci-env` command, which will determine git branch from Gitlab CI environment, automatically apply slug to this branch name and set `WERF_TAG_GIT_BRANCH` (which is alternative way to specify `--tag-git-branch` param). See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-### Unnamed image in GitLab job
+### Unnamed image in Gitlab CI job
 
-Given config with single unnamed image. The following command runs in GitLab job for git-tag named `v2.3.1`:
+Given werf.yaml with single unnamed image. The following command runs in Gitlab CI job for project named `web/core/queue`, in the git-tag named `v2.3.1`, docker registry is configured as `registry.hello.com/web/core/queue`:
 
 ```bash
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
 
-Image name in the result is `registry.hello.com/web/core/queue:v2-3-1-5cb8b0a4`
-
-Image name converts according to [tag slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) rules with appended murmurhash of original string, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
-
-### Two images with multiple tags in GitLab job
-
-Given config with 2 images — backend and frontend. The following command runs in GitLab job for git-branch named `rework-cache`:
-
-```bash
-type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
-werf publish --stages-storage :local --tag-custom feature-using-cache --tag-custom  my-test-branch
-```
-
-The command produces 6 image names for each image name and each tag-parameter (two images by three tags):
-* `registry.hello.com/web/core/system/backend:rework-cache`
-* `registry.hello.com/web/core/system/frontend:rework-cache`
-* `registry.hello.com/web/core/system/backend:feature-using-cache`
-* `registry.hello.com/web/core/system/frontend:feature-using-cache`
-* `registry.hello.com/web/core/system/backend:my-test-branch`
-* `registry.hello.com/web/core/system/frontend:my-test-branch`
+Image name in the result is `registry.hello.com/web/core/queue:v2.3.1`.

@@ -51,26 +51,7 @@ This feature opens possibilities for grouping resources by project name, url, et
 
 See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotate-and-label-chart-resources).
 
-Helm does not have this ability and will not have in the near future: https://github.com/helm/helm/pull/2631.
-
-## Chart generation
-
-During werf deploy a temporary helm chart is created.
-
-This chart contains:
-
-* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#templates).
-* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
-
-The temporary chart then to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
-
-### Chart.yaml is not required
-
-Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
-
-Werf internally generates this file when passing temporal chart to the builtin helm subsystem. In this generated file chart name equals project name from `werf.yaml` config and version is always `0.1.0` (version is an unimportant auxiliary field).
-
-If user have created `Chart.yaml` by itself, then werf will overwrite it in the generated actual chart and print a warning.
+Helm does not have this ability yet and will not have in the near future, [see issue](https://github.com/helm/helm/pull/2631).
 
 ## Parallel deploys are safe
 
@@ -89,6 +70,25 @@ Werf extends helm with special templates functions such as `werf_container_image
 Thus werf makes it super easy for the user to integrate custom built images into user templates: werf does the work of generating "the right" docker images names and tags, and werf makes sure that image will be pulled when it is necessary for kubernetes to pull new image version.
 
 Using pure helm user need to invent own system of passing actual images names using values.
+
+## Chart generation
+
+During werf deploy a temporary helm chart is created.
+
+This chart contains:
+
+* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#templates).
+* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
+
+The temporary chart then goes to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
+
+### Chart.yaml is not required
+
+Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
+
+Werf internally generates this file when passing temporal chart to the builtin helm subsystem. In this generated file chart name equals project name from `werf.yaml` config and version is always `0.1.0` (version is an unimportant auxiliary field).
+
+If user have created `Chart.yaml` by itself, then werf will overwrite it in the generated actual chart and print a warning.
 
 ## Fixed helm chart path in the project
 
