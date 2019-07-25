@@ -14,6 +14,9 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/build/stage"
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
@@ -60,6 +63,8 @@ type CmdData struct {
 	GitTagStrategyExpiryDays    *int64
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
+
+	StagesToIntrospect *[]string
 
 	LogPretty        *bool
 	LogColorMode     *string
@@ -299,6 +304,27 @@ func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", getBoolEnvironment("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
+func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesToIntrospect = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.StagesToIntrospect, "introspect-stage", "", []string{}, `Introspect a specific stage. The option can be used multiple times to introspect several stages.
+
+There are the following formats to use:
+* specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or artifact IMAGE_NAME
+* specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with name STAGE_NAME
+
+IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless image specified with ~.
+STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
+}
+
+func allStagesNames() []string {
+	var stageNames []string
+	for _, stageName := range stage.AllStages {
+		stageNames = append(stageNames, string(stageName))
+	}
+
+	return stageNames
+}
+
 func getBoolEnvironment(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":
@@ -479,6 +505,48 @@ func GetNamespace(namespaceOption string) string {
 		return kube.DefaultNamespace
 	}
 	return namespaceOption
+}
+
+func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
+	isStageExist := func(sName string) bool {
+		for _, stageName := range allStagesNames() {
+			if sName == stageName {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	introspectOptions := build.IntrospectOptions{}
+	for _, imageAndStage := range *cmdData.StagesToIntrospect {
+		var imageName, stageName string
+
+		parts := strings.SplitN(imageAndStage, "/", 2)
+		if len(parts) == 1 {
+			imageName = "*"
+			stageName = parts[0]
+		} else {
+			if parts[0] != "~" {
+				imageName = parts[0]
+			}
+
+			stageName = parts[1]
+		}
+
+		if imageName != "*" && !werfConfig.HasImageOrArtifact(imageName) {
+			return introspectOptions, fmt.Errorf("specified image %s (%s) is not defined in werf.yaml", imageName, imageAndStage)
+		}
+
+		if !isStageExist(stageName) {
+			return introspectOptions, fmt.Errorf("specified stage name %s (%s) is not exist", stageName, imageAndStage)
+		}
+
+		introspectTarget := build.IntrospectTarget{ImageName: imageName, StageName: stageName}
+		introspectOptions.Targets = append(introspectOptions.Targets, introspectTarget)
+	}
+
+	return introspectOptions, nil
 }
 
 func LogKubeContext(kubeContext string) {

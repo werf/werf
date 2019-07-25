@@ -33,6 +33,26 @@ const (
 	Dockerfile StageName = "dockerfile"
 )
 
+var (
+	AllStages = []StageName{
+		From,
+		BeforeInstall,
+		ImportsBeforeInstall,
+		GitArchive,
+		Install,
+		ImportsAfterInstall,
+		BeforeSetup,
+		ImportsBeforeSetup,
+		Setup,
+		ImportsAfterSetup,
+		GitCache,
+		GitLatestPatch,
+		DockerInstructions,
+
+		Dockerfile,
+	}
+)
+
 type NewBaseStageOptions struct {
 	ImageName        string
 	ConfigMounts     []*config.Mount

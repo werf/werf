@@ -7,6 +7,8 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
 )
 
@@ -16,6 +18,26 @@ func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStage
 
 type BuildStagesOptions struct {
 	ImageBuildOptions imagePkg.BuildOptions
+	IntrospectOptions
+}
+
+type IntrospectOptions struct {
+	Targets []IntrospectTarget
+}
+
+type IntrospectTarget struct {
+	ImageName string
+	StageName string
+}
+
+func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageName string) bool {
+	for _, stage := range opts.Targets {
+		if (stage.ImageName == "*" || stage.ImageName == imageName) && stage.StageName == stageName {
+			return true
+		}
+	}
+
+	return false
 }
 
 type BuildStagesPhase struct {
@@ -66,6 +88,12 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 			prevStageImageSize = img.Inspect().Size
 
+			if p.IntrospectOptions.ImageStageShouldBeIntrospected(image.GetName(), string(s.Name())) {
+				if err := introspectStage(s); err != nil {
+					return err
+				}
+			}
+
 			continue
 		}
 
@@ -107,9 +135,27 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		}
 
 		prevStageImageSize = img.Inspect().Size
+
+		if p.IntrospectOptions.ImageStageShouldBeIntrospected(image.GetName(), string(s.Name())) {
+			if err := introspectStage(s); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
+}
+
+func introspectStage(s stage.Interface) error {
+	logProcessMessage := fmt.Sprintf("Introspecting stage %s", s.Name())
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess(logProcessMessage, logProcessOptions, func() error {
+		if err := logboek.WithRawStreamsOutputModeOn(s.GetImage().Introspect); err != nil {
+			return fmt.Errorf("introspect error failed: %s", err)
+		}
+
+		return nil
+	})
 }
 
 var (

@@ -7,6 +7,7 @@ summary: |
   <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="c"># introspection before and after execution of a dysfunctional set of instructions</span>
   werf build --introspect-error
   werf build --introspect-before-error
+  werf build --introspect-stage [IMAGE_NAME/]STAGE_NAME
   </code></pre>
   </div>
 ---
