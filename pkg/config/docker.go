@@ -6,7 +6,6 @@ type Docker struct {
 	Env         map[string]string
 	Label       map[string]string
 	Cmd         []string
-	Onbuild     []string
 	Workdir     string
 	User        string
 	Entrypoint  []string

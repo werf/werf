@@ -8,7 +8,6 @@ type rawDocker struct {
 	Env         map[string]string `yaml:"ENV,omitempty"`
 	Label       map[string]string `yaml:"LABEL,omitempty"`
 	Cmd         interface{}       `yaml:"CMD,omitempty"`
-	Onbuild     interface{}       `yaml:"ONBUILD,omitempty"`
 	Workdir     string            `yaml:"WORKDIR,omitempty"`
 	User        string            `yaml:"USER,omitempty"`
 	Entrypoint  interface{}       `yaml:"ENTRYPOINT,omitempty"`
@@ -59,12 +58,6 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 		return nil, err
 	} else {
 		docker.Cmd = cmd
-	}
-
-	if onbuild, err := InterfaceToStringArray(c.Onbuild, c, c.rawStapelImage.doc); err != nil {
-		return nil, err
-	} else {
-		docker.Onbuild = onbuild
 	}
 
 	docker.Workdir = c.Workdir

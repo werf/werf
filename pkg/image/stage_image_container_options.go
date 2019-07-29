@@ -16,7 +16,6 @@ type StageImageContainerOptions struct {
 	Env         map[string]string
 	Label       map[string]string
 	Cmd         []string
-	Onbuild     []string
 	Workdir     string
 	User        string
 	Entrypoint  []string
@@ -57,10 +56,6 @@ func (co *StageImageContainerOptions) AddLabel(labels map[string]string) {
 
 func (co *StageImageContainerOptions) AddCmd(cmds ...string) {
 	co.Cmd = append(co.Cmd, cmds...)
-}
-
-func (co *StageImageContainerOptions) AddOnbuild(onbuilds ...string) {
-	co.Onbuild = append(co.Onbuild, onbuilds...)
 }
 
 func (co *StageImageContainerOptions) AddWorkdir(workdir string) {
@@ -107,12 +102,6 @@ func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *St
 		mergedCo.Cmd = co.Cmd
 	} else {
 		mergedCo.Cmd = co2.Cmd
-	}
-
-	if len(co2.Onbuild) == 0 {
-		mergedCo.Onbuild = co.Onbuild
-	} else {
-		mergedCo.Onbuild = co2.Onbuild
 	}
 
 	if co2.Workdir == "" {
@@ -207,10 +196,6 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
 	}
 
-	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
-	}
-
 	if co.Workdir != "" {
 		args = append(args, fmt.Sprintf("WORKDIR %s", co.Workdir))
 	}
@@ -261,10 +246,6 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		args = append(args, fmt.Sprintf("CMD %s", cmd))
 	} else if len(co.Cmd) != 0 {
 		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
-	}
-
-	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
 	}
 
 	if co.Workdir != "" {
