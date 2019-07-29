@@ -94,6 +94,8 @@ All specified tag params text will be validated to confirm with the docker image
 Also using tag options a user specifies not only tag value but also tagging strategy.
 Tagging strategy affects on [certain policies in cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
+Every `--tag-git-*` option requires `TAG`, `BRANCH` or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where CI job is running in the detached git worktree for specific commit and current git-tag or git-branch or git-commit is passed to job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for Gitlab CI).
+
 ### Combining parameters
 
 Any combination of tag parameters can be used simultaneously in [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). As a result, werf will publish a separate image for each tag parameter of each image in a project.
