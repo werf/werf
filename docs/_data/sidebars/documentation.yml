@@ -86,17 +86,17 @@ entries:
           - title: Gitlab CI
             url: /documentation/reference/plugging_into_cicd/gitlab_ci.html
 
-      - title: Local Development
+      - title: Development And Debug
         sfi:
 
           - title: Setup Minikube
-            url: /documentation/reference/local_development/setup_minikube.html
+            url: /documentation/reference/development_and_debug/setup_minikube.html
 
           - title: Stage Introspection
-            url: /documentation/reference/local_development/stage_introspection.html
+            url: /documentation/reference/development_and_debug/stage_introspection.html
 
           - title: As Layers
-            url: /documentation/reference/local_development/as_layers.html
+            url: /documentation/reference/development_and_debug/as_layers.html
 
       - title: Toolbox
         sfi:

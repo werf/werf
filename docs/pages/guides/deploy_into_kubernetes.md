@@ -13,7 +13,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
 ## Requirements
 
- * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/local_development/setup_minikube.html) to set up local minikube instance with docker-registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with docker-registry.
 
  * Working docker-registry.
 
