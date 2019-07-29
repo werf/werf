@@ -181,3 +181,26 @@ import:
   - <relative path or glob>
 asLayers: <bool>
 ```
+
+## Using artifacts
+
+Unlike [*stapel image*]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html), *stapel artifact* does not have a git latest patch stage.
+
+Git latest patch stage is supposed to be updated on every commit, which brings new changes to files. *Stapel artifact* though is recommended to be used as a deeply cached image, which will be updated in rare cases, when some special files changed.
+
+For example: import git into *stapel artifact* and rebuild assets in this artifact only when dependent assets files in git has changes. For every other change in git where non-dependent files has been changed assets will not be rebuilt.
+
+However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build golang application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
+
+```
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    setup:
+    - "*"
+```
+
+In this case every change in git files will result in artifact rebuild, all *stapel images* that import this artifact will also be rebuilt.
+
+**NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.
