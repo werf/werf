@@ -17,7 +17,7 @@
   title: Plugging into CI/CD
   url: /documentation/reference/plugging_into_cicd/overview.html
 /documentation/reference/development_and_debug:
-  title: Setup Minikube
+  title: Development and Debug
   url: /documentation/reference/development_and_debug/setup_minikube.html
 /documentation/reference/toolbox:
   title: Toolbox

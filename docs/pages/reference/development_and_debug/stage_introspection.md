@@ -4,11 +4,15 @@ sidebar: documentation
 permalink: documentation/reference/development_and_debug/stage_introspection.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="c"># introspection before and after execution of a dysfunctional set of instructions</span>
-  werf build --introspect-error
-  werf build --introspect-before-error
-  werf build --introspect-stage [IMAGE_NAME/]STAGE_NAME
-  </code></pre>
+  <div class="language-bash highlighter-rouge">
+  <div class="highlight"><pre class="highlight">
+  <code><span class="c"># introspect a specific stage</span>
+  werf build <span class="nt">--introspect-stage</span> <span class="o">[</span>IMAGE_NAME/]STAGE_NAME
+  
+  <span class="c"># introspect a stage before or after execution of a dysfunctional set of instructions</span>
+  werf build <span class="nt">--introspect-error</span>
+  werf build <span class="nt">--introspect-before-error</span></code>
+  </pre></div>
   </div>
 ---
 
