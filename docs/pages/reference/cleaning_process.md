@@ -103,7 +103,7 @@ In general it suitable for forced images removal.
 The manual cleaning approach includes the following options:
 
 * [Purge images repo command]({{ site.baseurl }}/documentation/cli/management/images/purge.html). Deleting images of the **current project** in _images repo_.
-* [Purge stages storage command]({{ site.baseurl }}/documentation/cli/management/stages/purge.html). Deleting stages of the **current project** in _stages storage_ or _images repo_.
+* [Purge stages storage command]({{ site.baseurl }}/documentation/cli/management/stages/purge.html). Deleting stages of the **current project** in _stages storage_.
 
 These steps are combined in one top-level command [purge]({{ site.baseurl }}/documentation/cli/main/purge.html).
 
