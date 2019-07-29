@@ -16,8 +16,6 @@ docker:
   - ENTRYPOINT
   CMD:
   - CMD
-  ONBUILD:
-  - ONBUILD
   WORKDIR: WORKDIR
   USER: USER
 

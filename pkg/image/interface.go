@@ -62,7 +62,6 @@ type ContainerOptions interface {
 	AddEnv(envs map[string]string)
 	AddLabel(labels map[string]string)
 	AddCmd(cmds ...string)
-	AddOnbuild(onbuilds ...string)
 	AddWorkdir(workdir string)
 	AddUser(user string)
 	AddEntrypoint(entrypoints ...string)

@@ -109,8 +109,6 @@ docker:
   - <entrypoint>
   CMD:
   - <cmd>
-  ONBUILD:
-  - <onbuild>
   WORKDIR: <workdir>
   USER: <user>
   STOPSIGNAL: <stopsignal>
