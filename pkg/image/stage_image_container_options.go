@@ -307,12 +307,14 @@ func getEmptyCmdOrEntrypointInstructionValue() (string, error) {
 		return "", err
 	}
 
-	verifiableVersion, err := version.NewVersion("17.10")
-	if err != nil {
-		return "", err
-	}
+	serverVersionMajor := serverVersion.Segments()[0]
+	serverVersionMinor := serverVersion.Segments()[1]
 
-	if serverVersion.LessThan(verifiableVersion) {
+	isLessMajorVersion := serverVersionMajor < 17
+	isLessMinorVersion := serverVersionMajor == 17 && serverVersionMinor < 10
+	isOldValueFormat := isLessMajorVersion || isLessMinorVersion
+
+	if isOldValueFormat {
 		return "[]", nil
 	} else {
 		return "[\"\"]", nil
