@@ -1,7 +1,7 @@
 ---
 title: Caching each instruction separately with asLayers
 sidebar: documentation
-permalink: documentation/reference/local_development/as_layers.html
+permalink: documentation/reference/development_and_debug/as_layers.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">asLayers</span><span class="pi">:</span> <span class="s">true</span>
@@ -15,7 +15,7 @@ Let us also consider the situation where one of the last stage instruction fails
 
 For development and debugging, we introduce _asLayers_ directive. When assembling, the instructions are cached separately, and re-assembly is only performed when their sequence changes. The directive can be specified for a specific _image_ or _artifact_ in the `werf.yaml` configuration.
 
-If `asLayers: true`, then the new caching mode is enabled — one docker image for one shell command, or one task for ansible. Otherwise, if _asLayers_ directive is not specified (or if `asLayers: false`) default caching is applied, one docker image is used for all _stage_ instructions. 
+If `asLayers: true`, then the new caching mode is enabled — one docker image for one shell command, or one task for ansible. Otherwise, if _asLayers_ directive is not specified (or if `asLayers: false`) default caching is applied, one docker image is used for all _stage_ instructions.
 
 Switching between assembly mode is only governed by the _asLayers directive_. Other instructions for the configuration remain unchanged. After having debugged the assembly instructions, _asLayers_ must be disabled.
 
