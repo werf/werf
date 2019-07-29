@@ -221,7 +221,7 @@ Werf performs _user stage_ commands as follows:
 
     ```bash
     #!/.werf/stapel/embedded/bin/bash -e
-    
+
     apt-get update
     apt-get install -y build-essential g++ libcurl4
     ```
@@ -524,7 +524,7 @@ As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPat
 
 _install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 
-> During image build process source codes are updated **only within one stage**, subsequent stages are based on this stage and use actualized files. First build adds sources on _gitArchive_ stage. Any other build updates sources on _gitCache_, _gitLatestPatch_ or on one of the following user stages: _install_, _beforeSetup_ and _setup_. 
+> During image build process source codes are updated **only within one stage**, subsequent stages are based on this stage and use actualized files. First build adds sources on _gitArchive_ stage. Any other build updates sources on _gitCache_, _gitLatestPatch_ or on one of the following user stages: _install_, _beforeSetup_ and _setup_.
 <br />
 <br />
 This stage is shown in _Calculation signature phase_
@@ -597,9 +597,11 @@ shell:
   - echo "install stage"
   beforeSetup:
   - echo "beforeSetup stage"
+  setup:
+  - echo "setup stage"
 ```
 
-This `werf.yaml` has a git mapping configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, and werf rebuilds _beforeSetup_ stage with applying a git patch.
+This `werf.yaml` has a git mapping configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. Werf will apply patch on the _beforeSetup_ stage itself.
 
 ## Dependency on CacheVersion values
 
