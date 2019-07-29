@@ -108,19 +108,14 @@ func generateGitlabEnvs() error {
 	}
 
 	imagesRepo := os.Getenv("CI_REGISTRY_IMAGE")
-	var imagesUsername, imagesPassword string
-	doLogin := false
-	if imagesRepo != "" {
-		isGRC, err := docker_registry.IsGCR(imagesRepo)
-		if err != nil {
-			return err
-		}
+	ciJobToken := os.Getenv("CI_JOB_TOKEN")
 
-		if !isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
-			imagesUsername = "gitlab-ci-token"
-			imagesPassword = os.Getenv("CI_JOB_TOKEN")
-			doLogin = true
-		}
+	var imagesUsername, imagesPassword string
+	var doLogin bool
+	if imagesRepo != "" && ciJobToken != "" {
+		imagesUsername = "gitlab-ci-token"
+		imagesPassword = ciJobToken
+		doLogin = true
 	}
 
 	if doLogin {
