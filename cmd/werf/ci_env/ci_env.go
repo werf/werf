@@ -143,23 +143,23 @@ func generateGitlabEnvs() error {
 	}
 
 	printHeader("DOCKER CONFIG", false)
-	printExportCommand("DOCKER_CONFIG", dockerConfig)
+	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
 	printHeader("IMAGES REPO", true)
-	printExportCommand("WERF_IMAGES_REPO", imagesRepo)
+	printExportCommand("WERF_IMAGES_REPO", imagesRepo, false)
 
 	printHeader("TAGGING", true)
 	if ciGitTag != "" {
-		printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag))
+		printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
 	}
 	if ciGitBranch != "" {
-		printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch))
+		printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
 	}
 
 	printHeader("DEPLOY", true)
-	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"))
+	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
-	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL")))
+	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL")), false)
 
 	cleanupConfig, err := getCleanupConfig()
 	if err != nil {
@@ -167,16 +167,16 @@ func generateGitlabEnvs() error {
 	}
 
 	printHeader("IMAGE CLEANUP POLICIES", true)
-	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit))
-	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays))
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit))
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays))
+	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
+	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
 
 	printHeader("OTHER", true)
-	printExportCommand("WERF_LOG_COLOR_MODE", "on")
-	printExportCommand("WERF_LOG_PROJECT_DIR", "1")
-	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1")
-	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "100")
+	printExportCommand("WERF_LOG_COLOR_MODE", "on", false)
+	printExportCommand("WERF_LOG_PROJECT_DIR", "1", false)
+	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
+	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "100", false)
 
 	if ciGitTag == "" && ciGitBranch == "" {
 		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
@@ -212,7 +212,17 @@ func printHeader(header string, withNewLine bool) {
 	}
 }
 
-func printExportCommand(key, value string) {
+func printExportCommand(key, value string, override bool) {
+	if !override && os.Getenv(key) != "" {
+		if CmdData.Verbose {
+			skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
+			echoSkip := fmt.Sprintf("echo '%s'", skipComment)
+			fmt.Println(echoSkip)
+		}
+
+		return
+	}
+
 	exportCommand := fmt.Sprintf("export %s=\"%s\"", key, value)
 	if value == "" {
 		exportCommand = fmt.Sprintf("# %s", exportCommand)
