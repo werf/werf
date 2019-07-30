@@ -15,16 +15,11 @@ There are several categories of commands that work with Docker registry, thus ne
 These commands do not perform authorization and use prepared _docker config_ to work with Docker registry.
 _Docker config_ is a directory which contains authorization info for registries and other settings.
 By default, werf uses the same _docker config_ as Docker utility does: `~/.docker`.
-Docker config directory can be redefined by `--docker-config` option, `$DOCKER_CONFIG` or `$WERF_DOCKER_CONFIG` environment variables. 
-The option and variable value is the same as `docker --config` standard option value.   
+Docker config directory can be redefined by `--docker-config` option, `$DOCKER_CONFIG` or `$WERF_DOCKER_CONFIG` environment variables.
+The option and variable value is the same as `docker --config` standard option value.
 
 To prepare _docker config_ you can use standart Docker client command `login` or, if you are using CI system, [ci-env command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) in werf ([more info about plugging werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html)).
 
 > Using `docker login` in parallel CI jobs can lead to failed jobs because of a race condition and temporary credentials.
-One job affects another job overriding temporary credentials in _Docker config_. 
+One job affects another job overriding temporary credentials in _Docker config_.
 Thus user should provide independent _Docker configs_ between jobs, `docker --config`, or use `ci-env` command.
-
-`ci-env` command generates werf environment variables for a specified CI system. 
-The command creates a temporary _Docker config_ based on current user _Docker config_. 
-Then runs `docker login` command with special credentials for specified CI system (e.g., `$CI_REGISTRY_IMAGE` and `$CI_JOB_TOKEN` for GitLab) and overrides `$DOCKER_CONFIG` with the temporary _Docker config_ path. 
-So this configuration will be used by werf and Docker in current terminal session.
