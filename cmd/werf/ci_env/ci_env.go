@@ -107,21 +107,21 @@ func generateGitlabEnvs() error {
 		return err
 	}
 
-	imagesRepo := os.Getenv("CI_REGISTRY_IMAGE")
+	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobToken := os.Getenv("CI_JOB_TOKEN")
 
 	var imagesUsername, imagesPassword string
 	var doLogin bool
-	if imagesRepo != "" && ciJobToken != "" {
+	if ciRegistryImage != "" && ciJobToken != "" {
 		imagesUsername = "gitlab-ci-token"
 		imagesPassword = ciJobToken
 		doLogin = true
 	}
 
 	if doLogin {
-		err := docker.Login(imagesUsername, imagesPassword, imagesRepo)
+		err := docker.Login(imagesUsername, imagesPassword, ciRegistryImage)
 		if err != nil {
-			return fmt.Errorf("unable to login into docker repo %s: %s", imagesRepo, err)
+			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImage, err)
 		}
 	}
 
@@ -141,7 +141,7 @@ func generateGitlabEnvs() error {
 	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
 	printHeader("IMAGES REPO", true)
-	printExportCommand("WERF_IMAGES_REPO", imagesRepo, false)
+	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
 
 	printHeader("TAGGING", true)
 	if ciGitTag != "" {
@@ -154,7 +154,11 @@ func generateGitlabEnvs() error {
 	printHeader("DEPLOY", true)
 	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
-	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL")), false)
+	var gitRepositoryUrl string
+	if os.Getenv("CI_PROJECT_URL") != "" {
+		gitRepositoryUrl = fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL"))
+	}
+	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", gitRepositoryUrl, false)
 
 	cleanupConfig, err := getCleanupConfig()
 	if err != nil {
@@ -209,8 +213,10 @@ func printHeader(header string, withNewLine bool) {
 
 func printExportCommand(key, value string, override bool) {
 	if !override && os.Getenv(key) != "" {
+		skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
+		fmt.Println(skipComment)
+
 		if CmdData.Verbose {
-			skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
 			echoSkip := fmt.Sprintf("echo '%s'", skipComment)
 			fmt.Println(echoSkip)
 		}
