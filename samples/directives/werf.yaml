@@ -97,10 +97,8 @@ docker:
     <env_name>: <env_value>
   LABEL:
     <label_name>: <label_value>
-  ENTRYPOINT:
-  - <entrypoint>
-  CMD:
-  - <cmd>
+  ENTRYPOINT: <entrypoint>
+  CMD: <cmd>
   WORKDIR: <workdir>
   USER: <user>
 asLayers: <bool>

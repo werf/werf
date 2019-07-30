@@ -61,10 +61,10 @@ type ContainerOptions interface {
 	AddExpose(exposes ...string)
 	AddEnv(envs map[string]string)
 	AddLabel(labels map[string]string)
-	AddCmd(cmds ...string)
+	AddCmd(cmd string)
 	AddWorkdir(workdir string)
 	AddUser(user string)
-	AddEntrypoint(entrypoints ...string)
+	AddEntrypoint(entrypoint string)
 	AddStopSignal(signal string)
 	AddHealthCheck(check string)
 }

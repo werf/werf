@@ -5,10 +5,10 @@ type Docker struct {
 	Expose      []string
 	Env         map[string]string
 	Label       map[string]string
-	Cmd         []string
+	Cmd         string
 	Workdir     string
 	User        string
-	Entrypoint  []string
+	Entrypoint  string
 	StopSignal  string
 	HealthCheck string
 

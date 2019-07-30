@@ -105,10 +105,8 @@ docker:
     <env name>: <env value>
   LABEL:
     <label name>: <label value>
-  ENTRYPOINT:
-  - <entrypoint>
-  CMD:
-  - <cmd>
+  ENTRYPOINT: <entrypoint>
+  CMD: <cmd>
   WORKDIR: <workdir>
   USER: <user>
   STOPSIGNAL: <stopsignal>
