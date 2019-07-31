@@ -416,15 +416,7 @@ Based on the environment werf will determine:
  1. Release name.
  2. Kubernetes namespace.
 
-Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI system, see [more info about plugging werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html). Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
-
-#### Integration with Gitlab
-
-Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). Werf will detect current environment for the pipeline in gitlab and use it as environment parameter.
-
-`CI_ENVIRONMENT_SLUG` gitlab variable used in Werf to determine environment name in gitlab pipeline.
-
-See more info about [plugging werf into Gitlab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
+Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI/CD system, see [CI/CD configuration integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#ci-cd-configuration-integration) for more info.
 
 ### Release name
 

@@ -121,6 +121,9 @@ entries:
         - title: Gitlab CI/CD integration
           url: /documentation/guides/gitlab_ci_cd_integration.html
 
+        - title: Unsupported CI/CD integration
+          url: /documentation/guides/unsupported_ci_cd_integration.html
+
         - title: Advanced build
           sfi:
 
