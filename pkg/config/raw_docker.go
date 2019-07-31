@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type rawDocker struct {
 	Volume      interface{}       `yaml:"VOLUME,omitempty"`
@@ -8,7 +11,6 @@ type rawDocker struct {
 	Env         map[string]string `yaml:"ENV,omitempty"`
 	Label       map[string]string `yaml:"LABEL,omitempty"`
 	Cmd         interface{}       `yaml:"CMD,omitempty"`
-	Onbuild     interface{}       `yaml:"ONBUILD,omitempty"`
 	Workdir     string            `yaml:"WORKDIR,omitempty"`
 	User        string            `yaml:"USER,omitempty"`
 	Entrypoint  interface{}       `yaml:"ENTRYPOINT,omitempty"`
@@ -55,22 +57,16 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	docker.Env = c.Env
 	docker.Label = c.Label
 
-	if cmd, err := InterfaceToStringArray(c.Cmd, c, c.rawStapelImage.doc); err != nil {
+	if cmd, err := prepareCommand(c.Cmd, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Cmd = cmd
 	}
 
-	if onbuild, err := InterfaceToStringArray(c.Onbuild, c, c.rawStapelImage.doc); err != nil {
-		return nil, err
-	} else {
-		docker.Onbuild = onbuild
-	}
-
 	docker.Workdir = c.Workdir
 	docker.User = c.User
 
-	if entrypoint, err := InterfaceToStringArray(c.Entrypoint, c, c.rawStapelImage.doc); err != nil {
+	if entrypoint, err := prepareCommand(c.Entrypoint, c, c.rawStapelImage.doc); err != nil {
 		return nil, err
 	} else {
 		docker.Entrypoint = entrypoint
@@ -89,6 +85,28 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	}
 
 	return docker, nil
+}
+
+func prepareCommand(stringOrArray interface{}, configSection interface{}, doc *doc) (cmd string, err error) {
+	if stringOrArray != nil {
+		if val, ok := stringOrArray.(string); ok {
+			cmd = val
+		} else if interfaceArray, ok := stringOrArray.([]interface{}); ok {
+			var stringArray []string
+			for _, interf := range interfaceArray {
+				if val, ok := interf.(string); ok {
+					stringArray = append(stringArray, val)
+				} else {
+					return cmd, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrArray), configSection, doc)
+				}
+			}
+			cmd = fmt.Sprintf("[\"%s\"]", strings.Join(stringArray, "\", \""))
+		} else {
+			return cmd, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrArray), configSection, doc)
+		}
+	}
+
+	return
 }
 
 func (c *rawDocker) validateDirective(docker *Docker) (err error) {

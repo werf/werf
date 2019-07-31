@@ -34,7 +34,7 @@
 - Different image tagging strategies:
   - Tag image by git tag, branch or commit.
   - Content based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
-  
+
 ### Deploy
 
 - Deploy an application into Kubernetes and check that application is deployed correctly.

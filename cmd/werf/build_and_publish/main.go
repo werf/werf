@@ -2,7 +2,6 @@ package build_and_publish
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -87,6 +86,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupLogOptions(&CommonCmdData, cmd)
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
+	common.SetupIntrospectStage(&CommonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
@@ -165,12 +166,18 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		}
 	}()
 
+	introspectOptions, err := common.GetIntrospectOptions(&CommonCmdData, werfConfig)
+	if err != nil {
+		return err
+	}
+
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
 			ImageBuildOptions: image.BuildOptions{
 				IntrospectAfterError:  CmdData.IntrospectAfterError,
 				IntrospectBeforeError: CmdData.IntrospectBeforeError,
 			},
+			IntrospectOptions: introspectOptions,
 		},
 		PublishImagesOptions: build.PublishImagesOptions{
 			TagOptions: tagOpts,

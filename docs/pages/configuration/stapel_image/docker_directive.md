@@ -8,26 +8,21 @@ summary: |
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vTZB0BLxL7mRUFxkrOMaj310CQgb5D5H_V0gXe7QYsTu3kKkdwchg--A1EoEP2CtKbO8pp2qARfeoOK/pub?w=1016&amp;h=72">
   </a>
   
-  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">docker</span><span class="pi">:</span>
-    <span class="s">VOLUME</span><span class="pi">:</span>
+    <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">docker</span><span class="pi">:</span>
+    <span class="na">VOLUME</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;volume&gt;</span>
-    <span class="s">EXPOSE</span><span class="pi">:</span>
+    <span class="na">EXPOSE</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;expose&gt;</span>
-    <span class="s">ENV</span><span class="pi">:</span>
+    <span class="na">ENV</span><span class="pi">:</span>
       <span class="s">&lt;env_name&gt;</span><span class="pi">:</span> <span class="s">&lt;env_value&gt;</span>
-    <span class="s">LABEL</span><span class="pi">:</span>
+    <span class="na">LABEL</span><span class="pi">:</span>
       <span class="s">&lt;label_name&gt;</span><span class="pi">:</span> <span class="s">&lt;label_value&gt;</span>
-    <span class="s">ENTRYPOINT</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;entrypoint&gt;</span>
-    <span class="s">CMD</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;cmd&gt;</span>
-    <span class="s">ONBUILD</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;onbuild&gt;</span>
-    <span class="s">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
-    <span class="s">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
-    <span class="s">STOPSIGNAL</span><span class="pi">:</span> <span class="s">&lt;stopsignal&gt;</span>
-    <span class="s">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre>
-  </div>
+    <span class="na">ENTRYPOINT</span><span class="pi">:</span> <span class="s">&lt;entrypoint&gt;</span>
+    <span class="na">CMD</span><span class="pi">:</span> <span class="s">&lt;cmd&gt;</span>
+    <span class="na">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
+    <span class="na">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
+    <span class="na">STOPSIGNAL</span><span class="pi">:</span> <span class="s">&lt;stopsignal&gt;</span>
+    <span class="na">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre></div></div>
 ---
 
 Docker can build images by [Dockerfile](https://docs.docker.com/engine/reference/builder/) instructions. These instructions can be divided into two groups: build-time instructions and other instructions that effect on an image manifest.  
@@ -42,7 +37,6 @@ Build-time instructions do not make sense in a werf build process. Therefore, we
 * `EXPOSE` to inform Docker that the container listens on the specified network ports at runtime (read more [here](https://docs.docker.com/engine/reference/builder/#expose))
 * `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)).
 * `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)).
-* `ONBUILD` to add to the image a trigger instruction to be executed at a later time when the image is used as the base for another build (read more [here](https://docs.docker.com/engine/reference/builder/#onbuild)).
 * `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 

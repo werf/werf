@@ -182,7 +182,7 @@ func (c *StageImageContainer) prepareRunOptions() (*StageImageContainerOptions, 
 func (c *StageImageContainer) prepareServiceRunOptions() (*StageImageContainerOptions, error) {
 	serviceRunOptions := newStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
-	serviceRunOptions.Entrypoint = []string{stapel.BashBinPath()}
+	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
 
 	stapelContainerName, err := stapel.GetOrCreateContainer()
@@ -234,8 +234,9 @@ func (c *StageImageContainer) prepareInheritedCommitOptions() (*StageImageContai
 		return nil, err
 	}
 
-	inheritedOptions.Entrypoint = fromImageInspect.Config.Entrypoint
-	inheritedOptions.Cmd = fromImageInspect.Config.Cmd
+	inheritedOptions.Entrypoint = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Entrypoint, "\", \""))
+	inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))
+
 	inheritedOptions.User = fromImageInspect.Config.User
 	if fromImageInspect.Config.WorkingDir != "" {
 		inheritedOptions.Workdir = fromImageInspect.Config.WorkingDir
@@ -265,7 +266,9 @@ func (c *StageImageContainer) introspect() error {
 	}
 
 	if err := docker.CliRun(runArgs...); err != nil {
-		return err
+		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+			return err
+		}
 	}
 
 	return nil
@@ -278,10 +281,23 @@ func (c *StageImageContainer) introspectBefore() error {
 	}
 
 	if err := docker.CliRun(runArgs...); err != nil {
-		return err
+		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+			return err
+		}
 	}
 
 	return nil
+}
+
+// https://docs.docker.com/engine/reference/run/#exit-status
+func IsStartContainerErr(err error) bool {
+	for _, code := range []string{"125", "126", "127"} {
+		if strings.HasPrefix(err.Error(), fmt.Sprintf("Code: %s", code)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *StageImageContainer) commit() (string, error) {

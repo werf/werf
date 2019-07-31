@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Werf is a compatible alternative to [Helm 2](https://helm.sh), which uses improved deploy process.
 
-Werf has 2 main commands to work with kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster. 
+Werf has 2 main commands to work with kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster.
 
 Deployed resources are tracked with different configurable modes, logs and kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. Werf can set arbitrary annotations and labels to all kubernetes resources of the project being deployed.
 
@@ -69,14 +69,12 @@ With go templates user can:
  * parametrize templates with [values](#values) for different environments;
  * define common text parts as named golang templates and reuse them in several places;
  * etc.
- 
+
 [Sprig functions](https://masterminds.github.io/sprig/) are available for users (except envrionment access functions such as `env`).
 
 Also check out [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks) for templates like `include` and `required`.
 
 Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom golang templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
-
-Files in the `.helm/templates` directory will be processed in the alphabet order. TODO: really?
 
 #### Integration with built images
 
@@ -142,7 +140,7 @@ spec:
 {{ tuple "backend" . | include "werf_container_image" | indent 8 }}
         env:
 {{ tuple "backend" . | include "werf_container_env" | indent 8 }}
-``` 
+```
 {% endraw %}
 
 To specify single unnamed image from `werf.yaml`:
@@ -165,7 +163,7 @@ spec:
 {{ include "werf_container_image" . | indent 8 }}
         env:
 {{ include "werf_container_env" . | indent 8 }}
-``` 
+```
 {% endraw %}
 
 #### Secret files
@@ -212,7 +210,7 @@ There are different types of values in the werf:
  * User defined regular values.
  * User defined secret values.
  * Service values.
- 
+
 #### User defined regular values
 
 Place user defined regular values into the chart file `.helm/values.yaml` (which is optional). For example:
@@ -241,7 +239,7 @@ File `.helm/values.yaml` is the default values file. Additional user defined reg
 
  * Separate values files by specifying werf options `--values=PATH_TO_FILE` (can be used multiple times to pass multiple files).
  * Set options `--set key1.key2.key3.array[0]=one`, `--set key1.key2.key3.array[1]=two` (can be used multiple times, see also `--set-string key=forced_string_value`).
- 
+
 #### User defined secret values
 
 Secret values are useful to store passwords and other sensitive data directly in the project repo.
@@ -330,7 +328,7 @@ The chart can include arbitrary number of dependencies called subcharts.
 
 Subcharts are placed in the directory `.helm/charts/SUBCHART_DIR`. Each subchart in the `SUBCHART_DIR` is a chart by itself with the similar files structure (which can also have own recursive subcharts).
 
-During deploy process werf will render, create and track all resources of all subcharts of current chart. 
+During deploy process werf will render, create and track all resources of all subcharts of current chart.
 
 #### Subchart and values
 
@@ -417,7 +415,7 @@ Based on the environment werf will determine:
 
  1. Release name.
  2. Kubernetes namespace.
- 
+
 Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI system, see [more info about plugging werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html). Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
 
 #### Integration with Gitlab
@@ -474,7 +472,7 @@ When running `werf deploy` command werf starts deploy process which includes fol
  2. Run `pre-install` or `pre-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
  3. Apply changes to kubernetes resources: create new, delete old, update existing.
  4. Create new release version and save current resources manifests state into this release.
- 5. Track all release resources till readyness state reached printing logs and other info along the way.  
+ 5. Track all release resources till readyness state reached printing logs and other info along the way.
  6. Run `post-install` or `post-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
 
 NOTE: Werf will delete all newly created resources immediately during current deploy process if this deploy process fails at any step specified above!
@@ -485,7 +483,7 @@ On the step 5 werf tracks all release resources until each resource reaches "rea
 
 Werf shows logs of resources Pods only until pod reaches "ready" state, except for Jobs. For Pods of a Job logs will be shown till Pods are terminated.
 
-Internally [kubedog library](https://github.com/flant/kubedog) is used to track resources. Deployments, StatefulSets, DaemonSets and Jobs are supported for tracking now. Service, Ingress, PVC and other are [soon to come](https://github.com/flant/werf/issues/1637). 
+Internally [kubedog library](https://github.com/flant/kubedog) is used to track resources. Deployments, StatefulSets, DaemonSets and Jobs are supported for tracking now. Service, Ingress, PVC and other are [soon to come](https://github.com/flant/werf/issues/1637).
 
 ### Method of applying changes
 
@@ -529,19 +527,19 @@ Tracking can be configured for each resource using resource annotations:
  * [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers);
  * [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers);
  * [`werf.io/show-service-messages`](#show-service-messages);
-  
+
 All of these annotations can be combined and used together for resource.
- 
+
 **TIP** Use `"werf.io/track-termination-mode": NonBlocking` and `"werf.io/fail-mode": IgnoreAndContinueDeployProcess` when you need to define a Job in the release, that runs in background and does not affect deploy process.
- 
+
 **TIP** Use `"werf.io/track-termination-mode": NonBlocking` when you need a StatefulSet with `OnDelete` manual update strategy, but you don't need to block deploy process till StatefulSet is updated immediately.
- 
+
 **TIP** Show service messages example:
- 
+
 ![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif)
- 
+
 **TIP** Skip logs example:
- 
+
 ![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif)
 
 **TIP** NonBlocking track termination mode example:
@@ -554,13 +552,13 @@ All of these annotations can be combined and used together for resource.
 
  * `WaitUntilResourceReady` (default) — specifies to block whole deploy process till each resource with this track termination mode is ready.
  * `NonBlocking` — specifies to track this resource only until there are other resources not ready yet.
- 
+
 #### Fail mode
 
 `"werf.io/fail-mode": FailWholeDeployProcessImmediately|HopeUntilEndOfDeployProcess|IgnoreAndContinueDeployProcess`
 
  * `FailWholeDeployProcessImmediately` (default) — fail whole deploy process when error occurred for resource.
- * `HopeUntilEndOfDeployProcess` — when error occurred for resource set this resource into "hope" mode and continue tracking other resources. When all of remained resources has become ready or all of remained resources are in the "hope" mode, transit resource back to "normal" mode and fail whole deploy process when error occurred for this resource once again. 
+ * `HopeUntilEndOfDeployProcess` — when error occurred for resource set this resource into "hope" mode and continue tracking other resources. When all of remained resources has become ready or all of remained resources are in the "hope" mode, transit resource back to "normal" mode and fail whole deploy process when error occurred for this resource once again.
  * `IgnoreAndContinueDeployProcess` — resource errors does not affect deploy process.
 
 #### Failures allowed per replica
@@ -587,7 +585,7 @@ Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to
 
 Set to `true` to suppress all logs of all containers of all Pods owned by resource with this annotation. Annotation is disabled by default.
 
-#### Skip logs for containers 
+#### Skip logs for containers
 
 `"werf.io/skip-logs-for-containers": CONTAINER_NAME1,CONTAINER_NAME2,CONTAINER_NAME3...`
 
@@ -613,11 +611,11 @@ Werf automatically sets following builtin annotations to all chart resources dep
 
  * `"werf.io/version": FULL_WERF_VERSION` — werf version that being used when running `werf deploy` command;
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`.
- 
+
 Werf also sets auto annotation `"project.werf.io/gitlab-url": $CI_PROJECT_URL` for gitlab CI when using `werf ci-env` command prior to run `werf deploy` command.
- 
+
 #### Custom annotations and labels
- 
+
 User can pass arbitrary additional annotations and labels using cli options `--add-annotation annoName=annoValue` (can be specified multiple times) and `--add-label labelName=labelValue` (can be specified multiple times) for werf deploy invocation.
 
 For example, to set annotations and labels `project-url=https://mygitlab.com/group/myproject`, `pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775` to all kubernetes resources from chart use following werf deploy invocation:
@@ -627,7 +625,7 @@ werf deploy \
   --add-annotation "project-url=https://mygitlab.com/group/myproject" \
   --add-label "project-url=https://mygitlab.com/group/myproject" \
   --add-annotation "pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775" \
-  --add-label "pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775" 
+  --add-label "pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775"
   --env dev \
   --images-repo :minikube \
   --stages-storage :local

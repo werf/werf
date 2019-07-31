@@ -2,7 +2,6 @@ package image
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/go-version"
 
@@ -15,11 +14,10 @@ type StageImageContainerOptions struct {
 	Expose      []string
 	Env         map[string]string
 	Label       map[string]string
-	Cmd         []string
-	Onbuild     []string
+	Cmd         string
 	Workdir     string
 	User        string
-	Entrypoint  []string
+	Entrypoint  string
 	StopSignal  string
 	HealthCheck string
 }
@@ -55,12 +53,8 @@ func (co *StageImageContainerOptions) AddLabel(labels map[string]string) {
 	}
 }
 
-func (co *StageImageContainerOptions) AddCmd(cmds ...string) {
-	co.Cmd = append(co.Cmd, cmds...)
-}
-
-func (co *StageImageContainerOptions) AddOnbuild(onbuilds ...string) {
-	co.Onbuild = append(co.Onbuild, onbuilds...)
+func (co *StageImageContainerOptions) AddCmd(cmd string) {
+	co.Cmd = cmd
 }
 
 func (co *StageImageContainerOptions) AddWorkdir(workdir string) {
@@ -79,8 +73,8 @@ func (co *StageImageContainerOptions) AddHealthCheck(check string) {
 	co.HealthCheck = check
 }
 
-func (co *StageImageContainerOptions) AddEntrypoint(entrypoints ...string) {
-	co.Entrypoint = append(co.Entrypoint, entrypoints...)
+func (co *StageImageContainerOptions) AddEntrypoint(entrypoint string) {
+	co.Entrypoint = entrypoint
 }
 
 func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *StageImageContainerOptions {
@@ -107,12 +101,6 @@ func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *St
 		mergedCo.Cmd = co.Cmd
 	} else {
 		mergedCo.Cmd = co2.Cmd
-	}
-
-	if len(co2.Onbuild) == 0 {
-		mergedCo.Onbuild = co.Onbuild
-	} else {
-		mergedCo.Onbuild = co2.Onbuild
 	}
 
 	if co2.Workdir == "" {
@@ -175,10 +163,8 @@ func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
 		args = append(args, fmt.Sprintf("--workdir=%s", co.Workdir))
 	}
 
-	if len(co.Entrypoint) == 1 {
-		args = append(args, fmt.Sprintf("--entrypoint=%s", co.Entrypoint[0]))
-	} else if len(co.Entrypoint) != 0 {
-		return nil, fmt.Errorf("`ENTRYPOINT` value `%v` isn't supported in run command (only string)", co.Entrypoint)
+	if co.Entrypoint != "" {
+		args = append(args, fmt.Sprintf("--entrypoint=%s", co.Entrypoint))
 	}
 
 	return args, nil
@@ -204,11 +190,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	}
 
 	if len(co.Cmd) != 0 {
-		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
-	}
-
-	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
+		args = append(args, fmt.Sprintf("CMD %s", co.Cmd))
 	}
 
 	if co.Workdir != "" {
@@ -220,7 +202,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	}
 
 	if len(co.Entrypoint) != 0 {
-		args = append(args, fmt.Sprintf("ENTRYPOINT [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+		args = append(args, fmt.Sprintf("ENTRYPOINT %s", co.Entrypoint))
 	}
 
 	if co.StopSignal != "" {
@@ -253,19 +235,18 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
 	}
 
-	if len(co.Cmd) == 0 {
-		cmd, err := getEmptyCmdOrEntrypointInstructionValue()
+	var cmd string
+	var err error
+	if co.Cmd == "" {
+		cmd, err = getEmptyCmdOrEntrypointInstructionValue()
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
-		args = append(args, fmt.Sprintf("CMD %s", cmd))
-	} else if len(co.Cmd) != 0 {
-		args = append(args, fmt.Sprintf("CMD [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
+	} else {
+		cmd = co.Cmd
 	}
 
-	if len(co.Onbuild) != 0 {
-		args = append(args, fmt.Sprintf("ONBUILD %s", strings.Join(co.Onbuild, " ")))
-	}
+	args = append(args, fmt.Sprintf("CMD %s", cmd))
 
 	if co.Workdir != "" {
 		args = append(args, fmt.Sprintf("WORKDIR %s", co.Workdir))
@@ -275,15 +256,17 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		args = append(args, fmt.Sprintf("USER %s", co.User))
 	}
 
-	if len(co.Entrypoint) == 0 {
-		entrypoint, err := getEmptyCmdOrEntrypointInstructionValue()
+	var entrypoint string
+	if co.Entrypoint == "" {
+		entrypoint, err = getEmptyCmdOrEntrypointInstructionValue()
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
-		args = append(args, fmt.Sprintf("ENTRYPOINT %s", entrypoint))
 	} else if len(co.Entrypoint) != 0 {
-		args = append(args, fmt.Sprintf("ENTRYPOINT [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+		entrypoint = co.Entrypoint
 	}
+
+	args = append(args, fmt.Sprintf("ENTRYPOINT %s", entrypoint))
 
 	if co.StopSignal != "" {
 		args = append(args, fmt.Sprintf("STOPSIGNAL %s", co.StopSignal))
@@ -307,12 +290,14 @@ func getEmptyCmdOrEntrypointInstructionValue() (string, error) {
 		return "", err
 	}
 
-	verifiableVersion, err := version.NewVersion("17.10")
-	if err != nil {
-		return "", err
-	}
+	serverVersionMajor := serverVersion.Segments()[0]
+	serverVersionMinor := serverVersion.Segments()[1]
 
-	if serverVersion.LessThan(verifiableVersion) {
+	isLessMajorVersion := serverVersionMajor < 17
+	isLessMinorVersion := serverVersionMajor == 17 && serverVersionMinor < 10
+	isOldValueFormat := isLessMajorVersion || isLessMinorVersion
+
+	if isOldValueFormat {
 		return "[]", nil
 	} else {
 		return "[\"\"]", nil

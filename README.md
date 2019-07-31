@@ -74,7 +74,7 @@ It is designed to make engineer's work fast end efficient.
 - Different image tagging strategies:
   - Tag image by git tag, branch or commit.
   - Content based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
-  
+
 ### Deploy
 
 - Deploy an application into Kubernetes and check that application is deployed correctly.
@@ -107,10 +107,11 @@ It is designed to make engineer's work fast end efficient.
 ## Install Dependencies
 
 ### Docker
-   
+
 [Docker CE installation guide](https://docs.docker.com/install/).
 
-Manage Docker as a non-root user. Create the **docker** group and add your user to the group: 
+Manage Docker as a non-root user. Create the **docker** group and add your user to the group:
+
 ```bash
 sudo groupadd docker
 sudo usermod -aG docker $USER
@@ -122,7 +123,7 @@ sudo usermod -aG docker $USER
 
 - Minimal required version is 1.9.0.
 - To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
-   
+
 ## Install Werf
 
 ### Method 1 (recommended): using Multiwerf
@@ -133,13 +134,13 @@ sudo usermod -aG docker $USER
 * automatically updates Werf binary (can be disabled).
 
 ```bash
-mkdir ~/bin
-cd ~/bin
-
-# add ~/bin in PATH if not there
-echo  ‘export PATH=$PATH:$HOME/bin’ >> ~/.bashrc 
+# add ~/bin into PATH
+echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
 exec bash
 
+# install multiwerf into ~/bin directory
+mkdir -p ~/bin
+cd ~/bin
 curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 source <(multiwerf use 1.0 beta)
 ```
@@ -151,7 +152,7 @@ The latest release can be reached via [this page](https://bintray.com/flant/werf
 ##### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-darwin-amd64-v1.0.3-beta.6 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-darwin-amd64-v1.0.3-beta.9 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -159,14 +160,14 @@ sudo mv /tmp/werf /usr/local/bin/werf
 ##### Linux
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-linux-amd64-v1.0.3-beta.6 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-linux-amd64-v1.0.3-beta.9 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
 ##### Windows
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.6/werf-windows-amd64-v1.0.3-beta.6.exe)
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-windows-amd64-v1.0.3-beta.9.exe)
 
 ### Method 3: from source
 

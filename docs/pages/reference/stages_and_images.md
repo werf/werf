@@ -41,7 +41,7 @@ The Werf assembly process assumes a sequential build of stages using _stage conv
 </a>
 </div>
 
-**All works with _stages_ are done by Werf, and you only need to write config correctly.**
+**User only needs to write a config corretly the rest of the work with stages are done by Werf.**
 
 For every _stage_ at each build, Werf calculates build stage identifier called _stage signature_.
 Each _stage_ is assembled in an ***assembly container*** based on the previous _stage_, and saved in [stages storage](#stages-storage).
@@ -58,10 +58,15 @@ It means that the _stage conveyor_, can be reduced to several _stages_ or even t
 
 ## Stage dependencies
 
-Most _stage dependencies_ are specified in `werf.yaml`, others relate to a runtime.
-Changing these dependencies affects on a _signature_, stages reassembling.
+_Stage dependency_ is some piece of data that affects stage _signature_. Stage dependency may be represented by:
 
-Tables below represent image from Dockerfile, Stapel image and [artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
+ - some file from git repo with its content;
+ - instructions to build stage specified in `werf.yaml`;
+ - arbitrary string specified by user in `werf.yaml`; etc.
+
+Most _stage dependencies_ are specified in `werf.yaml`, others relate to a runtime.
+
+Tables below represent Dockerfile image, Stapel image and [Stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
 Each row describes dependencies for certain stage.
 Left column consists of short descriptions of dependencies, right includes related `werf.yaml` directives and contains relevant references for more information.
 
