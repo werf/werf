@@ -104,7 +104,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 							deletedHooks[hookId] = true
 
 							if err := removeReleaseNamespacedResource(hookTemplate, rev.Namespace); err != nil {
-								logboek.LogErrorF("WARNING: Deleting helm hook %s %s failed: %s", hookTemplate.Metadata.Name, err)
+								logboek.LogErrorF("WARNING: Deleting helm hook %s failed: %s", hookTemplate.Metadata.Name, err)
 							}
 						}
 
@@ -234,7 +234,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				} else if exist {
 					logboek.LogErrorF("WARNING: Improper state:\n")
 					logboek.LogErrorF("* auto purge trigger file is exists, and\n")
-					logboek.LogErrorF("* the latest release revision should not be deleted.\n", latestReleaseRevisionStatus)
+					logboek.LogErrorF("* the latest release revision (%s) should not be deleted.\n", latestReleaseRevisionStatus)
 					logboek.LogLn()
 
 					if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
