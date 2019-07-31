@@ -121,9 +121,9 @@ func TestAesSecret_Extract_negative(t *testing.T) {
 			errorMessage: "minimum required data length: '68'",
 		},
 		{
-			name:         "unpad failed",
+			name:         "inconsistent data, unpad failed",
 			encodedData:  []byte("10000f13a718d019612ab8ad30d9bec8e2c09df0f2d168c179bef954e78371bf6a5b"),
-			errorMessage: "unpad failed",
+			errorMessage: "inconsistent data, unpad failed",
 		},
 	}
 
