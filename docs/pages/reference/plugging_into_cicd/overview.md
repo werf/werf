@@ -200,8 +200,6 @@ As a result of [docker registry integration procedure](#docker-registry-integrat
 
 This config then will be used by any following werf command and also can be used by `docker login` command to perform any additional custom logins on your needs.
 
-TODO: дать "идею", последовательность дейтсвий, основные моменты, которые нужно знать, чтобы прикрутить любую cicd. В чем заключается "суть" поддержки какой-либо cicd системы
-
 ### Complete list of ci-env params and customizing
 
 As an output of ci-env command werf exports following list of variables. To customize these variables user may predefine any variable with the name prefix `WERF_` prior running `werf ci-env` command (ci-env command will detect already defined environment variable and will use this variable as is). This can be accomplished using project environment variables or simply by exporting variables in shell.
