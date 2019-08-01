@@ -98,6 +98,9 @@ entries:
           - title: As Layers
             url: /documentation/reference/development_and_debug/as_layers.html
 
+          - title: Lint And Render Chart
+            url: /documentation/reference/development_and_debug/lint_and_render_chart.html
+
       - title: Toolbox
         sfi:
 
