@@ -1,16 +1,14 @@
 package deploy
 
 import (
-	"fmt"
-
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 )
 
 type ImageInfoGetterStub struct {
-	Name       string
-	ImageTag   string
-	ImagesRepo string
+	Name              string
+	Tag               string
+	ImagesRepoManager ImagesRepoManager
 }
 
 func (d *ImageInfoGetterStub) IsNameless() bool {
@@ -22,10 +20,7 @@ func (d *ImageInfoGetterStub) GetName() string {
 }
 
 func (d *ImageInfoGetterStub) GetImageName() string {
-	if d.Name == "" {
-		return fmt.Sprintf("%s:%s", d.ImagesRepo, d.ImageTag)
-	}
-	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Name, d.ImageTag)
+	return d.ImagesRepoManager.ImageRepoWithTag(d.Name, d.Tag)
 }
 
 func (d *ImageInfoGetterStub) GetImageId() (string, error) {
@@ -33,10 +28,10 @@ func (d *ImageInfoGetterStub) GetImageId() (string, error) {
 }
 
 type ImageInfo struct {
-	Name            string
-	WithoutRegistry bool
-	ImagesRepo      string
-	Tag             string
+	Name              string
+	WithoutRegistry   bool
+	ImagesRepoManager ImagesRepoManager
+	Tag               string
 }
 
 func (d *ImageInfo) IsNameless() bool {
@@ -48,10 +43,7 @@ func (d *ImageInfo) GetName() string {
 }
 
 func (d *ImageInfo) GetImageName() string {
-	if d.Name == "" {
-		return fmt.Sprintf("%s:%s", d.ImagesRepo, d.Tag)
-	}
-	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Name, d.Tag)
+	return d.ImagesRepoManager.ImageRepoWithTag(d.Name, d.Tag)
 }
 
 func (d *ImageInfo) GetImageId() (string, error) {

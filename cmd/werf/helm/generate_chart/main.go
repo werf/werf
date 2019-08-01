@@ -58,6 +58,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
@@ -111,6 +112,16 @@ func runGenerateChart(targetPath string) error {
 
 	imagesRepo = helm_common.GetImagesRepoOrStub(imagesRepo)
 
+	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
 	environment := helm_common.GetEnvironmentOrStub(*CommonCmdData.Environment)
 
 	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, environment, werfConfig)
@@ -133,9 +144,9 @@ func runGenerateChart(targetPath string) error {
 		}
 	}()
 
-	images := deploy.GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepo, tag, withoutRepo)
+	images := deploy.GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, withoutRepo)
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

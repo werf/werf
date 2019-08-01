@@ -85,6 +85,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
@@ -166,7 +167,7 @@ func runDeploy() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	var imagesRepo string
+	var imagesRepoManager *common.ImagesRepoManager
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
@@ -177,7 +178,17 @@ func runDeploy() error {
 			}
 		}
 
-		imagesRepo, err = common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+		imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+		if err != nil {
+			return err
+		}
+
+		imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+		if err != nil {
+			return err
+		}
+
+		imagesRepoManager, err = common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
 		if err != nil {
 			return err
 		}
@@ -223,7 +234,7 @@ func runDeploy() error {
 		return err
 	}
 
-	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepoManager, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *CommonCmdData.Set,
 		SetString:            *CommonCmdData.SetString,
 		Values:               *CommonCmdData.Values,

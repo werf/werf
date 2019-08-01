@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -33,15 +35,19 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		return err
 	}
 
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepImagesRepoMode)
+	if err != nil {
+		return err
+	}
+
 	releaseName := "RELEASE_NAME"
-	imagesRepo := "REPO"
 	tag := "GIT_BRANCH"
 	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
-	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepo, tag, true)
+	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
