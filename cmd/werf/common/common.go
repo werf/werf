@@ -52,8 +52,9 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage *string
-	ImagesRepo    *string
+	StagesStorage  *string
+	ImagesRepo     *string
+	ImagesRepoMode *string
 
 	DockerConfig *string
 	InsecureRepo *bool
@@ -202,6 +203,17 @@ func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
+}
+
+func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ImagesRepoMode = new(string)
+
+	defaultValue := os.Getenv("WERF_IMAGES_REPO_MODE")
+	if defaultValue == "" {
+		defaultValue = MultirepImagesRepoMode
+	}
+
+	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, MultirepImagesRepoMode, MonorepImagesRepoMode))
 }
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -451,6 +463,15 @@ func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepo(projectName, cmdData)
+}
+
+func GetImagesRepoMode(cmdData *CmdData) (string, error) {
+	switch *cmdData.ImagesRepoMode {
+	case MultirepImagesRepoMode, MonorepImagesRepoMode:
+		return *cmdData.ImagesRepoMode, nil
+	default:
+		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, MultirepImagesRepoMode, MonorepImagesRepoMode)
+	}
 }
 
 func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error) {
