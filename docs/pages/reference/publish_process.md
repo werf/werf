@@ -69,16 +69,24 @@ The result of this procedure is an image named by the [*image naming rules*](#im
 
 During images publish procedure Werf constructs resulting images names using:
  * _images repo_ param;
+ * _images repo mode_ param;
  * image name from werf.yaml;
- * tag param;
+ * tag param.
 
 Resulting docker image name constructed as [`DOCKER_REPOSITORY`](https://docs.docker.com/glossary/?term=repository)`:`[`TAG`](https://docs.docker.com/engine/reference/commandline/tag).
 
-If werf project contains single nameless image, then _images repo_ used as docker repository without changes. Otherwise werf constructs docker repository name for each image as `IMAGES_REPO/IMAGE_NAME`.
+There are _images repo_ and _images repo mode_ params defined where and how to store images. 
+If werf project contains single nameless image, then _images repo_ used as docker repository without changes and resulting docker image name costructed by the following pattern: `IMAGES_REPO:TAG`.
 
-So resulting docker image name costructed by the following pattern: `IMAGES_REPO[/IMAGE_NAME]:TAG`.
+Otherwise, werf constructs resulting docker image name for each image based on _images repo mode_:  
+- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorep` mode; 
+- `IMAGES_REPO/IMAGE_NAME:TAG` pattern for `multirep` mode.
 
 _Images repo_ param should be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
+
+_Images repo mode_ param should be specified by `--images-repo-mode` option or `$WERF_IMAGES_REPO_MODE`.
+
+> Image naming behavior should be the same for publish, deploy and cleaning processes. Otherwise, the pipeline can be failed and also you can lose images and stages during the cleanup
 
 *Docker tag* is taken from `--tag-*` params:
 
