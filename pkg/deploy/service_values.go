@@ -21,16 +21,16 @@ type ImageInfoGetter interface {
 	GetImageId() (string, error)
 }
 
-func GetImagesInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
+func GetImagesInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager ImagesRepoManager, tag string, withoutRegistry bool) []ImageInfoGetter {
 	var images []ImageInfoGetter
 
 	for _, image := range configImages {
-		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepoManager: imagesRepoManager, Tag: tag}
 		images = append(images, d)
 	}
 
 	for _, image := range configImagesFromDockerfile {
-		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		d := &ImageInfo{Name: image.Name, WithoutRegistry: withoutRegistry, ImagesRepoManager: imagesRepoManager, Tag: tag}
 		images = append(images, d)
 	}
 
@@ -41,7 +41,7 @@ type ServiceValuesOptions struct {
 	Env string
 }
 
-func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_strategy.TagStrategy, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(projectName string, imagesRepoManager ImagesRepoManager, namespace, tag string, tagStrategy tag_strategy.TagStrategy, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -54,7 +54,7 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_
 
 	werfInfo := map[string]interface{}{
 		"name":       projectName,
-		"repo":       repo,
+		"repo":       imagesRepoManager.ImagesRepo(),
 		"docker_tag": tag,
 		"ci":         ciInfo,
 	}

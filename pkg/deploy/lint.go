@@ -7,10 +7,11 @@ import (
 	"strings"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/tag_strategy"
-
-	"github.com/flant/werf/pkg/config"
 )
 
 type LintOptions struct {
@@ -32,14 +33,18 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		return err
 	}
 
-	imagesRepo := "REPO"
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepImagesRepoMode)
+	if err != nil {
+		return err
+	}
+
 	tag := "GIT_BRANCH"
 	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
-	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepo, tag, true)
+	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
