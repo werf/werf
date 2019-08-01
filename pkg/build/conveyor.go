@@ -169,6 +169,13 @@ type TagOptions struct {
 	TagsByGitCommit []string
 }
 
+type ImagesRepoManager interface {
+	ImagesRepo() string
+	ImageRepo(imageName string) string
+	ImageRepoTag(imageName, tag string) string
+	ImageRepoWithTag(imageName, tag string) string
+}
+
 type PublishImagesOptions struct {
 	TagOptions
 }
@@ -182,14 +189,14 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	return c.runPhases(phases)
 }
 
-func (c *Conveyor) PublishImages(imagesRepo string, opts PublishImagesOptions) error {
+func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
 	var err error
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase(false))
 	phases = append(phases, NewShouldBeBuiltPhase())
-	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts))
+	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
@@ -205,9 +212,9 @@ type BuildAndPublishOptions struct {
 	PublishImagesOptions
 }
 
-func (c *Conveyor) BuildAndPublish(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
+func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
 restart:
-	if err := c.buildAndPublish(stagesRepo, imagesRepo, opts); err != nil {
+	if err := c.buildAndPublish(stagesRepo, imagesRepoManager, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
 			c.ReInitRuntimeFields()
 			goto restart
@@ -219,7 +226,7 @@ restart:
 	return nil
 }
 
-func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
+func (c *Conveyor) buildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
 	var err error
 
 	var phases []Phase
@@ -228,7 +235,7 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
-	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts.PublishImagesOptions))
+	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
