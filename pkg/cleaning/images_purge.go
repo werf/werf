@@ -3,9 +3,9 @@ package cleaning
 import "github.com/flant/logboek"
 
 type ImagesPurgeOptions struct {
-	ImagesRepo  string
-	ImagesNames []string
-	DryRun      bool
+	ImagesRepoManager ImagesRepoManager
+	ImagesNames       []string
+	DryRun            bool
 }
 
 func ImagesPurge(options ImagesPurgeOptions) error {
@@ -17,9 +17,9 @@ func ImagesPurge(options ImagesPurgeOptions) error {
 
 func imagesPurge(options ImagesPurgeOptions) error {
 	commonRepoOptions := CommonRepoOptions{
-		ImagesRepo:  options.ImagesRepo,
-		ImagesNames: options.ImagesNames,
-		DryRun:      options.DryRun,
+		ImagesRepoManager: options.ImagesRepoManager,
+		ImagesNames:       options.ImagesNames,
+		DryRun:            options.DryRun,
 	}
 
 	imageImages, err := repoImages(commonRepoOptions)

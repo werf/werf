@@ -29,7 +29,13 @@ type DeployOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+type ImagesRepoManager interface {
+	ImagesRepo() string
+	ImageRepo(imageName string) string
+	ImageRepoWithTag(imageName, tag string) string
+}
+
+func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	var logBlockErr error
 	var werfChart *werf_chart.WerfChart
 
@@ -42,7 +48,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 		logboek.LogF("Using helm release name: %s\n", release)
 		logboek.LogF("Using kubernetes namespace: %s\n", namespace)
 
-		images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepo, tag, false)
+		images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, false)
 
 		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
@@ -50,7 +56,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 			return
 		}
 
-		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
 			logBlockErr = fmt.Errorf("error creating service values: %s", err)
 			return

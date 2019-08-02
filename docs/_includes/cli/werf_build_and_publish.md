@@ -65,6 +65,9 @@ werf build-and-publish [IMAGE_NAME...] [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
+      --images-repo-mode='multirep':
+            Define how to store images in Repo: multirep or monorep (defaults to                    
+            $WERF_IMAGES_REPO_MODE or multirep)
       --insecure-repo=false:
             Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --introspect-before-error=false:

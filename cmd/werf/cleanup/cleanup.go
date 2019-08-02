@@ -55,6 +55,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 	common.SetupImagesCleanupPolicies(&CommonCmdData, cmd)
@@ -124,6 +125,16 @@ func runCleanup() error {
 		return err
 	}
 
+	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
 	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
 		return err
@@ -161,9 +172,9 @@ func runCleanup() error {
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: cleaning.CommonRepoOptions{
-			ImagesRepo:  imagesRepo,
-			ImagesNames: imagesNames,
-			DryRun:      *CommonCmdData.DryRun,
+			ImagesRepoManager: imagesRepoManager,
+			ImagesNames:       imagesNames,
+			DryRun:            *CommonCmdData.DryRun,
 		},
 		LocalGit:          localGitRepo,
 		KubernetesClients: kubernetesClients,
@@ -172,11 +183,11 @@ func runCleanup() error {
 	}
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:   projectName,
-		ImagesRepo:    imagesRepo,
-		StagesStorage: stagesRepo,
-		ImagesNames:   imagesNames,
-		DryRun:        *CommonCmdData.DryRun,
+		ProjectName:       projectName,
+		ImagesRepoManager: imagesRepoManager,
+		StagesStorage:     stagesRepo,
+		ImagesNames:       imagesNames,
+		DryRun:            *CommonCmdData.DryRun,
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{

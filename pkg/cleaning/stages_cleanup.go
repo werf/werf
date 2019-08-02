@@ -18,11 +18,11 @@ import (
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 
 type StagesCleanupOptions struct {
-	ProjectName   string
-	ImagesRepo    string
-	StagesStorage string
-	ImagesNames   []string
-	DryRun        bool
+	ProjectName       string
+	ImagesRepoManager ImagesRepoManager
+	StagesStorage     string
+	ImagesNames       []string
+	DryRun            bool
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
@@ -44,10 +44,10 @@ func stagesCleanup(options StagesCleanupOptions) error {
 	}
 
 	commonRepoOptions := CommonRepoOptions{
-		ImagesRepo:    options.ImagesRepo,
-		StagesStorage: options.StagesStorage,
-		ImagesNames:   options.ImagesNames,
-		DryRun:        options.DryRun,
+		ImagesRepoManager: options.ImagesRepoManager,
+		StagesStorage:     options.StagesStorage,
+		ImagesNames:       options.ImagesNames,
+		DryRun:            options.DryRun,
 	}
 
 	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", commonProjectOptions.ProjectName)

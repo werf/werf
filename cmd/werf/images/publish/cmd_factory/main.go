@@ -53,6 +53,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
+	common.SetupImagesRepoMode(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo")
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
@@ -119,6 +120,16 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
+	imagesRepoMode, err := common.GetImagesRepoMode(commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
 	tagOpts, err := common.GetTagOptions(commonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
 		return err
@@ -138,7 +149,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 
-	if err = c.PublishImages(imagesRepo, opts); err != nil {
+	if err = c.PublishImages(imagesRepoManager, opts); err != nil {
 		return err
 	}
 
