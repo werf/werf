@@ -10,6 +10,7 @@ type rawImageFromDockerfile struct {
 	Context    string                 `yaml:"context,omitempty"`
 	Target     string                 `yaml:"target,omitempty"`
 	Args       map[string]interface{} `yaml:"args,omitempty"`
+	AddHost    interface{}            `yaml:"addHost,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -79,6 +80,12 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 	image.Context = c.Context
 	image.Target = c.Target
 	image.Args = c.Args
+
+	if addHost, err := InterfaceToStringArray(c.AddHost, c, c.doc); err != nil {
+		return nil, err
+	} else {
+		image.AddHost = addHost
+	}
 
 	image.raw = c
 

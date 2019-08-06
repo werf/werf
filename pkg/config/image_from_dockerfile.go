@@ -6,6 +6,7 @@ type ImageFromDockerfile struct {
 	Context    string
 	Target     string
 	Args       map[string]interface{}
+	AddHost    []string
 
 	raw *rawImageFromDockerfile
 }
