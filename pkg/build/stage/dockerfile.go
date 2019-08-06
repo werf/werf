@@ -19,17 +19,18 @@ import (
 	"github.com/flant/logboek"
 )
 
-func GenerateDockerfileStage(dockerfilePath, target, context string, dockerignorePatternMatcher *fileutils.PatternMatcher, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
-	return newDockerfileStage(dockerfilePath, target, context, dockerignorePatternMatcher, buildArgs, dockerStages, dockerArgsHash, dockerTargetStageIndex, baseStageOptions)
+func GenerateDockerfileStage(dockerfilePath, target, context string, dockerignorePatternMatcher *fileutils.PatternMatcher, buildArgs map[string]interface{}, addHost []string, dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
+	return newDockerfileStage(dockerfilePath, target, context, dockerignorePatternMatcher, buildArgs, addHost, dockerStages, dockerArgsHash, dockerTargetStageIndex, baseStageOptions)
 }
 
-func newDockerfileStage(dockerfilePath, target, context string, dockerignorePatternMatcher *fileutils.PatternMatcher, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
+func newDockerfileStage(dockerfilePath, target, context string, dockerignorePatternMatcher *fileutils.PatternMatcher, buildArgs map[string]interface{}, addHost []string, dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
 	s := &DockerfileStage{}
 	s.dockerfilePath = dockerfilePath
 	s.target = target
 	s.context = context
 	s.dockerignorePatternMatcher = dockerignorePatternMatcher
 	s.buildArgs = buildArgs
+	s.addHost = addHost
 
 	s.dockerStages = dockerStages
 	s.dockerArgsHash = dockerArgsHash
@@ -45,6 +46,7 @@ type DockerfileStage struct {
 	target         string
 	context        string
 	buildArgs      map[string]interface{}
+	addHost        []string
 
 	dockerStages           []instructions.Stage
 	dockerArgsHash         map[string]string
@@ -71,6 +73,10 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	var stagesDependencies [][]string
 	for _, stage := range s.dockerStages {
 		var dependencies []string
+
+		for _, addHost := range s.addHost {
+			dependencies = append(dependencies, addHost)
+		}
 
 		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, dockerMetaArgsString)
 		if err != nil {
@@ -167,6 +173,10 @@ func (s *DockerfileStage) dockerBuildArgs() []string {
 		for key, value := range s.buildArgs {
 			result = append(result, fmt.Sprintf("--build-arg=%s=%v", key, value))
 		}
+	}
+
+	for _, addHost := range s.addHost {
+		result = append(result, fmt.Sprintf("--add-host=%s", addHost))
 	}
 
 	result = append(result, s.context)
