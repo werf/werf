@@ -41,6 +41,30 @@ module Dapp
           '/apis/batch/v1' => [:job, ],
           '/apis/batch/v1beta1' => [:cronjob, ],
         },
+        '1.12' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+        '1.13' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+        '1.14' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+        '1.15' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
         'stable' => {
           '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
           '/apis/batch/v1' => [:job, ],
