@@ -4,18 +4,19 @@ sidebar: documentation
 permalink: documentation/configuration/dockerfile_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-    <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=1016&amp;h=72">
-    </a>
+  </a>
     
-    <div class="language-yaml highlighter-rouge">
-        <div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>
-    <span class="na">dockerfile</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
-    <span class="na">context</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
-    <span class="na">target</span><span class="pi">:</span> <span class="s">&lt;docker stage name&gt;</span>
-    <span class="na">args</span><span class="pi">:</span>
-      <span class="s">&lt;build arg name&gt;</span><span class="pi">:</span> <span class="s">&lt;value&gt;</span>
-    </code></pre></div></div>
+  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>
+  <span class="na">dockerfile</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
+  <span class="na">context</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
+  <span class="na">target</span><span class="pi">:</span> <span class="s">&lt;docker stage name&gt;</span>
+  <span class="na">args</span><span class="pi">:</span>
+    <span class="s">&lt;build arg name&gt;</span><span class="pi">:</span> <span class="s">&lt;value&gt;</span>
+  <span class="na">addHost</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">&lt;host:ip&gt;</span>
+  </code></pre></div></div>
 ---
 
 Building image from Dockerfile is the easiest way to start using werf in an existing project. 
@@ -61,5 +62,6 @@ Werf as well as Docker builds the image based on a Dockerfile and a context.
 
 - `dockerfile` **(required)**: to set Dockerfile path relative to the project directory. 
 - `context`: to set build context PATH inside project directory (defaults to root of a project, `.`).
-- `target`: to link specific Dockerfile stage (last one by default, see `docker build` --target option).
-- `args`: to set build-time variables (see `docker build` --build-arg option).
+- `target`: to link specific Dockerfile stage (last one by default, see `docker build` \-\-target option).
+- `args`: to set build-time variables (see `docker build` \-\-build-arg option).
+- `addHost`: to add a custom host-to-IP mapping (host:ip) (see `docker build` \-\-add-host option).
