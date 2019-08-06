@@ -45,6 +45,7 @@ type CmdData struct {
 	KubeConfig                  *string
 	HelmReleaseStorageNamespace *string
 	HelmReleaseStorageType      *string
+	StatusProgressPeriodSeconds *uint
 
 	Set             *[]string
 	SetString       *[]string
@@ -198,6 +199,11 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
+}
+
+func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StatusProgressPeriodSeconds = new(uint)
+	cmd.Flags().UintVarP(cmdData.StatusProgressPeriodSeconds, "status-progress-period", "", 5, "Status progress period in seconds. Set 0 to stop showing status progress. Defaults to 5 seconds")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {

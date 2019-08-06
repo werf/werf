@@ -62,6 +62,8 @@ type InitOptions struct {
 	HelmReleaseStorageNamespace string
 	HelmReleaseStorageType      string
 
+	StatusProgressPeriod time.Duration
+
 	WithoutKube bool
 }
 
@@ -93,7 +95,7 @@ func Init(options InitOptions) error {
 		releaseLogMessages = append(releaseLogMessages, msg)
 	}
 
-	resourcesWaiter = &ResourcesWaiter{Client: kubeClient}
+	resourcesWaiter = &ResourcesWaiter{Client: kubeClient, StatusProgressPeriod: options.StatusProgressPeriod}
 	kubeClient.SetResourcesWaiter(resourcesWaiter)
 
 	tillerSettings.KubeClient = kubeClient
