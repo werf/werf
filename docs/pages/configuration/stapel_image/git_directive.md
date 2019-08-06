@@ -13,47 +13,48 @@ summary: |
   </div>
 
   <div id="local" class="tabs__content active">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
-    <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="s">includePaths</span><span class="pi">:</span>
+  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
+    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
+    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
+    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
+    <span class="na">includePaths</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="s">excludePaths</span><span class="pi">:</span>
+    <span class="na">excludePaths</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="s">stageDependencies</span><span class="pi">:</span>
-      <span class="s">install</span><span class="pi">:</span>
+    <span class="na">stageDependencies</span><span class="pi">:</span>
+      <span class="na">install</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="s">beforeSetup</span><span class="pi">:</span>
+      <span class="na">beforeSetup</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="s">setup</span><span class="pi">:</span>
+      <span class="na">setup</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span></code></pre>
-    </div>
+  </div></div>     
   </div>
 
   <div id="remote" class="tabs__content">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
-    <span class="s">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
-    <span class="s">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
-    <span class="s">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
-    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
-    <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="s">includePaths</span><span class="pi">:</span>
+  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
+    <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
+    <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
+    <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
+    <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
+    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
+    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
+    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
+    <span class="na">includePaths</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="s">excludePaths</span><span class="pi">:</span>
+    <span class="na">excludePaths</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="s">stageDependencies</span><span class="pi">:</span>
-      <span class="s">install</span><span class="pi">:</span>
+    <span class="na">stageDependencies</span><span class="pi">:</span>
+      <span class="na">install</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="s">beforeSetup</span><span class="pi">:</span>
+      <span class="na">beforeSetup</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="s">setup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span></code></pre>
-      </div>
+      <span class="na">setup</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
+  </code></pre>
+  </div></div>
   </div>
 ---
 
@@ -378,26 +379,22 @@ A space between the layers in this table is not accidental. After a while, the n
 How does werf work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
 
 - Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git mappings_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
-- Build of commit No. 2. The layer of the _gitCache_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
-- Build of commit No. 3. The layer of the _gitLatestPatch_ stage is added, where the patch between `2` and `3` is applied.
-- Build of commit No. 4. The size of the patch between `1` and `4` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `2` and `4`.
-- Build of commit No. 5. The size of the patch between `1` and `5` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `2` and `5`.
-- Build of commit No. 6. The size of the patch between `1` and `6` exceeds 1 MiB. Now _gitCache_ stage layer is modified.
-- Build of commit No. 7. The layer of the _gitLatestPatch_ stage is modified by applying the patch between `6` and `7`.
+- Build of commit No. 2. The size of the patch between `1` and `2` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `1` and `2`.
+- Build of commit No. 3. The size of the patch between `1` and `3` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `1` and `3`.
+- Build of commit No. 4. The size of the patch between `1` and `4` exceeds 1 MiB. Now _gitCache_ stage layer is added by applying the patch between `1` and `4`.
+- Build of commit No. 5. The size of the patch between `4` and `5` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `4` and `5`.
 
 This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _gitCache_ stage, and only patches with moderate size are applied in the layer for the last _gitLatestPatch_ stage. This algorithm reduces the size of _stages_.
 
 | | gitArchive | gitCache | gitLatestPatch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 12:00 |  1 |  - | - |
-| Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
-| Commit No. 3 is made, build at 12:15 |  1 |  2 | 3 |
-| Commit No. 4 is made, build at 12:19 |  1 |  2 | 4 |
-| Commit No. 5 is made, build at 12:25 |  1 |  2 | 5 |
-| Commit No. 6 is made, build at 12:45 |  1 | *6 | - |
-| Commit No. 7 is made, build at 12:57 |  1 |  6 | 7 |
+| Commit No. 2 is made, build at 12:19 |  1 |  - | 2 |
+| Commit No. 3 is made, build at 12:25 |  1 |  - | 3 |
+| Commit No. 4 is made, build at 12:45 |  1 | *4 | - |
+| Commit No. 5 is made, build at 12:57 |  1 |  4 | 5 |
 
-\* — the size of the patch for commit `6` exceeded 1 MiB, so this patch is applied in the layer for the _gitCache_ stage.
+\* — the size of the patch for commit `4` exceeded 1 MiB, so this patch is applied in the layer for the _gitCache_ stage.
 
 ### Rebuild of gitArchive stage
 
@@ -405,20 +402,21 @@ For various reasons, you may want to reset the _gitArchive_ stage, for example, 
 
 To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _gitArchive_ stage. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _gitCache_ stage. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _gitArchive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _git stages_.
 
-You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset werf]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[werf reset]** in its message, and then the builds would look as follows:
+You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset werf]** string in the commit message. Let us assume that, in the previous example commit `6` contains **[werf reset]** in its message, and then the builds would look as follows:
 
 | | gitArchive | gitCache | gitLatestPatch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 12:00 |  1 |  - | - |
-| Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
-| Commit No. 3 is made, build at 12:15 |  1 |  2 | 3 |
-| Commit No. 4 is made, build at 12:19 |  *4 | - | - |
-| Commit No. 5 is made, build at 12:25 |  4 | 5 | - |
-| Commit No. 6 is made, build at 12:45 |  4 | 5 | 6 |
-| Commit No. 7 is made, build at 12:57 |  4 | 5 | 7 |
+| Commit No. 2 is made, build at 12:19 |  1 |  - | 2 |
+| Commit No. 3 is made, build at 12:25 |  1 |  - | 3 |
+| Commit No. 4 is made, build at 12:45 |  1 |  4 | - |
+| Commit No. 5 is made, build at 12:57 |  1 |  4 | 5 |
+| Commit No. 6 is made, build at 13:22 |  *6 |  - | - |
 
-\* — commit `4` contains the **[werf reset]** string in its message, so the _gitArchive_ stage is rebuilt.
+\* — commit `6` contains the **[werf reset]** string in its message, so the _gitArchive_ stage is rebuilt.
 
 ### _git stages_ and rebasing
 
-Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then werf rebuilds that stage with latest commits at the next build.
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. 
+These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_). 
+So, if any saved commit is not in a git repository (e.g., after rebasing) then werf rebuilds that stage with latest commits at the next build.
