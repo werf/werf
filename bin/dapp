@@ -10,7 +10,29 @@ Thread.abort_on_exception = true
 begin
   begin
     begin
-      Dapp::CLI.new.run
+      begin
+        Dapp::CLI.new.run
+      ensure
+        if Time.now.to_date < Date.parse("2019-11-01")
+          STDERR.puts
+          STDERR.puts ::Paint["###################################################################", :red, :bold]
+          STDERR.puts ::Paint["###                   DEPRECATION WARNING!                      ###", :red, :bold]
+          STDERR.puts ::Paint["###  Dapp will be deprecated for use starting with 01.11.2019!  ###", :red, :bold]
+          STDERR.puts ::Paint["###            Please port your project to werf:                ###", :red, :bold]
+          STDERR.puts ::Paint["###                     https://werf.io                         ###", :red, :bold]
+          STDERR.puts ::Paint["###################################################################", :red, :bold]
+          STDERR.puts
+        else
+          STDERR.puts
+          STDERR.puts ::Paint["######################################################################", :red, :bold]
+          STDERR.puts ::Paint["###                     DEPRECATION WARNING!                       ###", :red, :bold]
+          STDERR.puts ::Paint["###  Dapp is deprecated for use and will not receive any support!  ###", :red, :bold]
+          STDERR.puts ::Paint["###               Please port your project to werf:                ###", :red, :bold]
+          STDERR.puts ::Paint["###                       https://werf.io                          ###", :red, :bold]
+          STDERR.puts ::Paint["######################################################################", :red, :bold]
+          STDERR.puts
+        end
+      end
     rescue Dapp::Error::Base => e
       unless (message = Dapp::Helper::NetStatus.before_error_message(e)).empty?
         $stderr.puts(message)
