@@ -5,6 +5,7 @@ entries:
       - target dockerfile instructions
       - hashsum of files related with ADD and COPY dockerfile instructions
       - args used in target dockerfile instructions
+      - addHost
     werf_config: |
       image: <image name... || ~>
       dockerfile: <relative path>
@@ -12,6 +13,8 @@ entries:
       target: <docker stage name>
       args:
         <build arg name>: <value>
+      addHost:
+      - <host:ip>
   - name: from
     type: "image artifact"
     dependencies:

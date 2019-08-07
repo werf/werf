@@ -669,6 +669,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		contextDir,
 		dockerignorePatternMatcher,
 		imageFromDockerfileConfig.Args,
+		imageFromDockerfileConfig.AddHost,
 		dockerStages,
 		dockerArgsHash,
 		dockerTargetIndex,
