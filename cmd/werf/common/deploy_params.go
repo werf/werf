@@ -98,6 +98,10 @@ func GetStatusProgressPeriod(cmdData *CmdData) time.Duration {
 	return time.Second * time.Duration(*cmdData.StatusProgressPeriodSeconds)
 }
 
+func GetHooksStatusProgressPeriod(cmdData *CmdData) time.Duration {
+	return time.Second * time.Duration(*cmdData.HooksStatusProgressPeriodSeconds)
+}
+
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
 	extraAnnotations := map[string]string{}
 	var addAnnotations []string

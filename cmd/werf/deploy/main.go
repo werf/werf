@@ -83,6 +83,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
 	common.SetupStatusProgressPeriod(&CommonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
@@ -129,6 +130,7 @@ func runDeploy() error {
 			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
 			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
+			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {

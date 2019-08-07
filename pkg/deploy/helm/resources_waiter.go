@@ -27,9 +27,10 @@ import (
 )
 
 type ResourcesWaiter struct {
-	Client               *helmKube.Client
-	StatusProgressPeriod time.Duration
-	LogsFromTime         time.Time
+	Client                    *helmKube.Client
+	LogsFromTime              time.Time
+	StatusProgressPeriod      time.Duration
+	HooksStatusProgressPeriod time.Duration
 }
 
 func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
@@ -308,7 +309,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 
 			return logboek.LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name), logboek.LogProcessOptions{}, func() error {
 				return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
-					StatusProgressPeriod: waiter.StatusProgressPeriod,
+					StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
 					Options: tracker.Options{
 						Timeout:      timeout,
 						LogsFromTime: waiter.LogsFromTime,

@@ -36,16 +36,17 @@ type CmdData struct {
 	TagGitTag    *string
 	TagGitCommit *string
 
-	Environment                 *string
-	Release                     *string
-	Namespace                   *string
-	AddAnnotations              *[]string
-	AddLabels                   *[]string
-	KubeContext                 *string
-	KubeConfig                  *string
-	HelmReleaseStorageNamespace *string
-	HelmReleaseStorageType      *string
-	StatusProgressPeriodSeconds *uint
+	Environment                      *string
+	Release                          *string
+	Namespace                        *string
+	AddAnnotations                   *[]string
+	AddLabels                        *[]string
+	KubeContext                      *string
+	KubeConfig                       *string
+	HelmReleaseStorageNamespace      *string
+	HelmReleaseStorageType           *string
+	StatusProgressPeriodSeconds      *int64
+	HooksStatusProgressPeriodSeconds *int64
 
 	Set             *[]string
 	SetString       *[]string
@@ -202,8 +203,55 @@ func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StatusProgressPeriodSeconds = new(uint)
-	cmd.Flags().UintVarP(cmdData.StatusProgressPeriodSeconds, "status-progress-period", "", 5, "Status progress period in seconds. Set 0 to stop showing status progress. Defaults to 5 seconds")
+	cmdData.StatusProgressPeriodSeconds = new(int64)
+	cmd.Flags().Int64VarP(
+		cmdData.StatusProgressPeriodSeconds,
+		"status-progress-period",
+		"",
+		*statusProgressPeriodDefaultValue(),
+		"Status progress period in seconds. Set -1 to stop showing status progress. Defaults to $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds",
+	)
+}
+
+func statusProgressPeriodDefaultValue() *int64 {
+	defaultValue := int64(5)
+
+	v, err := getIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
+	if err != nil {
+		TerminateWithError(err.Error(), 1)
+	}
+
+	if v == nil {
+		return &defaultValue
+	} else {
+		return v
+	}
+}
+
+func SetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HooksStatusProgressPeriodSeconds = new(int64)
+	cmd.Flags().Int64VarP(
+		cmdData.HooksStatusProgressPeriodSeconds,
+		"hooks-status-progress-period",
+		"",
+		*hooksStatusProgressPeriodDefaultValue(),
+		"Hooks status progress period in seconds. Set 0 to stop showing hooks status progress. Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value",
+	)
+}
+
+func hooksStatusProgressPeriodDefaultValue() *int64 {
+	defaultValue := statusProgressPeriodDefaultValue()
+
+	v, err := getIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
+	if err != nil {
+		TerminateWithError(err.Error(), 1)
+	}
+
+	if v == nil {
+		return defaultValue
+	} else {
+		return v
+	}
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -353,6 +401,22 @@ func getBoolEnvironment(environmentName string) bool {
 }
 
 func getInt64EnvVar(varName string) (*int64, error) {
+	if v := os.Getenv(varName); v != "" {
+		vInt, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("bad %s variable value '%s': %s", varName, v, err)
+		}
+
+		res := new(int64)
+		*res = vInt
+
+		return res, nil
+	}
+
+	return nil, nil
+}
+
+func getIntEnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
@@ -676,9 +740,9 @@ func LogVersion() {
 	logboek.LogF("Version: %s\n", werf.Version)
 }
 
-func LogError(format string, a ...interface{}) {
+func TerminateWithError(errMsg string, exitCode int) {
 	_ = logboek.WithoutIndent(func() error {
-		msg := fmt.Sprintf(format, a...)
+		msg := fmt.Sprintf("Error: %s", errMsg)
 		msg = strings.TrimSuffix(msg, "\n")
 
 		_ = logboek.WithFitMode(false, func() error {
@@ -689,4 +753,6 @@ func LogError(format string, a ...interface{}) {
 
 		return nil
 	})
+
+	os.Exit(exitCode)
 }
