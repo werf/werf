@@ -214,6 +214,10 @@ func runDeploy() error {
 		}
 	}
 
+	if imagesRepoManager == nil {
+		imagesRepoManager = &common.ImagesRepoManager{}
+	}
+
 	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
