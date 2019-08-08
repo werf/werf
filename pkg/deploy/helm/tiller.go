@@ -13,8 +13,6 @@ import (
 	"github.com/gosuri/uitable/util/strutil"
 	"k8s.io/helm/pkg/proto/hapi/release"
 
-	"k8s.io/helm/pkg/timeconv"
-
 	corev1 "k8s.io/api/core/v1"
 	kubeErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +29,7 @@ import (
 	"k8s.io/helm/pkg/storage/driver"
 	"k8s.io/helm/pkg/tiller"
 	tiller_env "k8s.io/helm/pkg/tiller/environment"
+	"k8s.io/helm/pkg/timeconv"
 
 	"github.com/flant/logboek"
 )
@@ -38,6 +37,7 @@ import (
 var (
 	tillerReleaseServer = &tiller.ReleaseServer{}
 	tillerSettings      = tiller_env.New()
+	kubeClient          *KubeClient
 	helmSettings        helm_env.EnvSettings
 	resourcesWaiter     *ResourcesWaiter
 	releaseLogMessages  []string
@@ -73,6 +73,7 @@ func Init(options InitOptions) error {
 		tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
 
 		tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, nil, false)
+		tillerReleaseServer.ReleaseModule = &ReleaseModule{tillerReleaseServer.ReleaseModule}
 		tillerReleaseServer.Log = func(f string, args ...interface{}) {
 			msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
 			releaseLogMessages = append(releaseLogMessages, msg)
@@ -90,7 +91,7 @@ func Init(options InitOptions) error {
 	configFlags.KubeConfig = &helmSettings.KubeConfig
 	configFlags.Namespace = &options.HelmReleaseStorageNamespace
 
-	kubeClient := kube.New(configFlags)
+	kubeClient = &KubeClient{Client: kube.New(configFlags)}
 	kubeClient.Log = func(f string, args ...interface{}) {
 		msg := fmt.Sprintf(fmt.Sprintf("Kube client: %s", f), args...)
 		releaseLogMessages = append(releaseLogMessages, msg)
@@ -150,6 +151,7 @@ func Init(options InitOptions) error {
 	}
 
 	tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, clientset, false)
+	tillerReleaseServer.ReleaseModule = &ReleaseModule{tillerReleaseServer.ReleaseModule}
 	tillerReleaseServer.Log = func(f string, args ...interface{}) {
 		msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
 		releaseLogMessages = append(releaseLogMessages, msg)

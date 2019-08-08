@@ -27,7 +27,7 @@ import (
 )
 
 type ResourcesWaiter struct {
-	Client                    *helmKube.Client
+	Client                    *KubeClient
 	LogsFromTime              time.Time
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
