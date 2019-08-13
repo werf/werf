@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig"
 
@@ -91,6 +92,14 @@ func GetHelmReleaseStorageType(helmReleaseStorageType string) (string, error) {
 	default:
 		return "", fmt.Errorf("bad --helm-release-storage-type value '%s'. Use one of '%s' or '%s'", helmReleaseStorageType, helm.ConfigMapStorage, helm.SecretStorage)
 	}
+}
+
+func GetStatusProgressPeriod(cmdData *CmdData) time.Duration {
+	return time.Second * time.Duration(*cmdData.StatusProgressPeriodSeconds)
+}
+
+func GetHooksStatusProgressPeriod(cmdData *CmdData) time.Duration {
+	return time.Second * time.Duration(*cmdData.HooksStatusProgressPeriodSeconds)
 }
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {

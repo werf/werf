@@ -57,6 +57,8 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupKubeContext(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
+	common.SetupStatusProgressPeriod(&CommonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
@@ -90,6 +92,8 @@ func runDeployChart(chartDir string, releaseName string) error {
 			KubeContext:                 *CommonCmdData.KubeContext,
 			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
+			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
+			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {

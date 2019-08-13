@@ -64,15 +64,11 @@ func main() {
 	trapTerminationSignals()
 
 	if err := logging.Init(); err != nil {
-		common.LogError(fmt.Sprintf("logger initialization error: %s", err))
-
-		os.Exit(1)
+		common.TerminateWithError(fmt.Sprintf("logger initialization failed: %s", err), 1)
 	}
 
 	if err := process_exterminator.Init(); err != nil {
-		common.LogError(fmt.Sprintf("process exterminator initialization error: %s", err))
-
-		os.Exit(1)
+		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
 	rootCmd := &cobra.Command{
@@ -127,9 +123,7 @@ Find more information at https://werf.io`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		common.LogError("Error: %s", err)
-
-		os.Exit(1)
+		common.TerminateWithError(err.Error(), 1)
 	}
 }
 
@@ -240,8 +234,6 @@ func trapTerminationSignals() {
 	go func() {
 		<-c
 
-		common.LogError("interrupted")
-
-		os.Exit(17)
+		common.TerminateWithError("interrupted", 17)
 	}()
 }
