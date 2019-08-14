@@ -36,6 +36,9 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
             help for deploy-chart
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -61,6 +64,9 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
