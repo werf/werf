@@ -15,6 +15,14 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "werf — наш инструмент для CI/CD в Kubernetes (обзор и видео доклада)"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/460351/"
+    created: 2019-08-01
+    img: "/images/publications/ru_460351.jpg"
+    comment: |
+      <p>27 мая в главном зале конференции DevOpsConf 2019, проходящей в рамках фестиваля <a href="http://ritfest.ru/2019/">РИТ++ 2019</a>, в рамках секции «Непрерывная поставка», прозвучал доклад «werf — наш инструмент для CI/CD в Kubernetes». В нём рассказывается о тех <b>проблемах и вызовах, с которыми сталкивается каждый при деплое в Kubernetes</b>, а также о нюансах, которые могут быть заметны не сразу. Разбирая возможные пути решения, мы показываем, как это реализовано в Open Source-инструменте <a href="https://github.com/flant/werf">werf</a>.</p>
+
   - title: "Сборка проектов с werf (dapp). Часть 2: JavaScript (frontend)"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/company/flant/blog/359204/"
