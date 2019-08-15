@@ -14,7 +14,8 @@
   color: #00122c;
   margin: 30px 0 20px; 
   padding-bottom: 10px;
-  border-bottom: 2px solid rgba(0,102,255,0.1);;
+  border-bottom: 2px solid rgba(0,102,255,0.1);
+  clear: both;
 }
 
 .publications__list {
