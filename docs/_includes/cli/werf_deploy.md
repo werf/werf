@@ -79,6 +79,9 @@ werf deploy [options]
             help for deploy
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --ignore-secret-key=false:
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
   -i, --images-repo='':
@@ -123,15 +126,20 @@ werf deploy [options]
             with commas: key1=val1,key2=val2)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/documentation/reference/toolbox/ssh.html). Option can be specified      
-            multiple times to use multiple keys
+            https://werf.io/documentation/reference/toolbox/ssh.html).
+            Option can be specified multiple times to use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --tag-custom=[]:
-            Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
-            multiple times to produce multiple images with the specified tags
+            Use custom tagging strategy and tag by the specified arbitrary tags.
+            Option can be used multiple times to produce multiple images with the specified tags.
+            Also can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
+            $WERF_TAG_CUSTOM_TAG2=tag2)
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be      
             enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
