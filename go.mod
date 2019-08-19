@@ -3,12 +3,12 @@ module github.com/flant/werf
 require (
 	cloud.google.com/go v0.34.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
-	github.com/Azure/go-autorest v11.1.0+incompatible
+	github.com/Azure/go-autorest v11.1.2+incompatible
 	github.com/BurntSushi/toml v0.3.1
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
 	github.com/Masterminds/goutils v1.1.0
-	github.com/Masterminds/semver v1.3.1
-	github.com/Masterminds/sprig v0.0.0-20190301161902-9f8fceff796f
+	github.com/Masterminds/semver v1.4.2
+	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/Masterminds/vcs v1.11.1
 	github.com/Microsoft/go-winio v0.4.12
 	github.com/Microsoft/hcsshim v0.8.5
@@ -29,8 +29,8 @@ require (
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260
 	github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
-	github.com/coreos/etcd v3.2.1+incompatible
-	github.com/cpuguy83/go-md2man v1.0.8
+	github.com/coreos/etcd v3.3.10+incompatible
+	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/cyphar/filepath-securejoin v0.2.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v0.0.0-20160705203006-01aeca54ebda
@@ -52,7 +52,7 @@ require (
 	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170208215640-dcef7f557305
 	github.com/emirpasic/gods v1.12.0 // indirect
-	github.com/evanphx/json-patch v0.0.0-20190203023257-5858425f7550
+	github.com/evanphx/json-patch v4.2.0+incompatible
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
 	github.com/fatih/camelcase v0.0.0-20160318181535-f6a740d52f96
 	github.com/fatih/color v1.7.0
@@ -104,7 +104,6 @@ require (
 	github.com/mattn/go-shellwords v1.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/miekg/pkcs11 v0.0.0-20180208123018-5f6e0d0dad6f
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
@@ -124,17 +123,17 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.2.1
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/prometheus/client_golang v0.9.1
+	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
 	github.com/prometheus/common v0.2.0
-	github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d
-	github.com/russross/blackfriday v0.0.0-20160531111224-1d6b8e9301e7
+	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
+	github.com/russross/blackfriday v1.5.2
 	github.com/satori/go.uuid v1.2.0
 	github.com/seccomp/libseccomp-golang v0.0.0-20160531183505-32f571b70023
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20151028001915-10ef21a441db
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
@@ -152,7 +151,7 @@ require (
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
 	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
 	golang.org/x/net v0.0.0-20190603091049-60506f45cf65
-	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
+	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed
 	golang.org/x/text v0.3.2
@@ -188,4 +187,4 @@ require (
 	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc
 )
 
-replace k8s.io/helm => github.com/flant/helm v2.8.0-rc.1.0.20190422110815-d72b277ac847+incompatible
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20190822171242-a4b557e98828
