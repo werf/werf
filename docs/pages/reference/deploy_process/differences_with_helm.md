@@ -29,10 +29,6 @@ In contrast to Tiller, releases storage in Werf is not a static configuration of
 
 As helm client and tiller is built into werf there is no need for helm client installed on the host nor tiller installed in the cluster.
 
-### Hooks differences
-
-Added two extra hooks: `post-apply-on-install` and `post-apply-on-upgrade`. The hooks are launched after applying main application resources and before tracking ones. 
-
 ## Proper tracking of deployed resources
 
 Werf tracks all chart resources until each resource reaches ready state and prints logs and info about current resources status, resources status changes during deploy process and "what werf is waiting for?".

@@ -116,8 +116,8 @@ github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a h1:fatg
 github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a/go.mod h1:MgVxbTqOBzPfJUyizvHRrXq2MmYT6MobMn/1N9+QTFA=
 github.com/flant/helm v0.0.0-20190816114256-f4d27cf06ce1 h1:TglNufH8+S5aYqV2N1kbRvUSLmFYvcRuTGbiL6U26ck=
 github.com/flant/helm v0.0.0-20190816114256-f4d27cf06ce1/go.mod h1:kXwzKCOBX0Lv9+aHkKvEktNMpZXQgQwYHVvaB+hAM6o=
-github.com/flant/kubedog v0.3.4-0.20190806213522-0e6c57424c43 h1:J2Q/UQu9mGlZ9QX8NBW2EtI+e2khQSDtDhcoyXlN07Y=
-github.com/flant/kubedog v0.3.4-0.20190806213522-0e6c57424c43/go.mod h1:ZZiqdTPqlaI89q8yNLaq/x0FM9DN0R5Q4qpG5hYKNKA=
+github.com/flant/kubedog v0.3.4-0.20190813090843-d6249ea4bafe h1:ZzLzKkbV4BoR2NqUdLwCDOIeNkadIHwhw+oTfeLpBRY=
+github.com/flant/kubedog v0.3.4-0.20190813090843-d6249ea4bafe/go.mod h1:ZZiqdTPqlaI89q8yNLaq/x0FM9DN0R5Q4qpG5hYKNKA=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d/go.mod h1:WirgB39yMTvPGKqrAE3zlsG/02of4rr5lXh1EiwO5P0=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37 h1:HFAYpzWV3FHHE/ymr9YDIcWwf8eGqSp1KWJx4XEd8n0=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=

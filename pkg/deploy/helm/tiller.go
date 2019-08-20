@@ -37,7 +37,6 @@ import (
 var (
 	tillerReleaseServer = &tiller.ReleaseServer{}
 	tillerSettings      = tiller_env.New()
-	kubeClient          *KubeClient
 	helmSettings        helm_env.EnvSettings
 	resourcesWaiter     *ResourcesWaiter
 	releaseLogMessages  []string
@@ -73,7 +72,6 @@ func Init(options InitOptions) error {
 		tillerSettings.EngineYard[WerfTemplateEngineName] = WerfTemplateEngine
 
 		tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, nil, false)
-		tillerReleaseServer.ReleaseModule = &ReleaseModule{tillerReleaseServer.ReleaseModule}
 		tillerReleaseServer.Log = func(f string, args ...interface{}) {
 			msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
 			releaseLogMessages = append(releaseLogMessages, msg)
@@ -91,7 +89,7 @@ func Init(options InitOptions) error {
 	configFlags.KubeConfig = &helmSettings.KubeConfig
 	configFlags.Namespace = &options.HelmReleaseStorageNamespace
 
-	kubeClient = &KubeClient{Client: kube.New(configFlags)}
+	kubeClient := kube.New(configFlags)
 	kubeClient.Log = func(f string, args ...interface{}) {
 		msg := fmt.Sprintf(fmt.Sprintf("Kube client: %s", f), args...)
 		releaseLogMessages = append(releaseLogMessages, msg)
@@ -151,7 +149,6 @@ func Init(options InitOptions) error {
 	}
 
 	tillerReleaseServer = tiller.NewReleaseServer(tillerSettings, clientset, false)
-	tillerReleaseServer.ReleaseModule = &ReleaseModule{tillerReleaseServer.ReleaseModule}
 	tillerReleaseServer.Log = func(f string, args ...interface{}) {
 		msg := fmt.Sprintf(fmt.Sprintf("Release server: %s", f), args...)
 		releaseLogMessages = append(releaseLogMessages, msg)
