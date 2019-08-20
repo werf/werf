@@ -234,8 +234,13 @@ func (c *StageImageContainer) prepareInheritedCommitOptions() (*StageImageContai
 		return nil, err
 	}
 
-	inheritedOptions.Entrypoint = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Entrypoint, "\", \""))
-	inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))
+	if len(fromImageInspect.Config.Cmd) != 0 {
+		inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))
+	}
+
+	if len(fromImageInspect.Config.Entrypoint) != 0 {
+		inheritedOptions.Entrypoint = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Entrypoint, "\", \""))
+	}
 
 	inheritedOptions.User = fromImageInspect.Config.User
 	if fromImageInspect.Config.WorkingDir != "" {
