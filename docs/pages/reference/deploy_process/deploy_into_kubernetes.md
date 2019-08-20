@@ -463,16 +463,15 @@ When running `werf deploy` command werf starts deploy process which includes fol
  1. Render chart templates into single list of kubernetes resources manifests and validate them.
  2. Run `pre-install` or `pre-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
  3. Apply changes to kubernetes resources: create new, delete old, update existing.
- 4. Run `post-apply-on-install` or `post-apply-on-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
- 5. Create new release version and save current resources manifests state into this release.
- 6. Track all release resources till readiness state reached printing logs and other info along the way.
- 7. Run `post-install` or `post-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
+ 4. Create new release version and save current resources manifests state into this release.
+ 5. Track all release resources till readiness state reached printing logs and other info along the way.
+ 6. Run `post-install` or `post-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
 
 NOTE: Werf will delete all newly created resources immediately during current deploy process if this deploy process fails at any step specified above!
 
-During execution of helm hooks on the steps 2, 4 and 7 werf will track these hooks resources until successful termination. Tracking [can be configured](#resource-tracking-configuration) for each hook resource.
+During execution of helm hooks on the steps 2 and 6 werf will track these hooks resources until successful termination. Tracking [can be configured](#resource-tracking-configuration) for each hook resource.
 
-On the step 6 werf tracks all release resources until each resource reaches "ready" state. All resources are tracked at the same time. During tracking werf unifies info from all release resources in realtime into single text output and periodically prints so called status progress table. Tracking [can be configured](#resource-tracking-configuration) for each resource.
+On the step 5 werf tracks all release resources until each resource reaches "ready" state. All resources are tracked at the same time. During tracking werf unifies info from all release resources in realtime into single text output and periodically prints so called status progress table. Tracking [can be configured](#resource-tracking-configuration) for each resource.
 
 Werf shows logs of resources Pods only until pod reaches "ready" state, except for Jobs. For Pods of a Job logs will be shown till Pods are terminated.
 
@@ -506,10 +505,6 @@ metadata:
 There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://github.com/helm/helm/blob/master/docs/charts_hooks.md#the-available-hooks).
 
 Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates kuberntes resource for each of the hook in the case when resource already exists in the cluster. Hooks kubernetes resources are not deleted after execution.
-
-#### Extra werf hooks
-
-There are two extra hooks added in werf, `post-apply-on-install` and `post-apply-on-upgrade`. The hooks are launched after applying main application resources and before tracking ones (read more in the [deploy process](#deploy-process)).
 
 ### Resource tracking configuration
 
