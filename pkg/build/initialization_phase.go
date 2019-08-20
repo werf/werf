@@ -595,15 +595,32 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	}
 
 	var dockerignorePatternsWithContextPrefix []string
-	for _, pattern := range dockerignorePatterns {
-		var resultPattern string
-		if strings.HasPrefix(pattern, "!") {
-			resultPattern = "!" + path.Join(contextDir, pattern[1:])
-		} else {
-			resultPattern = path.Join(contextDir, pattern)
+	for _, dockerignorePattern := range dockerignorePatterns {
+		patterns := []string{dockerignorePattern}
+		specialPrefixes := []string{
+			"**/",
+			"/**/",
+			"!**/",
+			"!/**/",
 		}
 
-		dockerignorePatternsWithContextPrefix = append(dockerignorePatternsWithContextPrefix, resultPattern)
+		for _, prefix := range specialPrefixes {
+			if strings.HasPrefix(dockerignorePattern, prefix) {
+				patterns = append(patterns, strings.Replace(dockerignorePattern, "**/", "", 1))
+				break
+			}
+		}
+
+		for _, pattern := range patterns {
+			var resultPattern string
+			if strings.HasPrefix(pattern, "!") {
+				resultPattern = "!" + path.Join(contextDir, pattern[1:])
+			} else {
+				resultPattern = path.Join(contextDir, pattern)
+			}
+
+			dockerignorePatternsWithContextPrefix = append(dockerignorePatternsWithContextPrefix, resultPattern)
+		}
 	}
 
 	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatternsWithContextPrefix)
