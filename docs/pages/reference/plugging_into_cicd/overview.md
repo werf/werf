@@ -98,6 +98,13 @@ This mode makes use of [werf publish params]({{ site.baseurl }}/documentation/re
 
 This tagging mode is selected by `--tagging-strategy=tag-or-branch` option of [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html).
 
+> If used tag or branch value does not match regex `^[\w][\w.-]*$` or consists of more than 128 characters, werf slugifies this tag (read more in [slug reference]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)). 
+  <br />
+  <br />
+  For example: 
+  - branch `developer-feature` is valid and resulted tag will be unchanged;
+  - branch `developer/feature` is not valid and resulted tag will be `developer-feature-6e0628fc`.
+
 ## How ci-env works
 
 Ci-env command passes all paramters to werf using environment variables, see [pass cli params as environment variables below](#pass-cli-params-as-environment-variables).
