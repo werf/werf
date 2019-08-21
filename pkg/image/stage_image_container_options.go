@@ -189,7 +189,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
 	}
 
-	if len(co.Cmd) != 0 {
+	if co.Cmd != "" {
 		args = append(args, fmt.Sprintf("CMD %s", co.Cmd))
 	}
 
@@ -201,7 +201,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 		args = append(args, fmt.Sprintf("USER %s", co.User))
 	}
 
-	if len(co.Entrypoint) != 0 {
+	if co.Entrypoint != "" {
 		args = append(args, fmt.Sprintf("ENTRYPOINT %s", co.Entrypoint))
 	}
 
@@ -235,19 +235,6 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
 	}
 
-	var cmd string
-	var err error
-	if co.Cmd == "" {
-		cmd, err = getEmptyCmdOrEntrypointInstructionValue()
-		if err != nil {
-			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
-		}
-	} else {
-		cmd = co.Cmd
-	}
-
-	args = append(args, fmt.Sprintf("CMD %s", cmd))
-
 	if co.Workdir != "" {
 		args = append(args, fmt.Sprintf("WORKDIR %s", co.Workdir))
 	}
@@ -257,16 +244,23 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	}
 
 	var entrypoint string
-	if co.Entrypoint == "" {
-		entrypoint, err = getEmptyCmdOrEntrypointInstructionValue()
+	var err error
+	if co.Entrypoint != "" {
+		entrypoint = co.Entrypoint
+	} else {
+		entrypoint, err = getEmptyEntrypointInstructionValue()
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
-	} else if len(co.Entrypoint) != 0 {
-		entrypoint = co.Entrypoint
 	}
 
 	args = append(args, fmt.Sprintf("ENTRYPOINT %s", entrypoint))
+
+	if co.Cmd != "" {
+		args = append(args, fmt.Sprintf("CMD %s", co.Cmd))
+	} else if co.Entrypoint == "" {
+		args = append(args, "CMD []")
+	}
 
 	if co.StopSignal != "" {
 		args = append(args, fmt.Sprintf("STOPSIGNAL %s", co.StopSignal))
@@ -279,7 +273,7 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	return args, nil
 }
 
-func getEmptyCmdOrEntrypointInstructionValue() (string, error) {
+func getEmptyEntrypointInstructionValue() (string, error) {
 	v, err := docker.ServerVersion()
 	if err != nil {
 		return "", err

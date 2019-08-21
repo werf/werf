@@ -72,6 +72,10 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 		docker.Entrypoint = entrypoint
 	}
 
+	if docker.Entrypoint != "" && docker.Cmd == "" {
+		docker.Cmd = "[]"
+	}
+
 	if c.StopSignal != nil {
 		docker.StopSignal = fmt.Sprintf("%v", c.StopSignal)
 	}
@@ -100,7 +104,12 @@ func prepareCommand(stringOrArray interface{}, configSection interface{}, doc *d
 					return cmd, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrArray), configSection, doc)
 				}
 			}
-			cmd = fmt.Sprintf("[\"%s\"]", strings.Join(stringArray, "\", \""))
+
+			if len(stringArray) == 0 {
+				cmd = "[]"
+			} else {
+				cmd = fmt.Sprintf("[\"%s\"]", strings.Join(stringArray, "\", \""))
+			}
 		} else {
 			return cmd, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrArray), configSection, doc)
 		}
