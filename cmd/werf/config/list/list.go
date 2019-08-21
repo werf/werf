@@ -7,6 +7,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -38,6 +39,8 @@ func run() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	tmp_manager.AutoGCEnabled = false
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
