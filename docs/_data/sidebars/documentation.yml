@@ -186,6 +186,9 @@ entries:
             - title: config render
               url: /documentation/cli/management/config/render.html
 
+            - title: config list
+              url: /documentation/cli/management/config/render.html
+
             - title: stages build
               url: /documentation/cli/management/stages/build.html
 

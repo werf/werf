@@ -19,8 +19,8 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
