@@ -8,6 +8,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"github.com/Masterminds/semver"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
@@ -172,7 +173,22 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
 
 	printHeader("OTHER", true)
-	printExportCommand("WERF_LOG_COLOR_MODE", "on", false)
+
+	werfLogColorMode := "on"
+	ciServerVersion := os.Getenv("CI_SERVER_VERSION")
+	if ciServerVersion != "" {
+		currentVersion, err := semver.NewVersion(ciServerVersion)
+		if err == nil {
+			colorWorkTillVersion, _ := semver.NewVersion("12.1.3")
+			colorWorkSinceVersion, _ := semver.NewVersion("12.2.0")
+
+			if currentVersion.GreaterThan(colorWorkTillVersion) && currentVersion.LessThan(colorWorkSinceVersion) {
+				werfLogColorMode = "off"
+			}
+		}
+	}
+
+	printExportCommand("WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	printExportCommand("WERF_LOG_PROJECT_DIR", "1", false)
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "100", false)
