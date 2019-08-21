@@ -50,6 +50,9 @@ import (
 	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
 	helm_render "github.com/flant/werf/cmd/werf/helm/render"
 
+	config_list "github.com/flant/werf/cmd/werf/config/list"
+	config_render "github.com/flant/werf/cmd/werf/config/render"
+
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
 	"github.com/flant/werf/cmd/werf/version"
@@ -105,6 +108,7 @@ Find more information at https://werf.io`),
 		{
 			Message: "Lowlevel Management Commands:",
 			Commands: []*cobra.Command{
+				configCmd(),
 				stagesCmd(),
 				imagesCmd(),
 				helmCmd(),
@@ -125,6 +129,19 @@ Find more information at https://werf.io`),
 	if err := rootCmd.Execute(); err != nil {
 		common.TerminateWithError(err.Error(), 1)
 	}
+}
+
+func configCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Work with werf.yaml",
+	}
+	cmd.AddCommand(
+		config_render.NewCmd(),
+		config_list.NewCmd(),
+	)
+
+	return cmd
 }
 
 func imagesCmd() *cobra.Command {

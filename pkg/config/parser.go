@@ -15,16 +15,54 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"gopkg.in/yaml.v2"
 
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
-	"gopkg.in/yaml.v2"
 )
 
-func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
+func RenderWerfConfig(werfConfigPath string, imagesToProcess []string) error {
+	werfConfig, err := GetWerfConfig(werfConfigPath, false)
+	if err != nil {
+		return err
+	}
+
+	if len(imagesToProcess) == 0 {
+		werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
+		if err != nil {
+			return fmt.Errorf("cannot parse config: %s", err)
+		}
+
+		fmt.Print(werfConfigRenderContent)
+	} else {
+		var imageDocs []string
+
+		for _, imageToProcess := range imagesToProcess {
+			if !werfConfig.HasImageOrArtifact(imageToProcess) {
+				return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
+			} else {
+				if i := werfConfig.GetArtifact(imageToProcess); i != nil {
+					imageDocs = append(imageDocs, string(i.raw.doc.Content))
+				} else if i := werfConfig.GetStapelImage(imageToProcess); i != nil {
+					imageDocs = append(imageDocs, string(i.raw.doc.Content))
+				} else if i := werfConfig.GetDockerfileImage(imageToProcess); i != nil {
+					imageDocs = append(imageDocs, string(i.raw.doc.Content))
+				}
+			}
+		}
+
+		fmt.Print(strings.Join(imageDocs, "---\n"))
+	}
+
+	return nil
+}
+
+func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig, error) {
 	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
@@ -35,7 +73,9 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	logboek.LogF("Using werf config render file: %s\n", werfConfigRenderPath)
+	if logRenderedFilePath {
+		logboek.LogF("Using werf config render file: %s\n", werfConfigRenderPath)
+	}
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
