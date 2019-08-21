@@ -471,16 +471,25 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 }
 
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return config.GetWerfConfig(werfConfigPath, true)
+}
+
+func GetWerfConfigPath(projectDir string) (string, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
 		werfConfigPath := path.Join(projectDir, werfConfigName)
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
-			return nil, err
+			return "", err
 		} else if exist {
-			return config.GetWerfConfig(werfConfigPath)
+			return werfConfigPath, err
 		}
 	}
 
-	return nil, errors.New("werf.yaml not found")
+	return "", errors.New("werf.yaml not found")
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {

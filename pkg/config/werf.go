@@ -44,12 +44,28 @@ func (c *WerfConfig) GetAllImages() []ImageInterface {
 }
 
 func (c *WerfConfig) GetImage(imageName string) ImageInterface {
+	if i := c.GetStapelImage(imageName); i != nil {
+		return i
+	}
+
+	if i := c.GetDockerfileImage(imageName); i != nil {
+		return i
+	}
+
+	return nil
+}
+
+func (c *WerfConfig) GetStapelImage(imageName string) *StapelImage {
 	for _, image := range c.StapelImages {
 		if image.Name == imageName {
 			return image
 		}
 	}
 
+	return nil
+}
+
+func (c *WerfConfig) GetDockerfileImage(imageName string) *ImageFromDockerfile {
 	for _, image := range c.ImagesFromDockerfile {
 		if image.Name == imageName {
 			return image

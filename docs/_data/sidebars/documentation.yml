@@ -183,6 +183,9 @@ entries:
         - title: Lowlevel Management Commands
           sfi:
 
+            - title: config render
+              url: /documentation/cli/management/config/render.html
+
             - title: stages build
               url: /documentation/cli/management/stages/build.html
 
