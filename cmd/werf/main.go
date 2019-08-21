@@ -50,6 +50,7 @@ import (
 	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
 	helm_render "github.com/flant/werf/cmd/werf/helm/render"
 
+	config_list "github.com/flant/werf/cmd/werf/config/list"
 	config_render "github.com/flant/werf/cmd/werf/config/render"
 
 	"github.com/flant/werf/cmd/werf/completion"
@@ -137,6 +138,7 @@ func configCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		config_render.NewCmd(),
+		config_list.NewCmd(),
 	)
 
 	return cmd
