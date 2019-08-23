@@ -74,7 +74,7 @@ entries:
           - title: Differences with Helm
             url: /documentation/reference/deploy_process/differences_with_helm.html
 
-          - title: Experimental: three way merge
+          - title: "Experimental: three way merge"
             url: /documentation/reference/deploy_process/experimental_three_way_merge.html
 
       - title: Cleaning Process
