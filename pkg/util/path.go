@@ -1,11 +1,34 @@
 package util
 
-import "path/filepath"
+import (
+	"os/user"
+	"path/filepath"
+	"strings"
+)
 
 func ExpandPath(path string) string {
-	res, err := filepath.Abs(path)
-	if err != nil {
-		panic(err) // stupid interface of filepath.Abs
+	var result string
+
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		usr, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+
+		dir := usr.HomeDir
+
+		if path == "~" {
+			result = dir
+		} else {
+			result = filepath.Join(dir, path[2:])
+		}
+	} else {
+		var err error
+		result, err = filepath.Abs(path)
+		if err != nil {
+			panic(err) // stupid interface of filepath.Abs
+		}
 	}
-	return res
+
+	return result
 }
