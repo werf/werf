@@ -46,12 +46,11 @@ ansible:
   beforeInstall:
   - name: Install additional packages
     apt:
-      name: "{{`{{ item }}`}}"
       update_cache: yes
-    with_items:
-    - gcc
-    - sqlite3
-    - libsqlite3-dev
+      pkg:
+      - gcc
+      - sqlite3
+      - libsqlite3-dev
   install:
   - name: Getting packages
     shell: |
@@ -136,12 +135,11 @@ ansible:
   beforeInstall:
   - name: Install additional packages
     apt:
-      name: "{{`{{ item }}`}}"
       update_cache: yes
-    with_items:
-    - gcc
-    - sqlite3
-    - libsqlite3-dev
+      pkg:
+      - gcc
+      - sqlite3
+      - libsqlite3-dev
   install:
   - name: Getting packages
     shell: |
