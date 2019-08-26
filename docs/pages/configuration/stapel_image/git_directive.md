@@ -323,7 +323,7 @@ For example, login and password from GitLab CI variables:
 {% raw %}
 ```yaml
 git:
-- add: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
+- url: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
 ```
 {% endraw %}
 
@@ -335,7 +335,7 @@ Werf supports access to the repository via the git protocol. Access via this pro
 
 ```yaml
 git:
-- add: git@gitlab.company.name:project_group/project.git
+- url: git@gitlab.company.name:project_group/project.git
 ```
 
 To successfully work with remote repositories via ssh, you should understand how werf searches for access keys.
