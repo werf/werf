@@ -72,10 +72,9 @@ To implement these steps and requirements with Werf we will add a special file c
       beforeInstall:
       - name: "Install additional packages"
         apt:
-          name: "{{`{{ item }}`}}"
           state: present
           update_cache: yes
-        with_items:
+          pkg:
           - locales
           - ca-certificates
       - name: "Generate en_US.UTF-8 default locale"
