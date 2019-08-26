@@ -70,14 +70,6 @@ func newTmpDir(prefix string) (string, error) {
 		return "", err
 	}
 
-	if runtime.GOOS == "darwin" {
-		dir, err := filepath.EvalSymlinks(newDir)
-		if err != nil {
-			return "", fmt.Errorf("eval symlinks of path %s failed: %s", newDir, err)
-		}
-		newDir = dir
-	}
-
 	return newDir, nil
 }
 

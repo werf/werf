@@ -1,8 +1,10 @@
 package werf
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 var (
@@ -63,6 +65,15 @@ func Init(tmpDirOption, homeDirOption string) error {
 		tmpDir = tmpDirOption
 	} else {
 		tmpDir = os.TempDir()
+	}
+
+	if runtime.GOOS == "darwin" {
+		dir, err := filepath.EvalSymlinks(tmpDir)
+		if err != nil {
+			return fmt.Errorf("eval symlinks of path %s failed: %s", tmpDir, err)
+		}
+
+		tmpDir = dir
 	}
 
 	if val, ok := os.LookupEnv("WERF_HOME"); ok {
