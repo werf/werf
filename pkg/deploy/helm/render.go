@@ -11,6 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
+
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/getter"
 	"k8s.io/helm/pkg/manifest"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/strvals"
 	"k8s.io/helm/pkg/tiller"
+	"k8s.io/helm/pkg/tiller/environment"
 	"k8s.io/helm/pkg/timeconv"
 	"k8s.io/helm/pkg/version"
 )
@@ -227,7 +229,15 @@ func render(c *chart.Chart, config *chart.Config, opts renderOptions) (map[strin
 	}
 
 	// Set up engine.
-	renderer := tillerSettings.EngineYard[c.Metadata.Engine]
+	engine := environment.DefaultEngine
+	if c.Metadata.Engine != "" {
+		engine = c.Metadata.Engine
+	}
+	renderer := tillerSettings.EngineYard[engine]
+
+	if renderer == nil {
+		return nil, fmt.Errorf("unknown engine '%s': check engine field in Chart.yaml", engine)
+	}
 
 	caps := &chartutil.Capabilities{
 		APIVersions:   chartutil.DefaultVersionSet,
