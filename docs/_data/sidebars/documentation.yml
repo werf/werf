@@ -68,6 +68,9 @@ entries:
           - title: Deploy into kubernetes
             url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
 
+          - title: Working with chart dependencies
+            url: /documentation/reference/deploy_process/working_with_chart_dependencies.html
+
           - title: Working with secrets
             url: /documentation/reference/deploy_process/working_with_secrets.html
 
@@ -210,6 +213,15 @@ entries:
             - title: images purge
               url: /documentation/cli/management/images/purge.html
 
+            - title: helm dependency build
+              url: /documentation/cli/management/helm/dependency_build.html
+
+            - title: helm dependency list
+              url: /documentation/cli/management/helm/dependency_list.html
+
+            - title: helm dependency update
+              url: /documentation/cli/management/helm/dependency_update.html
+
             - title: helm deploy-chart
               url: /documentation/cli/management/helm/deploy_chart.html
 
@@ -230,6 +242,27 @@ entries:
 
             - title: helm render
               url: /documentation/cli/management/helm/render.html
+
+            - title: helm repo init
+              url: /documentation/cli/management/helm/repo_init.html
+
+            - title: helm repo add
+              url: /documentation/cli/management/helm/repo_add.html
+
+            - title: helm repo update
+              url: /documentation/cli/management/helm/repo_update.html
+
+            - title: helm repo remove
+              url: /documentation/cli/management/helm/repo_remove.html
+
+            - title: helm repo list
+              url: /documentation/cli/management/helm/repo_list.html
+
+            - title: helm repo search
+              url: /documentation/cli/management/helm/repo_search.html
+
+            - title: helm repo fetch
+              url: /documentation/cli/management/helm/repo_fetch.html
 
             - title: helm secret generate-secret-key
               url: /documentation/cli/management/helm/secret/generate_secret_key.html

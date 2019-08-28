@@ -11,7 +11,7 @@ werf will pass all additinal values and data into helm
 {{ header }} Syntax
 
 ```bash
-werf helm deploy-chart PATH RELEASE_NAME [options]
+werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
 ```
 
 {{ header }} Examples
@@ -19,13 +19,28 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
 ```bash
   # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease
+
+  # Deploy helm chart by chart reference
+  $ werf helm deploy-chart stable/nginx-ingress myrelease
+
 ```
 
 {{ header }} Options
 
 ```bash
+      --ca-file='':
+            verify certificates of HTTPS-enabled servers using this CA bundle (if using CHART as a  
+            chart reference)
+      --cert-file='':
+            identify HTTPS client using this SSL certificate file (if using CHART as a chart        
+            reference)
+      --devel=false:
+            use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
+            this is ignored (if using CHART as a chart reference)
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --helm-home='/home/aigrychev/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
       --helm-release-storage-namespace='kube-system':
             Helm release storage namespace (same as --tiller-namespace for regular helm, default    
             $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
@@ -39,6 +54,10 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
       --hooks-status-progress-period=5:
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --key-file='':
+            identify HTTPS client using this SSL key file (if using CHART as a chart reference)
+      --keyring='/home/aigrychev/.gnupg/pubring.gpg':
+            keyring containing public keys (if using CHART as a chart reference)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -58,6 +77,14 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
             * interactive terminal width or 140
       --namespace='':
             Namespace to install release into
+      --password='':
+            chart repository password (if using CHART as a chart reference)
+      --prov=false:
+            fetch the provenance file, but don't perform verification (if using CHART as a chart    
+            reference)
+      --repo='':
+            chart repository url where to locate the requested chart (if using CHART as a chart     
+            reference)
       --set=[]:
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2)
@@ -71,7 +98,14 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
             Resources tracking timeout in seconds
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --username='':
+            chart repository username (if using CHART as a chart reference)
       --values=[]:
             Specify helm values in a YAML file or a URL (can specify multiple)
+      --verify=false:
+            verify the package against its signature (if using CHART as a chart reference)
+      --version='':
+            specific version of a chart. Without this, the latest version is fetched (if using      
+            CHART as a chart reference)
 ```
 
