@@ -231,9 +231,9 @@ global:
       password: mysql-dev
 ```
 
-Values placed by key `global` will be available in the current chart and all [subcharts](#subcharts).
+Values placed by key `global` will be available in the current chart and all [subcharts]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_chart_dependencies.html).
 
-Values placed by arbitrary key `SOMEKEY` will be available in the current chart and in the [subchart](#subcharts) with the name `SOMEKEY`.
+Values placed by arbitrary key `SOMEKEY` will be available in the current chart and in the [subchart]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_chart_dependencies.html) with the name `SOMEKEY`.
 
 File `.helm/values.yaml` is the default values file. Additional user defined regular values can alternatively be passed via:
 
@@ -321,55 +321,6 @@ To access values from chart templates following syntax is used:
 {% endraw %}
 
 `.Values` object contains [merged result values](#merge-result-values) map.
-
-### Subcharts
-
-The chart can include arbitrary number of dependencies called subcharts.
-
-Subcharts are placed in the directory `.helm/charts/SUBCHART_DIR`. Each subchart in the `SUBCHART_DIR` is a chart by itself with the similar files structure (which can also have own recursive subcharts).
-
-During deploy process werf will render, create and track all resources of all subcharts of current chart.
-
-#### Subchart and values
-
-To pass values from parent chart to subchart called `mysubchart` user must define following values in the parent chart:
-
-```yaml
-mysubchart:
-  key1:
-    key2:
-    - key3: value
-```
-
-In the `mysubchart` these values should be specified without `mysubchart` key:
-
-{% raw %}
-```yaml
-{{ .Values.key1.key2[0].key3 }}
-```
-{% endraw %}
-
-Global values defined by the special toplevel values key `global` will also be available in the subcharts:
-
-```yaml
-global:
-  database:
-    mysql:
-      user: user
-      password: password
-```
-
-In the subcharts these values should be specified as always:
-
-{% raw %}
-```yaml
-{{ .Values.global.database.mysql.user }}
-```
-{% endraw %}
-
-Only values by keys `mysubchart` and `global` will be available in the subchart `mysubchart`.
-
-**NOTE** `secret-values.yaml` files from subcharts will not be used during deploy process. Although secret values from main chart and additional secret values from cli params `--secret-values` will be available in the `.Values` as usually.
 
 ## Release
 

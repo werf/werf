@@ -3,17 +3,23 @@ package deploy_chart
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
+	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/tmp_manager"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -22,16 +28,22 @@ var CmdData struct {
 }
 
 var CommonCmdData common.CmdData
+var HelmCmdData helm_common.HelmCmdData
+var DownloadChartOptions helm_common.DownloadChartOptions
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deploy-chart PATH RELEASE_NAME",
+		Use:   "deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME",
 		Short: "Deploy Helm chart specified by path",
 		Long: common.GetLongCommandDescription(`Deploy Helm chart specified by path.
 
 If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
 		Example: `  # Deploy raw helm chart from current directory
-  $ werf helm deploy-chart . myrelease`,
+  $ werf helm deploy-chart . myrelease
+
+  # Deploy helm chart by chart reference
+  $ werf helm deploy-chart stable/nginx-ingress myrelease
+`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
@@ -66,13 +78,30 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")
-	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	helm_common.SetupHelmHome(&HelmCmdData, cmd)
+
+	f := cmd.Flags()
+	f.StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")
+	f.IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+
+	downloadChartOptionsExtraUsage := " (if using CHART as a chart reference)"
+
+	f.BoolVar(&DownloadChartOptions.Verify, "verify", false, "verify the package against its signature"+downloadChartOptionsExtraUsage)
+	f.BoolVar(&DownloadChartOptions.VerifyLater, "prov", false, "fetch the provenance file, but don't perform verification"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.Version, "version", "", "specific version of a chart. Without this, the latest version is fetched"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.Keyring, "keyring", helm_common.DefaultKeyring(), "keyring containing public keys"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.RepoURL, "repo", "", "chart repository url where to locate the requested chart"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.CertFile, "cert-file", "", "identify HTTPS client using this SSL certificate file"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.KeyFile, "key-file", "", "identify HTTPS client using this SSL key file"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.CaFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle"+downloadChartOptionsExtraUsage)
+	f.BoolVar(&DownloadChartOptions.Devel, "devel", false, "use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set, this is ignored"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.Username, "username", "", "chart repository username"+downloadChartOptionsExtraUsage)
+	f.StringVar(&DownloadChartOptions.Password, "password", "", "chart repository password"+downloadChartOptionsExtraUsage)
 
 	return cmd
 }
 
-func runDeployChart(chartDir string, releaseName string) error {
+func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -115,9 +144,39 @@ func runDeployChart(chartDir string, releaseName string) error {
 		namespace = kube.DefaultNamespace
 	}
 
-	werfChart, err := werf_chart.LoadWerfChart(chartDir)
+	exists, err := util.DirExists(chartDirOrChartReference)
 	if err != nil {
-		return fmt.Errorf("unable to load chart %s: %s", chartDir, err)
+		return err
+	}
+
+	if !exists {
+		chartReferenceParts := strings.Split(chartDirOrChartReference, "/")
+		if len(chartReferenceParts) == 2 {
+			helm_common.InitHelmSettings(&HelmCmdData)
+
+			destDir, err := tmp_manager.CreateHelmTmpChartDestDir()
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(destDir)
+
+			DownloadChartOptions.ChartRef = chartDirOrChartReference
+			DownloadChartOptions.DestDir = destDir
+			DownloadChartOptions.Untar = true
+
+			if err := helm_common.DownloadChart(&DownloadChartOptions); err != nil {
+				return fmt.Errorf("\n- chart directory %[1]s is not found\n- unable to download chart %[1]s: %s", chartDirOrChartReference, err)
+			}
+
+			chartDirOrChartReference = filepath.Join(destDir, chartReferenceParts[1])
+		} else {
+			return fmt.Errorf("chart directory %s is not found", chartDirOrChartReference)
+		}
+	}
+
+	werfChart, err := werf_chart.LoadWerfChart(chartDirOrChartReference)
+	if err != nil {
+		return fmt.Errorf("unable to load chart %s: %s", chartDirOrChartReference, err)
 	}
 
 	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{

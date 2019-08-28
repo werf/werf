@@ -280,7 +280,7 @@ func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.InsecureRepo = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", getBoolEnvironment("WERF_INSECURE_REPO"), "Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)")
+	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", GetBoolEnvironment("WERF_INSECURE_REPO"), "Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
@@ -332,7 +332,7 @@ func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 
 	var defaultValue bool
 	if os.Getenv("WERF_LOG_PRETTY") != "" {
-		defaultValue = getBoolEnvironment("WERF_LOG_PRETTY")
+		defaultValue = GetBoolEnvironment("WERF_LOG_PRETTY")
 	} else {
 		defaultValue = true
 	}
@@ -370,12 +370,12 @@ func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IgnoreSecretKey = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", getBoolEnvironment("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironment("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", getBoolEnvironment("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
+	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironment("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
 func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
@@ -399,7 +399,7 @@ func allStagesNames() []string {
 	return stageNames
 }
 
-func getBoolEnvironment(environmentName string) bool {
+func GetBoolEnvironment(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":
 		return true
