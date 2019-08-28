@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Improve your CI/CD experience with werf and existing Dockerfiles"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/werf-dockerfile-support-e6504211b8e6"
+    img: "/images/publications/en_230819.png"
+    created: 2019-08-23
+    comment: |
+      <p>Better late than never. The story of how we almost made a major mistake by not implementing support for building images using regular Dockerfiles.</p>
   - title: "Announcing werf — a missing part for CI/CD systems"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/werf-devops-tool-d3f1251a65ab"
@@ -15,6 +22,13 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Собирать Docker-образы в werf теперь можно и по обычному Dockerfile"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/463613/"
+    img: "/images/publications/ru_210819.png"
+    created: 2019-08-21
+    comment: |
+      <p>Лучше поздно, чем никогда. Или как мы чуть не допустили серьёзную ошибку, не имея поддержки обычных Dockerfiles для сборки образов приложения.</p>
   - title: "werf — наш инструмент для CI/CD в Kubernetes (обзор и видео доклада)"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/460351/"
