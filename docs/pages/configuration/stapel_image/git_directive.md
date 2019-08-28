@@ -68,6 +68,8 @@ The configuration of the _git mapping_ supports filtering files, and you can use
 
 Werf has support for submodules. Werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
+> Werf uses the commit to which the submodule is locked in a project and **does not affect it**
+
 An example of a _git mapping_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
 ```yaml
