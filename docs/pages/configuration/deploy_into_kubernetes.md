@@ -5,6 +5,16 @@ permalink: documentation/configuration/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
+Each `TEMPLATE` as well as any value of the config can include [Werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1). E.g. you can mix the value with an environment variable:
+
+{% raw %}
+```yaml
+deploy:
+  helmRelease: >-
+    [[ project ]]-{{ env "HELM_RELEASE_EXTRA" }}-[[ env ]]
+```
+{% endraw %}
+
 ## Release name
 
 Werf allows to define a custom release name template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) to generate a release name.
