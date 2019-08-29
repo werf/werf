@@ -21,12 +21,36 @@ Werf uses following values for werf environment variables:
 
 [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch) value is taken from [`CI_COMMIT_REF_NAME`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
-### WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL
+### WERF_ADD_ANNOTATION_PROJECT_GIT
 
-[`WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_git_repository_url) value is taken from [`CI_PROJECT_URL`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
+[`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git) value is taken from [`CI_PROJECT_URL`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
 
 ```
-project.werf.io/gitlab-url=$CI_PROJECT_URL
+project.werf.io/git=$CI_PROJECT_URL
+```
+
+### WERF_ADD_ANNOTATION_CI_COMMIT
+
+[`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit) value is taken from [`CI_COMMIT_SHA`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
+
+```
+ci.werf.io/commit=$CI_COMMIT_SHA
+```
+
+### WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL
+
+`WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL` value is taken from [`CI_PIPELINE_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
+
+```
+gitlab.ci.werf.io/pipeline-url=$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID
+```
+
+### WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL
+
+`WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL` value is taken from [`CI_JOB_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
+
+```
+gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 ```
 
 ### WERF_ENV
