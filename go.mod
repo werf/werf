@@ -30,7 +30,7 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
-	github.com/flant/kubedog v0.3.4-0.20190821145513-2cd6191586fb
+	github.com/flant/kubedog v0.3.4-0.20190829111435-dab5e980566a
 	github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37
 	github.com/flant/logboek_py v0.0.0-20190418220715-388556f27301
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
