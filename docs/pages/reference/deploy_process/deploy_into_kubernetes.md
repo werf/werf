@@ -555,7 +555,11 @@ Werf automatically sets following builtin annotations to all chart resources dep
  * `"werf.io/version": FULL_WERF_VERSION` — werf version that being used when running `werf deploy` command;
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`.
 
-Werf also sets auto annotation `"project.werf.io/gitlab-url": $CI_PROJECT_URL` for gitlab CI when using `werf ci-env` command prior to run `werf deploy` command.
+Werf also sets auto annotations for GitLab CI when using `werf ci-env` command prior to run `werf deploy` command. Currently the following annotations supported:
+* `"project.werf.io/git": $CI_PROJECT_URL`;
+* `"ci.werf.io/commit": $CI_COMMIT_SHA`;
+* `"gitlab.ci.werf.io/pipeline-url":  $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID`;
+* `"gitlab.ci.werf.io/job-url": $CI_PROJECT_URL/pipelines/$CI_JOB_ID`.
 
 #### Custom annotations and labels
 

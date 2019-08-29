@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
-	"github.com/Masterminds/semver"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
@@ -155,11 +155,33 @@ func generateGitlabEnvs() error {
 	printHeader("DEPLOY", true)
 	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
-	var gitRepositoryUrl string
-	if os.Getenv("CI_PROJECT_URL") != "" {
-		gitRepositoryUrl = fmt.Sprintf("project.werf.io/gitlab-url=%s", os.Getenv("CI_PROJECT_URL"))
+	var projectGit string
+	ciProjectUrlEnv := os.Getenv("CI_PROJECT_URL")
+	if ciProjectUrlEnv != "" {
+		projectGit = fmt.Sprintf("project.werf.io/git=%s", ciProjectUrlEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_GIT_REPOSITORY_URL", gitRepositoryUrl, false)
+	printExportCommand("WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+
+	var ciCommit string
+	ciCommitShaEnv := os.Getenv("CI_COMMIT_SHA")
+	if ciCommitShaEnv != "" {
+		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
+	}
+	printExportCommand("WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
+
+	var gitlabCIPipelineUrl string
+	ciPipelineIdEnv := os.Getenv("CI_PIPELINE_ID")
+	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
+		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s/pipelines/%s", ciProjectUrlEnv, ciPipelineIdEnv)
+	}
+	printExportCommand("WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
+
+	var gitlabCiJobUrl string
+	ciJobIdEnv := os.Getenv("CI_JOB_ID")
+	if ciProjectUrlEnv != "" && os.Getenv("CI_JOB_ID") != "" {
+		gitlabCiJobUrl = fmt.Sprintf("gitlab.ci.werf.io/job-url=%s/-/jobs/%s", ciProjectUrlEnv, ciJobIdEnv)
+	}
+	printExportCommand("WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
 	cleanupConfig, err := getCleanupConfig()
 	if err != nil {
