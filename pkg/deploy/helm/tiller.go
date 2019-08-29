@@ -457,6 +457,7 @@ func releaseRollback(releaseName string, revision int32, opts releaseRollbackOpt
 }
 
 func displayReleaseLogMessages() {
+	logboek.LogOptionalLn()
 	logboek.LogBlock("Debug info", logboek.LogBlockOptions{}, func() {
 		for _, msg := range releaseLogMessages {
 			_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))

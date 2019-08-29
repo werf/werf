@@ -139,6 +139,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 		}
 	}
 
+	logboek.LogOptionalLn()
 	return logboek.LogProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
 		return multitrack.Multitrack(kube.Kubernetes, specs, multitrack.MultitrackOptions{
 			Options: tracker.Options{

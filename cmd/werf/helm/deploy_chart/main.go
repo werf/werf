@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
@@ -115,6 +117,8 @@ func runDeployChart(chartDir string, releaseName string) error {
 	if err != nil {
 		return fmt.Errorf("unable to load chart %s: %s", chartDir, err)
 	}
+
+	logboek.LogOptionalLn()
 
 	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,

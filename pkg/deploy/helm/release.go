@@ -362,6 +362,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	if isReleaseExists {
 		deployFunc = func() error {
 			logboek.LogF("Running helm upgrade...\n")
+			logboek.LogOptionalLn()
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
@@ -403,6 +404,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	} else {
 		deployFunc = func() error {
 			logboek.LogF("Running helm install...\n")
+			logboek.LogOptionalLn()
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
