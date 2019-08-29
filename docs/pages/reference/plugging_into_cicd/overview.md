@@ -171,8 +171,8 @@ export WERF_LOG_PROJECT_DIR="1"
 echo 'export WERF_LOG_PROJECT_DIR="1"'
 export WERF_ENABLE_PROCESS_EXTERMINATOR="1"
 echo 'export WERF_ENABLE_PROCESS_EXTERMINATOR="1"'
-export WERF_LOG_TERMINAL_WIDTH="100"
-echo 'export WERF_LOG_TERMINAL_WIDTH="100"'
+export WERF_LOG_TERMINAL_WIDTH="95"
+echo 'export WERF_LOG_TERMINAL_WIDTH="95"'
 ```
 
 ### Pass CLI params as environment variables
