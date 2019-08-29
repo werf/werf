@@ -76,7 +76,7 @@ export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30
 export WERF_LOG_COLOR_MODE=on
 export WERF_LOG_PROJECT_DIR=1
 export WERF_ENABLE_PROCESS_EXTERMINATOR=1
-export WERF_LOG_TERMINAL_WIDTH=100
+export WERF_LOG_TERMINAL_WIDTH=95
 ```
 
 This script needs to be customized to your CI/CD system: change `WERF_*` environment variables values to the real ones. Consult with the following pages to get an idea and examples of how to retrieve real values for werf variables:

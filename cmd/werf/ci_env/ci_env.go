@@ -213,7 +213,7 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	printExportCommand("WERF_LOG_PROJECT_DIR", "1", false)
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
-	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "100", false)
+	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "95", false)
 
 	if ciGitTag == "" && ciGitBranch == "" {
 		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
