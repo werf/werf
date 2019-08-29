@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
@@ -178,6 +180,8 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	if err != nil {
 		return fmt.Errorf("unable to load chart %s: %s", chartDirOrChartReference, err)
 	}
+
+	logboek.LogOptionalLn()
 
 	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,
