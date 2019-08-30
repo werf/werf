@@ -79,8 +79,8 @@ There are _images repo_ and _images repo mode_ params defined where and how to s
 If werf project contains single nameless image, then _images repo_ used as docker repository without changes and resulting docker image name costructed by the following pattern: `IMAGES_REPO:TAG`.
 
 Otherwise, werf constructs resulting docker image name for each image based on _images repo mode_:  
-- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorep` mode; 
-- `IMAGES_REPO/IMAGE_NAME:TAG` pattern for `multirep` mode.
+- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorepo` mode; 
+- `IMAGES_REPO/IMAGE_NAME:TAG` pattern for `multirepo` mode.
 
 _Images repo_ param should be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
 
