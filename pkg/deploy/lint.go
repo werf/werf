@@ -33,7 +33,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepImagesRepoMode)
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
 	if err != nil {
 		return err
 	}
