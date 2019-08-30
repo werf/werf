@@ -198,7 +198,7 @@ Note that `backend-saml/stage/` — is an arbitrary files structure, user can pl
 {% raw %}
  * `{{ .Chart.Name }}` — contains [project name] from `werf.yaml` config.
  * `{{ .Release.Name }}` — contains [release name](#release).
- * `{{ .Files.Get }}` — fucnction to read file content into templates, requires file path argument. Path should be relative to `.helm` directory (files outside `.helm` cannot be used).
+ * `{{ .Files.Get }}` — function to read file content into templates, requires file path argument. Path should be relative to `.helm` directory (files outside `.helm` cannot be used).
 {% endraw %}
 
 ### Values
