@@ -86,9 +86,9 @@ werf deploy [options]
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
-      --images-repo-mode='multirep':
-            Define how to store images in Repo: multirep or monorep (defaults to                    
-            $WERF_IMAGES_REPO_MODE or multirep)
+      --images-repo-mode='multirepo':
+            Define how to store images in Repo: multirepo or monorepo (defaults to                  
+            $WERF_IMAGES_REPO_MODE or multirepo)
       --insecure-repo=false:
             Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --kube-config='':

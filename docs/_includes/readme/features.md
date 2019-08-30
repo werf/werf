@@ -32,8 +32,8 @@
 ### Publishing
 
 - Store images in one or several Docker repositories by the following patterns:
-  - `IMAGES_REPO:[IMAGE_NAME-]TAG` using `monorep` mode.
-  - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `muiltirep` mode.
+  - `IMAGES_REPO:[IMAGE_NAME-]TAG` using `monorepo` mode.
+  - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `muiltirepo` mode.
 - Different image tagging strategies:
   - Tag image by git tag, branch or commit.
   - Content based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).

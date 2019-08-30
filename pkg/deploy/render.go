@@ -35,7 +35,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepImagesRepoMode)
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
 	if err != nil {
 		return err
 	}

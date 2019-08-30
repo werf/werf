@@ -11,21 +11,21 @@ func TestGetImagesRepoManager(t *testing.T) {
 		namelessImageRepoWithTag string
 		imageRepo                string
 		imageRepoWithTag         string
-		isMonorep                bool
+		isMonorepo               bool
 	}{
-		MonorepImagesRepoMode: {
+		MonorepoImagesRepoMode: {
 			namelessImageRepo:        "repo",
 			namelessImageRepoWithTag: "repo:tag",
 			imageRepo:                "repo",
-			imageRepoWithTag:         fmt.Sprintf("repo:image%stag", MonorepTagPartsSeparator),
-			isMonorep:                true,
+			imageRepoWithTag:         fmt.Sprintf("repo:image%stag", MonorepoTagPartsSeparator),
+			isMonorepo:               true,
 		},
-		MultirepImagesRepoMode: {
+		MultirepoImagesRepoMode: {
 			namelessImageRepo:        "repo",
 			namelessImageRepoWithTag: "repo:tag",
 			imageRepo:                "repo/image",
 			imageRepoWithTag:         "repo/image:tag",
-			isMonorep:                false,
+			isMonorepo:               false,
 		},
 	}
 
@@ -56,9 +56,9 @@ func TestGetImagesRepoManager(t *testing.T) {
 				t.Errorf("\n[EXPECTED]: %q\n[GOT]: %q", expected.imageRepoWithTag, imageRepoWithTag)
 			}
 
-			isMonorep := m.IsMonorep()
-			if expected.isMonorep != isMonorep {
-				t.Errorf("\n[EXPECTED]: %v\n[GOT]: %v", expected.isMonorep, isMonorep)
+			isMonorepo := m.IsMonorepo()
+			if expected.isMonorepo != isMonorepo {
+				t.Errorf("\n[EXPECTED]: %v\n[GOT]: %v", expected.isMonorepo, isMonorepo)
 			}
 		})
 	}

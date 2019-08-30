@@ -20,7 +20,7 @@ type ImagesRepoManager interface {
 	ImagesRepo() string
 	ImageRepo(imageName string) string
 	ImageRepoWithTag(imageName, tag string) string
-	IsMonorep() bool
+	IsMonorepo() bool
 }
 
 func repoImages(options CommonRepoOptions) (repoImages []docker_registry.RepoImage, err error) {
@@ -38,10 +38,10 @@ func repoImages(options CommonRepoOptions) (repoImages []docker_registry.RepoIma
 
 func repoImagesByImageName(options CommonRepoOptions) (repoImagesByImageName map[string][]docker_registry.RepoImage, err error) {
 	if err := logboek.LogProcessInline("Getting repo images", logboek.LogProcessInlineOptions{}, func() error {
-		if options.ImagesRepoManager.IsMonorep() {
-			repoImagesByImageName, err = monorepRepoImages(options)
+		if options.ImagesRepoManager.IsMonorepo() {
+			repoImagesByImageName, err = monorepoRepoImages(options)
 		} else {
-			repoImagesByImageName, err = multirepRepoImages(options)
+			repoImagesByImageName, err = multirepoRepoImages(options)
 		}
 
 		return err
@@ -54,7 +54,7 @@ func repoImagesByImageName(options CommonRepoOptions) (repoImagesByImageName map
 	return repoImagesByImageName, nil
 }
 
-func monorepRepoImages(options CommonRepoOptions) (map[string][]docker_registry.RepoImage, error) {
+func monorepoRepoImages(options CommonRepoOptions) (map[string][]docker_registry.RepoImage, error) {
 	repoImagesByImageName := map[string][]docker_registry.RepoImage{}
 	for _, imageName := range options.ImagesNames {
 		repoImagesByImageName[imageName] = []docker_registry.RepoImage{}
@@ -88,7 +88,7 @@ loop:
 	return repoImagesByImageName, nil
 }
 
-func multirepRepoImages(options CommonRepoOptions) (map[string][]docker_registry.RepoImage, error) {
+func multirepoRepoImages(options CommonRepoOptions) (map[string][]docker_registry.RepoImage, error) {
 	repoImagesByImageName := map[string][]docker_registry.RepoImage{}
 	for _, imageName := range options.ImagesNames {
 		repoImagesByImageName[imageName] = []docker_registry.RepoImage{}

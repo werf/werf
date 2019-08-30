@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	MultirepImagesRepoMode   = "multirep"
-	MonorepImagesRepoMode    = "monorep"
-	MonorepTagPartsSeparator = "-"
+	MultirepoImagesRepoMode   = "multirepo"
+	MonorepoImagesRepoMode    = "monorepo"
+	MonorepoTagPartsSeparator = "-"
 )
 
 type ImagesRepoManager struct {
@@ -57,7 +57,7 @@ func (m *ImagesRepoManager) ImageRepoWithTag(imageName, tag string) string {
 	return strings.Join([]string{m.ImageRepo(imageName), m.ImageRepoTag(imageName, tag)}, ":")
 }
 
-func (m *ImagesRepoManager) IsMonorep() bool {
+func (m *ImagesRepoManager) IsMonorepo() bool {
 	return m.ImagesRepo() == m.ImageRepo("image")
 }
 
@@ -67,7 +67,7 @@ func GetImagesRepoManager(imagesRepo, imagesRepoMode string) (*ImagesRepoManager
 	var imageRepoTagFunc func(imageName, tag string) string
 
 	switch imagesRepoMode {
-	case MultirepImagesRepoMode:
+	case MultirepoImagesRepoMode:
 		namelessImageRepoFunc = func(imagesRepo string) string {
 			return imagesRepo
 		}
@@ -79,7 +79,7 @@ func GetImagesRepoManager(imagesRepo, imagesRepoMode string) (*ImagesRepoManager
 		imageRepoTagFunc = func(_, tag string) string {
 			return tag
 		}
-	case MonorepImagesRepoMode:
+	case MonorepoImagesRepoMode:
 		namelessImageRepoFunc = func(imagesRepo string) string {
 			return imagesRepo
 		}
@@ -90,13 +90,13 @@ func GetImagesRepoManager(imagesRepo, imagesRepoMode string) (*ImagesRepoManager
 
 		imageRepoTagFunc = func(imageName, tag string) string {
 			if imageName != "" {
-				tag = strings.Join([]string{imageName, tag}, MonorepTagPartsSeparator)
+				tag = strings.Join([]string{imageName, tag}, MonorepoTagPartsSeparator)
 			}
 
 			return tag
 		}
 	default:
-		return nil, fmt.Errorf("bad images repo mode '%s': only %s and %s supported", imagesRepoMode, MultirepImagesRepoMode, MonorepImagesRepoMode)
+		return nil, fmt.Errorf("bad images repo mode '%s': only %s and %s supported", imagesRepoMode, MultirepoImagesRepoMode, MonorepoImagesRepoMode)
 	}
 
 	return newImagesRepoManager(
