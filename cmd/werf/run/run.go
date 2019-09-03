@@ -221,7 +221,9 @@ func runRun() error {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
 		return logboek.WithRawStreamsOutputModeOn(func() error {
-			return docker.CliRun(dockerRunArgs...)
+			return common.WithoutTerminationSignalsTrap(func() error {
+				return docker.CliRun(dockerRunArgs...)
+			})
 		})
 	}
 
