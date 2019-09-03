@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -64,7 +62,7 @@ import (
 )
 
 func main() {
-	trapTerminationSignals()
+	common.EnableTerminationSignalsTrap()
 
 	if err := logging.Init(); err != nil {
 		common.LogError(fmt.Sprintf("logger initialization error: %s", err))
@@ -248,17 +246,4 @@ func secretCmd() *cobra.Command {
 	)
 
 	return cmd
-}
-
-func trapTerminationSignals() {
-	c := make(chan os.Signal, 1)
-	signals := []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT}
-	signal.Notify(c, signals...)
-	go func() {
-		<-c
-
-		common.LogError("interrupted")
-
-		os.Exit(17)
-	}()
 }
