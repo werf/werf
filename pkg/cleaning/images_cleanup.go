@@ -35,11 +35,11 @@ type ImagesCleanupPolicies struct {
 }
 
 type ImagesCleanupOptions struct {
-	CommonRepoOptions CommonRepoOptions
-	LocalGit          GitRepo
-	KubernetesClients []kubernetes.Interface
-	WithoutKube       bool
-	Policies          ImagesCleanupPolicies
+	CommonRepoOptions         CommonRepoOptions
+	LocalGit                  GitRepo
+	KubernetesContextsClients map[string]kubernetes.Interface
+	WithoutKube               bool
+	Policies                  ImagesCleanupPolicies
 }
 
 func ImagesCleanup(options ImagesCleanupOptions) error {
@@ -60,7 +60,7 @@ func imagesCleanup(options ImagesCleanupOptions) error {
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
 				if err := logboek.LogProcess("Skipping repo images that are being used in kubernetes", logboek.LogProcessOptions{}, func() error {
-					repoImagesByImageName, err = exceptRepoImagesByWhitelist(repoImagesByImageName, options.KubernetesClients)
+					repoImagesByImageName, err = exceptRepoImagesByWhitelist(repoImagesByImageName, options.KubernetesContextsClients)
 					return err
 				}); err != nil {
 					return err
@@ -93,10 +93,10 @@ func imagesCleanup(options ImagesCleanupOptions) error {
 	})
 }
 
-func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]docker_registry.RepoImage, kubernetesClients []kubernetes.Interface) (map[string][]docker_registry.RepoImage, error) {
+func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]docker_registry.RepoImage, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]docker_registry.RepoImage, error) {
 	var deployedDockerImagesNames []string
-	for ind, kubernetesClient := range kubernetesClients {
-		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %d)", ind), logboek.LogProcessInlineOptions{}, func() error {
+	for contextName, kubernetesClient := range kubernetesContextsClients {
+		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
 			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
 			if err != nil {
 				return fmt.Errorf("cannot get deployed images: %s", err)
