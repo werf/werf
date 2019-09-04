@@ -66,7 +66,8 @@ loop:
 }
 
 func isSubPath(subPath, path string) bool {
-	return strings.HasPrefix(path, filepath.Join(subPath, "/")) || path == subPath
+	subPathWithSlashEnding := strings.TrimRight(subPath, "/") + "/"
+	return strings.HasPrefix(path, subPathWithSlashEnding) || path == subPath
 }
 
 func (c *ExportBase) GetIncludePathsForAutoExclude() []string {
