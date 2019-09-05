@@ -207,6 +207,8 @@ func runRun() error {
 	}
 
 	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	defer c.Terminate()
+
 	if err = c.ShouldBeBuilt(); err != nil {
 		return err
 	}

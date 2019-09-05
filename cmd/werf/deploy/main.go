@@ -213,6 +213,8 @@ func runDeploy() error {
 		}()
 
 		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+		defer c.Terminate()
+
 		if err = c.ShouldBeBuilt(); err != nil {
 			return err
 		}

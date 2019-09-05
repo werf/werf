@@ -23,6 +23,16 @@ func (p *PatchFile) GetFilePath() string {
 	return p.FilePath
 }
 
+func (a *PatchFile) RenameFile(newPath string) error {
+	if err := renameFile(a.FilePath, newPath); err != nil {
+		return err
+	}
+
+	a.FilePath = newPath
+
+	return nil
+}
+
 func (p *PatchFile) IsEmpty() bool {
 	return len(p.Descriptor.Paths) == 0
 }

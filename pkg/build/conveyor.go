@@ -39,6 +39,8 @@ type conveyorPermanentFields struct {
 	baseTmpDir       string
 
 	sshAuthSock string
+
+	gitReposCaches map[string]*stage.GitRepoCache
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
@@ -52,11 +54,34 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 			baseTmpDir:       baseTmpDir,
 
 			sshAuthSock: sshAuthSock,
+
+			gitReposCaches: make(map[string]*stage.GitRepoCache),
 		},
 	}
 	c.ReInitRuntimeFields()
 
 	return c
+}
+
+func (c *Conveyor) Terminate() error {
+	for gitRepoName, gitRepoCache := range c.gitReposCaches {
+		if err := gitRepoCache.Terminate(); err != nil {
+			return fmt.Errorf("unable to terminate cache of git repo '%s': %s", gitRepoName, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
+	if _, hasKey := c.gitReposCaches[gitRepoName]; !hasKey {
+		c.gitReposCaches[gitRepoName] = &stage.GitRepoCache{
+			Archives:  make(map[string]git_repo.Archive),
+			Patches:   make(map[string]git_repo.Patch),
+			Checksums: make(map[string]git_repo.Checksum),
+		}
+	}
+	return c.gitReposCaches[gitRepoName]
 }
 
 func (c *Conveyor) ReInitRuntimeFields() {

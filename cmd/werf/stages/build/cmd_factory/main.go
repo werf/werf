@@ -2,6 +2,7 @@ package cmd_factory
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -159,6 +160,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	defer c.Terminate()
 
 	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err
