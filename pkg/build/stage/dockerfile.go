@@ -243,7 +243,7 @@ func getAllFiles(target string) ([]string, error) {
 				return err
 			}
 
-			linkFilePath := filepath.Join(path, linkTo)
+			linkFilePath := filepath.Join(filepath.Dir(path), linkTo)
 			exist, err := util.FileExists(linkFilePath)
 			if err != nil {
 				return err
