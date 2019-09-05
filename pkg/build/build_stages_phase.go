@@ -9,7 +9,9 @@ import (
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/docker"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/werf"
 )
 
 func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStagesPhase {
@@ -117,7 +119,42 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			}
 
 			if err := logboek.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
-				return s.Build(p.ImageBuildOptions)
+				// TODO: isolate stapel and dockerfile builders logic
+				switch certainStage := s.(type) {
+				case *stage.DockerfileStage:
+					var buildArgs []string
+
+					for key, value := range map[string]string{
+						imagePkg.WerfDockerImageName:   img.Name(),
+						imagePkg.WerfLabel:             c.projectName(),
+						imagePkg.WerfVersionLabel:      werf.Version,
+						imagePkg.WerfCacheVersionLabel: BuildCacheVersion,
+						imagePkg.WerfImageLabel:        "false",
+					} {
+						buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
+					}
+
+					buildArgs = append(buildArgs, fmt.Sprintf("--tag=%s", img.Name()))
+					buildArgs = append(buildArgs, certainStage.DockerBuildArgs()...)
+
+					if err := docker.CliBuild(buildArgs...); err != nil {
+						return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+					}
+
+					if err := img.SyncDockerState(); err != nil {
+						return fmt.Errorf("failed to sync %s: %s", img.Name(), err)
+					}
+				default:
+					if err := img.Build(p.ImageBuildOptions); err != nil {
+						return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+					}
+
+					if err := img.SaveInCache(); err != nil {
+						return fmt.Errorf("failed to save in cache image %s: %s", img.Name(), err)
+					}
+				}
+
+				return nil
 			}); err != nil {
 				return err
 			}
