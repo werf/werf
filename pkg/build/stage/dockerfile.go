@@ -12,7 +12,6 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
-	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 
@@ -142,23 +141,7 @@ func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, image image.I
 	return nil
 }
 
-func (s *DockerfileStage) Build(options image.BuildOptions) error {
-	var buildArgs []string
-	buildArgs = append(buildArgs, fmt.Sprintf("--tag=%s", s.image.Name()))
-	buildArgs = append(buildArgs, s.dockerBuildArgs()...)
-
-	if err := docker.CliBuild(buildArgs...); err != nil {
-		return fmt.Errorf("failed to build %s: %s", s.image.Name(), err)
-	}
-
-	if err := s.image.SyncDockerState(); err != nil {
-		return fmt.Errorf("failed to sync %s: %s", s.image.Name(), err)
-	}
-
-	return nil
-}
-
-func (s *DockerfileStage) dockerBuildArgs() []string {
+func (s *DockerfileStage) DockerBuildArgs() []string {
 	var result []string
 
 	if s.dockerfilePath != "" {
