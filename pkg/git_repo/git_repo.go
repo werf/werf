@@ -51,6 +51,7 @@ type GitRepo interface {
 
 type Patch interface {
 	GetFilePath() string
+	RenameFile(newPath string) error
 	IsEmpty() bool
 	HasBinary() bool
 	GetPaths() []string
@@ -59,6 +60,7 @@ type Patch interface {
 
 type Archive interface {
 	GetFilePath() string
+	RenameFile(newPath string) error
 	GetType() ArchiveType
 	IsEmpty() bool
 }

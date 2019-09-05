@@ -2,6 +2,7 @@ package build_and_publish
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -196,6 +197,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	defer c.Terminate()
 
 	if err = c.BuildAndPublish(stagesRepo, imagesRepoManager, opts); err != nil {
 		return err

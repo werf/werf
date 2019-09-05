@@ -482,6 +482,8 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 
 	gitMapping.GitRepoInterface = remoteGitRepo
 
+	gitMapping.GitRepoCache = c.GetGitRepoCache(remoteGitRepo.GetName())
+
 	return gitMapping
 }
 
@@ -493,6 +495,8 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_
 	gitMapping.Name = "own"
 
 	gitMapping.GitRepoInterface = localGitRepo
+
+	gitMapping.GitRepoCache = c.GetGitRepoCache(localGitRepo.GetName())
 
 	return gitMapping
 }

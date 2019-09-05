@@ -148,6 +148,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	opts := build.PublishImagesOptions{TagOptions: tagOpts}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	defer c.Terminate()
 
 	if err = c.PublishImages(imagesRepoManager, opts); err != nil {
 		return err
