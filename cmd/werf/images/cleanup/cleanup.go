@@ -87,8 +87,6 @@ func runCleanup() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	common.LogKubeContext(kube.Context)
-
 	if err := common.InitKubedog(); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
@@ -153,7 +151,7 @@ func runCleanup() error {
 		return err
 	}
 
-	kubernetesClients, err := kube.GetAllClients(kube.GetClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
+	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
 	}
@@ -164,10 +162,10 @@ func runCleanup() error {
 			ImagesNames:       imagesNames,
 			DryRun:            *CommonCmdData.DryRun,
 		},
-		LocalGit:          localRepo,
-		KubernetesClients: kubernetesClients,
-		WithoutKube:       CmdData.WithoutKube,
-		Policies:          policies,
+		LocalGit:                  localRepo,
+		KubernetesContextsClients: kubernetesContextsClients,
+		WithoutKube:               CmdData.WithoutKube,
+		Policies:                  policies,
 	}
 
 	logboek.LogOptionalLn()
