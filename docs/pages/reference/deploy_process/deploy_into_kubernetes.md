@@ -70,9 +70,7 @@ With go templates user can:
  * define common text parts as named golang templates and reuse them in several places;
  * etc.
 
-[Sprig functions](https://masterminds.github.io/sprig/) are available for users (except envrionment access functions such as `env`).
-
-Also check out [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks) for templates like `include` and `required`.
+[Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates. 
 
 Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom golang templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
 
