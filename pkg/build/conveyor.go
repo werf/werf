@@ -23,8 +23,6 @@ type Conveyor struct {
 	buildingGitStageNameByImageName map[string]stage.StageName
 	remoteGitRepos                  map[string]*git_repo.Remote
 	imagesBySignature               map[string]image.ImageInterface
-	baseImagesRepoIdsCache          map[string]string
-	baseImagesRepoErrCache          map[string]error
 	globalLocks                     []string
 
 	tmpDir string
@@ -37,6 +35,9 @@ type conveyorPermanentFields struct {
 	projectDir       string
 	containerWerfDir string
 	baseTmpDir       string
+
+	baseImagesRepoIdsCache map[string]string
+	baseImagesRepoErrCache map[string]error
 
 	sshAuthSock string
 
@@ -56,6 +57,9 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 			sshAuthSock: sshAuthSock,
 
 			gitReposCaches: make(map[string]*stage.GitRepoCache),
+
+			baseImagesRepoIdsCache: make(map[string]string),
+			baseImagesRepoErrCache: make(map[string]error),
 		},
 	}
 	c.ReInitRuntimeFields()
@@ -86,10 +90,6 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 
 func (c *Conveyor) ReInitRuntimeFields() {
 	c.stageImages = make(map[string]*image.StageImage)
-
-	c.baseImagesRepoIdsCache = make(map[string]string)
-
-	c.baseImagesRepoErrCache = make(map[string]error)
 
 	c.imagesBySignature = make(map[string]image.ImageInterface)
 
