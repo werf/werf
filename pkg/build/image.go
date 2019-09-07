@@ -1,11 +1,13 @@
 package build
 
 import (
-	"github.com/fatih/color"
+	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
 )
@@ -16,8 +18,6 @@ type Image struct {
 	baseImageName      string
 	baseImageImageName string
 	baseImageRepoId    string
-	baseImageRepoErr   error
-	baseImageLatest    bool
 
 	stages     []stage.Interface
 	baseImage  *image.StageImage
@@ -110,14 +110,18 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	}
 
 	if i.baseImage.IsExists() {
-		if i.baseImageRepoId == "" || i.baseImageRepoId == i.baseImage.ID() {
-			if i.baseImageRepoId == "" {
-				logboek.LogErrorF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), i.baseImageRepoErr)
+		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c)
+		if baseImageRepoId == i.baseImage.ID() || err != nil {
+			if err != nil {
+				logboek.LogLn()
+				logboek.LogErrorF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 				logboek.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
 			}
 
 			return nil
 		}
+
+		logboek.LogOptionalLn()
 	}
 
 	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
@@ -132,4 +136,37 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 
 		return nil
 	})
+}
+
+func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor) (string, error) {
+	baseImageName := i.baseImage.Name()
+
+	if i.baseImageRepoId != "" {
+		return i.baseImageRepoId, nil
+	} else if cachedBaseImageRepoId, exist := c.baseImagesRepoIdsCache[baseImageName]; exist {
+		i.baseImageRepoId = cachedBaseImageRepoId
+		return cachedBaseImageRepoId, nil
+	} else if cachedBaseImagesRepoErr, exist := c.baseImagesRepoErrCache[baseImageName]; exist {
+		return "", cachedBaseImagesRepoErr
+	}
+
+	var fetchedBaseImageRepoId string
+	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
+	if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
+		var fetchImageIdErr error
+		fetchedBaseImageRepoId, fetchImageIdErr = docker_registry.ImageId(baseImageName)
+		if fetchImageIdErr != nil {
+			c.baseImagesRepoErrCache[baseImageName] = fetchImageIdErr
+			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	i.baseImageRepoId = fetchedBaseImageRepoId
+	c.baseImagesRepoIdsCache[baseImageName] = fetchedBaseImageRepoId
+
+	return i.baseImageRepoId, nil
 }

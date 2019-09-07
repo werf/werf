@@ -22,7 +22,6 @@ import (
 
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
@@ -118,31 +117,11 @@ func prepareImageBasedOnStapelImageConfig(imageInterfaceConfig config.StapelImag
 func handleImageFromName(from string, fromLatest bool, image *Image, c *Conveyor) error {
 	image.baseImageName = from
 
-	var baseImageRepoErr error
-	baseImageRepoId, exist := c.baseImagesRepoIdsCache[from]
-	if !exist {
-		processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", from)
-		if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
-			baseImageRepoId, baseImageRepoErr = docker_registry.ImageId(from)
-			if fromLatest {
-				return fmt.Errorf("can not get base image id from registry (%s): %s", from, baseImageRepoErr)
-			}
-
-			return nil
-		}); err != nil {
+	if fromLatest {
+		if _, err := image.getFromBaseImageIdFromRegistry(c); err != nil {
 			return err
 		}
-	} else {
-		baseImageRepoErr, _ = c.baseImagesRepoErrCache[from]
 	}
-
-	image.baseImageRepoId = baseImageRepoId
-	image.baseImageRepoErr = baseImageRepoErr
-
-	image.baseImageLatest = fromLatest
-
-	c.baseImagesRepoIdsCache[from] = baseImageRepoId
-	c.baseImagesRepoErrCache[from] = baseImageRepoErr
 
 	return nil
 }
