@@ -638,14 +638,16 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	dockerArgsHash := map[string]string{}
 	var dockerMetaArgsString []string
 	for _, arg := range dockerMetaArgs {
-		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", arg.Key, arg.ValueString()))
 		dockerArgsHash[arg.Key] = arg.ValueString()
 	}
 
 	for key, valueInterf := range imageFromDockerfileConfig.Args {
 		value := fmt.Sprintf("%v", valueInterf)
-		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%v", key, value))
 		dockerArgsHash[key] = value
+	}
+
+	for key, value := range dockerArgsHash {
+		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%v", key, value))
 	}
 
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
