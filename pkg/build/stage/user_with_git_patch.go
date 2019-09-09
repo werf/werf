@@ -28,7 +28,7 @@ func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image i
 		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == s.Name() {
 			if err := s.GitPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
-				return nil
+				return err
 			}
 		}
 	}
