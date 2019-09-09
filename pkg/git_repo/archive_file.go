@@ -23,16 +23,6 @@ func (a *ArchiveFile) GetFilePath() string {
 	return a.FilePath
 }
 
-func (a *ArchiveFile) RenameFile(newPath string) error {
-	if err := renameFile(a.FilePath, newPath); err != nil {
-		return err
-	}
-
-	a.FilePath = newPath
-
-	return nil
-}
-
 func (a *ArchiveFile) GetType() ArchiveType {
 	return ArchiveType(a.Descriptor.Type)
 }

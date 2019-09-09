@@ -37,7 +37,7 @@ func (s *InstallStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (s
 
 func (s *InstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
-		return nil
+		return err
 	}
 
 	if err := s.builder.Install(image.BuilderContainer()); err != nil {
