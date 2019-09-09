@@ -49,6 +49,19 @@ werf helm render [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false:
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+  -i, --images-repo='':
+            Docker Repo to store images (default $WERF_IMAGES_REPO)
+      --images-repo-mode='multirepo':
+            Define how to store images in Repo: multirepo or monorepo (defaults to                  
+            $WERF_IMAGES_REPO_MODE or multirepo)
+      --namespace='':
+            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+            deploy.namespace custom template from werf.yaml)
+  -o, --output-file-path='':
+            Write to file instead of stdout
+      --release='':
+            Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
+            deploy.helmRelease custom template from werf.yaml)
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
@@ -57,6 +70,20 @@ werf helm render [options]
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
+      --tag-custom=[]:
+            Use custom tagging strategy and tag by the specified arbitrary tags.
+            Option can be used multiple times to produce multiple images with the specified tags.
+            Also can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
+            $WERF_TAG_CUSTOM_TAG2=tag2)
+      --tag-git-branch='':
+            Use git-branch tagging strategy and tag by the specified git branch (option can be      
+            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
+      --tag-git-commit='':
+            Use git-commit tagging strategy and tag by the specified git commit hash (option can be 
+            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)
+      --tag-git-tag='':
+            Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
+            specifying git tag in the $WERF_TAG_GIT_TAG)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:

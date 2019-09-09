@@ -1,24 +1,32 @@
 package render
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/cmd/werf/common"
+	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
+	var outputFilePath string
+
 	cmd := &cobra.Command{
 		Use:                   "render",
 		Short:                 "Render Werf chart templates to stdout",
@@ -27,30 +35,40 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRender()
+			return runRender(outputFilePath)
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
-	common.SetupAddAnnotations(&CommonCmdData, cmd)
-	common.SetupAddLabels(&CommonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
 
-	common.SetupSet(&CommonCmdData, cmd)
-	common.SetupSetString(&CommonCmdData, cmd)
-	common.SetupValues(&CommonCmdData, cmd)
-	common.SetupSecretValues(&CommonCmdData, cmd)
-	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
+	common.SetupSet(&commonCmdData, cmd)
+	common.SetupSetString(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
+
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupTag(&commonCmdData, cmd)
+
+	cmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
 
 	return cmd
 }
 
-func runRender() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+func runRender(outputFilePath string) error {
+	tmp_manager.AutoGCEnabled = false
+
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -66,11 +84,11 @@ func runRender() error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -80,24 +98,94 @@ func runRender() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&CommonCmdData)
+	optionalImagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	userExtraLabels, err := common.GetUserExtraLabels(&CommonCmdData)
+	withoutImagesRepo := true
+	if optionalImagesRepo != "" {
+		withoutImagesRepo = false
+	}
+
+	imagesRepo := helm_common.GetImagesRepoOrStub(optionalImagesRepo)
+
+	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	return deploy.RunRender(projectDir, werfConfig, deploy.RenderOptions{
-		Values:               *CommonCmdData.Values,
-		SecretValues:         *CommonCmdData.SecretValues,
-		Set:                  *CommonCmdData.Set,
-		SetString:            *CommonCmdData.SetString,
-		Env:                  *CommonCmdData.Environment,
+	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	env := helm_common.GetEnvironmentOrStub(*commonCmdData.Environment)
+
+	release, err := common.GetHelmRelease(*commonCmdData.Release, env, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, env, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	tag, tagStrategy, err := helm_common.GetTagOrStub(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte{})
+	if err := deploy.RunRender(buf, projectDir, werfConfig, deploy.RenderOptions{
+		ReleaseName:          release,
+		Tag:                  tag,
+		TagStrategy:          tagStrategy,
+		Namespace:            namespace,
+		ImagesRepoManager:    imagesRepoManager,
+		WithoutImagesRepo:    withoutImagesRepo,
+		Values:               *commonCmdData.Values,
+		SecretValues:         *commonCmdData.SecretValues,
+		Set:                  *commonCmdData.Set,
+		SetString:            *commonCmdData.SetString,
+		Env:                  env,
 		UserExtraAnnotations: userExtraAnnotations,
 		UserExtraLabels:      userExtraLabels,
-		IgnoreSecretKey:      *CommonCmdData.IgnoreSecretKey,
-	})
+		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
+	}); err != nil {
+		return err
+	}
+
+	if outputFilePath != "" {
+		if err := saveRenderedChart(outputFilePath, buf); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf(buf.String())
+	}
+
+	return nil
+}
+
+func saveRenderedChart(outputFilePath string, buf *bytes.Buffer) error {
+	if err := os.MkdirAll(filepath.Dir(outputFilePath), 0777); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(outputFilePath, buf.Bytes(), 0644); err != nil {
+		return err
+	}
+
+	return nil
 }
