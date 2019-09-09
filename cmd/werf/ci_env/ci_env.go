@@ -174,7 +174,7 @@ func generateGitlabEnvs() error {
 	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
 		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s/pipelines/%s", ciProjectUrlEnv, ciPipelineIdEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
+	printExportCommand("WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
 
 	var gitlabCiJobUrl string
 	ciJobIdEnv := os.Getenv("CI_JOB_ID")
