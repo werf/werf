@@ -37,29 +37,45 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
-func ArchiveWithSubmodules(out io.Writer, gitDir, workTreeDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
-	return writeArchive(out, gitDir, workTreeDir, true, opts)
+func ArchiveWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+	var res *ArchiveDescriptor
+
+	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
+		writeArchiveRes, err := writeArchive(out, gitDir, workTreeCacheDir, true, opts)
+		res = writeArchiveRes
+		return err
+	})
+
+	return res, err
 }
 
-func Archive(out io.Writer, gitDir, workTreeDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
-	return writeArchive(out, gitDir, workTreeDir, false, opts)
+func Archive(out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+	var res *ArchiveDescriptor
+
+	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
+		writeArchiveRes, err := writeArchive(out, gitDir, workTreeCacheDir, false, opts)
+		res = writeArchiveRes
+		return err
+	})
+
+	return res, err
 }
 
 func debugArchive() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
-func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad git dir `%s`: %s", gitDir, err)
+		return nil, fmt.Errorf("bad git dir %s: %s", gitDir, err)
 	}
 
-	workTreeDir, err = filepath.Abs(workTreeDir)
+	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad work tree dir `%s`: %s", workTreeDir, err)
+		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 	}
 
 	if withSubmodules {
@@ -69,23 +85,9 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 	}
 
-	err = switchWorkTree(gitDir, workTreeDir, opts.Commit, withSubmodules)
+	workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
-		return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.Commit, err)
-	}
-
-	if withSubmodules {
-		var err error
-
-		err = syncSubmodules(gitDir, workTreeDir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot sync submodules: %s", err)
-		}
-
-		err = updateSubmodules(gitDir, workTreeDir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot update submodules: %s", err)
-		}
+		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
 	}
 
 	fileModesFromGit, err := gitWorkTreeFilesModes(gitDir, workTreeDir, withSubmodules)
@@ -101,7 +103,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 
 	err = filepath.Walk(workTreeDir, func(absPath string, info os.FileInfo, accessErr error) error {
 		if accessErr != nil {
-			return fmt.Errorf("error accessing `%s`: %s", absPath, accessErr)
+			return fmt.Errorf("error accessing %s: %s", absPath, accessErr)
 		}
 
 		baseName := filepath.Base(absPath)
@@ -123,13 +125,13 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 				desc.Type = DirectoryArchive
 
 				if debugArchive() {
-					fmt.Printf("Found BasePath `%s` directory: directory archive type\n", relPath)
+					fmt.Printf("Found BasePath %s directory: directory archive type\n", relPath)
 				}
 			} else {
 				desc.Type = FileArchive
 
 				if debugArchive() {
-					fmt.Printf("Found BasePath `%s` file: file archive\n", relPath)
+					fmt.Printf("Found BasePath %s file: file archive\n", relPath)
 				}
 			}
 		}
@@ -140,7 +142,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 
 		if !opts.PathFilter.IsFilePathValid(relPath) {
 			if debugArchive() {
-				fmt.Printf("Excluded path `%s` by path filter %s\n", relPath, opts.PathFilter.String())
+				fmt.Printf("Excluded path %s by path filter %s\n", relPath, opts.PathFilter.String())
 			}
 			return nil
 		}
@@ -154,7 +156,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		if fileModeFromGit == filemode.Symlink {
 			linkname, err := os.Readlink(absPath)
 			if err != nil {
-				return fmt.Errorf("cannot read symlink `%s`: %s", absPath, err)
+				return fmt.Errorf("cannot read symlink %s: %s", absPath, err)
 			}
 
 			err = tw.WriteHeader(&tar.Header{
@@ -169,11 +171,11 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 				ChangeTime: info.ModTime(),
 			})
 			if err != nil {
-				return fmt.Errorf("unable to write tar symlink header for file `%s`: %s", tarEntryName, err)
+				return fmt.Errorf("unable to write tar symlink header for file %s: %s", tarEntryName, err)
 			}
 
 			if debugArchive() {
-				fmt.Printf("Added archive symlink `%s` -> `%s`\n", relPath, linkname)
+				fmt.Printf("Added archive symlink %s -> %s\n", relPath, linkname)
 			}
 
 			return nil
@@ -189,22 +191,22 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 			ChangeTime: info.ModTime(),
 		})
 		if err != nil {
-			return fmt.Errorf("unable to write tar header for file `%s`: %s", tarEntryName, err)
+			return fmt.Errorf("unable to write tar header for file %s: %s", tarEntryName, err)
 		}
 
 		file, err := os.Open(absPath)
 		if err != nil {
-			return fmt.Errorf("unable to open file `%s`: %s", absPath, err)
+			return fmt.Errorf("unable to open file %s: %s", absPath, err)
 		}
 
 		_, err = io.Copy(tw, file)
 		if err != nil {
-			return fmt.Errorf("unable to write data to tar archive from file `%s`: %s", relPath, err)
+			return fmt.Errorf("unable to write data to tar archive from file %s: %s", relPath, err)
 		}
 
 		err = file.Close()
 		if err != nil {
-			return fmt.Errorf("error closing file `%s`: %s", absPath, err)
+			return fmt.Errorf("error closing file %s: %s", absPath, err)
 		}
 
 		if debugArchive() {
@@ -215,7 +217,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("entries iteration failed in `%s`: %s", workTreeDir, err)
+		return nil, fmt.Errorf("entries iteration failed in %s: %s", workTreeDir, err)
 	}
 
 	err = tw.Close()
@@ -224,7 +226,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 	}
 
 	if desc.Type == "" {
-		return nil, fmt.Errorf("base path `%s` entry not found repo", opts.PathFilter.BasePath)
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathFilter.BasePath)
 	}
 
 	return desc, nil
