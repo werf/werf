@@ -165,7 +165,7 @@ func (gp *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 	}
 
 	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd)
-	err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
+	err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		patch, err := gp.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err
@@ -324,9 +324,7 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 	}
 
 	if patch.HasBinary() {
-		patchPaths := patch.GetPaths()
-
-		pathsListFile, err := gp.createPatchPathsListFile(patchPaths, fromCommit, toCommit)
+		pathsListFile, err := gp.preparePatchPathsListFile(patchOpts, patch)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create patch paths list file: %s", err)
 		}
@@ -616,17 +614,41 @@ func (gp *GitMapping) getArchiveFileDescriptor(archiveOpts git_repo.ArchiveOptio
 func (gp *GitMapping) prepareArchiveFile(archiveOpts git_repo.ArchiveOptions, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
 	fileDesc := gp.getArchiveFileDescriptor(archiveOpts)
 
-	if archive.GetFilePath() != fileDesc.FilePath {
-		if err := archive.RenameFile(fileDesc.FilePath); err != nil {
-			return nil, err
-		}
+	fileExists := true
+	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
+		fileExists = false
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get stat of path %s: %s", fileDesc.FilePath, err)
+	}
+
+	if fileExists {
+		return fileDesc, nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %s: %s", filepath.Dir(fileDesc.FilePath), err)
+	}
+
+	if err := os.Link(archive.GetFilePath(), fileDesc.FilePath); err != nil {
+		return nil, fmt.Errorf("unable to create hardlink %s to %s: %s", fileDesc.FilePath, archive.GetFilePath(), err)
 	}
 
 	return fileDesc, nil
 }
 
-func (gp *GitMapping) createPatchPathsListFile(paths []string, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
-	fileDesc := gp.getPatchPathsListFileDescriptor(fromCommit, toCommit)
+func (gp *GitMapping) preparePatchPathsListFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
+	fileDesc := gp.getPatchPathsListFileDescriptor(patchOpts)
+
+	fileExists := true
+	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
+		fileExists = false
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get stat of path %s: %s", fileDesc.FilePath, err)
+	}
+
+	if fileExists {
+		return fileDesc, nil
+	}
 
 	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -634,7 +656,7 @@ func (gp *GitMapping) createPatchPathsListFile(paths []string, fromCommit, toCom
 	}
 
 	fullPaths := make([]string, 0)
-	for _, path := range paths {
+	for _, path := range patch.GetPaths() {
 		fullPaths = append(fullPaths, filepath.Join(gp.To, path))
 	}
 
@@ -655,17 +677,30 @@ func (gp *GitMapping) createPatchPathsListFile(paths []string, fromCommit, toCom
 func (gp *GitMapping) preparePatchFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	fileDesc := gp.getPatchFileDescriptor(patchOpts)
 
-	if patch.GetFilePath() != fileDesc.FilePath {
-		if err := patch.RenameFile(fileDesc.FilePath); err != nil {
-			return nil, err
-		}
+	fileExists := true
+	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
+		fileExists = false
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get stat of path %s: %s", fileDesc.FilePath, err)
+	}
+
+	if fileExists {
+		return fileDesc, nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %s: %s", filepath.Dir(fileDesc.FilePath), err)
+	}
+
+	if err := os.Link(patch.GetFilePath(), fileDesc.FilePath); err != nil {
+		return nil, fmt.Errorf("unable to create hardlink %s to %s: %s", fileDesc.FilePath, patch.GetFilePath(), err)
 	}
 
 	return fileDesc, nil
 }
 
-func (gp *GitMapping) getPatchPathsListFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s_%s-paths-list", gp.GetParamshash(), fromCommit, toCommit)
+func (gp *GitMapping) getPatchPathsListFileDescriptor(patchOpts git_repo.PatchOptions) *ContainerFileDescriptor {
+	fileName := fmt.Sprintf("%s.paths_list", objectToHashKey(patchOpts))
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(gp.PatchesDir, fileName),
