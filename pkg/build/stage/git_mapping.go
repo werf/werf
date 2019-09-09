@@ -500,6 +500,10 @@ func (gp *GitMapping) PatchSize(fromCommit string) (int64, error) {
 		return 0, fmt.Errorf("unable to get latest commit: %s", err)
 	}
 
+	if fromCommit == toCommit {
+		return 0, nil
+	}
+
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions:         gp.getRepoFilterOptions(),
 		FromCommit:            fromCommit,
@@ -569,6 +573,10 @@ func (gp *GitMapping) IsPatchEmpty(prevBuiltImage image.ImageInterface) (bool, e
 }
 
 func (gp *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
+	if fromCommit == toCommit {
+		return true, nil
+	}
+
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: gp.getRepoFilterOptions(),
 		FromCommit:    fromCommit,
