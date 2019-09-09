@@ -69,20 +69,6 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.Commit, err)
 	}
 
-	if withSubmodules {
-		var err error
-
-		err = syncSubmodules(gitDir, workTreeDir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot sync submodules: %s", err)
-		}
-
-		err = updateSubmodules(gitDir, workTreeDir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot update submodules: %s", err)
-		}
-	}
-
 	desc := &ArchiveDescriptor{
 		IsEmpty: true,
 	}
