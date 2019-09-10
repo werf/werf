@@ -37,9 +37,9 @@ project.werf.io/git=$CI_PROJECT_URL
 ci.werf.io/commit=$CI_COMMIT_SHA
 ```
 
-### WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL
+### WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL
 
-`WERF_ADD_ANNOTATION_GILAB_CI_PIPELINE_URL` value is taken from [`CI_PIPELINE_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
+`WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL` value is taken from [`CI_PIPELINE_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and constructed as:
 
 ```
 gitlab.ci.werf.io/pipeline-url=$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID
