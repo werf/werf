@@ -1,10 +1,8 @@
 package deploy
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/flant/logboek"
 
@@ -55,7 +53,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	if err := helm.Lint(
+	return helm.Lint(
 		os.Stdout,
 		werfChart.ChartDir,
 		namespace,
@@ -63,12 +61,5 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		append(werfChart.Set, opts.Set...),
 		append(werfChart.SetString, opts.SetString...),
 		helm.LintOptions{Strict: true},
-	); err != nil {
-		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
-		replaceNew := fmt.Sprintf("%s/", ".helm")
-		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
-		return errors.New(errMsg)
-	}
-
-	return nil
+	)
 }

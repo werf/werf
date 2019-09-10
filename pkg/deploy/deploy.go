@@ -1,9 +1,7 @@
 package deploy
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -88,7 +86,7 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 		return logBlockErr
 	}
 
-	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+	return helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,
 			ChartValuesOptions: helm.ChartValuesOptions{
@@ -97,12 +95,5 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 				Values:    opts.Values,
 			},
 		})
-	}); err != nil {
-		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
-		replaceNew := fmt.Sprintf("%s/", ".helm")
-		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
-		return errors.New(errMsg)
-	}
-
-	return nil
+	})
 }
