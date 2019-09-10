@@ -64,7 +64,7 @@ func newDependencyListCmd() *cobra.Command {
 func (l *dependencyListCmd) run() error {
 	var c *chart.Chart
 	var err error
-	if err := chartutil.WithSkipChartYamlFileValidation(func() error {
+	if err := chartutil.WithSkipChartYamlFileValidation(true, func() error {
 		c, err = chartutil.Load(l.chartpath)
 		return err
 	}); err != nil {

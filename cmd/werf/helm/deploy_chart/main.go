@@ -37,9 +37,6 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME",
 		Short: "Deploy Helm chart specified by path",
-		Long: common.GetLongCommandDescription(`Deploy Helm chart specified by path.
-
-If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
 		Example: `  # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease
 
@@ -146,12 +143,15 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		namespace = kube.DefaultNamespace
 	}
 
-	exists, err := util.DirExists(chartDirOrChartReference)
+	exist, err := util.DirExists(chartDirOrChartReference)
 	if err != nil {
 		return err
 	}
 
-	if !exists {
+	var chartDir string
+	if exist {
+		chartDir = chartDirOrChartReference
+	} else {
 		chartReferenceParts := strings.Split(chartDirOrChartReference, "/")
 		if len(chartReferenceParts) == 2 {
 			helm_common.InitHelmSettings(&HelmCmdData)
@@ -170,19 +170,14 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 				return fmt.Errorf("\n- chart directory %[1]s is not found\n- unable to download chart %[1]s: %s", chartDirOrChartReference, err)
 			}
 
-			chartDirOrChartReference = filepath.Join(destDir, chartReferenceParts[1])
+			chartDir = filepath.Join(destDir, chartReferenceParts[1])
 		} else {
 			return fmt.Errorf("chart directory %s is not found", chartDirOrChartReference)
 		}
 	}
 
-	werfChart, err := werf_chart.LoadWerfChart(chartDirOrChartReference)
-	if err != nil {
-		return fmt.Errorf("unable to load chart %s: %s", chartDirOrChartReference, err)
-	}
-
 	logboek.LogOptionalLn()
-
+	werfChart := &werf_chart.WerfChart{ChartDir: chartDir}
 	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,
 		ChartValuesOptions: helm.ChartValuesOptions{

@@ -126,7 +126,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 ```
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images));
+* it is important to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in `werf deploy`) otherwise you can't use werf templates functions `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images));
 * we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which contains an URL of the environment. You can use it in your helm templates, e.g. to configure ingress.
 

@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Deploy Helm chart specified by path.
-
-If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then   
-werf will pass all additinal values and data into helm
+Deploy Helm chart specified by path
 
 {{ header }} Syntax
 

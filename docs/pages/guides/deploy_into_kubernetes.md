@@ -41,7 +41,7 @@ source <(multiwerf use 1.0 beta)
 
 Our example application is a simple web application. To run this application we only need a web server.
 
-Desireable kubernetes layout:
+Desirable kubernetes layout:
 
      .----------------------.
      | backend (Deployment) |
@@ -130,7 +130,7 @@ spec:
       - name: backend
         workingDir: /app
         command: [ "python3", "-m", "http.server", "8080" ]
-{{ include "werf_container_image" . | indent 8 }}
+{{ werf_container_image . | indent 8 }}
         livenessProbe:
           httpGet:
             path: /
@@ -146,7 +146,7 @@ spec:
           name: http
           protocol: TCP
         env:
-{{ include "werf_container_env" . | indent 8 }}
+{{ werf_container_env . | indent 8 }}
 ---
 apiVersion: v1
 kind: Service
@@ -165,15 +165,17 @@ spec:
 
 In this configuration Deployment with name `myapp-backend` (after template {% raw %}`{{ .Chart.Name }}-backend`{% endraw %} expansion) with several replicas specified.
 
-Construction {% raw %}`{{ include "werf_container_image" . | indent 8 }}`{% endraw %} is an addition of werf to helm which:
+Construction {% raw %}`{{ werf_container_image . | indent 8 }}`{% endraw %} is an addition of werf to helm which:
 
 * always generates right image name (`werf-registry.kube-system.svc.cluster.local:5000/myapp:latest` in our case), and
 
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 
-Go template `werf_container_image` is the valid way to specify image **from config** in kubernetes resource configuration. There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+Go template function `werf_container_image` is the valid way to specify image **from config** in kubernetes resource configuration. 
+There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
-Construction {% raw %}`{{ include "werf_container_env" . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the kubernetes resource. It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
+Construction {% raw %}`{{ werf_container_env . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the kubernetes resource. 
+It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
 
 Finally, in this configuration Service `myapp-backend` specified to access Pods of Deployment `myapp-backend`.
 

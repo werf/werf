@@ -52,8 +52,16 @@ var (
 	ConfigMapStorage = "configmap"
 	SecretStorage    = "secret"
 
+	LoadChartfileFunc = func(chartPath string) (*chart.Chart, error) {
+		return chartutil.Load(chartPath)
+	}
+
 	ErrNoSuccessfullyDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
+
+func loadChartfile(chartPath string) (*chart.Chart, error) {
+	return LoadChartfileFunc(chartPath)
+}
 
 type InitOptions struct {
 	KubeConfig                  string
@@ -266,7 +274,7 @@ func ReleaseInstall(chartPath, releaseName, namespace string, values, set, setSt
 	}
 
 	// Check chart requirements to make sure all dependencies are present in /charts
-	loadedChart, err := chartutil.Load(chartPath)
+	loadedChart, err := loadChartfile(chartPath)
 	if err != nil {
 		return err
 	}
@@ -303,7 +311,7 @@ func ReleaseUpdate(chartPath, releaseName string, values, set, setString []strin
 	}
 
 	// Check chart requirements to make sure all dependencies are present in /charts
-	loadedChart, err := chartutil.Load(chartPath)
+	loadedChart, err := loadChartfile(chartPath)
 	if err == nil {
 		if req, err := chartutil.LoadRequirements(loadedChart); err == nil {
 			if err := renderutil.CheckDependencies(loadedChart, req); err != nil {
