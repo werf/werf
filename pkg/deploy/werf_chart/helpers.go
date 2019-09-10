@@ -39,7 +39,7 @@ var WerfChartHelpersTpl = []byte(`{{- define "werf_secret_file" -}}
 
 {{- define "_werf_container__imagePullPolicy" -}}
 {{-   $context := index . 0 -}}
-{{-   if $context.Values.global.werf.ci.is_branch -}}
+{{-   if or $context.Values.global.werf.ci.is_branch $context.Values.global.werf.ci.is_custom -}}
 imagePullPolicy: Always
 {{-   end -}}
 {{- end -}}
@@ -105,24 +105,18 @@ image: {{ tuple $name $context | include "_image2" }}
 
 {{- define "_werf_container_env" -}}
 {{-   $context := index . 0 -}}
-{{-   if $context.Values.global.werf.ci.is_branch -}}
+{{-   if or $context.Values.global.werf.ci.is_branch $context.Values.global.werf.ci.is_custom -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $context | include "_image_id" }}
-{{-   else -}}
-- name: DOCKER_IMAGE_ID
-  value: "-"
 {{-   end -}}
 {{- end -}}
 
 {{- define "_werf_container_env2" -}}
 {{-   $name := index . 0 -}}
 {{-   $context := index . 1 -}}
-{{-   if $context.Values.global.werf.ci.is_branch -}}
+{{-   if or $context.Values.global.werf.ci.is_branch $context.Values.global.werf.ci.is_custom -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $name $context | include "_image_id2" }}
-{{-   else -}}
-- name: DOCKER_IMAGE_ID
-  value: "-"
 {{-   end -}}
 {{- end -}}
 
