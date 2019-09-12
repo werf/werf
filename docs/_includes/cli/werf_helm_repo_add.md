@@ -18,8 +18,8 @@ werf helm repo add [NAME] [URL] [options]
             verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file='':
             identify HTTPS client using this SSL certificate file
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for add
       --key-file='':

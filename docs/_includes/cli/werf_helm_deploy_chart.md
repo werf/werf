@@ -39,8 +39,8 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             this is ignored (if using CHART as a chart reference)
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
       --helm-release-storage-namespace='kube-system':
             Helm release storage namespace (same as --tiller-namespace for regular helm, default    
             $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
