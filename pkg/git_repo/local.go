@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/util"
+
 	"github.com/flant/logboek"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -46,15 +48,15 @@ func (repo *Local) HeadBranchName() (string, error) {
 }
 
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
-	return repo.createPatch(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
+	return repo.createPatch(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
 func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
+	return repo.createArchive(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
 func (repo *Local) Checksum(opts ChecksumOptions) (Checksum, error) {
-	return repo.checksum(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
+	return repo.checksum(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
 func (repo *Local) IsCommitExists(commit string) (bool, error) {
@@ -69,23 +71,16 @@ func (repo *Local) RemoteBranchesList() ([]string, error) {
 	return repo.remoteBranchesList(repo.Path)
 }
 
-func (repo *Local) getWorkTreeDir() string {
-	pathParts := make([]string, 0)
-
-	path := filepath.Clean(repo.Path)
-	for i := 0; i < 3; i++ {
-		var lastPart string
-		path, lastPart = filepath.Split(filepath.Clean(path))
-		pathParts = append([]string{lastPart}, pathParts...)
-		if path == "/" {
-			break
-		}
+func (repo *Local) getRepoWorkTreeCacheDir() string {
+	absPath, err := filepath.Abs(repo.Path)
+	if err != nil {
+		panic(err) // stupid interface of filepath.Abs
 	}
 
-	pathParts = append([]string{"local"}, pathParts...)
-	pathParts = append([]string{GetBaseWorkTreeDir()}, pathParts...)
+	fullPath := filepath.Clean(absPath)
+	repoId := util.Sha256Hash(fullPath)
 
-	return filepath.Join(pathParts...)
+	return filepath.Join(GetBaseWorkTreeDir(), "local", repoId)
 }
 
 func (repo *Local) IsBranchState() bool {
