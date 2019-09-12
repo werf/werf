@@ -7,6 +7,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/Masterminds/sprig"
+
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -242,8 +244,13 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 }
 
 func NewWerfEngine() *WerfEngine {
+	defaultEngine := engine.New()
+	for _, name := range []string{"env", "expandenv"} {
+		defaultEngine.FuncMap[name] = sprig.TxtFuncMap()[name]
+	}
+
 	return &WerfEngine{
-		Engine:           engine.New(),
+		Engine:           defaultEngine,
 		ExtraAnnotations: map[string]string{},
 		ExtraLabels:      map[string]string{},
 	}
