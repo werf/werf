@@ -43,7 +43,7 @@ werf helm repo fetch [chart URL | repo/chartname] [...] [options]
             help for fetch
       --key-file='':
             identify HTTPS client using this SSL key file
-      --keyring='/home/aigrychev/.gnupg/pubring.gpg':
+      --keyring='$HOME/.gnupg/pubring.gpg':
             keyring containing public keys
       --password='':
             chart repository password

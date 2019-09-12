@@ -8,8 +8,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Content based<br/>
-                delivery tool
+                GitOps delivery tool
             </h1>
             <div class="welcome__subtitle">
                 mighty and carefully crafted
@@ -31,7 +30,9 @@ layout: default
                     A missing part of a CI/CD<br/> system
                 </div>
                 <div class="intro__text">
-                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis CI, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
+                    Werf is an OpenSource CLI tool written in Golang that intent to organize a complete application lifecycle. It builds docker images using Dockerfiles or alternative fast builder based on the custom syntax. It cleans docker registry from unused images. It deploys application into Kubernetes using helm-compatible format chart with handy customizations and improves deploy tracking, errors detection and output. Werf is not a complete CI/CD system yet it is a tool that can be embedded into any to implement CI/CD for your application. We consider it a new generation of high-level CI/CD tools.
+
+                    Check out a [complete features list](https://github.com/flant/werf#complete-features-list).
                 </div>
             </div>
     </div>
@@ -46,7 +47,7 @@ layout: default
             <div class="intro-extra__item-text">
                 Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
             </div>
-        </li>        
+        </li>
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
                 Image Lifecycle Management

@@ -13,16 +13,7 @@ ___
 
 <!-- WERF DOCS PARTIAL BEGIN: Overview -->
 
-Werf (previously known as Dapp) is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
-
-It helps DevOps engineers generate and deploy images by linking together:
-
-- application code (with Git support),
-- infrastructure code (with Ansible or shell scripts), and
-- platform as a service (Kubernetes).
-
-Werf simplifies development of build scripts, reduces commit build time and automates deployment.
-It is designed to make engineer's work fast end efficient.
+Werf is an OpenSource CLI tool written in Golang that intent to organize a complete application lifecycle. It builds docker images using Dockerfiles or alternative fast builder based on the custom syntax. It cleans docker registry from unused images. It deploys application into Kubernetes using helm-compatible format chart with handy customizations and improves deploy tracking, errors detection and output. Werf is not a complete CI/CD system yet it is a tool that can be embedded into any to implement CI/CD for your application.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -40,11 +31,12 @@ It is designed to make engineer's work fast end efficient.
 
 <!-- WERF DOCS PARTIAL BEGIN: Features -->
 
-- Complete application lifecycle management: build and publish images, deploy application into Kubernetes and cleanup unused images by policies.
-- Application build and deploy specification (as many components as needed) completely described in one git repository with source code (single source of truth).
-- Build images with Dockerfile or with our syntax to take advantage of incremental rebuilds based on git history and carefully crafted tools.
-- Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
-- Kubernetes clusters scanner and different policies to keep the registry clean.
+ - Complete application lifecycle management: build and publish images, deploy application into Kubernetes and cleanup unused images by policies.
+ - Application build and deploy specification (as many components as needed) completely described in one git repository with source code (single source of truth).
+ - Build images with Dockerfiles.
+ - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
+ - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
+ - Werf is a CLI tool written in Golang which can be embedded into any existing CI/CD system to implement CI/CD for your application.
 
 ## Coming soon
 

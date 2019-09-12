@@ -29,7 +29,7 @@ werf helm dependency build [options]
             location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
   -h, --help=false:
             help for build
-      --keyring='/home/aigrychev/.gnupg/pubring.gpg':
+      --keyring='$HOME/.gnupg/pubring.gpg':
             keyring containing public keys
       --verify=false:
             verify the packages against signatures
