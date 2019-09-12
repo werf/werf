@@ -29,8 +29,8 @@ werf helm dependency update [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for update
       --keyring='/home/aigrychev/.gnupg/pubring.gpg':
