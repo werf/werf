@@ -1,10 +1,8 @@
 package deploy
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/flant/logboek"
 
@@ -59,7 +57,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 		ShowNotes: false,
 	}
 
-	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+	return helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return helm.Render(
 			out,
 			werfChart.ChartDir,
@@ -69,12 +67,5 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 			append(werfChart.Set, opts.Set...),
 			append(werfChart.SetString, opts.SetString...),
 			renderOptions)
-	}); err != nil {
-		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
-		replaceNew := fmt.Sprintf("%s/", ".helm")
-		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
-		return errors.New(errMsg)
-	}
-
-	return nil
+	})
 }
