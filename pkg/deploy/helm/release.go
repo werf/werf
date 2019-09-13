@@ -40,6 +40,25 @@ const (
 	HelmHookAnnoName = "helm.sh/hook"
 )
 
+var (
+	werfAnnoList = []string{
+		TrackTerminationModeAnnoName,
+		FailModeAnnoName,
+		FailuresAllowedPerReplicaAnnoName,
+		LogRegexAnnoName,
+		SkipLogsAnnoName,
+		SkipLogsForContainersAnnoName,
+		ShowLogsOnlyForContainers,
+		ShowLogsUntilAnnoName,
+		ShowEventsAnnoName,
+		RecreateAnnoName,
+	}
+
+	werfAnnoPrefixList = []string{
+		LogRegexForAnnoPrefix,
+	}
+)
+
 func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	return withLockedHelmRelease(releaseName, func() error {
 		return doPurgeHelmRelease(releaseName, namespace, withNamespace, withHooks)

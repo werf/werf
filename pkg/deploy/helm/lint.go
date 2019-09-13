@@ -92,15 +92,6 @@ func lintChart(chartPath string, namespace string, values, set, setString []stri
 }
 
 func templatesRules(linter *support.Linter, chartPath, namespace string, values, set, setString []string) {
-	supportedWerfAnnotations := []string{
-		FailModeAnnoName,
-		FailuresAllowedPerReplicaAnnoName,
-		LogRegexAnnoName,
-		SkipLogsForContainersAnnoName,
-		ShowLogsOnlyForContainers,
-		RecreateAnnoName,
-	}
-
 	templates, _ := GetTemplatesFromChart(chartPath, "RELEASE_NAME", namespace, values, set, setString)
 
 	for _, template := range templates {
@@ -115,14 +106,16 @@ func templatesRules(linter *support.Linter, chartPath, namespace string, values,
 	templateAnnotationsLoop:
 		for annoName := range template.Metadata.Annotations {
 			if strings.HasPrefix(annoName, "werf.io/") {
-				for _, supportedAnnoName := range supportedWerfAnnotations {
+				for _, supportedAnnoName := range werfAnnoList {
 					if annoName == supportedAnnoName {
 						continue templateAnnotationsLoop
 					}
 				}
 
-				if strings.HasPrefix(annoName, LogRegexForAnnoPrefix) {
-					continue templateAnnotationsLoop
+				for _, supportedAnnoPrefix := range werfAnnoPrefixList {
+					if strings.HasPrefix(annoName, supportedAnnoPrefix) {
+						continue templateAnnotationsLoop
+					}
 				}
 
 				err := fmt.Errorf("%s/%s with unknown werf annotation %s", kind, metadataName, annoName)
