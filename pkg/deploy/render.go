@@ -3,18 +3,23 @@ package deploy
 import (
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"strings"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 type RenderOptions struct {
+	ReleaseName          string
+	Tag                  string
+	TagStrategy          tag_strategy.TagStrategy
+	Namespace            string
+	WithoutImagesRepo    bool
+	ImagesRepoManager    ImagesRepoManager
 	Values               []string
 	SecretValues         []string
 	Set                  []string
@@ -25,7 +30,7 @@ type RenderOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
+func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
 	if debug() {
 		fmt.Fprintf(logboek.GetOutStream(), "Render options: %#v\n", opts)
 	}
@@ -35,19 +40,9 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
-	if err != nil {
-		return err
-	}
+	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, opts.ImagesRepoManager, opts.Tag, opts.WithoutImagesRepo)
 
-	releaseName := "RELEASE_NAME"
-	tag := "GIT_BRANCH"
-	tagStrategy := tag_strategy.GitBranch
-	namespace := "NAMESPACE"
-
-	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, true)
-
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, opts.ImagesRepoManager, opts.Namespace, opts.Tag, opts.TagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
@@ -66,10 +61,10 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	if err := helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return helm.Render(
-			os.Stdout,
+			out,
 			werfChart.ChartDir,
-			releaseName,
-			namespace,
+			opts.ReleaseName,
+			opts.Namespace,
 			append(werfChart.Values, opts.Values...),
 			append(werfChart.Set, opts.Set...),
 			append(werfChart.SetString, opts.SetString...),

@@ -44,6 +44,7 @@ require (
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/gosuri/uitable v0.0.0-20160404203958-36ee7e946282
 	github.com/hashicorp/go-version v1.2.0
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
 	github.com/mattn/go-shellwords v1.0.5 // indirect
 	github.com/moby/buildkit v0.4.0
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
