@@ -37,8 +37,8 @@ werf helm repo fetch [chart URL | repo/chartname] [...] [options]
       --devel=false:
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored.
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for fetch
       --key-file='':

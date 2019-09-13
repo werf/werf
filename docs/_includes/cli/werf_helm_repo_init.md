@@ -14,8 +14,8 @@ werf helm repo init [options]
 {{ header }} Options
 
 ```bash
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for init
       --local-repo-url='http://127.0.0.1:8879/charts':

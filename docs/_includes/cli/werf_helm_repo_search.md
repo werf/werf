@@ -19,8 +19,8 @@ werf helm repo search [keyword] [options]
 ```bash
       --col-width=60:
             specifies the max column width of output
-      --helm-home='/home/aigrychev/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME
+      --helm-home='~/.helm':
+            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for search
   -r, --regexp=false:

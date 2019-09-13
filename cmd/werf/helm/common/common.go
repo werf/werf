@@ -71,7 +71,7 @@ func SetupHelmHome(cmdData *HelmCmdData, cmd *cobra.Command) {
 		helmHomeDefaultValue = helm_env.DefaultHelmHome
 	}
 
-	cmd.Flags().StringVarP(cmdData.helmSettingsHome, "helm-home", "", helmHomeDefaultValue, "location of your Helm config. Defaults to $WERF_HELM_HOME or $HELM_HOME")
+	cmd.Flags().StringVarP(cmdData.helmSettingsHome, "helm-home", "", helmHomeDefaultValue, "location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm")
 }
 
 func InitHelmSettings(helmCmdData *HelmCmdData) {
