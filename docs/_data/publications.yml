@@ -3,6 +3,11 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Monorepo/multirepo support in werf (and what does it have to do with Docker Registry?)"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/monorepo-multirepo-registry-support-in-werf-a73b2a5172d8"
+    img: "/images/publications/en_090919.png"
+    created: 2019-09-09
   - title: "Improve your CI/CD experience with werf and existing Dockerfiles"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/werf-dockerfile-support-e6504211b8e6"
@@ -22,6 +27,11 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Поддержка monorepo и multirepo в werf и при чём здесь Docker Registry"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/465131/"
+    img: "/images/publications/ru_300819.png"
+    created: 2019-08-30
   - title: "Собирать Docker-образы в werf теперь можно и по обычному Dockerfile"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/463613/"
