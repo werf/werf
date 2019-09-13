@@ -80,7 +80,7 @@ func InitHelmSettings(helmCmdData *HelmCmdData) {
 }
 
 func DefaultKeyring() string {
-	return os.ExpandEnv("$HOME/.gnupg/pubring.gpg")
+	return "$HOME/.gnupg/pubring.gpg"
 }
 
 func CheckArgsLength(argsReceived int, requiredArgs ...string) error {

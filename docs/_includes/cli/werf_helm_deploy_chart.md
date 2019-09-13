@@ -53,7 +53,7 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --key-file='':
             identify HTTPS client using this SSL key file (if using CHART as a chart reference)
-      --keyring='/home/aigrychev/.gnupg/pubring.gpg':
+      --keyring='$HOME/.gnupg/pubring.gpg':
             keyring containing public keys (if using CHART as a chart reference)
       --kube-config='':
             Kubernetes config file path

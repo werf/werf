@@ -33,7 +33,7 @@ werf helm dependency update [options]
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for update
-      --keyring='/home/aigrychev/.gnupg/pubring.gpg':
+      --keyring='$HOME/.gnupg/pubring.gpg':
             keyring containing public keys
       --skip-refresh=false:
             do not refresh the local repository cache

@@ -34,6 +34,10 @@ func newRepoFetchCmd() *cobra.Command {
 		Long:                  fetchDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if downloadChartOptions.Keyring != "" {
+				downloadChartOptions.Keyring = os.ExpandEnv(downloadChartOptions.Keyring)
+			}
+
 			if len(args) == 0 {
 				return fmt.Errorf("need at least one argument, url or repo/name of the chart")
 			}
