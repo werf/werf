@@ -365,7 +365,7 @@ ansible:
   install:
   - copy:
       content: |
-{{ .Files.Get '/conf/etc/nginx.conf' | indent 6}}
+{{ .Files.Get "/conf/etc/nginx.conf" | indent 8}}
       dest: /etc/nginx/nginx.conf
 ```
 {% endraw %}
