@@ -58,7 +58,7 @@ func Render(out io.Writer, chartPath, releaseName, namespace string, values, set
 	config := &chart.Config{Raw: string(rawVals), Values: map[string]*chart.Value{}}
 
 	// Check chart requirements to make sure all dependencies are present in /charts
-	c, err := chartutil.Load(chartPath)
+	c, err := loadChartfile(chartPath)
 	if err != nil {
 		return err
 	}

@@ -80,15 +80,15 @@ To use docker images in the chart resources specs user must specify full docker 
 
 The second question is how to use [`imagePullPolicy` kubernetes parameter](https://kubernetes.io/docs/concepts/containers/images/#updating-images) together with images from `werf.yaml`: should user set `imagePullPolicy` to `Always`, how to pull images only when there is a need to pull?
 
-To answer these questions werf has 2 template functions `werf_container_image` and `werf_container_env`.  User must use these template functions to specify images from `werf.yaml` in the chart templates safely and correctly.
+To answer these questions werf has runtime functions, `werf_container_image` and `werf_container_env`.  User must use these template functions to specify images from `werf.yaml` in the chart templates safely and correctly.
 
 ##### werf_container_image
 
 The template function generates `image` and `imagePullPolicy` keys for the pod container.
 
-A specific feature of the template is that `imagePullPolicy` is generated based on the `.Values.global.werf.is_branch` value, if tags are used, `imagePullPolicy: Always` is not set. So in the result images are pulled always only for the images tagged by git-branch names (because docker image id can be changed for the same docker image name).
+A specific feature of the function is that `imagePullPolicy` is generated based on the `.Values.global.werf.is_branch` value, if tags are used, `imagePullPolicy: Always` is not set. So in the result images are pulled always only for the images tagged by git-branch names (because docker image id can be changed for the same docker image name).
 
-The template may return multiple strings, which is why it must be used together with the `indent` construction.
+The function may return multiple strings, which is why it must be used together with the `indent` construction.
 
 The logic of generating the `imagePullPolicy` key:
 * The `.Values.global.werf.is_branch=true` value means that an image is being deployed based on the `latest` logic for a branch.
@@ -100,12 +100,12 @@ The logic of generating the `imagePullPolicy` key:
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
-An example of using a template in case multiple images exist in the `werf.yaml` config:
-* `tuple <image-name> . | include "werf_container_image" | indent <N-spaces>`
+An example of using the function in case multiple images exist in the `werf.yaml` config:
+* `tuple <image-name> . | werf_container_image | indent <N-spaces>`
 
-An example of using a template in case a single unnamed image exists in the config:
-* `tuple . | include "werf_container_image" | indent <N-spaces>`
-* `include "werf_container_image" . | indent <N-spaces>` (additional simplified entry format)
+An example of using the function in case a single unnamed image exists in the config:
+* `tuple . | werf_container_image | indent <N-spaces>`
+* `werf_container_image . | indent <N-spaces>` (additional simplified entry format)
 
 ##### werf_container_env
 
@@ -113,12 +113,12 @@ Enables streamlining the release process if the image remains unchanged. Generat
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
-An example of using a template in case multiple images exist in the `werf.yaml` config:
-* `tuple <image-name> . | include "werf_container_env" | indent <N-spaces>`
+An example of using the function in case multiple images exist in the `werf.yaml` config:
+* `tuple <image-name> . | werf_container_env | indent <N-spaces>`
 
-An example of using a template in case a single unnamed image exists in the config:
-* `tuple . | include "werf_container_env" | indent <N-spaces>`
-* `include "werf_container_env" . | indent <N-spaces>` (additional simplified entry format)
+An example of using the function in case a single unnamed image exists in the config:
+* `tuple . | werf_container_env | indent <N-spaces>`
+* `werf_container_env . | indent <N-spaces>` (additional simplified entry format)
 
 ##### Examples
 
@@ -139,9 +139,9 @@ spec:
       containers:
       - name: main
         command: [ ... ]
-{{ tuple "backend" . | include "werf_container_image" | indent 8 }}
+{{ tuple "backend" . | werf_container_image | indent 8 }}
         env:
-{{ tuple "backend" . | include "werf_container_env" | indent 8 }}
+{{ tuple "backend" . | werf_container_env | indent 8 }}
 ```
 {% endraw %}
 
@@ -162,9 +162,9 @@ spec:
       containers:
       - name: main
         command: [ ... ]
-{{ include "werf_container_image" . | indent 8 }}
+{{ werf_container_image . | indent 8 }}
         env:
-{{ include "werf_container_env" . | indent 8 }}
+{{ werf_container_env . | indent 8 }}
 ```
 {% endraw %}
 
@@ -176,7 +176,9 @@ Secret files are placed in the directory `.helm/secret`. User can create arbitra
 
 ##### werf_secret_file
 
-`werf_secret_file` is template function helper for user to fetch secret file content in chart templates. This template function reads file context, which usually placed in the resource yaml manifest of such resources as Secrets. Template function requires relative path to the file inside `.helm/secret` directory as an argument.
+`werf_secret_file` is runtime template function helper for user to fetch secret file content in chart templates. 
+This template function reads file context, which usually placed in the resource yaml manifest of such resources as Secrets. 
+Template function requires relative path to the file inside `.helm/secret` directory as an argument.
 
 For example to read `.helm/secret/backend-saml/stage/tls.key` and `.helm/secret/backend-saml/stage/tls.crt` files decrypted content into templates:
 
@@ -188,8 +190,8 @@ metadata:
   name: myproject-backend-saml
 type: kubernetes.io/tls
 data:
-  tls.crt: {{ tuple "backend-saml/stage/tls.crt" . | include "werf_secret_file" | b64enc }}
-  tls.key: {{ tuple "backend-saml/stage/tls.key" . | include "werf_secret_file" | b64enc }}
+  tls.crt: {{ werf_secret_file "backend-saml/stage/tls.crt" | b64enc }}
+  tls.key: {{ werf_secret_file "backend-saml/stage/tls.key" | b64enc }}
 ```
 {% endraw %}
 

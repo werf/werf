@@ -3,11 +3,13 @@ package deploy
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
@@ -42,11 +44,11 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, opts.ImagesRepoManager, opts.Namespace, opts.Tag, opts.TagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
+	projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
+	werfChart, err := PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}
-	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
 	werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
 	werfChart.MergeExtraLabels(opts.UserExtraLabels)
@@ -57,7 +59,10 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 		ShowNotes: false,
 	}
 
-	return helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFiles)
+	patchLoadChartfile(werfChart.Name)
+
+	return helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return helm.Render(
 			out,
 			werfChart.ChartDir,

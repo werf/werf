@@ -57,7 +57,7 @@ mysql:
 
 ## Secret file encryption
 
-Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `werf_secret_file` method (that generates werf `_werf_helpers.tpl` in the deployment process), you can get decrypted file content in a template.
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `werf_secret_file` runtime function you can get decrypted file content in a template.
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
@@ -67,7 +67,7 @@ Using a secret in a template may appear as follows:
 ```yaml
 ...
 data:
-  tls.key: {{ tuple "/backend-saml/tls.key" . | include "werf_secret_file" | b64enc }}
+  tls.key: {{ werf_secret_file "/backend-saml/tls.key" | b64enc }}
 ```
 {% endraw %}
 

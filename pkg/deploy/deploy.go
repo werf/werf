@@ -2,9 +2,13 @@ package deploy
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/ghodss/yaml"
+
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
@@ -65,7 +69,8 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 		logboek.LogLn("Using service values:")
 		logboek.LogLn(logboek.FitText(string(serviceValuesRaw), logboek.FitTextOptions{ExtraIndentWidth: 2}))
 
-		werfChart, err = PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
+		projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
+		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 		if err != nil {
 			logBlockErr = err
 			return
@@ -78,15 +83,14 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 	})
 	logboek.LogOptionalLn()
 
-	if werfChart != nil {
-		defer ReleaseTmpWerfChart(werfChart.ChartDir)
-	}
-
 	if logBlockErr != nil {
 		return logBlockErr
 	}
 
-	return helm.WithExtra(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFiles)
+	patchLoadChartfile(werfChart.Name)
+
+	return helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,
 			ChartValuesOptions: helm.ChartValuesOptions{
@@ -96,4 +100,30 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 			},
 		})
 	})
+}
+
+func patchLoadChartfile(chartName string) {
+	boundedFunc := helm.LoadChartfileFunc
+	helm.LoadChartfileFunc = func(chartPath string) (*chart.Chart, error) {
+		var c *chart.Chart
+
+		if err := chartutil.WithSkipChartYamlFileValidation(true, func() error {
+			var err error
+			if c, err = boundedFunc(chartPath); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+
+		c.Metadata = &chart.Metadata{
+			Name:    chartName,
+			Version: "0.1.0",
+			Engine:  helm.WerfTemplateEngineName,
+		}
+
+		return c, nil
+	}
 }

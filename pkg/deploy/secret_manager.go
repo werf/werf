@@ -12,10 +12,10 @@ import (
 
 func GetSafeSecretManager(projectDir string, secretValues []string, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
-	if _, err := os.Stat(filepath.Join(projectDir, werf_chart.ProjectSecretDir)); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName, werf_chart.SecretDirName)); !os.IsNotExist(err) {
 		isSecretsExists = true
 	}
-	if _, err := os.Stat(filepath.Join(projectDir, werf_chart.ProjectDefaultSecretValuesFile)); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName, werf_chart.DefaultSecretValuesFileName)); !os.IsNotExist(err) {
 		isSecretsExists = true
 	}
 	if len(secretValues) > 0 {
