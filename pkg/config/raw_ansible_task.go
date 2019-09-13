@@ -75,6 +75,7 @@ func supportedModules() []string {
 		"blockinfile",
 		"copy",
 		"file",
+		"replace",
 		"find",
 		"ini_file",
 		"iso_extract",

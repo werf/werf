@@ -43,3 +43,6 @@
 /documentation/cli/other:
   title: Other
   url: /documentation/cli/other/completion.html
+/documentation/development:
+  title: Development
+  url: /documentation/development/stapel.html

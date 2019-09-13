@@ -109,10 +109,6 @@ execfile("%s")
 	writeFile(filepath.Join(werfPackageDir, "live_stdout.py"), b.assetsWerfLiveStdoutPy())
 	writeFile(filepath.Join(werfPackageDir, "tee_popen.py"), b.assetsWerfTeePopenPy())
 
-	// logboek py module and so library
-	writeFile(filepath.Join(werfPackageDir, "logboek.py"), b.assetsLogboekPy())
-	writeFileBytes(filepath.Join(werfPackageDir, ".logboek.so"), b.assetsLogboekSo())
-
 	return nil
 }
 

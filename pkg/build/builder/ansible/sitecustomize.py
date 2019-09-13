@@ -2,16 +2,6 @@ from werf.tee_popen import TeePopen
 import sys, re
 import os
 
-path = os.environ.get('PATH', '')
-prepend_path = os.environ.get('ANSIBLE_PREPEND_SYSTEM_PATH', '')
-
-if path == '':
-    path = prepend_path
-elif prepend_path != '':
-    path = prepend_path + os.pathsep + path
-
-os.environ['PATH'] = path
-
 
 # __del__ is called when python assigns real arguments into sys.argv
 class IsAnsiballZ(object):
