@@ -47,6 +47,7 @@ func GetServiceValues(projectName string, imagesRepoManager ImagesRepoManager, n
 	ciInfo := map[string]interface{}{
 		"is_tag":    false,
 		"is_branch": false,
+		"is_custom": false,
 		"branch":    TemplateEmptyValue,
 		"tag":       TemplateEmptyValue,
 		"ref":       TemplateEmptyValue,
@@ -78,6 +79,9 @@ func GetServiceValues(projectName string, imagesRepoManager ImagesRepoManager, n
 		ciInfo["branch"] = tag
 		ciInfo["ref"] = tag
 		ciInfo["is_branch"] = true
+
+	case tag_strategy.Custom:
+		ciInfo["is_custom"] = true
 	}
 
 	imagesInfo := make(map[string]interface{})
@@ -95,24 +99,28 @@ func GetServiceValues(projectName string, imagesRepoManager ImagesRepoManager, n
 		}
 
 		imageData["docker_image"] = image.GetImageName()
-		imageData["docker_image_id"] = TemplateEmptyValue
 
-		imageID, err := image.GetImageId()
-		if err != nil {
-			return nil, err
-		}
+		if tagStrategy == tag_strategy.GitBranch || tagStrategy == tag_strategy.Custom {
+			imageData["docker_image_id"] = TemplateEmptyValue
 
-		if debug() {
-			fmt.Fprintf(logboek.GetOutStream(), "GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
-		}
+			imageID, err := image.GetImageId()
+			if err != nil {
+				return nil, err
+			}
 
-		var value string
-		if imageID == "" {
-			value = TemplateEmptyValue
-		} else {
-			value = imageID
+			if debug() {
+				fmt.Fprintf(logboek.GetOutStream(), "GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
+			}
+
+			var value string
+			if imageID == "" {
+				value = TemplateEmptyValue
+			} else {
+				value = imageID
+			}
+
+			imageData["docker_image_id"] = value
 		}
-		imageData["docker_image_id"] = value
 	}
 
 	if debug() {

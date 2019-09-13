@@ -98,6 +98,8 @@ The logic of generating the `imagePullPolicy` key:
   * In this case, the image for an appropriate docker tag doesn't need to be updated through docker pull if it already exists.
   * In this case, `imagePullPolicy` is not specified, which is consistent with the default value currently adopted in kubernetes: `imagePullPolicy=IfNotPresent`.
 
+> The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
+
 An example of using a template in case multiple images exist in the `werf.yaml` config:
 * `tuple <image-name> . | include "werf_container_image" | indent <N-spaces>`
 
@@ -108,6 +110,8 @@ An example of using a template in case a single unnamed image exists in the conf
 ##### werf_container_env
 
 Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container. Image id will be set to real value only if `.Values.global.werf.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
+
+> The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
 An example of using a template in case multiple images exist in the `werf.yaml` config:
 * `tuple <image-name> . | include "werf_container_env" | indent <N-spaces>`
