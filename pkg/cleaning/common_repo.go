@@ -37,7 +37,7 @@ func repoImages(options CommonRepoOptions) (repoImages []docker_registry.RepoIma
 }
 
 func repoImagesByImageName(options CommonRepoOptions) (repoImagesByImageName map[string][]docker_registry.RepoImage, err error) {
-	if err := logboek.LogProcessInline("Getting repo images", logboek.LogProcessInlineOptions{}, func() error {
+	if err := logboek.LogProcess("Getting repo images", logboek.LogProcessOptions{}, func() error {
 		if options.ImagesRepoManager.IsMonorepo() {
 			repoImagesByImageName, err = monorepoRepoImages(options)
 		} else {
