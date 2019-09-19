@@ -95,7 +95,7 @@ func (d *dependencyUpdateCmd) run() error {
 		man.Debug = true
 	}
 
-	return chartutil.WithSkipChartYamlFileValidation(func() error {
+	return chartutil.WithSkipChartYamlFileValidation(true, func() error {
 		if err := man.Update(); err != nil {
 			if helm_common.IsCouldNotLoadRepositoriesFileError(err) {
 				return fmt.Errorf(helm_common.CouldNotLoadRepositoriesFileErrorFormat, helm_common.HelmSettings.Home.RepositoryFile())
