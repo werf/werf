@@ -189,8 +189,6 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 				return nil
 			}
 
-			relativePath := strings.TrimPrefix(path, secretDir)
-
 			data, err := ioutil.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("error reading file %s: %s", path, err)
@@ -199,6 +197,11 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 			decodedData, err := m.Decrypt([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
 			if err != nil {
 				return fmt.Errorf("error decoding %s: %s", path, err)
+			}
+
+			relativePath, err := filepath.Rel(secretDir, path)
+			if err != nil {
+				panic(err)
 			}
 
 			werfChart.DecodedSecretFiles[relativePath] = string(decodedData)
