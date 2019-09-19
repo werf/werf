@@ -61,13 +61,13 @@ Besides secret values, templates also use files that may not be stored unencrypt
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
-Using a secret in a template may appear as follows:
+Using the decrypted secret `.helm/backend-saml/tls.key` in a template may appear as follows:
 
 {% raw %}
 ```yaml
 ...
 data:
-  tls.key: {{ werf_secret_file "/backend-saml/tls.key" | b64enc }}
+  tls.key: {{ werf_secret_file "backend-saml/tls.key" | b64enc }}
 ```
 {% endraw %}
 

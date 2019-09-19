@@ -3,6 +3,7 @@ package helm
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -264,6 +265,10 @@ func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles ma
 		}
 
 		werfSecretFileFunc := func(secretRelativePath string) (string, error) {
+			if filepath.IsAbs(secretRelativePath) {
+				return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
+			}
+
 			decodedData, ok := decodedSecretFiles[secretRelativePath]
 
 			if !ok {
@@ -284,25 +289,32 @@ func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles ma
 		werfIncludeFunc := func(name string, data interface{}) (string, error) {
 			// legacy
 			if name == "werf_secret_file" {
-				var relPathInterf interface{}
+				var arg interface{}
 
 				switch v := data.(type) {
 				case []interface{}:
 					if len(v) == 1 || len(v) == 2 {
-						relPathInterf = v[0]
+						arg = v[0]
 					} else {
 						return "", fmt.Errorf("expected relative secret file path, given %v", v)
 					}
 				case interface{}:
-					relPathInterf = v
+					arg = v
 				}
 
-				relPathStr, ok := relPathInterf.(string)
+				argTyped, ok := arg.(string)
 				if !ok {
-					return "", fmt.Errorf("expected relative secret file path, given %v", relPathInterf)
+					return "", fmt.Errorf("expected relative secret file path, given %v", arg)
 				}
 
-				return werfSecretFileFunc(relPathStr)
+				if strings.HasPrefix(argTyped, "/") {
+					legacyArgTyped := strings.TrimPrefix(argTyped, "/")
+					if res, err := werfSecretFileFunc(legacyArgTyped); err == nil {
+						return res, nil
+					}
+				}
+
+				return werfSecretFileFunc(argTyped)
 			}
 
 			return helmIncludeFunc(name, data)
