@@ -8,7 +8,8 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                GitOps delivery tool
+                GitOps<br>
+                delivery tool
             </h1>
             <div class="welcome__subtitle">
                 mighty and carefully crafted
@@ -30,9 +31,11 @@ layout: default
                     A missing part of a CI/CD<br/> system
                 </div>
                 <div class="intro__text">
-                    Werf is an OpenSource CLI tool written in Golang that intent to organize a complete application lifecycle. It builds docker images using Dockerfiles or alternative fast builder based on the custom syntax. It cleans docker registry from unused images. It deploys application into Kubernetes using helm-compatible format chart with handy customizations and improves deploy tracking, errors detection and output. Werf is not a complete CI/CD system yet it is a tool that can be embedded into any to implement CI/CD for your application. We consider it a new generation of high-level CI/CD tools.
+                    <div class="intro__text" markdown="1">
+{% include /readme/overview.md %}
 
-                    Check out a [complete features list](https://github.com/flant/werf#complete-features-list).
+Check out a [complete features list](https://github.com/flant/werf#complete-features-list).
+</div>
                 </div>
             </div>
     </div>
