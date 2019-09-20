@@ -13,7 +13,12 @@ ___
 
 <!-- WERF DOCS PARTIAL BEGIN: Overview -->
 
-Werf is an OpenSource CLI tool written in Golang that intent to organize a complete application lifecycle. It builds docker images using Dockerfiles or alternative fast builder based on the custom syntax. It cleans docker registry from unused images. It deploys application into Kubernetes using helm-compatible format chart with handy customizations and improves deploy tracking, errors detection and output. Werf is not a complete CI/CD system yet it is a tool that can be embedded into any to implement CI/CD for your application.
+Werf is an Open Source CLI tool written in Golang to implement your application delivery fast & easy. To benefit from it, you just need to describe your application's configuration (how to build it and deploy it into Kubernetes) in a Git repo acting as the single source of truth. In short, that's what we call GitOps today.
+
+* Werf builds Docker images using Dockerfiles or alternative fast builder based on the custom syntax. It also cleans Docker Registry from unused images.
+* Werf deploys your application into Kubernetes using a chart in Helm-compatible format with handy customizations and improved deploy tracking, errors detection and output.
+
+While werf is not a complete CI/CD system itself, it is a tool that can be embedded into any existing CI/CD system literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
 
 <!-- WERF DOCS PARTIAL END -->
 
