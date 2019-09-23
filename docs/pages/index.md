@@ -8,7 +8,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Content based<br/>
+                GitOps<br>
                 delivery tool
             </h1>
             <div class="welcome__subtitle">
@@ -31,7 +31,11 @@ layout: default
                     A missing part of a CI/CD<br/> system
                 </div>
                 <div class="intro__text">
-                    The main idea behind Werf is to help DevOps teams organize the workflow of applications delivery. It is designed with CI/CD systems in mind and can be used to create comfortable pipelines in GitLab, Jenkins, Travis CI, CircleCI, etc. It improves ease of use of git, docker, and helm and solves their problems: image naming, distributed caching, images cleanup, deployed resources tracking, etc. We consider it a new generation of high-level CI/CD tools.
+                    <div class="intro__text" markdown="1">
+{% include /readme/overview.md %}
+
+Check out a [complete features list](https://github.com/flant/werf#complete-features-list).
+</div>
                 </div>
             </div>
     </div>
@@ -46,7 +50,7 @@ layout: default
             <div class="intro-extra__item-text">
                 Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
             </div>
-        </li>        
+        </li>
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
                 Image Lifecycle Management
