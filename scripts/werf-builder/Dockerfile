@@ -10,4 +10,4 @@ ADD scripts/lib /werf/scripts/lib
 
 WORKDIR /werf
 
-RUN bash -ec "source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_mod_download"
+RUN bash -ec "echo '142.93.108.123 gonum.org www.gonum.org' >> /etc/hosts && source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_mod_download"
