@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-backend
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        service: {{ .Chart.Name }}-backend
+    spec:
+      containers:
+      - name: backend
+        workingDir: /app
+        command: [ "python3", "-m", "http.server", "8080" ]
+{{ werf_container_image . | indent 8 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+{{ werf_container_env . | indent 8 }}
