@@ -41,7 +41,7 @@ configVersion: 1
 ---
 
 image: go-booking
-from: golang
+from: golang:1.10
 ansible:
   beforeInstall:
   - name: Install additional packages
@@ -77,7 +77,7 @@ werf build --stages-storage :local
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking"  go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking"  go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -130,7 +130,7 @@ configVersion: 1
 ---
 
 artifact: booking-app
-from: golang
+from: golang:1.10
 ansible:
   beforeInstall:
   - name: Install additional packages
@@ -153,7 +153,7 @@ ansible:
       revel build --run-mode dev github.com/revel/examples/booking /app
 ---
 image: go-booking
-from: ubuntu
+from: ubuntu:18.04
 import:
 - artifact: booking-app
   add: /app
@@ -173,15 +173,15 @@ werf build --stages-storage :local
 
 ### Running
 
-Before running the modified application, you need to stop running `go-booking` container we built. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
+Before running the modified application, you need to stop and remove running `go-booking` container we built. Otherwise, the new container can't start or bind to 9000 port on localhost. E.g., execute the following command to stop and remove the `go-booking` container:
 
 ```bash
-docker stop go-booking
+docker stop go-booking && docker rm go-booking
 ```
 
 Run the modified application by executing the following command:
 ```bash
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
