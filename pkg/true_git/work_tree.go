@@ -104,7 +104,7 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	}
 
 	if err := os.RemoveAll(workTreeDirByCommit); err != nil {
-		return "", fmt.Errorf("unable to remove old dir %s: %s", workTreeDirByCommit)
+		return "", fmt.Errorf("unable to remove old dir %s: %s", workTreeDirByCommit, err)
 	}
 	if err := os.Rename(tmpWorkTreeDir, workTreeDirByCommit); err != nil {
 		return "", fmt.Errorf("unable to rename %s to %s: %s", tmpWorkTreeDir, workTreeDirByCommit, err)
