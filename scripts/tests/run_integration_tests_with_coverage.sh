@@ -32,7 +32,7 @@ coverage_dir=$WERF_INTEGRATION_TEST_COVERAGE_DIR
 coverage_file_name="$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 10 | head -n 1)-$(date +%s).out"
 coverage_file_path="$coverage_dir/$coverage_file_name"
 
-$script_dir/werf.test -test.coverprofile=$coverage_file_path "$@"
+exec $script_dir/werf.test -test.coverprofile=$coverage_file_path "$@"
 EOF
 
 chmod +x werf
