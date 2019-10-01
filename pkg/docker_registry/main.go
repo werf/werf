@@ -71,8 +71,13 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 		tagReference := strings.Join([]string{reference, tag}, ":")
 		v1Image, _, err := image(tagReference)
 		if err != nil {
+			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
+				logboek.LogErrorF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
+				continue
+			}
+
 			if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
-				logboek.LogErrorF("WARNING: Broken tag %s ignored: %s\n", tag, err)
+				logboek.LogErrorF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
 				continue
 			}
 			return nil, err
@@ -80,10 +85,6 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 
 		configFile, err := v1Image.ConfigFile()
 		if err != nil {
-			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
-				logboek.LogErrorF("WARNING: Broken tag %s ignored: %s\n", tag, err)
-				continue
-			}
 			return nil, err
 		}
 

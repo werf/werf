@@ -243,7 +243,7 @@ func (gp *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 
 	gitCommand := fmt.Sprintf(
 		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
-		stapel.SudoCommand(gp.Owner, gp.Group),
+		stapel.OptionalSudoCommand(gp.Owner, gp.Group),
 		stapel.GitBinPath(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
@@ -404,7 +404,7 @@ func (gp *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 
 	tarCommand := fmt.Sprintf(
 		"%s %s -xf %s -C \"%s\"",
-		stapel.SudoCommand(gp.Owner, gp.Group),
+		stapel.OptionalSudoCommand(gp.Owner, gp.Group),
 		stapel.TarBinPath(),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,

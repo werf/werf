@@ -210,6 +210,8 @@ Let's build and run our first application.
     werf build --stages-storage :local
     ```
 
+    > There is a known [issue](https://github.com/composer/composer/issues/945) in composer, so if you've got the `proc_open(): fork failed - Cannot allocate memory` error when running build add 1GB swap file. How to add swap space read [here](https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-16-04).
+
 3.  Run a container from the image:
 
     ```shell

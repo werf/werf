@@ -89,6 +89,8 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 }
 
 func (c *Conveyor) ReInitRuntimeFields() {
+	c.imagesInOrder = []*Image{}
+
 	c.stageImages = make(map[string]*image.StageImage)
 
 	c.imagesBySignature = make(map[string]image.ImageInterface)

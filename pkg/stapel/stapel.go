@@ -117,14 +117,14 @@ func SystemPATH() string {
 	return fmt.Sprintf("/.werf/stapel/embedded/bin:/.werf/stapel/embedded/sbin")
 }
 
-func SudoCommand(owner, group string) string {
+func OptionalSudoCommand(user, group string) string {
 	cmd := ""
 
-	if owner != "" || group != "" {
+	if user != "" || group != "" {
 		cmd += fmt.Sprintf("%s -E", embeddedBinPath("sudo"))
 
-		if owner != "" {
-			cmd += fmt.Sprintf(" -u %s", sudoFormatUser(owner))
+		if user != "" {
+			cmd += fmt.Sprintf(" -u %s -H", sudoFormatUser(user))
 		}
 
 		if group != "" {

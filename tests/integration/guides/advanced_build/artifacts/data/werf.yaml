@@ -1,0 +1,34 @@
+project: werf-test-hotel-booking-artifacts
+configVersion: 1
+---
+
+artifact: booking-app
+from: golang:1.10
+ansible:
+  beforeInstall:
+  - name: Install additional packages
+    apt:
+      update_cache: yes
+      pkg:
+      - gcc
+      - sqlite3
+      - libsqlite3-dev
+  install:
+  - name: Getting packages
+    shell: |
+      go get -v github.com/revel/revel
+      go get -v github.com/revel/cmd/revel
+      (go get -v github.com/revel/examples/booking/... ; true )
+  setup:
+  - name: Preparing config and building application
+    shell: |
+      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
+      revel build --run-mode dev github.com/revel/examples/booking /app
+---
+image: go-booking
+from: ubuntu:18.04
+import:
+- artifact: booking-app
+  add: /app
+  to: /app
+  after: install

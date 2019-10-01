@@ -1,10 +1,27 @@
 dist: xenial
-
+sudo: true
 language: go
 go:
-- 1.11.x
-
+- 1.12.x
+cache:
+  directories:
+  - $HOME/.cache/go-build
+  - $HOME/gopath/pkg/mod
+addons:
+  apt_packages:
+  - parallel
 install:
-- source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_build dev
-
-script: echo
+- source scripts/lib/release/global_data.sh
+- source scripts/lib/release/build.sh
+- go_build dev
+before_script:
+- ./scripts/ci/parallel_will_cite.sh
+- ./scripts/ci/bats_install.sh
+- ./scripts/ci/swap_file_create.sh
+- ./scripts/ci/codeclimate_before_script_hook.sh
+- export WERF_TEST_COVERAGE_DIR=$TRAVIS_BUILD_DIR/tests-coverage
+script:
+- ./scripts/ci/ping_stdout.sh &
+- ./scripts/tests/run_tests_with_coverage.sh 3 # 3 parallel jobs
+after_script:
+- if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./scripts/ci/codeclimate_after_script_hook.sh; fi
