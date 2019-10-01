@@ -67,7 +67,7 @@ Builds assets. After building werf imports assets into the `/static` directory o
 
 ```yaml
 artifact: storefront
-from: node:latest
+from: node:12.10-alpine
 git:
 - add: /app/react-app
   to: /usr/src/atsea/app/react-app
@@ -92,7 +92,7 @@ Builds a Java code. Werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar
 
 ```yaml
 artifact: appserver
-from: maven:latest
+from: maven:3.6.2-jdk-8
 mount:
 - from: build_dir
   to: /usr/share/maven/ref/repository
@@ -120,7 +120,7 @@ It is the `reverse_proxy` image. This image base on the official image of the [N
 {% raw %}
 ```yaml
 image: reverse_proxy
-from: nginx:alpine
+from: nginx:1.17-alpine
 ansible:
   install:
   - name: "Copy nginx.conf"
@@ -181,7 +181,7 @@ It is the `payment_gw` image. This image is an example of the payment gateway ap
 {% raw %}
 ```yaml
 image: payment_gw
-from: alpine
+from: alpine:3.9
 docker:
   CMD: ["/home/payment/process.sh"]
 ansible:
@@ -230,7 +230,7 @@ configVersion: 1
 ---
 
 artifact: storefront
-from: node:latest
+from: node:12.10-alpine
 git:
 - add: /app/react-app
   to: /usr/src/atsea/app/react-app
@@ -249,7 +249,7 @@ shell:
   - npm run build
 ---
 artifact: appserver
-from: maven:latest
+from: maven:3.6.2-jdk-8
 mount:
 - from: build_dir
   to: /usr/share/maven/ref/repository
@@ -289,7 +289,7 @@ import:
   after: install
 ---
 image: reverse_proxy
-from: nginx:alpine
+from: nginx:1.17-alpine
 ansible:
   install:
   - name: "Copy nginx.conf"
@@ -334,7 +334,7 @@ git:
   to:  /docker-entrypoint-initdb.d/
 ---
 image: payment_gw
-from: alpine
+from: alpine:3.9
 docker:
   CMD: ["/home/payment/process.sh"]
 ansible:
