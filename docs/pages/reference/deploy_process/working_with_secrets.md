@@ -38,11 +38,9 @@ Using the `.werf_secret_key` file is much safer and more convenient, because:
 
 ## Secret values encryption
 
-The `.helm/secret-values.yaml` file is designed for storing secret values.
+The secret values file is designed for storing secret values. **By default** werf uses `.helm/secret-values.yaml` file, but user can specify arbitrary number of such files.  
 
-It is decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md).
-
-This is what a file containing encrypted values may look like:
+Secret values file may look like:
 ```yaml
 mysql:
   host: 10005968c24e593b9821eadd5ea1801eb6c9535bd2ba0f9bcfbcd647fddede9da0bf6e13de83eb80ebe3cad4
@@ -51,15 +49,40 @@ mysql:
   db: 1000db50be293432129acb741de54209a33bf479ae2e0f53462b5053c30da7584e31a589f5206cfa4a8e249d20
 ```
 
+To manage secret values files use the following commands: 
 - [werf helm secret values edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/edit.html)
 - [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/encrypt.html)
 - [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/decrypt.html)
 
+### Using in a chart template
+
+The secret values files are decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). Thus, use is not different from common values:
+
+{% raw %}
+```yaml
+...
+env:
+- name: MYSQL_USER
+  value: {{ .Values.mysql.user }}
+- name: MYSQL_PASSWORD
+  value: {{ .Values.mysql.password }}
+```
+{% endraw %}
+
 ## Secret file encryption
 
-Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `werf_secret_file` runtime function you can get decrypted file content in a template.
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. 
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
+
+To manage secret files use the following commands: 
+- [werf helm secret file edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/edit.html)
+- [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/encrypt.html)
+- [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/decrypt.html)
+
+### Using in a chart template
+
+The `werf_secret_file` runtime function allows using decrypted file content in a template. The required function argument is a secret file path relative to `.helm/secret` directory.
 
 Using the decrypted secret `.helm/backend-saml/tls.key` in a template may appear as follows:
 
@@ -70,10 +93,6 @@ data:
   tls.key: {{ werf_secret_file "backend-saml/tls.key" | b64enc }}
 ```
 {% endraw %}
-
-- [werf helm secret file edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/edit.html)
-- [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/encrypt.html)
-- [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/decrypt.html)
 
 ## Secret key rotation
 
