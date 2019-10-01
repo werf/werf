@@ -1,18 +1,21 @@
 #!/bin/bash
 
 werf_home_init() {
-  export WERF_HOME=$BATS_TMPDIR/werf-test-home-$(generate_random_string)
-  mkdir $WERF_HOME
+# TODO: all tests have to use common werf locks that are stored in the service directory, $WERF_HOME/service
+#  export WERF_HOME=$BATS_TMPDIR/werf-test-home-$(generate_random_string)
+#  mkdir $WERF_HOME
+  /bin/true
 }
 
 werf_home_deinit() {
-  docker run \
-    --rm \
-    --volume $WERF_HOME:$WERF_HOME \
-    alpine \
-    rm -rf $WERF_HOME/*
-
-  rmdir $WERF_HOME
+#  docker run \
+#    --rm \
+#    --volume $WERF_HOME:$WERF_HOME \
+#    alpine \
+#    rm -rf $WERF_HOME/*
+#
+#  rmdir $WERF_HOME
+  /bin/true
 }
 
 test_dir_create() {
