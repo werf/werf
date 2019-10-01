@@ -1,0 +1,66 @@
+project: hotel-booking-mounts
+configVersion: 1
+---
+
+{{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
+{{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
+{{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
+{{ $_ := set . "BaseImage" "ubuntu:18.04" }}
+
+image: go-booking
+from: {{ .BaseImage }}
+mount:
+- from: tmp_dir
+  to: /var/lib/apt/lists
+- from: build_dir
+  to: /var/cache/apt
+- from: tmp_dir
+  to: /go
+- from: build_dir
+  to: /usr/local/src
+- from: build_dir
+  to: /usr/local/go
+ansible:
+  beforeInstall:
+  - name: Disable docker hook for apt-cache deletion
+    shell: |
+      set -e
+      sed -i -e "s/DPkg::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
+      sed -i -e "s/APT::Update::Post-Invoke.*//" /etc/apt/apt.conf.d/docker-clean
+  - name: Install essential utils
+    apt:
+      name: ['curl','git','tree']
+      update_cache: yes
+  - name: Download the Go tarball
+    get_url:
+      url: {{ .GoDlPath }}{{ .GoTarball }}
+      dest: /usr/local/src/{{ .GoTarball }}
+      checksum:  {{ .GoTarballChecksum }}
+  - name: Extract the Go tarball if Go is not yet installed or not the desired version
+    unarchive:
+      src: /usr/local/src/{{ .GoTarball }}
+      dest: /usr/local
+      copy: no
+  - name: Install additional packages
+    apt:
+      name: ['gcc','sqlite3','libsqlite3-dev']
+      update_cache: yes
+  install:
+  - name: Getting packages
+    shell: |
+{{ include "export golang vars" . | indent 6 }}
+      go get -v github.com/revel/revel
+      go get -v github.com/revel/cmd/revel
+      (go get -v github.com/revel/examples/booking/... ; true )
+  setup:
+  - name: Preparing config and building application
+    shell: |
+{{ include "export golang vars" . | indent 6 }}
+      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
+      revel build --run-mode dev github.com/revel/examples/booking /app
+
+# GO-template for exporting environment variables
+{{- define "export golang vars" -}}
+export GOPATH=/go
+export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
+{{- end -}}
