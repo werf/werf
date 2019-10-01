@@ -14,5 +14,4 @@ done
   -p=$(ls -1q coverage/*.codeclimate.json | wc -l) \
   coverage/*.codeclimate.json
 
-pwd
-./cc-test-reporter upload-coverage --debug
+./cc-test-reporter upload-coverage
