@@ -6,7 +6,7 @@ project_dir=$script_dir/../..
 run_bats() {
   if [ "$1" == "all" ]
   then
-    test_glob="$project_dir/tests/integration/guides/**"
+    test_glob="$project_dir/tests/**"
   else
     test_glob="$1"
   fi
