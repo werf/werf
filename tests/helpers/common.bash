@@ -1,7 +1,7 @@
 #!/bin/bash
 
 werf_home_init() {
-  WERF_HOME=$BATS_TMPDIR/werf-test-home-$(generate_random_string)
+  export WERF_HOME=$BATS_TMPDIR/werf-test-home-$(generate_random_string)
   mkdir $WERF_HOME
 }
 

@@ -1,4 +1,4 @@
-project: symfony-demo-ansible
+project: werf-test-symfony-demo-ansible
 configVersion: 1
 ---
 image: ~

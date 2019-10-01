@@ -1,4 +1,4 @@
-project: myapp
+project: werf-test-deploy-into-kubernetes
 configVersion: 1
 ---
 image: ~
