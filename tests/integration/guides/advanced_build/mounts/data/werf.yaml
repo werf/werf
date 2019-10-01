@@ -1,4 +1,4 @@
-project: hotel-booking-mounts
+project: werf-test-hotel-booking-mounts
 configVersion: 1
 ---
 
