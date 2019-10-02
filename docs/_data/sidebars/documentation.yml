@@ -308,3 +308,8 @@ entries:
 
             - title: version
               url: /documentation/cli/other/version.html
+
+    - title: Development
+      sf:
+        - title: Stapel
+          url: /documentation/development/stapel.html

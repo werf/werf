@@ -2,20 +2,29 @@ package stapel
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/flant/werf/pkg/docker"
 )
 
-const VERSION = "0.1.2"
+const VERSION = "0.2.2"
+
+func getVersion() string {
+	version := VERSION
+	if v := os.Getenv("WERF_STAPEL_IMAGE_VERSION"); v != "" {
+		version = v
+	}
+	return version
+}
 
 func ImageName() string {
-	return fmt.Sprintf("flant/werf-stapel:%s", VERSION)
+	return fmt.Sprintf("flant/werf-stapel:%s", getVersion())
 }
 
 func getContainer() container {
 	return container{
-		Name:      fmt.Sprintf("stapel_%s", VERSION),
+		Name:      fmt.Sprintf("stapel_%s", getVersion()),
 		ImageName: ImageName(),
 		Volume:    "/.werf/stapel",
 	}
@@ -113,8 +122,24 @@ func AnsiblePlaybookBinPath() string {
 	return embeddedBinPath("ansible-playbook")
 }
 
+/*
+ * Ansible tools and libs overlay path is like /usr/local which has more priority than /usr.
+ * Ansible tools and libs overlay path used to force ansible to use tools directly from stapel rather than find it in the base system.
+ *
+ * Use case is "unarchive" module which does not work with alpine busybox "tar" util (which is installed by default
+ * and takes precedence over other utils). For this case we put tar into ansible tools overlay path.
+ */
+
+func AnsibleToolsOverlayPATH() string {
+	return "/.werf/stapel/ansible_tools_overlay/bin"
+}
+
+func AnsibleLibsOverlayLDPATH() string {
+	return "/.werf/stapel/ansible_tools_overlay/lib"
+}
+
 func SystemPATH() string {
-	return fmt.Sprintf("/.werf/stapel/embedded/bin:/.werf/stapel/embedded/sbin")
+	return "/.werf/stapel/sbin:/.werf/stapel/embedded/sbin:/.werf/stapel/bin:/.werf/stapel/embedded/bin"
 }
 
 func OptionalSudoCommand(user, group string) string {

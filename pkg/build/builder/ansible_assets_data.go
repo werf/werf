@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/logboek_py"
-	"github.com/flant/werf/pkg/stapel"
-
 	"github.com/flant/werf/pkg/build/builder/ansible"
+	"github.com/flant/werf/pkg/stapel"
 )
 
 func (b *Ansible) assetsAnsibleCfg() string {
@@ -77,12 +75,4 @@ func (b *Ansible) assetsWerfLiveStdoutPy() string {
 
 func (b *Ansible) assetsWerfTeePopenPy() string {
 	return ansible.FSMustString(false, "/ansible/werf/tee_popen.py")
-}
-
-func (b *Ansible) assetsLogboekPy() string {
-	return logboek_py.FSMustString(false, "/logboek.py")
-}
-
-func (b *Ansible) assetsLogboekSo() []byte {
-	return logboek_py.FSMustByte(false, "/logboek.so")
 }

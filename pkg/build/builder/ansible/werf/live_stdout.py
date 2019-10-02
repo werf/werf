@@ -5,8 +5,8 @@ import os
 import socket
 import select
 
+import logboek
 from werf import STDOUT_UNIX_SOCK_NAME
-from werf import logboek
 
 '''
 

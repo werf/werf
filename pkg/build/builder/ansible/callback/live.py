@@ -28,8 +28,8 @@ import os
 import json, re
 from collections import Iterable
 
+import logboek
 from werf.live_stdout import LiveStdoutListener
-from werf import logboek
 
 # Taken from Dstat
 class vt100:
@@ -376,7 +376,7 @@ class CallbackModule(LiveCallbackHelpers):
         #cols=60
         self.HEADER_NAME_INFO_LEN = cols-2
         logboek.SetTerminalWidth(cols)
-        logboek.FittedStreamsOutputOn()
+        logboek.EnableFitMode()
         #logboek.LogProcessStart(play.name)
         self._live_stdout_listener.start()
 
