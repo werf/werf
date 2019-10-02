@@ -52,7 +52,8 @@ These values includes project name, docker images ids and other`),
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
-	common.SetupInsecureRepo(&CommonCmdData, cmd)
+	common.SetupInsecureRegistry(&CommonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -76,7 +77,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 

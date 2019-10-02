@@ -55,7 +55,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupImagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepoMode(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo")
-	common.SetupInsecureRepo(commonCmdData, cmd)
+	common.SetupInsecureRegistry(commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)
 	common.SetupLogProjectDir(commonCmdData, cmd)
@@ -76,7 +77,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *commonCmdData.InsecureRepo}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 

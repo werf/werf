@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	AllowInsecureRepo = false
-	GCRUrlPatterns    = []string{"^container\\.cloud\\.google\\.com", "^gcr\\.io", "^.*\\.gcr\\.io"}
+	InsecureRegistry      = false
+	SkipTlsVerifyRegistry = false
+	GCRUrlPatterns        = []string{"^container\\.cloud\\.google\\.com", "^gcr\\.io", "^.*\\.gcr\\.io"}
 )
 
 type RepoImage struct {
@@ -31,11 +32,13 @@ type RepoImage struct {
 }
 
 type Options struct {
-	AllowInsecureRepo bool
+	InsecureRegistry      bool
+	SkipTlsVerifyRegistry bool
 }
 
 func Init(opts Options) error {
-	AllowInsecureRepo = opts.AllowInsecureRepo
+	InsecureRegistry = opts.InsecureRegistry
+	SkipTlsVerifyRegistry = opts.SkipTlsVerifyRegistry
 	return nil
 }
 
@@ -118,7 +121,7 @@ func Tags(reference string) ([]string, error) {
 }
 
 func list(reference string) ([]string, error) {
-	repo, err := name.NewRepository(reference, name.WeakValidation)
+	repo, err := name.NewRepository(reference, newRepositoryOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
 	}
@@ -169,7 +172,7 @@ func ImageConfigFile(reference string) (v1.ConfigFile, error) {
 }
 
 func ImageDelete(reference string) error {
-	r, err := name.ParseReference(reference, name.WeakValidation)
+	r, err := name.ParseReference(reference, parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
@@ -248,7 +251,7 @@ func ImageDigest(reference string) (string, error) {
 }
 
 func image(reference string) (v1.Image, name.Reference, error) {
-	ref, err := name.ParseReference(reference, name.WeakValidation)
+	ref, err := name.ParseReference(reference, parseReferenceOptions()...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
@@ -268,10 +271,25 @@ func image(reference string) (v1.Image, name.Reference, error) {
 	return img, ref, nil
 }
 
+func newRepositoryOptions() []name.Option {
+	return parseReferenceOptions()
+}
+
+func parseReferenceOptions() []name.Option {
+	var options []name.Option
+	options = append(options, name.WeakValidation)
+
+	if InsecureRegistry {
+		options = append(options, name.Insecure)
+	}
+
+	return options
+}
+
 func getHttpTransport() (transport http.RoundTripper) {
 	transport = http.DefaultTransport
 
-	if AllowInsecureRepo {
+	if SkipTlsVerifyRegistry {
 		defaultTransport := http.DefaultTransport.(*http.Transport)
 
 		newTransport := &http.Transport{

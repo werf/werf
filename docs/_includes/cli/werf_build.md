@@ -54,8 +54,8 @@ werf build [IMAGE_NAME...] [options]
             help for build
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-repo=false:
-            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
+      --insecure-registry=false:
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false:
             Introspect failed stage in the clean state, before running all assembly instructions of 
             the stage
@@ -91,6 +91,9 @@ werf build [IMAGE_NAME...] [options]
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --skip-tls-verify-registry=false:
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/documentation/reference/toolbox/ssh.html).

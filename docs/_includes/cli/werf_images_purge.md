@@ -31,8 +31,8 @@ werf images purge [options]
       --images-repo-mode='multirepo':
             Define how to store images in Repo: multirepo or monorepo (defaults to                  
             $WERF_IMAGES_REPO_MODE or multirepo)
-      --insecure-repo=false:
-            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
+      --insecure-registry=false:
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a        
@@ -48,6 +48,9 @@ werf images purge [options]
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --skip-tls-verify-registry=false:
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

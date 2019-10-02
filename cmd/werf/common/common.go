@@ -58,9 +58,10 @@ type CmdData struct {
 	ImagesRepo     *string
 	ImagesRepoMode *string
 
-	DockerConfig *string
-	InsecureRepo *bool
-	DryRun       *bool
+	DockerConfig          *string
+	InsecureRegistry      *bool
+	SkipTlsVerifyRegistry *bool
+	DryRun                *bool
 
 	GitTagStrategyLimit         *int64
 	GitTagStrategyExpiryDays    *int64
@@ -278,9 +279,14 @@ func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, MultirepoImagesRepoMode, MonorepoImagesRepoMode))
 }
 
-func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.InsecureRepo = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", GetBoolEnvironment("WERF_INSECURE_REPO"), "Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)")
+func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.InsecureRegistry = new(bool)
+	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", GetBoolEnvironment("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
+}
+
+func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SkipTlsVerifyRegistry = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironment("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
