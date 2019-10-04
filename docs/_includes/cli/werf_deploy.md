@@ -89,8 +89,8 @@ werf deploy [options]
       --images-repo-mode='multirepo':
             Define how to store images in Repo: multirepo or monorepo (defaults to                  
             $WERF_IMAGES_REPO_MODE or multirepo)
-      --insecure-repo=false:
-            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
+      --insecure-registry=false:
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -124,6 +124,9 @@ werf deploy [options]
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
+      --skip-tls-verify-registry=false:
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/documentation/reference/toolbox/ssh.html).

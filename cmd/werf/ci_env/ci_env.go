@@ -42,7 +42,8 @@ Currently supported only GitLab CI`,
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
-	common.SetupInsecureRepo(&CommonCmdData, cmd)
+	common.SetupInsecureRegistry(&CommonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 	cmd.Flags().BoolVarP(&CmdData.Verbose, "verbose", "", false, "Generate echo command for each resulted script line")
@@ -99,7 +100,7 @@ func generateGitlabEnvs() error {
 		return fmt.Errorf("unable to create tmp docker config: %s", err)
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 

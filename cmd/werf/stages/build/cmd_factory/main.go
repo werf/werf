@@ -73,7 +73,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
-	common.SetupInsecureRepo(commonCmdData, cmd)
+	common.SetupInsecureRegistry(commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
 
 	common.SetupIntrospectStage(commonCmdData, cmd)
 
@@ -99,7 +100,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *commonCmdData.InsecureRepo}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 

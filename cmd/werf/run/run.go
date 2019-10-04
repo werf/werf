@@ -98,7 +98,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
-	common.SetupInsecureRepo(&CommonCmdData, cmd)
+	common.SetupInsecureRegistry(&CommonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
@@ -156,7 +157,7 @@ func runRun() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 

@@ -32,8 +32,11 @@ werf ci-env CI_SYSTEM [options]
             help for ci-env
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-repo=false:
-            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
+      --insecure-registry=false:
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --skip-tls-verify-registry=false:
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tagging-strategy='':
             tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified     
             CI_SYSTEM environment variables
