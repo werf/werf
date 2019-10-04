@@ -505,6 +505,7 @@ cp $TOOLS/bin/nettle* /tmp/bin && \
 cp $TOOLS/bin/libassuan* /tmp/bin && \
 cp $TOOLS/bin/libgcrypt* /tmp/bin && \
 cp $TOOLS/bin/npth* /tmp/bin && \
+cp $TOOLS/bin/dirmngr* /tmp/bin && \
 rm -rf $TOOLS/bin && \
 mv /tmp/bin $TOOLS/bin
 

@@ -94,7 +94,7 @@ func supportedModules() []string {
 	// No Network modules
 	// No Notification modules
 	// Packaging/Language Modules
-	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip"}...)
+	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip", "yarn"}...)
 	// Packaging/Os Modules
 	modules = append(modules, []string{
 		"apk",
