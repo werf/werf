@@ -285,15 +285,13 @@ func getEmptyEntrypointInstructionValue() (string, error) {
 	}
 
 	serverVersionMajor := serverVersion.Segments()[0]
-	serverVersionMinor := serverVersion.Segments()[1]
-
-	isLessMajorVersion := serverVersionMajor < 17
-	isLessMinorVersion := serverVersionMajor == 17 && serverVersionMinor < 10
-	isOldValueFormat := isLessMajorVersion || isLessMinorVersion
-
-	if isOldValueFormat {
-		return "[]", nil
-	} else {
-		return "[\"\"]", nil
+	if serverVersionMajor >= 17 {
+		serverVersionMinor := serverVersion.Segments()[1]
+		isOldValueFormat := serverVersionMajor == 17 && serverVersionMinor < 10
+		if isOldValueFormat {
+			return "[]", nil
+		}
 	}
+
+	return "[\"\"]", nil
 }
