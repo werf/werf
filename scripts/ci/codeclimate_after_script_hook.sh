@@ -7,6 +7,7 @@ do
   ./cc-test-reporter format-coverage \
     -t=gocov \
     -o="coverage/$file_name.codeclimate.json" \
+    -p=github.com/flant/werf/ \
     "$file"
 done
 

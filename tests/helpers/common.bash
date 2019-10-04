@@ -51,7 +51,7 @@ docker_registry_rm() {
 }
 
 generate_random_string() {
-  cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1
+  date +%s.%N | sha256sum | cut -c 1-10
 }
 
 get_unused_port() {
