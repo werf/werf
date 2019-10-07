@@ -1,9 +1,9 @@
 setup() {
-	cd tests/integration/ansible/python_encoding
+	cd $BATS_TEST_DIRNAME
 }
 
 teardown() {
-	werf stages purge -s :local --dir app
+	werf stages purge -s :local --dir app --force
 	rm -rf app
 }
 

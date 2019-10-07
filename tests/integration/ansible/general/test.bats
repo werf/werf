@@ -1,9 +1,9 @@
 setup() {
-	cd tests/integration/ansible/general
+	cd $BATS_TEST_DIRNAME
 }
 
 teardown() {
-	werf stages purge -s :local
+	werf stages purge -s :local --force
 }
 
 @test "Ansible modules should perform without errors" {
