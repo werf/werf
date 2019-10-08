@@ -14,7 +14,7 @@ teardown() {
 }
 
 @test "mounts" {
-    cp -r $BATS_TEST_DIRNAME/data/werf.yaml .
+    cp $BATS_TEST_DIRNAME/data/werf.yaml .
 
     werf build --stages-storage :local
 

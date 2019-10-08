@@ -22,7 +22,7 @@ stages_count() {
     export WERF_IMAGES_REPO=$WERF_TEST_DOCKER_REGISTRY/test
     export WERF_STAGES_STORAGE=:local
 
-    cp -r $BATS_TEST_DIRNAME/data/werf.yaml .
+    cp $BATS_TEST_DIRNAME/data/werf.yaml .
 
     # check: cleanup stages storage based on empty images repository
     werf stages cleanup
