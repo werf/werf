@@ -58,6 +58,16 @@ All these tools are compiled with an independent glibc, which allows running the
 
 `flant/werf-stapel` is mounted into every build container so that all precompiled tools are available in every stage build and may be used in instructions list.
 
+### How stapel builder processes CMD and ENTRYPOINT
+
+To build stage image werf launches a container with service `CMD` and `ENTRYPOINT` and then substitutes ones with the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) values. If the base image does not have the value werf resets service to the special empty value: 
+* `[]` for `CMD`;  
+* `[""]` for `ENTRYPOINT`. 
+
+Also, werf uses the special empty value instead of base image `ENTRYPOINT` if a user specifies `CMD` (`docker.CMD`).
+
+Otherwise, werf works like docker according to [documentation](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact). 
+
 ## Multiple builds on the same host
 
 Multiple build commands can run at the same time on the same host. When building _stage_ Werf acquires a **lock** using _stage signature_ as ID so that only one build process is active for a stage with a particular signature at the same time.
