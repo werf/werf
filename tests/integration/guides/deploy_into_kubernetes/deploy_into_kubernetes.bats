@@ -1,4 +1,5 @@
 load ../../../helpers/common
+load ../../../helpers/k8s
 
 setup() {
     werf_home_init
@@ -12,19 +13,21 @@ teardown() {
     werf_home_deinit
 }
 
-@test "deploy into kubernetes" {
-    skip "This command will return zero soon, but not now"
+@test "[k8s] deploy into kubernetes$(test_k8s_version)" {
+    test_skip_if_k8s_disabled
+    test_requires_k8s_docker_registry
 
-    cp -r $BATS_TEST_DIRNAME/data/* .
+    registry_repository_name=deploy-into-kubernetes-$(generate_random_string)
+    cp -a $BATS_TEST_DIRNAME/data/. .
 
     werf build-and-publish \
         --stages-storage :local \
-        --images-repo :minikube \
+        --images-repo $WERF_TEST_K8S_DOCKER_REGISTRY/$registry_repository_name \
         --tag-custom myapp
 
     werf deploy \
         --stages-storage :local \
-        --images-repo :minikube \
+        --images-repo $WERF_TEST_K8S_DOCKER_REGISTRY/$registry_repository_name \
         --tag-custom myapp \
         --env dev
 
