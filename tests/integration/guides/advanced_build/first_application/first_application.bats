@@ -38,7 +38,8 @@ test_case_run() {
   docker stop $container_name
 }
 
-@test "first application with ansible" {
+@test "first application with ansible (FIXME https://github.com/flant/werf/issues/1820)" {
+    skip
     git clone https://github.com/symfony/symfony-demo.git .
     cp -r $BATS_TEST_DIRNAME/data/ansible/* .
 
@@ -46,7 +47,8 @@ test_case_run() {
     test_case_run $CONTAINER_NAME
 }
 
-@test "first application with shell" {
+@test "first application with shell (FIXME https://github.com/flant/werf/issues/1820)" {
+    skip
     git clone https://github.com/symfony/symfony-demo.git .
     cp -r $BATS_TEST_DIRNAME/data/shell/* .
 
