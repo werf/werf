@@ -521,6 +521,7 @@ COPY --from=0 $TOOLS/sbin $TOOLS/sbin
 COPY --from=0 $TOOLS/bin $TOOLS/bin
 COPY --from=0 $TOOLS/lib64 $TOOLS/lib64
 COPY --from=0 $TOOLS/lib $TOOLS/lib
+COPY --from=0 $TOOLS/etc $TOOLS/etc
 COPY --from=0 $TOOLS/share $TOOLS/share
 COPY --from=0 $TOOLS/embedded/bin $TOOLS/embedded/bin
 COPY --from=0 $TOOLS/embedded/etc $TOOLS/embedded/etc
