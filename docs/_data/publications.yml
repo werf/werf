@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Deploying Helm charts with dependencies in Kubernetes via werf"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/deploying-helm-charts-with-dependencies-in-kubernetes-via-werf-17e5457cdd3f"
+    img: "/images/publications/en_041019.png"
+    created: 2019-10-04
+    comment: |
+      <p>This article should be useful if you create & apply Helm charts for Kubernetes using the existing solutions drawn from the chart repositories.</p>
   - title: "Monorepo/multirepo support in werf (and what does it have to do with Docker Registry?)"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/monorepo-multirepo-registry-support-in-werf-a73b2a5172d8"
@@ -27,6 +34,13 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Использование werf для выката комплексных Helm-чартов"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/468049/"
+    img: "/images/publications/ru_240919.png"
+    created: 2019-09-24
+    comment: |
+      <p>Статья посвящена новым командам для работы с зависимостями чарта и чарт-репозиториями.</p>
   - title: "Поддержка monorepo и multirepo в werf и при чём здесь Docker Registry"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/465131/"
