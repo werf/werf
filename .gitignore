@@ -17,4 +17,7 @@
 /pkg/build/builder/ansible/pylogger.h
 /pkg/build/builder/ansible/pylogger.so
 *.pyc
+
 /tests/integration/ansible/**/app
+/bin
+/tests-coverage
