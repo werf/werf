@@ -44,6 +44,7 @@ docker_registry_run() {
   docker run -d -p $container_host_port:5000 --name $WERF_TEST_DOCKER_REGISTRY_CONTAINER_NAME registry:2
 
   WERF_TEST_DOCKER_REGISTRY=localhost:$container_host_port
+  wait_till_host_ready_to_respond $WERF_TEST_DOCKER_REGISTRY 30
 }
 
 docker_registry_rm() {

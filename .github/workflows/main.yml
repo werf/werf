@@ -83,6 +83,7 @@ jobs:
       run: |
         ./scripts/tests/werf_with_coverage.sh
         ./scripts/ci/bats.sh
+        ./scripts/ci/git.sh
         ./scripts/ci/parallel.sh
 
     - name: Integration tests except k8s
