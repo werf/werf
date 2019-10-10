@@ -81,13 +81,17 @@ jobs:
 
     - name: Before integration tests
       run: |
+        export GOPATH=~/go
         ./scripts/tests/werf_with_coverage.sh
         ./scripts/ci/bats.sh
         ./scripts/ci/git.sh
+        ./scripts/ci/crane.sh
         ./scripts/ci/parallel.sh
 
     - name: Integration tests except k8s
       run: |
+        export GOPATH=~/go
+        export PATH="$GOPATH/bin:$PATH"
         export PATH="$GITHUB_WORKSPACE/bin/tests:$PATH"
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
         export WERF_TEST_K8S_DISABLED=1

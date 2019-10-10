@@ -1,0 +1,7 @@
+project: werf-test-images-purge
+configVersion: 1
+---
+image: ~
+from: alpine
+shell:
+  setup: date

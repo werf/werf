@@ -41,7 +41,10 @@ test_dir_werf_stages_purge() {
 docker_registry_run() {
   WERF_TEST_DOCKER_REGISTRY_CONTAINER_NAME=werf_test_docker_registry-$(generate_random_string)
   container_host_port=$(get_unused_port)
-  docker run -d -p $container_host_port:5000 --name $WERF_TEST_DOCKER_REGISTRY_CONTAINER_NAME registry:2
+  docker run \
+    -d -p $container_host_port:5000 \
+    -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+    --name $WERF_TEST_DOCKER_REGISTRY_CONTAINER_NAME registry:2
 
   WERF_TEST_DOCKER_REGISTRY=localhost:$container_host_port
   wait_till_host_ready_to_respond $WERF_TEST_DOCKER_REGISTRY 30
