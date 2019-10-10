@@ -23,16 +23,8 @@ type PatchDescriptor struct {
 	BinaryPaths []string
 }
 
-func PatchWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	var res *PatchDescriptor
-
-	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(out, gitDir, workTreeCacheDir, true, opts)
-		res = writePatchRes
-		return err
-	})
-
-	return res, err
+func PatchWithSubmodules(out io.Writer, gitDir, workTreeDir string, opts PatchOptions) (*PatchDescriptor, error) {
+	return writePatch(out, gitDir, workTreeDir, true, opts)
 }
 
 func Patch(out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, error) {
@@ -43,17 +35,17 @@ func debugPatch() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
-func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad git dir %s: %s", gitDir, err)
+		return nil, fmt.Errorf("bad git dir `%s`: %s", gitDir, err)
 	}
 
-	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
+	workTreeDir, err = filepath.Abs(workTreeDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+		return nil, fmt.Errorf("bad work tree dir `%s`: %s", workTreeDir, err)
 	}
 
 	if withSubmodules {
@@ -62,8 +54,8 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 			return nil, err
 		}
 	}
-	if withSubmodules && workTreeCacheDir == "" {
-		return nil, fmt.Errorf("provide work tree cache directory to enable submodules!")
+	if withSubmodules && workTreeDir == "" {
+		return nil, fmt.Errorf("provide work tree directory to enable submodules!")
 	}
 
 	commonGitOpts := []string{
@@ -87,9 +79,21 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 	var cmd *exec.Cmd
 
 	if withSubmodules {
-		workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
+		var err error
+
+		err = switchWorkTree(gitDir, workTreeDir, opts.ToCommit, withSubmodules)
 		if err != nil {
-			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.ToCommit, err)
+			return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.ToCommit, err)
+		}
+
+		err = syncSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot sync submodules: %s", err)
+		}
+
+		err = updateSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot update submodules: %s", err)
 		}
 
 		gitArgs := append(commonGitOpts, "--work-tree", workTreeDir)
@@ -212,10 +216,10 @@ WaitForData:
 	if debugPatch() {
 		fmt.Printf("Patch paths count is %d, binary paths count is %d\n", len(desc.Paths), len(desc.BinaryPaths))
 		for _, path := range desc.Paths {
-			fmt.Printf("Patch path %s\n", path)
+			fmt.Printf("Patch path `%s`\n", path)
 		}
 		for _, path := range desc.BinaryPaths {
-			fmt.Printf("Binary patch path %s\n", path)
+			fmt.Printf("Binary patch path `%s`\n", path)
 		}
 	}
 

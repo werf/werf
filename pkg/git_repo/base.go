@@ -11,9 +11,11 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/bmatcuk/doublestar"
 	"github.com/flant/logboek"
+	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/true_git"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -128,6 +130,11 @@ func (repo *Base) isEmpty(repoPath string) (bool, error) {
 	return false, nil
 }
 
+func (repo *Base) withWorkTreeLock(workTree string, f func() error) error {
+	lockName := fmt.Sprintf("git_work_tree %s", workTree)
+	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
+}
+
 func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, error) {
 	var err error
 
@@ -161,7 +168,7 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
-func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -212,8 +219,12 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 	}
 
 	var desc *true_git.PatchDescriptor
+
 	if hasSubmodules {
-		desc, err = true_git.PatchWithSubmodules(fileHandler, gitDir, workTreeCacheDir, patchOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.PatchWithSubmodules(fileHandler, gitDir, workTreeDir, patchOpts)
+			return err
+		})
 	} else {
 		desc, err = true_git.Patch(fileHandler, gitDir, patchOpts)
 	}
@@ -243,7 +254,9 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
-func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
+	logboek.LogF("Using work tree %s\n", workTreeDir)
+
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -281,10 +294,17 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 	}
 
 	var desc *true_git.ArchiveDescriptor
+
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.ArchiveWithSubmodules(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
 	} else {
-		desc, err = true_git.Archive(fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.Archive(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
 	}
 
 	if err != nil {
@@ -401,7 +421,7 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) checksum(repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
+func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOptions) (Checksum, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -427,7 +447,19 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeCacheDir string, opts Check
 		Hash:         sha256.New(),
 	}
 
-	err = true_git.WithWorkTree(gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(workTreeDir string) error {
+	err = repo.withWorkTreeLock(workTreeDir, func() error {
+		if hasSubmodules {
+			err := true_git.PrepareWorkTreeWithSubmodules(gitDir, workTreeDir, opts.Commit)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := true_git.PrepareWorkTree(gitDir, workTreeDir, opts.Commit)
+			if err != nil {
+				return err
+			}
+		}
+
 		paths := make([]string, 0)
 
 		for _, pathPattern := range opts.Paths {

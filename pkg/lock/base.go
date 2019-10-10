@@ -59,20 +59,20 @@ func (lock *Base) Unlock(l locker) error {
 	return nil
 }
 
-func (lock *Base) WithLock(locker locker, f func() error) (resErr error) {
-	if err := lock.Lock(locker); err != nil {
+func (lock *Base) WithLock(locker locker, f func() error) error {
+	var err error
+
+	err = lock.Lock(locker)
+	if err != nil {
 		return err
 	}
 
-	defer func() {
-		if err := lock.Unlock(locker); err != nil {
-			if resErr == nil {
-				resErr = err
-			}
-		}
-	}()
+	resErr := f()
 
-	resErr = f()
+	err = lock.Unlock(locker)
+	if err != nil {
+		return err
+	}
 
-	return
+	return resErr
 }
