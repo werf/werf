@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/util"
-
 	"gopkg.in/ini.v1"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -265,42 +263,40 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 }
 
 func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
+	workTreeDir, err := repo.getWorkTreeDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.createPatch(repo.ClonePath, repo.ClonePath, workTreeCacheDir, opts)
+	return repo.createPatch(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
 func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
+	workTreeDir, err := repo.getWorkTreeDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.createArchive(repo.ClonePath, repo.ClonePath, workTreeCacheDir, opts)
+	return repo.createArchive(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
 func (repo *Remote) Checksum(opts ChecksumOptions) (Checksum, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
+	workTreeDir, err := repo.getWorkTreeDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.checksum(repo.ClonePath, repo.ClonePath, workTreeCacheDir, opts)
+	return repo.checksum(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {
 	return repo.isCommitExists(repo.ClonePath, repo.ClonePath, commit)
 }
 
-func (repo *Remote) getWorkTreeCacheDir() (string, error) {
+func (repo *Remote) getWorkTreeDir() (string, error) {
 	ep, err := transport.NewEndpoint(repo.Url)
 	if err != nil {
 		return "", fmt.Errorf("bad endpoint url `%s`: %s", repo.Url, err)
 	}
 
-	repoId := util.Sha256Hash(filepath.Join(ep.Host, ep.Path))
-
-	return filepath.Join(GetBaseWorkTreeDir(), "remote", repoId), nil
+	return filepath.Join(GetBaseWorkTreeDir(), "remote", ep.Host, ep.Path), nil
 }
 
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
