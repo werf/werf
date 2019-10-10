@@ -33,6 +33,7 @@ type WerfChart struct {
 	ExtraAnnotations map[string]string
 	ExtraLabels      map[string]string
 
+	DecodedSecrets     []string
 	DecodedSecretFiles map[string]string
 }
 
@@ -62,7 +63,13 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 		return fmt.Errorf("cannot unmarshal secret values file %s: %s", path, err)
 	}
 
-	chart.Set = append(chart.Set, valuesToStrvals(values)...)
+	strvals := valuesToStrvals(values)
+	chart.Set = append(chart.Set, strvals...)
+
+	for _, strval := range strvals {
+		parts := strings.SplitN(strval, "=", 2)
+		chart.DecodedSecrets = append(chart.DecodedSecrets, parts[1])
+	}
 
 	return nil
 }
@@ -205,6 +212,7 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 			}
 
 			werfChart.DecodedSecretFiles[relativePath] = string(decodedData)
+			werfChart.DecodedSecrets = append(werfChart.DecodedSecrets, string(decodedData))
 
 			return nil
 		}); err != nil {
