@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/flant/logboek"
@@ -338,11 +339,52 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 			stapel.RmBinPath(),
 		))
 
-		commands = append(commands, fmt.Sprintf(
-			"%s %s -type d -empty -delete",
-			stapel.FindBinPath(),
-			gp.To,
-		))
+		var rmEmptyChangedDirsCommands []string
+		changedRelDirsByLevel := make(map[int]map[string]bool)
+
+	getPathsLoop:
+		for _, path := range patch.GetPaths() {
+			targetDir := path
+
+			for {
+				targetDir = filepath.Dir(targetDir)
+				if targetDir == "." {
+					continue getPathsLoop
+				}
+
+				partsCount := len(strings.Split(targetDir, string(os.PathSeparator)))
+
+				paths, exist := changedRelDirsByLevel[partsCount]
+				if !exist {
+					paths = map[string]bool{}
+				} else {
+					_, exist = paths[targetDir]
+					if exist {
+						continue getPathsLoop
+					}
+				}
+
+				paths[targetDir] = true
+				changedRelDirsByLevel[partsCount] = paths
+			}
+		}
+
+		var levelList []int
+		for level := range changedRelDirsByLevel {
+			levelList = append(levelList, level)
+		}
+
+		sort.Sort(sort.Reverse(sort.IntSlice(levelList)))
+		for _, level := range levelList {
+			paths := changedRelDirsByLevel[level]
+			for targetRelDir := range paths {
+				rmEmptyChangedDirsCommands = append(rmEmptyChangedDirsCommands, fmt.Sprintf("if [ -d %[3]s ] && [ ! \"$(%[1]s -A %[3]s)\" ]; then %[2]s -d %[3]s; fi",
+					stapel.LsBinPath(),
+					stapel.RmBinPath(),
+					filepath.Join(gp.To, targetRelDir),
+				))
+			}
+		}
 
 		archiveOpts := git_repo.ArchiveOptions{
 			FilterOptions: gp.getRepoFilterOptions(),
@@ -355,6 +397,7 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 		}
 
 		if archive.IsEmpty() {
+			commands = append(commands, rmEmptyChangedDirsCommands...)
 			return commands, nil
 		}
 
@@ -370,6 +413,8 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 			return nil, err
 		}
 		commands = append(commands, applyArchiveCommands...)
+
+		commands = append(commands, rmEmptyChangedDirsCommands...)
 
 		return commands, nil
 	}

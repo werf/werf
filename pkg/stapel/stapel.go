@@ -74,6 +74,10 @@ func Base64BinPath() string {
 	return embeddedBinPath("base64")
 }
 
+func LsBinPath() string {
+	return embeddedBinPath("ls")
+}
+
 func RmBinPath() string {
 	return embeddedBinPath("rm")
 }
