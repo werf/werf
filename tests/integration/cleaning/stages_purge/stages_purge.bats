@@ -19,7 +19,7 @@ stages_count() {
 @test "stages purge" {
     export WERF_STAGES_STORAGE=:local
 
-    cp -r $BATS_TEST_DIRNAME/data/werf.yaml .
+    cp $BATS_TEST_DIRNAME/data/werf.yaml .
 
     werf build
     [ ! "$(stages_count)" -eq "0" ]

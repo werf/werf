@@ -22,7 +22,7 @@ teardown() {
     skip
     git clone https://github.com/dockersamples/atsea-sample-shop-app.git .
     mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=atseashop.com;" -sha256 -keyout reverse_proxy/certs/revprox_key -x509 -days 365 -out reverse_proxy/certs/revprox_cert
-    cp -r $BATS_TEST_DIRNAME/data/werf.yaml .
+    cp $BATS_TEST_DIRNAME/data/werf.yaml .
 
     werf build \
         --stages-storage :local

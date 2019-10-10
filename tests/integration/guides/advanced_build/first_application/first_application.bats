@@ -41,7 +41,7 @@ test_case_run() {
 @test "first application with ansible (FIXME https://github.com/flant/werf/issues/1820)" {
     skip
     git clone https://github.com/symfony/symfony-demo.git .
-    cp -r $BATS_TEST_DIRNAME/data/ansible/* .
+    cp -a $BATS_TEST_DIRNAME/data/ansible/. .
 
     CONTAINER_NAME=symfony-demo-ansible-$(generate_random_string)
     test_case_run $CONTAINER_NAME
@@ -50,7 +50,7 @@ test_case_run() {
 @test "first application with shell (FIXME https://github.com/flant/werf/issues/1820)" {
     skip
     git clone https://github.com/symfony/symfony-demo.git .
-    cp -r $BATS_TEST_DIRNAME/data/shell/* .
+    cp -a $BATS_TEST_DIRNAME/data/shell/. .
 
     CONTAINER_NAME=symfony-demo-shell-$(generate_random_string)
     test_case_run $CONTAINER_NAME

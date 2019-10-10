@@ -17,7 +17,7 @@ teardown() {
 
 @test "getting started" {
     git clone https://github.com/dockersamples/linux_tweet_app.git .
-    cp -r $BATS_TEST_DIRNAME/data/werf.yaml .
+    cp $BATS_TEST_DIRNAME/data/werf.yaml .
 
     werf build --stages-storage :local
 
