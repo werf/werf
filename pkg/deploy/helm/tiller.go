@@ -485,7 +485,7 @@ func fprintReleaseStatus(out io.Writer, releaseName string) error {
 
 	status, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
 	if err != nil {
-		fmt.Errorf("error getting release %v status: %s", releaseName, err)
+		return fmt.Errorf("error getting release %v status: %s", releaseName, err)
 	}
 
 	fmt.Fprintf(out, "NAME: %s\n", releaseName)
