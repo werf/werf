@@ -70,6 +70,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 			"LD_LIBRARY_PATH":           stapel.AnsibleLibsOverlayLDPATH(),
 			"LANG":                      "C.UTF-8",
 			"LC_ALL":                    "C.UTF-8",
+			"LOGBOEK_SO_PATH":           "/.werf/stapel/embedded/lib/python2.7/_logboek.so",
 		},
 	)
 
