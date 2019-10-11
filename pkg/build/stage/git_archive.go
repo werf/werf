@@ -12,13 +12,17 @@ const GitArchiveResetCommitRegex = "(\\[werf reset\\])|(\\[reset werf\\])"
 
 type NewGitArchiveStageOptions struct {
 	ArchivesDir          string
+	ScriptsDir           string
 	ContainerArchivesDir string
+	ContainerScriptsDir  string
 }
 
 func NewGitArchiveStage(gitArchiveStageOptions *NewGitArchiveStageOptions, baseStageOptions *NewBaseStageOptions) *GitArchiveStage {
 	s := &GitArchiveStage{
 		ArchivesDir:          gitArchiveStageOptions.ArchivesDir,
+		ScriptsDir:           gitArchiveStageOptions.ScriptsDir,
 		ContainerArchivesDir: gitArchiveStageOptions.ContainerArchivesDir,
+		ContainerScriptsDir:  gitArchiveStageOptions.ContainerScriptsDir,
 	}
 	s.GitStage = newGitStage(GitArchive, baseStageOptions)
 	return s
@@ -28,7 +32,9 @@ type GitArchiveStage struct {
 	*GitStage
 
 	ArchivesDir          string
+	ScriptsDir           string
 	ContainerArchivesDir string
+	ContainerScriptsDir  string
 }
 
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
@@ -61,6 +67,7 @@ func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.I
 	}
 
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil
 }

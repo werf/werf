@@ -9,16 +9,20 @@ import (
 type NewGitPatchStageOptions struct {
 	PatchesDir           string
 	ArchivesDir          string
+	ScriptsDir           string
 	ContainerPatchesDir  string
 	ContainerArchivesDir string
+	ContainerScriptsDir  string
 }
 
 func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitPatchStage {
 	s := &GitPatchStage{
 		PatchesDir:           gitPatchStageOptions.PatchesDir,
 		ArchivesDir:          gitPatchStageOptions.ArchivesDir,
+		ScriptsDir:           gitPatchStageOptions.ScriptsDir,
 		ContainerPatchesDir:  gitPatchStageOptions.ContainerPatchesDir,
 		ContainerArchivesDir: gitPatchStageOptions.ContainerArchivesDir,
+		ContainerScriptsDir:  gitPatchStageOptions.ContainerScriptsDir,
 	}
 	s.GitStage = newGitStage(name, baseStageOptions)
 	return s
@@ -29,8 +33,10 @@ type GitPatchStage struct {
 
 	PatchesDir           string
 	ArchivesDir          string
+	ScriptsDir           string
 	ContainerPatchesDir  string
 	ContainerArchivesDir string
+	ContainerScriptsDir  string
 }
 
 func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
@@ -101,6 +107,7 @@ func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.Ima
 
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.PatchesDir, s.ContainerPatchesDir))
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil
 }

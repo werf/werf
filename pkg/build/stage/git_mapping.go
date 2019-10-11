@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
 
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/stapel"
+	"github.com/flant/werf/pkg/util"
 )
 
 type GitRepoCache struct {
@@ -65,6 +66,8 @@ type GitMapping struct {
 	ContainerPatchesDir  string
 	ArchivesDir          string
 	ContainerArchivesDir string
+	ScriptsDir           string
+	ContainerScriptsDir  string
 }
 
 type ContainerFileDescriptor struct {
@@ -266,7 +269,9 @@ func (gp *GitMapping) ApplyPatchCommand(prevBuiltImage, image image.ImageInterfa
 		return err
 	}
 
-	image.Container().AddServiceRunCommands(commands...)
+	if err := gp.applyScript(image, commands); err != nil {
+		return err
+	}
 
 	gp.AddGitCommitToImageLabels(image, toCommit)
 
@@ -471,9 +476,24 @@ func (gp *GitMapping) ApplyArchiveCommand(image image.ImageInterface) error {
 		return err
 	}
 
-	image.Container().AddServiceRunCommands(commands...)
+	if err := gp.applyScript(image, commands); err != nil {
+		return err
+	}
 
 	gp.AddGitCommitToImageLabels(image, commit)
+
+	return nil
+}
+
+func (gp *GitMapping) applyScript(image image.ImageInterface, commands []string) error {
+	stageHostTmpScriptFilePath := filepath.Join(gp.ScriptsDir, gp.GetParamshash())
+	containerTmpScriptFilePath := filepath.Join(gp.ContainerScriptsDir, gp.GetParamshash())
+
+	if err := stapel.CreateScript(stageHostTmpScriptFilePath, commands); err != nil {
+		return err
+	}
+
+	image.Container().AddServiceRunCommands(containerTmpScriptFilePath)
 
 	return nil
 }

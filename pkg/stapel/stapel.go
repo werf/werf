@@ -2,8 +2,11 @@ package stapel
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/flant/werf/pkg/docker"
 )
@@ -180,4 +183,19 @@ func sudoFormatUser(user string) string {
 
 func embeddedBinPath(bin string) string {
 	return fmt.Sprintf("/.werf/stapel/embedded/bin/%s", bin)
+}
+
+func CreateScript(path string, commands []string) error {
+	dirPath := filepath.Dir(path)
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create dir %s: %s", dirPath, err)
+	}
+
+	var scriptLines []string
+	scriptLines = append(scriptLines, fmt.Sprintf("#!%s -e", BashBinPath()))
+	scriptLines = append(scriptLines, "")
+	scriptLines = append(scriptLines, commands...)
+	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
+
+	return ioutil.WriteFile(path, scriptData, os.FileMode(0667))
 }

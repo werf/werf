@@ -209,14 +209,18 @@ func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, 
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
 		ArchivesDir:          getImageArchivesDir(imageName, c),
+		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
+		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 	}
 
 	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
 		PatchesDir:           getImagePatchesDir(imageName, c),
 		ArchivesDir:          getImageArchivesDir(imageName, c),
+		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerPatchesDir:  getImagePatchesContainerDir(c),
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
+		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 	}
 
 	gitMappings, err := generateGitMappings(imageBaseConfig, c)
@@ -491,6 +495,8 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 		ContainerPatchesDir:  getImagePatchesContainerDir(c),
 		ArchivesDir:          getImageArchivesDir(imageName, c),
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
+		ScriptsDir:           getImageScriptsDir(imageName, c),
+		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 
 		RepoPath: path.Join("/", local.Add),
 
@@ -520,6 +526,14 @@ func getImageArchivesDir(imageName string, c *Conveyor) string {
 
 func getImageArchivesContainerDir(c *Conveyor) string {
 	return path.Join(c.containerWerfDir, "archive")
+}
+
+func getImageScriptsDir(imageName string, c *Conveyor) string {
+	return path.Join(c.tmpDir, imageName, "scripts")
+}
+
+func getImageScriptsContainerDir(c *Conveyor) string {
+	return path.Join(c.containerWerfDir, "scripts")
 }
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {
