@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 
+	helm_kube "k8s.io/helm/pkg/kube"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
@@ -52,6 +54,8 @@ var (
 		ShowLogsUntilAnnoName,
 		ShowEventsAnnoName,
 		RecreateAnnoName,
+		helm_kube.SetReplicasOnlyOnCreationAnnotation,
+		helm_kube.SetResourcesOnlyOnCreationAnnotation,
 	}
 
 	werfAnnoPrefixList = []string{
