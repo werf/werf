@@ -3,11 +3,15 @@ load ../../../helpers/k8s
 
 setup() {
     werf_home_init
-	test_dir_create
-	test_dir_cd
+    test_dir_create
+    test_dir_cd
 }
 
 teardown() {
+    werf dismiss \
+      --env dev \
+      --with-namespace
+
     test_dir_werf_stages_purge
     test_dir_rm
     werf_home_deinit
@@ -30,8 +34,4 @@ teardown() {
         --images-repo $WERF_TEST_K8S_DOCKER_REGISTRY/$registry_repository_name \
         --tag-custom myapp \
         --env dev
-
-    werf dismiss \
-        --env dev \
-        --with-namespace
 }

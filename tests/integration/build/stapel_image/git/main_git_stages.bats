@@ -1,4 +1,5 @@
-load ../../../../../helpers/common
+load ../../../../helpers/common
+load helpers
 
 setup() {
     werf_home_init
@@ -10,19 +11,6 @@ teardown() {
     test_dir_werf_stages_purge
     test_dir_rm
     werf_home_deinit
-}
-
-files_checksum_command() {
-    echo "find ${1:-.} -xtype f -not -path '**/.git' -not -path '**/.git/*' | xargs md5sum | awk '{ print \$1 }' | sort | md5sum | awk '{ print \$1 }'"
-}
-
-files_checksum() {
-    eval "$(files_checksum_command ${1:-.})"
-}
-
-container_files_checksum() {
-    image_name=$(werf run -s :local --dry-run | tail -n1 | cut -d' ' -f3)
-    docker run --rm $image_name bash -ec "eval $(files_checksum_command ${1:-/app})"
 }
 
 @test "gitArchive, gitCache and gitLatestPatch stages" {
