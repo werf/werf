@@ -56,6 +56,21 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 import sys
 sys.path.append("%s")
 
+import os
+path = os.environ.get('PATH', '')
+prepend_path = os.environ.get('ANSIBLE_PREPEND_SYSTEM_PATH', '')
+append_path = os.environ.get('ANSIBLE_APPEND_SYSTEM_PATH', '')
+
+path_components = []
+if prepend_path != '':
+    path_components.append(prepend_path)
+if path != '':
+    path_components.append(path)
+if append_path != '':
+    path_components.append(append_path)
+
+os.environ['PATH'] = os.pathsep.join(path_components)
+
 execfile("%s")
 `, stapel.PythonBinPath(), filepath.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
 		os.FileMode(0777),
