@@ -386,7 +386,7 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 				rmEmptyChangedDirsCommands = append(rmEmptyChangedDirsCommands, fmt.Sprintf("if [ -d %[3]s ] && [ ! \"$(%[1]s -A %[3]s)\" ]; then %[2]s -d %[3]s; fi",
 					stapel.LsBinPath(),
 					stapel.RmBinPath(),
-					filepath.Join(gp.To, targetRelDir),
+					quoteShellArg(filepath.Join(gp.To, targetRelDir)),
 				))
 			}
 		}
@@ -430,6 +430,19 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 	}
 
 	return gp.applyPatchCommand(patchFile, archiveType)
+}
+
+func quoteShellArg(arg string) string {
+	if len(arg) == 0 {
+		return "''"
+	}
+
+	pattern := regexp.MustCompile(`[^\w@%+=:,./-]`)
+	if pattern.MatchString(arg) {
+		return "'" + strings.Replace(arg, "'", "'\"'\"'", -1) + "'"
+	}
+
+	return arg
 }
 
 func (gp *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
