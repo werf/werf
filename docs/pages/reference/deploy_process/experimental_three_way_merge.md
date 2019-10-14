@@ -52,6 +52,34 @@ Also during deploy process a WARNING message will be written to the screen if re
 
 Annotation `debug.werf.io/repair-patch-errors` will contain errors occurred when creating a repair patch, deploy process in this case will not be interrupted.
 
+#### Deal with HPA
+
+[The Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) automatically scales the number of pods in a replication controller, deployment or replica set.
+
+When HPA is enabled and user has set `spec.replicas` to static number in chart templates, then repair patch may detect a change in the live state of the object `spec.replicas` field, because this field has been changed by the autoscaler. To disable such repair patches user may either delete `spec.replicas` from chart configuration or define [`werf.io/set-replicas-only-on-creation` annotation](#werf-io-set-replicas-only-on-creation).
+
+##### `werf.io/set-replicas-only-on-creation`
+
+This annotation tells werf that resource `spec.replicas` field value from chart template should only be used when initializing a new resource.
+
+Werf will ignore `spec.replicas` field changes on subsequent resource updates.
+
+This annotation should be turned on when [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) is enabled.
+
+#### Deal with VPA
+
+[The Vertical Pod Autoscaler](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) can recommend values for CPU and memory requests, or it can automatically update values for CPU and memory requests.
+
+When VPA is enabled and user has set `resources` to some static settings in chart templates, then repair patch may detect a change in the live state of the obje ct `resources` field, because this field has been changed by the autoscaler. To disable such repair patches user may either delete `resources` settings from chart configuration or define [`werf.io/set-resources-only-on-creation` annotation](#werf-io-set-resources-only-on-creation).
+
+##### `werf.io/set-resources-only-on-creation`
+
+This annotation tells werf that resource `resources` field value from chart template should only be used when initializing a new resource.
+
+Werf will ignore `resources` field changes on subsequent resource updates.
+
+This annotation should be turned on when [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) is enabled.
+
 ### Compatibility mode
 
 In the compatibility mode werf will apply three-way-merge patches only to the new resources created by the werf and use old two-way-merge patches for already existing resources.
