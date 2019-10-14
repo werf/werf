@@ -325,43 +325,67 @@ RUN go build -o /.werf/stapel/embedded/lib/python2.7/_logboek.so -buildmode=c-sh
 RUN cp /root/go/pkg/mod/github.com/flant/logboek@*/logboek.py /.werf/stapel/embedded/lib/python2.7
 RUN cp /werf/pkg/build/builder/ansible/crypt.py /.werf/stapel/embedded/lib/python2.7
 
-# Create ansible tools overlay path
+
+# Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)
 RUN mkdir -p $TOOLS/ansible_tools_overlay/bin $TOOLS/ansible_tools_overlay/lib
+
+# Shadow /usr/bin/tar with gnu tar (needed for unarchive ansible module in alpine based image)
+RUN ln -fs $TOOLS/embedded/bin/tar $TOOLS/ansible_tools_overlay/bin/tar
+
+
+# Binaries and libraries built and linked for ubuntu:18.04
+RUN mkdir -p $TOOLS/ubuntu_tools/bin $TOOLS/ubuntu_tools/lib $TOOLS/ubuntu_tools/lib/python2.7 $TOOLS/ubuntu_tools/lib/python2.7
 
 # python-apt package will install all libs in docker.from image.
 # python-apt will be installed automatically by ansible apt module on first run.
 # flant/werf-stapel offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
 RUN apt install -y python-apt libzstd1 apt-utils
 RUN \
-cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0.0 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0.2 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0.0 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/liblz4.so.1 $TOOLS/embedded/lib/ && \
-cp /lib/x86_64-linux-gnu/liblzma.so.5 $TOOLS/embedded/lib/ && \
-cp /lib/x86_64-linux-gnu/libbz2.so.1.0 $TOOLS/embedded/lib/ && \
-cp /lib/x86_64-linux-gnu/libudev.so.1 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libzstd.so* $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0.2 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/liblz4.so.1 $TOOLS/ubuntu_tools/lib/ && \
+cp /lib/x86_64-linux-gnu/liblzma.so.5 $TOOLS/ubuntu_tools/lib/ && \
+cp /lib/x86_64-linux-gnu/libbz2.so.1.0 $TOOLS/ubuntu_tools/lib/ && \
+cp /lib/x86_64-linux-gnu/libudev.so.1 $TOOLS/ubuntu_tools/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libzstd.so* $TOOLS/ubuntu_tools/lib/ && \
 cp /usr/lib/python2.7/dist-packages/apt_inst.x86_64-linux-gnu.so /tmp/apt_inst.so && \
-cp /tmp/apt_inst.so $TOOLS/embedded/lib/python2.7/ && \
+cp /tmp/apt_inst.so $TOOLS/ubuntu_tools/lib/python2.7/ && \
 cp /usr/lib/python2.7/dist-packages/apt_pkg.x86_64-linux-gnu.so /tmp/apt_pkg.so && \
-cp /tmp/apt_pkg.so $TOOLS/embedded/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/apt $TOOLS/embedded/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/aptsources $TOOLS/embedded/lib/python2.7/ && \
-cp /lib/x86_64-linux-gnu/libsystemd.so.0.21.0 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libsystemd.so.0 $TOOLS/lib && \
-cp /usr/bin/apt-extracttemplates $TOOLS/embedded/bin
+cp /tmp/apt_pkg.so $TOOLS/ubuntu_tools/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/apt $TOOLS/ubuntu_tools/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/aptsources $TOOLS/ubuntu_tools/lib/python2.7/ && \
+cp /lib/x86_64-linux-gnu/libsystemd.so.0.21.0 $TOOLS/ubuntu_tools/lib && \
+cp /lib/x86_64-linux-gnu/libsystemd.so.0 $TOOLS/ubuntu_tools/lib && \
+cp /usr/bin/apt-extracttemplates $TOOLS/ubuntu_tools/bin
 
 RUN \
-ln -fs $TOOLS/embedded/bin/tar $TOOLS/ansible_tools_overlay/bin/tar && \
-ln -fs $TOOLS/embedded/lib/libapt-private.so.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-private.so.0.0 && \
-ln -fs $TOOLS/embedded/lib/libapt-private.so.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-private.so.0.0.0 && \
-ln -fs $TOOLS/embedded/lib/libapt-pkg.so.5.0 $TOOLS/ansible_tools_overlay/lib/libapt-private.so.5.0 && \
-ln -fs $TOOLS/embedded/lib/libapt-pkg.so.5.0.2 $TOOLS/ansible_tools_overlay/lib/libapt-private.so.5.0.2 && \
-ln -fs $TOOLS/embedded/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
-ln -fs $TOOLS/embedded/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0   $TOOLS/embedded/lib/libapt-private.so.0.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0.0 $TOOLS/embedded/lib/libapt-private.so.0.0.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-pkg.so.5.0   $TOOLS/embedded/lib/libapt-pkg.so.5.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-pkg.so.5.0.2 $TOOLS/embedded/lib/libapt-pkg.so.5.0.2 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0   $TOOLS/embedded/lib/libapt-inst.so.2.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/embedded/lib/libapt-inst.so.2.0.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/liblz4.so.1 $TOOLS/embedded/lib/liblz4.so.1 && \
+ln -fs $TOOLS/ubuntu_tools/lib/liblzma.so.5 $TOOLS/embedded/lib/liblzma.so.5 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libbz2.so.1.0 $TOOLS/embedded/lib/libbz2.so.1.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libudev.so.1 $TOOLS/embedded/lib/libudev.so.1 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libzstd.so.1 $TOOLS/embedded/lib/libzstd.so.1 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libzstd.so.1.3.3 $TOOLS/embedded/lib/libzstd.so.1.3.3 && \
+ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt_inst.so $TOOLS/embedded/lib/python2.7/apt_inst.so && \
+ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt_pkg.so $TOOLS/embedded/lib/python2.7/apt_pkg.so && \
+ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt $TOOLS/embedded/lib/python2.7/apt && \
+ln -fs $TOOLS/ubuntu_tools/lib/python2.7/aptsources $TOOLS/embedded/lib/python2.7/aptsources && \
+ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0.21.0 $TOOLS/embedded/lib/libsystemd.so.0.21.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0 $TOOLS/embedded/lib/libsystemd.so.0 && \
+ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extracttemplates
+
+RUN \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
+ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
 
 # TODO: FIXME: https://github.com/flant/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
@@ -514,7 +538,6 @@ mv /tmp/bin $TOOLS/bin
 FROM scratch as final
 CMD ["no-such-command"]
 ENV TOOLS=/.werf/stapel
-COPY --from=0 $TOOLS/ansible_tools_overlay $TOOLS/ansible_tools_overlay
 COPY --from=0 $TOOLS/libexec $TOOLS/libexec
 COPY --from=0 $TOOLS/x86_64-lfs-linux-gnu $TOOLS/x86_64-lfs-linux-gnu
 COPY --from=0 $TOOLS/sbin $TOOLS/sbin
@@ -530,3 +553,5 @@ COPY --from=0 $TOOLS/embedded/libexec $TOOLS/embedded/libexec
 COPY --from=0 $TOOLS/embedded/sbin $TOOLS/embedded/sbin
 COPY --from=0 $TOOLS/embedded/share $TOOLS/embedded/share
 COPY --from=0 $TOOLS/embedded/ssl $TOOLS/embedded/ssl
+COPY --from=0 $TOOLS/ubuntu_tools $TOOLS/ubuntu_tools
+COPY --from=0 $TOOLS/ansible_tools_overlay $TOOLS/ansible_tools_overlay
