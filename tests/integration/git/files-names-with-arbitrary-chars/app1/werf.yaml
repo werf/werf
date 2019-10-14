@@ -1,0 +1,11 @@
+configVersion: 1
+project: git-files-names-with-arbitrary-chars
+---
+image: ~
+from: ubuntu:18.04
+git:
+- add: /
+  to: /app
+shell:
+  setup:
+  - mkdir "/app/dir/директория 2@l! \$пустая .."
