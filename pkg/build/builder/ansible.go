@@ -63,14 +63,15 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 
 	container.AddEnv(
 		map[string]string{
-			"ANSIBLE_CONFIG":            filepath.Join(b.containerWorkDir(), "ansible.cfg"),
-			"WERF_DUMP_CONFIG_DOC_PATH": filepath.Join(b.containerWorkDir(), "dump_config.json"),
-			"PYTHONIOENCODING":          "utf-8",
-			"PATH":                      fmt.Sprintf("%s:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%s", stapel.AnsibleToolsOverlayPATH(), stapel.SystemPATH()),
-			"LD_LIBRARY_PATH":           stapel.AnsibleLibsOverlayLDPATH(),
-			"LANG":                      "C.UTF-8",
-			"LC_ALL":                    "C.UTF-8",
-			"LOGBOEK_SO_PATH":           "/.werf/stapel/embedded/lib/python2.7/_logboek.so",
+			"ANSIBLE_CONFIG":              filepath.Join(b.containerWorkDir(), "ansible.cfg"),
+			"WERF_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
+			"PYTHONIOENCODING":            "utf-8",
+			"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.AnsibleToolsOverlayPATH(),
+			"ANSIBLE_APPEND_SYSTEM_PATH":  stapel.SystemPATH(),
+			"LD_LIBRARY_PATH":             stapel.AnsibleLibsOverlayLDPATH(),
+			"LANG":                        "C.UTF-8",
+			"LC_ALL":                      "C.UTF-8",
+			"LOGBOEK_SO_PATH":             "/.werf/stapel/embedded/lib/python2.7/_logboek.so",
 		},
 	)
 
