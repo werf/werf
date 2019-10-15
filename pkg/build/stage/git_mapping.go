@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
 
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/stapel"
+	"github.com/flant/werf/pkg/util"
 )
 
 type GitRepoCache struct {
@@ -65,6 +66,8 @@ type GitMapping struct {
 	ContainerPatchesDir  string
 	ArchivesDir          string
 	ContainerArchivesDir string
+	ScriptsDir           string
+	ContainerScriptsDir  string
 }
 
 type ContainerFileDescriptor struct {
@@ -266,7 +269,9 @@ func (gp *GitMapping) ApplyPatchCommand(prevBuiltImage, image image.ImageInterfa
 		return err
 	}
 
-	image.Container().AddServiceRunCommands(commands...)
+	if err := gp.applyScript(image, commands); err != nil {
+		return err
+	}
 
 	gp.AddGitCommitToImageLabels(image, toCommit)
 
@@ -381,7 +386,7 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 				rmEmptyChangedDirsCommands = append(rmEmptyChangedDirsCommands, fmt.Sprintf("if [ -d %[3]s ] && [ ! \"$(%[1]s -A %[3]s)\" ]; then %[2]s -d %[3]s; fi",
 					stapel.LsBinPath(),
 					stapel.RmBinPath(),
-					filepath.Join(gp.To, targetRelDir),
+					quoteShellArg(filepath.Join(gp.To, targetRelDir)),
 				))
 			}
 		}
@@ -425,6 +430,19 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 	}
 
 	return gp.applyPatchCommand(patchFile, archiveType)
+}
+
+func quoteShellArg(arg string) string {
+	if len(arg) == 0 {
+		return "''"
+	}
+
+	pattern := regexp.MustCompile(`[^\w@%+=:,./-]`)
+	if pattern.MatchString(arg) {
+		return "'" + strings.Replace(arg, "'", "'\"'\"'", -1) + "'"
+	}
+
+	return arg
 }
 
 func (gp *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
@@ -471,9 +489,24 @@ func (gp *GitMapping) ApplyArchiveCommand(image image.ImageInterface) error {
 		return err
 	}
 
-	image.Container().AddServiceRunCommands(commands...)
+	if err := gp.applyScript(image, commands); err != nil {
+		return err
+	}
 
 	gp.AddGitCommitToImageLabels(image, commit)
+
+	return nil
+}
+
+func (gp *GitMapping) applyScript(image image.ImageInterface, commands []string) error {
+	stageHostTmpScriptFilePath := filepath.Join(gp.ScriptsDir, gp.GetParamshash())
+	containerTmpScriptFilePath := filepath.Join(gp.ContainerScriptsDir, gp.GetParamshash())
+
+	if err := stapel.CreateScript(stageHostTmpScriptFilePath, commands); err != nil {
+		return err
+	}
+
+	image.Container().AddServiceRunCommands(containerTmpScriptFilePath)
 
 	return nil
 }
