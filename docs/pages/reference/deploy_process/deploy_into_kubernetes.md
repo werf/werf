@@ -35,13 +35,16 @@ Templates are placed in the `.helm/templates` directory.
 Directory contains YAML files `*.yaml`. Each YAML file describes one or several kubernetes resources specs separated by three hyphens `---`, for example:
 
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mydeploy
   labels:
     service: mydeploy
 spec:
+  selector:
+    matchLabels:
+      service: mydeploy
   template:
     metadata:
       labels:
@@ -126,11 +129,16 @@ To specify image named `backend` from `werf.yaml`:
 
 {% raw %}
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    service: backend
 spec:
+  selector:
+    matchLabels:
+      service: backend
   template:
     metadata:
       labels:
@@ -149,11 +157,16 @@ To specify single unnamed image from `werf.yaml`:
 
 {% raw %}
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    service: backend
 spec:
+  selector:
+    matchLabels:
+      service: backend
   template:
     metadata:
       labels:
