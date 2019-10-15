@@ -18,8 +18,7 @@ teardown() {
     werf_home_deinit
 }
 
-@test "multi images (FIXME https://github.com/flant/werf/issues/1820)" {
-    skip
+@test "multi images" {
     git clone https://github.com/dockersamples/atsea-sample-shop-app.git .
     mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=atseashop.com;" -sha256 -keyout reverse_proxy/certs/revprox_key -x509 -days 365 -out reverse_proxy/certs/revprox_cert
     cp $BATS_TEST_DIRNAME/data/werf.yaml .
