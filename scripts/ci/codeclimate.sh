@@ -1,9 +1,12 @@
 #!/bin/bash -e
 
-coverage_files=$WERF_TEST_COVERAGE_DIR/*.out
+curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+chmod +x ./cc-test-reporter
+
+coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
 for file in ${coverage_files[@]}
 do
-  file_name=$(basename $file)
+  file_name=$(echo $file | tr / _)
   ./cc-test-reporter format-coverage \
     -t=gocov \
     -o="coverage/$file_name.codeclimate.json" \

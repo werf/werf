@@ -1,4 +1,4 @@
-project: werf-test-deploy-into-kubernetes
+project: {{ env "WERF_TEST_K8S_PROJECT_NAME" }}
 configVersion: 1
 ---
 image: ~

@@ -14,9 +14,10 @@ jobs:
   build:
     name: Build
     strategy:
+      fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macOS-latest, windows-latest]
-    runs-on: ${{ matrix.platform }}
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
 
     - name: Set up Go 1.12
@@ -34,9 +35,10 @@ jobs:
   unit_tests:
     name: Unit tests
     strategy:
+      fail-fast: false
       matrix:
-        platform: [macOS-latest, windows-latest]
-    runs-on: ${{ matrix.platform }}
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
 
     - name: Set up Go 1.12
@@ -48,15 +50,41 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Test
-      run: go test -tags "dfrunmount dfssh" ./...
+    - name: Prepare environment (!windows)
+      run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/unit_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+      if: matrix.os != 'windows-latest'
 
-  tests_with_coverage:
-    name: All tests with coverage
+    - name: Prepare environment (windows)
+      run: |
+        SET WERF_TEST_COVERAGE_DIR=%GITHUB_WORKSPACE%\tests_coverage\unit_tests\${{ matrix.os }}
+        mkdir -p %WERF_TEST_COVERAGE_DIR%
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::%WERF_TEST_COVERAGE_DIR%
+      if: matrix.os == 'windows-latest'
+
+    - name: Test (!windows)
+      run: go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=$WERF_TEST_COVERAGE_DIR/coverage.out ./...
+      if: matrix.os != 'windows-latest'
+
+    - name: Test (windows)
+      run: go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=%WERF_TEST_COVERAGE_DIR%\coverage.out ./...
+      if: matrix.os == 'windows-latest'
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
+  integration_tests:
+    name: Integration tests
     strategy:
+      fail-fast: false
       matrix:
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
 
     - name: Set up Go 1.12
@@ -68,60 +96,107 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Before tests
+    - name: Prepare environment
       run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
-        mkdir $WERF_TEST_COVERAGE_DIR
-        ./scripts/ci/codeclimate_before_script_hook.sh
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-    - name: Unit tests
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
-        go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=$WERF_TEST_COVERAGE_DIR/unit_tests_coverage.out ./...
-
-    - name: Before integration tests
-      run: |
         export GOPATH=~/go
+        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$GOPATH/bin:$PATH
+
         ./scripts/tests/werf_with_coverage.sh
         ./scripts/ci/bats.sh
+        ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
         ./scripts/ci/crane.sh
-        ./scripts/ci/parallel.sh
 
-    - name: Integration tests except k8s
+    - name: Test
+      run: WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
+  integration_k8s_tests:
+    name: Integration k8s tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+
+    - name: Set up Go 1.12
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.12
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Prepare environment
       run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+
         export GOPATH=~/go
-        export PATH="$GOPATH/bin:$PATH"
-        export PATH="$GITHUB_WORKSPACE/bin/tests:$PATH"
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
-        export WERF_TEST_K8S_DISABLED=1
-        bats -r $GITHUB_WORKSPACE/tests --jobs 5
+        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$GOPATH/bin:$PATH
 
-    - name: Before integration k8s tests
-      run: ./scripts/ci/insecure_docker_registry.sh
+        ./scripts/tests/werf_with_coverage.sh
+        ./scripts/ci/bats.sh
+        ./scripts/ci/parallel.sh
+        ./scripts/ci/git.sh
+        ./scripts/ci/crane.sh
+
+        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_${{ matrix.k8s_version }})
       env:
-        WERF_TEST_K8S_INSECURE_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_INSECURE_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1.16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
 
-    - name: Integration k8s tests
-      run: |
-        export PATH="$GITHUB_WORKSPACE/bin/tests:$PATH"
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
-        ./scripts/ci/integration_k8s_tests.sh 5
+    - name: Test
+      run: ./scripts/ci/integration_k8s_tests.sh 5
       env:
-        WERF_TEST_K8S_INSECURE_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_INSECURE_DOCKER_REGISTRY }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.11 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.12 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.13 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.14 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.15 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1.16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1.16 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_MINIKUBE: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_MINIKUBE }}
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
 
-    - name: After tests
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
+  upload_coverage:
+    name: Upload coverage
+    needs: [unit_tests, integration_tests, integration_k8s_tests]
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Download coverage artifact
+      uses: actions/download-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
+    - name: Upload
       run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests-coverage
+        export WERF_TEST_COVERAGE_DIR=tests_coverage
         export GIT_BRANCH=${GITHUB_REF:11}
         export GIT_COMMIT_SHA=$GITHUB_SHA
-        ./scripts/ci/codeclimate_after_script_hook.sh
+        ./scripts/ci/codeclimate.sh
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
