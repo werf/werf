@@ -28,7 +28,8 @@ Currently annotations mode is active: three-way-merge repair patch only created 
 In the annotations mode werf still applies two-way-merge patches. The following annotations are set into each chart resource by the werf when updating these resources:
 
  * `debug.werf.io/repair-patch`;
- * `debug.werf.io/repair-patch-errors`.
+ * `debug.werf.io/repair-patch-errors`;
+ * `debug.werf.io/repair-messages`.
 
 Annotation `debug.werf.io/repair-patch` contains calculated patch json between current resource state and new chart resource configuration.
 
@@ -51,6 +52,14 @@ kubectl -n mynamespace patch cm/myconfigmap '{"data":{"node.conf":"PROPER CONTEN
 Also during deploy process a WARNING message will be written to the screen if repair-patch needs to be applied by administrator.
 
 Annotation `debug.werf.io/repair-patch-errors` will contain errors occurred when creating a repair patch, deploy process in this case will not be interrupted.
+
+Annotation `debug.werf.io/repair-messages` will contain warnings written to the deploy log along with debug developer messages.
+
+#### Resources validation
+
+Werf will validate every resource configuration from chart template and write a warning to the screen if this validation fails.
+
+Annotation `debug.werf.io/validation-messages` will also contain these validation warnings.
 
 #### Deal with HPA
 
