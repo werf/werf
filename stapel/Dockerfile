@@ -19,11 +19,10 @@ ENV TOOLS=/.werf/stapel
 ENV LFS_TGT=x86_64-lfs-linux-gnu
 
 RUN mkdir -pv $LFS$TOOLS && mkdir -pv $LFS/sources && chmod -v a+wt $LFS/sources
-ADD stapel/wget-list $LFS/sources/wget-list
-ADD stapel/md5sums $LFS/sources/md5sums
-# TODO: rename md5sums & wget-list files
-RUN wget --input-file=$LFS/sources/wget-list --continue --directory-prefix=$LFS/sources
-RUN bash -c "pushd $LFS/sources && md5sum -c $LFS/sources/md5sums && popd"
+ADD stapel/wget-list-before-omnibus $LFS/sources/wget-list-before-omnibus
+ADD stapel/wget-list-before-omnibus.md5sums $LFS/sources/wget-list-before-omnibus.md5sums
+RUN wget --input-file=$LFS/sources/wget-list-before-omnibus --continue --directory-prefix=$LFS/sources
+RUN bash -c "pushd $LFS/sources && md5sum -c $LFS/sources/wget-list-before-omnibus.md5sums && popd"
 ADD stapel/version-check.sh $LFS/sources/version-check.sh
 RUN $LFS/sources/version-check.sh
 
@@ -114,6 +113,8 @@ libc_cv_c_cleanup=yes
 WORKDIR $LFS/sources/glibc/build
 RUN make
 RUN make install
+RUN mkdir /.werf/stapel/lib/locale
+RUN /.werf/stapel/bin/localedef -i POSIX -f UTF-8 C.UTF-8 || true
 
 RUN echo "Libstdc++" && cd $LFS/sources/ && \
 rm -rf gcc && \
@@ -446,10 +447,6 @@ ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay
 #ln -fs $TOOLS/embedded/lib/librpmio.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8.0.1 && \
 #ln -fs $TOOLS/embedded/lib/librpmbuild.so.8 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8
 
-# TODO: FIXME move to glibc
-WORKDIR $LFS/sources/glibc/build
-RUN mkdir /.werf/stapel/lib/locale
-RUN /.werf/stapel/bin/localedef -i POSIX -f UTF-8 C.UTF-8 || true
 
 # Cleanup stapel: only runtime libs and binaries are needed
 RUN rm -rf \
