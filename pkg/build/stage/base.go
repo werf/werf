@@ -282,9 +282,16 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
-		err := os.MkdirAll(absoluteFrom, os.ModePerm)
+		exist, err := util.FileExists(absoluteFrom)
 		if err != nil {
-			return fmt.Errorf("error creating %s: %s", absoluteFrom, err)
+			return err
+		}
+
+		if !exist {
+			err := os.MkdirAll(absoluteFrom, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("error creating %s: %s", absoluteFrom, err)
+			}
 		}
 
 		for _, mountpoint := range mountpoints {
