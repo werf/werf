@@ -1,0 +1,12 @@
+setup() {
+	cd $BATS_TEST_DIRNAME
+}
+
+teardown() {
+	rm ./main
+}
+
+@test "Test simple repair-patch cases" {
+	go build ./main.go
+	./main
+}
