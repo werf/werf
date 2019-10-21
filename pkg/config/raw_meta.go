@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/flant/werf/pkg/slug"
 )
@@ -52,7 +53,12 @@ func (c *rawMeta) toMeta() *Meta {
 	}
 
 	if c.Project != nil {
-		meta.Project = *c.Project
+		werfProjectName := os.Getenv("WERF_PROJECT_NAME")
+		if werfProjectName != "" {
+			meta.Project = werfProjectName
+		} else {
+			meta.Project = *c.Project
+		}
 	}
 
 	meta.DeployTemplates = c.DeployTemplates.toDeployTemplates()
