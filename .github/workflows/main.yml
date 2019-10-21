@@ -78,8 +78,8 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
-  integration_tests:
-    name: Integration tests
+  prepare_integration_tests_tools:
+    name: Prepare integration tests tools
     strategy:
       fail-fast: false
       matrix:
@@ -96,20 +96,58 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
+    - name: Build
+      run: |
+        ./scripts/tests/werf_with_coverage.sh
+        ./scripts/ci/crane.sh
+
+    - name: Upload test tools artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: integration_tests_tools
+        path: bin/tests
+
+  integration_tests:
+    name: Integration tests
+    needs: prepare_integration_tests_tools
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+    - name: Set up Go 1.12
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.12
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Download test tools artifact
+      uses: actions/download-artifact@master
+      with:
+        name: integration_tests_tools
+        path: bin/tests
+
     - name: Prepare environment
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        export GOPATH=~/go
-        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$GOPATH/bin:$PATH
+        chmod +x \
+          bin/tests/werf \
+          bin/tests/werf.test \
+          bin/tests/crane
 
-        ./scripts/tests/werf_with_coverage.sh
+        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
+
         ./scripts/ci/bats.sh
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
-        ./scripts/ci/crane.sh
 
     - name: Test
       run: WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
@@ -122,6 +160,7 @@ jobs:
 
   integration_k8s_tests:
     name: Integration k8s tests
+    needs: prepare_integration_tests_tools
     strategy:
       fail-fast: false
       matrix:
@@ -140,20 +179,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
+    - name: Download test tools artifact
+      uses: actions/download-artifact@master
+      with:
+        name: integration_tests_tools
+        path: bin/tests
+
     - name: Prepare environment
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        export GOPATH=~/go
-        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$GOPATH/bin:$PATH
+        chmod +x \
+          bin/tests/werf \
+          bin/tests/werf.test \
+          bin/tests/crane
 
-        ./scripts/tests/werf_with_coverage.sh
+        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
+
         ./scripts/ci/bats.sh
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
-        ./scripts/ci/crane.sh
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_${{ matrix.k8s_version }})
       env:
