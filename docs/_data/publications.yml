@@ -34,6 +34,13 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Сборка и деплой однотипных микросервисов с werf и GitLab CI"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/469541/"
+    img: "/images/publications/ru_071019.png"
+    created: 2019-10-07
+    comment: |
+      <p>Раннее мы публиковали статью <a href="https://habr.com/ru/company/flant/blog/340996/">«Сборка проектов с GitLab CI: один .gitlab-ci.yml для сотни приложений»</a>, а теперь расскажем о решении схожей задачи сегодня. Новый материал — о том, как можно построить CI/CD-процессы для большого количества однотипных приложений с появлением include в <i>.gitlab-ci.yml</i> и приходом werf на замену dapp.</p>
   - title: "Использование werf для выката комплексных Helm-чартов"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/468049/"
