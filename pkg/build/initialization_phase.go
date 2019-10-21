@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -24,9 +23,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
 )
 
 type InitializationPhase struct{}
@@ -286,19 +283,9 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
 		remoteGitRepo, exist := c.remoteGitRepos[remoteGitMappingConfig.Name]
 		if !exist {
-			clonePath, err := getRemoteGitRepoClonePath(remoteGitMappingConfig, c)
-			if err != nil {
-				return nil, err
-			}
-
-			if err := os.MkdirAll(filepath.Dir(clonePath), os.ModePerm); err != nil {
-				return nil, fmt.Errorf("unable to mkdir %s: %s", filepath.Dir(clonePath), err)
-			}
-
 			remoteGitRepo = &git_repo.Remote{
-				Base:      git_repo.Base{Name: remoteGitMappingConfig.Name},
-				Url:       remoteGitMappingConfig.Url,
-				ClonePath: clonePath,
+				Base: git_repo.Base{Name: remoteGitMappingConfig.Name},
+				Url:  remoteGitMappingConfig.Url,
 			}
 
 			if err := logboek.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LogProcessOptions{}, func() error {
@@ -417,25 +404,6 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 	}
 
 	return nonEmptyGitMappings, nil
-}
-
-func getRemoteGitRepoClonePath(remoteGitMappingConfig *config.GitRemote, c *Conveyor) (string, error) {
-	scheme, err := urlScheme(remoteGitMappingConfig.Url)
-	if err != nil {
-		return "", err
-	}
-
-	clonePath := path.Join(
-		werf.GetLocalCacheDir(),
-		"remote_git_repos",
-		"projects",
-		c.werfConfig.Meta.Project,
-		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
-		slug.Slug(remoteGitMappingConfig.Name),
-		scheme,
-	)
-
-	return clonePath, nil
 }
 
 func urlScheme(urlString string) (string, error) {

@@ -1,5 +1,13 @@
 package git_repo
 
+import (
+	"path/filepath"
+
+	"github.com/flant/werf/pkg/werf"
+)
+
+const GitRepoCacheVersion = "1"
+
 type PatchOptions struct {
 	FilterOptions
 	FromCommit, ToCommit string
@@ -66,4 +74,8 @@ type Archive interface {
 type Checksum interface {
 	String() string
 	GetNoMatchPaths() []string
+}
+
+func GetGitRepoCacheDir() string {
+	return filepath.Join(werf.GetLocalCacheDir(), "git_repos", GitRepoCacheVersion)
 }
