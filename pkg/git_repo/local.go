@@ -83,7 +83,7 @@ func (repo *Local) getWorkTreeDir() string {
 	}
 
 	pathParts = append([]string{"local"}, pathParts...)
-	pathParts = append([]string{GetBaseWorkTreeDir()}, pathParts...)
+	pathParts = append([]string{GetWorkTreeCacheDir()}, pathParts...)
 
 	return filepath.Join(pathParts...)
 }
