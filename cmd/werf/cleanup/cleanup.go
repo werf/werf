@@ -19,10 +19,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CmdData struct {
-	WithoutKube bool
-}
-
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
@@ -69,7 +65,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupLogOptions(&CommonCmdData, cmd)
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	common.SetupWithoutKube(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -177,7 +173,7 @@ func runCleanup() error {
 		},
 		LocalGit:                  localGitRepo,
 		KubernetesContextsClients: kubernetesContextsClients,
-		WithoutKube:               CmdData.WithoutKube,
+		WithoutKube:               *CommonCmdData.WithoutKube,
 		Policies:                  policies,
 	}
 
