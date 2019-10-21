@@ -2,7 +2,12 @@
 
 set -e
 
-source scripts/stapel/version.sh
+if [ -z "$1" ] ; then
+	echo "Provide image version: $0 VERSION" 1>&2
+	exit 1
+fi
 
-#docker push flant/werf-stapel-base:$CURRENT_STAPEL_VERSION
-docker push flant/werf-stapel:$CURRENT_STAPEL_VERSION
+VERSION=$1
+
+docker tag flant/werf-stapel:dev flant/werf-stapel:$VERSION
+docker push flant/werf-stapel:$VERSION
