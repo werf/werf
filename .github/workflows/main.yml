@@ -198,10 +198,13 @@ jobs:
         chmod +x \
           bin/tests/werf \
           bin/tests/werf.test \
+          bin/tests/crane \
           bin/tests/ginkgo
 
         echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
 
+        ./scripts/ci/bats.sh
+        ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_${{ matrix.k8s_version }})
