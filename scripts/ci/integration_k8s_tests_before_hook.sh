@@ -15,11 +15,6 @@ fi
 
 echo $WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD | docker login $WERF_TEST_K8S_DOCKER_REGISTRY -u $WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME --password-stdin
 
-if [[ ! -z "$1" ]]; then
-  bats_jobs_option="--jobs $1"
-fi
-
 export KUBECONFIG=$(mktemp -d)/config
 echo $WERF_TEST_K8S_BASE64_KUBECONFIG | base64 -d -w0 > $KUBECONFIG
-bats -r $project_dir/tests -f '^\[k8s\]' $bats_jobs_option
 

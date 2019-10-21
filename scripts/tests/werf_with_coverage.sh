@@ -6,7 +6,7 @@ project_bin_tests_dir=$project_dir/bin/tests
 
 generate_binary() {
     cd $project_dir
-    go test -tags "dfrunmount dfssh integration" -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o $project_bin_tests_dir/werf.test
+    go test -tags "dfrunmount dfssh integration_coverage" -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o $project_bin_tests_dir/werf.test
 
     cat <<'EOF' > $project_bin_tests_dir/werf
 #!/bin/bash

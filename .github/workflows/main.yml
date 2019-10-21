@@ -100,6 +100,7 @@ jobs:
       run: |
         ./scripts/tests/werf_with_coverage.sh
         ./scripts/ci/crane.sh
+        ./scripts/ci/ginkgo.sh
 
     - name: Upload test tools artifact
       uses: actions/upload-artifact@master
@@ -141,7 +142,8 @@ jobs:
         chmod +x \
           bin/tests/werf \
           bin/tests/werf.test \
-          bin/tests/crane
+          bin/tests/crane \
+          bin/tests/ginkgo
 
         echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
 
@@ -150,7 +152,9 @@ jobs:
         ./scripts/ci/git.sh
 
     - name: Test
-      run: WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
+      run: |
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration -p -r integration
+        WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
@@ -194,7 +198,8 @@ jobs:
         chmod +x \
           bin/tests/werf \
           bin/tests/werf.test \
-          bin/tests/crane
+          bin/tests/crane \
+          bin/tests/ginkgo
 
         echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
 
@@ -212,7 +217,9 @@ jobs:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1.16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
 
     - name: Test
-      run: ./scripts/ci/integration_k8s_tests.sh 5
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration_k8s -p -r integration
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
