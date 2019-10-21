@@ -27,8 +27,11 @@ class LiveStdoutListener(object):
 
     def stop(self):
         self._stop = True
-        self._reader.stop()
-        self._reader.join(10)
+
+        if self._reader != None:
+            self._reader.stop()
+            self._reader.join(10)
+
         self._stdout_sock.close()
         os.unlink(STDOUT_UNIX_SOCK_NAME)
 
