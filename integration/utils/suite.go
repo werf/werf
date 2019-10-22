@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 
 	. "github.com/onsi/gomega"
@@ -12,7 +14,19 @@ import (
 )
 
 func GetTempDir() (string, error) {
-	return ioutil.TempDir("", "werf-integration-tests-")
+	dir, err := ioutil.TempDir("", "werf-integration-tests-")
+	if err != nil {
+		return "", err
+	}
+
+	if runtime.GOOS == "darwin" {
+		dir, err = filepath.EvalSymlinks(dir)
+		if err != nil {
+			return "", fmt.Errorf("eval symlinks of path %s failed: %s", dir, err)
+		}
+	}
+
+	return dir, nil
 }
 
 func ProcessWerfBinPath() string {

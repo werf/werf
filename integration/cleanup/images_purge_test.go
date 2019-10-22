@@ -19,7 +19,7 @@ var _ = Describe("images purge command", func() {
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
-		utils.CreateSimpleWerfYaml(testDirPath)
+		utils.CopyIn(fixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

@@ -1,0 +1,15 @@
+project: none
+configVersion: 1
+---
+image: ~
+from: ubuntu
+import:
+- artifact: test
+  add: /app
+  to: /app
+  after: setup
+---
+artifact: test
+from: ubuntu
+git:
+- to: /app

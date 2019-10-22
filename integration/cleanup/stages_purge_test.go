@@ -16,7 +16,7 @@ var _ = Describe("stages purge command", func() {
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
-		utils.CreateSimpleWerfYaml(testDirPath)
+		utils.CopyIn(fixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

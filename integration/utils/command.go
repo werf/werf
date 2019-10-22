@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -34,4 +35,8 @@ func SucceedCommandOutput(dir, command string, args ...string) string {
 	res, err := cmd.CombinedOutput()
 	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
 	return string(res)
+}
+
+func ShelloutPack(command string) string {
+	return fmt.Sprintf("eval $(echo %s | base64 --decode)", base64.StdEncoding.EncodeToString([]byte(command)))
 }
