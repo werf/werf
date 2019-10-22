@@ -11,12 +11,16 @@ import (
 	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
-var _ = Describe("Guide/Getting started", func() {
+var _ = Describe("Getting started", func() {
 	var testDirPath string
 	var testName = "getting_started"
 
+	BeforeEach(func() {
+		testDirPath = tmpPath(testName)
+	})
+
 	AfterEach(func() {
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
@@ -24,9 +28,7 @@ var _ = Describe("Guide/Getting started", func() {
 	})
 
 	It("application should be built, checked and published", func() {
-		testDirPath = tmpPath(testName)
-
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			".",
 			"git",
 			"clone", "https://github.com/dockersamples/linux_tweet_app.git", testDirPath,
@@ -34,7 +36,7 @@ var _ = Describe("Guide/Getting started", func() {
 
 		utils.CopyIn(fixturePath(testName), testDirPath)
 
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"build", "-s", ":local",
@@ -43,7 +45,7 @@ var _ = Describe("Guide/Getting started", func() {
 		containerHostPort := utils.GetFreeTCPHostPort()
 		containerName := fmt.Sprintf("getting_started_%s", utils.GetRandomString(10))
 
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:80 --name %s", containerHostPort, containerName),
@@ -61,7 +63,7 @@ var _ = Describe("Guide/Getting started", func() {
 		defer func() { utilsDocker.ContainerStopAndRemove(registryContainerName) }()
 
 		registryRepositoryName := containerName
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"publish", "-s", ":local", "-i", fmt.Sprintf("%s/%s", registry, registryRepositoryName), "--tag-custom", "test",

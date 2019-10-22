@@ -1,4 +1,4 @@
-project: werf-test-getting-started
+project: none
 configVersion: 1
 ---
 image: ~

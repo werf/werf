@@ -68,6 +68,8 @@ type CmdData struct {
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
 
+	WithoutKube *bool
+
 	StagesToIntrospect *[]string
 
 	LogPretty        *bool
@@ -114,6 +116,11 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS")
 	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT")
 	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS")
+}
+
+func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.WithoutKube = new(bool)
+	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironment("WERF_WITHOUT_KUBE"), "Do not skip deployed kubernetes images (default $WERF_KUBE_CONTEXT)")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {

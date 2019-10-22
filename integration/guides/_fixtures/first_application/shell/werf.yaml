@@ -1,4 +1,4 @@
-project: werf-test-symfony-demo-shell
+project: none
 configVersion: 1
 ---
 image: ~

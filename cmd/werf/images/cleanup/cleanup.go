@@ -19,10 +19,6 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
-	WithoutKube bool
-}
-
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
@@ -62,7 +58,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	common.SetupWithoutKube(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -165,7 +161,7 @@ func runCleanup() error {
 		},
 		LocalGit:                  localRepo,
 		KubernetesContextsClients: kubernetesContextsClients,
-		WithoutKube:               CmdData.WithoutKube,
+		WithoutKube:               *CommonCmdData.WithoutKube,
 		Policies:                  policies,
 	}
 

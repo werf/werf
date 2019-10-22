@@ -2,23 +2,36 @@ package utils
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func RunCommand(dir, command string, args ...string) {
-	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
-	Ω(runCommand(dir, command, args...)).Should(Succeed(), errorDesc)
+func RunCommand(dir, command string, args ...string) ([]byte, error) {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
+
+	return cmd.CombinedOutput()
 }
 
-func runCommand(dir, bin string, args ...string) error {
-	cmd := exec.Command(bin, args...)
+func RunSucceedCommand(dir, command string, args ...string) {
+	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = GinkgoWriter
+	cmd.Stderr = GinkgoWriter
 
-	return cmd.Run()
+	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
+	Ω(cmd.Run()).ShouldNot(HaveOccurred(), errorDesc)
+}
+
+func SucceedCommandOutput(dir, command string, args ...string) string {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
+
+	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
+	res, err := cmd.CombinedOutput()
+	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
+	return string(res)
 }

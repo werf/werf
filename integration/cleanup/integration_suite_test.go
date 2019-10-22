@@ -1,20 +1,24 @@
 // +build integration integration_k8s
 
-package guides_test
+package cleanup_test
 
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
 	"github.com/flant/werf/integration/utils"
+	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
 func TestIntegration(t *testing.T) {
@@ -24,7 +28,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Guides Suite")
+	RunSpecs(t, "Integration Cleanup Suite")
 }
 
 var requiredSuiteTools = []string{"git", "docker"}
@@ -67,16 +71,11 @@ func fixturePath(paths ...string) string {
 	return filepath.Join(pathsToJoin...)
 }
 
-func waitTillHostReadyAndCheckResponseBody(url string, maxAttempts int, bodySubstring string) {
-	utils.WaitTillHostReadyToRespond(url, maxAttempts)
-
-	resp, err := http.Get(url)
+func LocalProjectStagesCount() int {
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", strings.Join([]string{"werf-stages-storage", os.Getenv("WERF_PROJECT_NAME")}, "/"))
+	options := types.ImageListOptions{Filters: filterSet}
+	images, err := utilsDocker.Images(options)
 	Ω(err).ShouldNot(HaveOccurred())
-	defer func() { _ = resp.Body.Close() }()
-
-	Ω(resp.StatusCode).Should(Equal(200))
-
-	body, err := ioutil.ReadAll(resp.Body)
-	Ω(err).ShouldNot(HaveOccurred())
-	Ω(string(body)).Should(ContainSubstring(bodySubstring))
+	return len(images)
 }

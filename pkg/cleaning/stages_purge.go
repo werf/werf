@@ -22,7 +22,7 @@ func stagesPurge(options StagesPurgeOptions) error {
 	commonProjectOptions.ProjectName = options.ProjectName
 	commonProjectOptions.CommonOptions = CommonOptions{
 		RmiForce:                      true,
-		RmForce:                       false,
+		RmForce:                       options.RmContainersThatUseWerfImages,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
 	}

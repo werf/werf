@@ -11,12 +11,17 @@ import (
 	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
-var _ = Describe("Guide/Advanced build/Artifacts", func() {
+var _ = Describe("Advanced build/Artifacts", func() {
 	var testDirPath string
 	var testName = "artifacts"
 
+	BeforeEach(func() {
+		testDirPath = tmpPath(testName)
+		utils.CopyIn(fixturePath(testName), testDirPath)
+	})
+
 	AfterEach(func() {
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
@@ -24,11 +29,7 @@ var _ = Describe("Guide/Advanced build/Artifacts", func() {
 	})
 
 	It("application should be built and checked", func() {
-		testDirPath = tmpPath(testName)
-
-		utils.CopyIn(fixturePath(testName), testDirPath)
-
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"build", "-s", ":local",
@@ -36,7 +37,7 @@ var _ = Describe("Guide/Advanced build/Artifacts", func() {
 
 		containerHostPort := utils.GetFreeTCPHostPort()
 		containerName := fmt.Sprintf("go_booking_artifacts_%s", utils.GetRandomString(10))
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:9000 --name %s", containerHostPort, containerName), "go-booking", "--", "/app/run.sh",

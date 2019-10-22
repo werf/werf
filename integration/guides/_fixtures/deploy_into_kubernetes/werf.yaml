@@ -1,4 +1,4 @@
-project: {{ env "WERF_TEST_K8S_PROJECT_NAME" }}
+project: none
 configVersion: 1
 ---
 image: ~
