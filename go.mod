@@ -52,6 +52,7 @@ require (
 	github.com/hashicorp/uuid v0.0.0-20160311170451-ebb0a03e909c // indirect
 	github.com/ishidawataru/sctp v0.0.0-20180213033435-07191f837fed // indirect
 	github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63
+	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/moby/buildkit v0.3.3
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
@@ -62,6 +63,7 @@ require (
 	github.com/otiai10/copy v1.0.1
 	github.com/pkg/profile v1.2.1 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3

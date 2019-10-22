@@ -11,12 +11,12 @@ import (
 	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
-var _ = Describe("Guide/Advanced build/First application", func() {
+var _ = Describe("Advanced build/First application", func() {
 	var testDirPath string
 	var testName = "first_application"
 
 	AfterEach(func() {
-		utils.RunCommand(
+		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
@@ -29,7 +29,7 @@ var _ = Describe("Guide/Advanced build/First application", func() {
 		It(fmt.Sprintf("%s application should be built, checked and published", boundedBuilder), func() {
 			testDirPath = tmpPath(testName, boundedBuilder)
 
-			utils.RunCommand(
+			utils.RunSucceedCommand(
 				".",
 				"git",
 				"clone", "https://github.com/symfony/symfony-demo.git", testDirPath,
@@ -37,7 +37,7 @@ var _ = Describe("Guide/Advanced build/First application", func() {
 
 			utils.CopyIn(fixturePath(testName, boundedBuilder), testDirPath)
 
-			utils.RunCommand(
+			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
 				"build", "-s", ":local",
@@ -45,7 +45,7 @@ var _ = Describe("Guide/Advanced build/First application", func() {
 
 			containerHostPort := utils.GetFreeTCPHostPort()
 			containerName := fmt.Sprintf("symfony_demo_%s_%s", boundedBuilder, utils.GetRandomString(10))
-			utils.RunCommand(
+			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
 				"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:8000 --name %s", containerHostPort, containerName), "--", "/app/start.sh",
@@ -63,7 +63,7 @@ var _ = Describe("Guide/Advanced build/First application", func() {
 			defer func() { utilsDocker.ContainerStopAndRemove(registryContainerName) }()
 
 			registryRepositoryName := containerName
-			utils.RunCommand(
+			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
 				"publish", "-s", ":local", "-i", fmt.Sprintf("%s/%s", registry, registryRepositoryName), "--tag-custom", "test",

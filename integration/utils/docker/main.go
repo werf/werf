@@ -1,44 +1,56 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
+	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/flags"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/integration/utils"
 )
 
 var cli *command.DockerCli
+var apiClient *client.Client
 
 func init() {
 	if err := initCli(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init docker cli failed: %s\n", err)
 		os.Exit(1)
 	}
+
+	if err := initApiClient(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "init docker api client failed: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func initCli() error {
 	cliOpts := []command.DockerCliOption{
-		command.WithStandardStreams(),
 		command.WithContentTrust(false),
+		command.WithOutputStream(GinkgoWriter),
+		command.WithErrorStream(GinkgoWriter),
 	}
+
+	logrus.SetOutput(GinkgoWriter)
 
 	newCli, err := command.NewDockerCli(cliOpts...)
 	if err != nil {
 		return err
 	}
-
-	newCli.Out().SetIsTerminal(terminal.IsTerminal(int(os.Stdout.Fd())))
-	newCli.In().SetIsTerminal(terminal.IsTerminal(int(os.Stdin.Fd())))
 
 	opts := flags.NewClientOptions()
 	if err := newCli.Initialize(opts); err != nil {
@@ -46,6 +58,17 @@ func initCli() error {
 	}
 
 	cli = newCli
+
+	return nil
+}
+
+func initApiClient() error {
+	ctx := context.Background()
+	serverVersion, err := cli.Client().ServerVersion(ctx)
+	apiClient, err = client.NewClientWithOpts(client.WithVersion(serverVersion.APIVersion))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -80,42 +103,52 @@ func LocalDockerRegistryRun() (string, string) {
 
 func CliRun(args ...string) error {
 	cmd := container.NewRunCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmdExecute(cmd, args)
 }
 
 func CliRm(args ...string) error {
 	cmd := container.NewRmCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmdExecute(cmd, args)
 }
 
 func CliStop(args ...string) error {
 	cmd := container.NewStopCommand(cli)
+	return cmdExecute(cmd, args)
+}
+
+func CliPull(args ...string) error {
+	cmd := image.NewPullCommand(cli)
+	return cmdExecute(cmd, args)
+}
+
+func CliPush(args ...string) error {
+	cmd := image.NewPushCommand(cli)
+	return cmdExecute(cmd, args)
+}
+
+func CliTag(args ...string) error {
+	cmd := image.NewTagCommand(cli)
+	return cmdExecute(cmd, args)
+}
+
+func CliRmi(args ...string) error {
+	cmd := image.NewRemoveCommand(cli)
+	return cmdExecute(cmd, args)
+}
+
+func cmdExecute(cmd *cobra.Command, args []string) error {
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
+	return cmd.Execute()
+}
 
-	err := cmd.Execute()
+func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
+	ctx := context.Background()
+	images, err := apiClient.ImageList(ctx, options)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return images, nil
 }

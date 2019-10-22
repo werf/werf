@@ -1,7 +1,8 @@
-project: werf-test-stages-purge
+project: none
 configVersion: 1
 ---
 image: ~
 from: alpine
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   setup: date
