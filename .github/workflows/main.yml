@@ -134,11 +134,11 @@ jobs:
 #      if: matrix.os == 'windows-latest'
 
     - name: Test (ubuntu-latest, macOS-latest)
-      run: go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=$WERF_TEST_COVERAGE_DIR/coverage.out ./...
+      run: go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=$WERF_TEST_COVERAGE_DIR/coverage.out ./cmd/... ./pkg/...
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
     - name: Test (windows-latest)
-      run: go test -tags "dfrunmount dfssh" ./...
+      run: go test -tags "dfrunmount dfssh" ./cmd/... ./pkg/...
       if: matrix.os == 'windows-latest'
 
     - name: Upload coverage artifact (ubuntu-latest, macOS-latest)
