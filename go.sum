@@ -180,6 +180,16 @@ github.com/flant/helm v0.0.0-20191011121808-548765548d52 h1:upVBPaJI2x4A8P3yIxxE
 github.com/flant/helm v0.0.0-20191011121808-548765548d52/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
 github.com/flant/helm v0.0.0-20191017134624-c4061266c309 h1:OtFdJ4SsJezqFEpX2ft2Q/p6IJmWyZGPmiDKwhcVBX4=
 github.com/flant/helm v0.0.0-20191017134624-c4061266c309/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
+github.com/flant/helm v0.0.0-20191024160456-259c6308fddb h1:ZYuy/JPUzpEmTHTCR+ZWfeZx9umtextBoFi0z+X01aw=
+github.com/flant/helm v0.0.0-20191024160456-259c6308fddb/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
+github.com/flant/helm v0.0.0-20191101162241-c65586790869 h1:vMYLR6m7qQyYwK85G58MkQEo5LQnZo+hI2vS8MP+GUY=
+github.com/flant/helm v0.0.0-20191101162241-c65586790869/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
+github.com/flant/helm v0.0.0-20191111093205-70e6eda19a90 h1:xxluXV2xSwrXXLubeF+YuzQVXo3SWjK9UxMCeb5nKag=
+github.com/flant/helm v0.0.0-20191111093205-70e6eda19a90/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
+github.com/flant/helm v0.0.0-20191111155056-4a61afe6bf10 h1:f3VWpoT09EBq/8WYovzeBweCzJU0okoeENqunib9s24=
+github.com/flant/helm v0.0.0-20191111155056-4a61afe6bf10/go.mod h1:FBJB9Ee3D1KsW2Q54spnyJAihmDmnHKRmVyKscC3++Y=
+github.com/flant/helm v0.0.0-20191113092127-64b7551164d6 h1:tjw08kbV1icd2jU65RUuG8bccJrYRPnXZ3MiZ4T2NOw=
+github.com/flant/helm v0.0.0-20191113092127-64b7551164d6/go.mod h1:8HfWC34vJLVKWk1DLpU9CS0nKa8k6N6H3coDnrX1Loo=
 github.com/flant/kubedog v0.3.5-0.20190923111717-5fda2f77f960 h1:RQaVATHub/MgDkqhQ2Zrsumxi73cyvNQt3bW82HFHx4=
 github.com/flant/kubedog v0.3.5-0.20190923111717-5fda2f77f960/go.mod h1:o9cSuE3Z/kgxKhLCLUGUc9vPOFQgmY0B+7bdOQq++7o=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d/go.mod h1:WirgB39yMTvPGKqrAE3zlsG/02of4rr5lXh1EiwO5P0=
