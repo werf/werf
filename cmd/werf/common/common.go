@@ -73,6 +73,8 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
+
+	ThreeWayMergeMode *string
 }
 
 const (
@@ -397,6 +399,29 @@ func allStagesNames() []string {
 	}
 
 	return stageNames
+}
+
+func SetupThreeWayMergeMode(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ThreeWayMergeMode = new(string)
+
+	modeEnvironmentValue := os.Getenv("WERF_THREE_WAY_MERGE_MODE")
+
+	defaultValue := ""
+	if modeEnvironmentValue != "" {
+		defaultValue = modeEnvironmentValue
+	}
+
+	cmd.Flags().StringVarP(cmdData.ThreeWayMergeMode, "three-way-merge-mode", "", defaultValue, `Set three way merge mode for release.
+Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html`)
+}
+
+func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeModeType, error) {
+	switch threeWayMergeModeParam {
+	case "enabled", "disabled", "onlyNewReleases", "":
+		return helm.ThreeWayMergeModeType(threeWayMergeModeParam), nil
+	}
+
+	return "", fmt.Errorf("bad three-way-merge-mode '%s': enabled, disabled or  onlyNewReleases modes can be specified", threeWayMergeModeParam)
 }
 
 func GetBoolEnvironment(environmentName string) bool {
