@@ -54,6 +54,8 @@ var _ = BeforeEach(func() {
 var _ = AfterEach(func() {
 	err := os.RemoveAll(tmpDir)
 	Ω(err).ShouldNot(HaveOccurred())
+
+	utils.ResetEnviron()
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {

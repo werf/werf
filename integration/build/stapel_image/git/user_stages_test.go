@@ -81,11 +81,6 @@ var _ = Describe("user stages", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
 				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
-
-				Ω(os.Setenv("BEFORE_INSTALL_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("INSTALL_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("BEFORE_SETUP_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("SETUP_CACHE_VERSION", "0")).Should(Succeed())
 			})
 
 			Context("when gitArchive stage is built", func() {
@@ -254,11 +249,6 @@ var _ = Describe("user stages", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
 				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
-
-				Ω(os.Setenv("BEFORE_INSTALL_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("INSTALL_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("BEFORE_SETUP_CACHE_VERSION", "0")).Should(Succeed())
-				Ω(os.Setenv("SETUP_CACHE_VERSION", "0")).Should(Succeed())
 			})
 
 			Context("when gitArchive stage is built", func() {
