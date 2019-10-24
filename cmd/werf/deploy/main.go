@@ -101,6 +101,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupSecretValues(&CommonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
 
+	common.SetupThreeWayMergeMode(&CommonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
 	return cmd
@@ -120,6 +122,11 @@ func runDeploy() error {
 	}
 
 	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	if err != nil {
+		return err
+	}
+
+	threeWayMergeMode, err := common.GetThreeWayMergeMode(*CommonCmdData.ThreeWayMergeMode)
 	if err != nil {
 		return err
 	}
@@ -255,5 +262,6 @@ func runDeploy() error {
 		UserExtraAnnotations: userExtraAnnotations,
 		UserExtraLabels:      userExtraLabels,
 		IgnoreSecretKey:      *CommonCmdData.IgnoreSecretKey,
+		ThreeWayMergeMode:    threeWayMergeMode,
 	})
 }
