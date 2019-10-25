@@ -13,10 +13,9 @@ import (
 
 var _ = Describe("stages purge command", func() {
 	var testDirPath string
-	var testName = "stages_purge"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
+		testDirPath = tmpPath()
 		utils.CreateSimpleWerfYaml(testDirPath)
 
 		utils.RunSucceedCommand(

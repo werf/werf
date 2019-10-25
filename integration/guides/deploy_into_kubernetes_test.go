@@ -13,7 +13,6 @@ import (
 
 var _ = Describe("Getting started", func() {
 	var testDirPath string
-	var testName = "deploy_into_kubernetes"
 
 	requiredSuiteEnvs = append(
 		requiredSuiteEnvs,
@@ -23,8 +22,8 @@ var _ = Describe("Getting started", func() {
 	)
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
-		utils.CopyIn(fixturePath(testName), testDirPath)
+		testDirPath = tmpPath()
+		utils.CopyIn(fixturePath("deploy_into_kubernetes"), testDirPath)
 	})
 
 	AfterEach(func() {
@@ -42,7 +41,7 @@ var _ = Describe("Getting started", func() {
 			"build", "-s", ":local",
 		)
 
-		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), testName)
+		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), "deploy_into_kubernetes")
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,

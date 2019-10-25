@@ -13,10 +13,9 @@ import (
 
 var _ = Describe("Advanced build/Multi images", func() {
 	var testDirPath string
-	var testName = "multi_images"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
+		testDirPath = tmpPath()
 	})
 
 	AfterEach(func() {
@@ -34,7 +33,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 			"clone", "https://github.com/dockersamples/atsea-sample-shop-app.git", testDirPath,
 		)
 
-		utils.CopyIn(fixturePath(testName), testDirPath)
+		utils.CopyIn(fixturePath("multi_images"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

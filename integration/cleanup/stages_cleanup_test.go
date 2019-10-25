@@ -17,11 +17,10 @@ import (
 var _ = Describe("stages cleanup command", func() {
 	var testDirPath string
 	var registry, registryRepository, registryContainerName string
-	var testName = "stages_cleanup"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
-		utils.CopyIn(fixturePath(testName), testDirPath)
+		testDirPath = tmpPath()
+		utils.CopyIn(fixturePath("stages_cleanup"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

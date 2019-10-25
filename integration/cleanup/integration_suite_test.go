@@ -4,7 +4,6 @@ package cleanup_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,7 +45,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 
 var _ = BeforeEach(func() {
 	var err error
-	tmpDir, err = ioutil.TempDir("", "werf-integration-tests")
+	tmpDir, err = utils.GetTempDir()
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.BeforeEachOverrideWerfProjectName()

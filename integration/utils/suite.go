@@ -2,12 +2,17 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
+
+func GetTempDir() (string, error) {
+	return ioutil.TempDir("", "werf-integration-tests-")
+}
 
 func ProcessWerfBinPath() string {
 	path := os.Getenv("WERF_TEST_WERF_BINARY_PATH")

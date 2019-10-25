@@ -13,7 +13,10 @@ import (
 
 var _ = Describe("Advanced build/First application", func() {
 	var testDirPath string
-	var testName = "first_application"
+
+	BeforeEach(func() {
+		testDirPath = tmpPath()
+	})
 
 	AfterEach(func() {
 		utils.RunSucceedCommand(
@@ -23,19 +26,17 @@ var _ = Describe("Advanced build/First application", func() {
 		)
 	})
 
-	for _, elm := range []string{"shell", "ansible"} {
-		boundedBuilder := elm
+	for _, builder := range []string{"shell", "ansible"} {
+		boundedBuilder := builder
 
 		It(fmt.Sprintf("%s application should be built, checked and published", boundedBuilder), func() {
-			testDirPath = tmpPath(testName, boundedBuilder)
-
 			utils.RunSucceedCommand(
 				".",
 				"git",
 				"clone", "https://github.com/symfony/symfony-demo.git", testDirPath,
 			)
 
-			utils.CopyIn(fixturePath(testName, boundedBuilder), testDirPath)
+			utils.CopyIn(fixturePath("first_application", boundedBuilder), testDirPath)
 
 			utils.RunSucceedCommand(
 				testDirPath,

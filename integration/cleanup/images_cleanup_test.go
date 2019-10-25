@@ -16,10 +16,9 @@ import (
 var _ = Describe("images cleanup command", func() {
 	var testDirPath string
 	var registry, registryRepository, registryContainerName string
-	var testName = "images_cleanup"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
+		testDirPath = tmpPath()
 		utils.CreateSimpleWerfYaml(testDirPath)
 
 		utils.RunSucceedCommand(
