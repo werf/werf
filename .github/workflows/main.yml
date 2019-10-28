@@ -52,7 +52,7 @@ jobs:
     - name: Upload test tools artifact (ubuntu-latest, macOS-latest)
       uses: actions/upload-artifact@master
       with:
-        name: integration_tests_tools
+        name: integration_tests_tools_${{ matrix.os }}
         path: bin/tests
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
@@ -181,7 +181,7 @@ jobs:
     - name: Download test tools artifact
       uses: actions/download-artifact@master
       with:
-        name: integration_tests_tools
+        name: integration_tests_tools_${{ matrix.os }}
         path: bin/tests
       if: matrix.os == 'ubuntu-latest'
 
@@ -249,7 +249,7 @@ jobs:
     - name: Download test tools artifact
       uses: actions/download-artifact@master
       with:
-        name: integration_tests_tools
+        name: integration_tests_tools_${{ matrix.os }}
         path: bin/tests
       if: matrix.os == 'ubuntu-latest'
 
