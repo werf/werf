@@ -1,11 +1,9 @@
 // +build integration integration_k8s
 
-package guides_test
+package git
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,6 +15,8 @@ import (
 	"github.com/flant/werf/integration/utils"
 )
 
+const gitCacheSizeStep = 1024 * 1024
+
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
 		fmt.Println("Missing required tools")
@@ -24,7 +24,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Guides Suite")
+	RunSpecs(t, "Integration Build/Stapel Image/Git Suite")
 }
 
 var requiredSuiteTools = []string{"git", "docker"}
@@ -69,16 +69,26 @@ func fixturePath(paths ...string) string {
 	return filepath.Join(pathsToJoin...)
 }
 
-func waitTillHostReadyAndCheckResponseBody(url string, maxAttempts int, bodySubstring string) {
-	utils.WaitTillHostReadyToRespond(url, maxAttempts)
+func commonBeforeEach(testDirPath, fixturePath string) {
+	utils.CopyIn(fixturePath, testDirPath)
 
-	resp, err := http.Get(url)
-	Ω(err).ShouldNot(HaveOccurred())
-	defer func() { _ = resp.Body.Close() }()
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"init",
+	)
 
-	Ω(resp.StatusCode).Should(Equal(200))
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"add", "werf.yaml",
+	)
 
-	body, err := ioutil.ReadAll(resp.Body)
-	Ω(err).ShouldNot(HaveOccurred())
-	Ω(string(body)).Should(ContainSubstring(bodySubstring))
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"commit", "-m", "Initial commit",
+	)
+
+	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 }

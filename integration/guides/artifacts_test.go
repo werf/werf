@@ -13,11 +13,10 @@ import (
 
 var _ = Describe("Advanced build/Artifacts", func() {
 	var testDirPath string
-	var testName = "artifacts"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
-		utils.CopyIn(fixturePath(testName), testDirPath)
+		testDirPath = tmpPath()
+		utils.CopyIn(fixturePath("artifacts"), testDirPath)
 	})
 
 	AfterEach(func() {

@@ -13,10 +13,9 @@ import (
 
 var _ = Describe("Getting started", func() {
 	var testDirPath string
-	var testName = "getting_started"
 
 	BeforeEach(func() {
-		testDirPath = tmpPath(testName)
+		testDirPath = tmpPath()
 	})
 
 	AfterEach(func() {
@@ -34,7 +33,7 @@ var _ = Describe("Getting started", func() {
 			"clone", "https://github.com/dockersamples/linux_tweet_app.git", testDirPath,
 		)
 
-		utils.CopyIn(fixturePath(testName), testDirPath)
+		utils.CopyIn(fixturePath("getting_started"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

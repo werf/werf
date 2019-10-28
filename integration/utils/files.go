@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"io"
 	"io/ioutil"
 	"os"
@@ -42,21 +41,7 @@ func CopyIn(sourcePath, destinationPath string) {
 	}
 }
 
-func CreateSimpleWerfYaml(path string) {
-	err := os.MkdirAll(path, 0777)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	werfYamlPath := filepath.Join(path, "werf.yaml")
-	data := []byte(`
-project: none
-configVersion: 1
----
-image: ~
-from: alpine
-shell:
-  setup: date
-	`)
-
-	err = ioutil.WriteFile(werfYamlPath, bytes.TrimSpace(data), 0644)
-	Ω(err).ShouldNot(HaveOccurred())
+func CreateFile(path string, data []byte) {
+	Ω(os.MkdirAll(filepath.Dir(path), 0777)).Should(Succeed())
+	Ω(ioutil.WriteFile(path, data, 0644)).Should(Succeed())
 }

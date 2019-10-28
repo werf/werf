@@ -2,12 +2,33 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
+
+func GetTempDir() (string, error) {
+	dir, err := ioutil.TempDir("", "werf-integration-tests-")
+	if err != nil {
+		return "", err
+	}
+
+	if runtime.GOOS == "darwin" {
+		dir, err = filepath.EvalSymlinks(dir)
+		if err != nil {
+			return "", fmt.Errorf("eval symlinks of path %s failed: %s", dir, err)
+		}
+	}
+
+	return dir, nil
+}
 
 func ProcessWerfBinPath() string {
 	path := os.Getenv("WERF_TEST_WERF_BINARY_PATH")
@@ -21,7 +42,7 @@ func ProcessWerfBinPath() string {
 }
 
 func BeforeEachOverrideWerfProjectName() {
-	projectName := "werf-integration-test-" + GetRandomString(10)
+	projectName := "werf-integration-test-" + strconv.Itoa(os.Getpid()) + "-" + GetRandomString(10)
 	Ω(os.Setenv("WERF_PROJECT_NAME", projectName)).ShouldNot(HaveOccurred())
 }
 
@@ -44,4 +65,14 @@ func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
 	}
 
 	return hasRequirements
+}
+
+var environ = os.Environ()
+
+func ResetEnviron() {
+	os.Clearenv()
+	for _, env := range environ {
+		parts := strings.SplitN(env, "=", 2)
+		Ω(os.Setenv(parts[0], parts[1])).Should(Succeed())
+	}
 }
