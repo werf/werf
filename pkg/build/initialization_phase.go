@@ -115,7 +115,7 @@ func handleImageFromName(from string, fromLatest bool, image *Image, c *Conveyor
 	image.baseImageName = from
 
 	if fromLatest {
-		if _, err := image.getFromBaseImageIdFromRegistry(c); err != nil {
+		if _, err := image.getFromBaseImageIdFromRegistry(c, image.baseImageName); err != nil {
 			return err
 		}
 	}
