@@ -78,6 +78,31 @@ func ContainerStopAndRemove(containerName string) {
 	Ω(CliRm(containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
 }
 
+func ImageRemoveIfExists(imageName string) {
+	_, err := imageInspect(imageName)
+	if err == nil {
+		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+	} else {
+		if !strings.HasPrefix(err.Error(), "Error: No such image") {
+			Ω(err).ShouldNot(HaveOccurred())
+		}
+	}
+}
+
+func ImageParent(imageName string) string {
+	return ImageInspect(imageName).Parent
+}
+
+func ImageID(imageName string) string {
+	return ImageInspect(imageName).ID
+}
+
+func ImageInspect(imageName string) *types.ImageInspect {
+	inspect, err := imageInspect(imageName)
+	Ω(err).ShouldNot(HaveOccurred())
+	return inspect
+}
+
 func LocalDockerRegistryRun() (string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
 	imageName := "registry"
@@ -151,4 +176,14 @@ func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
 	}
 
 	return images, nil
+}
+
+func imageInspect(ref string) (*types.ImageInspect, error) {
+	ctx := context.Background()
+	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return &inspect, nil
 }
