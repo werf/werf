@@ -771,18 +771,9 @@ func LogVersion() {
 }
 
 func TerminateWithError(errMsg string, exitCode int) {
-	_ = logboek.WithoutIndent(func() error {
-		msg := fmt.Sprintf("Error: %s", errMsg)
-		msg = strings.TrimSuffix(msg, "\n")
+	msg := fmt.Sprintf("Error: %s", errMsg)
+	msg = strings.TrimSuffix(msg, "\n")
 
-		_ = logboek.WithFitMode(false, func() error {
-			logboek.LogErrorLn(msg)
-
-			return nil
-		})
-
-		return nil
-	})
-
+	_, _ = fmt.Fprintln(os.Stderr, logboek.ColorizeWarning(msg))
 	os.Exit(exitCode)
 }
