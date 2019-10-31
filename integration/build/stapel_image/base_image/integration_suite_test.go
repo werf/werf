@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -13,6 +14,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"github.com/flant/werf/integration/utils"
+	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
 func TestIntegration(t *testing.T) {
@@ -30,12 +32,20 @@ var requiredSuiteEnvs []string
 
 var tmpDir string
 var werfBinPath string
+var registry, registryContainerName string
+var registryProjectRepository string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	pathToWerf := utils.ProcessWerfBinPath()
-	return []byte(pathToWerf)
+	computedPathToWerf := utils.ProcessWerfBinPath()
+	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
 	werfBinPath = string(computedPathToWerf)
+	registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
+})
+
+var _ = SynchronizedAfterSuite(func() {}, func() {
+	gexec.CleanupBuildArtifacts()
+	utilsDocker.ContainerStopAndRemove(registryContainerName)
 })
 
 var _ = BeforeEach(func() {
@@ -44,6 +54,8 @@ var _ = BeforeEach(func() {
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.BeforeEachOverrideWerfProjectName()
+
+	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
 })
 
 var _ = AfterEach(func() {
@@ -51,10 +63,6 @@ var _ = AfterEach(func() {
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.ResetEnviron()
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
 })
 
 func tmpPath(paths ...string) string {

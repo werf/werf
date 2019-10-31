@@ -19,7 +19,6 @@ import (
 
 var _ = Describe("from and from latest", func() {
 	var testDirPath string
-	var registry, registryRepository, registryContainerName string
 	var fromBaseRepoImageState1ID, fromBaseRepoImageState2ID string
 
 	fromBaseRepoImageState1IDFunc := func() string { return fromBaseRepoImageState1ID }
@@ -30,18 +29,15 @@ var _ = Describe("from and from latest", func() {
 
 	registryProjectRepositoryLatestAs := func(imageName string) {
 		Ω(utilsDocker.CliPull(imageName)).Should(Succeed(), "docker pull")
-		Ω(utilsDocker.CliTag(imageName, registryRepository)).Should(Succeed(), "docker tag")
-		Ω(utilsDocker.CliPush(registryRepository)).Should(Succeed(), "docker push")
-		Ω(utilsDocker.CliRmi(registryRepository)).Should(Succeed(), "docker rmi")
+		Ω(utilsDocker.CliTag(imageName, registryProjectRepository)).Should(Succeed(), "docker tag")
+		Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
+		Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
 	}
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
 
 		utils.CopyIn(fixturePath("from_and_from_latest"), testDirPath)
-
-		registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
-		registryRepository = strings.Join([]string{registry, "test"}, "/")
 
 		Ω(utilsDocker.CliPull(state1Image)).Should(Succeed(), "docker pull")
 		Ω(utilsDocker.CliPull(state2Image)).Should(Succeed(), "docker pull")
@@ -52,13 +48,12 @@ var _ = Describe("from and from latest", func() {
 		registryProjectRepositoryLatestAs(state2Image)
 
 		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
-		Ω(os.Setenv("FROM_IMAGE", registryRepository))
+		Ω(os.Setenv("FROM_IMAGE", registryProjectRepository))
 		Ω(os.Setenv("FROM_LATEST", "false"))
 	})
 
 	AfterEach(func() {
-		utilsDocker.ContainerStopAndRemove(registryContainerName)
-		utilsDocker.ImageRemoveIfExists(registryRepository)
+		utilsDocker.ImageRemoveIfExists(registryProjectRepository)
 
 		utils.RunSucceedCommand(
 			testDirPath,
@@ -98,7 +93,7 @@ var _ = Describe("from and from latest", func() {
 	Context("when from stage is not built", func() {
 		Context("when local from image is actual", func() {
 			BeforeEach(func() {
-				Ω(utilsDocker.CliPull(registryRepository)).Should(Succeed(), "docker pull")
+				Ω(utilsDocker.CliPull(registryProjectRepository)).Should(Succeed(), "docker pull")
 			})
 
 			DescribeTable("checking from stage logic",
@@ -152,7 +147,7 @@ var _ = Describe("from and from latest", func() {
 			Context("when from image exists locally", func() {
 				BeforeEach(func() {
 					Ω(utilsDocker.CliPull(state1Image)).Should(Succeed(), "docker pull")
-					Ω(utilsDocker.CliTag(state1Image, registryRepository)).Should(Succeed(), "docker tag")
+					Ω(utilsDocker.CliTag(state1Image, registryProjectRepository)).Should(Succeed(), "docker tag")
 				})
 
 				DescribeTable("checking from stage logic",
@@ -207,7 +202,7 @@ var _ = Describe("from and from latest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt, without checking registry (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliPull(registryRepository)).Should(Succeed(), "docker pull")
+						Ω(utilsDocker.CliPull(registryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: false,
@@ -221,7 +216,7 @@ var _ = Describe("from and from latest", func() {
 				}),
 				Entry("should not be rebuilt, with checking registry (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliPull(registryRepository)).Should(Succeed(), "docker pull")
+						Ω(utilsDocker.CliPull(registryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: true,
@@ -241,7 +236,7 @@ var _ = Describe("from and from latest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt, without checking registry (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(registryRepository)).Should(Succeed(), "docker rmi")
+						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(state1Image)
 					},
 					entry: entry{
@@ -256,7 +251,7 @@ var _ = Describe("from and from latest", func() {
 				}),
 				Entry("should be rebuilt with getting id and pulling (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(registryRepository)).Should(Succeed(), "docker rmi")
+						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(state1Image)
 					},
 					entry: entry{

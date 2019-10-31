@@ -34,8 +34,8 @@ var tmpDir string
 var werfBinPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	pathToWerf := utils.ProcessWerfBinPath()
-	return []byte(pathToWerf)
+	computedPathToWerf := utils.ProcessWerfBinPath()
+	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
 	werfBinPath = string(computedPathToWerf)
 })

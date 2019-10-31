@@ -60,14 +60,10 @@ var _ = Describe("Advanced build/First application", func() {
 				"Symfony Demo application",
 			)
 
-			registry, registryContainerName := utilsDocker.LocalDockerRegistryRun()
-			defer func() { utilsDocker.ContainerStopAndRemove(registryContainerName) }()
-
-			registryRepositoryName := containerName
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"publish", "-s", ":local", "-i", fmt.Sprintf("%s/%s", registry, registryRepositoryName), "--tag-custom", "test",
+				"publish", "-s", ":local", "-i", registryProjectRepository, "--tag-custom", "test",
 			)
 		})
 	}

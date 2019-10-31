@@ -46,6 +46,10 @@ func BeforeEachOverrideWerfProjectName() {
 	Ω(os.Setenv("WERF_PROJECT_NAME", projectName)).ShouldNot(HaveOccurred())
 }
 
+func ProjectName() string {
+	return os.Getenv("WERF_PROJECT_NAME")
+}
+
 func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
 	hasRequirements := true
 	for _, tool := range requiredSuiteTools {
