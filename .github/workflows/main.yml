@@ -11,13 +11,11 @@ env:
 
 jobs:
 
-  prepare_go_modules_and_test_tools:
-    name: Prepare go modules and test tools
+  download_go_modules:
+    name: Download go modules
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macOS-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.12
@@ -29,36 +27,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Build
-      run: |
-        go get --tags "dfrunmount dfssh" ./...
+    - name: Download modules
+      run: go mod download
+      shell: bash
 
-        ./scripts/tests/werf_with_coverage.sh
-        ./scripts/ci/crane.sh
-        ./scripts/ci/ginkgo.sh
-
-    - name: Pack go modules (ubuntu-latest, macOS-latest)
-      run: tar -czvf go_modules.tar.gz -C ~/go/pkg/mod .
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+    - name: Pack go modules
+      run: tar -czvf go_modules.tar.gz -C $HOME/go/pkg/mod .
+      shell: bash
 
     # FIXME: https://github.community/t5/GitHub-Actions/Caching-files-between-GitHub-Action-executions/m-p/30974#M630
-    - name: Upload go modules artifact (ubuntu-latest, macOS-latest)
+    - name: Upload go modules artifact
       uses: actions/upload-artifact@master
       with:
-        name: go_modules_${{ matrix.os }}
+        name: go_modules
         path: go_modules.tar.gz
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-
-    - name: Upload test tools artifact (ubuntu-latest, macOS-latest)
-      uses: actions/upload-artifact@master
-      with:
-        name: integration_tests_tools_${{ matrix.os }}
-        path: bin/tests
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
   build:
     name: Build
-    needs: prepare_go_modules_and_test_tools
+    needs: download_go_modules
     strategy:
       fail-fast: false
       matrix:
@@ -72,26 +58,26 @@ jobs:
         go-version: 1.12
       id: go
 
-    - name: Download go modules artifact (ubuntu-latest, macOS-latest)
+    - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
-        name: go_modules_${{ matrix.os }}
+        name: go_modules
         path: .
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
-    - name: Unpack go modules (ubuntu-latest, macOS-latest)
-      run: mkdir -p ~/go/pkg/mod && tar -xzvf go_modules.tar.gz -C ~/go/pkg/mod
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+    - name: Unpack go modules
+      run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
+      shell: bash
 
     - name: Checkout code
       uses: actions/checkout@v1
 
     - name: Build
       run: go build -tags "dfrunmount dfssh" github.com/flant/werf/cmd/werf
+      shell: bash
 
   unit_tests:
     name: Unit tests
-    needs: prepare_go_modules_and_test_tools
+    needs: download_go_modules
     strategy:
       fail-fast: false
       matrix:
@@ -108,49 +94,36 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Download go modules artifact (ubuntu-latest, macOS-latest)
+    - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
-        name: go_modules_${{ matrix.os }}
+        name: go_modules
         path: .
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
-    - name: Unpack go modules (ubuntu-latest, macOS-latest)
-      run: mkdir -p ~/go/pkg/mod && tar -xzvf go_modules.tar.gz -C ~/go/pkg/mod
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+    - name: Unpack go modules
+      run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
+      shell: bash
 
-    - name: Prepare environment (ubuntu-latest, macOS-latest)
+    - name: Prepare environment
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/unit_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      shell: bash
 
-#    - name: Prepare environment (windows-latest)
-#      run: |
-#        SET WERF_TEST_COVERAGE_DIR=%GITHUB_WORKSPACE%\tests_coverage\unit_tests\${{ matrix.os }}
-#        mkdir -p %WERF_TEST_COVERAGE_DIR%
-#        echo ::set-env name=WERF_TEST_COVERAGE_DIR::%WERF_TEST_COVERAGE_DIR%
-#      if: matrix.os == 'windows-latest'
-
-    - name: Test (ubuntu-latest, macOS-latest)
+    - name: Test
       run: go test -tags "dfrunmount dfssh" -coverpkg=./... -coverprofile=$WERF_TEST_COVERAGE_DIR/coverage.out ./cmd/... ./pkg/...
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      shell: bash
 
-    - name: Test (windows-latest)
-      run: go test -tags "dfrunmount dfssh" ./cmd/... ./pkg/...
-      if: matrix.os == 'windows-latest'
-
-    - name: Upload coverage artifact (ubuntu-latest, macOS-latest)
+    - name: Upload coverage artifact
       uses: actions/upload-artifact@master
       with:
         name: tests_coverage
         path: tests_coverage
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
   integration_tests:
     name: Integration tests
-    needs: prepare_go_modules_and_test_tools
+    needs: download_go_modules
     strategy:
       fail-fast: false
       matrix:
@@ -170,20 +143,12 @@ jobs:
     - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
-        name: go_modules_${{ matrix.os }}
+        name: go_modules
         path: .
-      if: matrix.os == 'ubuntu-latest'
 
-    - name: Unpack go modules (ubuntu-latest)
-      run: mkdir -p ~/go/pkg/mod && tar -xzvf go_modules.tar.gz -C ~/go/pkg/mod
-      if: matrix.os == 'ubuntu-latest'
-
-    - name: Download test tools artifact
-      uses: actions/download-artifact@master
-      with:
-        name: integration_tests_tools_${{ matrix.os }}
-        path: bin/tests
-      if: matrix.os == 'ubuntu-latest'
+    - name: Unpack go modules
+      run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
+      shell: bash
 
     - name: Prepare environment
       run: |
@@ -191,22 +156,23 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        chmod +x \
-          bin/tests/werf \
-          bin/tests/werf.test \
-          bin/tests/crane \
-          bin/tests/ginkgo
-
-        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
-
         ./scripts/ci/bats.sh
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
+
+        go install github.com/onsi/ginkgo/ginkgo
+        go install github.com/google/go-containerregistry/cmd/crane # bats tests
+        echo "::add-path::$HOME/go/bin"
+
+        ./scripts/tests/werf_with_coverage.sh
+        echo "::add-path::$GITHUB_WORKSPACE/bin/tests"
+      shell: bash
 
     - name: Test
       run: |
         WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration -p -r integration
         WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
+      shell: bash
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
@@ -216,7 +182,7 @@ jobs:
 
   integration_k8s_tests:
     name: Integration k8s tests
-    needs: prepare_go_modules_and_test_tools
+    needs: download_go_modules
     strategy:
       fail-fast: false
       matrix:
@@ -238,20 +204,12 @@ jobs:
     - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
-        name: go_modules_${{ matrix.os }}
+        name: go_modules
         path: .
-      if: matrix.os == 'ubuntu-latest'
 
-    - name: Unpack go modules (ubuntu-latest)
-      run: mkdir -p ~/go/pkg/mod && tar -xzvf go_modules.tar.gz -C ~/go/pkg/mod
-      if: matrix.os == 'ubuntu-latest'
-
-    - name: Download test tools artifact
-      uses: actions/download-artifact@master
-      with:
-        name: integration_tests_tools_${{ matrix.os }}
-        path: bin/tests
-      if: matrix.os == 'ubuntu-latest'
+    - name: Unpack go modules
+      run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
+      shell: bash
 
     - name: Prepare environment
       run: |
@@ -259,19 +217,16 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        chmod +x \
-          bin/tests/werf \
-          bin/tests/werf.test \
-          bin/tests/crane \
-          bin/tests/ginkgo
-
-        echo ::set-env name=PATH::$GITHUB_WORKSPACE/bin/tests:$PATH
-
-        ./scripts/ci/bats.sh
-        ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
 
+        go install github.com/onsi/ginkgo/ginkgo
+        echo "::add-path::$HOME/go/bin"
+
+        ./scripts/tests/werf_with_coverage.sh
+        echo "::add-path::$GITHUB_WORKSPACE/bin/tests"
+
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_${{ matrix.k8s_version }})
+      shell: bash
       env:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1.11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1.12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
@@ -284,6 +239,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration_k8s -p -r integration
+      shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
