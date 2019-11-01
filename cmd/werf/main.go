@@ -36,6 +36,8 @@ import (
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
 	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
 
+	stage_image "github.com/flant/werf/cmd/werf/stage/image"
+
 	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
 	host_purge "github.com/flant/werf/cmd/werf/host/purge"
 
@@ -122,6 +124,7 @@ Find more information at https://werf.io`),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
 		docs.NewCmd(),
+		stageCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -165,6 +168,18 @@ func stagesCmd() *cobra.Command {
 		stages_build.NewCmd(),
 		stages_cleanup.NewCmd(),
 		stages_purge.NewCmd(),
+	)
+
+	return cmd
+}
+
+func stageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:    "stage",
+		Hidden: true,
+	}
+	cmd.AddCommand(
+		stage_image.NewCmd(),
 	)
 
 	return cmd

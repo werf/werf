@@ -5,18 +5,15 @@ package cleanup_test
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/integration/utils"
-	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
 var _ = Describe("stages cleanup command", func() {
 	var testDirPath string
-	var registry, registryRepository, registryContainerName string
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
@@ -40,18 +37,13 @@ var _ = Describe("stages cleanup command", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
-		registryRepository = strings.Join([]string{registry, "test"}, "/")
-
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryRepository)).Should(Succeed())
+		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
 		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 
 		Ω(os.Setenv("FROM_CACHE_VERSION", "x")).Should(Succeed())
 	})
 
 	AfterEach(func() {
-		utilsDocker.ContainerStopAndRemove(registryContainerName)
-
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,

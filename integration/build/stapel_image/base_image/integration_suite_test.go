@@ -1,11 +1,12 @@
 // +build integration integration_k8s
 
-package git
+package base_image
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -13,9 +14,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"github.com/flant/werf/integration/utils"
+	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
-
-const gitCacheSizeStep = 1024 * 1024
 
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
@@ -24,20 +24,28 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Build/Stapel Image/Git Suite")
+	RunSpecs(t, "Integration Build/Stapel Image/Base Image Suite")
 }
 
-var requiredSuiteTools = []string{"git", "docker"}
+var requiredSuiteTools = []string{"docker"}
 var requiredSuiteEnvs []string
 
 var tmpDir string
 var werfBinPath string
+var registry, registryContainerName string
+var registryProjectRepository string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
 	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
 	werfBinPath = string(computedPathToWerf)
+	registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
+})
+
+var _ = SynchronizedAfterSuite(func() {}, func() {
+	gexec.CleanupBuildArtifacts()
+	utilsDocker.ContainerStopAndRemove(registryContainerName)
 })
 
 var _ = BeforeEach(func() {
@@ -46,6 +54,8 @@ var _ = BeforeEach(func() {
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.BeforeEachOverrideWerfProjectName()
+
+	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
 })
 
 var _ = AfterEach(func() {
@@ -53,10 +63,6 @@ var _ = AfterEach(func() {
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.ResetEnviron()
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
 })
 
 func tmpPath(paths ...string) string {
@@ -67,28 +73,4 @@ func tmpPath(paths ...string) string {
 func fixturePath(paths ...string) string {
 	pathsToJoin := append([]string{"_fixtures"}, paths...)
 	return filepath.Join(pathsToJoin...)
-}
-
-func commonBeforeEach(testDirPath, fixturePath string) {
-	utils.CopyIn(fixturePath, testDirPath)
-
-	utils.RunSucceedCommand(
-		testDirPath,
-		"git",
-		"init",
-	)
-
-	utils.RunSucceedCommand(
-		testDirPath,
-		"git",
-		"add", "werf.yaml",
-	)
-
-	utils.RunSucceedCommand(
-		testDirPath,
-		"git",
-		"commit", "-m", "Initial commit",
-	)
-
-	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 }

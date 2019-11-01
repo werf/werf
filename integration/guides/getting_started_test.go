@@ -58,14 +58,10 @@ var _ = Describe("Getting started", func() {
 			"Linux Tweet App!",
 		)
 
-		registry, registryContainerName := utilsDocker.LocalDockerRegistryRun()
-		defer func() { utilsDocker.ContainerStopAndRemove(registryContainerName) }()
-
-		registryRepositoryName := containerName
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"publish", "-s", ":local", "-i", fmt.Sprintf("%s/%s", registry, registryRepositoryName), "--tag-custom", "test",
+			"publish", "-s", ":local", "-i", registryProjectRepository, "--tag-custom", "test",
 		)
 	})
 })

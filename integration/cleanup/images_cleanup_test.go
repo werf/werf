@@ -10,12 +10,10 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/integration/utils"
-	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
 var _ = Describe("images cleanup command", func() {
 	var testDirPath string
-	var registry, registryRepository, registryContainerName string
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
@@ -51,16 +49,11 @@ var _ = Describe("images cleanup command", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
-		registryRepository = strings.Join([]string{registry, "test"}, "/")
-
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryRepository)).Should(Succeed())
+		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
 		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 	})
 
 	AfterEach(func() {
-		utilsDocker.ContainerStopAndRemove(registryContainerName)
-
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
@@ -97,7 +90,7 @@ var _ = Describe("images cleanup command", func() {
 					"build-and-publish", "--tag-git-branch", testBranch,
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(ContainElement(testBranch))
 
 				utils.RunSucceedCommand(
@@ -106,7 +99,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).ShouldNot(ContainElement(testBranch))
 			})
 
@@ -135,7 +128,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(ContainElement(testBranch))
 
 				utils.RunSucceedCommand(
@@ -150,7 +143,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).ShouldNot(ContainElement(testBranch))
 			})
 		})
@@ -177,7 +170,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(ContainElement(testTag))
 
 				utils.RunSucceedCommand(
@@ -192,7 +185,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).ShouldNot(ContainElement(testTag))
 			})
 
@@ -209,7 +202,7 @@ var _ = Describe("images cleanup command", func() {
 					"build-and-publish", "--tag-git-tag", testTag,
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
@@ -218,7 +211,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup", "--git-tag-strategy-expiry-days", "0",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(0))
 			})
 
@@ -237,7 +230,7 @@ var _ = Describe("images cleanup command", func() {
 					)
 				}
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(3))
 
 				utils.RunSucceedCommand(
@@ -246,7 +239,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup", "--git-tag-strategy-limit", "1",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 			})
 		})
@@ -259,7 +252,7 @@ var _ = Describe("images cleanup command", func() {
 					"build-and-publish", "--tag-git-commit", "8a99331ce0f918b411423223f4060e9688e03f6a",
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
@@ -268,7 +261,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(0))
 			})
 
@@ -292,7 +285,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup",
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(ContainElement(commit))
 			})
 
@@ -310,7 +303,7 @@ var _ = Describe("images cleanup command", func() {
 					"build-and-publish", "--tag-git-commit", commit,
 				)
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
@@ -319,7 +312,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup", "--git-commit-strategy-expiry-days", "0",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(0))
 			})
 
@@ -346,7 +339,7 @@ var _ = Describe("images cleanup command", func() {
 					)
 				}
 
-				tags := utils.RegistryRepositoryList(registryRepository)
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(amount))
 
 				utils.RunSucceedCommand(
@@ -355,7 +348,7 @@ var _ = Describe("images cleanup command", func() {
 					"images", "cleanup", "--git-commit-strategy-limit", "2",
 				)
 
-				tags = utils.RegistryRepositoryList(registryRepository)
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(2))
 			})
 		})

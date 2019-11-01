@@ -13,8 +13,11 @@ import (
 func RunCommand(dir, command string, args ...string) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
+	res, err := cmd.CombinedOutput()
 
-	return cmd.CombinedOutput()
+	_, _ = GinkgoWriter.Write(res)
+
+	return res, err
 }
 
 func RunSucceedCommand(dir, command string, args ...string) {
@@ -33,6 +36,9 @@ func SucceedCommandOutput(dir, command string, args ...string) string {
 
 	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
 	res, err := cmd.CombinedOutput()
+
+	_, _ = GinkgoWriter.Write(res)
+
 	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
 	return string(res)
 }

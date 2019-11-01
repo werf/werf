@@ -15,7 +15,6 @@ import (
 
 var _ = Describe("images purge command", func() {
 	var testDirPath string
-	var registry, registryRepository, registryContainerName string
 
 	BeforeEach(func() {
 		testDirPath = tmpPath()
@@ -51,16 +50,11 @@ var _ = Describe("images purge command", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
-		registryRepository = strings.Join([]string{registry, "test"}, "/")
-
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryRepository)).Should(Succeed())
+		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
 		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 	})
 
 	AfterEach(func() {
-		utilsDocker.ContainerStopAndRemove(registryContainerName)
-
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
@@ -104,7 +98,7 @@ var _ = Describe("images purge command", func() {
 				)
 			}
 
-			tags := utils.RegistryRepositoryList(registryRepository)
+			tags := utils.RegistryRepositoryList(registryProjectRepository)
 			Ω(tags).Should(HaveLen(amount))
 
 			utils.RunSucceedCommand(
@@ -113,18 +107,18 @@ var _ = Describe("images purge command", func() {
 				"images", "purge",
 			)
 
-			tags = utils.RegistryRepositoryList(registryRepository)
+			tags = utils.RegistryRepositoryList(registryProjectRepository)
 			Ω(tags).Should(HaveLen(0))
 		})
 
 		It("should not remove images built without werf", func() {
 			Ω(utilsDocker.CliPull("alpine")).Should(Succeed(), "docker pull")
-			Ω(utilsDocker.CliTag("alpine", registryRepository)).Should(Succeed(), "docker tag")
-			defer func() { Ω(utilsDocker.CliRmi(registryRepository)).Should(Succeed(), "docker rmi") }()
+			Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
+			defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
 
-			Ω(utilsDocker.CliPush(registryRepository)).Should(Succeed(), "docker push")
+			Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
 
-			tags := utils.RegistryRepositoryList(registryRepository)
+			tags := utils.RegistryRepositoryList(registryProjectRepository)
 			Ω(tags).Should(HaveLen(1))
 
 			utils.RunSucceedCommand(
@@ -133,7 +127,7 @@ var _ = Describe("images purge command", func() {
 				"images", "purge",
 			)
 
-			tags = utils.RegistryRepositoryList(registryRepository)
+			tags = utils.RegistryRepositoryList(registryProjectRepository)
 			Ω(tags).Should(HaveLen(1))
 		})
 	})
