@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Building and deploying lots of microservices using werf and GitLab CI"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/building-and-deploying-lots-of-microservices-using-werf-and-gitlab-ci-3ce2b7d19450"
+    img: "/images/publications/en_311019.png"
+    created: 2019-10-31
+    comment: |
+      <p>Are you struggling with implementing CI/CD for many microservices in a efficient and elegant way? Here’s our current approach in solving this task using GitLab CI (thanks to its include keyword in <i>.gitlab-ci.yml</i>) and werf.</p>
   - title: "Deploying Helm charts with dependencies in Kubernetes via werf"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/deploying-helm-charts-with-dependencies-in-kubernetes-via-werf-17e5457cdd3f"
