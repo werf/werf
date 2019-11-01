@@ -281,8 +281,6 @@ jobs:
           git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
           git checkout --progress --force $GITHUB_SHA
 
-          security unlock-keychain -p "${{ secrets.MAC_PASSWORD }}"
-
           filename=integration_tests_$(echo -n $GITHUB_REF | tr / _)
           lockfile=~/.github_actions/lock/$filename
           commitfile=~/.github_actions/commit/$filename
@@ -354,8 +352,6 @@ jobs:
           cd $tmp_dir
           git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
           git checkout --progress --force $GITHUB_SHA
-
-          security unlock-keychain -p "${{ secrets.MAC_PASSWORD }}"
 
           filename=integration_k8s_tests_${{ matrix.k8s_version }}_$(echo -n $GITHUB_REF | tr / _)
           lockfile=~/.github_actions/lock/$filename
