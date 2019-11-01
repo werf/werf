@@ -4,6 +4,8 @@ metadata:
   name: mydeploy1
   labels:
     service: mydeploy1
+  annotations:
+    "werf.io/show-service-messages": "true"
 spec:
   replicas: 2
   selector:
