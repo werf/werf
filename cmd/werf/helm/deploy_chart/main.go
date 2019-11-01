@@ -77,6 +77,8 @@ func NewCmd() *cobra.Command {
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
 
+	common.SetupThreeWayMergeMode(&CommonCmdData, cmd)
+
 	helm_common.SetupHelmHome(&HelmCmdData, cmd)
 
 	f := cmd.Flags()
@@ -110,6 +112,11 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	}
 
 	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	if err != nil {
+		return err
+	}
+
+	threeWayMergeMode, err := common.GetThreeWayMergeMode(*CommonCmdData.ThreeWayMergeMode)
 	if err != nil {
 		return err
 	}
@@ -185,6 +192,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 			SetString: *CommonCmdData.SetString,
 			Values:    *CommonCmdData.Values,
 		},
+		ThreeWayMergeMode: threeWayMergeMode,
 	}); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", strings.TrimRight(werfChart.ChartDir, "/"))
