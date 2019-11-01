@@ -86,9 +86,9 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 })
 
 func werfDeploy(dir string, opts werfexec.CommandOptions) error {
-	return werfexec.ExecWerfCommand(dir, opts, "deploy", "--env", "dev")
+	return werfexec.ExecWerfCommand(dir, werfBinPath, opts, "deploy", "--env", "dev")
 }
 
 func werfDismiss(dir string, opts werfexec.CommandOptions) error {
-	return werfexec.ExecWerfCommand(dir, opts, "dismiss", "--env", "dev", "--with-namespace")
+	return werfexec.ExecWerfCommand(dir, werfBinPath, opts, "dismiss", "--env", "dev", "--with-namespace")
 }
