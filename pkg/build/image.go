@@ -110,7 +110,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	}
 
 	if i.baseImage.IsExists() {
-		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c)
+		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
 		if baseImageRepoId == i.baseImage.ID() || err != nil {
 			if err != nil {
 				logboek.LogLn()
@@ -138,9 +138,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	})
 }
 
-func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor) (string, error) {
-	baseImageName := i.baseImage.Name()
-
+func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string) (string, error) {
 	if i.baseImageRepoId != "" {
 		return i.baseImageRepoId, nil
 	} else if cachedBaseImageRepoId, exist := c.baseImagesRepoIdsCache[baseImageName]; exist {
