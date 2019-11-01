@@ -13,8 +13,8 @@ type CommandOptions struct {
 	OutputLineHandler func(string)
 }
 
-func ExecWerfCommand(dir string, opts CommandOptions, arg ...string) error {
-	cmd := exec.Command("werf", arg...)
+func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string) error {
+	cmd := exec.Command(werfBinPath, arg...)
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 
