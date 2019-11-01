@@ -270,7 +270,7 @@ jobs:
         script_stop: true
         envs: GITHUB_SHA,GITHUB_REF
         script: |
-          set -e
+          set -ex
 
           export PATH=/usr/local/bin:$PATH
           source ~/.bash_profile
@@ -331,7 +331,7 @@ jobs:
         script_stop: true
         envs: GITHUB_SHA,GITHUB_REF
         script: |
-          set -e
+          set -ex
 
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_11=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_12=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
