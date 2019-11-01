@@ -108,8 +108,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 
 The _git mapping_ configuration for a remote repository has some additional parameters:
 - `url` — remote repository address;
-- `branch`, `tag`, `commit` — a name of branch, tag or commit hash that will be used. If these parameters are not specified, the master branch is used;
-- `as` — defines an alias to simplify the retrieval of remote repository-related information in helm templates. Details are available in the [Deployment to kubernetes]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) reference.
+- `branch`, `tag`, `commit` — a name of branch, tag or commit hash that will be used. If these parameters are not specified, the master branch is used.
 
 ## Uses of git mappings
 
