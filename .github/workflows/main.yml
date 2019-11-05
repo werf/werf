@@ -270,7 +270,10 @@ jobs:
         script_stop: true
         envs: GITHUB_SHA,GITHUB_REF
         script: |
-          set -e
+          set -ex
+
+          export GITHUB_SHA=$GITHUB_SHA
+          export GITHUB_REF=$GITHUB_REF
 
           export PATH=/usr/local/bin:$PATH
           source ~/.bash_profile
@@ -281,36 +284,8 @@ jobs:
           git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
           git checkout --progress --force $GITHUB_SHA
 
-          security unlock-keychain -p "${{ secrets.MAC_PASSWORD }}"
-
-          filename=integration_tests_$(echo -n $GITHUB_REF | tr / _)
-          lockfile=~/.github_actions/lock/$filename
-          commitfile=~/.github_actions/commit/$filename
-          pidfile=~/.github_actions/pid/$filename
-
-          mkdir -p $(dirname $lockfile) $(dirname $pidfile) $(dirname $commitfile)
-
-          (
-            flock -n 9 || exit 1
-            if [ -f $pidfile ]; then
-              current_commit_ts=$(git show -s --format=%ct $GITHUB_SHA || echo 0)
-              if [ -f $commitfile ]; then
-                saved_commit_ts=$(git show -s --format=%ct $(cat $commitfile) || echo 0)
-              fi
-
-              if [[ "$current_commit_ts" -gt "$saved_commit_ts" ]]; then
-                kill $(cat $pidfile) || true
-              else
-                echo "Test was skipped: commit $(cat $commitfile) has a higher priority"
-                exit 1
-              fi
-            fi
-
-            echo $GITHUB_SHA > $commitfile
-            echo $$ > $pidfile
-          ) 9>$lockfile
-
-          ginkgo --tags integration -p -r integration
+          export JOB_NAME=integration_tests
+          exec ./scripts/ci/integration_test_macos_runner.sh
 
   macos_integration_k8s_tests:
     name: Integration k8s tests (macOS-latest)
@@ -333,7 +308,10 @@ jobs:
         script_stop: true
         envs: GITHUB_SHA,GITHUB_REF
         script: |
-          set -e
+          set -ex
+
+          export GITHUB_SHA=$GITHUB_SHA
+          export GITHUB_REF=$GITHUB_REF
 
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_11=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_12=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
@@ -341,6 +319,8 @@ jobs:
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_14=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_15=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
           export WERF_TEST_K8S_BASE64_KUBECONFIG_1_16=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+
+          export WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
 
           export WERF_TEST_K8S_DOCKER_REGISTRY=${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
           export WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME=${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
@@ -355,38 +335,8 @@ jobs:
           git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
           git checkout --progress --force $GITHUB_SHA
 
-          security unlock-keychain -p "${{ secrets.MAC_PASSWORD }}"
-
-          filename=integration_k8s_tests_${{ matrix.k8s_version }}_$(echo -n $GITHUB_REF | tr / _)
-          lockfile=~/.github_actions/lock/$filename
-          commitfile=~/.github_actions/commit/$filename
-          pidfile=~/.github_actions/pid/$filename
-
-          mkdir -p $(dirname $lockfile) $(dirname $pidfile) $(dirname $commitfile)
-
-          (
-            flock -n 9 || exit 1
-            if [ -f $pidfile ]; then
-              current_commit_ts=$(git show -s --format=%ct $GITHUB_SHA || echo 0)
-              if [ -f $commitfile ]; then
-                saved_commit_ts=$(git show -s --format=%ct $(cat $commitfile) || echo 0)
-              fi
-
-              if [[ "$current_commit_ts" -gt "$saved_commit_ts" ]]; then
-                kill $(cat $pidfile) || true
-              else
-                echo "Test was skipped: commit $(cat $commitfile) has a higher priority"
-                exit 1
-              fi
-            fi
-
-            echo $GITHUB_SHA > $commitfile
-            echo $$ > $pidfile
-          ) 9>$lockfile
-
-          export WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
-          source ./scripts/ci/integration_k8s_tests_before_hook.sh
-          ginkgo --tags integration_k8s -p -r integration
+          export JOB_NAME=integration_k8s_tests_${{ matrix.k8s_version }}
+          exec ./scripts/ci/integration_test_macos_runner.sh integration_k8s
 
   upload_coverage:
     name: Upload coverage
@@ -394,8 +344,8 @@ jobs:
     - unit_tests
     - integration_tests
     - integration_k8s_tests
-    - macos_integration_tests
-    - macos_integration_k8s_tests
+#    - macos_integration_tests
+#    - macos_integration_k8s_tests
     runs-on: ubuntu-latest
     steps:
 

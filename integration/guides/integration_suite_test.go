@@ -45,9 +45,10 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
+var _ = SynchronizedAfterSuite(func() {
 	utilsDocker.ContainerStopAndRemove(registryContainerName)
+}, func() {
+	gexec.CleanupBuildArtifacts()
 })
 
 var _ = BeforeEach(func() {
