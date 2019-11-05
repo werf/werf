@@ -7,10 +7,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Builtin Helm client and Tiller
 
-Helm 2 uses server component called [Tiller](https://helm.sh/docs/glossary/#tiller). The Tiller manages [releases]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release): creates, updates, deletes and lists them.
+Helm 2 uses server component called [Tiller](https://helm.sh/docs/glossary/#tiller). Tiller manages [releases]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release): performs create, update, delete and list releases operations.
 
-Deploying with werf does not require a Tiller installed in Kubernetes cluster. 
-Helm is fully embedded into werf, and Tiller is started locally during the time relevant commands are executed only.
+Deploying with werf does not require a Tiller installed in Kubernetes cluster. Helm client and Tiller is fully embedded into werf, and Tiller is operating locally (without grpc network requests) within single werf process during execution of deploy commands.
 
 Yet werf is [fully compatible]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#helm-compatibility-notice) with already existing helm 2 installations.
 
