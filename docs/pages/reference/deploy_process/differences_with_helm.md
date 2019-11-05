@@ -105,8 +105,8 @@ Helm does not define a static place in the project where helm chart should be st
 
 Errors like non-existing fields in resource configuration of chart templates are not shown by standard helm. No feedback is given to the user.
 
-Werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more into [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/experimental_three_way_merge.html#resources-validation).
+Werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
 
 ## Three way merge
 
-Werf is now in the process of migrating to three-way-merge based resources updates. See more into [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/experimental_three_way_merge.html#annotations-mode).
+Werf is now in the process of migrating to three-way-merge based resources updates. See more into [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html).
