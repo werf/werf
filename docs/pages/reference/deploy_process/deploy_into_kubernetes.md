@@ -597,6 +597,49 @@ werf deploy \
   --stages-storage :local
 ```
 
+### Resources manifests validation
+
+If resource manifest in the chart contains logical or syntax errors then werf will write validation warning to the output during deploy process. Also all validation errors will be written to the `debug.werf.io/validation-messages`. These errors typically does not affect deploy process exit status, because kubernetes apiserver can accept wrong manifests with certain typos or errors without reporting errors.
+
+For example, having following typos in the chart templates (`envs` instead of `env` and `redinessProbe` instead of `readinessProbe`):
+
+```
+      containers:
+      - name: main
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04
+        redinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      envs:
+      - name: MYVAR
+        value: myvalue
+```
+
+Validation output will be like:
+
+```
+│   WARNING ### Following problems detected during deploy process ###
+│   WARNING Validation of target data failed: deployment/mydeploy1: [ValidationError(Deployment.spec.template.spec.containers[0]): unknown field               ↵
+│ "redinessProbe" in io.k8s.api.core.v1.Container, ValidationError(Deployment.spec.template.spec): unknown field "envs" in io.k8s.api.core.v1.PodSpec]
+```
+
+And resource will contain `debug.werf.io/validation-messages` annotation:
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    debug.werf.io/validation-messages: 'Validation of target data failed: deployment/mydeploy1:
+      [ValidationError(Deployment.spec.template.spec.containers[0]): unknown field
+      "redinessProbe" in io.k8s.api.core.v1.Container, ValidationError(Deployment.spec.template.spec):
+      unknown field "envs" in io.k8s.api.core.v1.PodSpec]'
+...
+```
+
 ## Multiple Kubernetes clusters
 
 There are cases when separate Kubernetes clusters are needed for a different environments. You can [configure access to multiple clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) using kube contexts in a single kube config.
