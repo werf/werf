@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/onsi/gomega/gexec"
 )
@@ -17,6 +18,8 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 	cmd := exec.Command(werfBinPath, arg...)
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
+
+	fmt.Printf("[DEBUG] COMMAND in %s: %s %s\n", dir, werfBinPath, strings.Join(arg, " "))
 
 	stdoutReadPipe, stdoutWritePipe, err := os.Pipe()
 	if err != nil {

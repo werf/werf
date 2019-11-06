@@ -1,6 +1,6 @@
 // +build integration_k8s
 
-package deploytracking
+package releaseserver
 
 import (
 	"strings"
@@ -27,13 +27,13 @@ func unknownMydeploy1ResourceStateForbidden(outputLine string) {
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			werfDismiss("app1", werfexec.CommandOptions{})
+			werfDismiss("kubedog_multitrack_app1", werfexec.CommandOptions{})
 		})
 
 		It("should report Deployment is ready before werf exit", func(done Done) {
 			gotDeploymentReadyLine := false
 
-			Ω(werfDeploy("app1", werfexec.CommandOptions{
+			Ω(werfDeploy("kubedog_multitrack_app1", werfexec.CommandOptions{
 				OutputLineHandler: func(line string) {
 					resourceState := resourceStateLine(line)
 					if resourceState == "mydeploy1 2/2 2 2" {
@@ -52,7 +52,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			werfDismiss("app2", werfexec.CommandOptions{})
+			werfDismiss("kubedog_multitrack_app2", werfexec.CommandOptions{})
 		})
 
 		It("should report ImagePullBackoff occured in Deployment and werf should fail", func(done Done) {
@@ -60,7 +60,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
-			Ω(werfDeploy("app2", werfexec.CommandOptions{
+			Ω(werfDeploy("kubedog_multitrack_app2", werfexec.CommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true
@@ -84,11 +84,3 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 		}, 120)
 	})
 })
-
-func werfDeploy(dir string, opts werfexec.CommandOptions) error {
-	return werfexec.ExecWerfCommand(dir, werfBinPath, opts, "deploy", "--env", "dev")
-}
-
-func werfDismiss(dir string, opts werfexec.CommandOptions) error {
-	return werfexec.ExecWerfCommand(dir, werfBinPath, opts, "dismiss", "--env", "dev", "--with-namespace")
-}
