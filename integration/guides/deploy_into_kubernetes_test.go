@@ -41,7 +41,7 @@ var _ = Describe("Getting started", func() {
 			"build", "-s", ":local",
 		)
 
-		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), "deploy_into_kubernetes")
+		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
