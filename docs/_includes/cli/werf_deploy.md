@@ -97,7 +97,7 @@ werf deploy [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a        
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:
@@ -152,6 +152,10 @@ werf deploy [options]
       --tag-git-tag='':
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
             specifying git tag in the $WERF_TAG_GIT_TAG)
+      --three-way-merge-mode='':
+            Set three way merge mode for release.
+            Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           
+            https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
