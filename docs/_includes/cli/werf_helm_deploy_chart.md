@@ -64,7 +64,7 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a        
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:

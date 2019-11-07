@@ -3,6 +3,32 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Building and deploying lots of microservices using werf and GitLab CI"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/building-and-deploying-lots-of-microservices-using-werf-and-gitlab-ci-3ce2b7d19450"
+    img: "/images/publications/en_311019.png"
+    created: 2019-10-31
+    comment: |
+      <p>Are you struggling with implementing CI/CD for many microservices in a efficient and elegant way? Here’s our current approach in solving this task using GitLab CI (thanks to its include keyword in <i>.gitlab-ci.yml</i>) and werf.</p>
+  - title: "How to kill a dragon: Rewriting your app to Golang"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/rewriting-your-app-to-golang-2839e8920ace"
+    img: "/images/publications/en_251019.png"
+    created: 2019-10-25
+    comment: |
+      <p>Let’s imagine that your application is written in some scripting language — e.g. Ruby — and you want to rewrite it in Golang. You may ask a reasonable question: what is the point in rewriting a program that is up and running?..</p>
+  - title: "Deploying Helm charts with dependencies in Kubernetes via werf"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/deploying-helm-charts-with-dependencies-in-kubernetes-via-werf-17e5457cdd3f"
+    img: "/images/publications/en_041019.png"
+    created: 2019-10-04
+    comment: |
+      <p>This article should be useful if you create & apply Helm charts for Kubernetes using the existing solutions drawn from the chart repositories.</p>
+  - title: "Monorepo/multirepo support in werf (and what does it have to do with Docker Registry?)"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/monorepo-multirepo-registry-support-in-werf-a73b2a5172d8"
+    img: "/images/publications/en_090919.png"
+    created: 2019-09-09
   - title: "Improve your CI/CD experience with werf and existing Dockerfiles"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/werf-dockerfile-support-e6504211b8e6"
@@ -22,6 +48,25 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Сборка и деплой однотипных микросервисов с werf и GitLab CI"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/469541/"
+    img: "/images/publications/ru_071019.png"
+    created: 2019-10-07
+    comment: |
+      <p>Раннее мы публиковали статью <a href="https://habr.com/ru/company/flant/blog/340996/">«Сборка проектов с GitLab CI: один .gitlab-ci.yml для сотни приложений»</a>, а теперь расскажем о решении схожей задачи сегодня. Новый материал — о том, как можно построить CI/CD-процессы для большого количества однотипных приложений с появлением include в <i>.gitlab-ci.yml</i> и приходом werf на замену dapp.</p>
+  - title: "Использование werf для выката комплексных Helm-чартов"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/468049/"
+    img: "/images/publications/ru_240919.png"
+    created: 2019-09-24
+    comment: |
+      <p>Статья посвящена новым командам для работы с зависимостями чарта и чарт-репозиториями.</p>
+  - title: "Поддержка monorepo и multirepo в werf и при чём здесь Docker Registry"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/465131/"
+    img: "/images/publications/ru_300819.png"
+    created: 2019-08-30
   - title: "Собирать Docker-образы в werf теперь можно и по обычному Dockerfile"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/463613/"
@@ -36,7 +81,13 @@ ru:
     img: "/images/publications/ru_460351.jpg"
     comment: |
       <p>27 мая в главном зале конференции DevOpsConf 2019, проходящей в рамках фестиваля <a href="http://ritfest.ru/2019/">РИТ++ 2019</a>, в рамках секции «Непрерывная поставка», прозвучал доклад «werf — наш инструмент для CI/CD в Kubernetes». В нём рассказывается о тех <b>проблемах и вызовах, с которыми сталкивается каждый при деплое в Kubernetes</b>, а также о нюансах, которые могут быть заметны не сразу. Разбирая возможные пути решения, мы показываем, как это реализовано в Open Source-инструменте <a href="https://github.com/flant/werf">werf</a>.</p>
-
+  - title: "Как победить дракона: переписываем вашу программу на Golang"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/437044/"
+    img: "/images/publications/ru_240119.jpg"
+    created: 2019-01-24
+    comment: |
+      <p>Так случилось, что ваша программа написана на скриптовом языке — например, на Ruby — и встала необходимость переписать ее на Golang.</p>
   - title: "Сборка проектов с werf (dapp). Часть 2: JavaScript (frontend)"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/company/flant/blog/359204/"
@@ -45,7 +96,6 @@ ru:
     comment: |
       <p>Этот материал продолжает цикл о сборке Docker-образов для приложений на различных языках программирования с помощью утилиты <a href="https://github.com/flant/dapp">werf (dapp)</a>. Поговорим о приложениях на JavaScript. Для начала это будет frontend-приложение, а в следующей части планируется рассказать о сборке backend'а и запуске всего в Kubernetes.</p>
       <p>В качестве иллюстрации будут использованы приложения <a href="https://github.com/Snipa22/nodejs-pool">nodejs-pool</a> и <a href="https://github.com/mesh0000/poolui">poolui</a>. Да-да, подготовим к запуску в Kubernetes свой майнинг-пул с блокчейном и выплатами!</p>
-
   - title: "Мониторинг и Kubernetes (Дмитрий Столяров, Флант, RootConf 2018)"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/company/flant/blog/412901/"

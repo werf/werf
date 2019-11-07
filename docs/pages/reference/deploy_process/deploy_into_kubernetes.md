@@ -35,13 +35,16 @@ Templates are placed in the `.helm/templates` directory.
 Directory contains YAML files `*.yaml`. Each YAML file describes one or several kubernetes resources specs separated by three hyphens `---`, for example:
 
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mydeploy
   labels:
     service: mydeploy
 spec:
+  selector:
+    matchLabels:
+      service: mydeploy
   template:
     metadata:
       labels:
@@ -124,11 +127,16 @@ To specify image named `backend` from `werf.yaml`:
 
 {% raw %}
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    service: backend
 spec:
+  selector:
+    matchLabels:
+      service: backend
   template:
     metadata:
       labels:
@@ -147,11 +155,16 @@ To specify single unnamed image from `werf.yaml`:
 
 {% raw %}
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    service: backend
 spec:
+  selector:
+    matchLabels:
+      service: backend
   template:
     metadata:
       labels:
@@ -553,26 +566,28 @@ Set to `true` to enable additional debug info for resource including kubernetes 
 Werf automatically sets following builtin annotations to all chart resources deployed:
 
  * `"werf.io/version": FULL_WERF_VERSION` — werf version that being used when running `werf deploy` command;
- * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`.
+ * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
+ * `"project.werf.io/env": ENV` — environment name specified with `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-Werf also sets auto annotations for GitLab CI when using `werf ci-env` command prior to run `werf deploy` command. Currently the following annotations supported:
-* `"project.werf.io/git": $CI_PROJECT_URL`;
-* `"ci.werf.io/commit": $CI_COMMIT_SHA`;
-* `"gitlab.ci.werf.io/pipeline-url":  $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID`;
-* `"gitlab.ci.werf.io/job-url": $CI_PROJECT_URL/pipelines/$CI_JOB_ID`.
+Werf also sets auto annotations with info from the used CI/CD system (Gitlab CI for example)  when using `werf ci-env` command prior to run `werf deploy` command. For example [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
+
+For more info about CI/CD integration check out following pages:
+
+ * [plugging into CI/CD overview]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html);
+ * [plugging into Gitlab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
 
 #### Custom annotations and labels
 
 User can pass arbitrary additional annotations and labels using cli options `--add-annotation annoName=annoValue` (can be specified multiple times) and `--add-label labelName=labelValue` (can be specified multiple times) for werf deploy invocation.
 
-For example, to set annotations and labels `project-url=https://mygitlab.com/group/myproject`, `pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775` to all kubernetes resources from chart use following werf deploy invocation:
+For example, to set annotations and labels `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` to all kubernetes resources from chart use following werf deploy invocation:
 
 ```bash
 werf deploy \
-  --add-annotation "project-url=https://mygitlab.com/group/myproject" \
-  --add-label "project-url=https://mygitlab.com/group/myproject" \
-  --add-annotation "pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775" \
-  --add-label "pipeline-id=https://mygitlab.com/group/myproject/pipelines/37775"
+  --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
+  --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
+  --add-annotation "gitlab-user-email=vasya@myproject.com" \
+  --add-label "gitlab-user-email=vasya@myproject.com" \
   --env dev \
   --images-repo :minikube \
   --stages-storage :local
