@@ -42,7 +42,7 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a        
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:

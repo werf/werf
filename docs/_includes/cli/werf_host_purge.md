@@ -40,7 +40,7 @@ werf host purge [options]
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a        
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:

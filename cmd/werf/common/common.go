@@ -338,7 +338,7 @@ func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
-Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes.
+Supported on, off and auto (based on the stdout’s file descriptor referring to a terminal) modes.
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 

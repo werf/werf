@@ -92,7 +92,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
             importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
       --log-color-mode='auto':
             Set log color mode.
-            Supported on, off and auto (based on the stdout's file descriptor referring to a        
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --log-pretty=true:
