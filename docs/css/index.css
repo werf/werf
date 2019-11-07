@@ -171,6 +171,7 @@ html, body, .page {
     line-height: normal;
     letter-spacing: normal;
     color: #00122c;
+    margin-left: 15px;
 }
 
 .welcome__search {
