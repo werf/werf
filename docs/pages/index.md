@@ -8,11 +8,10 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                GitOps<br>
-                delivery tool
+                GitOps CLI tool
             </h1>
             <div class="welcome__subtitle">
-                mighty and carefully crafted
+                 Deliver your application fast & easy.<br>Open Source. Written in Golang.
             </div>
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
@@ -28,13 +27,18 @@ layout: default
             <div class="intro__image"></div>
             <div class="intro__content">
                 <div class="intro__title">
-                    A missing part of a CI/CD<br/> system
+                    CLI tool to construct CI/CD pipelines
                 </div>
                 <div class="intro__text">
                     <div class="intro__text" markdown="1">
-{% include /readme/overview.md %}
-
-Check out a [complete features list](https://github.com/flant/werf#complete-features-list).
+ * Werf is a single CLI tool that integrates well known tools: `git`, `helm` and `docker`.
+ * Werf can be embedded into any existing CI/CD system (like Gitlab CI) to implement CI/CD pipelines using provided building blocks:
+   * `werf build-and-publish`;
+   * `werf deploy`;
+   * `werf dismiss`;
+   * `werf cleanup`.
+ * Open Source, written in Golang.
+ * Werf is not a SAAS, we consider it a new generation of high-level CI/CD tools.
 </div>
                 </div>
             </div>
@@ -48,7 +52,14 @@ Check out a [complete features list](https://github.com/flant/werf#complete-feat
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                Full compatibility with&nbsp;Helm. Easy RBAC definition. Control of&nbsp;the&nbsp;deployment process with&nbsp;annotations. Control of&nbsp;resources readiness. Logging and&nbsp;error reporting. Easy debugging of&nbsp;problems without&nbsp;unnecessary kubectl invocations.
+                <div class="intro-extra__item-text" markdown="1">
+ * Full compatibility with Helm.
+ * Easy RBAC definition.
+ * Applied deploy configuration in kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.
+ * Werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.
+ * Configurable resource errors detector and resource readiness detector using resource annotations.
+ * Rich logging and error reporting.
+</div>
             </div>
         </li>
         <li class="intro-extra__item">
@@ -56,7 +67,12 @@ Check out a [complete features list](https://github.com/flant/werf#complete-feat
                 Image Lifecycle Management
             </div>
             <div class="intro-extra__item-text">
-                Build images with&nbsp;Dockerfile or&nbsp;with&nbsp;our syntax to&nbsp;take advantage of&nbsp;incremental rebuilds based on&nbsp;git history and&nbsp;carefully crafted tools. Pushing into a&nbsp;registry by&nbsp;specific tag strategy and&nbsp;cleaning a&nbsp;registry from unused images based on&nbsp;policies.
+                <div class="intro-extra__item-text" markdown="1">
+ * Build images with Dockerfiles or advanced image builder with incremental rebuilds based on the git history and ansible.
+ * Publish images to the registry using advanced image naming schemas.
+ * Deploy application images into Kubernetes cluster.
+ * Cleanup registry from unused images based on policies.
+</div>
             </div>
         </li>
     </ul>
@@ -89,7 +105,6 @@ Check out a [complete features list](https://github.com/flant/werf#complete-feat
 
 <div class="features">
     <div class="page__container">
-        <div class="features__title">Full delivery cycle</div>
         <ul class="features__list">
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
@@ -128,6 +143,15 @@ Check out a [complete features list](https://github.com/flant/werf#complete-feat
                 <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
             </li>
             <li class="features__list-item"></li>
+            <li class="features__list-item"></li>
+            <li class="features__list-item">
+                <div class="features__list-item-title">
+                    <div class="intro-extra__item-title" markdown="1">
+Check out a [complete features list](https://github.com/flant/werf#complete-features-list)
+</div>
+                </div>
+            </li>
+            <li class="features__list-item"></li>
         </ul>
     </div>
 </div>
@@ -136,7 +160,7 @@ Check out a [complete features list](https://github.com/flant/werf#complete-feat
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly growing community</div>
-            <div class="community__subtitle">Werf’s developers are always in contact with community<br/> though Slack and Telegram.</div>
+            <div class="community__subtitle">Werf’s developers are always in contact with community<br/> at Slack and Telegram.</div>
             <div class="community__btns">
                 <a href="https://t.me/werf_ru" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_telegram"></span>
