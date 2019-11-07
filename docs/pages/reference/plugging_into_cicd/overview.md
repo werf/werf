@@ -107,7 +107,7 @@ This tagging mode is selected by `--tagging-strategy=tag-or-branch` option of [`
 
 ## How ci-env works
 
-Ci-env command passes all paramters to werf using environment variables, see [pass cli params as environment variables below](#pass-cli-params-as-environment-variables).
+Ci-env command passes all parameters to werf using environment variables, see [pass cli params as environment variables below](#pass-cli-params-as-environment-variables).
 
 [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) should be called in the begin of any CI/CD job prior running any other werf commands.
 
