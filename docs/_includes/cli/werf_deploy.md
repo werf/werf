@@ -152,6 +152,10 @@ werf deploy [options]
       --tag-git-tag='':
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
             specifying git tag in the $WERF_TAG_GIT_TAG)
+      --three-way-merge-mode='':
+            Set three way merge mode for release.
+            Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           
+            https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
