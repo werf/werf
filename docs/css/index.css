@@ -259,7 +259,7 @@ html, body, .page {
 }
 
 .intro-extra__item {
-    width: 560px;
+    width: 560px;    
 }
 
 .intro-extra__item-title {
@@ -283,6 +283,74 @@ html, body, .page {
     letter-spacing: -0.3px;
     color: #00122c;
     margin: 0 auto;
+}
+
+.intro__list, .intro__list ul {
+    box-sizing: border-box;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.intro__list li {
+    width: 100%;    
+    font-size: 16px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    color: #00122c;
+    margin-top: 15px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.intro__list > li::before {
+    content: '';
+    display: block;
+    background: #0066FF;
+    width: 6px;
+    height: 6px;
+    border-radius: 6px;
+    position: absolute;
+    left: 5px;
+    top: 9px;
+}
+
+.intro__list li:first-child {
+    margin-top: 0px;
+}
+
+.intro__list ul > li::before {
+    content: '';
+    display: block;
+    border: 1px solid #0066FF;
+    background: transparent;
+    width: 5px;
+    height: 5px;
+    border-radius: 6px;
+    position: absolute;
+    left: 5px;
+    top: 9px;
+}
+
+ul.intro__list_c2 {
+    display: block;
+}
+
+ul.intro__list_c2 > li {
+    float: left;
+    width: 50%;
+    box-sizing: border-box;
+}
+
+ul.intro__list_c2 > li:first-child {
+    margin-top: 15px;   
 }
 
 .stats {
@@ -495,6 +563,11 @@ html, body, .page {
     letter-spacing: -0.3px;
     text-align: center;
     color: #00122c;
+}
+
+.features__btn {
+    width: 380px;
+    margin: 35px auto 0;
 }
 
 .roadmap {
@@ -946,4 +1019,12 @@ html, body, .page {
     line-height: 1.71;
     letter-spacing: -0.3px;
     color: #00122c;
+}
+
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    background: #eef2ff;
+    white-space: nowrap;
+    border-radius: 4px;
 }
