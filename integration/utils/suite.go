@@ -47,7 +47,9 @@ func BeforeEachOverrideWerfProjectName() {
 }
 
 func ProjectName() string {
-	return os.Getenv("WERF_PROJECT_NAME")
+	val := os.Getenv("WERF_PROJECT_NAME")
+	Expect(val).NotTo(BeEmpty())
+	return val
 }
 
 func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
