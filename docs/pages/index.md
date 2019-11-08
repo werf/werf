@@ -11,7 +11,7 @@ layout: default
                 GitOps CLI tool
             </h1>
             <div class="welcome__subtitle">
-                 Deliver your application fast & easy.<br>Open Source. Written in Golang.
+                 Deliver your application fast & easy.<br/>Open Source. Written in Golang.
             </div>
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
@@ -24,24 +24,34 @@ layout: default
 
 <div class="page__container">
     <div class="intro">
-            <div class="intro__image"></div>
-            <div class="intro__content">
-                <div class="intro__title">
-                    CLI tool to construct CI/CD pipelines
-                </div>
-                <div class="intro__text">
-                    <div class="intro__text" markdown="1">
- * Werf is a single CLI tool that integrates well known tools: `git`, `helm` and `docker`.
- * Werf can be embedded into any existing CI/CD system (like Gitlab CI) to implement CI/CD pipelines using provided building blocks:
-   * `werf build-and-publish`;
-   * `werf deploy`;
-   * `werf dismiss`;
-   * `werf cleanup`.
- * Open Source, written in Golang.
- * Werf is not a SAAS, we consider it a new generation of high-level CI/CD tools.
-</div>
-                </div>
+        <div class="intro__image"></div>
+        <div class="intro__content">
+            <div class="intro__title">
+                CLI tool to construct CI/CD pipelines
             </div>
+            <div class="intro__text">
+                <ul class="intro__list">
+                    <li>
+                        Werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
+                    </li>
+                    <li>
+                        Werf can be embedded into any existing CI/CD system (like Gitlab CI) <br>to implement CI/CD pipelines using provided building blocks:
+                        <ul class="intro__list_c2">
+                            <li><code>werf build-and-publish</code>;</li>
+                            <li><code>werf deploy</code>;</li>
+                            <li><code>werf dismiss</code>;</li>
+                            <li><code>werf cleanup</code>.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Open Source, written in Golang.
+                    </li>
+                    <li>
+                        Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -52,14 +62,14 @@ layout: default
                 Comfortable deployment
             </div>
             <div class="intro-extra__item-text">
-                <div class="intro-extra__item-text" markdown="1">
- * Full compatibility with Helm.
- * Easy RBAC definition.
- * Applied deploy configuration in kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.
- * Werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.
- * Configurable resource errors detector and resource readiness detector using resource annotations.
- * Rich logging and error reporting.
-</div>
+                <ul class="intro__list">
+                    <li>Full compatibility with Helm.</li>
+                    <li>Easy RBAC definition.</li>
+                    <li>Applied deploy configuration in kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.</li>
+                    <li>Werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.</li>
+                    <li>Configurable resource errors detector and resource readiness detector using resource annotations.</li>
+                    <li>Rich logging and error reporting.</li>
+                </ul>
             </div>
         </li>
         <li class="intro-extra__item">
@@ -67,12 +77,12 @@ layout: default
                 Image Lifecycle Management
             </div>
             <div class="intro-extra__item-text">
-                <div class="intro-extra__item-text" markdown="1">
- * Build images with Dockerfiles or advanced image builder with incremental rebuilds based on the git history and ansible.
- * Publish images to the registry using advanced image naming schemas.
- * Deploy application images into Kubernetes cluster.
- * Cleanup registry from unused images based on policies.
-</div>
+                <ul class="intro__list">
+                    <li>Build images with Dockerfiles or advanced image builder with incremental rebuilds based on the git history and ansible.</li>
+                    <li>Publish images to the registry using advanced image naming schemas.</li>
+                    <li>Deploy application images into Kubernetes cluster.</li>
+                    <li>Cleanup registry from unused images based on policies.</li>
+                </ul>
             </div>
         </li>
     </ul>
@@ -143,16 +153,10 @@ layout: default
                 <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
             </li>
             <li class="features__list-item"></li>
-            <li class="features__list-item"></li>
-            <li class="features__list-item">
-                <div class="features__list-item-title">
-                    <div class="intro-extra__item-title" markdown="1">
-Check out a [complete features list](https://github.com/flant/werf#complete-features-list)
-</div>
-                </div>
-            </li>
-            <li class="features__list-item"></li>
         </ul>
+        <a href="https://github.com/flant/werf#complete-features-list" target="_blank" class="page__btn page__btn_o features__btn">
+            Check out a complete features list
+        </a>
     </div>
 </div>
 
