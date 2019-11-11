@@ -50,9 +50,9 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 				line := string(lineBuf)
 				lineBuf = lineBuf[:0]
 
-				if opts.OutputLineHandler != nil {
-					fmt.Printf("[DEBUG] HANDLE OUTPUT LINE: %s\n", line)
+				fmt.Printf("[DEBUG] OUTPUT LINE: %s\n", line)
 
+				if opts.OutputLineHandler != nil {
 					func() {
 						handlerDone := false
 						defer func() {

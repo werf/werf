@@ -142,7 +142,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 		}
 	}
 
-	if err := logboek.LogProcessInline("Deleting release", logboek.LogProcessInlineOptions{}, func() error {
+	if err := logboek.LogProcess("Deleting release", logboek.LogProcessOptions{}, func() error {
 		return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
 	}); err != nil {
 		return fmt.Errorf("release delete failed: %s", err)
