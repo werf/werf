@@ -144,6 +144,8 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 source <(multiwerf use 1.0 beta)
 ```
 
+> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` enstead of `source <(multiwerf use 1.0 beta)`
+
 ### Method 2: download binary
 
 The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion)
