@@ -63,7 +63,7 @@ var _ = Describe("Helm hooks deleter", func() {
 		}, 120)
 	})
 
-	Context("when releasing a chart containing a hook with before-hook-creation delete policy and the hook already exists in the cluster before release", func() {
+	Context("when releasing a chart containing a hook with before-hook-creation delete policy", func() {
 		var namespace, projectName string
 
 		BeforeEach(func() {
@@ -80,18 +80,35 @@ var _ = Describe("Helm hooks deleter", func() {
 		})
 
 		It("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func(done Done) {
-			jobName := "migrate"
+			hookName := "myhook"
 
 			Expect(werfDeploy("app2", werfexec.CommandOptions{})).Should(Succeed())
 
-			jobAfterInstall, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(jobName, metav1.GetOptions{})
+			hookObj, err := kube.Kubernetes.CoreV1().Pods(namespace).Get(hookName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			delete(hookObj.Annotations, "service.werf.io/owner-release")
+			newHookObj, err := kube.Kubernetes.CoreV1().Pods(namespace).Update(hookObj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newHookObj.Annotations["service.werf.io/owner-release"]).To(BeEmpty())
+			hookObj = newHookObj
+
+			gotDeletingHookLine := false
 			// Update release, hook should be deleted by before-hook-creation policy and created again
-			Expect(werfDeploy("app2", werfexec.CommandOptions{})).Should(Succeed())
-			jobAfterUpdate, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(jobName, metav1.GetOptions{})
+			Expect(werfDeploy("app2", werfexec.CommandOptions{
+				OutputLineHandler: func(line string) {
+					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Pod/myhook: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
+
+					if strings.HasPrefix(line, "│ Deleting resource Pod/myhook from release") {
+						gotDeletingHookLine = true
+					}
+				},
+			})).Should(Succeed())
+			Expect(gotDeletingHookLine).Should(BeTrue())
+
+			newHookObj, err = kube.Kubernetes.CoreV1().Pods(namespace).Get(hookName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(jobAfterUpdate.UID).NotTo(Equal(jobAfterInstall.UID))
+			Expect(newHookObj.UID).NotTo(Equal(hookObj.UID))
 
 			close(done)
 		}, 120)
