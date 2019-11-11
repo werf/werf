@@ -27,7 +27,6 @@ type DeployOptions struct {
 	UserExtraAnnotations map[string]string
 	UserExtraLabels      map[string]string
 	IgnoreSecretKey      bool
-	ThreeWayMergeMode    helm.ThreeWayMergeModeType
 }
 
 type ImagesRepoManager interface {
@@ -97,7 +96,6 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 				SetString: opts.SetString,
 				Values:    opts.Values,
 			},
-			ThreeWayMergeMode: opts.ThreeWayMergeMode,
 		})
 	}); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
