@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"regexp"
 )
 
@@ -131,13 +130,7 @@ func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	}
 
 	gitRemote.Url = c.Url
-
-	if url, err := c.getNameFromUrl(); err != nil {
-		return nil, newDetailedConfigError(err.Error(), c, c.rawStapelImage.doc)
-	} else {
-		gitRemote.Name = url
-	}
-
+	gitRemote.Name = getRepositoryID(c.Url)
 	gitRemote.raw = c
 
 	if err := c.validateGitRemoteDirective(gitRemote); err != nil {
@@ -145,20 +138,6 @@ func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	}
 
 	return gitRemote, nil
-}
-
-func (c *rawGit) getNameFromUrl() (string, error) {
-	return getGitName(c.Url)
-}
-
-func getGitName(remoteOriginUrl string) (string, error) {
-	r := regexp.MustCompile(`.*?([^:/ ]+/[^/ ]+)\.git$`)
-	match := r.FindStringSubmatch(remoteOriginUrl)
-	if len(match) == 2 {
-		return match[1], nil
-	} else {
-		return "", fmt.Errorf("cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex", remoteOriginUrl)
-	}
 }
 
 func (c *rawGit) validateGitRemoteDirective(gitRemote *GitRemote) (err error) {
@@ -197,4 +176,14 @@ func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExpo
 	}
 
 	return nil
+}
+
+func getRepositoryID(repository string) string {
+	r := regexp.MustCompile(`(?U).*?[:/](.*/[^/ ]+)(\.git)?/?$`)
+	match := r.FindStringSubmatch(repository)
+	if len(match) == 3 {
+		return match[1]
+	} else {
+		return repository
+	}
 }

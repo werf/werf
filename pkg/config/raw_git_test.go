@@ -1,50 +1,39 @@
 package config
 
 import (
-	"fmt"
-	"testing"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
-func TestRawGit_getNameFromUrl(t *testing.T) {
-	var positiveExpectations = []struct {
-		url  string
-		name string
-	}{
-		{
-			"git@github.com:company/name.git",
-			"company/name",
-		},
-		{
-			"https://github.com/company/name.git",
-			"company/name",
-		},
-	}
-
-	for _, expectation := range positiveExpectations {
-		rawGit := rawGit{Url: expectation.url}
-
-		name, err := rawGit.getNameFromUrl()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if name != expectation.name {
-			t.Errorf("\n[EXPECTED]: %#v\n[GOT]: %#v", expectation.name, name)
-		}
-	}
-
-	var negativeExpectations = []string{
-		"git@github.com:company/name",
-	}
-
-	for _, expectation := range negativeExpectations {
-		rawGit := rawGit{Url: expectation}
-		_, err := rawGit.getNameFromUrl()
-		expectedError := fmt.Sprintf("cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex", expectation)
-		if err == nil {
-			t.Errorf("\n[EXPECTED]: %s", expectedError)
-		} else if err.Error() != expectedError {
-			t.Errorf("\n[EXPECTED]: %s\n[GOT]: %s", expectedError, err.Error())
-		}
-	}
+type entry struct {
+	repository string
+	expectedID string
 }
+
+var _ = DescribeTable("parsing git repository ID", func(e entry) {
+	Ω(getRepositoryID(e.repository)).Should(Equal(e.expectedID))
+},
+	Entry("git", entry{
+		"git@github.com:company/name.git",
+		"company/name",
+	}),
+	Entry("git without ending", entry{
+		"git@github.com:company/name",
+		"company/name",
+	}),
+	Entry("https", entry{
+		"https://github.com/company/name.git",
+		"company/name",
+	}),
+	Entry("https with credentials", entry{
+		"https://username:password@github.com/company/name.git",
+		"company/name",
+	}),
+	Entry("file", entry{
+		"file:///path/workspace/name.git/",
+		"workspace/name",
+	}),
+	Entry("relative", entry{
+		"../name",
+		"../name",
+	}))
