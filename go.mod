@@ -20,7 +20,7 @@ require (
 	github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
 	github.com/docker/compose-on-kubernetes v0.4.23 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v1.14.0-0.20190319215453-e7b5f7dbe98c
+	github.com/docker/docker v1.4.2-0.20190319215453-e7b5f7dbe98c
 	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go v1.5.1-1
 	github.com/docker/go-connections v0.4.0
@@ -155,3 +155,5 @@ replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918161442
 replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.0.0-20190918162410-e45c26d066f2
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.0.0-20190918161628-92eb3cb7496c
+
+go 1.13
