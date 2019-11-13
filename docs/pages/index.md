@@ -47,7 +47,7 @@ layout: default
                         Open Source, written in Golang.
                     </li>
                     <li>
-                        Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
+                        Werf is not a SAAS. We consider it a new generation<br/> of high-level CI/CD tools.
                     </li>
                 </ul>
             </div>
@@ -261,7 +261,7 @@ layout: default
                 Complete documentation
             </div>
             <div class="documentation__info-text">
-                Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
+                Documentation of werf comprises over 100 articles which include common use cases (getting started, deploying to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
             </div>
         </div>
         <div class="documentation__btns">
