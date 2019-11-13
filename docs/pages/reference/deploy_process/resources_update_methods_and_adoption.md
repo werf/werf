@@ -119,4 +119,70 @@ User can define a new resource in the chart templates of already existing releas
 
 ### How to adopt resource
 
-To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the resource manifest in the chart and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart (NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption, three-way-merge patch will be used anyway).
+To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the resource manifest in the chart and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart.
+ 
+NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption, three-way-merge patch will be used anyway during adoption process.
+ 
+#### Three way merge patches and adoption 
+
+Three way merge patches are always used when adopting already existing resource into the release (`WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adopter).
+ 
+**NOTE** After adoption live resource manifest may not fully match resource manifest in the chart. In the cases when additional fields are defined in the live resource — these fields will not be deleted and stay in the live resource version.
+ 
+For example, let's say we have an already existing Deploy in the cluster with the following spec:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy1
+  annotations:
+    extra: data
+  labels:
+    service: mydeploy1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: mydeploy1
+  template:
+    metadata:
+      labels:
+        mylabel: myvalue
+        service: mydeploy1
+    spec:
+      containers:
+      - name: main
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04
+      - name: additional
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04
+```
+
+And following Deployment is defined in the chart templates:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy1
+  labels:
+    service: mydeploy1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: mydeploy1
+  template:
+    metadata:
+      labels:
+        service: mydeploy1
+    spec:
+      containers:
+      - name: main
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04
+```
+
+After adoption werf will change `replicas=1` to `replicas=2`. Extra data `metadata.annotations.extra=data`, `spec.template.metadata.labels.mylable=myvalue` and `spec.template.spec.containers[]` container named `additional` will stay in the final live resource version, because these fields are not defined in the chart template. User should remove such fields manually if it is needed.
