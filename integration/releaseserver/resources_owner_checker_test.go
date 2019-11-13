@@ -33,7 +33,7 @@ var _ = Describe("Resources owner checker", func() {
 			werfDismiss("resources_owner_checker_app1-003", werfexec.CommandOptions{})
 		})
 
-		It("should set owner-release refs during rollback operation", func() {
+		It("should set owner-release refs during rollback operation https://github.com/flant/werf/issues/1902", func() {
 			By("creating deployed release in FAILED state without service.werf.io/owner-release annotations (emulating already existing old werf release)")
 
 			Expect(werfDeploy("resources_owner_checker_app1-001", werfexec.CommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
