@@ -1,6 +1,6 @@
 // +build integration integration_k8s
 
-package deploytracking
+package releaseserver
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ import (
 
 func TestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "deploytracking suite")
+	ginkgo.RunSpecs(t, "Release server suite")
 }
 
 var werfBinPath string
