@@ -475,15 +475,15 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 		return nil, err
 	}
 
+	if err := werfConfig.validateImagesFrom(); err != nil {
+		return nil, err
+	}
+
 	if err := werfConfig.associateImportsArtifacts(); err != nil {
 		return nil, err
 	}
 
 	if err := werfConfig.exportsAutoExcluding(); err != nil {
-		return nil, err
-	}
-
-	if err := werfConfig.associateImagesFrom(); err != nil {
 		return nil, err
 	}
 

@@ -219,7 +219,7 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 	return nil
 }
 
-func (c *WerfConfig) associateImagesFrom() error {
+func (c *WerfConfig) validateImagesFrom() error {
 	for _, image := range c.StapelImages {
 		if err := c.validateImageFrom(image.StapelImageBase); err != nil {
 			return err
