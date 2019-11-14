@@ -21,7 +21,6 @@ summary: |
     <span class="na">CMD</span><span class="pi">:</span> <span class="s">&lt;cmd&gt;</span>
     <span class="na">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
     <span class="na">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
-    <span class="na">STOPSIGNAL</span><span class="pi">:</span> <span class="s">&lt;stopsignal&gt;</span>
     <span class="na">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre></div></div>
 ---
 
@@ -35,7 +34,6 @@ summary: |
 * `EXPOSE` to inform Docker that the container listens on the specified network ports at runtime (read more [here](https://docs.docker.com/engine/reference/builder/#expose))
 * `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)).
 * `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)).
-* `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 These instructions can be specified in the `docker` config directive.

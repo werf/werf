@@ -40,7 +40,6 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _, _ image.ImageIn
 	args = append(args, s.instructions.Entrypoint)
 	args = append(args, s.instructions.Workdir)
 	args = append(args, s.instructions.User)
-	args = append(args, s.instructions.StopSignal)
 	args = append(args, s.instructions.HealthCheck)
 
 	return util.Sha256Hash(args...), nil
@@ -74,7 +73,6 @@ func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image
 	imageCommitChangeOptions.AddEntrypoint(s.instructions.Entrypoint)
 	imageCommitChangeOptions.AddUser(s.instructions.User)
 	imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
-	imageCommitChangeOptions.AddStopSignal(s.instructions.StopSignal)
 	imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
 
 	return nil
