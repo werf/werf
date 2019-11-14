@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: ubuntu
+from: alpine
 import:
 - artifact: test
   add: /app
@@ -10,7 +10,7 @@ import:
   after: setup
 ---
 artifact: test
-from: ubuntu
+from: alpine
 git:
 - to: /app
 shell:

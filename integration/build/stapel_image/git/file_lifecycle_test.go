@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/alessio/shellescape"
 
@@ -65,19 +64,20 @@ var _ = Describe("file lifecycle", func() {
 		dockerOptions := []string{"--rm"}
 
 		if entry.delete {
-			cmd = append(cmd, checkContainerFileCommand(path.Join(gitToPath, entry.name), false, false))
+			cmd = append(cmd, utils.CheckContainerFileCommand(path.Join(gitToPath, entry.name), false, false))
 		} else {
-			cmd = append(cmd, checkContainerFileCommand(path.Join(gitToPath, entry.name), false, true))
+			cmd = append(cmd, utils.CheckContainerFileCommand(path.Join(gitToPath, entry.name), false, true))
 			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)", path.Join(gitToPath, entry.name), strconv.FormatUint(uint64(entry.perm), 8)))
 			cmd = append(cmd, fmt.Sprintf("diff %s %s", path.Join(gitToPath, entry.name), "/source"))
 
 			dockerOptions = append(dockerOptions, fmt.Sprintf("-v %s:%s", filePath, "/source"))
 		}
 
-		utils.RunSucceedCommand(
-			testDirPath,
+		utils.RunSucceedContainerCommandWithStapel(
 			werfBinPath,
-			"run", "--docker-options", strings.Join(dockerOptions, " "), "--", "bash", "-ec", strings.Join(cmd, " && "),
+			testDirPath,
+			[]string{fmt.Sprintf("-v %s:%s", filePath, "/source")},
+			cmd,
 		)
 	}
 
@@ -198,10 +198,11 @@ var _ = Describe("file lifecycle", func() {
 				cmd = append(cmd, fmt.Sprintf("diff <(%s) <(echo %s)", readlinkCmd, entry.link))
 			}
 
-			utils.RunSucceedCommand(
-				testDirPath,
+			utils.RunSucceedContainerCommandWithStapel(
 				werfBinPath,
-				"run", "--docker-options", "--rm", "--", "bash", "-ec", strings.Join(cmd, " && "),
+				testDirPath,
+				[]string{},
+				cmd,
 			)
 		}
 
