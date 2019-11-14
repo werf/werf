@@ -3,6 +3,7 @@
 package releaseserver
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/flant/werf/integration/utils/werfexec"
@@ -11,17 +12,64 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func resourceStateLine(outputLine string) string {
-	fields := strings.Fields(outputLine)
-	if len(fields) >= 4 {
-		return strings.Join(fields[len(fields)-4:len(fields)], " ")
+func releaseResourcesStatusProgressLine(outputLine string) string {
+	prefix := "│ │ │ "
+	if strings.HasPrefix(outputLine, prefix) {
+		return strings.Trim(outputLine, prefix)
 	}
 	return ""
 }
 
-func unknownMydeploy1ResourceStateForbidden(outputLine string) {
-	resourceState := resourceStateLine(outputLine)
-	Ω(resourceState).ShouldNot(Equal("mydeploy1 - - -"), "Unknown mydeploy1 state should not be reported")
+type DeploymentState struct {
+	Deployment       string
+	Replicas         string
+	ReplicasCurrent  string
+	Available        string
+	AvailableCurrent string
+	UpToDate         string
+	UpToDateCurrent  string
+
+	StatusProgressLine string
+}
+
+func mydeploy1State(statusProgressLine string) *DeploymentState {
+	fields := strings.Fields(statusProgressLine)
+
+	if len(fields) == 4 && fields[0] == "mydeploy1" {
+		ds := &DeploymentState{
+			Deployment:         fields[0],
+			Replicas:           fields[1],
+			Available:          fields[2],
+			UpToDate:           fields[3],
+			StatusProgressLine: statusProgressLine,
+		}
+
+		if parts := strings.Split(ds.Replicas, "->"); len(parts) > 1 {
+			ds.ReplicasCurrent = parts[1]
+		} else {
+			ds.ReplicasCurrent = ds.Replicas
+		}
+		if parts := strings.Split(ds.Available, "->"); len(parts) > 1 {
+			ds.AvailableCurrent = parts[1]
+		} else {
+			ds.AvailableCurrent = ds.Available
+		}
+		if parts := strings.Split(ds.UpToDate, "->"); len(parts) > 1 {
+			ds.UpToDateCurrent = parts[1]
+		} else {
+			ds.UpToDateCurrent = ds.UpToDate
+		}
+
+		return ds
+	}
+
+	return nil
+}
+
+func unknownDeploymentStateForbidden(ds *DeploymentState) {
+	Expect(ds.Replicas).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s REPLICAS should not be reported", ds.Deployment))
+	Expect(ds.Available).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s AVAILABLE should not be reported", ds.Deployment))
+	Expect(ds.UpToDate).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s UP-TO-DATE should not be reported", ds.Deployment))
 }
 
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
@@ -33,18 +81,21 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 		It("should report Deployment is ready before werf exit", func(done Done) {
 			gotDeploymentReadyLine := false
 
-			Ω(werfDeploy("kubedog_multitrack_app1", werfexec.CommandOptions{
+			Expect(werfDeploy("kubedog_multitrack_app1", werfexec.CommandOptions{
 				OutputLineHandler: func(line string) {
-					resourceState := resourceStateLine(line)
-					if resourceState == "mydeploy1 2/2 2 2" {
-						gotDeploymentReadyLine = true
-					}
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
 
-					unknownMydeploy1ResourceStateForbidden(line)
+							if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
+								gotDeploymentReadyLine = true
+							}
+						}
+					}
 				},
 			})).Should(Succeed())
 
-			Ω(gotDeploymentReadyLine).Should(BeTrue())
+			Expect(gotDeploymentReadyLine).Should(BeTrue())
 
 			close(done)
 		}, 120)
@@ -60,7 +111,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
-			Ω(werfDeploy("kubedog_multitrack_app2", werfexec.CommandOptions{
+			Expect(werfDeploy("kubedog_multitrack_app2", werfexec.CommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true
@@ -72,13 +123,17 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 						gotImagePullBackoffLine = true
 					}
 
-					unknownMydeploy1ResourceStateForbidden(line)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
+						}
+					}
 				},
 			})).Should(MatchError("exit code 1"))
 
-			Ω(gotImagePullBackoffLine).Should(BeTrue())
-			Ω(gotAllowedErrorsWarning).Should(BeTrue())
-			Ω(gotAllowedErrorsExceeded).Should(BeTrue())
+			Expect(gotImagePullBackoffLine).Should(BeTrue())
+			Expect(gotAllowedErrorsWarning).Should(BeTrue())
+			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
 
 			close(done)
 		}, 120)
