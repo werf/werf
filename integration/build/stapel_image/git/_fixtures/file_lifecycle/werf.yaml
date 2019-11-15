@@ -2,6 +2,6 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: ubuntu
+from: alpine
 git:
 - to: /app

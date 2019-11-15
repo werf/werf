@@ -44,7 +44,7 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			)
 
 			By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerAddedDirPath)))
-			checkContainerDirectoryExists(testDirPath, containerAddedDirPath)
+			utils.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerAddedDirPath)
 
 			By(fmt.Sprintf("Remove file %s", shellescape.Quote(projectAddedFilePath)))
 
@@ -69,13 +69,13 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			for _, relDirPath := range entry.shouldBeDeleted {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s does not exist", shellescape.Quote(containerDirPath)))
-				checkContainerDirectoryDoesNotExist(testDirPath, containerDirPath)
+				utils.CheckContainerDirectoryDoesNotExist(werfBinPath, testDirPath, containerDirPath)
 			}
 
 			for _, relDirPath := range entry.shouldBeSkipped {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerDirPath)))
-				checkContainerDirectoryExists(testDirPath, containerDirPath)
+				utils.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerDirPath)
 			}
 		}
 	}
@@ -131,40 +131,3 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 		}),
 	)
 })
-
-func checkContainerDirectoryExists(projectPath, containerDirPath string) {
-	checkContainerDirectory(projectPath, containerDirPath, true)
-}
-
-func checkContainerDirectoryDoesNotExist(projectPath, containerDirPath string) {
-	checkContainerDirectory(projectPath, containerDirPath, false)
-}
-
-func checkContainerDirectory(projectPath, containerDirPath string, exist bool) {
-	cmd := checkContainerFileCommand(containerDirPath, true, exist)
-
-	utils.RunSucceedCommand(
-		projectPath,
-		werfBinPath,
-		"run", "--docker-options", "--rm", "--", "bash", "-ec", cmd,
-	)
-}
-
-func checkContainerFileCommand(containerDirPath string, directory bool, exist bool) string {
-	var cmd string
-	var flag string
-
-	if directory {
-		flag = "-d"
-	} else {
-		flag = "-f"
-	}
-
-	if exist {
-		cmd = fmt.Sprintf("test %s %s", flag, shellescape.Quote(containerDirPath))
-	} else {
-		cmd = fmt.Sprintf("! test %s %s", flag, shellescape.Quote(containerDirPath))
-	}
-
-	return cmd
-}

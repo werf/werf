@@ -643,16 +643,11 @@ func checkResultedFilesChecksum(testDirPath string) {
 	resultFilesChecksum := filesChecksumCommand("/app")
 	diffCommand := fmt.Sprintf("diff <(%s) <(%s)", resultFilesChecksum, expectedFilesChecksum)
 
-	werfRunArgs := []string{
-		"run",
-		"--docker-options", fmt.Sprintf("--rm -v %s:%s", testDirPath, containerTestDirPath),
-		"--",
-		"bash", "-ec", utils.ShelloutPack(diffCommand),
-	}
-	utils.RunSucceedCommand(
-		testDirPath,
+	utils.RunSucceedContainerCommandWithStapel(
 		werfBinPath,
-		werfRunArgs...,
+		testDirPath,
+		[]string{fmt.Sprintf("-v %s:%s", testDirPath, containerTestDirPath)},
+		[]string{utils.ShelloutPack(diffCommand)},
 	)
 }
 
