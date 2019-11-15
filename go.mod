@@ -53,6 +53,7 @@ require (
 	github.com/hashicorp/uuid v0.0.0-20160311170451-ebb0a03e909c // indirect
 	github.com/ishidawataru/sctp v0.0.0-20180213033435-07191f837fed // indirect
 	github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63
+	github.com/mattn/go-isatty v0.0.7
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/moby/buildkit v0.3.3
