@@ -16,6 +16,10 @@ spec:
       labels:
         service: mydeploy1
     spec:
+      initContainers:
+      - name: init
+        command: [ "/bin/bash", "-c", "for i in {1..2} ; do date; sleep 1; done" ]
+        image: ubuntu:18.04
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]

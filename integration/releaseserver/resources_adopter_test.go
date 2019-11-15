@@ -316,6 +316,6 @@ spec:
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
 			close(done)
-		}, 120)
+		}, 300)
 	})
 })
