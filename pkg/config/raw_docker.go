@@ -14,7 +14,6 @@ type rawDocker struct {
 	Workdir     string            `yaml:"WORKDIR,omitempty"`
 	User        string            `yaml:"USER,omitempty"`
 	Entrypoint  interface{}       `yaml:"ENTRYPOINT,omitempty"`
-	StopSignal  interface{}       `yaml:"STOPSIGNAL,omitempty"`
 	HealthCheck string            `yaml:"HEALTHCHECK,omitempty"`
 
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
@@ -74,10 +73,6 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 
 	if docker.Entrypoint != "" && docker.Cmd == "" {
 		docker.Cmd = "[]"
-	}
-
-	if c.StopSignal != nil {
-		docker.StopSignal = fmt.Sprintf("%v", c.StopSignal)
 	}
 
 	docker.HealthCheck = c.HealthCheck

@@ -9,7 +9,6 @@ type Docker struct {
 	Workdir     string
 	User        string
 	Entrypoint  string
-	StopSignal  string
 	HealthCheck string
 
 	raw *rawDocker
