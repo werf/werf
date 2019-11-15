@@ -8,18 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/gomega/types"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 
 	"github.com/flant/werf/integration/utils"
 	utilsDocker "github.com/flant/werf/integration/utils/docker"
 )
 
-var _ = Describe("from and from latest", func() {
-	var testDirPath string
+var _ = Describe("from and fromLatest", func() {
 	var fromBaseRepoImageState1ID, fromBaseRepoImageState2ID string
 	var fromImage string
 
@@ -37,9 +35,7 @@ var _ = Describe("from and from latest", func() {
 	}
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
-
-		utils.CopyIn(fixturePath("from_and_from_latest"), testDirPath)
+		testDirPath = fixturePath("from_and_from_latest")
 
 		Ω(utilsDocker.CliPull(state1Image)).Should(Succeed(), "docker pull")
 		Ω(utilsDocker.CliPull(state2Image)).Should(Succeed(), "docker pull")
@@ -49,17 +45,8 @@ var _ = Describe("from and from latest", func() {
 
 		fromImage = registryProjectRepository
 
-		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 		Ω(os.Setenv("FROM_IMAGE", fromImage))
 		Ω(os.Setenv("FROM_LATEST", "false"))
-	})
-
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
 	})
 
 	type entry struct {
@@ -361,5 +348,29 @@ var _ = Describe("from and from latest", func() {
 				}),
 			)
 		})
+	})
+})
+
+var _ = Describe("fromCacheVersion", func() {
+	BeforeEach(func() {
+		testDirPath = fixturePath("from_cache_version")
+	})
+
+	It("should be rebuilt", func() {
+		specStep := func(fromCacheVersion string) {
+			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
+			Ω(os.Setenv("FROM_CACHE_VERSION", fromCacheVersion)).Should(Succeed())
+
+			output := utils.SucceedCommandOutput(
+				testDirPath,
+				werfBinPath,
+				"build",
+			)
+
+			Ω(output).Should(ContainSubstring("Building stage from"))
+		}
+
+		specStep("0")
+		specStep("1")
 	})
 })

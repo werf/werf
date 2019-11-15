@@ -30,7 +30,7 @@ func TestIntegration(t *testing.T) {
 var requiredSuiteTools = []string{"docker"}
 var requiredSuiteEnvs []string
 
-var tmpDir string
+var testDirPath string
 var werfBinPath string
 var registry, registryContainerName string
 var registryProjectRepository string
@@ -50,26 +50,21 @@ var _ = SynchronizedAfterSuite(func() {
 })
 
 var _ = BeforeEach(func() {
-	var err error
-	tmpDir, err = utils.GetTempDir()
-	Ω(err).ShouldNot(HaveOccurred())
-
 	utils.BeforeEachOverrideWerfProjectName()
-
 	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
+
+	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 })
 
 var _ = AfterEach(func() {
-	err := os.RemoveAll(tmpDir)
-	Ω(err).ShouldNot(HaveOccurred())
+	utils.RunSucceedCommand(
+		testDirPath,
+		werfBinPath,
+		"stages", "purge", "-s", ":local", "--force",
+	)
 
 	utils.ResetEnviron()
 })
-
-func tmpPath(paths ...string) string {
-	pathsToJoin := append([]string{tmpDir}, paths...)
-	return filepath.Join(pathsToJoin...)
-}
 
 func fixturePath(paths ...string) string {
 	pathsToJoin := append([]string{"_fixtures"}, paths...)
