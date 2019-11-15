@@ -35,10 +35,10 @@ func objectToHashKey(obj interface{}) string {
 
 func (cache *GitRepoCache) Terminate() error {
 	for _, patch := range cache.Patches {
-		os.RemoveAll(patch.GetFilePath())
+		_ = os.RemoveAll(patch.GetFilePath())
 	}
 	for _, archive := range cache.Archives {
-		os.RemoveAll(archive.GetFilePath())
+		_ = os.RemoveAll(archive.GetFilePath())
 	}
 	return nil
 }
@@ -127,12 +127,7 @@ func (gp *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo
 func (gp *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	var res git_repo.Archive
 
-	cwd := gp.Cwd
-	if cwd == "" {
-		cwd = "/"
-	}
-
-	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), cwd), logboek.LogProcessOptions{}, func() error {
+	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), gp.Cwd), logboek.LogProcessOptions{}, func() error {
 		archive, err := gp.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -164,12 +159,7 @@ func (gp *GitMapping) getOrCreatePatch(opts git_repo.PatchOptions) (git_repo.Pat
 func (gp *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, error) {
 	var res git_repo.Patch
 
-	cwd := gp.Cwd
-	if cwd == "" {
-		cwd = "/"
-	}
-
-	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd)
+	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), gp.Cwd)
 	err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		patch, err := gp.GitRepo().CreatePatch(opts)
 		if err != nil {

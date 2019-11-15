@@ -90,7 +90,7 @@ require (
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
-	gopkg.in/src-d/go-billy.v4 v4.3.0 // indirect
+	gopkg.in/src-d/go-billy.v4 v4.3.0
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.11.0
 	gopkg.in/yaml.v2 v2.2.2
