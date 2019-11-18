@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"runtime"
 
 	"github.com/alessio/shellescape"
 
@@ -23,10 +24,15 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 		dirToAdd        string
 		shouldBeDeleted []string
 		shouldBeSkipped []string
+		skipOnWindows   bool
 	}
 
 	removingEmptyDirectoriesItBody := func(fixturePathFolder string) func(removingEmptyDirectoriesEntry) {
 		return func(entry removingEmptyDirectoriesEntry) {
+			if entry.skipOnWindows && runtime.GOOS == "windows" {
+				Skip("skip on windows")
+			}
+
 			commonBeforeEach(testDirPath, fixturePath(append(fixturesPathParts, fixturePathFolder)...))
 
 			projectAddedFilePath := filepath.Join(entry.dirToAdd, "file")
@@ -107,6 +113,7 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			dirToAdd:        "dir/sub dir/sub dir with special ch@ra(c)ters? ()",
 			shouldBeDeleted: []string{"dir/sub dir/sub dir with special ch@ra(c)ters? ()", "dir/sub dir", "dir"},
 			shouldBeSkipped: []string{},
+			skipOnWindows:   true,
 		}),
 	)
 

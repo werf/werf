@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/alessio/shellescape"
@@ -27,6 +28,9 @@ var _ = Describe("file lifecycle", func() {
 	fileDataToAdd := []byte("test")
 	fileDataToModify := []byte("test2")
 
+	gitExecutableFilePerm := os.FileMode(0755)
+	gitOrdinaryFilePerm := os.FileMode(0644)
+
 	type fileLifecycleEntry struct {
 		name   string
 		data   []byte
@@ -36,7 +40,24 @@ var _ = Describe("file lifecycle", func() {
 
 	createFileFunc := func(filePath string, fileData []byte, filePerm os.FileMode) {
 		utils.CreateFile(filePath, fileData)
-		Ω(os.Chmod(filePath, filePerm)).Should(Succeed())
+
+		if runtime.GOOS == "windows" {
+			gitUpdateIndexCommandArgs := []string{"update-index", "--add"}
+			if filePerm == gitExecutableFilePerm {
+				gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, "--chmod=+x")
+			} else {
+				gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, "--chmod=-x")
+			}
+			gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, filePath)
+
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				gitUpdateIndexCommandArgs...,
+			)
+		} else {
+			Ω(os.Chmod(filePath, filePerm)).Should(Succeed())
+		}
 	}
 
 	fileLifecycleEntryItBody := func(entry fileLifecycleEntry) {
@@ -80,17 +101,8 @@ var _ = Describe("file lifecycle", func() {
 	}
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		fixturesPathParts = []string{"file_lifecycle"}
 		commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
-	})
-
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
 	})
 
 	DescribeTable("processing file with archive apply",
@@ -98,18 +110,18 @@ var _ = Describe("file lifecycle", func() {
 		Entry("should add file (0755)", fileLifecycleEntry{
 			name: fileNameToAdd,
 			data: fileDataToAdd,
-			perm: 0755,
+			perm: gitExecutableFilePerm,
 		}),
 		Entry("should add file (0644)", fileLifecycleEntry{
 			name: fileNameToAdd,
 			data: fileDataToAdd,
-			perm: 0644,
+			perm: gitOrdinaryFilePerm,
 		}),
 	)
 
 	Context("when gitArchive stage with file is built", func() {
 		BeforeEach(func() {
-			createFileFunc(filepath.Join(testDirPath, fileNameToAddAndModify), fileDataToAdd, 0755)
+			createFileFunc(filepath.Join(testDirPath, fileNameToAddAndModify), fileDataToAdd, gitExecutableFilePerm)
 			addAndCommitFile(testDirPath, fileNameToAddAndModify, "Add file "+fileNameToAddAndModify)
 
 			utils.RunSucceedCommand(
@@ -124,27 +136,27 @@ var _ = Describe("file lifecycle", func() {
 			Entry("should add file (0755)", fileLifecycleEntry{
 				name: fileNameToAdd,
 				data: fileDataToAdd,
-				perm: 0755,
+				perm: gitExecutableFilePerm,
 			}),
 			Entry("should add file (0644)", fileLifecycleEntry{
 				name: fileNameToAdd,
 				data: fileDataToAdd,
-				perm: 0644,
+				perm: gitOrdinaryFilePerm,
 			}),
 			Entry("should modify file", fileLifecycleEntry{
 				name: fileNameToAddAndModify,
 				data: fileDataToModify,
-				perm: 0755,
+				perm: gitExecutableFilePerm,
 			}),
 			Entry("should change file permission (0755->0644)", fileLifecycleEntry{
 				name: fileNameToAddAndModify,
 				data: fileDataToAdd,
-				perm: 0644,
+				perm: gitOrdinaryFilePerm,
 			}),
 			Entry("should modify and change file permission (0755->0644)", fileLifecycleEntry{
 				name: fileNameToAddAndModify,
 				data: fileDataToModify,
-				perm: 0644,
+				perm: gitOrdinaryFilePerm,
 			}),
 			Entry("should delete file", fileLifecycleEntry{
 				name:   fileNameToAddAndModify,
@@ -203,6 +215,12 @@ var _ = Describe("file lifecycle", func() {
 				cmd,
 			)
 		}
+
+		BeforeEach(func() {
+			if runtime.GOOS == "windows" {
+				Skip("skip on windows")
+			}
+		})
 
 		DescribeTable("processing symlink file with archive apply",
 			symlinkFileLifecycleEntryItBody,
