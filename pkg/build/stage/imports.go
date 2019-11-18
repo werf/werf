@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"sort"
@@ -126,6 +127,10 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 		dockerImageName = c.GetImageLatestStageImageName(i.ImageName)
 	} else {
 		dockerImageName = c.GetImageLatestStageImageName(i.ArtifactName)
+	}
+
+	if err := os.MkdirAll(importImageTmp, os.ModePerm); err != nil {
+		return err
 	}
 
 	args := []string{
