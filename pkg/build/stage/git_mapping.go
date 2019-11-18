@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -231,7 +232,7 @@ func (gp *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 
 	switch archiveType {
 	case git_repo.FileArchive:
-		applyPatchDirectory = filepath.Dir(gp.To)
+		applyPatchDirectory = path.Dir(gp.To)
 	case git_repo.DirectoryArchive:
 		applyPatchDirectory = gp.To
 	default:
@@ -348,16 +349,16 @@ func (gp *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 		changedRelDirsByLevel := make(map[int]map[string]bool)
 
 	getPathsLoop:
-		for _, path := range patch.GetPaths() {
-			targetDir := path
+		for _, p := range patch.GetPaths() {
+			targetDir := p
 
 			for {
-				targetDir = filepath.Dir(targetDir)
+				targetDir = path.Dir(targetDir)
 				if targetDir == "." {
 					continue getPathsLoop
 				}
 
-				partsCount := len(strings.Split(targetDir, string(os.PathSeparator)))
+				partsCount := len(strings.Split(targetDir, "/"))
 
 				paths, exist := changedRelDirsByLevel[partsCount]
 				if !exist {
@@ -451,7 +452,7 @@ func (gp *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 
 	switch archiveType {
 	case git_repo.FileArchive:
-		unpackArchiveDirectory = filepath.Dir(gp.To)
+		unpackArchiveDirectory = path.Dir(gp.To)
 	case git_repo.DirectoryArchive:
 		unpackArchiveDirectory = gp.To
 	default:
@@ -500,7 +501,7 @@ func (gp *GitMapping) ApplyArchiveCommand(image image.ImageInterface) error {
 
 func (gp *GitMapping) applyScript(image image.ImageInterface, commands []string) error {
 	stageHostTmpScriptFilePath := filepath.Join(gp.ScriptsDir, gp.GetParamshash())
-	containerTmpScriptFilePath := filepath.Join(gp.ContainerScriptsDir, gp.GetParamshash())
+	containerTmpScriptFilePath := path.Join(gp.ContainerScriptsDir, gp.GetParamshash())
 
 	if err := stapel.CreateScript(stageHostTmpScriptFilePath, commands); err != nil {
 		return err
@@ -565,8 +566,9 @@ func (gp *GitMapping) StageDependenciesChecksum(stageName StageName) (string, er
 		return "", err
 	}
 
-	for _, path := range checksum.GetNoMatchPaths() {
-		logboek.LogErrorF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, path, gp.GitRepo().GetName())
+	for _, p := range checksum.GetNoMatchPaths() {
+		logboek.LogErrorF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, p,
+			gp.GitRepo().GetName())
 	}
 
 	return checksum.String(), nil
@@ -693,7 +695,7 @@ func (gp *GitMapping) getArchiveFileDescriptor(archiveOpts git_repo.ArchiveOptio
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(gp.ArchivesDir, fileName),
-		ContainerFilePath: filepath.Join(gp.ContainerArchivesDir, fileName),
+		ContainerFilePath: path.Join(gp.ContainerArchivesDir, fileName),
 	}
 }
 
@@ -742,8 +744,8 @@ func (gp *GitMapping) preparePatchPathsListFile(patchOpts git_repo.PatchOptions,
 	}
 
 	fullPaths := make([]string, 0)
-	for _, path := range patch.GetPaths() {
-		fullPaths = append(fullPaths, filepath.Join(gp.To, path))
+	for _, p := range patch.GetPaths() {
+		fullPaths = append(fullPaths, path.Join(gp.To, p))
 	}
 
 	pathsData := strings.Join(fullPaths, "\000")
@@ -790,7 +792,7 @@ func (gp *GitMapping) getPatchPathsListFileDescriptor(patchOpts git_repo.PatchOp
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(gp.PatchesDir, fileName),
-		ContainerFilePath: filepath.Join(gp.ContainerPatchesDir, fileName),
+		ContainerFilePath: path.Join(gp.ContainerPatchesDir, fileName),
 	}
 }
 
@@ -799,7 +801,7 @@ func (gp *GitMapping) getPatchFileDescriptor(patchOpts git_repo.PatchOptions) *C
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(gp.PatchesDir, fileName),
-		ContainerFilePath: filepath.Join(gp.ContainerPatchesDir, fileName),
+		ContainerFilePath: path.Join(gp.ContainerPatchesDir, fileName),
 	}
 }
 

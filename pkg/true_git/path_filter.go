@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -110,8 +111,8 @@ func TrimFileBasePath(filePath, basePath string) string {
 	return strings.TrimPrefix(filePath, NormalizeDirectoryPrefix(basePath))
 }
 
-func NormalizeAbsolutePath(path string) string {
-	return filepath.Clean(filepath.Join("/", path))
+func NormalizeAbsolutePath(p string) string {
+	return path.Clean(path.Join("/", p))
 }
 
 func NormalizeDirectoryPrefix(directoryPrefix string) string {

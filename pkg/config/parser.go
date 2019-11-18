@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -93,7 +92,7 @@ func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(path.Dir(werfConfigPath))
+		defaultProjectName, err := GetProjectName(filepath.Dir(werfConfigPath))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
@@ -123,9 +122,9 @@ func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig
 }
 
 func GetProjectName(projectDir string) (string, error) {
-	name := path.Base(projectDir)
+	name := filepath.Base(projectDir)
 
-	if exist, err := util.DirExists(path.Join(projectDir, ".git")); err != nil {
+	if exist, err := util.DirExists(filepath.Join(projectDir, ".git")); err != nil {
 		return "", err
 	} else if exist {
 		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
@@ -151,7 +150,7 @@ func GetProjectName(projectDir string) (string, error) {
 func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 	localGitRepo := &git_repo.Local{
 		Path:   projectDir,
-		GitDir: path.Join(projectDir, ".git"),
+		GitDir: filepath.Join(projectDir, ".git"),
 	}
 
 	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()

@@ -3,7 +3,7 @@ package helm
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 	"text/template"
 
@@ -44,9 +44,9 @@ func (templates ChartTemplates) DaemonSets() []Template {
 func (templates ChartTemplates) ByKind(kind string) []Template {
 	var resultTemplates []Template
 
-	for _, template := range templates {
-		if strings.ToLower(template.Kind) == strings.ToLower(kind) {
-			resultTemplates = append(resultTemplates, template)
+	for _, t := range templates {
+		if strings.ToLower(t.Kind) == strings.ToLower(kind) {
+			resultTemplates = append(resultTemplates, t)
 		}
 	}
 
@@ -265,7 +265,7 @@ func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles ma
 		}
 
 		werfSecretFileFunc := func(secretRelativePath string) (string, error) {
-			if filepath.IsAbs(secretRelativePath) {
+			if path.IsAbs(secretRelativePath) {
 				return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
 			}
 

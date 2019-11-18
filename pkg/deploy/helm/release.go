@@ -3,7 +3,6 @@ package helm
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -655,7 +654,7 @@ func removeResource(name, kind, namespace string) error {
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
-	dirPath := path.Dir(filePath)
+	dirPath := filepath.Dir(filePath)
 
 	if fileExist, err := util.FileExists(filePath); err != nil {
 		return err
