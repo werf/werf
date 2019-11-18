@@ -12,8 +12,6 @@ import (
 )
 
 var _ = Describe("Getting started", func() {
-	var testDirPath string
-
 	requiredSuiteEnvs = append(
 		requiredSuiteEnvs,
 		"WERF_TEST_K8S_DOCKER_REGISTRY",
@@ -22,7 +20,6 @@ var _ = Describe("Getting started", func() {
 	)
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("deploy_into_kubernetes"), testDirPath)
 	})
 

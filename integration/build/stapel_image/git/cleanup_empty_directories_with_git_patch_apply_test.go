@@ -16,7 +16,6 @@ import (
 )
 
 var _ = Describe("cleanup empty directories with git patch apply", func() {
-	var testDirPath string
 	var fixturesPathParts []string
 	gitToPath := "/app"
 
@@ -81,7 +80,6 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 	}
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		fixturesPathParts = []string{"cleanup_empty_directories_with_git_patch_apply"}
 	})
 

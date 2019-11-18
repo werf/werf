@@ -19,7 +19,6 @@ import (
 )
 
 var _ = Describe("file lifecycle", func() {
-	var testDirPath string
 	var fixturesPathParts []string
 	gitToPath := "/app"
 
@@ -61,8 +60,7 @@ var _ = Describe("file lifecycle", func() {
 		)
 
 		var cmd []string
-		dockerOptions := []string{"--rm"}
-
+		extraDockerOptions := []string{}
 		if entry.delete {
 			cmd = append(cmd, utils.CheckContainerFileCommand(path.Join(gitToPath, entry.name), false, false))
 		} else {
@@ -70,13 +68,13 @@ var _ = Describe("file lifecycle", func() {
 			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)", path.Join(gitToPath, entry.name), strconv.FormatUint(uint64(entry.perm), 8)))
 			cmd = append(cmd, fmt.Sprintf("diff %s %s", path.Join(gitToPath, entry.name), "/source"))
 
-			dockerOptions = append(dockerOptions, fmt.Sprintf("-v %s:%s", filePath, "/source"))
+			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", filePath, "/source"))
 		}
 
 		utils.RunSucceedContainerCommandWithStapel(
 			werfBinPath,
 			testDirPath,
-			[]string{fmt.Sprintf("-v %s:%s", filePath, "/source")},
+			extraDockerOptions,
 			cmd,
 		)
 	}

@@ -34,6 +34,7 @@ var requiredSuiteTools = []string{"git", "docker"}
 var requiredSuiteEnvs []string
 
 var tmpDir string
+var testDirPath string
 var werfBinPath string
 var registry, registryContainerName string
 var registryProjectRepository string
@@ -56,6 +57,8 @@ var _ = BeforeEach(func() {
 	var err error
 	tmpDir, err = utils.GetTempDir()
 	Ω(err).ShouldNot(HaveOccurred())
+
+	testDirPath = tmpPath()
 
 	utils.BeforeEachOverrideWerfProjectName()
 

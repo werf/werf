@@ -12,12 +12,6 @@ import (
 )
 
 var _ = Describe("Getting started", func() {
-	var testDirPath string
-
-	BeforeEach(func() {
-		testDirPath = tmpPath()
-	})
-
 	AfterEach(func() {
 		utils.RunSucceedCommand(
 			testDirPath,

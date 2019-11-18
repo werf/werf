@@ -19,7 +19,6 @@ type entry struct {
 }
 
 var itBody = func(e entry) {
-	testDirPath = tmpPath()
 	utils.CopyIn(e.fixturePath, testDirPath)
 
 	Ω(os.Setenv("FROM_CACHE_VERSION", "1"))

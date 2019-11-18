@@ -13,10 +13,7 @@ import (
 )
 
 var _ = Describe("images cleanup command", func() {
-	var testDirPath string
-
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
