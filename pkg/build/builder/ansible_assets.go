@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
@@ -72,7 +73,7 @@ if append_path != '':
 os.environ['PATH'] = os.pathsep.join(path_components)
 
 execfile("%s")
-`, stapel.PythonBinPath(), filepath.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
+`, stapel.PythonBinPath(), path.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
 		os.FileMode(0777),
 	)
 
@@ -188,25 +189,25 @@ func (b *Ansible) stageConfig(userStageName string) (map[string]interface{}, err
 }
 
 func (b *Ansible) stageHostTmpDir(userStageName string) (string, error) {
-	path := filepath.Join(b.extra.TmpPath, fmt.Sprintf("ansible-tmpdir-%s", userStageName))
+	p := filepath.Join(b.extra.TmpPath, fmt.Sprintf("ansible-tmpdir-%s", userStageName))
 
-	if err := mkdirP(filepath.Join(path, "local")); err != nil {
+	if err := mkdirP(filepath.Join(p, "local")); err != nil {
 		return "", err
 	}
 
-	if err := mkdirP(filepath.Join(path, "remote")); err != nil {
+	if err := mkdirP(filepath.Join(p, "remote")); err != nil {
 		return "", err
 	}
 
-	return path, nil
+	return p, nil
 }
 
 func (b *Ansible) containerWorkDir() string {
-	return filepath.Join(b.extra.ContainerWerfPath, "ansible-workdir")
+	return path.Join(b.extra.ContainerWerfPath, "ansible-workdir")
 }
 
 func (b *Ansible) containerTmpDir() string {
-	return filepath.Join(b.extra.ContainerWerfPath, "ansible-tmpdir")
+	return path.Join(b.extra.ContainerWerfPath, "ansible-tmpdir")
 }
 
 func mkdirP(path string) error {
@@ -215,8 +216,4 @@ func mkdirP(path string) error {
 
 func writeFile(path string, content string) error {
 	return ioutil.WriteFile(path, []byte(content), os.FileMode(0664))
-}
-
-func writeFileBytes(path string, content []byte) error {
-	return ioutil.WriteFile(path, content, os.FileMode(0664))
 }

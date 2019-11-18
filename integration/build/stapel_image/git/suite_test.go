@@ -30,6 +30,7 @@ func TestIntegration(t *testing.T) {
 var requiredSuiteTools = []string{"git", "docker"}
 var requiredSuiteEnvs []string
 
+var testDirPath string
 var tmpDir string
 var werfBinPath string
 
@@ -44,6 +45,8 @@ var _ = BeforeEach(func() {
 	var err error
 	tmpDir, err = utils.GetTempDir()
 	Ω(err).ShouldNot(HaveOccurred())
+
+	testDirPath = tmpPath()
 
 	utils.BeforeEachOverrideWerfProjectName()
 })

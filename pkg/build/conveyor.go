@@ -2,7 +2,6 @@ package build
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 
 	"github.com/flant/logboek"
@@ -355,5 +354,5 @@ func (c *Conveyor) GetBuildingGitStage(imageName string) stage.StageName {
 }
 
 func (c *Conveyor) GetImageTmpDir(imageName string) string {
-	return path.Join(c.tmpDir, "image", imageName)
+	return filepath.Join(c.tmpDir, "image", imageName)
 }

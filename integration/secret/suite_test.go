@@ -3,6 +3,7 @@
 package secret
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -41,6 +42,13 @@ var _ = BeforeEach(func() {
 	testDirPath = tmpPath()
 
 	utils.BeforeEachOverrideWerfProjectName()
+})
+
+var _ = AfterEach(func() {
+	err := os.RemoveAll(tmpDir)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	utils.ResetEnviron()
 })
 
 func tmpPath(paths ...string) string {

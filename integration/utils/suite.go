@@ -78,7 +78,15 @@ var environ = os.Environ()
 func ResetEnviron() {
 	os.Clearenv()
 	for _, env := range environ {
+		// ignore dynamic variables (e.g. "=ExitCode" windows variable)
+		if strings.HasPrefix(env, "=") {
+			continue
+		}
+
 		parts := strings.SplitN(env, "=", 2)
-		Ω(os.Setenv(parts[0], parts[1])).Should(Succeed())
+		envName := parts[0]
+		envValue := parts[1]
+
+		Ω(os.Setenv(envName, envValue)).Should(Succeed(), env)
 	}
 }

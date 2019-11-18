@@ -2,7 +2,7 @@ package cleanup
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -133,7 +133,7 @@ func runCleanup() error {
 	}
 
 	var localRepo cleaning.GitRepo
-	gitDir := path.Join(projectDir, ".git")
+	gitDir := filepath.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
 	} else if exist {

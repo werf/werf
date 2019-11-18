@@ -12,10 +12,7 @@ import (
 )
 
 var _ = Describe("Advanced build/Mounts", func() {
-	var testDirPath string
-
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("mounts"), testDirPath)
 	})
 

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -618,7 +618,7 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 
 func GetWerfConfigPath(projectDir string) (string, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
-		werfConfigPath := path.Join(projectDir, werfConfigName)
+		werfConfigPath := filepath.Join(projectDir, werfConfigName)
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
 			return "", err
 		} else if exist {
@@ -636,10 +636,10 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	if *cmdData.Dir != "" {
-		if path.IsAbs(*cmdData.Dir) {
+		if filepath.IsAbs(*cmdData.Dir) {
 			return *cmdData.Dir, nil
 		} else {
-			return path.Clean(path.Join(currentDir, *cmdData.Dir)), nil
+			return filepath.Clean(filepath.Join(currentDir, *cmdData.Dir)), nil
 		}
 	}
 

@@ -12,12 +12,6 @@ import (
 )
 
 var _ = Describe("Advanced build/First application", func() {
-	var testDirPath string
-
-	BeforeEach(func() {
-		testDirPath = tmpPath()
-	})
-
 	AfterEach(func() {
 		utils.RunSucceedCommand(
 			testDirPath,

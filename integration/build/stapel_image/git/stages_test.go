@@ -15,12 +15,10 @@ import (
 )
 
 var _ = Describe("git stages", func() {
-	var testDirPath string
 	var fixturesPathParts []string
 	var specSteps []stagesSpecStep
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		fixturesPathParts = []string{"git_stages"}
 		specSteps = []stagesSpecStep{}
 	})
@@ -258,12 +256,10 @@ var _ = Describe("git stages", func() {
 })
 
 var _ = Describe("user stages", func() {
-	var testDirPath string
 	var fixturesPathParts []string
 	var specSteps []stagesSpecStep
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		fixturesPathParts = []string{"user_stages"}
 		specSteps = []stagesSpecStep{}
 	})

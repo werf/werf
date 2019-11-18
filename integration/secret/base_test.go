@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -30,7 +31,7 @@ var _ = It("should rotate secret key", func() {
 	res, err := ioutil.ReadFile(filepath.Join(testDirPath, ".werf_secret_key"))
 	Ω(err).ShouldNot(HaveOccurred())
 
-	oldSecretKey := string(res)
+	oldSecretKey := strings.TrimSpace(string(res))
 	Ω(os.Remove(filepath.Join(testDirPath, ".werf_secret_key"))).Should(Succeed())
 
 	output := utils.SucceedCommandOutput(
@@ -52,12 +53,9 @@ var _ = It("should rotate secret key", func() {
 	_, _ = fmt.Fprintf(GinkgoWriter, string(res))
 	Ω(err).ShouldNot(HaveOccurred())
 
-	for _, substr := range []string{
-		"Regenerating file '.helm/secret/test'",
-		"Regenerating file '.helm/secret/sudir/test'",
-		"Regenerating file '.helm/secret-values.yaml'",
-	} {
-		Ω(string(res)).Should(ContainSubstring(substr))
+	filesShouldBeRegenerated := []string{".helm/secret/test", ".helm/secret/subdir/test", ".helm/secret-values.yaml"}
+	for _, path := range filesShouldBeRegenerated {
+		Ω(string(res)).Should(ContainSubstring(fmt.Sprintf("Regenerating file '%s'", filepath.FromSlash(path))))
 	}
 })
 
@@ -66,6 +64,10 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 	var encryptedSecret = "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
 	BeforeEach(func() {
+		if runtime.GOOS == "windows" {
+			Skip("skip on windows")
+		}
+
 		utils.CopyIn(fixturePath("default"), testDirPath)
 	})
 

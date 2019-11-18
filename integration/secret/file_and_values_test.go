@@ -58,6 +58,9 @@ func fileContentsShouldBeEqual(path1, path2 string) {
 	data2, err := ioutil.ReadFile(filepath.Join(testDirPath, path2))
 	Ω(err).ShouldNot(HaveOccurred())
 
+	data1 = bytes.ReplaceAll(data1, []byte(utils.LineBreak), []byte("\n"))
+	data2 = bytes.ReplaceAll(data2, []byte(utils.LineBreak), []byte("\n"))
+
 	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(testDirPath, path1))
 	_, _ = fmt.Fprintf(GinkgoWriter, string(data1))
 	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(testDirPath, path1))

@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 var (
@@ -107,7 +110,7 @@ func gc(dryRun bool) error {
 		}
 
 		if !dryRun {
-			if err := removeProjectDirs(projectDirsToRemove); err != nil {
+			if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
 				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
 			}
 		}

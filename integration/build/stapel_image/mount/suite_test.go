@@ -48,6 +48,8 @@ var _ = BeforeEach(func() {
 	tmpDir, err = utils.GetTempDir()
 	Ω(err).ShouldNot(HaveOccurred())
 
+	testDirPath = tmpPath()
+
 	utils.BeforeEachOverrideWerfProjectName()
 	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
 })

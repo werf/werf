@@ -13,10 +13,7 @@ import (
 )
 
 var _ = Describe("stages cleanup command", func() {
-	var testDirPath string
-
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("stages_cleanup"), testDirPath)
 
 		utils.RunSucceedCommand(

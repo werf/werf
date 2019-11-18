@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -47,7 +48,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, prevImage, _ image.ImageInterfac
 	}
 
 	for _, mount := range s.configMounts {
-		args = append(args, filepath.Clean(mount.From), filepath.Clean(mount.To), mount.Type)
+		args = append(args, filepath.Clean(mount.From), path.Clean(mount.To), mount.Type)
 	}
 
 	args = append(args, prevImage.Name())

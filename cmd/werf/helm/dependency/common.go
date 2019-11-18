@@ -3,7 +3,7 @@ package dependency
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -27,14 +27,14 @@ func getWerfChartPath(commonCmdData common.CmdData) (string, error) {
 	}
 
 	if *commonCmdData.Dir != "" {
-		if path.IsAbs(*commonCmdData.Dir) {
+		if filepath.IsAbs(*commonCmdData.Dir) {
 			projectDirOrChartDir = *commonCmdData.Dir
 		} else {
-			projectDirOrChartDir = path.Clean(path.Join(projectDirOrChartDir, *commonCmdData.Dir))
+			projectDirOrChartDir = filepath.Clean(filepath.Join(projectDirOrChartDir, *commonCmdData.Dir))
 		}
 	}
 
-	chartDir := path.Join(projectDirOrChartDir, ".helm")
+	chartDir := filepath.Join(projectDirOrChartDir, ".helm")
 	exist, err := util.DirExists(chartDir)
 	if err != nil {
 		return "", err

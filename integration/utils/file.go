@@ -5,9 +5,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	. "github.com/onsi/gomega"
 )
+
+var LineBreak = "\n"
+
+func init() {
+	if runtime.GOOS == "windows" {
+		LineBreak = "\r\n"
+	}
+}
 
 func CopyIn(sourcePath, destinationPath string) {
 	err := os.MkdirAll(destinationPath, 0777)
