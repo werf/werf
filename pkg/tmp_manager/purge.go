@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -34,14 +36,13 @@ func purge(dryRun bool) error {
 		}
 	}
 
-	errors := []error{}
-
+	var errors []error
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
 			logboek.LogLn(projectDirToRemove)
 		}
 		if !dryRun {
-			if err := removeProjectDirs(projectDirsToRemove); err != nil {
+			if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
 				errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
 			}
 		}

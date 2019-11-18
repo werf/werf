@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/werf"
 )
 
 func CreateProjectDir() (string, error) {
@@ -38,17 +34,4 @@ func CreateProjectDir() (string, error) {
 
 func ReleaseProjectDir(dir string) error {
 	return releasePath(dir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir), filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
-}
-
-func removeProjectDirs(dirs []string) error {
-	args := []string{
-		"--rm",
-		"--volume", fmt.Sprintf("%s:%s", werf.GetTmpDir(), werf.GetTmpDir()),
-		stapel.ImageName(),
-		stapel.RmBinPath(), "-rf",
-	}
-
-	args = append(args, dirs...)
-
-	return docker.CliRun(args...)
 }
