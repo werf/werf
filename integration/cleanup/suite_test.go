@@ -1,4 +1,4 @@
-// +build integration integration_k8s
+// +build integration
 
 package cleanup_test
 

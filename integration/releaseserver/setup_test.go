@@ -1,4 +1,4 @@
-// +build integration integration_k8s
+// +build integration_k8s
 
 package releaseserver_test
 

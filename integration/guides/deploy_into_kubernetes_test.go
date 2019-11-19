@@ -11,7 +11,7 @@ import (
 	"github.com/flant/werf/integration/utils"
 )
 
-var _ = Describe("Getting started", func() {
+var _ = Describe("Deploy into kubernetes", func() {
 	requiredSuiteEnvs = append(
 		requiredSuiteEnvs,
 		"WERF_TEST_K8S_DOCKER_REGISTRY",

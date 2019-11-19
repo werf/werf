@@ -1,4 +1,4 @@
-// +build integration integration_k8s
+// +build integration
 
 package base_image_test
 
