@@ -1,6 +1,6 @@
 // +build integration
 
-package mount
+package mount_test
 
 import (
 	"os"

@@ -1,4 +1,4 @@
-package releaseserver
+package releaseserver_test
 
 import "github.com/flant/werf/integration/utils/werfexec"
 

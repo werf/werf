@@ -13,8 +13,6 @@ import (
 	"github.com/flant/werf/integration/utils"
 )
 
-var fixtureDir = "_fixtures"
-
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Integration Config Suite")
@@ -43,6 +41,6 @@ var _ = AfterEach(func() {
 })
 
 func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{fixtureDir}, paths...)
+	pathsToJoin := append([]string{"_fixtures"}, paths...)
 	return filepath.Join(pathsToJoin...)
 }

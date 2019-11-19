@@ -1,6 +1,6 @@
 // +build integration
 
-package base_image
+package base_image_test
 
 import (
 	"fmt"

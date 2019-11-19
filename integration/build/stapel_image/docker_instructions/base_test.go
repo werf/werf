@@ -1,6 +1,6 @@
 // +build integration
 
-package docker_instruction
+package docker_instruction_test
 
 import (
 	"os"

@@ -1,6 +1,6 @@
 // +build integration
 
-package git
+package git_test
 
 import (
 	"fmt"

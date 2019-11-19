@@ -1,6 +1,6 @@
 // +build integration integration_k8s
 
-package docker_instruction
+package docker_instruction_test
 
 import (
 	"fmt"

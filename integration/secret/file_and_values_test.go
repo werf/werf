@@ -1,6 +1,6 @@
 // +build integration
 
-package secret
+package secret_test
 
 import (
 	"bytes"
