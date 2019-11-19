@@ -2,7 +2,6 @@ package config
 
 type GitLocal struct {
 	*GitLocalExport
-	As string
 
 	raw *rawGit
 }

@@ -73,9 +73,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	for _, stage := range s.dockerStages {
 		var dependencies []string
 
-		for _, addHost := range s.addHost {
-			dependencies = append(dependencies, addHost)
-		}
+		dependencies = append(dependencies, s.addHost...)
 
 		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, dockerMetaArgsString)
 		if err != nil {

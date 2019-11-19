@@ -9,8 +9,6 @@ import (
 type GitExportBase struct {
 	*GitExport
 	StageDependencies *StageDependencies
-
-	raw *rawGit
 }
 
 func (c *ExportBase) GitMappingAdd() string {
@@ -55,8 +53,4 @@ func gitMappingPath(path string) string {
 	}
 
 	return path
-}
-
-func (c *GitExportBase) validate() error {
-	return nil
 }

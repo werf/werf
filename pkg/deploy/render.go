@@ -43,6 +43,9 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, opts.ImagesRepoManager, opts.Tag, opts.WithoutImagesRepo)
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, opts.ImagesRepoManager, opts.Namespace, opts.Tag, opts.TagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	if err != nil {
+		return err
+	}
 
 	projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
 	werfChart, err := PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
