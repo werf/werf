@@ -47,11 +47,6 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 	return nil
 }
 
-// GenMarkdown creates markdown output.
-func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
-	return GenMarkdownCustom(cmd, w)
-}
-
 // GenMarkdownCustom creates custom markdown output.
 func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 	cmd.InitDefaultHelpCmd()
