@@ -55,7 +55,7 @@ Annotation `debug.werf.io/repair-messages` will contain warnings written to the 
 
 With this method werf will apply three-way-merge patches which take into accout resource version from the previous release, resource version from current chart template and live resource version from cluster to calculate a patch. This patch should transform resource state to match chart template configuration.
 
-## Selecting sesources update method
+## Selecting resources update method
 
 To select resources update method werf has an option called `WERF_THREE_WAY_MERGE_MODE` (or `--three-way-merge-mode` cli option), which can have one of the following values:
 
