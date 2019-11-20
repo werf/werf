@@ -37,7 +37,7 @@ var _ = Describe("cleaning stages", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		out := utils.SucceedCommandOutput(
+		out := utils.SucceedCommandOutputString(
 			testDirPath,
 			"git",
 			"rev-parse", "HEAD",

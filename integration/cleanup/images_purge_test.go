@@ -84,7 +84,7 @@ var _ = Describe("purging images", func() {
 						"commit", "--allow-empty", "--allow-empty-message", "-m", "",
 					)
 
-					out := utils.SucceedCommandOutput(
+					out := utils.SucceedCommandOutputString(
 						testDirPath,
 						"git",
 						"rev-parse", "HEAD",

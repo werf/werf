@@ -3,12 +3,12 @@
 package secret_test
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -34,7 +34,7 @@ var _ = It("should rotate secret key", func() {
 	oldSecretKey := strings.TrimSpace(string(res))
 	Ω(os.Remove(filepath.Join(testDirPath, ".werf_secret_key"))).Should(Succeed())
 
-	output := utils.SucceedCommandOutput(
+	output := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"helm", "secret", "generate-secret-key",
@@ -64,41 +64,49 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 	var encryptedSecret = "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
 	BeforeEach(func() {
-		if runtime.GOOS == "windows" {
-			Skip("skip on windows")
-		}
-
 		utils.CopyIn(fixturePath("default"), testDirPath)
 	})
 
 	It("should be encrypted", func() {
-		output := utils.SucceedCommandOutput(
+		resultData, _ := utils.RunCommandWithOptions(
 			testDirPath,
-			"bash",
-			"-c", "echo "+secret+" | "+werfBinPath+" helm secret encrypt",
+			werfBinPath,
+			[]string{"helm", "secret", "encrypt"},
+			utils.RunCommandOptions{
+				ToStdin:       secret,
+				ShouldSucceed: true,
+			},
 		)
 
-		result := strings.TrimSpace(output)
+		result := string(bytes.TrimSpace(resultData))
 
-		output = utils.SucceedCommandOutput(
+		resultData, _ = utils.RunCommandWithOptions(
 			testDirPath,
-			"bash",
-			"-c", "echo "+result+" | "+werfBinPath+" helm secret decrypt",
+			werfBinPath,
+			[]string{"helm", "secret", "decrypt"},
+			utils.RunCommandOptions{
+				ToStdin:       result,
+				ShouldSucceed: true,
+			},
 		)
 
-		result = strings.TrimSpace(output)
+		result = string(bytes.TrimSpace(resultData))
 
 		Ω(result).Should(BeEquivalentTo(secret))
 	})
 
 	It("should be decrypted", func() {
-		output := utils.SucceedCommandOutput(
+		resultData, _ := utils.RunCommandWithOptions(
 			testDirPath,
-			"bash",
-			"-c", "echo "+encryptedSecret+" | "+werfBinPath+" helm secret decrypt",
+			werfBinPath,
+			[]string{"helm", "secret", "decrypt"},
+			utils.RunCommandOptions{
+				ToStdin:       encryptedSecret,
+				ShouldSucceed: true,
+			},
 		)
 
-		result := strings.TrimSpace(output)
+		result := string(bytes.TrimSpace(resultData))
 
 		Ω(result).Should(BeEquivalentTo(secret))
 	})

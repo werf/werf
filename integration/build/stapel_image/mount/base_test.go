@@ -23,7 +23,7 @@ var itBody = func(e entry) {
 
 	Ω(os.Setenv("FROM_CACHE_VERSION", "1"))
 
-	output := utils.SucceedCommandOutput(
+	output := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"build",
@@ -35,7 +35,7 @@ var itBody = func(e entry) {
 
 	Ω(os.Setenv("FROM_CACHE_VERSION", "2"))
 
-	output = utils.SucceedCommandOutput(
+	output = utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"build",

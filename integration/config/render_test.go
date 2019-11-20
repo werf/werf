@@ -22,7 +22,7 @@ var renderItBody = func(entry renderEntry) {
 	werfArgs := []string{"config", "render"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
-	output := utils.SucceedCommandOutput(
+	output := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		werfArgs...,

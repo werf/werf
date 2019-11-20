@@ -76,7 +76,7 @@ var _ = Describe("from and fromLatest", func() {
 		}
 
 		if err == nil {
-			resultImageName := utils.SucceedCommandOutput(
+			resultImageName := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"stage", "image",
@@ -361,7 +361,7 @@ var _ = Describe("fromCacheVersion", func() {
 			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
 			Ω(os.Setenv("FROM_CACHE_VERSION", fromCacheVersion)).Should(Succeed())
 
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"build",

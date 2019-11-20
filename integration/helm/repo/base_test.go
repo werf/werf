@@ -17,7 +17,7 @@ var _ = Describe("helm repo", func() {
 	})
 
 	It("helm should be configured", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "repo", "init",
@@ -42,7 +42,7 @@ var _ = Describe("helm repo", func() {
 		})
 
 		It("should update chart repositories cache", func() {
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"helm", "repo", "update",
@@ -52,7 +52,7 @@ var _ = Describe("helm repo", func() {
 		})
 
 		It("default repositories should be listed", func() {
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"helm", "repo", "list",
@@ -73,7 +73,7 @@ var _ = Describe("helm repo", func() {
 				"helm", "repo", "remove", "stable",
 			)
 
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"helm", "repo", "list",
@@ -89,7 +89,7 @@ var _ = Describe("helm repo", func() {
 				"helm", "repo", "add", "company", "https://kubernetes-charts.storage.googleapis.com",
 			)
 
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"helm", "repo", "list",
@@ -99,7 +99,7 @@ var _ = Describe("helm repo", func() {
 		})
 
 		It("should search charts", func() {
-			output := utils.SucceedCommandOutput(
+			output := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"helm", "repo", "search",
