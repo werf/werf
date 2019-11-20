@@ -65,6 +65,10 @@ func initCli() error {
 func initApiClient() error {
 	ctx := context.Background()
 	serverVersion, err := cli.Client().ServerVersion(ctx)
+	if err != nil {
+		return err
+	}
+
 	apiClient, err = client.NewClientWithOpts(client.WithVersion(serverVersion.APIVersion))
 	if err != nil {
 		return err

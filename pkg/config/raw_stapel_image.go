@@ -345,14 +345,6 @@ func (c *rawStapelImage) toStapelImageBaseAnsibleLayersDirectivesByStage(name st
 	return imageLayers, nil
 }
 
-func (c *rawStapelImage) toStapelImageLayerDirective(layerName string) (image *StapelImage, err error) {
-	image = &StapelImage{}
-	if image.StapelImageBase, err = c.toBaseStapelImageBaseDirective(layerName); err != nil {
-		return nil, err
-	}
-	return
-}
-
 func (c *rawStapelImage) toStapelImageTopLayerDirective(name string) (mainImageLayer *StapelImage, err error) {
 	mainImageLayer = &StapelImage{}
 	if mainImageLayer.StapelImageBase, err = c.toBaseStapelImageBaseDirective(name); err != nil {

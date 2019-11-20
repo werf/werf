@@ -109,7 +109,9 @@ func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, opt
 
 func exceptRepoImageStagesByImageId(repoImageStages []docker_registry.RepoImage, imageId string) ([]docker_registry.RepoImage, error) {
 	repoImageStage, err := findRepoImageStageByImageId(repoImageStages, imageId)
-	if repoImageStage == nil {
+	if err != nil {
+		return nil, err
+	} else if repoImageStage == nil {
 		return repoImageStages, nil
 	}
 
@@ -176,7 +178,9 @@ func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.Rep
 
 func exceptRepoImageStagesBySignature(repoImageStages []docker_registry.RepoImage, signature string) ([]docker_registry.RepoImage, error) {
 	repoImageStage, err := findRepoImageStageBySignature(repoImageStages, signature)
-	if repoImageStage == nil {
+	if err != nil {
+		return nil, err
+	} else if repoImageStage == nil {
 		return repoImageStages, nil
 	}
 

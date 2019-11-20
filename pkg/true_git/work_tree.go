@@ -61,7 +61,7 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	gitDirPath := filepath.Join(workTreeCacheDir, "git_dir")
 	if _, err := os.Stat(gitDirPath); os.IsNotExist(err) {
 		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0644); err != nil {
-			return "", fmt.Errorf("error writing %s: %s", gitDirPath)
+			return "", fmt.Errorf("error writing %s: %s", gitDirPath, err)
 		}
 	} else if err != nil {
 		return "", fmt.Errorf("unable to access %s: %s", gitDirPath, err)

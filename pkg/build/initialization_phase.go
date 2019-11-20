@@ -419,8 +419,6 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitMapping {
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
-	gitMapping.As = localGitMappingConfig.As
-
 	gitMapping.Name = "own"
 
 	gitMapping.GitRepoInterface = localGitRepo

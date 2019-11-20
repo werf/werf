@@ -1,6 +1,6 @@
 // +build integration integration_k8s
 
-package secret
+package secret_test
 
 import (
 	"os"

@@ -74,6 +74,9 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		if !bytes.Equal(data, newData) {
 			if values {
 				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
+				if err != nil {
+					return err
+				}
 			}
 
 			if err := SaveGeneratedData(filePath, newEncodedData); err != nil {

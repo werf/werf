@@ -1,6 +1,6 @@
 // +build integration_k8s
 
-package releaseserver
+package releaseserver_test
 
 import (
 	"fmt"

@@ -1,6 +1,6 @@
 // +build integration integration_k8s
 
-package mount
+package mount_test
 
 import (
 	"fmt"

@@ -1,6 +1,6 @@
 // +build integration
 
-package git
+package git_test
 
 import (
 	"fmt"
@@ -38,22 +38,23 @@ var _ = Describe("file lifecycle", func() {
 		delete bool
 	}
 
-	createFileFunc := func(filePath string, fileData []byte, filePerm os.FileMode) {
+	createFileFunc := func(fileName string, fileData []byte, filePerm os.FileMode) {
+		filePath := filepath.Join(testDirPath, fileName)
 		utils.CreateFile(filePath, fileData)
 
 		if runtime.GOOS == "windows" {
-			gitUpdateIndexCommandArgs := []string{"update-index", "--add"}
+			gitArgs := []string{"add"}
 			if filePerm == gitExecutableFilePerm {
-				gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, "--chmod=+x")
+				gitArgs = append(gitArgs, "--chmod=+x")
 			} else {
-				gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, "--chmod=-x")
+				gitArgs = append(gitArgs, "--chmod=-x")
 			}
-			gitUpdateIndexCommandArgs = append(gitUpdateIndexCommandArgs, filePath)
+			gitArgs = append(gitArgs, fileName)
 
 			utils.RunSucceedCommand(
 				testDirPath,
 				"git",
-				gitUpdateIndexCommandArgs...,
+				gitArgs...,
 			)
 		} else {
 			Ω(os.Chmod(filePath, filePerm)).Should(Succeed())
@@ -68,7 +69,7 @@ var _ = Describe("file lifecycle", func() {
 			Ω(os.Remove(filePath)).Should(Succeed())
 			commitMsg = "Delete file " + entry.name
 		} else {
-			createFileFunc(filePath, entry.data, entry.perm)
+			createFileFunc(entry.name, entry.data, entry.perm)
 			commitMsg = "Add/Modify file " + entry.name
 		}
 
@@ -121,7 +122,7 @@ var _ = Describe("file lifecycle", func() {
 
 	Context("when gitArchive stage with file is built", func() {
 		BeforeEach(func() {
-			createFileFunc(filepath.Join(testDirPath, fileNameToAddAndModify), fileDataToAdd, gitExecutableFilePerm)
+			createFileFunc(fileNameToAddAndModify, fileDataToAdd, gitExecutableFilePerm)
 			addAndCommitFile(testDirPath, fileNameToAddAndModify, "Add file "+fileNameToAddAndModify)
 
 			utils.RunSucceedCommand(

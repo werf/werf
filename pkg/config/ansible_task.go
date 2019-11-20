@@ -9,7 +9,3 @@ type AnsibleTask struct {
 func (c *AnsibleTask) GetDumpConfigSection() string {
 	return dumpConfigSection(c.raw)
 }
-
-func (c *AnsibleTask) validate() error {
-	return nil
-}

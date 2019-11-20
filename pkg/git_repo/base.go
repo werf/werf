@@ -397,6 +397,9 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }

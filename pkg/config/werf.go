@@ -14,19 +14,11 @@ type WerfConfig struct {
 }
 
 func (c *WerfConfig) HasImageOrArtifact(imageName string) bool {
-	if c.HasImage(imageName) || c.GetArtifact(imageName) != nil {
-		return true
-	}
-
-	return false
+	return c.HasImage(imageName) || c.GetArtifact(imageName) != nil
 }
 
 func (c *WerfConfig) HasImage(imageName string) bool {
-	if c.GetImage(imageName) != nil {
-		return true
-	}
-
-	return false
+	return c.GetImage(imageName) != nil
 }
 
 func (c *WerfConfig) GetAllImages() []ImageInterface {

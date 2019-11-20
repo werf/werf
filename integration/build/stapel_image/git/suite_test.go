@@ -1,6 +1,6 @@
 // +build integration integration_k8s
 
-package git
+package git_test
 
 import (
 	"fmt"
