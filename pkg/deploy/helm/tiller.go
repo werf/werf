@@ -67,7 +67,7 @@ var (
 	ErrNoSuccessfullyDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 
 	currentDate                                 = time.Now()
-	threeWayMergeOnlyNewReleasesEnabledDeadline = time.Date(2019, 11, 25, 0, 0, 0, 0, time.UTC)
+	threeWayMergeOnlyNewReleasesEnabledDeadline = time.Date(2019, 12, 1, 0, 0, 0, 0, time.UTC)
 	threeWayMergeEnabledDeadline                = time.Date(2019, 12, 15, 0, 0, 0, 0, time.UTC)
 	noDisableThreeWayMergeDeadline              = time.Date(2020, 3, 1, 0, 0, 0, 0, time.UTC)
 )
