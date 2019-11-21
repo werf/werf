@@ -85,6 +85,10 @@ When HPA is enabled and user has set `spec.replicas` to static number in chart t
 
 #### `werf.io/set-replicas-only-on-creation`
 
+```
+"werf.io/set-replicas-only-on-creation": "true"
+```
+
 This annotation tells werf that resource `spec.replicas` field value from chart template should only be used when initializing a new resource.
 
 Werf will ignore `spec.replicas` field changes on subsequent resource updates.
@@ -98,6 +102,10 @@ This annotation should be turned on when [HPA](https://kubernetes.io/docs/tasks/
 When VPA is enabled and user has set `resources` to some static settings in chart templates, then repair patch may detect a change in the live state of the obje ct `resources` field, because this field has been changed by the autoscaler. To disable such repair patches user may either delete `resources` settings from chart configuration or define [`werf.io/set-resources-only-on-creation` annotation](#werf-io-set-resources-only-on-creation).
 
 #### `werf.io/set-resources-only-on-creation`
+
+```
+"werf.io/set-resources-only-on-creation": "true"
+```
 
 This annotation tells werf that resource `resources` field value from chart template should only be used when initializing a new resource.
 
