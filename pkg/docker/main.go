@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
 
 	"github.com/flant/logboek"
@@ -51,18 +50,8 @@ func ServerVersion() (*types.Version, error) {
 	return &version, nil
 }
 
-type customReadCloser struct {
-	*os.File
-}
-
-// ignore closing stdin after interactive mode, e.g. docker run -ti
-func (r customReadCloser) Close() error {
-	return nil
-}
-
 func setDockerClient() error {
 	cliOpts := []command.DockerCliOption{
-		command.WithInputStream(customReadCloser{os.Stdin}),
 		command.WithOutputStream(logboek.GetOutStream()),
 		command.WithErrorStream(logboek.GetErrStream()),
 		command.WithContentTrust(false),
@@ -72,9 +61,6 @@ func setDockerClient() error {
 	if err != nil {
 		return err
 	}
-
-	newCli.Out().SetIsTerminal(terminal.IsTerminal(int(os.Stdout.Fd())))
-	newCli.In().SetIsTerminal(terminal.IsTerminal(int(os.Stdin.Fd())))
 
 	opts := flags.NewClientOptions()
 	if err := newCli.Initialize(opts); err != nil {
