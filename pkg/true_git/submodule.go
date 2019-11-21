@@ -12,7 +12,7 @@ func syncSubmodules(repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Sync submodules in work tree '%s'", workTreeDir)
 	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		cmd := exec.Command(
-			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+			"git", "-c", "core.autocrlf=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "sync", "--recursive",
 		)
 
@@ -37,7 +37,7 @@ func updateSubmodules(repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree '%s'", workTreeDir)
 	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		cmd := exec.Command(
-			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+			"git", "-c", "core.autocrlf=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "update", "--checkout", "--force", "--init", "--recursive",
 		)
 
