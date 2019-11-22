@@ -131,7 +131,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	var output *bytes.Buffer
 
 	cmd = exec.Command(
-		"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+		"git", "-c", "core.autocrlf=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
 		"reset", "--hard", commit,
 	)
 	output = setCommandRecordingLiveOutput(cmd)
@@ -172,7 +172,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		cmd = exec.Command(
 			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "foreach", "--recursive",
-			"git", "reset", "--hard",
+			"git", "-c", "core.autocrlf=false", "reset", "--hard",
 		)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 		output = setCommandRecordingLiveOutput(cmd)
