@@ -312,7 +312,7 @@ There are following service values:
  * Git branch name or git tag name used: `.Values.global.werf.ci.is_branch`, `.Values.global.werf.ci.branch`, `.Values.global.werf.ci.is_tag`, `.Values.global.werf.ci.tag`.
  * `.Values.global.ci.ref` is set to either git branch name or git tag name.
  * Full docker images names and ids for each image from `werf.yaml` config: `.Values.global.werf.image.IMAGE_NAME.docker_image` and `.Values.global.werf.image.IMAGE_NAME.docker_image_id`.
- * `.Values.global.werf.is_nameless_image` indicates whether there is a single image defined in the `werf.yaml` config.
+ * `.Values.global.werf.is_nameless_image` indicates whether there is the nameless image defined in the `werf.yaml` config.
  * Project name from `werf.yaml`: `.Values.global.werf.name`.
  * Docker tag being used during deploy for images from `werf.yaml` (accordingly to the selected tagging strategy): `.Values.global.werf.docker_tag`.
  * Images repo being used during deploy: `.Values.global.werf.repo`.

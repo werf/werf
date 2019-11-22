@@ -88,16 +88,9 @@ Config section with the key `artifact: IMAGE_NAME` is the artifact config sectio
 
 ### Minimal config example
 
-Currently Werf requires to define meta config section and at least one image config section. Image config sections will be fully optional soon.
-
-Example of minimal werf config:
-
 ```yaml
 project: my-project
 configVersion: 1
----
-image: ~
-from: alpine:latest
 ```
 
 ## Organizing configuration
@@ -380,6 +373,12 @@ Go templates are available within YAML configuration. The following functions ar
 
 * `.Files.Get` function for getting project file content:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
+  <div class="tabs">
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+  </div>
+  
+  <div id="ansible" class="tabs__content active" markdown="1">
   {% raw %}
   ```yaml
   project: my-project
@@ -397,3 +396,24 @@ Go templates are available within YAML configuration. The following functions ar
         dest: /etc/nginx/nginx.conf
   ```
   {% endraw %}
+  </div>
+  
+  <div id="shell" class="tabs__content" markdown="1">
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+  
+  image: app
+  from: alpine
+  shell:
+    setup:
+    - |
+      head -c -1 <<EOF | tee file > /etc/nginx/nginx.conf
+  {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+      EOF
+  ```
+  {% endraw %}
+  </div>
+  
