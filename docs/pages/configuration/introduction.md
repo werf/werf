@@ -88,16 +88,9 @@ Config section with the key `artifact: IMAGE_NAME` is the artifact config sectio
 
 ### Minimal config example
 
-Currently Werf requires to define meta config section and at least one image config section. Image config sections will be fully optional soon.
-
-Example of minimal werf config:
-
 ```yaml
 project: my-project
 configVersion: 1
----
-image: ~
-from: alpine:latest
 ```
 
 ## Organizing configuration
