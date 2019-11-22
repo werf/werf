@@ -19,6 +19,7 @@ type ImageInfoGetter interface {
 	GetName() string
 	GetImageName() string
 	GetImageId() (string, error)
+	GetImageDigest() (string, error)
 }
 
 func GetImagesInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager ImagesRepoManager, tag string, withoutRegistry bool) []ImageInfoGetter {
@@ -101,25 +102,31 @@ func GetServiceValues(projectName string, imagesRepoManager ImagesRepoManager, n
 		imageData["docker_image"] = image.GetImageName()
 
 		if tagStrategy == tag_strategy.GitBranch || tagStrategy == tag_strategy.Custom {
-			imageData["docker_image_id"] = TemplateEmptyValue
+			setKey := func(key, value string) {
+				if value == "" {
+					imageData[key] = TemplateEmptyValue
+				} else {
+					imageData[key] = value
+				}
+
+				if debug() {
+					_, _ = fmt.Fprintf(logboek.GetOutStream(), "ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
+				}
+			}
 
 			imageID, err := image.GetImageId()
 			if err != nil {
 				return nil, err
 			}
 
-			if debug() {
-				fmt.Fprintf(logboek.GetOutStream(), "GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
+			setKey("docker_image_id", imageID)
+
+			imageDigest, err := image.GetImageDigest()
+			if err != nil {
+				return nil, err
 			}
 
-			var value string
-			if imageID == "" {
-				value = TemplateEmptyValue
-			} else {
-				value = imageID
-			}
-
-			imageData["docker_image_id"] = value
+			setKey("docker_image_digest", imageDigest)
 		}
 	}
 
