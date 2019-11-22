@@ -298,9 +298,11 @@ global:
       assets:
         docker_image: registry.domain.com/apps/myapp/assets:mybranch
         docker_image_id: sha256:ddaec322ee2c622aa0591177062a81009d9e52785be6915c5a37e822c2019755
+        docker_image_digest: sha256:81009d9e52785be6915c5a37e822c2019755ddaec322ee2c622aa0591177062a
       rails:
         docker_image: registry.domain.com/apps/myapp/rails:mybranch
         docker_image_id: sha256:646c56c828beaf26e67e84a46bcdb6ab555c6bce8ebeb066b79a9075d0e87f50
+        docker_image_digest: sha256:555c6bce8ebeb066b79a9075d0e87f50646c56c828beaf26e67e84a46bcdb6ab
     is_nameless_image: false
     name: myapp
     repo: registry.domain.com/apps/myapp
@@ -311,7 +313,7 @@ There are following service values:
  * Kubernetes namespace being used during deploy: `.Values.global.namespace`.
  * Git branch name or git tag name used: `.Values.global.werf.ci.is_branch`, `.Values.global.werf.ci.branch`, `.Values.global.werf.ci.is_tag`, `.Values.global.werf.ci.tag`.
  * `.Values.global.ci.ref` is set to either git branch name or git tag name.
- * Full docker images names and ids for each image from `werf.yaml` config: `.Values.global.werf.image.IMAGE_NAME.docker_image` and `.Values.global.werf.image.IMAGE_NAME.docker_image_id`.
+ * Full docker images names and ids for each image from `werf.yaml` config: `.Values.global.werf.image.IMAGE_NAME.docker_image`, `.Values.global.werf.image.IMAGE_NAME.docker_image_id` and `.Values.global.werf.image.IMAGE_NAME.docker_image_digest`.
  * `.Values.global.werf.is_nameless_image` indicates whether there is the nameless image defined in the `werf.yaml` config.
  * Project name from `werf.yaml`: `.Values.global.werf.name`.
  * Docker tag being used during deploy for images from `werf.yaml` (accordingly to the selected tagging strategy): `.Values.global.werf.docker_tag`.

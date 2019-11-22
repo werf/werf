@@ -61,3 +61,19 @@ func (d *ImageInfo) GetImageId() (string, error) {
 
 	return res, nil
 }
+
+func (d *ImageInfo) GetImageDigest() (string, error) {
+	if d.WithoutRegistry {
+		return "", nil
+	}
+
+	imageName := d.GetImageName()
+
+	res, err := docker_registry.ImageDigest(imageName)
+	if err != nil {
+		logboek.LogErrorF("WARNING: Getting image %s digest failed: %s\n", imageName, err)
+		return "", nil
+	}
+
+	return res, nil
+}
