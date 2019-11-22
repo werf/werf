@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"os/exec"
@@ -11,47 +12,45 @@ import (
 )
 
 func RunCommand(dir, command string, args ...string) ([]byte, error) {
-	cmd := exec.Command(command, args...)
-
-	if dir != "" {
-		cmd.Dir = dir
-	}
-
-	res, err := cmd.CombinedOutput()
-
-	_, _ = GinkgoWriter.Write(res)
-
-	return res, err
+	return RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: false})
 }
 
 func RunSucceedCommand(dir, command string, args ...string) {
-	cmd := exec.Command(command, args...)
-
-	if dir != "" {
-		cmd.Dir = dir
-	}
-
-	cmd.Stdout = GinkgoWriter
-	cmd.Stderr = GinkgoWriter
-
-	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
-	Ω(cmd.Run()).ShouldNot(HaveOccurred(), errorDesc)
+	_, _ = RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: true})
 }
 
-func SucceedCommandOutput(dir, command string, args ...string) string {
+func SucceedCommandOutputString(dir, command string, args ...string) string {
+	res, _ := RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: true})
+	return string(res)
+}
+
+type RunCommandOptions struct {
+	ToStdin       string
+	ShouldSucceed bool
+}
+
+func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 
 	if dir != "" {
 		cmd.Dir = dir
 	}
 
-	errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
-	res, err := cmd.CombinedOutput()
+	if options.ToStdin != "" {
+		var b bytes.Buffer
+		b.Write([]byte(options.ToStdin))
+		cmd.Stdin = &b
+	}
 
+	res, err := cmd.CombinedOutput()
 	_, _ = GinkgoWriter.Write(res)
 
-	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
-	return string(res)
+	if options.ShouldSucceed {
+		errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
+		Ω(err).ShouldNot(HaveOccurred(), errorDesc)
+	}
+
+	return res, err
 }
 
 func ShelloutPack(command string) string {

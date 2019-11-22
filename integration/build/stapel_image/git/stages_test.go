@@ -609,7 +609,7 @@ func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
 			step.beforeBuildHookFunc()
 		}
 
-		out := utils.SucceedCommandOutput(
+		out := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"build",
@@ -623,7 +623,7 @@ func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
 			Ω(out).Should(matcher)
 		}
 
-		out = utils.SucceedCommandOutput(
+		out = utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"build",

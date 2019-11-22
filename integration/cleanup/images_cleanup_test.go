@@ -273,7 +273,7 @@ var _ = Describe("cleaning images", func() {
 					})
 
 					It("should not remove image that associated with commit", func() {
-						out := utils.SucceedCommandOutput(
+						out := utils.SucceedCommandOutputString(
 							testDirPath,
 							"git",
 							"rev-parse", "HEAD",
@@ -297,7 +297,7 @@ var _ = Describe("cleaning images", func() {
 					})
 
 					It("should remove image by expiry days policy (WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS)", func() {
-						out := utils.SucceedCommandOutput(
+						out := utils.SucceedCommandOutputString(
 							testDirPath,
 							"git",
 							"rev-parse", "HEAD",
@@ -333,7 +333,7 @@ var _ = Describe("cleaning images", func() {
 								"commit", "--allow-empty", "--allow-empty-message", "-m", "",
 							)
 
-							out := utils.SucceedCommandOutput(
+							out := utils.SucceedCommandOutputString(
 								testDirPath,
 								"git",
 								"rev-parse", "HEAD",

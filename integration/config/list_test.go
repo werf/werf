@@ -21,7 +21,7 @@ var listItBody = func(entry listEntry) {
 	werfArgs := []string{"config", "list"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
-	output := utils.SucceedCommandOutput(
+	output := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		werfArgs...,

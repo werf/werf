@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -154,9 +155,21 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		desc.IsEmpty = false
 
 		if fileModeFromGit == filemode.Symlink {
-			linkname, err := os.Readlink(absPath)
-			if err != nil {
-				return fmt.Errorf("cannot read symlink %s: %s", absPath, err)
+			isSymlink := info.Mode()&os.ModeSymlink != 0
+
+			var linkname string
+			if isSymlink {
+				linkname, err = os.Readlink(absPath)
+				if err != nil {
+					return fmt.Errorf("cannot read symlink %s: %s", absPath, err)
+				}
+			} else {
+				data, err := ioutil.ReadFile(absPath)
+				if err != nil {
+					return fmt.Errorf("cannot read file %s: %s", absPath, err)
+				}
+
+				linkname = string(bytes.TrimSpace(data))
 			}
 
 			err = tw.WriteHeader(&tar.Header{

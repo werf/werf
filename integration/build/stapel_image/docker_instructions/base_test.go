@@ -34,7 +34,7 @@ var itBody = func(e entry) {
 		"build",
 	)
 
-	resultImageName := utils.SucceedCommandOutput(
+	resultImageName := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"stage", "image",

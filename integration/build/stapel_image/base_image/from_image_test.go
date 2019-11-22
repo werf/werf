@@ -18,7 +18,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	By(fmt.Sprintf("fromCacheVersion: %s", "0"))
 	Ω(os.Setenv("FROM_CACHE_VERSION", "0")).Should(Succeed())
 
-	output := utils.SucceedCommandOutput(
+	output := utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"build",
@@ -31,7 +31,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	By(fmt.Sprintf("fromCacheVersion: %s", "1"))
 	Ω(os.Setenv("FROM_CACHE_VERSION", "1")).Should(Succeed())
 
-	output = utils.SucceedCommandOutput(
+	output = utils.SucceedCommandOutputString(
 		testDirPath,
 		werfBinPath,
 		"build",
@@ -49,13 +49,13 @@ var _ = Describe("fromImage", func() {
 
 	It("should be rebuilt", func() {
 		fromImageItFunc("app", "fromImage", func(appConfigName, fromImageConfigName string) {
-			appImageName := utils.SucceedCommandOutput(
+			appImageName := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"stage", "image", appConfigName,
 			)
 
-			fromImageName := utils.SucceedCommandOutput(
+			fromImageName := utils.SucceedCommandOutputString(
 				testDirPath,
 				werfBinPath,
 				"stage", "image", fromImageConfigName,

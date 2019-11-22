@@ -3,6 +3,7 @@
 package git_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
@@ -184,11 +185,28 @@ var _ = Describe("file lifecycle", func() {
 				Ω(os.Remove(filePath)).Should(Succeed())
 				commitMsg = "Delete file " + entry.name
 			} else {
-				if _, err := os.Lstat(filePath); err == nil {
-					Ω(os.Remove(filePath)).Should(Succeed())
-				}
+				hashBytes, _ := utils.RunCommandWithOptions(
+					testDirPath,
+					"git",
+					[]string{"hash-object", "-w", "--stdin"},
+					utils.RunCommandOptions{
+						ToStdin:       entry.link,
+						ShouldSucceed: true,
+					},
+				)
 
-				Ω(os.Symlink(entry.link, filePath)).Should(Succeed())
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), entry.name,
+				)
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"checkout", entry.name,
+				)
+
 				commitMsg = "Add/Modify file " + entry.name
 			}
 
@@ -216,12 +234,6 @@ var _ = Describe("file lifecycle", func() {
 				cmd,
 			)
 		}
-
-		BeforeEach(func() {
-			if runtime.GOOS == "windows" {
-				Skip("skip on windows")
-			}
-		})
 
 		DescribeTable("processing symlink file with archive apply",
 			symlinkFileLifecycleEntryItBody,

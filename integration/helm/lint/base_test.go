@@ -15,7 +15,7 @@ var _ = Describe("helm lint", func() {
 	})
 
 	It("should be linted", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "lint",

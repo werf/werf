@@ -17,7 +17,7 @@ var _ = Describe("helm render", func() {
 	})
 
 	It("should be rendered", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "render",

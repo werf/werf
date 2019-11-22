@@ -25,7 +25,7 @@ var _ = Describe("helm dependency", func() {
 	})
 
 	It("should be listed", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "dependency", "list",
@@ -41,7 +41,7 @@ var _ = Describe("helm dependency", func() {
 	})
 
 	It("should be built", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "dependency", "build",
@@ -57,7 +57,7 @@ var _ = Describe("helm dependency", func() {
 	})
 
 	It("should be updated", func() {
-		output := utils.SucceedCommandOutput(
+		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
 			"helm", "dependency", "build",
