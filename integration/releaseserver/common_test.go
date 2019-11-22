@@ -1,3 +1,5 @@
+// +build integration_k8s
+
 package releaseserver_test
 
 import "github.com/flant/werf/integration/utils/werfexec"

@@ -160,7 +160,6 @@ jobs:
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo
         go install github.com/google/go-containerregistry/cmd/crane # bats tests
         echo "::add-path::$HOME/go/bin"
 
@@ -170,7 +169,7 @@ jobs:
 
     - name: Test
       run: |
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration -p -r integration
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf go test --tags integration --timeout 0 ./integration/...
         WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
       shell: bash
 
@@ -219,9 +218,6 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo
-        echo "::add-path::$HOME/go/bin"
-
         ./scripts/tests/werf_with_coverage.sh
         echo "::add-path::$GITHUB_WORKSPACE/bin/tests"
 
@@ -238,7 +234,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration_k8s -p -r integration
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf go test --tags integration_k8s --timeout 0 ./integration/...
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -251,92 +247,73 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
-  macos_integration_tests:
-    name: Integration tests (macOS-latest)
-    needs: download_go_modules
-    strategy:
-      fail-fast: false
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Test (macOS-latest)
-      uses: appleboy/ssh-action@master
-      with:
-        command_timeout: 6h
-        host: ${{ secrets.MAC_HOST }}
-        username: ${{ secrets.MAC_USERNAME }}
-        key: ${{ secrets.MAC_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.MAC_PORT }}
-        script_stop: true
-        envs: GITHUB_SHA,GITHUB_REF
-        script: |
-          set -ex
-
-          export GITHUB_SHA=$GITHUB_SHA
-          export GITHUB_REF=$GITHUB_REF
-
-          export PATH=/usr/local/bin:$PATH
-          source ~/.bash_profile
-
-          tmp_dir=$(mktemp -d -t github_actions-)
-          git clone https://github.com/flant/werf.git $tmp_dir
-          cd $tmp_dir
-          git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
-          git checkout --progress --force $GITHUB_SHA
-
-          export JOB_NAME=integration_tests
-          exec ./scripts/ci/integration_test_macos_runner.sh
-
-  macos_integration_k8s_tests:
-    name: Integration k8s tests (macOS-latest)
+  integration_tests_on_self_hosted_runners:
+    name: Integration tests
     needs: download_go_modules
     strategy:
       fail-fast: false
       matrix:
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
-    runs-on: ubuntu-latest
+        os: [macos]
+    runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
-    - name: Test (macOS-latest)
-      uses: appleboy/ssh-action@master
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
       with:
-        command_timeout: 6h
-        host: ${{ secrets.MAC_HOST }}
-        username: ${{ secrets.MAC_USERNAME }}
-        key: ${{ secrets.MAC_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.MAC_PORT }}
-        script_stop: true
-        envs: GITHUB_SHA,GITHUB_REF
-        script: |
-          set -ex
+        go-version: 1.13
+      id: go
 
-          export GITHUB_SHA=$GITHUB_SHA
-          export GITHUB_REF=$GITHUB_REF
+    - name: Checkout code
+      uses: actions/checkout@v1
 
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_11=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_12=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_13=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_14=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_15=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
-          export WERF_TEST_K8S_BASE64_KUBECONFIG_1_16=${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+    - name: Prepare environment
+      run: ./scripts/ci/git.sh
+      shell: bash
 
-          export WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+    - name: Test
+      run: go test --tags integration --timeout 0 ./integration/...
+      shell: bash
 
-          export WERF_TEST_K8S_DOCKER_REGISTRY=${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-          export WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME=${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-          export WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD=${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+  integration_k8s_tests_on_self_hosted_runners:
+    name: Integration k8s tests
+    needs: download_go_modules
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos]
+        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    steps:
 
-          export PATH=/usr/local/bin:$PATH
-          source ~/.bash_profile
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
 
-          tmp_dir=$(mktemp -d -t github_actions-)
-          git clone https://github.com/flant/werf.git $tmp_dir
-          cd $tmp_dir
-          git fetch --tags --prune --progress --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/pull/*/merge:refs/remotes/origin/pr/*
-          git checkout --progress --force $GITHUB_SHA
+    - name: Checkout code
+      uses: actions/checkout@v1
 
-          export JOB_NAME=integration_k8s_tests_${{ matrix.k8s_version }}
-          exec ./scripts/ci/integration_test_macos_runner.sh integration_k8s
+    - name: Prepare environment
+      run: echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+      shell: bash
+      env:
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+
+    - name: Test
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        go test --tags integration_k8s --timeout 0 ./integration/...
+      shell: bash
+      env:
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
 
   upload_coverage:
     name: Upload coverage
@@ -344,8 +321,8 @@ jobs:
     - unit_tests
     - integration_tests
     - integration_k8s_tests
-#    - macos_integration_tests
-#    - macos_integration_k8s_tests
+#    - integration_tests_on_self_hosted_runners
+#    - integration_k8s_tests_on_self_hosted_runners
     runs-on: ubuntu-latest
     steps:
 
