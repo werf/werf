@@ -103,7 +103,17 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 			logboek.LogInfoF("Current commit: %s\n", currentCommit)
 		}
 
-		return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
+		if err := switchWorkTree(repoDir, workTreeDir, commit, withSubmodules); err != nil {
+			logboek.LogInfoF("WARNING Work tree switch have failed: %s\n")
+			logboek.LogInfoF("WARNING Will empty work tree cache and retry work tree files preparation\n")
+
+			if err := os.RemoveAll(workTreeDir); err != nil {
+				return fmt.Errorf("Unable to remove %s to retry work tree switch: %s", workTreeDir, err)
+			}
+			return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
+		}
+
+		return nil
 	}); err != nil {
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
 	}
