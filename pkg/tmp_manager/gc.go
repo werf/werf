@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -110,8 +111,16 @@ func gc(dryRun bool) error {
 		}
 
 		if !dryRun {
-			if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
-				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+			if runtime.GOOS == "windows" {
+				for _, path := range projectDirsToRemove {
+					if err := os.RemoveAll(path); err != nil {
+						removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp project dir %s: %s", path, err))
+					}
+				}
+			} else {
+				if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
+					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+				}
 			}
 		}
 	}
