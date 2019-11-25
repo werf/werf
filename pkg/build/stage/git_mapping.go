@@ -607,7 +607,9 @@ func (gp *GitMapping) GetParamshash() string {
 
 	hash := sha256.New()
 
-	parts := []string{gp.GetFullName(), ":::", gp.To, ":::", gp.Cwd}
+	cmd := path.Join("/", gp.Cwd) // legacy absolute cmd
+
+	parts := []string{gp.GetFullName(), ":::", gp.To, ":::", cmd}
 	parts = append(parts, ":::")
 	parts = append(parts, gp.IncludePaths...)
 	parts = append(parts, ":::")
