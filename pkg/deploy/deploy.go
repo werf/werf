@@ -3,9 +3,9 @@ package deploy
 import (
 	"fmt"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"time"
+
+	"github.com/flant/werf/pkg/util/secretvalues"
 
 	"github.com/ghodss/yaml"
 
@@ -78,6 +78,7 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 			logBlockErr = err
 			return
 		}
+		helm.SetReleaseLogSecretValuesToMask(werfChart.SecretValuesToMask)
 
 		werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
 		werfChart.MergeExtraLabels(opts.UserExtraLabels)
@@ -90,7 +91,7 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 		return logBlockErr
 	}
 
-	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFiles)
+	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)
 
 	err := helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
@@ -106,27 +107,7 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 	})
 
 	if err != nil {
-		errMsg := err.Error()
-
-		for _, secretValue := range werfChart.DecodedSecrets {
-			var secretValueQuotedLines []string
-			for _, line := range strings.Split(secretValue, "\n") {
-				secretValueQuotedLines = append(secretValueQuotedLines, regexp.QuoteMeta(line))
-			}
-
-			var trimmedSecretValueQuotedLines []string
-			for _, line := range strings.Split(strings.TrimSpace(secretValue), "\n") {
-				trimmedSecretValueQuotedLines = append(trimmedSecretValueQuotedLines, regexp.QuoteMeta(line))
-			}
-
-			for _, quotedLines := range [][]string{secretValueQuotedLines, trimmedSecretValueQuotedLines} {
-				reString := strings.Join(quotedLines, `\n([\t ]*\d+)?[\t ]*`)
-				re := regexp.MustCompile(reString)
-				errMsg = re.ReplaceAllString(errMsg, "***")
-			}
-		}
-
-		return fmt.Errorf(errMsg)
+		return fmt.Errorf("%s", secretvalues.MaskSecretValuesInString(werfChart.SecretValuesToMask, err.Error()))
 	}
 
 	return nil

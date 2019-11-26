@@ -49,9 +49,9 @@ type RenderOptions struct {
 	ShowNotes bool
 }
 
-func Render(out io.Writer, chartPath, releaseName, namespace string, values, set, setString []string, opts RenderOptions) error {
+func Render(out io.Writer, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, opts RenderOptions) error {
 	// get combined values and create config
-	rawVals, err := vals(values, set, setString, []string{}, "", "", "")
+	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
 	}
@@ -102,11 +102,11 @@ func Render(out io.Writer, chartPath, releaseName, namespace string, values, set
 	return nil
 }
 
-func vals(valueFiles valueFiles, values []string, stringValues []string, fileValues []string, CertFile, KeyFile, CAFile string) ([]byte, error) {
+func vals(values valueFiles, secretValues []map[string]interface{}, set []string, setString []string, setFile []string, CertFile, KeyFile, CAFile string) ([]byte, error) {
 	base := map[string]interface{}{}
 
 	// User specified a values files via -f/--values
-	for _, filePath := range valueFiles {
+	for _, filePath := range values {
 		currentMap := map[string]interface{}{}
 
 		var bytes []byte
@@ -128,22 +128,26 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 		base = mergeValues(base, currentMap)
 	}
 
+	for i := range secretValues {
+		base = mergeValues(base, secretValues[i])
+	}
+
 	// User specified a value via --set
-	for _, value := range values {
+	for _, value := range set {
 		if err := strvals.ParseInto(value, base); err != nil {
 			return []byte{}, fmt.Errorf("failed parsing --set data: %s", err)
 		}
 	}
 
 	// User specified a value via --set-string
-	for _, value := range stringValues {
+	for _, value := range setString {
 		if err := strvals.ParseIntoString(value, base); err != nil {
 			return []byte{}, fmt.Errorf("failed parsing --set-string data: %s", err)
 		}
 	}
 
 	// User specified a value via --set-file
-	for _, value := range fileValues {
+	for _, value := range setFile {
 		reader := func(rs []rune) (interface{}, error) {
 			bytes, err := readFile(string(rs), CertFile, KeyFile, CAFile)
 			return string(bytes), err
