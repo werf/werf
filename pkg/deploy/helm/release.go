@@ -158,9 +158,10 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 }
 
 type ChartValuesOptions struct {
-	Set       []string
-	SetString []string
-	Values    []string
+	SecretValues []map[string]interface{}
+	Set          []string
+	SetString    []string
+	Values       []string
 }
 
 type ChartOptions struct {
@@ -410,6 +411,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				chartPath,
 				releaseName,
 				opts.Values,
+				opts.SecretValues,
 				opts.Set,
 				opts.SetString,
 				opts.ThreeWayMergeMode,
@@ -453,6 +455,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				releaseName,
 				namespace,
 				opts.Values,
+				opts.SecretValues,
 				opts.Set,
 				opts.SetString,
 				opts.ThreeWayMergeMode,
@@ -474,7 +477,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		var templatesFromChart ChartTemplates
 
 		if err := logboek.LogProcessInline("Getting chart templates", logboek.LogProcessInlineOptions{}, func() error {
-			templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.Set, opts.SetString)
+			templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
 			return err
 		}); err != nil {
 			return err

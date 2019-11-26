@@ -62,7 +62,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 		ShowNotes: false,
 	}
 
-	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFiles)
+	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)
 
 	return helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
@@ -72,6 +72,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 			opts.ReleaseName,
 			opts.Namespace,
 			append(werfChart.Values, opts.Values...),
+			werfChart.SecretValues,
 			append(werfChart.Set, opts.Set...),
 			append(werfChart.SetString, opts.SetString...),
 			renderOptions)

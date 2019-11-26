@@ -14,6 +14,7 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/util/secretvalues"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -27,14 +28,15 @@ const (
 type WerfChart struct {
 	Name             string
 	ChartDir         string
+	SecretValues     []map[string]interface{}
 	Values           []string
 	Set              []string
 	SetString        []string
 	ExtraAnnotations map[string]string
 	ExtraLabels      map[string]string
 
-	DecodedSecrets     []string
-	DecodedSecretFiles map[string]string
+	DecodedSecretFilesData map[string]string
+	SecretValuesToMask     []string
 }
 
 func (chart *WerfChart) SetGlobalAnnotation(name, value string) error {
@@ -43,7 +45,7 @@ func (chart *WerfChart) SetGlobalAnnotation(name, value string) error {
 }
 
 func (chart *WerfChart) SetServiceValues(values map[string]interface{}) error {
-	chart.Set = append(chart.Set, valuesToStrvals(values)...)
+	chart.SecretValues = append(chart.SecretValues, values)
 	return nil
 }
 
@@ -62,14 +64,8 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	if err := yaml.Unmarshal(decodedData, &values); err != nil {
 		return fmt.Errorf("cannot unmarshal secret values file %s: %s", path, err)
 	}
-
-	strvals := valuesToStrvals(values)
-	chart.Set = append(chart.Set, strvals...)
-
-	for _, strval := range strvals {
-		parts := strings.SplitN(strval, "=", 2)
-		chart.DecodedSecrets = append(chart.DecodedSecrets, parts[1])
-	}
+	chart.SecretValues = append(chart.SecretValues, values)
+	chart.SecretValuesToMask = secretvalues.ExtractSecretValuesFromMap(values)
 
 	return nil
 }
@@ -104,6 +100,7 @@ func valueToStrvals(valuePath string, value interface{}) []string {
 }
 
 func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.ChartOptions) error {
+	opts.SecretValues = append(chart.SecretValues, opts.SecretValues...)
 	opts.Set = append(chart.Set, opts.Set...)
 	opts.SetString = append(chart.SetString, opts.SetString...)
 	opts.Values = append(chart.Values, opts.Values...)
@@ -163,7 +160,7 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 		"werf.io/version":      werf.Version,
 		"project.werf.io/name": projectName,
 	}
-	werfChart.DecodedSecretFiles = make(map[string]string, 0)
+	werfChart.DecodedSecretFilesData = make(map[string]string, 0)
 
 	if env != "" {
 		werfChart.ExtraAnnotations["project.werf.io/env"] = env
@@ -211,8 +208,8 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 				panic(err)
 			}
 
-			werfChart.DecodedSecretFiles[relativePath] = string(decodedData)
-			werfChart.DecodedSecrets = append(werfChart.DecodedSecrets, string(decodedData))
+			werfChart.DecodedSecretFilesData[relativePath] = string(decodedData)
+			werfChart.SecretValuesToMask = append(werfChart.SecretValuesToMask, string(decodedData))
 
 			return nil
 		}); err != nil {

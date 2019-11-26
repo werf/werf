@@ -9,6 +9,8 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/flant/werf/pkg/util/secretvalues"
+
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
 	"k8s.io/helm/pkg/proto/hapi/release"
@@ -43,11 +45,12 @@ var (
 )
 
 var (
-	tillerReleaseServer = &tiller.ReleaseServer{}
-	tillerSettings      = tiller_env.New()
-	helmSettings        helm_env.EnvSettings
-	resourcesWaiter     *ResourcesWaiter
-	releaseLogMessages  []string
+	tillerReleaseServer          = &tiller.ReleaseServer{}
+	tillerSettings               = tiller_env.New()
+	helmSettings                 helm_env.EnvSettings
+	resourcesWaiter              *ResourcesWaiter
+	releaseLogMessages           []string
+	releaseLogSecretValuesToMask []string
 
 	WerfTemplateEngine     = NewWerfEngine()
 	WerfTemplateEngineName = "werfGoTpl"
@@ -71,6 +74,10 @@ var (
 	threeWayMergeEnabledDeadline                = time.Date(2019, 12, 15, 0, 0, 0, 0, time.UTC)
 	noDisableThreeWayMergeDeadline              = time.Date(2020, 3, 1, 0, 0, 0, 0, time.UTC)
 )
+
+func SetReleaseLogSecretValuesToMask(secretValuesToMask []string) {
+	releaseLogSecretValuesToMask = secretValuesToMask
+}
 
 func loadChartfile(chartPath string) (*chart.Chart, error) {
 	return LoadChartfileFunc(chartPath)
@@ -228,7 +235,7 @@ func releaseStatus(releaseName string, opts releaseStatusOptions) (*services.Get
 	res, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
 	if err != nil {
 		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
+			logboek.LogInfoF("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
 		}
 	}
 	return res, err
@@ -258,7 +265,7 @@ func releaseDelete(releaseName string, opts releaseDeleteOptions) error {
 	_, err := tillerReleaseServer.UninstallRelease(ctx, req)
 	if err != nil {
 		for _, msg := range releaseLogMessages {
-			logboek.LogInfoF("%s\n", msg)
+			logboek.LogInfoF("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
 		}
 		return err
 	}
@@ -276,8 +283,8 @@ type ReleaseInstallOptions struct {
 	Debug bool
 }
 
-func ReleaseInstall(chartPath, releaseName, namespace string, values, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseInstallOptions) error {
-	rawVals, err := vals(values, set, setString, []string{}, "", "", "")
+func ReleaseInstall(chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseInstallOptions) error {
+	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
 	}
@@ -317,8 +324,8 @@ type ReleaseUpdateOptions struct {
 	Debug bool
 }
 
-func ReleaseUpdate(chartPath, releaseName string, values, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseUpdateOptions) error {
-	rawVals, err := vals(values, set, setString, []string{}, "", "", "")
+func ReleaseUpdate(chartPath, releaseName string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseUpdateOptions) error {
+	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
 	}
@@ -505,7 +512,7 @@ func displayReleaseLogMessages() {
 	logboek.LogOptionalLn()
 	logboek.LogBlock("Debug info", logboek.LogBlockOptions{}, func() {
 		for _, msg := range releaseLogMessages {
-			_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(msg))
+			_, _ = logboek.OutF("%s\n", logboek.ColorizeInfo(secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg)))
 		}
 	})
 }

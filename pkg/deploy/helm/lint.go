@@ -14,7 +14,7 @@ type LintOptions struct {
 	Strict bool
 }
 
-func Lint(out io.Writer, chartPath, namespace string, values, set, setString []string, opts LintOptions) error {
+func Lint(out io.Writer, chartPath, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, opts LintOptions) error {
 	var lowestTolerance int
 	if opts.Strict {
 		lowestTolerance = support.WarningSev
@@ -24,7 +24,7 @@ func Lint(out io.Writer, chartPath, namespace string, values, set, setString []s
 
 	var total int
 	var failures int
-	if linter, err := lintChart(chartPath, namespace, values, set, setString); err != nil {
+	if linter, err := lintChart(chartPath, namespace, values, secretValues, set, setString); err != nil {
 		fmt.Fprintln(out, "==> Skipping", chartPath)
 		fmt.Fprintln(out, err)
 	} else {
@@ -55,7 +55,7 @@ func Lint(out io.Writer, chartPath, namespace string, values, set, setString []s
 	return nil
 }
 
-func lintChart(chartPath string, namespace string, values, set, setString []string) (support.Linter, error) {
+func lintChart(chartPath string, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) (support.Linter, error) {
 	linter := support.Linter{}
 
 	// Using abs path to get directory context
@@ -64,13 +64,13 @@ func lintChart(chartPath string, namespace string, values, set, setString []stri
 	linter.ChartDir = chartDir
 
 	rules.Values(&linter)
-	templatesRules(&linter, chartPath, namespace, values, set, setString)
+	templatesRules(&linter, chartPath, namespace, values, secretValues, set, setString)
 
 	return linter, nil
 }
 
-func templatesRules(linter *support.Linter, chartPath, namespace string, values, set, setString []string) {
-	templates, err := GetTemplatesFromChart(chartPath, "RELEASE_NAME", namespace, values, set, setString)
+func templatesRules(linter *support.Linter, chartPath, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) {
+	templates, err := GetTemplatesFromChart(chartPath, "RELEASE_NAME", namespace, values, secretValues, set, setString)
 	linter.RunLinterRule(support.ErrorSev, chartPath, err)
 
 	for _, template := range templates {
