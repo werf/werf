@@ -1,6 +1,6 @@
 name "ansible"
 
-ANSIBLE_GIT_TAG = "v2.8.5"
+ANSIBLE_GIT_TAG = "v2.7.15"
 
 dependency "python"
 dependency "pip"
