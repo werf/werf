@@ -41,12 +41,17 @@ While werf is not a complete CI/CD system itself, it is a tool that can be embed
  - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
  - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
  - Werf is a CLI tool written in Golang which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - Cross-platform development: Linux based containers are supported on Linux, macOS, and Windows.
 
 ## Coming soon
 
-- 3-way-merge [#1616](https://github.com/flant/werf/issues/1616).
-- Content based tagging [#1184](https://github.com/flant/werf/issues/1184).
+- ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
+- Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
+- Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
+- Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
 - Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
+- Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
+- Userspace builds without Docker daemon (as in kaniko)[#1618](https://github.com/flant/werf/issues/1618).
 
 ## Complete features list
 
@@ -224,6 +229,8 @@ Werf’s developers are always in contact with community though Slack and Telegr
 - Russian community in [Telegram Chat #werf_ru](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
+
+Official twitter: [https://twitter.com/werf_io](https://twitter.com/werf_io).
 
 <!-- WERF DOCS PARTIAL END -->
 
