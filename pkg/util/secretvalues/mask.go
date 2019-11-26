@@ -41,8 +41,9 @@ func ExtractSecretValuesFromMap(data map[string]interface{}) []string {
 				maskedValues = append(maskedValues, elemStr)
 			}
 			for _, line := range strings.Split(elemStr, "\n") {
-				if len(line) >= 4 {
-					maskedValues = append(maskedValues, line)
+				trimmedLine := strings.TrimSpace(line)
+				if len(trimmedLine) >= 4 {
+					maskedValues = append(maskedValues, trimmedLine)
 				}
 			}
 
