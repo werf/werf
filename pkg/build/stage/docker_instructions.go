@@ -40,6 +40,7 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _, _ image.ImageIn
 	args = append(args, s.instructions.Entrypoint)
 	args = append(args, s.instructions.Workdir)
 	args = append(args, s.instructions.User)
+	args = append(args, "") // legacy StopSignal
 	args = append(args, s.instructions.HealthCheck)
 
 	return util.Sha256Hash(args...), nil
