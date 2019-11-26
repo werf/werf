@@ -2,6 +2,8 @@ package cleaning
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 
 	"github.com/docker/docker/api/types/filters"
 
@@ -88,5 +90,15 @@ func purgeHomeWerfFiles(dryRun bool) error {
 		return nil
 	}
 
-	return util.RemoveHostDirsWithLinuxContainer(werf.GetHomeDir(), pathsToRemove)
+	if runtime.GOOS == "windows" {
+		for _, path := range pathsToRemove {
+			if err := os.RemoveAll(path); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	} else {
+		return util.RemoveHostDirsWithLinuxContainer(werf.GetHomeDir(), pathsToRemove)
+	}
 }
