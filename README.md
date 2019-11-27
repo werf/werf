@@ -51,7 +51,7 @@ While werf is not a complete CI/CD system itself, it is a tool that can be embed
 - Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
 - Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
 - Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
-- Userspace builds without Docker daemon (as in kaniko)[#1618](https://github.com/flant/werf/issues/1618).
+- Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
 
 ## Complete features list
 

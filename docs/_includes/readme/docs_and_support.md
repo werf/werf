@@ -8,3 +8,5 @@ Werf’s developers are always in contact with community though Slack and Telegr
 - Russian community in [Telegram Chat #werf_ru](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
+
+Official twitter: [https://twitter.com/werf_io](https://twitter.com/werf_io).
