@@ -188,15 +188,15 @@ go get github.com/flant/werf/cmd/werf
 
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
-The Werf [documentation](https://werf.io) contains the following examples that demonstrate the capabilities of Werf and help you get started using Werf in your project:
-- [Getting started](https://werf.io/documentation/guides/getting_started.html) — using Werf with existing Dockerfile.
-- [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — building your fist application (PHP Symfony) with Werf using advanced build.
-- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploying application into Kubernetes using Werf.
-- [Gitlab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — integrating Werf with GitLab CI.
-- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrating Werf with almost any existing CI/CD systems.
-- [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — describing multiple images of the Java/ReactJS application in a one config.
-- [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — optimizing build instructions of the Go/Revel application to substantial reduce image size with using _mount_ directives.
-- [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — optimizing build instructions of the Go/Revel application to substantial reduce image size with using _artifact_ directives.
+The following guides demonstrate the main features and help you get started using Werf:
+- [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using Werf with existing Dockerfile.
+- [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with Werf builder.
+- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy the application into Kubernetes using Werf built images.
+- [Gitlab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
+- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate Werf with any CI/CD system.
+- [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
+- [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).
+- [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — reduce image size with artifacts (Go/Revel).
 
 <!-- WERF DOCS PARTIAL END -->
 
