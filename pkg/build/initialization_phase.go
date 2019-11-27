@@ -502,6 +502,7 @@ func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Inte
 func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor) (*Image, error) {
 	image := &Image{}
 	image.name = imageFromDockerfileConfig.Name
+	image.isDockerfileImage = true
 
 	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
 
