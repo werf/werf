@@ -27,6 +27,7 @@ While werf is not a complete CI/CD system itself, it is a tool that can be embed
 - [Installation](#installation)
   - [Install Dependencies](#install-dependencies)
   - [Install Werf](#install-werf)
+- [Getting started](#getting-started)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
 - [Docs and Support](#docs-and-support)
 - [License](#license)
@@ -180,6 +181,22 @@ Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-windows
 ```
 go get github.com/flant/werf/cmd/werf
 ```
+
+<!-- WERF DOCS PARTIAL END -->
+
+# Getting started
+
+<!-- WERF DOCS PARTIAL BEGIN: Getting started -->
+
+The Werf [documentation](https://werf.io) contains the following examples that demonstrate the capabilities of Werf and help you get started using Werf in your project:
+- [Getting started](https://werf.io/documentation/guides/getting_started.html) — using Werf with existing Dockerfile.
+- [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — building your fist application (PHP Symfony) with Werf using advanced build.
+- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploying application into Kubernetes using Werf.
+- [Gitlab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — integrating Werf with GitLab CI.
+- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrating Werf with almost any existing CI/CD systems.
+- [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — describing multiple images of the Java/ReactJS application in a one config.
+- [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — optimizing build instructions of the Go/Revel application to substantial reduce image size with using _mount_ directives.
+- [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — optimizing build instructions of the Go/Revel application to substantial reduce image size with using _artifact_ directives.
 
 <!-- WERF DOCS PARTIAL END -->
 
