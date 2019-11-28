@@ -19,9 +19,10 @@ type Image struct {
 	baseImageImageName string
 	baseImageRepoId    string
 
-	stages     []stage.Interface
-	baseImage  *image.StageImage
-	isArtifact bool
+	stages            []stage.Interface
+	baseImage         *image.StageImage
+	isArtifact        bool
+	isDockerfileImage bool
 }
 
 func (i *Image) LogName() string {
