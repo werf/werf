@@ -160,16 +160,17 @@ jobs:
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
 
+        export GOBIN=$GITHUB_WORKSPACE/bin/tests
+        go install github.com/onsi/ginkgo/ginkgo
         go install github.com/google/go-containerregistry/cmd/crane # bats tests
-        echo "::add-path::$HOME/go/bin"
+        echo "::add-path::$GOBIN"
 
         ./scripts/tests/werf_with_coverage.sh
-        echo "::add-path::$GITHUB_WORKSPACE/bin/tests"
       shell: bash
 
     - name: Test
       run: |
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf go test --tags integration --timeout 0 ./integration/...
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration -keepGoing -p -r integration
         WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
       shell: bash
 
@@ -218,8 +219,11 @@ jobs:
 
         ./scripts/ci/git.sh
 
+        export GOBIN=$GITHUB_WORKSPACE/bin/tests
+        go install github.com/onsi/ginkgo/ginkgo
+        echo "::add-path::$GOBIN"
+
         ./scripts/tests/werf_with_coverage.sh
-        echo "::add-path::$GITHUB_WORKSPACE/bin/tests"
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
       shell: bash
@@ -234,7 +238,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf go test --tags integration_k8s --timeout 0 ./integration/...
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration_k8s -keepGoing -p -r integration
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -267,11 +271,16 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Prepare environment
-      run: ./scripts/ci/git.sh
+      run: |
+        export GOBIN=$GITHUB_WORKSPACE/bin/tests
+        go install github.com/onsi/ginkgo/ginkgo
+        echo "::add-path::$GOBIN"
+
+        ./scripts/ci/git.sh
       shell: bash
 
     - name: Test
-      run: go test --tags integration --timeout 0 ./integration/...
+      run: ginkgo --tags integration -keepGoing -p -r integration
       shell: bash
 
   integration_k8s_tests_on_self_hosted_runners:
@@ -295,7 +304,12 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Prepare environment
-      run: echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+      run: |
+        export GOBIN=$GITHUB_WORKSPACE/bin/tests
+        go install github.com/onsi/ginkgo/ginkgo
+        echo "::add-path::$GOBIN"
+
+        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
       shell: bash
       env:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
@@ -308,7 +322,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        go test --tags integration_k8s --timeout 0 ./integration/...
+        ginkgo --tags integration_k8s -keepGoing -nodes 2 -r integration
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}

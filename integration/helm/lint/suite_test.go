@@ -1,4 +1,4 @@
-// +build integration
+// +build integration integration_k8s
 
 package lint_test
 

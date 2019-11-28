@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	. "github.com/onsi/ginkgo"
+
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -21,7 +23,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 	cmd.Env = os.Environ()
 
 	absDir, _ := filepath.Abs(dir)
-	fmt.Printf("[DEBUG] COMMAND in %s: %s %s\n", absDir, werfBinPath, strings.Join(arg, " "))
+	_, _ = fmt.Fprintf(GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, werfBinPath, strings.Join(arg, " "))
 
 	stdoutReadPipe, stdoutWritePipe, err := os.Pipe()
 	if err != nil {
@@ -55,7 +57,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 				line := string(lineBuf)
 				lineBuf = lineBuf[:0]
 
-				fmt.Printf("[DEBUG] OUTPUT LINE: %s\n", line)
+				_, _ = fmt.Fprintf(GinkgoWriter, "[DEBUG] OUTPUT LINE: %s\n", line)
 
 				if opts.OutputLineHandler != nil {
 					func() {
