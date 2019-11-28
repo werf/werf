@@ -1,0 +1,97 @@
+project: werf-integration-test
+configVersion: 1
+---
+image: dockerfile_image
+dockerfile: Dockerfile
+args:
+  TEST: test
+addHost:
+- "docker:10.180.0.1"
+---
+image: stapel_image
+fromImage: dockerfile_image
+fromCacheVersion: test
+git:
+- add: /
+  to: /app
+  owner: user
+  group: group
+  includePaths:
+  - a
+  - b
+  - c
+  excludePaths:
+  - a/a
+  - a/b
+  - a/c
+  stageDependencies:
+    install:
+    - a
+    beforeSetup:
+    - b
+    setup:
+    - c
+shell:
+  beforeInstall:
+  - date
+  install:
+  - "true"
+  beforeSetup:
+  - date
+  setup:
+  - "true"
+  cacheVersion: test
+  beforeInstallCacheVersion: test
+  installCacheVersion: test
+  beforeSetupCacheVersion: test
+  setupCacheVersion: test
+mount:
+- from: build_dir
+  to: /build
+- from: tmp_dir
+  to: /tmp
+- fromPath: /test
+  to: /from
+docker:
+  VOLUME:
+  - volume
+  EXPOSE:
+  - "80"
+  ENV:
+    test: test
+  LABEL:
+    test: test
+  ENTRYPOINT: cmd
+  CMD: cmd
+  WORKDIR: /root
+  USER: test
+  HEALTHCHECK: CMD true
+import:
+- image: dockerfile_image
+  before: install
+  add: /test
+  to: /test
+  owner: test
+  group: test
+  includePaths:
+  - a
+  - b
+  - c
+  excludePaths:
+  - a/a
+  - a/b
+  - a/c
+- image: dockerfile_image
+  after: setup
+  add: /test2
+  to: /test2
+  owner: test
+  group: test
+  includePaths:
+  - a
+  - b
+  - c
+  excludePaths:
+  - a/a
+  - a/b
+  - a/c
