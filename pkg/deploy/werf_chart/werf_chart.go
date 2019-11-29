@@ -208,7 +208,7 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 				panic(err)
 			}
 
-			werfChart.DecodedSecretFilesData[relativePath] = string(decodedData)
+			werfChart.DecodedSecretFilesData[filepath.ToSlash(relativePath)] = string(decodedData)
 			werfChart.SecretValuesToMask = append(werfChart.SecretValuesToMask, string(decodedData))
 
 			return nil
