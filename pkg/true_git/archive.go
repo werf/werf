@@ -149,7 +149,11 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		}
 
 		unixRelPath := util.ToLinuxContainerPath(relPath)
-		fileModeFromGit := fileModesFromGit[unixRelPath]
+		fileModeFromGit, exist := fileModesFromGit[unixRelPath]
+		if !exist {
+			return fmt.Errorf("cannot process filename %s", unixRelPath)
+		}
+
 		tarEntryName := util.ToLinuxContainerPath(opts.PathFilter.TrimFileBasePath(relPath))
 
 		desc.IsEmpty = false
@@ -250,7 +254,7 @@ func gitWorkTreeFilesModes(repoDir, workTreeDir string, withSubmodules bool) (ma
 	var gitLsFilesCommandOutputs []*bytes.Buffer
 
 	execArgs := []string{
-		"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+		"git", "-c", "core.quotePath=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
 		"ls-files", "--stage",
 	}
 
@@ -270,7 +274,7 @@ func gitWorkTreeFilesModes(repoDir, workTreeDir string, withSubmodules bool) (ma
 	if withSubmodules {
 		execArgs := []string{
 			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
-			"submodule", "foreach", "--recursive", "git", "ls-files", "--stage",
+			"submodule", "foreach", "--recursive", "git", "-c", "core.quotePath=false", "ls-files", "--stage",
 		}
 
 		outBuf := bytes.NewBuffer([]byte{})

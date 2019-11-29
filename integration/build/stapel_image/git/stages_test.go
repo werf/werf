@@ -643,7 +643,7 @@ func checkResultedFilesChecksum(testDirPath string) {
 		werfBinPath,
 		testDirPath,
 		[]string{fmt.Sprintf("-v %s:%s", testDirPath, containerTestDirPath)},
-		[]string{utils.ShelloutPack(diffCommand)},
+		[]string{diffCommand},
 	)
 }
 
