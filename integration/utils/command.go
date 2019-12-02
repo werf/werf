@@ -54,5 +54,5 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 }
 
 func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | base64 --decode)", base64.StdEncoding.EncodeToString([]byte(command)))
+	return fmt.Sprintf("eval $(echo %s | base64 -d)", base64.StdEncoding.EncodeToString([]byte(command)))
 }

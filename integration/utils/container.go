@@ -33,7 +33,7 @@ func CheckContainerDirectory(werfBinPath, projectPath, containerDirPath string, 
 	RunSucceedContainerCommandWithStapel(werfBinPath, projectPath, []string{}, []string{cmd})
 }
 
-func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string, extraDockerOptions []string, cmd []string) {
+func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string, extraDockerOptions []string, cmds []string) {
 	container, err := stapel.GetOrCreateContainer()
 	Ω(err).ShouldNot(HaveOccurred())
 
@@ -45,16 +45,21 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 
 	dockerOptions = append(dockerOptions, extraDockerOptions...)
 
-	werfArgs := []string{
+	baseWerfArgs := []string{
 		"run", "--docker-options", strings.Join(dockerOptions, " "), "--", stapel.BashBinPath(), "-ec",
 	}
-	werfArgs = append(werfArgs, strings.Join(cmd, " && "))
+	containerCommand := strings.Join(cmds, " && ")
+	werfArgs := append(baseWerfArgs, ShelloutPack(containerCommand))
 
-	RunSucceedCommand(
+	_, err = RunCommandWithOptions(
 		projectPath,
 		werfBinPath,
-		werfArgs...,
+		werfArgs,
+		RunCommandOptions{},
 	)
+
+	errorDesc := fmt.Sprintf("%[2]s (dir: %[1]s)", projectPath, strings.Join(append(baseWerfArgs, containerCommand), " "))
+	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
 }
 
 func CheckContainerFileCommand(containerDirPath string, directory bool, exist bool) string {

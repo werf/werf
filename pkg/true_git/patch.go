@@ -69,6 +69,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 	commonGitOpts := []string{
 		"--git-dir", gitDir,
 		"-c", "diff.renames=false",
+		"-c", "core.quotePath=false",
 	}
 	if opts.WithEntireFileContext {
 		commonGitOpts = append(commonGitOpts, "-c", "diff.context=999999999")
