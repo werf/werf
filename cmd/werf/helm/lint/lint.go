@@ -52,7 +52,7 @@ func runLint() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := lock.Init(werf.GetServiceDir()); err != nil {
 		return err
 	}
 

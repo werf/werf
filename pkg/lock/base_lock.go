@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-type Base struct {
-	Name        string
-	ActiveLocks int
-}
-
 type locker interface {
 	Lock() error
 	Unlock() error
@@ -28,11 +23,16 @@ func (locker *baseLocker) Unlock() error {
 	panic("not implemented")
 }
 
-func (lock *Base) GetName() string {
+type BaseLock struct {
+	Name        string
+	ActiveLocks int
+}
+
+func (lock *BaseLock) GetName() string {
 	return lock.Name
 }
 
-func (lock *Base) Lock(l locker) error {
+func (lock *BaseLock) Lock(l locker) error {
 	if lock.ActiveLocks == 0 {
 		err := l.Lock()
 		if err != nil {
@@ -45,7 +45,7 @@ func (lock *Base) Lock(l locker) error {
 	return nil
 }
 
-func (lock *Base) Unlock(l locker) error {
+func (lock *BaseLock) Unlock(l locker) error {
 	if lock.ActiveLocks == 0 {
 		return nil
 	}
@@ -59,7 +59,7 @@ func (lock *Base) Unlock(l locker) error {
 	return nil
 }
 
-func (lock *Base) WithLock(locker locker, f func() error) (resErr error) {
+func (lock *BaseLock) WithLock(locker locker, f func() error) (resErr error) {
 	if err := lock.Lock(locker); err != nil {
 		return err
 	}

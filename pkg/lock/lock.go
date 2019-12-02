@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/werf"
 )
 
 var (
@@ -16,9 +15,9 @@ var (
 	DefaultTimeout = 24 * time.Hour
 )
 
-func Init() error {
+func Init(serviceDir string) error {
 	Locks = make(map[string]LockObject)
-	LocksDir = filepath.Join(werf.GetServiceDir(), "locks")
+	LocksDir = filepath.Join(serviceDir, "locks")
 
 	err := os.MkdirAll(LocksDir, 0755)
 	if err != nil {
@@ -65,7 +64,7 @@ func TryLock(name string, opts TryLockOptions) (bool, error) {
 
 func Unlock(name string) error {
 	if _, hasKey := Locks[name]; !hasKey {
-		return fmt.Errorf("no such lock `%s` found", name)
+		return fmt.Errorf("no such lock %q found", name)
 	}
 
 	lock := getLock(name)
@@ -84,7 +83,7 @@ func WithLock(name string, opts LockOptions, f func() error) error {
 }
 
 func onWait(name string, doWait func() error) error {
-	logProcessMsg := fmt.Sprintf("Waiting for locked resource '%s'", name)
+	logProcessMsg := fmt.Sprintf("Waiting for locked resource %q", name)
 	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		return doWait()
 	})
