@@ -33,13 +33,20 @@ type ResourcesWaiter struct {
 	HooksStatusProgressPeriod time.Duration
 }
 
+func extractSpecReplicas(specReplicas *int32) int {
+	if specReplicas != nil {
+		return int(*specReplicas)
+	}
+	return 1
+}
+
 func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
 	specs := multitrack.MultitrackSpecs{}
 
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
 		case *appsv1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -47,7 +54,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -55,7 +62,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta2.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -63,7 +70,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -101,7 +108,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -109,7 +116,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -117,7 +124,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta2.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, int(*value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}

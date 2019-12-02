@@ -112,7 +112,7 @@ require (
 	sigs.k8s.io/yaml v1.1.0
 )
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20191113092127-64b7551164d6
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20191202114706-d77c3dd37dbe
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 
