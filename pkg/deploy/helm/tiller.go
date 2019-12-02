@@ -629,19 +629,14 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 		}
 	} else if userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
 		logboek.LogHighlightF("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)
+		if newRelease.ThreeWayMergeEnabled {
+			logboek.LogHighlightF("ATTENTION Three way merge is ENABLED for the release %q.\n", newRelease.Name)
+		} else {
+			logboek.LogHighlightF("ATTENTION Three way merge is DISABLED for the release %q.\n", newRelease.Name)
+		}
+		logboek.LogHighlightF("ATTENTION\n")
 		logboek.LogHighlightF("ATTENTION Note that three-way-merge-mode does not affect resources adoption,\n")
 		logboek.LogHighlightF("ATTENTION resources adoption will always use three-way-merge patches.\n")
-
-		if userSpecifiedThreeWayMergeMode == threeWayMergeOnlyNewReleases {
-			if newRelease.ThreeWayMergeEnabled {
-				logboek.LogHighlightF("ATTENTION Three way merge is ENABLED for release %q.\n", newRelease.Name)
-			} else {
-				logboek.LogHighlightF("ATTENTION Three way merge is DISABLED for release %q.\n", newRelease.Name)
-				logboek.LogHighlightF("ATTENTION Add annotation \"%s\": \"true\" to the %s\n", driver.ThreeWayMergeEnabledAnnotation, releaseResourceName)
-				logboek.LogHighlightF("ATTENTION to enable three way merge for the release.\n")
-			}
-		}
-
 		logboek.LogHighlightF("ATTENTION\n")
 		logboek.LogHighlightF("ATTENTION To force werf to use specific three-way-merge mode\n")
 		logboek.LogHighlightF("ATTENTION and prevent auto selecting of three-way-merge-mode\n")

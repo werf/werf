@@ -14,13 +14,18 @@ import (
 )
 
 type CommandOptions struct {
+	Env               map[string]string
 	OutputLineHandler func(string)
 }
 
 func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string) error {
 	cmd := exec.Command(werfBinPath, arg...)
 	cmd.Dir = dir
+
 	cmd.Env = os.Environ()
+	for k, v := range opts.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
 
 	absDir, _ := filepath.Abs(dir)
 	_, _ = fmt.Fprintf(GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, werfBinPath, strings.Join(arg, " "))
