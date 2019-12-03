@@ -92,6 +92,8 @@ type InitOptions struct {
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
 
+	ReleasesMaxHistory int
+
 	WithoutKube bool
 }
 
@@ -161,6 +163,11 @@ func Init(options InitOptions) error {
 			msg := fmt.Sprintf(fmt.Sprintf("Release storage: %s", f), args...)
 			releaseLogMessages = append(releaseLogMessages, msg)
 		}
+
+		if options.ReleasesMaxHistory > 0 {
+			tillerSettings.Releases.MaxHistory = options.ReleasesMaxHistory
+		}
+
 	case SecretStorage:
 		secrets := driver.NewSecrets(clientset.CoreV1().Secrets(options.HelmReleaseStorageNamespace))
 		secrets.Log = func(f string, args ...interface{}) {

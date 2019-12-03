@@ -47,6 +47,7 @@ type CmdData struct {
 	HelmReleaseStorageType           *string
 	StatusProgressPeriodSeconds      *int64
 	HooksStatusProgressPeriodSeconds *int64
+	ReleasesHistoryMax               *int
 
 	Set             *[]string
 	SetString       *[]string
@@ -228,6 +229,28 @@ func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 		"",
 		*statusProgressPeriodDefaultValue(),
 		"Status progress period in seconds. Set -1 to stop showing status progress. Defaults to $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds",
+	)
+}
+
+func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReleasesHistoryMax = new(int)
+
+	defaultValueP, err := getIntEnvVar("WERF_RELEASES_HISTORY_MAX")
+	if err != nil {
+		TerminateWithError(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err), 1)
+	}
+
+	var defaultValue int
+	if defaultValueP != nil {
+		defaultValue = int(*defaultValueP)
+	}
+
+	cmd.Flags().IntVarP(
+		cmdData.ReleasesHistoryMax,
+		"releases-history-max",
+		"",
+		defaultValue,
+		"Max releases to keep in release storage. Can be set by environment variable $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.",
 	)
 }
 

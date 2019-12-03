@@ -64,6 +64,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupKubeContext(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
 
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
@@ -95,6 +96,7 @@ func runDismiss() error {
 			KubeContext:                 *CommonCmdData.KubeContext,
 			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
+			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
