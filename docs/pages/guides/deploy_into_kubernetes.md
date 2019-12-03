@@ -13,9 +13,9 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
 ## Requirements
 
- * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with docker-registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with Docker Registry.
 
- * Working docker-registry.
+ * Working Docker Registry.
 
    * Accessible from a host machine to push images to the registry and read info about images being deployed.
 
@@ -27,7 +27,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
-**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
+**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and Docker Registry installation, specify your own `REPO` address instead of `:minikube`.
 
 ### Select werf version
 
@@ -103,7 +103,7 @@ Build and push an image with the following command:
 werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo :minikube
 ```
 
-The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. As we have specified `myapp` as a tag, for our example werf will push into the docker-registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
+The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. As we have specified `myapp` as a tag, for our example werf will push into the Docker Registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Prepare deploy configuration
 

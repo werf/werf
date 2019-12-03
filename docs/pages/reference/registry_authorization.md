@@ -22,4 +22,4 @@ To prepare _docker config_ you can use standart Docker client command `login` or
 
 > Using `docker login` in parallel CI jobs can lead to failed jobs because of a race condition and temporary credentials.
 One job affects another job overriding temporary credentials in _Docker config_.
-Thus user should provide independent _Docker configs_ between jobs, `docker --config`, or use `ci-env` command.
+Thus user should provide independent _Docker configs_ between jobs, `docker --config`, or use `ci-env` command

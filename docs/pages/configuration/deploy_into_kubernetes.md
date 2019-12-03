@@ -49,4 +49,4 @@ deploy:
 
 `deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace-slug) to generated kubernetes namespace. Default: `true`. 
+`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace-slug) to generated kubernetes namespace. Default: `true`.

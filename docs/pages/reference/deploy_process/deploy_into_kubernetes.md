@@ -73,7 +73,7 @@ With go templates user can:
  * define common text parts as named golang templates and reuse them in several places;
  * etc.
 
-[Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates. 
+[Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates.
 
 Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom golang templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
 
@@ -189,8 +189,8 @@ Secret files are placed in the directory `.helm/secret`. User can create arbitra
 
 ##### werf_secret_file
 
-`werf_secret_file` is runtime template function helper for user to fetch secret file content in chart templates. 
-This template function reads file context, which usually placed in the resource yaml manifest of such resources as Secrets. 
+`werf_secret_file` is runtime template function helper for user to fetch secret file content in chart templates.
+This template function reads file context, which usually placed in the resource yaml manifest of such resources as Secrets.
 Template function requires relative path to the file inside `.helm/secret` directory as an argument.
 
 For example to read `.helm/secret/backend-saml/stage/tls.key` and `.helm/secret/backend-saml/stage/tls.crt` files decrypted content into templates:
@@ -220,7 +220,7 @@ Note that `backend-saml/stage/` — is an arbitrary files structure, user can pl
 
 ### Values
 
-Values is an arbitrary yaml map, filled with the parameters, which can be used in (templates)[#templates].
+Values is an arbitrary yaml map, filled with the parameters, which can be used in [templates](#templates).
 
 There are different types of values in the werf:
 
@@ -291,7 +291,6 @@ global:
       branch: mybranch
       is_branch: true
       is_tag: false
-      ref: mybranch
       tag: '"-"'
     docker_tag: mybranch
     image:
@@ -474,7 +473,7 @@ metadata:
 
 There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://github.com/helm/helm/blob/master/docs/charts_hooks.md#the-available-hooks).
 
-Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates kuberntes resource for each of the hook in the case when resource already exists in the cluster. Hooks kubernetes resources are not deleted after execution.
+Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks kubernetes resources are not deleted after execution.
 
 ### Resource tracking configuration
 
@@ -580,7 +579,7 @@ Werf also sets auto annotations with info from the used CI/CD system (Gitlab CI 
 For more info about CI/CD integration check out following pages:
 
  * [plugging into CI/CD overview]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html);
- * [plugging into Gitlab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
+ * [plugging into GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
 
 #### Custom annotations and labels
 
@@ -647,6 +646,3 @@ metadata:
 There are cases when separate Kubernetes clusters are needed for a different environments. You can [configure access to multiple clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) using kube contexts in a single kube config.
 
 In that case deploy option `--kube-context=CONTEXT` should be specified manually along with the environment.
-
-
-

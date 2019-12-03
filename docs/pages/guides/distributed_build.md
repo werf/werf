@@ -18,7 +18,7 @@ Distributed build assumes the following steps:
 
 In this tutorial, we setup the CI/CD process using GitLab CI and two persistent build nodes with a distributed build.
 
-> The same approach described in this tutorial is also appliable when there are arbitrary number of dynamically allocated build nodes, instead of fixed number of persistent build nodes.
+> The same approach described in this tutorial is also appliable when there are arbitrary number of dynamically allocated build nodes, instead of fixed number of persistent build nodes
 
 ## Requirements
 
@@ -38,7 +38,7 @@ In this tutorial, we setup the CI/CD process using GitLab CI and two persistent 
 
 ![]({{ site.baseurl }}/images/howto_distributed_build1.png)
 
-> We don't recommend to run werf in docker for now as it can give an unexpected result.
+> We don't recommend to run werf in docker for now as it can give an unexpected result
 
 To set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with shell executor is needed to run werf.
 
@@ -93,7 +93,7 @@ Two main steps allow distributing cache work.
 
 There are two runners with the `build` tag in your project, so build jobs runs on a random runner from both.
 
-> It is essential to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in bp or push commands) otherwise cleanup won't work.
+> It is essential to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in bp or push commands) otherwise cleanup won't work
 
 ### Deploy stage
 
@@ -209,7 +209,7 @@ Cleanup builder:
 
 To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_IMAGES_CLEANUP_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_IMAGES_CLEANUP_PASSWORD` and a value consisting of `Personal Access Token`.
 
-> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`
 
 For the demo project create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
@@ -344,7 +344,7 @@ With the added `.gitlab-ci.yml`, you can build the application on any runner wit
 
 When `werf pull` executed, werf looks into config, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
 
-> If you need to pull images of every stage you can use `--all` option with `werf pull` command.
+> If you need to pull images of every stage you can use `--all` option with `werf pull` command
 
 Make changes in the config and push it. Retry build stage several times and compare job logs. You will see that werf uses cache and build only stage with changes and stages after that stage, according to the stage conveyor.
 

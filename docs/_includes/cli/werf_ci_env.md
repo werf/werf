@@ -16,7 +16,7 @@ werf ci-env CI_SYSTEM [options]
 {{ header }} Examples
 
 ```bash
-  # Load generated werf environment variables on gitlab job runner
+  # Load generated werf environment variables on GitLab job runner
   $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
 ```
 

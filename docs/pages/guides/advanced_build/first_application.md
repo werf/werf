@@ -226,9 +226,9 @@ Let's build and run our first application.
 
 ## Step 3: Push image into docker registry
 
-Werf can be used to push a built image into docker-registry.
+Werf can be used to push a built image into Docker Registry.
 
-1. Run local docker-registry:
+1. Run local Docker Registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2

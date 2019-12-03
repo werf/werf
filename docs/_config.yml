@@ -1,13 +1,29 @@
 output: web
 
-topnav_title: Werf Documentation
-site_title: Werf Documentation
+topnav_title: Werf
+site_title: Werf
 company_name: Flant
+url: https://werf.io
+site_lang: en
+site_urls:
+  ru: https://ru.werf.io
+  en: https://werf.io
+
+social_links:
+  ru:
+    twitter: https://twitter.com/werf_io
+    telegram: https://t.me/werf_ru
+    slack: https://cloud-native.slack.com/messages/CHY2THYUU
+  en:
+    twitter: https://twitter.com/werf_io
+    telegram: https://t.me/werf_io
+    slack: https://cloud-native.slack.com/messages/CHY2THYUU
 
 exclude:
 - .idea/
 - .gitignore
 - vendor
+- pages_ru/
 
 highlighter: rouge
 
@@ -22,21 +38,30 @@ breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page
     image: false # Show image or title text
+  hometext: "Home"
 
 collections:
   tooltips:
     output: false
 
 defaults:
-- scope:
-    path: ""
-    type: "pages"
-  values:
-    layout: "page"
-    comments: true
-    search: true
-    sidebar: sidebar
-    topnav: topnav
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+      lang: en
+      comments: true
+      search: true
+      sidebar: sidebar
+      topnav: topnav
+  - scope:
+      path: "pages_ru"
+      type: "pages"
+    values:
+      lang: ru
+
 
 sidebars:
 - documentation
+
