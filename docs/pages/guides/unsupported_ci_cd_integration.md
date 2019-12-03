@@ -13,9 +13,9 @@ The behaviour of `werf ci-env` command should be resembled (without actual using
 
 ## Ci-env procedures
 
-### Docker registry integration
+### Docker Registry integration
 
-According to [docker registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
+According to [Docker Registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
 
@@ -80,7 +80,7 @@ export WERF_LOG_TERMINAL_WIDTH=95
 ```
 
 This script needs to be customized to your CI/CD system: change `WERF_*` environment variables values to the real ones. Consult with the following pages to get an idea and examples of how to retrieve real values for werf variables:
- * [Gitlab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)
+ * [GitLab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)
 
 Copy following script and place into `werf-ci-env-cleanup.sh`:
 
@@ -88,6 +88,5 @@ Copy following script and place into `werf-ci-env-cleanup.sh`:
 rm -rf .docker
 ```
 
-`werf-ci-env.sh` should be called in the beginning of everr CI/CD job prior running any werf commands.
+`werf-ci-env.sh` should be called in the beginning of every CI/CD job prior running any werf commands.
 `werf-ci-env-cleanup.sh` should be called in the end of every CI/CD job.
-

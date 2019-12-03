@@ -240,14 +240,11 @@ Version without prerelease part is considered to be from a stable channel.
 
 [Make your first Werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-Werf’s developers are always in contact with community though Slack and Telegram. Join us!
+We are always in contact with community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
 
-- English-speaking community in [CNCF Slack channel #werf](https://cloud-native.slack.com/messages/CHY2THYUU)
-- Russian community in [Telegram Chat #werf_ru](https://t.me/werf_ru)
+> Russian-speaking community can contact with us in [Telegram Chat](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
-
-Official twitter: [https://twitter.com/werf_io](https://twitter.com/werf_io).
 
 <!-- WERF DOCS PARTIAL END -->
 

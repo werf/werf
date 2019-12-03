@@ -47,7 +47,7 @@ The transformations are the same for all slugs, because these transformations ar
 
 Slug can be applied to arbitrary string with [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
 
-Also Werf applies slug automatically when used in CI/CD systems such as Gitlab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
+Also Werf applies slug automatically when used in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
  * apply slug automatically to params that are derived automatically from CI/CD systems environment;
  * do not apply slug automatically to params that are specified manually with `--tag-*`, `--release` or `--namespace`, this way params are only validated to confirm with the requirements.
 

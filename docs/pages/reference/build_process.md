@@ -20,7 +20,7 @@ How `dockerfile` stage is built:
  1. Stage signature is calculated based on specified `Dockerfile` and its context. This signature represents result image state.
  2. If image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), then werf does not issue a new docker build.
  3. If image with this signature is not found in the [stage storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), then werf issues a regular docker build. Werf uses usual build command of builtin docker client (same as in `docker build` command). Local docker cache will be created and used as usually with the regular docker client.
- 4. After docker image is built werf puts result `dockerfile` stage into [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) (by tagging result docker image with a calculated signature when using [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
+ 4. After docker image is built werf puts result `dockerfile` stage into [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) (by tagging result docker image with a calculated signature) when using [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
 
 See [configuration artictle]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
 

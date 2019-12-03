@@ -7,7 +7,7 @@ summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=1016&amp;h=72">
   </a>
-    
+
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>
   <span class="na">dockerfile</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
   <span class="na">context</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
@@ -19,7 +19,7 @@ summary: |
   </code></pre></div></div>
 ---
 
-Building image from Dockerfile is the easiest way to start using werf in an existing project. 
+Building image from Dockerfile is the easiest way to start using werf in an existing project.
 Minimal `werf.yaml` below describes an image named `example` related with a project `Dockerfile`:
 
 ```yaml
@@ -58,9 +58,9 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 ## Dockerfile directives
 
-Werf as well as Docker builds the image based on a Dockerfile and a context. 
+Werf as well as Docker builds the image based on a Dockerfile and a context.
 
-- `dockerfile` **(required)**: to set Dockerfile path relative to the project directory. 
+- `dockerfile` **(required)**: to set Dockerfile path relative to the project directory.
 - `context`: to set build context PATH inside project directory (defaults to root of a project, `.`).
 - `target`: to link specific Dockerfile stage (last one by default, see `docker build` \-\-target option).
 - `args`: to set build-time variables (see `docker build` \-\-build-arg option).

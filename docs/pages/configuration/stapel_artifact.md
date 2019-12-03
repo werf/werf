@@ -58,7 +58,7 @@ artifact: "application assets"
 
 Unlike with _image_, _artifact stage conveyor_ has no _gitCache_ and _gitLatestPatch_ stages.
 
-> Werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
+> Werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions
 
 Read about working with _git repositories_ in the corresponding [article]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
 

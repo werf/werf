@@ -168,17 +168,7 @@ git:
   includePaths: assets
 ```
 
-> Werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same.
-
-### Copying of file
-
-Copying the content, not the specified directory, from `add` path also applies to files. To transfer the file to the image, you must specify its name twice — once in `add`, and again in `to`. This provides an ability to rename the file:
-
-```yaml
-git:
-- add: /config/prod.yaml
-  to: /app/conf/production.yaml
-```
+> Werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same
 
 ### Changing an owner
 
@@ -226,7 +216,7 @@ git:
   - '**/*-test.*'
 ```
 
-This is the git mapping configuration that adds `.php` and `.js` files from `/src` except files with suffixes that starts with `-dev.` or `-test.`.
+This is the _git mapping_ configuration that adds `.php` and `.js` files from `/src` except files with suffixes that starts with `-dev.` or `-test.`.
 
 To determine whether the file matches the mask the following algorithm is applied:
  - take for the check the next absolute file path inside the repository;
@@ -237,7 +227,7 @@ To determine whether the file matches the mask the following algorithm is applie
    - the path in `add` is concatenated with the mask or raw path from include or exclude config directive and concatenated with additional suffix pattern `**/*`;
    - two paths are compared with the use of glob patterns: if file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`), the algorithm is ended.
 
-> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
+> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter
 
 Masks may contain the following patterns:
 
@@ -279,7 +269,7 @@ git:
 
 ### Target paths overlapping
 
-If multiple git mappings are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
+If multiple _git mappings_ are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
 
 ```yaml
 git:
@@ -289,7 +279,7 @@ git:
   to: /app/assets
 ```
 
-When processing a config, werf calculates the possible intersections among all git mappings concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the git mapping. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git mappings.
+When processing a config, werf calculates the possible intersections among all _git mappings_ concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the _git mapping_. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git mappings.
 
 Implicit `excludePaths` example:
 
@@ -416,6 +406,6 @@ You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset
 
 ### _git stages_ and rebasing
 
-Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. 
-These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_). 
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built.
+These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_).
 So, if any saved commit is not in a git repository (e.g., after rebasing) then werf rebuilds that stage with latest commits at the next build.

@@ -1,5 +1,5 @@
 ---
-title: Gitlab CI/CD integration
+title: GitLab CI/CD integration
 sidebar: documentation
 permalink: documentation/guides/gitlab_ci_cd_integration.html
 author: Artem Kladov <artem.kladov@flant.com>

@@ -24,7 +24,7 @@ summary: |
   </code></pre></div></div>
 ---
 
-The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them. 
+The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.
 To solve such problems, Docker community suggests doing the installation of tools, the assembly, and removal in one step.
 
 ```
@@ -73,8 +73,8 @@ The meaning of such an approach is as follows, describe several auxiliary images
 
 We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) and [_artifacts_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section).
 
-> Why is werf not using multi-stage? 
-* Historically, _imports_ appeared much earlier than Docker multi-stage, and 
+> Why is werf not using multi-stage?
+* Historically, _imports_ appeared much earlier than Docker multi-stage, and
 * Werf gives more flexibility working with auxiliary images
 
 Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)). `import` is an array of records. Each record should contain the following:
@@ -95,10 +95,10 @@ import:
   after: setup
 ```
 
-As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path. 
-You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`. 
+As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path.
+You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`.
 Read more about these in the [git directive article]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
 
-> Import paths and _git mappings_ must not overlap with each other.
+> Import paths and _git mappings_ must not overlap with each other
 
 Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html).

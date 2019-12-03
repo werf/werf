@@ -11,7 +11,7 @@ When you build an application image, it is often necessary to download temporary
 
 Werf can [import]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) resources from images and [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html). Thus you can isolate build process and tools in other images and then copy result files to reduce the image size. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
 
-In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
+In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using artifacts.
 
 ## Requirements
 
@@ -85,7 +85,7 @@ Check that container is running by executing the following command:
 docker ps -f "name=go-booking"
 ```
 
-You should see a running container with a random name, like this:
+You should see a running container with the `go-booking` name, like this:
 ```bash
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
@@ -189,7 +189,7 @@ Check that container is running by executing the following command:
 docker ps -f "name=go-booking"
 ```
 
-You should see a running container with a random name, like this:
+You should see a running container with the `go-booking` name, like this:
 ```bash
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking

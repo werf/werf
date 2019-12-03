@@ -231,7 +231,6 @@ Werf performs _user stage_ commands as follows:
 
 > `bash` binary is stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same)
 
-
 ## Ansible
 
 Syntax for _user stages_ with _ansible assembly instructions_:
@@ -333,22 +332,15 @@ results if executed twice and werf cannot correctly calculate _signature_ to
 rebuild _stages_. For now, there is a list of supported modules:
 
 - [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
-
 - [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate, and other.
-
 - [Files modules](https://docs.ansible.com/ansible/2.5/modules/list_of_files_modules.html): acl, archive, copy, stat, tempfile, and other.
-
 - [Net Tools Modules](https://docs.ansible.com/ansible/2.5/modules/list_of_net_tools_modules.html): get_url, slurp, uri.
-
 - [Packaging/Language modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#language): composer, gem, npm, pip, and other.
-
 - [Packaging/OS modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#os): apt, apk, yum, and other.
-
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
-
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-_Werf config_ with the module not from this list gives an error and stops a build. Feel free to report an issue if some module should be enabled.
+_Werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/flant/werf/issues/new) if some module should be enabled.
 
 ### Copy files
 
@@ -520,7 +512,7 @@ So this configuration rebuilds _beforeInstall_ user stage on every commit.
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
   </a>
 
-As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#rebuild-of-git_archive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
+As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#rebuild-of-gitarchive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
 
 _install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 
@@ -563,7 +555,7 @@ For each _user stage_ werf creates a list of matched files and calculates a chec
 
 Mask that starts with `*` is treated as anchor name by yaml parser. So mask with `*` or `**` patterns at the beginning should be quoted:
 
-```
+```yaml
 # * at the beginning of mask, so use double quotes
 - "*.rb"
 # single quotes also work
@@ -584,7 +576,6 @@ These checksums are calculated in the beginning of the build process before any 
 Example:
 
 ```yaml
----
 image: app
 git:
 - add: /src
@@ -601,7 +592,7 @@ shell:
   - echo "setup stage"
 ```
 
-This `werf.yaml` has a git mapping configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. Werf will apply patch on the _beforeSetup_ stage itself.
+This `werf.yaml` has a _git mapping_ configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. Werf will apply patch on the _beforeSetup_ stage itself.
 
 ## Dependency on CacheVersion values
 

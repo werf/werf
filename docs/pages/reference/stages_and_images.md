@@ -41,7 +41,7 @@ The Werf assembly process assumes a sequential build of stages using _stage conv
 </a>
 </div>
 
-**User only needs to write a config corretly the rest of the work with stages are done by Werf.**
+**User only needs to write a config correсtly the rest of the work with stages are done by Werf.**
 
 For every _stage_ at each build, Werf calculates build stage identifier called _stage signature_.
 Each _stage_ is assembled in an ***assembly container*** based on the previous _stage_, and saved in [stages storage](#stages-storage).
@@ -169,14 +169,14 @@ _Stages_ in _local stages storage_ are named by the following schema — `werf-s
 
 ## Images
 
-_Image_ is a **ready-to-use** Docker image, corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html#image-tag-parameters).
+_Image_ is a **ready-to-use** Docker image, corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
 
 As it is written [above](#stages), _stages_ are steps in the assembly process, building blocks for constructing _images_.
 _Stages_ are not intended for direct use, unlike images. The main difference between images and stages is [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to stored meta-information.
 The _stages storage_ cleanup is only based on the related images in _images repo_.
 
 Werf creates _images_ using _stages storage_.
-Currently, _images_ can only be created in a [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and be saved in [_images repo_]({{ site.baseurl }}/documentation/reference/publish_process.html#images-repo).
+Currently, _images_ can only be created in a [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and be saved in _images repo_.
 
 Images should be defined in the werf configuration file `werf.yaml`.
 

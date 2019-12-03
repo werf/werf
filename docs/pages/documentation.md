@@ -48,6 +48,6 @@ Also, this section includes articles with base primitives and general tools:
 * [Development and debug]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html).
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use **CLI Commands** section.
+Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use [**CLI Commands**]({{ site.baseurl }}/documentation/cli/main/build.html) section.
 
 [**Development** section]({{ site.baseurl }}/documentation/development/stapel.html) contains service and maintenance manuals and other docs which help developers to understand how some werf subsystem works, how to maintain some subsystem in the actual state, how to write and build new code for the werf, etc.

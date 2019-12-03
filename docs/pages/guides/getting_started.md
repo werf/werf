@@ -68,7 +68,7 @@ Add a special file called `werf.yaml` to the source code and define application 
 
 ## Step 3: Publish built image to Docker registry
 
-1. Run local docker-registry:
+1. Run local Docker Registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2

@@ -98,10 +98,10 @@ This mode makes use of [werf publish params]({{ site.baseurl }}/documentation/re
 
 This tagging mode is selected by `--tagging-strategy=tag-or-branch` option of [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html).
 
-> If used tag or branch value does not match regex `^[\w][\w.-]*$` or consists of more than 128 characters, werf slugifies this tag (read more in [slug reference]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)). 
+> If used tag or branch value does not match regex `^[\w][\w.-]*$` or consists of more than 128 characters, werf slugifies this tag (read more in [slug reference]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)).
   <br />
   <br />
-  For example: 
+  For example:
   - branch `developer-feature` is valid and resulted tag will be unchanged;
   - branch `developer/feature` is not valid and resulted tag will be `developer-feature-6e0628fc`.
 
@@ -275,4 +275,3 @@ Within [configure modes of operation in CI/CD systems](#configure-modes-of-opera
 
  * [How Gitlab CI integration works]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
  * [How to use werf with unsupported CI/CD system]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html).
-

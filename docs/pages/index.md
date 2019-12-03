@@ -1,5 +1,5 @@
 ---
-title: Main page
+title: GitOps CLI tool
 permalink: /
 layout: default
 ---
@@ -35,7 +35,7 @@ layout: default
                         Werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
                     </li>
                     <li>
-                        Werf can be embedded into any existing CI/CD system (like Gitlab CI) <br>to implement CI/CD pipelines using provided building blocks:
+                        Werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
                         <ul class="intro__list_c2">
                             <li><code>werf build-and-publish</code>;</li>
                             <li><code>werf deploy</code>;</li>
@@ -164,15 +164,19 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly growing community</div>
-            <div class="community__subtitle">Werf’s developers are always in contact with community<br/> at Slack and Telegram.</div>
+            <div class="community__subtitle">We are always in contact with community through<br/> Twitter, Slack and Telegram.</div>
             <div class="community__btns">
-                <a href="https://t.me/werf_ru" target="_blank" class="page__btn page__btn_w community__btn">
-                    <span class="page__icon page__icon_telegram"></span>
-                    Join via Telegram
+                <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
+                    <span class="page__icon page__icon_twitter"></span>
+                    Join via Twitter
                 </a>
-                <a href="https://cloud-native.slack.com/messages/CHY2THYUU" target="_blank" class="page__btn page__btn_w community__btn">
+                <a href="{{ site.social_links[page.lang].slack }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Join via Slack
+                </a>
+                <a href="{{ site.social_links[page.lang].telegram }}" target="_blank" class="page__btn page__btn_w community__btn">
+                    <span class="page__icon page__icon_telegram"></span>
+                    Join via Telegram
                 </a>
             </div>
         </div>

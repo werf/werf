@@ -5,7 +5,8 @@ body {
 }
 
 .page {
-    font-family: 'Work Sans', sans-serif;
+    /* font-family: 'Work Sans', sans-serif; */
+    font-family: 'Open Sans', sans-serif;
     line-height: 1.16;
 }
 
@@ -96,6 +97,10 @@ html, body, .page {
 
 .page__icon_telegram {
     background-image: url('../images/icons/telegram.svg');
+}
+
+.page__icon_twitter {
+    background-image: url('../images/icons/twitter.svg');
 }
 
 .page__icon_github {

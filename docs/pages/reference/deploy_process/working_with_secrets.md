@@ -16,7 +16,7 @@ A key is required for encryption and decryption of data. There are two locations
 * from a special `.werf_secret_key` file in the project root
 * from `~/.werf/global_secret_key` (globally)
 
-> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html) returns AES-128 encryption key.
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html) returns AES-128 encryption key
 
 You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html).
 

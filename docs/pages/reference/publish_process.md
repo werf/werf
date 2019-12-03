@@ -63,7 +63,7 @@ To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_imag
 
 This procedure will be referred as **images publish procedure**.
 
-The result of this procedure is an image named by the [*image naming rules*](#image-naming-rules) pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
+The result of this procedure is an image named by the [*image naming rules*](#images-naming) pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
 ## Images naming
 
@@ -75,11 +75,11 @@ During images publish procedure Werf constructs resulting images names using:
 
 Resulting docker image name constructed as [`DOCKER_REPOSITORY`](https://docs.docker.com/glossary/?term=repository)`:`[`TAG`](https://docs.docker.com/engine/reference/commandline/tag).
 
-There are _images repo_ and _images repo mode_ params defined where and how to store images. 
+There are _images repo_ and _images repo mode_ params defined where and how to store images.
 If werf project contains single nameless image, then _images repo_ used as docker repository without changes and resulting docker image name costructed by the following pattern: `IMAGES_REPO:TAG`.
 
 Otherwise, werf constructs resulting docker image name for each image based on _images repo mode_:  
-- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorepo` mode; 
+- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorepo` mode;
 - `IMAGES_REPO/IMAGE_NAME:TAG` pattern for `multirepo` mode.
 
 _Images repo_ param should be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
@@ -102,7 +102,7 @@ All specified tag params text will be validated to confirm with the docker image
 Also using tag options a user specifies not only tag value but also tagging strategy.
 Tagging strategy affects on [certain policies in cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
-Every `--tag-git-*` option requires `TAG`, `BRANCH` or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where CI job is running in the detached git worktree for specific commit and current git-tag or git-branch or git-commit is passed to job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for Gitlab CI).
+Every `--tag-git-*` option requires `TAG`, `BRANCH` or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where CI job is running in the detached git worktree for specific commit and current git-tag or git-branch or git-commit is passed to job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for GitLab CI).
 
 ### Combining parameters
 
@@ -154,7 +154,7 @@ produces the following image names respectively:
 
 Note that [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) command will generate a valid docker tag. See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-### Two images in Gitlab CI job
+### Two images in GitLab CI job
 
 Given `werf.yaml` config with 2 images — `backend` and `frontend`.
 
@@ -171,9 +171,9 @@ Image names in the result are:
 
 Note that werf automatically applies slug to the result docker image tag: `core/feature/ADD_SETTINGS` will be converted to `core-feature-add-settings-df80fdc3`. This convertation occurs in `werf ci-env` command, which will determine git branch from Gitlab CI environment, automatically apply slug to this branch name and set `WERF_TAG_GIT_BRANCH` (which is alternative way to specify `--tag-git-branch` param). See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-### Unnamed image in Gitlab CI job
+### Unnamed image in GitLab CI job
 
-Given werf.yaml with single unnamed image. The following command runs in Gitlab CI job for project named `web/core/queue`, in the git-tag named `v2.3.1`, docker registry is configured as `registry.hello.com/web/core/queue`:
+Given werf.yaml with single unnamed image. The following command runs in GitLab CI job for project named `web/core/queue`, in the git-tag named `v2.3.1`, docker registry is configured as `registry.hello.com/web/core/queue`:
 
 ```bash
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)

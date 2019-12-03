@@ -1,5 +1,4 @@
-{% assign sidebar = site.data.sidebars[page.sidebar].entries %}
-
+{% assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
 <ul class="sidebar" id="mysidebar">
   {% for folder in sidebar.f %}
     {% if folder.fi %}
