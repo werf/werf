@@ -106,6 +106,10 @@ Errors like non-existing fields in resource configuration of chart templates are
 
 Werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
 
-## Three way merge
+## Three way merge patches and resources adoption
 
-Werf is now in the process of migrating to three-way-merge based resources updates. See more into [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html).
+Werf may use 3-way-merge patches and 2-way-merge patches (as Helm 2 does) with repair patches. There are different resource update methods and adoption, all of which are compatible with existing Helm 2 installations.
+
+More info about resources update methods and patches is available [in the reference article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html) and ["3-way merge in werf: deploying to Kubernetes via Helm “on steroids” medium article](https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe).
+
+Also werf has an ability to adopt already existing resources in the working kubernetes cluster into the helm release in an explicit manner (user should explicitly manually set an annotation to the desired resource and deploy a chart using werf). More info about resources adoption is available [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html#resources-adoption).
