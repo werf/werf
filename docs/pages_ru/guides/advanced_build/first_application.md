@@ -14,7 +14,7 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 1. Скачивание и установка composer из `phar-файла`.
 1. Установка других зависимостей проекта с помощью composer.
 1. Добавление кода приложения в папку `/app` конечного образа и установка владельца `app:app` на файлы и папки.
-1. Установка IP адресов, на которых web-сервер будет принимать запросы. Это делается в скрипте  `/opt/start.sh`, который запускается во время старта контейнера.
+1. Установка IP адресов, на которых web-сервер будет принимать запросы. Это делается в скрипте  `/apt/start.sh`, который запускается во время старта контейнера.
 1. Выполнение других действий по настройке приложения. В качестве примера таких действий, мы будем записывать текущую дату в файл `version.txt`.
 
 Также, мы проверим что приложение работает и запушим образ в Docker Registry.
@@ -133,7 +133,7 @@ source <(multiwerf use 1.0 beta)
         copy:
           content: |
             #!/bin/bash
-            php bin/console server:run 0.0.0.0:8000
+            php -S 0.0.0.0:8000 -t public/
           dest: /app/start.sh
           owner: app
           group: app
@@ -184,7 +184,7 @@ source <(multiwerf use 1.0 beta)
       - su -c 'composer update' app
       setup:
       - "echo '#!/bin/bash' >> /app/start.sh"
-      - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+      - echo 'php -S 0.0.0.0:8000 -t public/' >> /app/start.sh
       - echo `date` > /app/version.txt
       - chown app:app /app/start.sh /app/version.txt
       - chmod +x /app/start.sh
