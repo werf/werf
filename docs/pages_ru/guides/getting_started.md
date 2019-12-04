@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается как быстро начать работу с Werf используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker Registry.
+В статье рассматривается как быстро начать работу с Werf, используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker Registry.
 
 В качестве примера приложения будем использовать [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
 
@@ -19,7 +19,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ### Выбор версии Werf
 
-Перед началом работы с Werf, нужно выбрать версию Werf, которую вы будете использовать. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполните в вашей shell-сессии:
+Перед началом работы с Werf необходимо выбрать версию Werf, которую вы будете использовать. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -27,16 +27,16 @@ source <(multiwerf use 1.0 beta)
 
 ## Шаг 1: Добавьте конфигурацию Werf
 
-В код приложения добавьте файл `werf.yaml`, описывающий конфигурацию сборки образа приложения с использованием существующего в проекте [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
+Добавим файл `werf.yaml`, описывающий конфигурацию сборки образа приложения с использованием существующего в проекте [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
 
-1. Клонируйте репозиторий приложения [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app):
+1. Склонируем репозиторий приложения [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app):
 
     ```shell
     git clone https://github.com/dockersamples/linux_tweet_app.git
     cd linux_tweet_app
     ```
 
-1. В корневой папке приложения создайте файл `werf.yaml`, со следующим содержимым:
+1. В корневой папке приложения создадим файл `werf.yaml` со следующим содержимым:
 
     ```yaml
     project: g-started
@@ -48,19 +48,19 @@ source <(multiwerf use 1.0 beta)
 
 ## Step 2: Соберите приложение и проверьте его работу
 
-1. Соберите образ приложения (выполните в корневой папке):
+1. Соберём образ приложения, выполнив команду в корневой папке:
 
     ```shell
     werf build --stages-storage :local
     ```
 
-1. Запустите контейнер, на базе собранного образа приложения:
+1. Запустим контейнер на основе собранного образа приложения:
 
     ```shell
     werf run --stages-storage :local --docker-options="-d -p 80:80"
     ```
 
-1. Проверьте что приложение запустилось и отвечает корректно, открыв в web-браузере `http://localhost:80` либо выполнив:
+1. Проверим, что приложение запустилось и отвечает корректно, открыв в web-браузере `http://localhost:80` либо выполнив:
 
     ```shell
     curl localhost:80
@@ -68,13 +68,13 @@ source <(multiwerf use 1.0 beta)
 
 ## Step 3: Загрузите образ приложения в Docker Registry
 
-1. Запустите локальную службу Docker Registry:
+1. Запустим Docker Registry локально:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузите образ приложения в Docker Registry, предварительно протэгировав его тегом `v0.1.0`:
+2. Загрузим образ приложения в Docker Registry, предварительно протэгировав его тегом `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/g-started --tag-custom v0.1.0
