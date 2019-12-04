@@ -1,5 +1,5 @@
 ---
-title: GitOps CLI утилита
+title: GitOps CLI-утилита
 permalink: /
 layout: default
 ---
@@ -11,7 +11,7 @@ layout: default
                 GitOps-утилита
             </h1>
             <div class="welcome__subtitle">
-                 Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Golang.
+                 Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Go.
             </div>
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
@@ -27,7 +27,7 @@ layout: default
         <div class="intro__image"></div>
         <div class="intro__content">
             <div class="intro__title">
-                CLI утилита для построения пайплайнов CI/CD
+                CLI-утилита для построения пайплайнов CI/CD
             </div>
             <div class="intro__text">
                 <ul class="intro__list">
@@ -44,10 +44,10 @@ layout: default
                         </ul>
                     </li>
                     <li>
-                        Open Source, написана на Golang.
+                        Open Source, написана на Go.
                     </li>
                     <li>
-                        Werf — это не SAAS, а, по нашему мнению, представитель высокоуровневых CI/CD инструментов нового поколения.
+                        Werf — это не SAAS, а представитель высокоуровневых CI/CD-инструментов нового поколения.
                     </li>
                 </ul>
             </div>
@@ -78,10 +78,10 @@ layout: default
             </div>
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
-                    <li>Сборка образов с Dockerfile либо с нашим синтаксисом, учитывая особенности инкрементальной сборкой (основанной на истории git), используя Ansible и многие дригие особенности Werf сборщика.</li>
+                    <li>Сборка образов с Dockerfile либо с нашим синтаксисом, учитывая особенности инкрементальной сборкой (основанной на истории Git), используя Ansible и многие другие особенности сборщика werf.</li>
                     <li>Публикация образов в Docker Registry, используя множество различных схем тегирования.</li>
                     <li>Выкат приложения в Kubernetes.</li>
-                    <li>Очистка Docker Registry, основанная на встроенных политиках и используемых в Kubernetes кластерах образах приложения.</li>
+                    <li>Очистка Docker Registry, основанная на встроенных политиках и используемых в Kubernetes-кластерах образах приложения.</li>
                 </ul>
             </div>
         </li>
@@ -119,12 +119,12 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Легко начать</div>
-                <div class="features__list-item-text">Начните использовать Werf с существующим Dockerfile.</div>
+                <div class="features__list-item-text">Начните использовать werf с существующим Dockerfile.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Компактный файл конфигурации</div>
-                <div class="features__list-item-text">Собирайте несколько образов, используя один файл конфигурации, переиспользуйте общие части с помощью Go-шаблонов.</div>
+                <div class="features__list-item-text">Собирайте несколько образов, используя один файл конфигурации, повторно используйте общие части с помощью Go-шаблонов.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
@@ -154,7 +154,7 @@ layout: default
             </li>
             <li class="features__list-item"></li>
         </ul>
-        <a href="https://github.com/flant/werf/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o features__btn">
+        <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o features__btn">
             Узнайте полный список возможностей
         </a>
     </div>
@@ -194,7 +194,7 @@ layout: default
                     <div class="roadmap__goals-title">Цели</div>
                     <ul class="roadmap__goals-list">
                         <li class="roadmap__goals-list-item">
-                            Полнофункциональная версия Werf, хорошо работающая на единственном хосте при выполнении всех операций Werf (сборка, деплой и очистка).
+                            Полнофункциональная версия werf, хорошо работающая на единственном хосте при выполнении всех операций werf (сборка, деплой и очистка).
                         </li>
                         <li class="roadmap__goals-list-item">
                             Проверенные подходы и готовые решения<br/>
@@ -213,19 +213,19 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х этапного слияния</a> при обновлении helm-релизов.</strike>
+                                <strike>Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х этапного слияния</a> при обновлении Helm-релизов.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
                             <a href="https://github.com/flant/werf/issues/1940" class="roadmap__steps-list-item-issue" target="_blank">#1940</a>
                             <span class="roadmap__steps-list-item-text">
-                                Локальная разработка приложений с Werf.
+                                Локальная разработка приложений с werf.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                Тэгирование, основанное на контенте.
+                                Тегирование, основанное на контенте.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
@@ -269,7 +269,7 @@ layout: default
                 Исчерпывающая документация
             </div>
             <div class="documentation__info-text">
-                Документация содержит более 100 статей, включающих описание частых случаев (первые шаги, деплой в Kubernetes, интеграция с CI/CD системами и другое), полное описание функций, архитектуры и CLI-команд.
+                Документация содержит более 100 статей, включающих описание частых случаев (первые шаги, деплой в Kubernetes, интеграция с CI/CD-системами и другое), полное описание функций, архитектуры и CLI-команд.
             </div>
         </div>
         <div class="documentation__btns">
@@ -280,7 +280,7 @@ layout: default
                 Руководства для старта
             </a>
             <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
-                CLI команды
+                CLI-команды
             </a>
         </div>
     </div>
