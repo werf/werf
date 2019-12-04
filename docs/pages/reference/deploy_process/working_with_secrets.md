@@ -49,14 +49,14 @@ mysql:
   db: 1000db50be293432129acb741de54209a33bf479ae2e0f53462b5053c30da7584e31a589f5206cfa4a8e249d20
 ```
 
-To manage secret values files use the following commands: 
+To manage secret values files use the following commands:
 - [werf helm secret values edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/edit.html)
 - [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/encrypt.html)
 - [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/decrypt.html)
 
 ### Using in a chart template
 
-The secret values files are decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). Thus, use is not different from common values:
+The secret values files are decoded in the course of deployment and used in helm as [additional values](https://helm.sh/docs/topics/chart_template_guide/values_files/). Thus, use is not different from common values:
 
 {% raw %}
 ```yaml
@@ -71,11 +71,11 @@ env:
 
 ## Secret file encryption
 
-Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. 
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored.
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
-To manage secret files use the following commands: 
+To manage secret files use the following commands:
 - [werf helm secret file edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/edit.html)
 - [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/encrypt.html)
 - [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/decrypt.html)

@@ -5,3 +5,5 @@
 Мы всегда на связи с сообществом. Присоединяйтесь к нам в [Telegram](https://t.me/werf_ru), [Twitter](https://twitter.com/werf_io) или [Slack](https://cloud-native.slack.com/messages/CHY2THYUU)!
 
 Мы внимательно рассматриваем ваши [issues](https://github.com/flant/werf/issues) на GitHub.
+
+Также мы есть в Twitter: [https://twitter.com/werf_io](https://twitter.com/werf_io).

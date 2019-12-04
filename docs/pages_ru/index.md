@@ -32,7 +32,7 @@ layout: default
             <div class="intro__text">
                 <ul class="intro__list">
                     <li>
-                        Werf интегрирует <code>git</code>, <code>helm</code> и <code>Docker</code>.
+                        Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
                     </li>
                     <li>
                         Может быть встроена в любую CI/CD-систему (например, GitLab CI) для построения пайплайнов, используя предложенный набор команд:
@@ -213,7 +213,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х этапного слияния</a> при обновлении Helm-релизов.</strike>
+                                Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х стороннего слияния</a><br> при обновлении Helm-релизов.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">

@@ -28,7 +28,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Тестовое приложение
 
-Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [GO](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
+Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [Go](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
 
 ### Сборка
 

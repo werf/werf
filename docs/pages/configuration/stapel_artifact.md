@@ -190,7 +190,7 @@ Git latest patch stage is supposed to be updated on every commit, which brings n
 
 For example: import git into *stapel artifact* and rebuild assets in this artifact only when dependent assets files in git has changes. For every other change in git where non-dependent files has been changed assets will not be rebuilt.
 
-However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build golang application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
+However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build Go application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
 
 ```
 git:

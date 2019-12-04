@@ -24,7 +24,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Тестовое приложение
 
-Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [GO](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
+Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [Go](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
 
 ### Сборка
 
@@ -76,7 +76,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
@@ -243,7 +243,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
