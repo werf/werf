@@ -64,6 +64,9 @@ werf dismiss [options]
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml)
+      --releases-history-max=0:
+            Max releases to keep in release storage. Can be set by environment variable             
+            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --with-hooks=true:

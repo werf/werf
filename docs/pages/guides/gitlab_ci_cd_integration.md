@@ -153,7 +153,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
-To configure deployment of your application according to the environment you can use `.Values.global.env` variable in Go-template's blocks of your `helm` templates - werf sets `global.env` parameter according to the CI environment.
+To configure deployment of your application according to the environment you can use `.Values.global.env` variable in Go template's blocks of your `helm` templates - werf sets `global.env` parameter according to the CI environment.
 
 #### Review
 

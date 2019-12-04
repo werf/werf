@@ -11,7 +11,7 @@ layout: default
                 GitOps CLI tool
             </h1>
             <div class="welcome__subtitle">
-                 Deliver your application fast & easy.<br/>Open Source. Written in Golang.
+                 Deliver your application fast & easy.<br/>Open Source. Written in Go.
             </div>
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
@@ -44,7 +44,7 @@ layout: default
                         </ul>
                     </li>
                     <li>
-                        Open Source, written in Golang.
+                        Open Source, written in Go.
                     </li>
                     <li>
                         Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
@@ -124,7 +124,7 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
-                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using go-templates.</div>
+                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using Go templates.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>

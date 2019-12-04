@@ -116,6 +116,9 @@ werf deploy [options]
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml)
+      --releases-history-max=0:
+            Max releases to keep in release storage. Can be set by environment variable             
+            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:

@@ -29,7 +29,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Sample application
 
-The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [GO](https://golang.org/) for [Revel Framework](https://github.com/revel).
+The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [Go](https://golang.org/) for [Revel Framework](https://github.com/revel).
 
 ### Building
 

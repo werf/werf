@@ -5,7 +5,7 @@
  - Build images with Dockerfiles.
  - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
  - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
- - Werf is a CLI tool written in Golang which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - Werf is a CLI tool written in Go which can be embedded into any existing CI/CD system to implement CI/CD for your application.
  - Cross-platform development: Linux based containers are supported on Linux, macOS, and Windows.
 
 ## Coming soon

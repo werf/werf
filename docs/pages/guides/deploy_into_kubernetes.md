@@ -107,7 +107,7 @@ The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a 
 
 ## Prepare deploy configuration
 
-Werf uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional helm golang templates to generate image names and some more.
+Werf uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional Helm Go templates to generate image names and some more.
 
 ### Backend configuration
 

@@ -9,7 +9,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ## Dockerfile-образ
 
-Werf использует Dockerfile как главный способ описания того, как должен быть собран образ. Образ, собранный из Dockerfile далее будет упоминаться как **Dockerfile-образ** (более подробно об использовании Dockerfile-образа читай в [соответствующем разделе]]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
+Werf использует Dockerfile как главный способ описания того, как должен быть собран образ. Образ, собранный из Dockerfile далее будет упоминаться как **Dockerfile-образ** (более подробно об использовании Dockerfile-образа читай в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
 
 ### Как собирается Dockerfile-образ
 

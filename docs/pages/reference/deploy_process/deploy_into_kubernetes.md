@@ -65,17 +65,17 @@ kind: ConfigMap
       loglevel notice
 ```
 
-Each YAML file also preprocessed using [go templates](https://golang.org/pkg/text/template/#hdr-Actions).
+Each YAML file also preprocessed using [Go templates](https://golang.org/pkg/text/template/#hdr-Actions).
 
 With go templates user can:
  * generate different kubernetes specs for different cases;
  * parametrize templates with [values](#values) for different environments;
- * define common text parts as named golang templates and reuse them in several places;
+ * define common text parts as named Go templates and reuse them in several places;
  * etc.
 
 [Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates.
 
-Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom golang templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
+Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom Go templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
 
 #### Integration with built images
 
@@ -471,7 +471,7 @@ metadata:
     "helm.sh/hook-weight": "1"
 ```
 
-There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://github.com/helm/helm/blob/master/docs/charts_hooks.md#the-available-hooks).
+There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
 
 Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks kubernetes resources are not deleted after execution.
 

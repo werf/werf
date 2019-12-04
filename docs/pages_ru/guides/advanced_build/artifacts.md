@@ -20,7 +20,7 @@ Werf может [импортировать]({{ site.baseurl }}/documentation/co
 
 ### Выбор версии Werf
 
-Перед началом работы с Werf, нужно выбрать версию Werf, которую вы будете использовать. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполните в вашей shell-сессии:
+Перед началом работы необходимо выбрать версию Werf. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -28,7 +28,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Тестовое приложение
 
-Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [GO](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
+Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [Go](https://golang.org/) под  фреймворк [Revel Framework](https://github.com/revel).
 
 ### Сборка
 

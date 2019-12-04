@@ -7,26 +7,25 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Обзор задачи
 
-Будет рассмотрено, как деплоить приложение в Kubernetes с помощью Werf.
+Будет рассмотрено как деплоить приложение в Kubernetes с помощью Werf.
 
-Werf использует (с некоторыми изменениями и дополнениями) [Helm](helm.sh) для деплоя приложений в Kubernetes, и в статье мы создадим простое web-приложение, соберем все необходимые для него образы, создадим Helm-шаблоны'ы и запустим приложение в вашем кластере Kubernetes.
+Для деплоя приложений в Kubernetes Werf использует [Helm](https://helm.sh) (с некоторыми изменениями и дополнениями). В статье мы создадим простое web-приложение, соберем все необходимые для него образы, создадим Helm-шаблоны и запустим приложение в кластере Kubernetes.
 
 ## Требования
 
  * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker Registry.
  * Работающий Docker Registry.
-   * Доступ от хостов Kubernetes с правами на push образов в registry.
-   * Доступ от хостов Kubernetes с правами на pull образов в registry.
+   * Доступ от хостов Kubernetes с правами на push образов в Docker Registry.
+   * Доступ от хостов Kubernetes с правами на pull образов в Docker Registry.
  * Установленные [зависимости Werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
  * Установленный [Multiwerf](https://github.com/flant/multiwerf).
- * Установленный `kubectl` и сконфигурированный для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
+ * Установленный и сконфигурированный `kubectl` для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
-**Внимание!** Далее, в качестве адреса репозитория мы будем использовать значение `:minikube` . Если вы используете ваш существующий кластер Kubernetes и отдельный экземпляр Docker Registry, указывайте его вместо аргумента `:minikube`.
-
+**Внимание!** Далее в качестве адреса репозитория будет использоваться значение `:minikube` . Если вы используете собственный кластер Kubernetes и Docker Registry, то указывайте репозиторий проекта в Docker Registry вместо аргумента `:minikube`.
 
 ### Выбор версии Werf
 
-Перед началом работы с Werf, нужно выбрать версию Werf, которую вы будете использовать. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполните в вашей shell-сессии:
+Перед началом работы необходимо выбрать версию Werf. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -36,7 +35,7 @@ source <(multiwerf use 1.0 beta)
 
 Пример представляет собой простейшее web-приложение, для запуска которого нам нужен только web-сервер.
 
-Архитектура подобных приложений в Kubernetes выглядит, как правило, следующе:
+Архитектура подобных приложений в Kubernetes выглядит, как правило, следующим образом:
 
      .----------------------.
      | backend (Deployment) |
@@ -51,9 +50,9 @@ source <(multiwerf use 1.0 beta)
 
 ## Файлы приложения
 
-Werf ожидает что все файлы, необходимые для сборки и развертывания приложения, находятся в папке с исходным кодом самого приложения (строго говоря, исходного кода приложения может и не быть) — папке приложения (папке проекта).
+Werf ожидает, что все файлы, необходимые для сборки и развертывания приложения, находятся в папке приложения (папке проекта) вместе с исходным кодом, если он имеется.   
 
-Создадим пустую папку, на машине, где будет происходить сборка:
+Создадим пустую директорию проекта и перейдём в неё для выполнения следующих шагов:
 
 ```shell
 mkdir myapp
@@ -62,7 +61,7 @@ cd myapp
 
 ## Подготовка образа
 
-Нам нужно подготовить образ приложения с web-сервером внутри. Для этого, создайте файл `werf.yaml` в папке приложения следующего содержания:
+Необходимо подготовить образ приложения с web-сервером внутри. Для этого создадим файл `werf.yaml` в папке приложения со следующим содержимым:
 
 ```yaml
 project: myapp
@@ -90,23 +89,26 @@ ansible:
       dest: /app/index.html
 ```
 
-Наше web-приложение состоит из единственной статической HTML-страницы, которая создается прямо на этапе сборки образа, в инструкциях сборки. Содержимое этой страницы будет отдавать Python HTTP-сервер.
+Web-приложение состоит из единственной статической HTML-страницы, которая задаётся в инструкциях и создаётся при сборке образа. Содержимое этой страницы будет отдавать Python HTTP-сервер.
 
-Соберите образ приложения и загрузите его в Docker Registry:
+Соберём образ приложения и загрузим его в Docker Registry:
 
 ```shell
 werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo :minikube
 ```
 
-Название собранного образа приложения состоит из адреса Docker Registry (`REPO`) и тэга (`TAG`). При указании `:minikube` в качестве адреса Docker Registry, Werf использует в качестве адреса Docker Registry адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. Так как мы указали в качестве тега образа тег `myapp`, Werf загрузит в Docker Registry образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
+Название собранного образа приложения состоит из адреса Docker Registry (`REPO`) и тэга (`TAG`). 
+При указании `:minikube` в качестве адреса Docker Registry Werf использует адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. Так как в качестве тега был указан `myapp`, Werf загрузит в Docker Registry образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Подготовка конфигурации деплоя
 
-Werf использует код из [Helm](helm.sh) *для применения* конфигурации в Kubernetes. Для *описания* объектов Kubernetes, Werf также использует конфигурационные файлы Helm: шаблоны, файлы параметров (например, `values.yaml`). Также, Werf использует расширенные конфигурации, такие как — шифрованные файлы, файлы с секретами (например `secret-values.yaml`), собственные Helm-шаблоны для подстановки имен образов и переменных при деплое.
+Werf использует встроенный [Helm](helm.sh) *для применения* конфигурации в Kubernetes. 
+Для *описания* объектов Kubernetes Werf использует конфигурационные файлы Helm: шаблоны и файлы с параметрами (например, `values.yaml`). 
+Помимо этого, Werf поддерживает дополнительные файлы, такие как — файлы секретами и с секретными значениями (например `secret-values.yaml`), а также дополнительные Go-шаблоны для интеграции собранных образов.
 
 ### Backend
 
-Создайте файл конфигурации backend'а `.helm/templates/010-backend.yaml` (далее мы рассмотрим его подробнее):
+Создадим файл конфигурации backend `.helm/templates/010-backend.yaml` (далее мы рассмотрим его подробнее):
 
 {% raw %}
 ```yaml
@@ -158,11 +160,11 @@ spec:
 ```
 {% endraw %}
 
-В конфигурации описывается создание Deployment'а `myapp-backend` (конструкция {% raw %}`{{ .Chart.Name }}-backend`{% endraw %} будет преобразована в `myapp-backend`) с четырьмя репликами.
+В конфигурации описывается создание Deployment `myapp-backend` (конструкция {% raw %}`{{ .Chart.Name }}-backend`{% endraw %} будет преобразована в `myapp-backend`) с четырьмя репликами.
 
-Конструкция {% raw %}`{{ werf_container_image . | indent 8 }}`{% endraw %} — это использование функции Go-шаблонов, добавляемой Werf, которая:
-* всегда возвращает поле `image:` объекта Kubernetes с корректным именем образа, учитывая используемую схему тэгирования (в примере это — `werf-registry.kube-system.svc.cluster.local:5000/myapp:latest`)
-* дополнительно может возвращать другие поля объекта Kubernetes, такие как `imagePullPolicy`, на основании заложенной логики и некоторых внешних условий.
+Конструкция {% raw %}`{{ werf_container_image . | indent 8 }}`{% endraw %} — это использование функции Werf, которая:
+* всегда возвращает поле `image:` для ресурса Kubernetes с именем образа, учитывая используемую схему тэгирования (в нашем случае — `werf-registry.kube-system.svc.cluster.local:5000/myapp:latest`)
+* функция может возвращать дополнительные поля, такие как `imagePullPolicy`, на основании схемы тэгирования, заложенной логики и некоторых внешних условий.
 
 Функция `werf_container_image` позволяет удобно указывать имя образа в объекте Kubernetes исходя из **описанной** (в `werf.yaml`) конфигурации. Как использовать эту функцию в случае если в конфигурации описано несколько образов, читай подробнее [в соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
@@ -172,7 +174,7 @@ spec:
 
 ### Frontend
 
-Создайте файл конфигурации frontend'а `.helm/templates/090-frontend.yaml` со следующим содержимым:
+Создадим файл конфигурации frontend `.helm/templates/090-frontend.yaml` со следующим содержимым:
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -193,29 +195,29 @@ spec:
           servicePort: 8080
 ```
 
-Эта конфигурация описывает Ingress-ресурс, и настраивает NGINX прокси-сервер перенаправлять трафик для хоста `myapp.local` на наш backend-сервер `myapp-backend`.
+Эта конфигурация описывает Ingress, и настраивает NGINX прокси-сервер перенаправлять трафик для хоста `myapp.local` на backend-сервер `myapp-backend`.
 
 ## Деплой
 
-Если вы используете `minikube`, перед деплоем включите ingress-модуль:
+Если используется `minikube`, то перед деплоем необходимо включить ingress-модуль:
 
 ```shell
 minikube addons enable ingress
 ```
 
-Запустите деплой:
+Наконец, запустим деплой:
 
 ```shell
 werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp --env dev
 ```
 
-После запуска команды, werf создаст соответствующие ресурсы в Kubernetes и будет отслеживать статус Deployment'а `myapp-backend` до его готовности (готовности всех pod'ов) либо ошибки.
+После запуска команды, werf создаст соответствующие ресурсы в Kubernetes и будет отслеживать статус Deployment `myapp-backend` до его готовности (готовности всех Pod'ов) либо ошибки.
 
-Для того, чтобы сформировать правильные — имя Helm-релиза и namespace, требуется указать [окружение]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment) с помощью параметра `--env`.
+Для того, чтобы сформировать правильные имя Helm-релиза и namespace, требуется указать [окружение]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment) с помощью параметра `--env`.
 
-В результате будет создан helm-релиз с именем `myapp-dev`. Название Helm-релиза состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (указанного в `werf.yaml`), и переданного названия окружения — `dev`. Более подробно про формирование имен helm-релизов смотри в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name).
+В результате будет создан helm-релиз с именем `myapp-dev`. Название Helm-релиза состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. Более подробно про формирование имен Helm-релизов можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name).
 
-При создании объектов Kubernetes будет использоваться namespace `myapp-dev`. Имя этого namespace'а также состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (указанного в `werf.yaml`), и переданного названия окружения — `dev`. Более подробно про формирование namespace в kubernetes смотри в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
+При создании объектов Kubernetes будет использоваться namespace `myapp-dev`. Имя этого namespace также состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. Более подробно про формирование namespace в Kubernetes можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
 
 ## Проверка работы приложения
 
@@ -230,11 +232,11 @@ minikube ip
 192.168.99.100 myapp.local
 ```
 
-Проверьте работу приложения, открыв адрес `http://myapp.local`.
+Проверим работу приложения, открыв адрес `http://myapp.local`.
 
 ## Удаление приложение из кластера
 
-Для полного удаления из кластера развернутого приложения, запустите следующую команду:
+Для полного удаления из кластера развернутого приложения запустим следующую команду:
 
 ```shell
 werf dismiss --env dev --with-namespace

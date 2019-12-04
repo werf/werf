@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
+In this article, we will build an example Go application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Sample application
 
-The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [GO](https://golang.org/) for [Revel Framework](https://github.com/revel).
+The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [Go](https://golang.org/) for [Revel Framework](https://github.com/revel).
 
 ### Building
 
@@ -76,7 +76,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
@@ -247,7 +247,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
