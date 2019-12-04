@@ -448,7 +448,12 @@ Internally [kubedog library](https://github.com/flant/kubedog) is used to track 
 
 ### Method of applying changes
 
-Currently changes to manifest are applied only based on the previous state of manifests. The real state of resources is not taken into account. Resource state stored in the release and real resource state can get out of sync (for example by manual editing of resource manifest using `kubectl edit` command). This will lead to errors in subsequent werf deploy invocations. So it is up to user now to remember, that resources should be changed only by editing chart templates and running `werf deploy`. The new 3-way-merge method of applying changes to the resources which solves this problem is coming soon, subscribe to the issue: https://github.com/flant/werf/issues/1616.
+Werf tries to use 3-way-merge patches to update resources in the kubernetes cluster, which is the best option. However there are different reosurce update methods are available.
+
+See more info in the articles:
+ - [resources update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);
+ - [differences with helm resources update method]({{ site.baseurl }}/documentation/reference/deploy_process/differences_with_helm.html#three-way-merge-patches-and-resources-adoption);
+ - ["3-way merge in werf: deploying to Kubernetes via Helm “on steroids” medium article](https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe).
 
 ### If deploy failed
 
