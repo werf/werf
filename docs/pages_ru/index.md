@@ -14,7 +14,7 @@ layout: default
                  Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Go.
             </div>
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
-                <input name="sitesearch" type="hidden" value="werf.io">
+                <input name="sitesearch" type="hidden" value="ru.werf.io">
                 <input autocomplete="on" class="page__input welcome__search-input" name="q" placeholder="Поиск по документации" required="required"  type="text">
                 <button type="submit" class="page__icon page__icon_search welcome__search-btn"></button>
             </form>
@@ -250,7 +250,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1618">
                             <a href="https://github.com/flant/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
                             <span class="roadmap__steps-list-item-text">
-                                <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">Kaniko</a>-подобная сборка без привязки к локальному Docker-демону.
+                                <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">Kaniko</a>-подобная сборка без привязки<br>к локальному Docker-демону.
                             </span>
                         </li>
                     </ul>

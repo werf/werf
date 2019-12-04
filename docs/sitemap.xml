@@ -7,7 +7,7 @@ search: exclude
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-    {%- assign pages_in_main_lang=site.pages | where: "lang", site.site_lang %}
+    {%- assign pages_in_main_lang=site.pages | where: "lang", site.site_lang | where: "sitemap_include", true %}
     {%- for page in pages_in_main_lang %}
     <url>
         <loc>{{ site.url }}{{ site.baseurl }}{{ page.url }}</loc>
