@@ -104,7 +104,7 @@ layout: default
                     <div class="stats__list-item-subtitle">в среднем за прошлый год</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1200</div>
+                    <div class="stats__list-item-num">1400</div>
                     <div class="stats__list-item-title">инсталляций</div>
                     <div class="stats__list-item-subtitle">в больших и маленьких проектах</div>
                 </li>
@@ -291,12 +291,12 @@ layout: default
 <div class="popup" data-popup="slack">
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
-        <div class="popup__text">Присоединяйтесь к нашему дружелюбному сообществу за пару простых шагов:</div>
-        <div class="popup__title">Шаг 1:</div>        
+        <div class="popup__title">Англоязычный slack-канал общения находится в slack <br/><a href="https://cncf.io">Cloud Native Computing Foundation (CNCF)</a></div>
+        <div class="popup__text">Мы выбрали slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.<br/><br/>Если Вы еще <b>не зарегистрированы</b> в slack CNCF,<br/>то вы можете свободно получить приглашение:</div>
         <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
-            Войти в Slack Cloud Native Computing Foundation
+            Получить приглашение в slack CNCF
         </a>
-        <div class="popup__title">Шаг 2:</div>
+        <div class="popup__text">Если вы уже <b>зарегистрированы</b> в slack CNCF, <br/>то подключайтесь к нашему каналу:</div>
         <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
             Войти в канал #werf
         </a>

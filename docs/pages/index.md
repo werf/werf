@@ -13,7 +13,7 @@ layout: default
             <div class="welcome__subtitle">
                  Deliver your application fast & easy.<br/>Open Source. Written in Go.
             </div>
-            <!-- 
+            <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
                 <input autocomplete="on" class="page__input welcome__search-input" name="q" placeholder="Search the documentation" required="required"  type="text">
@@ -104,7 +104,7 @@ layout: default
                     <div class="stats__list-item-subtitle">on average for the last year</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1200</div>
+                    <div class="stats__list-item-num">1400</div>
                     <div class="stats__list-item-title">installations</div>
                     <div class="stats__list-item-subtitle">of large and small projects</div>
                 </li>
@@ -293,12 +293,13 @@ layout: default
 <div class="popup" data-popup="slack">
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
-        <div class="popup__text">Join our friendly Slack community by following these steps:</div>
-        <div class="popup__title">Step 1:</div>        
+        <div class="popup__title">Slack communication channel<br/>is in <a href="https://cncf.io">CNCF</a> slack</div>
+        <div class="popup__text">We chose CNCF slack because most<br/>of the Kubernetes community members are registered there.<br/><br/>
+        If you are <b>not a member</b> of the CNCF slack yet,<br/>You can freely get an invitation:</div>
         <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
-            Join Cloud Native Computing Foundation on Slack
+            Get invite to slack CNCF
         </a>
-        <div class="popup__title">Step 2:</div>
+        <div class="popup__text">If you are already <b>registered</b> with the CNCF slack,<br/>then join our channel:</div>
         <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
             Join #werf channel
         </a>
