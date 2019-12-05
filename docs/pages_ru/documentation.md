@@ -11,7 +11,7 @@ sidebar: documentation
 - [Установка]({{ site.baseurl }}/documentation/guides/installation.html) содержит зависимости и возможные варианты установки.
 - [Первые шаги]({{ site.baseurl }}/documentation/guides/getting_started.html) помогает начать использовать Werf с существующим Dockerfile. Вы можете легко запустить Werf в вашем проекте прямо сейчас.
 - [Деплой в Kubernetes]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html) — краткий пример развертывания приложения в кластере Kubernetes.
-- [Интеграция с GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) расскажет всё об интеграции с GitLab: про сборку, публикацию, деплой и очистку Docker Registry.
+- [Интеграция с GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) расскажет всё об интеграции с GitLab: про сборку, публикацию, деплой и очистку Docker registry.
 - [Интеграция с неподдерживаемыми системами CI/CD]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html) расскажет о том, как интегрировать Werf в любую CI/CD-систему, которая пока еще [официально не поддерживается]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
 - В разделе расширенной сборки рассказывается о нашем синтаксисе описания сборки образов. Синтаксис позволяет использовать Werf сборщик, который учитывает особенности инкрементальной сборки и предоставляет дополнительные возможности (к примеру, описание сборочных инструкций Ansible-задачами). Рекомендуем начать знакомство с создания [первого приложения]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).
 
@@ -43,7 +43,7 @@ sidebar: documentation
 Также в этот раздел включены статьи с описанием базовых примитивов и общих инструментов:
 
 * [Стадии и образы]({{ site.baseurl }}/documentation/reference/stages_and_images.html)
-* [Авторизация в Docker Registry]({{ site.baseurl }}/documentation/reference/registry_authorization.html)
+* [Авторизация в Docker registry]({{ site.baseurl }}/documentation/reference/registry_authorization.html)
 * [Разработка и отладка]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html)
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)
 

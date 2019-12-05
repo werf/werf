@@ -586,7 +586,7 @@ Werf автоматически устанавливает следующие в
 Для более подробной информации об интеграции Werf с системами CI/CD читайте статьи по темам:
 
  * [Общие сведения по работе с CI/CD системами]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html);
- * [Работа Gitlab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
+ * [Работа GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
 
 #### Пользовательские аннотации и метки
 

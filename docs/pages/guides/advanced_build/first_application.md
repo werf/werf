@@ -18,7 +18,7 @@ In this tutorial, we will build an image of simple PHP [Symfony application](htt
 1. Setting up the IP address that the web server will listen to. This is done with a setting in `/apt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
 
-Also, we will check that the application works and push the image in a docker registry.
+Also, we will check that the application works and push the image in a Docker registry.
 
 ## Requirements
 
@@ -224,11 +224,11 @@ Let's build and run our first application.
     curl localhost:8000
     ```
 
-## Step 3: Push image into docker registry
+## Step 3: Push image into Docker registry
 
-Werf can be used to push a built image into Docker Registry.
+Werf can be used to push a built image into Docker registry.
 
-1. Run local Docker Registry:
+1. Run local Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2

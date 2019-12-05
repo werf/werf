@@ -33,4 +33,4 @@ image: [main-front,main-back]
 * [werf build-and-publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html)
 * [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/cli/main/run.html)
 
-Также, имя образа используется при загрузке собранного образа в Docker Registry (читайте подробнее в соответствующей [статье]({{ site.baseurl }}/documentation/reference/publish_process.html)).
+Также имя образа используется при загрузке собранного образа в Docker registry (читайте подробнее в соответствующей [статье]({{ site.baseurl }}/documentation/reference/publish_process.html)).

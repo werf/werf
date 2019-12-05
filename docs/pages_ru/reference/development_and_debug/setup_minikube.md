@@ -35,7 +35,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
    ```
    {% endraw %}
 
-3. Включите модуль registry в minikube, реализующий функционал Docker Registry:
+3. Включите модуль registry в minikube, реализующий функционал Docker registry:
 
    {% raw %}
    ```
@@ -51,7 +51,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
    ```
    {% endraw %}
 
-5. Добавьте DNS-имя запущенного сервиса Docker Registry в виртуальную машину:
+5. Добавьте DNS-имя запущенного сервиса Docker registry в виртуальную машину:
 
    {% raw %}
    ```
@@ -60,7 +60,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
    ```
    {% endraw %}
 
-6. Добавьте DNS-имя запущенного сервиса Docker Registry на вашем хосте:
+6. Добавьте DNS-имя запущенного сервиса Docker registry на вашем хосте:
 
    {% raw %}
    ```
@@ -68,7 +68,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
    ```
    {% endraw %}
 
-7. В отдельном терминале на вашем хосте запустите проброс портов, для доступа к сервису Docker Registry:
+7. В отдельном терминале на вашем хосте запустите проброс портов, для доступа к сервису Docker registry:
 
    {% raw %}
    ```

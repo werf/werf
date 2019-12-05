@@ -1,5 +1,5 @@
 ---
-title: Deploy into kubernetes
+title: Deploy into Kubernetes
 sidebar: documentation
 permalink: documentation/reference/deploy_process/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
@@ -7,9 +7,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Werf is a compatible alternative to [Helm 2](https://helm.sh), which uses improved deploy process.
 
-Werf has 2 main commands to work with kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster.
+Werf has 2 main commands to work with Kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster.
 
-Deployed resources are tracked with different configurable modes, logs and kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. Werf can set arbitrary annotations and labels to all kubernetes resources of the project being deployed.
+Deployed resources are tracked with different configurable modes, logs and Kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. Werf can set arbitrary annotations and labels to all Kubernetes resources of the project being deployed.
 
 Configuration is described with Helm compatible [chart](#chart).
 
@@ -32,7 +32,7 @@ The chart is a collection of configuration files which describe an application. 
 
 Templates are placed in the `.helm/templates` directory.
 
-Directory contains YAML files `*.yaml`. Each YAML file describes one or several kubernetes resources specs separated by three hyphens `---`, for example:
+Directory contains YAML files `*.yaml`. Each YAML file describes one or several Kubernetes resources specs separated by three hyphens `---`, for example:
 
 ```yaml
 apiVersion: apps/v1
@@ -68,20 +68,20 @@ kind: ConfigMap
 Each YAML file also preprocessed using [Go templates](https://golang.org/pkg/text/template/#hdr-Actions).
 
 With go templates user can:
- * generate different kubernetes specs for different cases;
+ * generate different Kubernetes specs for different cases;
  * parametrize templates with [values](#values) for different environments;
  * define common text parts as named Go templates and reuse them in several places;
  * etc.
 
 [Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates.
 
-Also user can place `*.tpl` files, which will not be rendered into kubernetes specs. These files can be used to store arbitrary custom Go templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
+Also user can place `*.tpl` files, which will not be rendered into Kubernetes specs. These files can be used to store arbitrary custom Go templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
 
 #### Integration with built images
 
 To use docker images in the chart resources specs user must specify full docker images names including docker repo and docker tag. But how to specify images from `werf.yaml` given that full docker images names for these images depends on the selected tagging strategy and specified images repo?
 
-The second question is how to use [`imagePullPolicy` kubernetes parameter](https://kubernetes.io/docs/concepts/containers/images/#updating-images) together with images from `werf.yaml`: should user set `imagePullPolicy` to `Always`, how to pull images only when there is a need to pull?
+The second question is how to use [`imagePullPolicy` Kubernetes parameter](https://kubernetes.io/docs/concepts/containers/images/#updating-images) together with images from `werf.yaml`: should user set `imagePullPolicy` to `Always`, how to pull images only when there is a need to pull?
 
 To answer these questions werf has runtime functions, `werf_container_image` and `werf_container_env`.  User must use these template functions to specify images from `werf.yaml` in the chart templates safely and correctly.
 
@@ -99,7 +99,7 @@ The logic of generating the `imagePullPolicy` key:
   * In this case – `imagePullPolicy=Always`.
 * The `.Values.global.werf.is_branch=false` value means that a tag or a specific image commit is being deployed.
   * In this case, the image for an appropriate docker tag doesn't need to be updated through docker pull if it already exists.
-  * In this case, `imagePullPolicy` is not specified, which is consistent with the default value currently adopted in kubernetes: `imagePullPolicy=IfNotPresent`.
+  * In this case, `imagePullPolicy` is not specified, which is consistent with the default value currently adopted in Kubernetes: `imagePullPolicy=IfNotPresent`.
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
@@ -112,7 +112,7 @@ An example of using the function in case a single unnamed image exists in the co
 
 ##### werf_container_env
 
-Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container. Image id will be set to real value only if `.Values.global.werf.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
+Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container. Image id will be set to real value only if `.Values.global.werf.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces Kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
@@ -348,7 +348,7 @@ Each release have a single name and multiple versions. On each werf deploy invoc
 
 ### Releases storage
 
-Each release version is stored in the kubernetes cluster itself. Werf can store releases in ConfigMaps or Secrets in arbitrary namespaces.
+Each release version is stored in the Kubernetes cluster itself. Werf can store releases in ConfigMaps or Secrets in arbitrary namespaces.
 
 By default werf stores releases in the ConfigMaps in the `kube-system` namespace to be fully compatible with [Helm 2](https://helm.sh) default installations. Releases storage can be configured by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
@@ -429,9 +429,9 @@ This is default behaviour, which can be disabled by [setting `deploy.namespaceSl
 
 When running `werf deploy` command werf starts deploy process which includes following steps:
 
- 1. Render chart templates into single list of kubernetes resources manifests and validate them.
+ 1. Render chart templates into single list of Kubernetes resources manifests and validate them.
  2. Run `pre-install` or `pre-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
- 3. Apply changes to kubernetes resources: create new, delete old, update existing.
+ 3. Apply changes to Kubernetes resources: create new, delete old, update existing.
  4. Create new release version and save current resources manifests state into this release.
  5. Track all release resources till readiness state reached printing logs and other info along the way.
  6. Run `post-install` or `post-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
@@ -448,7 +448,7 @@ Internally [kubedog library](https://github.com/flant/kubedog) is used to track 
 
 ### Method of applying changes
 
-Werf tries to use 3-way-merge patches to update resources in the kubernetes cluster, which is the best option. However there are different reosurce update methods are available.
+Werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster, which is the best option. However there are different reosurce update methods are available.
 
 See more info in the articles:
  - [resources update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);
@@ -465,7 +465,7 @@ This rollback step is needed now and will be passed away when [3-way-merge metho
 
 ### Helm hooks
 
-The helm hook is arbitrary kubernetes resource marked with special annotation `helm.sh/hook`. For example:
+The helm hook is arbitrary Kubernetes resource marked with special annotation `helm.sh/hook`. For example:
 
 ```yaml
 kind: Job
@@ -478,7 +478,7 @@ metadata:
 
 There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
 
-Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks kubernetes resources are not deleted after execution.
+Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates Kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks Kubernetes resources are not deleted after execution.
 
 ### Resource tracking configuration
 
@@ -567,7 +567,7 @@ Comman-separated list on containers names of all Pods owned by resource with thi
 
 `"werf.io/show-service-messages": true|false`
 
-Set to `true` to enable additional debug info for resource including kubernetes events in realtime text stream during tracking. By default werf will show these service messages only when this resource has failed whole deploy process.
+Set to `true` to enable additional debug info for resource including Kubernetes events in realtime text stream during tracking. By default werf will show these service messages only when this resource has failed whole deploy process.
 
 ### Annotate and label chart resources
 
@@ -579,7 +579,7 @@ Werf automatically sets following builtin annotations to all chart resources dep
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
  * `"project.werf.io/env": ENV` — environment name specified with `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-Werf also sets auto annotations with info from the used CI/CD system (Gitlab CI for example)  when using `werf ci-env` command prior to run `werf deploy` command. For example [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
+Werf also sets auto annotations with info from the used CI/CD system (GitLab CI for example)  when using `werf ci-env` command prior to run `werf deploy` command. For example [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
 
 For more info about CI/CD integration check out following pages:
 
@@ -590,7 +590,7 @@ For more info about CI/CD integration check out following pages:
 
 User can pass arbitrary additional annotations and labels using cli options `--add-annotation annoName=annoValue` (can be specified multiple times) and `--add-label labelName=labelValue` (can be specified multiple times) for werf deploy invocation.
 
-For example, to set annotations and labels `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` to all kubernetes resources from chart use following werf deploy invocation:
+For example, to set annotations and labels `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` to all Kubernetes resources from chart use following werf deploy invocation:
 
 ```bash
 werf deploy \
@@ -605,7 +605,7 @@ werf deploy \
 
 ### Resources manifests validation
 
-If resource manifest in the chart contains logical or syntax errors then werf will write validation warning to the output during deploy process. Also all validation errors will be written to the `debug.werf.io/validation-messages`. These errors typically does not affect deploy process exit status, because kubernetes apiserver can accept wrong manifests with certain typos or errors without reporting errors.
+If resource manifest in the chart contains logical or syntax errors then werf will write validation warning to the output during deploy process. Also all validation errors will be written to the `debug.werf.io/validation-messages`. These errors typically does not affect deploy process exit status, because Kubernetes apiserver can accept wrong manifests with certain typos or errors without reporting errors.
 
 For example, having following typos in the chart templates (`envs` instead of `env` and `redinessProbe` instead of `readinessProbe`):
 

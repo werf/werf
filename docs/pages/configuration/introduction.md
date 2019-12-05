@@ -45,14 +45,14 @@ Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_V
 
 `project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)). This is single required field of meta configuration.
 
-Project name should be unique within group of projects that shares build hosts and deployed into the same kubernetes cluster (i.e. unique across all groups within the same gitlab).
+Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab).
 
 Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
 
 **WARNING**. You should never change project name, once it has been set up, unless you know what you are doing.
 
 Changing project name leads to issues:
-1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and docker registry manually.
+1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and Docker registry manually.
 2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
 
 Werf cannot automatically resolve project name change. Described issues must be resolved manually.

@@ -66,7 +66,7 @@ entries:
         - title: Deploy Process
           sfi:
 
-            - title: Deploy into kubernetes
+            - title: Deploy into Kubernetes
               url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
 
             - title: Working with secrets
@@ -125,7 +125,7 @@ entries:
           - title: Getting started
             url: /documentation/guides/getting_started.html
 
-          - title: Deploy into kubernetes
+          - title: Deploy into Kubernetes
             url: /documentation/guides/deploy_into_kubernetes.html
 
           - title: GitLab CI/CD integration
@@ -365,7 +365,7 @@ entries:
         - title: Стадии и образы
           url: /documentation/reference/stages_and_images.html
 
-        - title: Авторизация в Docker Registry
+        - title: Авторизация в Docker registry
           url: /documentation/reference/registry_authorization.html
 
         - title: Сборка

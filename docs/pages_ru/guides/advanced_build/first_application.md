@@ -17,7 +17,7 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 1. Установка IP адресов, на которых web-сервер будет принимать запросы. Это делается в скрипте  `/apt/start.sh`, который запускается во время старта контейнера.
 1. Выполнение других действий по настройке приложения. В качестве примера таких действий, мы будем записывать текущую дату в файл `version.txt`.
 
-Также, мы проверим что приложение работает и запушим образ в Docker Registry.
+Также, мы проверим что приложение работает и запушим образ в Docker registry.
 
 ## Требования
 
@@ -223,17 +223,17 @@ source <(multiwerf use 1.0 beta)
     curl localhost:8000
     ```
 
-## Шаг 3: Загрузите образ в Docker Registry
+## Шаг 3: Загрузите образ в Docker registry
 
-С помощью Werf можно пушить собранные образы в Docker Registry.
+С помощью Werf можно пушить собранные образы в Docker registry.
 
-1. Запустите локальный Docker Registry:
+1. Запустите локальный Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузите образ в Docker Registry используя Werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
+2. Загрузите образ в Docker registry используя Werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0

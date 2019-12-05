@@ -79,9 +79,9 @@ layout: default
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
                     <li>Сборка образов с Dockerfile либо с нашим синтаксисом, учитывая особенности инкрементальной сборкой (основанной на истории Git), используя Ansible и многие другие особенности сборщика werf.</li>
-                    <li>Публикация образов в Docker Registry, используя множество различных схем тегирования.</li>
+                    <li>Публикация образов в Docker registry, используя множество различных схем тегирования.</li>
                     <li>Выкат приложения в Kubernetes.</li>
-                    <li>Очистка Docker Registry, основанная на встроенных политиках и используемых в Kubernetes-кластерах образах приложения.</li>
+                    <li>Очистка Docker registry, основанная на встроенных политиках и используемых в Kubernetes-кластерах образах приложения.</li>
                 </ul>
             </div>
         </li>
@@ -238,7 +238,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
                             <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
                             <span class="roadmap__steps-list-item-text">
-                                Распределенная сборка с общим Docker Registry.
+                                Распределенная сборка с общим Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1606">

@@ -13,15 +13,15 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Требования
 
- * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker Registry.
- * Работающий Docker Registry.
-   * Доступ от хостов Kubernetes с правами на push образов в Docker Registry.
-   * Доступ от хостов Kubernetes с правами на pull образов в Docker Registry.
+ * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker registry.
+ * Работающий Docker registry.
+   * Доступ от хостов Kubernetes с правами на push образов в Docker registry.
+   * Доступ от хостов Kubernetes с правами на pull образов в Docker registry.
  * Установленные [зависимости Werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
  * Установленный [Multiwerf](https://github.com/flant/multiwerf).
  * Установленный и сконфигурированный `kubectl` для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
-**Внимание!** Далее в качестве адреса репозитория будет использоваться значение `:minikube` . Если вы используете собственный кластер Kubernetes и Docker Registry, то указывайте репозиторий проекта в Docker Registry вместо аргумента `:minikube`.
+**Внимание!** Далее в качестве адреса репозитория будет использоваться значение `:minikube` . Если вы используете собственный кластер Kubernetes и Docker registry, то указывайте репозиторий проекта в Docker registry вместо аргумента `:minikube`.
 
 ### Выбор версии Werf
 
@@ -92,15 +92,15 @@ ansible:
 Web-приложение состоит из единственной статической HTML-страницы, которая задаётся в инструкциях и добавляется при сборке образа. 
 Содержимое этой страницы будет отдавать Python HTTP-сервер.
 
-Соберём образ приложения и загрузим его в Docker Registry:
+Соберём образ приложения и загрузим его в Docker registry:
 
 ```shell
 werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo :minikube
 ```
 
-Название собранного образа приложения состоит из адреса Docker Registry (`REPO`) и тега (`TAG`). 
-При указании `:minikube` в качестве адреса Docker Registry Werf использует адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. 
-Так как в качестве тега был указан `myapp`, Werf загрузит в Docker Registry следующий образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
+Название собранного образа приложения состоит из адреса Docker registry (`REPO`) и тега (`TAG`). 
+При указании `:minikube` в качестве адреса Docker registry Werf использует адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. 
+Так как в качестве тега был указан `myapp`, Werf загрузит в Docker registry следующий образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Подготовка конфигурации деплоя
 

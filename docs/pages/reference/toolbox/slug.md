@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 In some cases, text from environment variables or parameters can't be used as is because it can contain unacceptable symbols.
 
-To take into account restrictions for docker images names, helm releases names and kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
+To take into account restrictions for docker images names, helm releases names and Kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
 
 There are 3 types of slug built into Werf:
 
