@@ -13,45 +13,47 @@ layout: default
             <div class="welcome__subtitle">
                  Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Go.
             </div>
+            <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="ru.werf.io">
                 <input autocomplete="on" class="page__input welcome__search-input" name="q" placeholder="Поиск по документации" required="required"  type="text">
                 <button type="submit" class="page__icon page__icon_search welcome__search-btn"></button>
             </form>
+            -->
+            <div class="welcome__extra-content">
+                <div class="welcome__extra-content-title">
+                    CLI-утилита для построения пайплайнов CI/CD
+                </div>
+                <div class="welcome__extra-content-text">
+                    <ul class="intro__list">
+                        <li>
+                            Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
+                        </li>
+                        <li>
+                            Может быть встроена в любую CI/CD-систему (например, GitLab CI) для построения пайплайнов, используя предложенный набор команд:
+                            <ul>
+                                <li><code>werf build-and-publish</code>;</li>
+                                <li><code>werf deploy</code>;</li>
+                                <li><code>werf dismiss</code>;</li>
+                                <li><code>werf cleanup</code>.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Open Source, написана на Go.
+                        </li>
+                        <li>
+                            Werf — это не SAAS, а представитель высокоуровневых CI/CD-инструментов нового поколения.
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="page__container">
     <div class="intro">
-        <div class="intro__image"></div>
-        <div class="intro__content">
-            <div class="intro__title">
-                CLI-утилита для построения пайплайнов CI/CD
-            </div>
-            <div class="intro__text">
-                <ul class="intro__list">
-                    <li>
-                        Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
-                    </li>
-                    <li>
-                        Может быть встроена в любую CI/CD-систему (например, GitLab CI) для построения пайплайнов, используя предложенный набор команд:
-                        <ul class="intro__list_c2">
-                            <li><code>werf build-and-publish</code>;</li>
-                            <li><code>werf deploy</code>;</li>
-                            <li><code>werf dismiss</code>;</li>
-                            <li><code>werf cleanup</code>.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        Open Source, написана на Go.
-                    </li>
-                    <li>
-                        Werf — это не SAAS, а представитель высокоуровневых CI/CD-инструментов нового поколения.
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <div class="intro__image"></div>        
     </div>
 </div>
 
@@ -86,6 +88,9 @@ layout: default
             </div>
         </li>
     </ul>
+    <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o intro__btn">
+        Узнайте полный список возможностей
+    </a>
 </div>
 
 <div class="stats">
@@ -153,10 +158,7 @@ layout: default
                 <div class="features__list-item-text">Выкатывайте приложение в Kubernetes, используя стандартный менеджер пакетов с интерактивным отслеживанием процесса и получением событий и логов в режиме реального времени.</div>
             </li>
             <li class="features__list-item"></li>
-        </ul>
-        <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o features__btn">
-            Узнайте полный список возможностей
-        </a>
+        </ul>        
     </div>
 </div>
 
