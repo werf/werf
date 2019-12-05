@@ -20,7 +20,7 @@ Werf использует Dockerfile как главный способ опис
  1. Высчитывается сигнатура стадии, исходя из указанного `Dockerfile` и его содержимого. Эта сигнатура отражает состояние собранного образа.
  2. Если образ с такой сигнатурой уже существует в [хранилище стадий]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий), то Werf не выполняет новую сборку образа.
  3. Если образ с такой сигнатурой отсутствует в [хранилище стадий]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий), то Werf запускает обычную сборку образа с помощью Docker, используя стандартные команды встроенного в Docker клиента (это аналогично выполнению команды `docker build`). Кэш, создаваемый при сборке используется как и при обычной сборке без помощи Werf.
- 4. После сборки стадии, Werf помещает ее в [хранилище стадий]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий) (при этом тэгируя соответствующий Docker-образ сигнатурой стадии), если используется параметр [`--stages-storage :local`]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий).
+ 4. После сборки стадии, Werf помещает ее в [хранилище стадий]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий) (при этом тегируя соответствующий Docker-образ сигнатурой стадии), если используется параметр [`--stages-storage :local`]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий).
 
 Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html).
 

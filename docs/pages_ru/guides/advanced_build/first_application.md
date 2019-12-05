@@ -233,7 +233,7 @@ source <(multiwerf use 1.0 beta)
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузите образ в Docker Registry используя Werf с пользовательской моделью тэгирования, используя тэг `v0.1.0`:
+2. Загрузите образ в Docker Registry используя Werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0
