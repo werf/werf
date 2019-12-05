@@ -293,15 +293,23 @@ layout: default
 <div class="popup" data-popup="slack">
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
-        <div class="popup__title">Slack communication channel<br/>is in <a href="https://cncf.io">CNCF</a> slack</div>
-        <div class="popup__text">We chose CNCF slack because most<br/>of the Kubernetes community members are registered there.<br/><br/>
-        If you are <b>not a member</b> of the CNCF slack yet,<br/>You can freely get an invitation:</div>
-        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
-            Get invite to slack CNCF
+        <div class="popup__title">
+            Join the party at <a href="https://cncf.io" target="_blank">CNCF</a> Slack
+        </div>
+        <div class="popup__subtitle">
+            Step 1:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Get invite to CNCF Slack
         </a>
-        <div class="popup__text">If you are already <b>registered</b> with the CNCF slack,<br/>then join our channel:</div>
-        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+        <div class="popup__subtitle">
+            Step 2:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_w popup__btn">
             Join #werf channel
         </a>
+        <div class="popup__text">
+            We chose CNCF Slack because most of the Kubernetes community members are registered there.
+        </div>
     </div>
 </div>

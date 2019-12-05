@@ -291,14 +291,23 @@ layout: default
 <div class="popup" data-popup="slack">
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
-        <div class="popup__title">Англоязычный slack-канал общения находится в slack <br/><a href="https://cncf.io">Cloud Native Computing Foundation (CNCF)</a></div>
-        <div class="popup__text">Мы выбрали slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.<br/><br/>Если Вы еще <b>не зарегистрированы</b> в slack CNCF,<br/>то вы можете свободно получить приглашение:</div>
-        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
-            Получить приглашение в slack CNCF
+        <div class="popup__title">
+            Присоединяйтесь к англоязычному комьюнити в Slack <a href="https://cncf.io" target="_blank">CNCF</a>
+        </div>
+        <div class="popup__subtitle">
+            Шаг 1:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Получить приглашение в Slack CNCF
         </a>
-        <div class="popup__text">Если вы уже <b>зарегистрированы</b> в slack CNCF, <br/>то подключайтесь к нашему каналу:</div>
-        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+        <div class="popup__subtitle">
+            Шаг 2:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_w popup__btn">
             Войти в канал #werf
         </a>
+        <div class="popup__text">
+            Мы выбрали Slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.
+        </div>
     </div>
 </div>

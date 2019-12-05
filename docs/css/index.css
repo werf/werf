@@ -1040,7 +1040,7 @@ code {
     position: fixed;
     top: 0px;
     left: 0px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(50,50,50,0.7);
     width: 100%;
     height: 100%;    
     justify-content: center;
@@ -1056,9 +1056,37 @@ code {
     box-sizing: border-box;
     width: 600px;
     border-radius: 10px;
-    padding: 25px;
-    background: #FFFFFF;
+    padding: 50px;
+    background: #0166FF;
     box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
+    text-align: center;
+    color: #fff;    
+}
+
+.popup__content:before {
+    content: '';
+    display: block;
+    width: 100px;
+    height: 100px;
+    background-image: url('../images/icons/slack.svg');
+    background-size: contain;
+    filter: brightness(0) invert(100%);
+    position: absolute;
+    top: -30px;
+    left: -30px;
+}
+
+.popup__content:after {
+    content: '';
+    display: block;
+    width: 133px;
+    height: 140px;
+    position: absolute;
+    right: -60px;
+    bottom: -100px;
+    background-repeat: no-repeat;
+    background-image: url(../images/illustrations/community2.svg);
+    background-position: center;
 }
 
 .popup__text {
@@ -1067,10 +1095,7 @@ code {
     font-style: normal;
     font-stretch: normal;
     line-height: 1.5;
-    text-align: center;
-    color: #00122c;
-    opacity: 0.7;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .popup__title {
@@ -1080,14 +1105,31 @@ code {
     font-stretch: normal;
     line-height: normal;
     letter-spacing: normal;
-    color: #00122c;
-    text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.popup__subtitle {
+    font-size: 20px;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    margin-bottom: 5px;
+}
+
+.popup__title a {
+    color: #FFF;
+    opacity: 0.7;
+    text-decoration: none;
+}
+
+.popup__title a:hover {
+    text-decoration: underline;
 }
 
 .popup__btn {
     width: auto;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .popup__close {
@@ -1096,7 +1138,7 @@ code {
     right: 12.5px;
     font-size: 18px;
     font-weight: 600;
-    color: #0066FF;    
+    color: #fff;    
     text-decoration: none;
 }
 
