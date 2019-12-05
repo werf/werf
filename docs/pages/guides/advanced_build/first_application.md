@@ -15,7 +15,7 @@ In this tutorial, we will build an image of simple PHP [Symfony application](htt
 1. Installing other project dependencies with the composer.
 1. Adding the application code to the `/app` directory of the resulting image.
    This directory and all files in it should belong to `app:app`.
-1. Setting up the IP address that the web server will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
+1. Setting up the IP address that the web server will listen to. This is done with a setting in `/apt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
 
 Also, we will check that the application works and push the image in a docker registry.
@@ -134,7 +134,7 @@ To implement these steps and requirements with Werf we will add a special file c
         copy:
           content: |
             #!/bin/bash
-            php bin/console server:run 0.0.0.0:8000
+            php -S 0.0.0.0:8000 -t public/
           dest: /app/start.sh
           owner: app
           group: app
@@ -185,7 +185,7 @@ To implement these steps and requirements with Werf we will add a special file c
       - su -c 'composer update' app
       setup:
       - "echo '#!/bin/bash' >> /app/start.sh"
-      - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+      - echo 'php -S 0.0.0.0:8000 -t public/' >> /app/start.sh
       - echo `date` > /app/version.txt
       - chown app:app /app/start.sh /app/version.txt
       - chmod +x /app/start.sh
