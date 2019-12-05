@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается как быстро начать работу с Werf, используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker Registry. В качестве примера приложения используется [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
+В статье рассматривается как быстро начать работу с Werf, используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker registry. В качестве примера приложения используется [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
 
 ## Требования
 
@@ -23,7 +23,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 source <(multiwerf use 1.0 beta)
 ```
 
-## Шаг 1: Добавьте конфигурацию Werf
+## Шаг 1: Конфигурация werf.yaml
 
 Добавим файл `werf.yaml`, описывающий конфигурацию сборки образа приложения с использованием существующего в проекте [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
 
@@ -44,7 +44,7 @@ source <(multiwerf use 1.0 beta)
     dockerfile: Dockerfile
     ```
 
-## Step 2: Соберите приложение и проверьте его работу
+## Шаг 2: Сборка приложения
 
 1. Соберём образ приложения, выполнив команду в корневой папке:
 
@@ -64,15 +64,15 @@ source <(multiwerf use 1.0 beta)
     curl localhost:80
     ```
 
-## Step 3: Загрузите образ приложения в Docker Registry
+## Шаг 3: Публикация образа в Docker registry
 
-1. Запустим Docker Registry локально:
+1. Запустим Docker registry локально:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузим образ приложения в Docker Registry, предварительно протегировав его тегом `v0.1.0`:
+2. Загрузим образ приложения в Docker registry, предварительно протегировав его тегом `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/g-started --tag-custom v0.1.0
