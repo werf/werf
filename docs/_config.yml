@@ -3,6 +3,7 @@ output: web
 topnav_title: Werf
 site_title: Werf
 company_name: Flant
+company_url: https://flant.com
 url: https://werf.io
 site_lang: en
 site_urls:
@@ -55,11 +56,17 @@ defaults:
       search: true
       sidebar: sidebar
       topnav: topnav
+      sitemap_include: true
   - scope:
       path: "pages_ru"
       type: "pages"
     values:
       lang: ru
+  - scope:
+      path: "pages_ru/cli"
+      type: "pages"
+    values:
+      sitemap_include: false
 
 
 sidebars:
