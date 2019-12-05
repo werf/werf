@@ -77,14 +77,14 @@ Other images in the _images repo_ stay as they are.
 
 #### Whitelist of images
 
-The image always remains in _images repo_ while exists kubernetes object which uses the image.
-In kubernetes cluster, werf scans the following kinds of objects: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
+The image always remains in _images repo_ while exists Kubernetes object which uses the image.
+In Kubernetes cluster, werf scans the following kinds of objects: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
 The functionality can be disabled by option `--without-kube`.
 
-#### Connecting to kubernetes
+#### Connecting to Kubernetes
 
-Werf gets information about kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
+Werf gets information about Kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
 
 ### Cleanup stages storage
 
@@ -96,7 +96,7 @@ On this step, werf deletes _stages_ which do not relate to _images_ currently ex
 ## Manual cleaning
 
 Manual cleaning approach assumes one-step cleaning with the complete removal of images from _stages storage_ or _images repo_.
-This method does not check whether the image used by kubernetes or not.
+This method does not check whether the image used by Kubernetes or not.
 Manual cleaning is not recommended for automatic usage (use cleaning by policies instead).
 In general it suitable for forced images removal.
 

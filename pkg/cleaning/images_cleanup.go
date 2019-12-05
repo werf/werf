@@ -59,7 +59,7 @@ func imagesCleanup(options ImagesCleanupOptions) error {
 
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
-				if err := logboek.LogProcess("Skipping repo images that are being used in kubernetes", logboek.LogProcessOptions{}, func() error {
+				if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
 					repoImagesByImageName, err = exceptRepoImagesByWhitelist(repoImagesByImageName, options.KubernetesContextsClients)
 					return err
 				}); err != nil {

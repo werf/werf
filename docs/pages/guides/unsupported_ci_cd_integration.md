@@ -5,7 +5,7 @@ permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf for now only supports [Gitlab CI system]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html). Support for top-10 popular CI systems [coming soon](https://github.com/flant/werf/issues/1682).
+Werf for now only supports [GitLab CI system]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html). Support for top-10 popular CI systems [coming soon](https://github.com/flant/werf/issues/1682).
 
 To use werf with any CI/CD system that does not supported yet user should perform procedures described in the [what is ci-env]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env) by own script.
 
@@ -13,9 +13,9 @@ The behaviour of `werf ci-env` command should be resembled (without actual using
 
 ## Ci-env procedures
 
-### Docker Registry integration
+### Docker registry integration
 
-According to [Docker Registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
+According to [Docker registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
 

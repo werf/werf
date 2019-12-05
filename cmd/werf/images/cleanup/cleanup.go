@@ -150,7 +150,7 @@ func runCleanup() error {
 
 	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
-		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
+		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
 	}
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{

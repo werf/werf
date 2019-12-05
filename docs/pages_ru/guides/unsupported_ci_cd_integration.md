@@ -13,9 +13,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Настройка CI-окружения
 
-### Интеграция с Docker Registry
+### Интеграция с Docker registry
 
-Согласно процедуре [интеграции с Docker Registry]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-docker-registry), необходимо определить следующие переменные:
+Согласно процедуре [интеграции с Docker registry]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-docker-registry), необходимо определить следующие переменные:
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
 

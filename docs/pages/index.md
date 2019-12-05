@@ -65,7 +65,7 @@ layout: default
                 <ul class="intro__list">
                     <li>Full compatibility with Helm.</li>
                     <li>Easy RBAC definition.</li>
-                    <li>Applied deploy configuration in kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.</li>
+                    <li>Applied deploy configuration in Kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.</li>
                     <li>Werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.</li>
                     <li>Configurable resource errors detector and resource readiness detector using resource annotations.</li>
                     <li>Rich logging and error reporting.</li>
@@ -79,9 +79,9 @@ layout: default
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
                     <li>Build images with Dockerfiles or advanced image builder with incremental rebuilds based on the git history and ansible.</li>
-                    <li>Publish images to the registry using advanced image naming schemas.</li>
+                    <li>Publish images to the Docker registry using advanced image naming schemas.</li>
                     <li>Deploy application images into Kubernetes cluster.</li>
-                    <li>Cleanup registry from unused images based on policies.</li>
+                    <li>Cleanup Docker registry from unused images based on policies.</li>
                 </ul>
             </div>
         </li>
@@ -239,7 +239,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
                             <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
                             <span class="roadmap__steps-list-item-text">
-                                Distributed builds with common registry.
+                                Distributed builds with common Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1606">

@@ -26,7 +26,7 @@ If an environment variable is available in the environment where werf is launche
 
 In a local environment, you can declare it from the console.
 
-For Gitlab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
+For GitLab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
 
 ### Working with the .werf_secret_key file
 

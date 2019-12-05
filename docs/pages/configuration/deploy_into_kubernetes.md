@@ -1,5 +1,5 @@
 ---
-title: Deploy into kubernetes
+title: Deploy into Kubernetes
 sidebar: documentation
 permalink: documentation/configuration/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
@@ -35,7 +35,7 @@ deploy:
 
 ## Kubernetes namespace
 
-Werf allows to define a custom kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) to generate a Kubernetes Namespace.
+Werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) to generate a Kubernetes Namespace.
 
 Custom Kubernetes Namespace template is defined in the [meta configuration section]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) of `werf.yaml`:
 

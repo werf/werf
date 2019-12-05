@@ -14,7 +14,7 @@ ___
 
 Werf is an Open Source CLI tool written in Go to implement your application delivery fast & easy. To benefit from it, you just need to describe your application's configuration (how to build it and deploy it into Kubernetes) in a Git repo acting as the single source of truth. In short, that's what we call GitOps today.
 
-* Werf builds Docker images using Dockerfiles or alternative fast builder based on the custom syntax. It also cleans Docker Registry from unused images.
+* Werf builds Docker images using Dockerfiles or alternative fast builder based on the custom syntax. It also cleans Docker registry from unused images.
 * Werf deploys your application into Kubernetes using a chart in Helm-compatible format with handy customizations and improved deploy tracking, errors detection and output.
 
 While werf is not a complete CI/CD system itself, it is a tool that can be embedded into any existing CI/CD system literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
@@ -50,7 +50,7 @@ While werf is not a complete CI/CD system itself, it is a tool that can be embed
 - Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
 - Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
 - Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
-- Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
+- Distributed builds with common Docker registry [#1614](https://github.com/flant/werf/issues/1614).
 - Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
 - Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
 
@@ -192,7 +192,7 @@ The following guides demonstrate the main features and help you get started usin
 - [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using Werf with existing Dockerfile.
 - [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with Werf builder.
 - [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy the application into Kubernetes using Werf built images.
-- [Gitlab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
+- [GitLab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
 - [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate Werf with any CI/CD system.
 - [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
 - [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).

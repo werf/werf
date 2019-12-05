@@ -14,7 +14,7 @@
 - Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
 - Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
 - Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
-- Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
+- Distributed builds with common Docker registry [#1614](https://github.com/flant/werf/issues/1614).
 - Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
 - Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
 

@@ -22,7 +22,7 @@ To begin, you'll need the following:
 ![scheme]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
 
 * Kubernetes cluster
-* GitLab with docker registry enabled
+* GitLab with enabled Docker registry
 * Werf node (node for build and for deploy)
 
 Pay attention, that both the build process and the deployment process run on the same node — this is the only right way to use local stages storage specified with `--stages-storage :local` (distributed stages storage not supported yet, will be added soon).
@@ -36,9 +36,9 @@ Werf use `~/.werf/` folder to store build cache and other files. Werf assumes th
 The deployment process needs access to the cluster through the kubectl, and therefore you need to setup kubectl on a Werf node. Werf will use default kubectl context for deploy unless you specify otherwise (e.g. with the `--kube-context` option or `$WERF_KUBE_CONTEXT` environment variable).
 
 Eventually, Werf node needs access:
-- to the application git repository
-- to the docker registry
-- to the kubernetes cluster.
+- to the application git repository;
+- to the Docker registry;
+- to the Kubernetes cluster.
 
 You need to set up GitLab runner with `werf` tags.
 
@@ -96,7 +96,7 @@ stages:
 We've defined the following stages:
 * `build` — stage for building application images;
 * `deploy` — stage for deploying built images on environments such as — stage, test, review, production or any other;
-* `cleanup` — stage for cleaning up registry and build cache.
+* `cleanup` — stage for cleaning up Docker registry and build cache.
 
 ### Build stage
 
@@ -117,9 +117,9 @@ Build:
 
 Cleanup will use schedule, and it is not necessary to rebuild images on running cleanup job. Therefore we need to specify `except: schedules` in the build stage above.
 
-For registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
+For Docker registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
 
-If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container Docker registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
 
 ### Deploy stage
 
@@ -200,7 +200,7 @@ We've defined two jobs:
 
     The `url` parameter of the job you can use in you helm templates to set up e.g. ingress.
 2. Stop review.
-    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
+    In this job, werf will delete helm release and delete Kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
 
 Review jobs needn't run on pushes to git master branch, because review environment is for developers.
 
@@ -253,9 +253,9 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stage
 
-Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+Werf has an efficient cleanup functionality which can help you to avoid overflow Docker registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
-In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
+In the results of werf works, we have images in a Docker registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
 
 There is a `cleanup` stage in the `.gitlab-ci.yml` file for the cleanup process.
 
@@ -286,7 +286,7 @@ Cleanup stage will start only by schedule. You can define schedule in `CI/CD` �
 
 > How it works:
    - `werf ci-env` creates a temporary docker configuration file for each GitLab job, sets the path to that file in the DOCKER_CONFIG variable, and exports it;
-   - `docker login` uses a temporary configuration file from DOCKER_CONFIG environment for registry authentication;
+   - `docker login` uses a temporary configuration file from DOCKER_CONFIG environment for Docker registry authentication;
    - `werf cleanup` also uses a temporary configuration file from DOCKER_CONFIG.
 
 

@@ -18,7 +18,7 @@ During templates rendering werf will create a single text stream of all manifest
 
 Use [`werf helm render` command]({{ site.baseurl }}/documentation/cli/management/helm/render.html) to get rendered manifests. The same params as in [`werf deploy` command]({{ site.baseurl }}/documentation/cli/main/deploy.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#values), images repo, environment and other).
 
-Render command aimed to help in debugging of problems related to the wrong usage of Go templates or inspect yaml format of kubernetes manifests.
+Render command aimed to help in debugging of problems related to the wrong usage of Go templates or inspect yaml format of Kubernetes manifests.
 
 ## Lint
 

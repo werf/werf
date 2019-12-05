@@ -13,7 +13,7 @@
 - Локальная разработка приложений с werf [#1940](https://github.com/flant/werf/issues/1940).
 - Тегирование, основанное на контенте [#1184](https://github.com/flant/werf/issues/1184).
 - Лучшие практики и рецепты для наиболее популярных CI-систем [#1617](https://github.com/flant/werf/issues/1617).
-- Распределенная сборка с общим Docker Registry [#1614](https://github.com/flant/werf/issues/1614).
+- Распределенная сборка с общим Docker registry [#1614](https://github.com/flant/werf/issues/1614).
 - Поддержка Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - Kaniko-подобная сборка без привязки к локальному Docker-демону [#1618](https://github.com/flant/werf/issues/1618).
 
@@ -63,5 +63,5 @@
 
 ### Очистка
 
-- Очистка локального хранилища и Docker Registry по настраиваемым политикам.
+- Очистка локального хранилища и Docker registry по настраиваемым политикам.
 - Очистка игнорирует используемые в Kubernetes-кластере образы. Werf сканирует следующие типы объектов кластера: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.

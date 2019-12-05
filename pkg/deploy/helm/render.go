@@ -252,7 +252,7 @@ func render(c *chart.Chart, config *chart.Config, opts renderOptions) (map[strin
 	if opts.KubeVersion != "" {
 		kv, verErr := semver.NewVersion(opts.KubeVersion)
 		if verErr != nil {
-			return nil, fmt.Errorf("could not parse a kubernetes version: %v", verErr)
+			return nil, fmt.Errorf("could not parse a Kubernetes version: %v", verErr)
 		}
 		caps.KubeVersion.Major = fmt.Sprint(kv.Major())
 		caps.KubeVersion.Minor = fmt.Sprint(kv.Minor())

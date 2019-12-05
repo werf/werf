@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 > Three way merge is under development now. This page contains implementation notes and other debug and development info about resources update method which Werf currently uses
 
-Three way merge is a way of applying changes to kubernetes resources which uses previous resource configuration, new resource configuration and current resource state to calculate and then apply a three-way-merge patch with new changes for for each resource. This method used by the `kubectl apply` command.
+Three way merge is a way of applying changes to Kubernetes resources which uses previous resource configuration, new resource configuration and current resource state to calculate and then apply a three-way-merge patch with new changes for for each resource. This method used by the `kubectl apply` command.
 
 Werf is fully compatible with the Helm 2, which makes use of two-way-merge patches. This method implies creating patches between previous chart resource configuration and a new one.
 

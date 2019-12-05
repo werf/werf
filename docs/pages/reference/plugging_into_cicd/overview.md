@@ -30,9 +30,9 @@ With *ci-env command* werf gathers data from CI/CD systems and sets modes of ope
 
 Typically CI/CD system can provide each job with:
  1. Docker registry address.
- 2. Credentials to access docker registry.
+ 2. Credentials to access Docker registry.
 
-Werf ci-env command should perform login into detected docker registry using detected credentials. See more [info about docker login below](#docker-registry-login). [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) will be set.
+Werf ci-env command should perform login into detected Docker registry using detected credentials. See more [info about docker login below](#docker-registry-login). [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) will be set.
 
 Docker registry address will also be used as `--images-repo` parameter value. [`WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO`](#werf_images_repo) will be set.
 
@@ -46,7 +46,7 @@ Werf ci-env command detects current git-commit, git-tag or git-branch and uses t
 
 ### CI/CD pipelines integration
 
-Werf can embed any info into deployed kubernetes resources annotations and labels. Typically CI/CD system exposes for users such info as link to CI/CD web page of the project, link to job itself, job id and pipeline id and other info.
+Werf can embed any info into deployed Kubernetes resources annotations and labels. Typically CI/CD system exposes for users such info as link to CI/CD web page of the project, link to job itself, job id and pipeline id and other info.
 
 Werf ci-env command automatically detects CI/CD web page project url and embeds this url into annotations of every resource deployed with werf.
 
@@ -58,7 +58,7 @@ There are another *auto annotations* set by werf using any CI/CD system, also *c
 
 ### CI/CD configuration integration
 
-There is a concept used in CI/CD systems named *environment*. Environment can define used host nodes, access parameters, kubernetes cluster connection info, job parameters (using environment variables for example) and other info. Typical environments are: *development*, *staging*, *testing*, *production* and *review environments* with dynamical names.
+There is a concept used in CI/CD systems named *environment*. Environment can define used host nodes, access parameters, Kubernetes cluster connection info, job parameters (using environment variables for example) and other info. Typical environments are: *development*, *staging*, *testing*, *production* and *review environments* with dynamical names.
 
 Werf also uses concept of *environment name* in the [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment).
 
@@ -92,7 +92,7 @@ The only available mode of ci-env for now is *tag-or-branch* mode.
 
 Current git-tag or git-branch will be used to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from `werf.yaml` built by werf.
 
-Image related with git-tag and git-branch will be kept in the docker registry accourding to [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
+Image related with git-tag and git-branch will be kept in the Docker registry according to [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
 This mode makes use of [werf publish params]({{ site.baseurl }}/documentation/reference/publish_process.html#images-naming): `--tag-git-tag` or `--tag-git-branch` — automatically choosing appropriate one. These params also used in the [werf deploy command]({{ site.baseurl }}/documentation/cli/main/deploy.html).
 
@@ -199,17 +199,17 @@ Note that `_MYANNOTATION_1`, `_MYANNOTATION_2`, `_MYLABEL_1`, `_MYLABEL_2` suffi
 
 ### Docker registry login
 
-As noted in the [docker registry integration](#docker-registry-integration) werf performs autologin into detected docker registry.
+As noted in the [Docker registry integration](#docker-registry-integration) werf performs autologin into detected docker registry.
 
 Ci-env command always creates a new temporal [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files).
 
-Temporal docker config needed so that parallel running jobs cannot interfere with each other. Also temporal docker config is a more secure way, than logging into docker registry using system-wide default docker config (`~/.docker`).
+Temporal docker config needed so that parallel running jobs cannot interfere with each other. Also temporal docker config is a more secure way, than logging into Docker registry using system-wide default docker config (`~/.docker`).
 
 If `DOCKER_CONFIG` variable is defined or there is `~/.docker`, then werf will *copy* this already existing config into a new temporal one. So any *docker logins* already made before running `werf ci-env` command will still be active and available using this new temporal config.
 
-After new tmp config was created werf performs additional login into detected docker registry.
+After new tmp config was created werf performs additional login into detected Docker registry.
 
-As a result of [docker registry integration procedure](#docker-registry-integration) `werf ci-env` will export `DOCKER_CONFIG` variable with new temporal docker config.
+As a result of [Docker registry integration procedure](#docker-registry-integration) `werf ci-env` will export `DOCKER_CONFIG` variable with new temporal docker config.
 
 This config then will be used by any following werf command and also can be used by `docker login` command to perform any additional custom logins on your needs.
 
@@ -225,7 +225,7 @@ Path to new temporal docker config generated by [`werf ci-env` command]({{ site.
 
 #### WERF_IMAGES_REPO
 
-Within [docker registry integration](#docker-registry-integration) procedure [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) will detect docker registry and define `--images-repo` param using `WERF_IMAGES_REPO` environment variable.
+Within [Docker registry integration](#docker-registry-integration) procedure [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) will detect docker registry and define `--images-repo` param using `WERF_IMAGES_REPO` environment variable.
 
 #### WERF_TAG_GIT_TAG
 
@@ -273,5 +273,5 @@ Within [configure modes of operation in CI/CD systems](#configure-modes-of-opera
 
 ## Further reading
 
- * [How Gitlab CI integration works]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
+ * [How GitLab CI integration works]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
  * [How to use werf with unsupported CI/CD system]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html).
