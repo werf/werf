@@ -8,3 +8,6 @@ f58fa8001d60c4c77595fbbb62b63c1d gmp-6.1.2.tar.xz
 0e5707b418c3826768d41130fbe4ee86 nettle-3.5.1.tar.gz
 a36cb11809d31268b6ddd17cb38b92bb gnutls-3.6.9.tar.xz
 090a9cf689efd8d4899600c3093b3735 p11-kit-0.23.16.1.tar.gz
+9766a37736974e636227d62f86bae40e glib-2.62.3.tar.xz
+6fcfea2043b5ac188fd3eed56aeb5d90 util-linux-2.33.1.tar.xz
+10942a1dc23137a8aa07f0639cbfece5 libxml2-2.9.10.tar.gz

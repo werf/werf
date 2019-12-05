@@ -8,3 +8,6 @@ ftp://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
 ftp://ftp.gnu.org/gnu/nettle/nettle-3.5.1.tar.gz
 ftp://ftp.gnupg.org/gcrypt/gnutls/v3.6/gnutls-3.6.9.tar.xz
 https://github.com/p11-glue/p11-kit/releases/download/0.23.16.1/p11-kit-0.23.16.1.tar.gz
+http://ftp.gnome.org/pub/gnome/sources/glib/2.62/glib-2.62.3.tar.xz
+https://www.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-2.33.1.tar.xz
+http://xmlsoft.org/sources/libxml2-2.9.10.tar.gz
