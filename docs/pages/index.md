@@ -172,7 +172,7 @@ layout: default
                     <span class="page__icon page__icon_twitter"></span>
                     Join via Twitter
                 </a>
-                <a href="{{ site.social_links[page.lang].slack }}" target="_blank" class="page__btn page__btn_w community__btn">
+                <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Join via Slack
                 </a>
@@ -287,5 +287,20 @@ layout: default
                 Explore CLI
             </a>
         </div>
+    </div>
+</div>
+
+<div class="popup" data-popup="slack">
+    <div class="popup__content">
+        <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
+        <div class="popup__text">Join our friendly Slack community by following these steps:</div>
+        <div class="popup__title">Step 1:</div>        
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+            Join Cloud Native Computing Foundation on Slack
+        </a>
+        <div class="popup__title">Step 2:</div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+            Join #werf channel
+        </a>
     </div>
 </div>

@@ -173,10 +173,10 @@ layout: default
                     Мы в Telegram
                 </a>
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
-                <span class="page__icon page__icon_twitter"></span>
-                Мы в Twitter
+                    <span class="page__icon page__icon_twitter"></span>
+                    Мы в Twitter
                 </a>
-                <a href="{{ site.social_links[page.lang].slack }}" target="_blank" class="page__btn page__btn_w community__btn">
+                <a href="#" data-open-popup="slack" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Мы в Slack
                 </a>
@@ -285,5 +285,20 @@ layout: default
                 CLI-команды
             </a>
         </div>
+    </div>
+</div>
+
+<div class="popup" data-popup="slack">
+    <div class="popup__content">
+        <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
+        <div class="popup__text">Присоединяйтесь к нашему дружелюбному сообществу за пару простых шагов:</div>
+        <div class="popup__title">Шаг 1:</div>        
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+            Войти в Slack Cloud Native Computing Foundation
+        </a>
+        <div class="popup__title">Шаг 2:</div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_o popup__btn">
+            Войти в канал #werf
+        </a>
     </div>
 </div>
