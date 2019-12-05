@@ -5,111 +5,107 @@ permalink: documentation/reference/deploy_process/differences_with_helm.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-<div id="outdatedWarning" class="docs__outdated active">
-    Статья в процессе перевода.
-</div>
+## Встроенный Helm-клиент и Tiller
 
-## Builtin Helm client and Tiller
+Helm 2 использует компонент [Tiller](https://helm.sh/docs/glossary/#tiller), который управляет [релизами]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release): выполняет операции создания, обновления, удаления и вывода списка релизов.
 
-Helm 2 uses server component called [Tiller](https://helm.sh/docs/glossary/#tiller). Tiller manages [releases]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release): performs create, update, delete and list releases operations.
+Деплой с помощью **werf** не требует установленного в кластере Kubernetes Tiller. Helm-клиент и Tiller полностью встроены в **werf**, и Tiller выполняется локально (без сетевых gRPC запросов) в рамках единого процесса **werf** во время деплоя.
 
-Deploying with werf does not require a Tiller installed in Kubernetes cluster. Helm client and Tiller is fully embedded into werf, and Tiller is operating locally (without grpc network requests) within single werf process during execution of deploy commands.
+**Werf** [полностью совместим]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#helm-compatibility-notice) с существующими инсталляциями Helm 2.
 
-Yet werf is [fully compatible]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#helm-compatibility-notice) with already existing helm 2 installations.
+Такая архитектура дает **werf** ряд преимуществ, которые рассматриваются далее.
 
-This architecture gives werf following advantages.
+### Возможность по-своему реализовать отслеживание ресурсов
 
-### Ability to implement resources tracking properly
+**Werf** импортирует кодовую базу Helm и релизовывает по своему ключевые шаги принятого в Helm процесса деплоя. Реализация в **werf** позволяет [отслеживать журналы (в stdout) ресурсов](#правильное-отслеживание-развернутых-ресурсов) без сложных архитектурных решений, таких как потоковая передача через gRPC с использованием Helm-клиента и Tiller.
 
-Werf imports helm codebase and redefines key points of helm standard deploy process. These changes making it possible to [track resources with logs](#proper-tracking-of-deployed-resources) without complex architectural solutions such as streaming of logs over grpc when using helm client with Tiller server.
+### Безопасность
 
-### Security advantage
+Обычно Tiller устанавливается в кластере Kubernetes с правами администратора. С помощью **werf**, пользователь может более тонко настраивать доступ к кластеру, например, для каждого namespace проекта.
 
-Typically Tiller is deployed into cluster with admin permissions. With werf user can setup fine grained access to cluster for example per project namespace.
+В отличие от Tiller, в **werf** хранилище данных о релизах не привязано к конфигурации кластера или другим параметрам установки. **Werf** может хранить данные о релизах каждого проекта прямо в namespace проекта. Это приводит к тому, что другие проекты в кластере не смогут получить доступ к данным релиза другого проекта, при отсутствии доступа к соответствующему namespace.
 
-In contrast to Tiller, releases storage in Werf is not a static configuration of cluster installation. Thus Werf can store releases of each project right in the namespace of the project, so that neighbour projects does not have ability to see other releases if there is no access to these neighbour namespaces.
+### Установка
 
-### Installation advantage
+Поскольку Helm-клиент и Tiller встроены в **werf**, нет необходимости ни в установке Helm-клиента на хосте ни в установке Tiller в кластере.
 
-As helm client and Tiller is built into werf there is no need for helm client installed on the host nor Tiller installed in the cluster.
+## Правильное отслеживание развернутых ресурсов
 
-## Proper tracking of deployed resources
+**Werf** отслеживает все ресурсы чарта до тех пор, пока каждый ресурс не перейдет в состояние готовности. В процессе отслеживания **werf** выводит журналы и информацию о текущем состоянии ресурсов, изменениях состояния ресурсов в процессе деплоя, а также информацию о том, чего **werf** ожидает (например готовность каких ресурсов ожидается).
 
-Werf tracks all chart resources until each resource reaches ready state and prints logs and info about current resources status, resources status changes during deploy process and "what werf is waiting for?".
+В стандартном Helm, пользователь имеет возможность только указать флаг `--wait` для ожидания ресурсов, но при использовании этого флага Helm не дает никакой интерактивной информации о том, «что происходит сейчас?».
 
-With pure helm user has only the ability to wait for resources using `--wait` flag, but helm does not provide any interactive info about "what is going on now?" when using this flag.
+Также, **werf** быстро завершает текущий процесс при возникновении ошибки во время деплоя. При использовании флага `--wait` в стандартном Helm, пользователь должен дождаться истечения таймаута когда что-то пойдет не так. Поскольку неудачные деплои — не редкость, ожидание таймаутов может значительно замедлить работу CI/CD.
 
-Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
+Кроме того, поведение при отслеживании по умолчанию можно настроить согласно вашим потребностям, читайте подробнее об этом в [соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#настройка-отслеживания-ресурсов).
 
-And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
+Отслеживание ресурсов в **werf** реализовано с помощью библиотеки [kubedog](https://github.com/flant/kubedog).
 
-Werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
+## Использование аннотаций и меток ресурсов чарта
 
-## Annotate and label chart resources
-
-Werf automatically appends annotations to all chart resources (including hooks), such as (for GitLab):
+Ко всем ресурсам чарта (включая хуки) **werf** автоматически добавляет аннотации, например такие как (при использовании в GitLab):
 * `"project.werf.io/git": $CI_PROJECT_URL`;
 * `"ci.werf.io/commit": $CI_COMMIT_SHA`;
 * `"gitlab.ci.werf.io/pipeline-url":  $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID`;
 * `"gitlab.ci.werf.io/job-url": $CI_PROJECT_URL/pipelines/$CI_JOB_ID`.
 
-User can pass any additional annotations and labels to werf deploy invocation and werf will set these annotations to all resources of the chart.
+Пользователь может передавать любые дополнительные аннотации и метки при вызове команды `werf deploy`, — **werf** установит эти аннотации и метки всем ресурсам чарта.
 
-This feature opens possibilities for grouping resources by project name, url, etc. for example in monitoring task.
+Эта возможность позволяет группировать ресурсы по имени проекта, URL и т.д., например для использования в мониторинге. Читайте подробнее про основы деплоя в [соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#аннотации-и-метки-ресурсов-чарта).
 
-See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotate-and-label-chart-resources).
+У Helm пока нет такого функционала, и он [не появится](https://github.com/helm/helm/pull/2631) в ближайшем будущем.
 
-Helm does not have this ability yet and will not have in the near future, [see issue](https://github.com/helm/helm/pull/2631).
+## Безопасный параллельный деплой
 
-## Parallel deploys are safe
+**Werf** использует блокировки для предотвращения параллельного деплоя или удаления ресурсов в рамках одного релиза. Блокировка выполняется по имени релиза.
 
-Werf uses locks system to prevent any parallel deploys or dismisses when working with a single release. Release is locked by name.
+Helm не использует каких-либо блокировок, поэтому параллельный деплой может приводить к неожиданным результатам.
 
-Helm does not use any locks, so parallel deploys may lead to unexpected results.
+## Встроенная поддержка секретов
 
-## Builtin secrets support
+У **werf** есть встроенные инструменты работы с файлами секретов и секретными данными. Эта возможность позволяет хранить конфиденциальные данные прямо в репозитории проекта. Читай подробнее об этом в статьях по [основам деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) и [работе с секретами]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html).
 
-Werf has a builtin tools and abilities to work with secret files and secret values to store sensitive data right in the project repo. See [deploy essentials]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) and [working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html) for more info.
+## Интеграция с описанной конфигурацией образа
 
-## Integration with built images
+**Werf** расширяет возможности Helm благодаря специальным функциям шаблонов, таким как `werf_container_image` и `werf_container_env`. Эти функции возвращают корректные имена образов и секции переменных, для использования в шаблонах чарта с учетом описанного в конфигурации образа. Читай подробнее про [основы деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 
-Werf extends helm with special templates functions such as `werf_container_image` and `werf_container_env` to generate images names for the images built with werf builder. See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+Таким образом, **werf** значительно упрощает использование пользовательских образов в шаблонах: **werf** генерирует «правильные» имена и теги Docker-образа, а также гарантирует, что нужная версия образа будет скачана со стороны Kubernetes когда это будет необходимо.
 
-Thus werf makes it super easy for the user to integrate custom built images into user templates: werf does the work of generating "the right" docker images names and tags, and werf makes sure that image will be pulled when it is necessary for Kubernetes to pull new image version.
+В случае же стандартного Helm, пользователю необходимо придумать собственную систему передачи актуальных имен образов.
 
-Using pure helm user need to invent own system of passing actual images names using values.
+## Генерация чартов
 
-## Chart generation
+Во время деплоя происходит создание временного Helm-чарта. Этот чарт содержит:
 
-During werf deploy a temporary helm chart is created.
+* Вызов дополнительных функции Go-шаблонов: `werf_container_image`, `werf_container_env` и других. Эти функции описаны в соответствующей [статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#шаблоны).
+* Расшифрованные данные секретов из файла `secret-values.yaml`. Работа с этими секретами описана в [соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#шифрация-секретных-переменных).
 
-This chart contains:
+Затем, временный чарт отправляется в подсистему Helm внутри **werf**. **Werf** удаляет этот чарт при завершении работы команды деплоя.
 
-* Additional runtime Go templates functions: `werf_container_image`, `werf_container_env` and other. These functions are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#templates).
-* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
+### Не нужен Chart.yaml
 
-The temporary chart then goes to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
+Helm-чарт требует обязательного наличия файла `Chart.yaml` в корне папки чарта, где должны быть определены имя и версия чарта.
 
-### Chart.yaml is not required
+**Werf** генерирует этот файл при передаче временного чарта в подсистему Helm. В сгенерированном файле имя чарта совпадает с именем проекта из конфигурации `werf.yaml`, а версия всегда равна `0.1.0` (это неважное вспомогательное поле).
 
-Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
+Если пользователь сам создал файл `Chart.yaml`, то **werf** перепишет его сгенерированным файлом и выведет соответствующее предупреждение.
 
-Werf internally generates this file when passing temporal chart to the builtin helm subsystem. In this generated file chart name equals project name from `werf.yaml` config and version is always `0.1.0` (version is an unimportant auxiliary field).
+## Фиксированный путь Helm-чарта в проекте
 
-If user have created `Chart.yaml` by itself, then werf will overwrite it in the generated actual chart and print a warning.
+**Werf** требует, чтобы [чарт]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#чарт) был размещен в папке `.helm`, в той же папке где находится файл конфигурация `werf.yaml`.
 
-## Fixed helm chart path in the project
+Helm не определяет фиксированного места размещения чарта в проекте.
 
-Werf requires [chart]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
+## Проверка ресурсов чарта
 
-Helm does not define a static place in the project where helm chart should be stored.
+Ошибки, такие как несуществующие в конфигурации ресурсов шаблонов чарта поля, не отображаются стандартным Helm. Нет обратной связи — пользователь не знает о наличии таких ошибок.
 
-## Chart resource validation
+**Werf** выводит предупреждения (с префиксом `WARNINGS`) об ошибках проверки, а также записывает эти предупреждения в аннотацию соответствующего ресурса (чтобы их можно было легко получить с помощью CLI-команд из нескольких кластеров). Читайте более подробно [здесь]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#проверка-манифестов-ресурсов).
 
-Errors like non-existing fields in resource configuration of chart templates are not shown by standard helm. No feedback is given to the user.
+## Трехстороннее слияние и применение изменений
 
-Werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
+В **werf** реализовано два метода применения изменений — двухэтапный (как в Helm 2) и трехэтапный методы слияния. Оба способа совместимы с существующими инсталляциями Helm 2 в кластере
 
-## Three way merge
+Подробнее о методах применения изменений ресурсов можно прочитать в [соответствующей статье]({{site.baseurl}}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html) документации, а также в [статье на Хабр "3-way merge в werf: деплой в Kubernetes с Helm «на стероидах»"](https://habr.com/ru/company/flant/blog/476646/).
 
-Werf is now in the process of migrating to three-way-merge based resources updates. See more into [in the article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html).
+Также в **werf** реализована возможность явным образом перенести в Helm-релиз уже существующие ресурсы в работающем кластере Kubernetes (для этого необходимо явно вручную установить аннотацию у желаемого ресурса и развернуть чарт с помощью **werf**). Более подробная информация об использовании ресурсов доступна в соответствующей [статье]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html#принятие-существующих-ресурсов).

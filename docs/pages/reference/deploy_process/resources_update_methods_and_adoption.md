@@ -113,7 +113,7 @@ Werf will ignore `resources` field changes on subsequent resource updates.
 
 This annotation should be turned on when [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) is enabled.
 
-## Resources adoption
+## Принятие существующих ресурсов
 
 There are 2 cases when resource defined in the chart already exists in the cluster.
 
@@ -128,15 +128,15 @@ User can define a new resource in the chart templates of already existing releas
 ### How to adopt resource
 
 To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the resource manifest in the chart and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart.
- 
+
 NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption, three-way-merge patch will be used anyway during adoption process.
- 
-#### Three way merge patches and adoption 
+
+#### Three way merge patches and adoption
 
 Three way merge patches are always used when adopting already existing resource into the release (`WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adopter).
- 
+
 **NOTE** After adoption live resource manifest may not fully match resource manifest in the chart. In the cases when additional fields are defined in the live resource — these fields will not be deleted and stay in the live resource version.
- 
+
 For example, let's say we have an already existing Deploy in the cluster with the following spec:
 
 ```yaml
