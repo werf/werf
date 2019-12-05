@@ -35,6 +35,8 @@ Werf tracks all chart resources until each resource reaches ready state and prin
 
 With pure helm user has only the ability to wait for resources using `--wait` flag, but helm does not provide any interactive info about "what is going on now?" when using this flag.
 
+![Comparison werf and helm]({{ site.baseurl }}/images/deploy/werf_and_helm.gif)
+
 Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
 
 And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
@@ -77,22 +79,20 @@ Using pure helm user need to invent own system of passing actual images names us
 
 ## Chart generation
 
-During werf deploy a temporary helm chart is created.
+During command execution werf:
 
-This chart contains:
-
-* Additional runtime Go templates functions: `werf_container_image`, `werf_container_env` and other. These functions are described in [the templates article]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#templates).
-* Decoded secret values YAML file. The secrets are described in [the secrets article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
-
-The temporary chart then goes to the helm subsystem inside werf. Werf deletes this chart on the werf deploy command termination.
+* Passes [service values]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#service-values) into Helm.
+* Decrypts secret values files (by default `secret-values.yaml`) and passes the result values into Helm. More details about working with secret values files in [a separate article]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html).
+* Adds extra Go-template functions to Helm render:
+  * [integration with built images functions]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images): `werf_container_image`, `werf_container_env`;
+  * [function to use decrypted secret file content]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_secret_file): `werf_secret_file`;
+  * [environment variables functions](http://masterminds.github.io/sprig/os.html): `env`, `expandenv`.
 
 ### Chart.yaml is not required
 
 Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
 
-Werf internally generates this file when passing temporal chart to the builtin helm subsystem. In this generated file chart name equals project name from `werf.yaml` config and version is always `0.1.0` (version is an unimportant auxiliary field).
-
-If user have created `Chart.yaml` by itself, then werf will overwrite it in the generated actual chart and print a warning.
+Werf generates Chart metadata based on project `werf.yaml` therefore `Chart.yaml` file is not needed. If user have created `Chart.yaml` by itself, then werf will ignore it and print a warning.
 
 ## Fixed helm chart path in the project
 
