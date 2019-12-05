@@ -30,7 +30,7 @@ layout: default
                             Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
                         </li>
                         <li>
-                            Может быть встроена в любую CI/CD-систему (например, GitLab CI) для построения пайплайнов, используя предложенный набор команд:
+                            Может быть встроена в любую CI/CD-систему (например, GitLab CI) <br/>для построения пайплайнов, используя предложенный набор команд:
                             <ul>
                                 <li><code>werf build-and-publish</code>;</li>
                                 <li><code>werf deploy</code>;</li>
@@ -42,7 +42,7 @@ layout: default
                             Open Source, написана на Go.
                         </li>
                         <li>
-                            Werf — это не SAAS, а представитель высокоуровневых CI/CD-инструментов нового поколения.
+                            Werf — это не SAAS, а представитель высокоуровневых <br/>CI/CD-инструментов нового поколения.
                         </li>
                     </ul>
                 </div>
