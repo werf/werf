@@ -13,7 +13,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Требования
 
- * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker registry.
+ * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes-кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker registry.
  * Работающий Docker registry.
    * Доступ от хостов Kubernetes с правами на push образов в Docker registry.
    * Доступ от хостов Kubernetes с правами на pull образов в Docker registry.

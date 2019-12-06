@@ -456,7 +456,7 @@ Werf пытается применять трехсторонний метод �
 
 Читай более подробнее об этом в соответствующих статьях:
  - [Методы обновления ресурсов и применения изменений]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);
- - [Отличия от метода обновления ресурсов в Helm]({{ site.baseurl }}/documentation/reference/deploy_process/differences_with_helm.html#three-way-merge-patches-and-resources-adoption);
+ - [Сравнение методов обновления ресурсов с Helm]({{ site.baseurl }}/documentation/reference/deploy_process/differences_with_helm.html#трехстороннее-слияние-и-применение-изменений);
  - [Статья на Хабр "3-way merge в werf: деплой в Kubernetes с Helm «на стероидах»"](https://habr.com/ru/company/flant/blog/476646/).
 
 ### Если деплой завершился неудачно
