@@ -241,7 +241,7 @@ html, body, .page {
 @media (max-width: 1300px) {
     .welcome {
         background-size: 50%;
-        background-position: right 200px;
+        background-position: right 100px;
     }    
 }
 

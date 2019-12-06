@@ -1,7 +1,3 @@
-.header-dummy {
-    height: 85px;
-}
-
 .header {
     height: 90px;
     width: 100%;
@@ -16,6 +12,9 @@
 @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
     .header {
         position: fixed;
+    }
+    .header-dummy {
+        height: 90px;
     }
 }
 
