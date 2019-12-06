@@ -22,7 +22,7 @@ layout: default
             -->
             <div class="welcome__extra-content">
                 <div class="welcome__extra-content-title">
-                    CLI-утилита для построения пайплайнов CI/CD
+                    CLI-утилита для построения <span>пайплайнов CI/CD</span>
                 </div>
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">

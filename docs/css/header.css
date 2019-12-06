@@ -6,10 +6,17 @@
     height: 90px;
     width: 100%;
     z-index: 5;
-    position: fixed;
+    top: 0px;
+    position: sticky;
     background: transparent;
     box-shadow: 0 10px 40px 0 rgba(0,18,44,0.0);
-    transition: all 0.3s ease-out;
+    transition: all 0.3s ease-out;    
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .header {
+        position: fixed;
+    }
 }
 
 .header_active {    

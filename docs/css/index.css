@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    min-width: 1200px;
+    min-width: 1260px;
     overflow-y: scroll;
 }
 
@@ -236,6 +236,19 @@ html, body, .page {
     line-height: 1.5;
     letter-spacing: -0.3px;
     color: #00122c;
+}
+
+@media (max-width: 1300px) {
+    .welcome {
+        background-size: 50%;
+        background-position: right 200px;
+    }    
+}
+
+@media (max-width: 1700px) {
+    .welcome__extra-content-title span {
+        display: block;
+    }
 }
 
 .intro {
