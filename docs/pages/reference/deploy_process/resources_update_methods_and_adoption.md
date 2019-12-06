@@ -113,7 +113,7 @@ Werf will ignore `resources` field changes on subsequent resource updates.
 
 This annotation should be turned on when [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) is enabled.
 
-## Принятие существующих ресурсов
+## Resources adoption
 
 There are 2 cases when resource defined in the chart already exists in the cluster.
 
