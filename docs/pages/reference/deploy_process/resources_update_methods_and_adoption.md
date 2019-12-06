@@ -137,7 +137,7 @@ Three way merge patches are always used when adopting already existing resource 
 
 **NOTE** After adoption live resource manifest may not fully match resource manifest in the chart. In the cases when additional fields are defined in the live resource — these fields will not be deleted and stay in the live resource version.
 
-For example, let's say we have an already existing Deploy in the cluster with the following spec:
+For example, let's say we have an already existing Deployment in the cluster with the following spec:
 
 ```yaml
 apiVersion: apps/v1
