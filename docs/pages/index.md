@@ -13,45 +13,47 @@ layout: default
             <div class="welcome__subtitle">
                  Deliver your application fast & easy.<br/>Open Source. Written in Go.
             </div>
+            <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
                 <input autocomplete="on" class="page__input welcome__search-input" name="q" placeholder="Search the documentation" required="required"  type="text">
                 <button type="submit" class="page__icon page__icon_search welcome__search-btn"></button>
             </form>
+            -->
+            <div class="welcome__extra-content">
+                <div class="welcome__extra-content-title">
+                    CLI tool to construct CI/CD pipelines
+                </div>
+                <div class="welcome__extra-content-text">
+                    <ul class="intro__list">
+                        <li>
+                            Werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
+                        </li>
+                        <li>
+                            Werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
+                            <ul>
+                                <li><code>werf build-and-publish</code>;</li>
+                                <li><code>werf deploy</code>;</li>
+                                <li><code>werf dismiss</code>;</li>
+                                <li><code>werf cleanup</code>.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Open Source, written in Go.
+                        </li>
+                        <li>
+                            Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="page__container">
     <div class="intro">
-        <div class="intro__image"></div>
-        <div class="intro__content">
-            <div class="intro__title">
-                CLI tool to construct CI/CD pipelines
-            </div>
-            <div class="intro__text">
-                <ul class="intro__list">
-                    <li>
-                        Werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
-                    </li>
-                    <li>
-                        Werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
-                        <ul class="intro__list_c2">
-                            <li><code>werf build-and-publish</code>;</li>
-                            <li><code>werf deploy</code>;</li>
-                            <li><code>werf dismiss</code>;</li>
-                            <li><code>werf cleanup</code>.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        Open Source, written in Go.
-                    </li>
-                    <li>
-                        Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <div class="intro__image"></div>        
     </div>
 </div>
 
@@ -86,6 +88,9 @@ layout: default
             </div>
         </li>
     </ul>
+    <a href="https://github.com/flant/werf#complete-features-list" target="_blank" class="page__btn page__btn_o intro__btn">
+        Check out a complete features list
+    </a>
 </div>
 
 <div class="stats">
@@ -99,7 +104,7 @@ layout: default
                     <div class="stats__list-item-subtitle">on average for the last year</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1200</div>
+                    <div class="stats__list-item-num">1400</div>
                     <div class="stats__list-item-title">installations</div>
                     <div class="stats__list-item-subtitle">of large and small projects</div>
                 </li>
@@ -153,10 +158,7 @@ layout: default
                 <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
             </li>
             <li class="features__list-item"></li>
-        </ul>
-        <a href="https://github.com/flant/werf#complete-features-list" target="_blank" class="page__btn page__btn_o features__btn">
-            Check out a complete features list
-        </a>
+        </ul>        
     </div>
 </div>
 
@@ -170,7 +172,7 @@ layout: default
                     <span class="page__icon page__icon_twitter"></span>
                     Join via Twitter
                 </a>
-                <a href="{{ site.social_links[page.lang].slack }}" target="_blank" class="page__btn page__btn_w community__btn">
+                <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Join via Slack
                 </a>
@@ -284,6 +286,30 @@ layout: default
             <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
                 Explore CLI
             </a>
+        </div>
+    </div>
+</div>
+
+<div class="popup" data-popup="slack">
+    <div class="popup__content">
+        <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
+        <div class="popup__title">
+            Join the party at <a href="https://cncf.io" target="_blank">CNCF</a> Slack
+        </div>
+        <div class="popup__subtitle">
+            Step 1:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Get invite to CNCF Slack
+        </a>
+        <div class="popup__subtitle">
+            Step 2:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Join #werf channel
+        </a>
+        <div class="popup__text">
+            We chose CNCF Slack because most of the Kubernetes community members are registered there.
         </div>
     </div>
 </div>

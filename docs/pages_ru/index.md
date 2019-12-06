@@ -13,45 +13,47 @@ layout: default
             <div class="welcome__subtitle">
                  Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Go.
             </div>
+            <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="ru.werf.io">
                 <input autocomplete="on" class="page__input welcome__search-input" name="q" placeholder="Поиск по документации" required="required"  type="text">
                 <button type="submit" class="page__icon page__icon_search welcome__search-btn"></button>
             </form>
+            -->
+            <div class="welcome__extra-content">
+                <div class="welcome__extra-content-title">
+                    CLI-утилита для построения <span>пайплайнов CI/CD</span>
+                </div>
+                <div class="welcome__extra-content-text">
+                    <ul class="intro__list">
+                        <li>
+                            Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
+                        </li>
+                        <li>
+                            Может быть встроена в любую CI/CD-систему (например, GitLab CI) <br/>для построения пайплайнов, используя предложенный набор команд:
+                            <ul>
+                                <li><code>werf build-and-publish</code>;</li>
+                                <li><code>werf deploy</code>;</li>
+                                <li><code>werf dismiss</code>;</li>
+                                <li><code>werf cleanup</code>.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Open Source, написана на Go.
+                        </li>
+                        <li>
+                            Werf — это не SAAS, а представитель высокоуровневых <br/>CI/CD-инструментов нового поколения.
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="page__container">
     <div class="intro">
-        <div class="intro__image"></div>
-        <div class="intro__content">
-            <div class="intro__title">
-                CLI-утилита для построения пайплайнов CI/CD
-            </div>
-            <div class="intro__text">
-                <ul class="intro__list">
-                    <li>
-                        Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
-                    </li>
-                    <li>
-                        Может быть встроена в любую CI/CD-систему (например, GitLab CI) для построения пайплайнов, используя предложенный набор команд:
-                        <ul class="intro__list_c2">
-                            <li><code>werf build-and-publish</code>;</li>
-                            <li><code>werf deploy</code>;</li>
-                            <li><code>werf dismiss</code>;</li>
-                            <li><code>werf cleanup</code>.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        Open Source, написана на Go.
-                    </li>
-                    <li>
-                        Werf — это не SAAS, а представитель высокоуровневых CI/CD-инструментов нового поколения.
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <div class="intro__image"></div>        
     </div>
 </div>
 
@@ -86,6 +88,9 @@ layout: default
             </div>
         </li>
     </ul>
+    <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o intro__btn">
+        Узнайте полный список возможностей
+    </a>
 </div>
 
 <div class="stats">
@@ -99,7 +104,7 @@ layout: default
                     <div class="stats__list-item-subtitle">в среднем за прошлый год</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1200</div>
+                    <div class="stats__list-item-num">1400</div>
                     <div class="stats__list-item-title">инсталляций</div>
                     <div class="stats__list-item-subtitle">в больших и маленьких проектах</div>
                 </li>
@@ -153,10 +158,7 @@ layout: default
                 <div class="features__list-item-text">Выкатывайте приложение в Kubernetes, используя стандартный менеджер пакетов с интерактивным отслеживанием процесса и получением событий и логов в режиме реального времени.</div>
             </li>
             <li class="features__list-item"></li>
-        </ul>
-        <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o features__btn">
-            Узнайте полный список возможностей
-        </a>
+        </ul>        
     </div>
 </div>
 
@@ -171,10 +173,10 @@ layout: default
                     Мы в Telegram
                 </a>
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
-                <span class="page__icon page__icon_twitter"></span>
-                Мы в Twitter
+                    <span class="page__icon page__icon_twitter"></span>
+                    Мы в Twitter
                 </a>
-                <a href="{{ site.social_links[page.lang].slack }}" target="_blank" class="page__btn page__btn_w community__btn">
+                <a href="#" data-open-popup="slack" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Мы в Slack
                 </a>
@@ -282,6 +284,30 @@ layout: default
             <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
                 CLI-команды
             </a>
+        </div>
+    </div>
+</div>
+
+<div class="popup" data-popup="slack">
+    <div class="popup__content">
+        <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
+        <div class="popup__title">
+            Присоединяйтесь к англоязычному комьюнити в Slack <a href="https://cncf.io" target="_blank">CNCF</a>
+        </div>
+        <div class="popup__subtitle">
+            Шаг 1:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Получить приглашение в Slack CNCF
+        </a>
+        <div class="popup__subtitle">
+            Шаг 2:
+        </div>
+        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_w popup__btn">
+            Войти в канал #werf
+        </a>
+        <div class="popup__text">
+            Мы выбрали Slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.
         </div>
     </div>
 </div>
