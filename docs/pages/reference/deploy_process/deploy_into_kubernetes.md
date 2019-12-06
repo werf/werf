@@ -448,7 +448,7 @@ Internally [kubedog library](https://github.com/flant/kubedog) is used to track 
 
 ### Method of applying changes
 
-Werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster, which is the best option. However there are different reosurce update methods are available.
+Werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster, which is the best option. However there are different resource update methods are available.
 
 See more info in the articles:
  - [resources update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);

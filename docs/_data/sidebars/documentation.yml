@@ -386,7 +386,7 @@ entries:
             - title: Работа с секретами
               url: /documentation/reference/deploy_process/working_with_secrets.html
 
-            - title: Отличия от Helm
+            - title: Сравнение с Helm
               url: /documentation/reference/deploy_process/differences_with_helm.html
 
             - title: Методы обновления ресурсов и применения изменений
