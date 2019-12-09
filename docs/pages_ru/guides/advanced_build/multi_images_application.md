@@ -18,7 +18,7 @@ werf же, позволяет описать все образы проекта 
 ## Требования
 
 * Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
-* Установленный [Multiwerf](https://github.com/flant/multiwerf).
+* Установленный [multiwerf](https://github.com/flant/multiwerf).
 
 ### Выбор версии werf
 

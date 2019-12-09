@@ -13,7 +13,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 * Минимальные знания [Docker](https://www.docker.com/) и структуры [Dockerfile](https://docs.docker.com/engine/reference/builder/).
 * Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
-* Установленный [Multiwerf](https://github.com/flant/multiwerf).
+* Установленный [multiwerf](https://github.com/flant/multiwerf).
 
 ### Выбор версии werf
 

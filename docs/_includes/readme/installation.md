@@ -22,9 +22,9 @@ sudo usermod -aG docker $USER
 
 ## Install werf
 
-### Method 1 (recommended): using Multiwerf
+### Method 1 (recommended): using multiwerf
 
-[Multiwerf](https://github.com/flant/multiwerf) is a version manager for werf, which:
+[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf, which:
 * downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
 * automatically updates werf binary (can be disabled).
