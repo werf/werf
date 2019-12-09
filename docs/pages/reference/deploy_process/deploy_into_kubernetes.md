@@ -103,10 +103,10 @@ The logic of generating the `imagePullPolicy` key:
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
-An example of using the function in case multiple images exist in the `werf.yaml` config:
+An example of using the function in the case when a **named** image (or multiple images) used in the `werf.yaml` config:
 * `tuple <image-name> . | werf_container_image | indent <N-spaces>`
 
-An example of using the function in case a single unnamed image exists in the config:
+An example of using the function in the case when a single **unnamed** image used in the `werf.yaml` config:
 * `tuple . | werf_container_image | indent <N-spaces>`
 * `werf_container_image . | indent <N-spaces>` (additional simplified entry format)
 
@@ -116,10 +116,10 @@ Enables streamlining the release process if the image remains unchanged. Generat
 
 > The images tagged by custom tag strategy (`--tag-custom`) processed like the images tagged by git branch tag strategy (`--tag-git-branch`)
 
-An example of using the function in case multiple images exist in the `werf.yaml` config:
+An example of using the function in the case when a **named** image (or multiple images) used in the `werf.yaml` config:
 * `tuple <image-name> . | werf_container_env | indent <N-spaces>`
 
-An example of using the function in case a single unnamed image exists in the config:
+An example of using the function in the case when a single **unnamed** image used in the `werf.yaml` config:
 * `tuple . | werf_container_env | indent <N-spaces>`
 * `werf_container_env . | indent <N-spaces>` (additional simplified entry format)
 
