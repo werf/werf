@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     version_added: "2.4"
     description:
         - Solo mode with live stdout for raw and script tasks
-        - Werf specific error messages
+        - werf specific error messages
     requirements:
       - set as stdout callback in configuration
 '''

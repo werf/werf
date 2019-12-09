@@ -58,7 +58,7 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 ## Dockerfile directives
 
-Werf as well as Docker builds the image based on a Dockerfile and a context.
+werf as well as Docker builds the image based on a Dockerfile and a context.
 
 - `dockerfile` **(required)**: to set Dockerfile path relative to the project directory.
 - `context`: to set build context PATH inside project directory (defaults to root of a project, `.`).

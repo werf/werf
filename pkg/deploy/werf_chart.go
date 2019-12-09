@@ -29,7 +29,7 @@ func PrepareWerfChart(projectName, chartDir, env string, m secret.Manager, secre
 	}
 
 	if debug() {
-		fmt.Fprintf(logboek.GetOutStream(), "Werf chart: %#v\n", werfChart)
+		fmt.Fprintf(logboek.GetOutStream(), "werf chart: %#v\n", werfChart)
 	}
 
 	return werfChart, nil

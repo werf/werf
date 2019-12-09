@@ -31,7 +31,7 @@ summary: |
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> Аналогичный пример может быть реализован и в Werf. Для этого достаточно описать инструкции в одной _пользовательской стадии_. Пример при использовании _shell-сборщика_ для стадии _install_ (аналогичен и для _ansible-сборщика_):
+> Аналогичный пример может быть реализован и в werf. Для этого достаточно описать инструкции в одной _пользовательской стадии_. Пример при использовании _shell-сборщика_ для стадии _install_ (аналогичен и для _ansible-сборщика_):
 ```yaml
 shell:
   install:
@@ -71,11 +71,11 @@ CMD ["--spring.profiles.active=postgres"]
 
 Смысл такого подхода в следующем — описать несколько вспомогательных образов и выборочно копировать артефакты из одного образа в другой, оставляя все то, что не нужно в конечном образе.
 
-Werf предлагает такой-же подход, но с использованием [_образов_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) и  [_артефактов_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section).
+werf предлагает такой-же подход, но с использованием [_образов_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) и  [_артефактов_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section).
 
-> Почему Werf не использует multi-stage сборку?
+> Почему werf не использует multi-stage сборку?
 * Исторически, возможность _импорта_ появилась значительно раньше чем в Docker появилась multi-stage сборка.
-* Werf дает больше гибкости при работе со вспомогательными образами
+* werf дает больше гибкости при работе со вспомогательными образами
 
 Импорт _ресурсов_ из _образов_ и _артефактов_ должен быть описан в директиве `import` в конфигурации [_образа_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) или [_артефакта_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)) куда импортируются файлы. `import` — массив записей, каждая из которых должна содержать следующие параметры:
 

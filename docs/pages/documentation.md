@@ -4,12 +4,12 @@ permalink: documentation/index.html
 sidebar: documentation
 ---
 
-Documentation of Werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
+Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
 
 We recommend to start discovering from our **Guides** section:
 
-- [Installation]({{ site.baseurl }}/documentation/guides/installation.html) describes Werf dependencies and different installation methods.
-- [Getting started]({{ site.baseurl }}/documentation/guides/getting_started.html) helps to start using Werf with regular Dockerfile. Take your project and put into Werf easily just now.
+- [Installation]({{ site.baseurl }}/documentation/guides/installation.html) describes werf dependencies and different installation methods.
+- [Getting started]({{ site.baseurl }}/documentation/guides/getting_started.html) helps to start using werf with regular Dockerfile. Take your project and put into werf easily just now.
 - [Deploying into Kubernetes]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html) is a short example of application deployment.
 - [GitLab CI/CD integration]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) is all about integration with GitLab: build, publish, deployment and scheduled Docker registry cleanup.
 - [Unsupported CI/CD integration]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html) is about plugging werf into CI/CD system that is not [officially supported]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
@@ -17,7 +17,7 @@ We recommend to start discovering from our **Guides** section:
 
 The next step is **Configuration** section.
 
-To use Werf an application should be configured in `werf.yaml` file.
+To use werf an application should be configured in `werf.yaml` file.
 This configuration includes:
 
 1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
@@ -32,7 +32,7 @@ In the [Overview]({{ site.baseurl }}/documentation/configuration/introduction.ht
 
 Other section articles give detailed information about [Dockerfile Image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
 
-**Reference** section is dedicated to Werf main processes:
+**Reference** section is dedicated to werf main processes:
 
 * [Build process]({{ site.baseurl }}/documentation/reference/build_process.html).
 * [Publish process]({{ site.baseurl }}/documentation/reference/publish_process.html).
@@ -48,6 +48,6 @@ Also, this section includes articles with base primitives and general tools:
 * [Development and debug]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html).
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use [**CLI Commands**]({{ site.baseurl }}/documentation/cli/main/build.html) section.
+werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use [**CLI Commands**]({{ site.baseurl }}/documentation/cli/main/build.html) section.
 
 [**Development** section]({{ site.baseurl }}/documentation/development/stapel.html) contains service and maintenance manuals and other docs which help developers to understand how some werf subsystem works, how to maintain some subsystem in the actual state, how to write and build new code for the werf, etc.

@@ -1,7 +1,7 @@
 output: web
 
-topnav_title: Werf
-site_title: Werf
+topnav_title: werf
+site_title: werf
 company_name: Flant
 company_url: https://flant.com
 url: https://werf.io

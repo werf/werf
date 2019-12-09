@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Render Werf chart templates to stdout
+Render werf chart templates to stdout
 
 {{ header }} Syntax
 

@@ -5,17 +5,17 @@ permalink: documentation/reference/deploy_process/resources_update_methods_and_a
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-> Three way merge is under development now. This page contains implementation notes and other debug and development info about resources update method which Werf currently uses
+> Three way merge is under development now. This page contains implementation notes and other debug and development info about resources update method which werf currently uses
 
 Three way merge is a way of applying changes to Kubernetes resources which uses previous resource configuration, new resource configuration and current resource state to calculate and then apply a three-way-merge patch with new changes for for each resource. This method used by the `kubectl apply` command.
 
-Werf is fully compatible with the Helm 2, which makes use of two-way-merge patches. This method implies creating patches between previous chart resource configuration and a new one.
+werf is fully compatible with the Helm 2, which makes use of two-way-merge patches. This method implies creating patches between previous chart resource configuration and a new one.
 
 Two-way-merge method have a problem: chart resource configuration gets out of sync with the current resource state when user suddenly makes changes to the current resource state (via `kubectl edit` command for example). For example if you have `replicas=5` in the chart template and set `replicas=3` in the live resource state (by `kubectl edit` command), then subsequent werf deploy calls will not set replicas to 5 as expected, because two-way-merge patches does not take into account current live resource state.
 
 ## Resources update methods
 
-Werf currently migrating from two-way-merge to three-way-merge method. Following methods of resources update are avaiable:
+werf currently migrating from two-way-merge to three-way-merge method. Following methods of resources update are avaiable:
 
  1. Two-way-merge and repair patches.
  2. Three-way-merge patches.
@@ -91,7 +91,7 @@ When HPA is enabled and user has set `spec.replicas` to static number in chart t
 
 This annotation tells werf that resource `spec.replicas` field value from chart template should only be used when initializing a new resource.
 
-Werf will ignore `spec.replicas` field changes on subsequent resource updates.
+werf will ignore `spec.replicas` field changes on subsequent resource updates.
 
 This annotation should be turned on when [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) is enabled.
 
@@ -109,7 +109,7 @@ When VPA is enabled and user has set `resources` to some static settings in char
 
 This annotation tells werf that resource `resources` field value from chart template should only be used when initializing a new resource.
 
-Werf will ignore `resources` field changes on subsequent resource updates.
+werf will ignore `resources` field changes on subsequent resource updates.
 
 This annotation should be turned on when [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) is enabled.
 

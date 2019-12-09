@@ -76,8 +76,8 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "werf",
-		Short: "Werf helps to implement and support Continuous Integration and Continuous Delivery",
-		Long: common.GetLongCommandDescription(`Werf helps to implement and support Continuous Integration and Continuous Delivery.
+		Short: "werf helps to implement and support Continuous Integration and Continuous Delivery",
+		Long: common.GetLongCommandDescription(`werf helps to implement and support Continuous Integration and Continuous Delivery.
 
 Find more information at https://werf.io`),
 		SilenceUsage:  true,

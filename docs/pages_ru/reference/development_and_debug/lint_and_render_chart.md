@@ -7,14 +7,14 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Во время разработки [шаблонов helm-чартов]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#шаблоны) зачастую полезно выполнять проверку корректности синтаксиса перед выполнением процесса деплоя.
 
-Werf содержит два инструмента для выполнения этой задачи:
+werf содержит два инструмента для выполнения этой задачи:
 
  1. [Рендеринг шаблонов](#рендеринг)
  2. [Линтер шаблонов](#линтер)
 
 ## Рендеринг
 
-Во время рендеринга шаблонов Werf возвращает содержимое всех manifest-файлов шаблона выполняя в том числе и все Go-шаблоны.
+Во время рендеринга шаблонов werf возвращает содержимое всех manifest-файлов шаблона выполняя в том числе и все Go-шаблоны.
 
 Для получения отрендеренного manifest-файла шаблона необходимо использовать команду [werf helm render]({{ site.baseurl }}/documentation/cli/management/helm/render.html). Этой команде можно передавать все те-же параметры что и команде [`werf deploy`]({{ site.baseurl }}/documentation/cli/main/deploy.html), в том числе  передавать дополнителные [переменные]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#values), адрес репозитория Docker-образов и другие параметры.
 

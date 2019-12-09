@@ -6,7 +6,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 We propose to divide the assembly proccess into steps, intermediate images (like layers in Docker), with clear functions and assignments.
-In Werf, such step is called [stage](#stages) and result [image](#images) consists of a set of built stages.
+In werf, such step is called [stage](#stages) and result [image](#images) consists of a set of built stages.
 All stages are kept in a [stages storage](#stages-storage) and defining build cache of application (not really cache but part of building context).
 
 ## Stages
@@ -15,7 +15,7 @@ Stages are steps in the assembly process, building blocks for constructing image
 A ***stage*** is built from a logically grouped set of config instructions, taking into account the assembly conditions and rules.
 Each _stage_ relates to one Docker image.
 
-The Werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. Werf uses different _stage conveyor_ for assembling a particular type of build object.
+The werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. werf uses different _stage conveyor_ for assembling a particular type of build object.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'dockerfile-image-tab')">Dockerfile Image</a>
@@ -41,12 +41,12 @@ The Werf assembly process assumes a sequential build of stages using _stage conv
 </a>
 </div>
 
-**User only needs to write a config correсtly the rest of the work with stages are done by Werf.**
+**User only needs to write a config correсtly the rest of the work with stages are done by werf.**
 
-For every _stage_ at each build, Werf calculates build stage identifier called _stage signature_.
+For every _stage_ at each build, werf calculates build stage identifier called _stage signature_.
 Each _stage_ is assembled in an ***assembly container*** based on the previous _stage_, and saved in [stages storage](#stages-storage).
 The _stage signature_ is used for [tagging](#stage-naming) _stage_ in _stages storage_.
-Werf does not build stages that already exist in _stages storage_ (like caching in Docker, but more complex).
+werf does not build stages that already exist in _stages storage_ (like caching in Docker, but more complex).
 
 The ***stage signature*** is the checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies) and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped.
 
@@ -175,7 +175,7 @@ As it is written [above](#stages), _stages_ are steps in the assembly process, b
 _Stages_ are not intended for direct use, unlike images. The main difference between images and stages is [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to stored meta-information.
 The _stages storage_ cleanup is only based on the related images in _images repo_.
 
-Werf creates _images_ using _stages storage_.
+werf creates _images_ using _stages storage_.
 Currently, _images_ can only be created in a [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and be saved in _images repo_.
 
 Images should be defined in the werf configuration file `werf.yaml`.

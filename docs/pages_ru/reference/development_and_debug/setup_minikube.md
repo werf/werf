@@ -5,7 +5,7 @@ permalink: documentation/reference/development_and_debug/setup_minikube.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Использование Werf для сборки и деплоя локально требует настройки следующих компонент:
+Использование werf для сборки и деплоя локально требует настройки следующих компонент:
 
      .-----------------------------------------.
      |          Kubernetes (minikube)          |

@@ -6,7 +6,7 @@ create_github_release() {
     GHPAYLOAD=$(cat <<- JSON
     {
     "tag_name": "$VERSION",
-    "name": "Werf $VERSION",
+    "name": "werf $VERSION",
     "body": $TAG_RELEASE_MESSAGE,
     "draft": false,
     "prerelease": false

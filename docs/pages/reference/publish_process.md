@@ -13,14 +13,14 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 <!--## What can be published-->
 
 <!--The result of werf [build commands]({{ site.baseurl }}/documentation/cli/build/build.html) is a _stages_ in _stages storage_ related to images defined in the `werf.yaml` config. -->
-<!--Werf can be used to publish either:-->
+<!--werf can be used to publish either:-->
 
 <!--* Images. These can only be used as _images for running_. -->
 <!--These images are not suitable for _distributed images cache_, because werf build algorithm implies creating separate images for _stages_. -->
 <!--When you pull a image from a Docker registry, you do not receive _stages_ for this image.-->
 <!--* Images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.-->
 
-<!--Werf pushes image into a Docker registry with a so-called [**image publish procedure**](#image-publish-procedure). Also, werf pushes stages cache of all images from config with a so-called [**stages publish procedure**](#stages-publish-procedure).-->
+<!--werf pushes image into a Docker registry with a so-called [**image publish procedure**](#image-publish-procedure). Also, werf pushes stages cache of all images from config with a so-called [**stages publish procedure**](#stages-publish-procedure).-->
 
 <!--Before digging into these algorithms, it is helpful to see how to publish images using Docker.-->
 
@@ -55,9 +55,9 @@ docker rmi REPO:TAG
  3. Push image by newly created alias into Docker registry.
  4. Delete temporary image name alias.
 
-To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from the config Werf implements another logic:
+To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from the config werf implements another logic:
 
- 1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+ 1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. werf uses this information in [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
  2. Push newly created image into Docker registry.
  3. Delete temporary image created in the 1'st step.
 
@@ -67,7 +67,7 @@ The result of this procedure is an image named by the [*image naming rules*](#im
 
 ## Images naming
 
-During images publish procedure Werf constructs resulting images names using:
+During images publish procedure werf constructs resulting images names using:
  * _images repo_ param;
  * _images repo mode_ param;
  * image name from werf.yaml;

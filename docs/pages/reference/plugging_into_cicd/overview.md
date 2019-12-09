@@ -5,9 +5,9 @@ permalink: documentation/reference/plugging_into_cicd/overview.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf represents the new breed of CI/CD tools that integrates lowlevel building, cleaning and deploying tools into a single tool, which can easily be plugged into any existing CI/CD system. This is possible because werf follows established concepts of all such systems.
+werf represents the new breed of CI/CD tools that integrates lowlevel building, cleaning and deploying tools into a single tool, which can easily be plugged into any existing CI/CD system. This is possible because werf follows established concepts of all such systems.
 
-Werf plugs into CI/CD system using so called *ci-env command*. Ci-env command is responsible to gather required info from CI/CD system and define corresponding werf params using environment variables which will be referred to as *ci-env*.
+werf plugs into CI/CD system using so called *ci-env command*. Ci-env command is responsible to gather required info from CI/CD system and define corresponding werf params using environment variables which will be referred to as *ci-env*.
 
 ![ci-env]({{ site.baseurl }}/images/plugging_into_cicd.svg)
 
@@ -32,7 +32,7 @@ Typically CI/CD system can provide each job with:
  1. Docker registry address.
  2. Credentials to access Docker registry.
 
-Werf ci-env command should perform login into detected Docker registry using detected credentials. See more [info about docker login below](#docker-registry-login). [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) will be set.
+werf ci-env command should perform login into detected Docker registry using detected credentials. See more [info about docker login below](#docker-registry-login). [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) will be set.
 
 Docker registry address will also be used as `--images-repo` parameter value. [`WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO`](#werf_images_repo) will be set.
 
@@ -40,15 +40,15 @@ Docker registry address will also be used as `--images-repo` parameter value. [`
 
 Typically CI/CD system that uses git runs each job in the detached commit state of git worktree. And current git-commit, git-tag or git-branch are passed to the job using environment variables.
 
-Werf ci-env command detects current git-commit, git-tag or git-branch and uses this info to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from `werf.yaml` config. This usage of git info depends on the selected tagging scheme, [more info below](#ci-env-tagging-modes).
+werf ci-env command detects current git-commit, git-tag or git-branch and uses this info to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from `werf.yaml` config. This usage of git info depends on the selected tagging scheme, [more info below](#ci-env-tagging-modes).
 
 [`WERF_TAG_GIT_TAG=GIT_TAG`](#werf_tag_git_tag) or [`WERF_TAG_GIT_BRANCH=GIT_BRANCH`](#werf_tag_git_branch) will be set.
 
 ### CI/CD pipelines integration
 
-Werf can embed any info into deployed Kubernetes resources annotations and labels. Typically CI/CD system exposes for users such info as link to CI/CD web page of the project, link to job itself, job id and pipeline id and other info.
+werf can embed any info into deployed Kubernetes resources annotations and labels. Typically CI/CD system exposes for users such info as link to CI/CD web page of the project, link to job itself, job id and pipeline id and other info.
 
-Werf ci-env command automatically detects CI/CD web page project url and embeds this url into annotations of every resource deployed with werf.
+werf ci-env command automatically detects CI/CD web page project url and embeds this url into annotations of every resource deployed with werf.
 
 Annotation name depends on the selected CI/CD system and constructed as follows: `"project.werf.io/CI_CD_SYSTEM_NAME-url": URL`.
 
@@ -60,7 +60,7 @@ There are another *auto annotations* set by werf using any CI/CD system, also *c
 
 There is a concept used in CI/CD systems named *environment*. Environment can define used host nodes, access parameters, Kubernetes cluster connection info, job parameters (using environment variables for example) and other info. Typical environments are: *development*, *staging*, *testing*, *production* and *review environments* with dynamical names.
 
-Werf also uses concept of *environment name* in the [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment).
+werf also uses concept of *environment name* in the [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment).
 
 Ci-env command detects current environment name of CI/CD system and passes it to all subsequent werf commands automatically. Slugged name of the environment will be preferred if CI/CD system exports such a name.
 
@@ -76,7 +76,7 @@ Colorized output of werf will be forced if CI/CD system has support for it. [`WE
 
 Logging of project directory where werf runs will be forced: convinient common output to debug problems within CI/CD system, by default when running werf it will not print the directory. [`WERF_LOG_PROJECT_DIR=1`](#werf_log_project_dir) will be set.
 
-So called werf process exterminator will be enabled. Some CI/CD systems will kill job process with `SIGKILL` linux signal when user hits the `Cancel` button in the user interface. Child processes of this job will continue to run till termination in this case. Werf with enabled process exterminator will constantly check in the background for its parent processes pids and if one of them has died, then werf will be terminated by itself. This mode will be enabled in CI/CD system and is disabled by default. [`WERF_ENABLE_PROCESS_EXTERMINATOR=1`](#werf_enable_process_exterminator) will be set.
+So called werf process exterminator will be enabled. Some CI/CD systems will kill job process with `SIGKILL` linux signal when user hits the `Cancel` button in the user interface. Child processes of this job will continue to run till termination in this case. werf with enabled process exterminator will constantly check in the background for its parent processes pids and if one of them has died, then werf will be terminated by itself. This mode will be enabled in CI/CD system and is disabled by default. [`WERF_ENABLE_PROCESS_EXTERMINATOR=1`](#werf_enable_process_exterminator) will be set.
 
 Logging output widht will be forced to 100 symbols, which is experimentally proven universal width to support most of the typical today screens. [`WERF_LOG_TERMINAL_WIDTH=100`](#werf_log_terminal_width) will be set.
 
@@ -111,7 +111,7 @@ Ci-env command passes all parameters to werf using environment variables, see [p
 
 [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) should be called in the begin of any CI/CD job prior running any other werf commands.
 
-**NOTE** Werf ci-env command prints bash script which exports [werf params using environment variables](#pass-cli-params-as-environment-variables). So to actually use ci-env command user must `source` command output using bash. For example:
+**NOTE** werf ci-env command prints bash script which exports [werf params using environment variables](#pass-cli-params-as-environment-variables). So to actually use ci-env command user must `source` command output using bash. For example:
 
 ```
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)

@@ -27,10 +27,10 @@ layout: default
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
-                            Werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
+                            werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
                         </li>
                         <li>
-                            Werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
+                            werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
                             <ul>
                                 <li><code>werf build-and-publish</code>;</li>
                                 <li><code>werf deploy</code>;</li>
@@ -42,7 +42,7 @@ layout: default
                             Open Source, written in Go.
                         </li>
                         <li>
-                            Werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
+                            werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
                         </li>
                     </ul>
                 </div>
@@ -68,7 +68,7 @@ layout: default
                     <li>Full compatibility with Helm.</li>
                     <li>Easy RBAC definition.</li>
                     <li>Applied deploy configuration in Kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.</li>
-                    <li>Werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.</li>
+                    <li>werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.</li>
                     <li>Configurable resource errors detector and resource readiness detector using resource annotations.</li>
                     <li>Rich logging and error reporting.</li>
                 </ul>
@@ -278,7 +278,7 @@ layout: default
         </div>
         <div class="documentation__btns">
             <a href="https://github.com/flant/werf" target="_blank" class="page__btn page__btn_b documentation__btn">
-                Get Werf
+                Get werf
             </a>
             <a href="{{ site.baseurl }}/documentation/guides/getting_started.html" class="page__btn page__btn_o documentation__btn">
                 Starters guide

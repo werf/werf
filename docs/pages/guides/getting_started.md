@@ -7,25 +7,25 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-This tutorial demonstrates how you can easily start using Werf with Dockerfile. 
+This tutorial demonstrates how you can easily start using werf with Dockerfile. 
 We will build the application image and publish it to the local Docker registry. 
 For example, we choose simple project — [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
 
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
-* Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
-### Select Werf version
+### Select werf version
 
-This command should be run prior running any Werf command in your shell session:
+This command should be run prior running any werf command in your shell session:
 
 ```shell
 source <(multiwerf use 1.0 beta)
 ```
 
-## Step 1: Add a Werf configuration
+## Step 1: Add a werf configuration
 
 Add a special file called `werf.yaml` to the source code and define application image based on project [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
 
@@ -83,7 +83,7 @@ Add a special file called `werf.yaml` to the source code and define application 
 ## What's next?
 
 Firstly, you can plunge into the relevant documentation:
-* [Werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
+* [werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
 * [Dockerfile Image: complete directive list]({{ site.base_url}}/documentation/configuration/dockerfile_image.html).
 * [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
 * [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).

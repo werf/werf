@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-Werf can store [_stages cache_]({{ site.baseurl }}/documentation/reference/stages_and_images.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
+werf can store [_stages cache_]({{ site.baseurl }}/documentation/reference/stages_and_images.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
 * **Dynamic resources.** You can setup a dynamic allocation of resources for building by using cloud providers. These resources can be temporary, so in build time a stages cache may be absent.
 * **More than one build nodes.** If you have more than one nodes (hosts) for building images, you need to synchronize stages cache before building an image.
 
@@ -173,7 +173,7 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stages
 
-Werf has an efficient cleanup functionality which can help you to avoid overflow Docker registry and disk space on _build nodes_. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+werf has an efficient cleanup functionality which can help you to avoid overflow Docker registry and disk space on _build nodes_. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
 In the results of werf works, we have images in a Docker registry and a build cache. Build cache exists only on build node and to the Docker registry werf push only built images.
 
@@ -350,7 +350,7 @@ Make changes in the config and push it. Retry build stage several times and comp
 
 ## Conclusions
 
-Werf can use a distributed cache and can work with:
+werf can use a distributed cache and can work with:
 * **Dynamic resources.** You can start build node on-demand, pull stages cache and build n image.
 * **More than one build nodes.** You can have more than one build nodes in your environment.
 
