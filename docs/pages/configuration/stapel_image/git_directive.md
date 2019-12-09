@@ -125,13 +125,16 @@ git:
 
 This is the simple _git mapping_ configuration that adds the entire content from the repository to the `/app` directory in the image.
 
-If the repository contains the following structure:
-
-![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_01.png)
-
-Then the image contains this structure:
-
-![image files tree]({{ site.baseurl }}/images/build/git_mapping_02.png)
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn btn__example1 active" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-source')">Git repo structure</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example1" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-dest')">Result image structure</a>
+</div>
+<div id="git-mapping-01-source" class="tabs__content tab__example1 active">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_01.png" alt="git repository files tree" />
+</div>
+<div id="git-mapping-01-dest" class="tabs__content tab__example1">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_02.png" alt="image files tree" />
+</div>
 
 Multiple _git mappings_ may be specified:
 
@@ -143,13 +146,17 @@ git:
   to: /static
 ```
 
-If the repository contains the following structure:
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn btn__example2 active" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-source')">Git repo structure</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example2" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-dest')">Result image structure</a>
+</div>
+<div id="git-mapping-02-source" class="tabs__content tab__example2 active">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_03.png" alt="git repository files tree" />
+</div>
+<div id="git-mapping-02-dest" class="tabs__content tab__example2">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_04.png" alt="image files tree" />
+</div>
 
-![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_03.png)
-
-Then the image contains this structure:
-
-![image files tree]({{ site.baseurl }}/images/build/git_mapping_04.png)
 
 It should be noted, that _git mapping_ configuration doesn't specify a directory to be transferred like `cp -r /src /app`. `add` parameter specifies a directory content that will be recursively transferred from the repository. That is if the `/assets` directory needs to be transferred to the `/app/assets` directory, then the name **assets** should be written twice, or `includePaths` [filter](#using-filters) can be used.
 
