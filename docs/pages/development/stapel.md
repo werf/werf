@@ -15,9 +15,9 @@ Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux 
 
  * Glibc;
  * Gnu cli tools (install, patch, find, wget, grep, rsync and other);
- * Git cli util;
- * Bash;
- * Python interpreter;
+ * Git cli util.
+ * Bash.
+ * Python interpreter.
  * Ansible.
 
 Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following dirs:
