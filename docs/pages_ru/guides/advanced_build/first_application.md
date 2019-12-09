@@ -7,17 +7,17 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается сборка простого PHP-приложения — [Symfony application](https://github.com/symfony/demo), которая включает в том числе следующие шаги:
+В руководстве рассматривается сборка простого PHP-приложения ([Symfony application](https://github.com/symfony/demo)), которая включает следующие шаги:
 
 1. Установка требуемых пакетов и зависимостей: `php`, `curl`, `php-sqlite` (для приложения),  `php-xml` и `php-zip` (для composer).
 1. Создание пользователя и группы `app` для работы веб-сервера.
 1. Скачивание и установка composer из `phar-файла`.
-1. Установка других зависимостей проекта с помощью composer.
+1. Установка зависимостей проекта с помощью composer.
 1. Добавление кода приложения в папку `/app` конечного образа и установка владельца `app:app` на файлы и папки.
 1. Установка IP адресов, на которых web-сервер будет принимать запросы. Это делается в скрипте  `/apt/start.sh`, который запускается во время старта контейнера.
 1. Выполнение других действий по настройке приложения. В качестве примера таких действий, мы будем записывать текущую дату в файл `version.txt`.
 
-Также, мы проверим что приложение работает и запушим образ в Docker registry.
+Проверим, что приложение работает, и опубликуем образ в Docker registry.
 
 ## Требования
 
@@ -33,18 +33,18 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 source <(multiwerf use 1.0 beta)
 ```
 
-## Шаг 1: Добавление конфигурации
+## Шаг 1: Конфигурация werf.yaml
 
 Чтобы выполнить все необходимые шаги по сборке с помощью werf, добавим специальный файл `werf.yaml` к исходному коду приложения.
 
-1. Клонируйте git-репозиторий [Symfony Demo Application](https://github.com/symfony/demo):
+1. Склонируем Git-репозиторий [Symfony Demo Application](https://github.com/symfony/demo):
 
     ```shell
     git clone https://github.com/symfony/symfony-demo.git
     cd symfony-demo
     ```
 
-2.  В корневой папке проекта создайте файл `werf.yaml` следующего содержания:
+2. В корневой папке проекта создадим файл `werf.yaml` следующего содержания:
 
     <div class="tabs">
       <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'Ansible')">Ansible</a>
@@ -197,43 +197,43 @@ source <(multiwerf use 1.0 beta)
     {% endraw %}
     </div>
 
-## Шаг 2: Соберите и запустите приложение
+## Шаг 2: Сборка приложения
 
-Давайте соберем и запустим наше первое приложение
+Далее соберем и запустим наше первое приложение
 
-1.  Перейдите в корневую папку проекта.
+1.  Перейдём в корневую папку проекта.
 
-2.  Соберите образ приложения:
+2.  Соберём образ приложения:
 
     ```shell
     werf build --stages-storage :local
     ```
 
-    > При работе с composer может возникать известная [ошибка](https://github.com/composer/composer/issues/945). Если вы получили при сборке ошибку `proc_open(): fork failed - Cannot allocate memory`, добавьте 1ГБ swap-файл. Как это сделать, например, читай [тут](https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-16-04).
+    > При работе с composer может возникать известная [ошибка](https://github.com/composer/composer/issues/945). Если вы получили при сборке ошибку `proc_open(): fork failed - Cannot allocate memory`, добавьте 1ГБ swap-файл. Как это сделать, например, читайте [здесь](https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-16-04).
 
-3.  Запустите контейнер из собранного образа:
+3.  Запустим контейнер из собранного образа:
 
     ```shell
     werf --stages-storage :local run --docker-options="-d -p 8000:8000" -- /app/start.sh
     ```
 
-4.  Проверьте что приложение запустилось и отвечает:
+4.  Проверим, что приложение запустилось и отвечает:
 
     ```shell
     curl localhost:8000
     ```
 
-## Шаг 3: Загрузите образ в Docker registry
+## Шаг 3: Публикация образа в Docker registry
 
-С помощью werf можно пушить собранные образы в Docker registry.
+С помощью werf можно опубликовать собранные образы в Docker registry.
 
-1. Запустите локальный Docker registry:
+1. Запустим локальный Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузите образ в Docker registry используя werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
+2. Загрузим образ в Docker registry, используя тег `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0
@@ -241,9 +241,8 @@ source <(multiwerf use 1.0 beta)
 
 ## Что можно улучшить
 
-В приведенном примере есть что улучшить:
-* Набор команд создания скрипта `start.sh` можно легко заменить на одну команду — git, а сам файл `start.sh` хранить в git-репозитории.
-* Если хранить файл в git-репозитории, то при его копировании можно сразу же (в той-же команде) указывать необходимые права.
-* Лучше использовать `composer install` вместо `composer update` чтобы устанавливать зависимости согласно версий, закрепленных в файлах `composer.lock`, `package.json` и `yarn.lock`. Также, при сборке необходима проверка этих файлов и запуск `composer install` при их изменении. Чтобы добиться этого, в werf есть директива `stageDependencies`.
+* Набор команд создания скрипта `start.sh` можно легко заменить на одну команду git, а сам файл `start.sh` хранить в Git-репозитории.
+* Если хранить файл в Git-репозитории, то при его копировании можно сразу же, в той же команде, указывать необходимые права.
+* Лучше использовать `composer install` вместо `composer update`, чтобы устанавливать зависимости согласно версиям, закрепленным в файлах `composer.lock`, `package.json` и `yarn.lock`. Также при сборке необходима проверка этих файлов и запуск `composer install` при их изменении. Для этого в werf предусмотрена директива `stageDependencies`.
 
-Решение этих задач рассматривается в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) документации.
+Решение этих задач рассматривается в [соответствующем разделе документации]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
