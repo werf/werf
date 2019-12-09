@@ -19,12 +19,14 @@ According to [Docker registry integration]({{ site.baseurl }}/documentation/refe
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
 
-Create temporal docker config in the current job dir:
+Create temporal docker config and define images repo:
 
 ```bash
-mkdir .docker
-export DOCKER_CONFIG=$(pwd)/.docker
-export WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO
+TMP_DOCKER_CONFIG=$(mktemp -d)
+DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+[[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
+export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
+export WERF_IMAGES_REPO=registry.company.com/project
 ```
 
 ### Git integration
@@ -61,9 +63,12 @@ Variables to define:
 Copy following script and place into `werf-ci-env.sh` in the root of the project:
 
 ```bash
-mkdir .docker
-export DOCKER_CONFIG=$(pwd)/.docker
-export WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO
+TMP_DOCKER_CONFIG=$(mktemp -d)
+DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+[[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
+export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
+export WERF_IMAGES_REPO=registry.company.com/project
+
 docker login -u USER -p PASSWORD $WERF_IMAGES_REPO
 
 export WERF_TAG_GIT_TAG=GIT_TAG
@@ -85,7 +90,7 @@ This script needs to be customized to your CI/CD system: change `WERF_*` environ
 Copy following script and place into `werf-ci-env-cleanup.sh`:
 
 ```bash
-rm -rf .docker
+rm -rf $TMP_DOCKER_CONFIG
 ```
 
 `werf-ci-env.sh` should be called in the beginning of every CI/CD job prior running any werf commands.
