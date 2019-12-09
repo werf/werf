@@ -5,9 +5,9 @@ permalink: documentation/reference/plugging_into_cicd/gitlab_ci.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Согласно общему описанию [использования ci-env переменных]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные), для интеграции с системой CI/CD Werf должен установить набор переменных `WERF_*` и выполнить некоторые действия.
+Согласно общему описанию [использования ci-env переменных]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные), для интеграции с системой CI/CD werf должен установить набор переменных `WERF_*` и выполнить некоторые действия.
 
-Для получения данных, необходимых при интеграции с GitLab CI, Werf использует переменные окружения CI-задания приведенные далее.
+Для получения данных, необходимых при интеграции с GitLab CI, werf использует переменные окружения CI-задания приведенные далее.
 
 ### WERF_IMAGES_REPO
 
@@ -55,7 +55,7 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 ### WERF_ENV
 
-В GitLab реализована [поддержка окружений](https://docs.gitlab.com/ce/ci/environments.html). Werf определяет название текущего окружения из CI-задания GitLab.
+В GitLab реализована [поддержка окружений](https://docs.gitlab.com/ce/ci/environments.html). werf определяет название текущего окружения из CI-задания GitLab.
 
 Значение для установки переменной окружения [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) формируется на основе переменной окружения GitLab [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/).
 

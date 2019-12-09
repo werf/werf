@@ -59,7 +59,7 @@ summary: |
 ## What is user stages?
 
 ***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/reference/stages_and_images.html) with _assembly instructions_ from config.
-Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Werf
+Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf
 defines 4 _user stages_ and executes them in this order: _beforeInstall_, _install_,
 _beforeSetup_ and _setup_. Assembly instructions from one stage are executed to
 create one docker layer.
@@ -82,7 +82,7 @@ should be on each _stage_.
 
 ### Run assembly instruction on git changes
 
-_User stage_ execution can depend on changes of files in a git repository. Werf
+_User stage_ execution can depend on changes of files in a git repository. werf
 supports local and remote git repositories. User stage can be
 dependent on changes in several repositories. Different changes in one
 repository can cause a rebuild of different _user stages_.
@@ -101,7 +101,7 @@ is not so difficult.
 
 ## Usage of user stages
 
-Werf provides 4 _user stages_ where assembly instructions can be defined. Assembly
+werf provides 4 _user stages_ where assembly instructions can be defined. Assembly
 instructions are not limited by werf. You can define whatever you define for `RUN`
 instruction in Dockerfile. However, assembly instructions grouping arises from
 experience with real-life applications. So the vast majority of application builds
@@ -208,7 +208,7 @@ shell:
 
 _Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus werf creates one layer for one _user stage_.
 
-Werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _beforeInstall_ stage with `apt-get update` and `apt-get install` commands:
+werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _beforeInstall_ stage with `apt-get update` and `apt-get install` commands:
 
 ```yaml
 beforeInstall:
@@ -216,7 +216,7 @@ beforeInstall:
 - apt-get install -y build-essential g++ libcurl4
 ```
 
-Werf performs _user stage_ commands as follows:
+werf performs _user stage_ commands as follows:
 - generates temporary script on host machine
 
     ```bash
@@ -313,7 +313,7 @@ werf produces this `playbook.yml` for _install_ stage:
   ...
 ```
 
-Werf plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
+werf plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
 command:
 
 ```bash
@@ -340,11 +340,11 @@ rebuild _stages_. For now, there is a list of supported modules:
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-_Werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/flant/werf/issues/new) if some module should be enabled.
+_werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/flant/werf/issues/new) if some module should be enabled.
 
 ### Copy files
 
-The preferred way of copying files into an image is [_git mappings_]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html). Werf cannot calculate changes of files referred in `copy` module. The only way to
+The preferred way of copying files into an image is [_git mappings_]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html). werf cannot calculate changes of files referred in `copy` module. The only way to
 copy some external file into an image, for now, is to use the go-templating method
 `.Files.Get`. This method returns file content as a string. So content of the file becomes a part of _user stage signature_, and file changes lead to _user stage_
 rebuild.
@@ -362,7 +362,7 @@ ansible:
 ```
 {% endraw %}
 
-Werf renders that snippet as go template and then transforms it into this `playbook.yml`:
+werf renders that snippet as go template and then transforms it into this `playbook.yml`:
 
 ```yaml
 - hosts: all
@@ -564,7 +564,7 @@ Mask that starts with `*` is treated as anchor name by yaml parser. So mask with
 - src/**/*.js
 ```
 
-Werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
+werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
 
 - werf creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters:
 - each file path from the list compared to the mask with the use of glob patterns;
@@ -592,7 +592,7 @@ shell:
   - echo "setup stage"
 ```
 
-This `werf.yaml` has a _git mapping_ configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. Werf will apply patch on the _beforeSetup_ stage itself.
+This `werf.yaml` has a _git mapping_ configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. werf will apply patch on the _beforeSetup_ stage itself.
 
 ## Dependency on CacheVersion values
 

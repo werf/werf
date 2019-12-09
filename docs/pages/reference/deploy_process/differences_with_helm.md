@@ -17,13 +17,13 @@ This architecture gives werf following advantages.
 
 ### Ability to implement resources tracking properly
 
-Werf imports helm codebase and redefines key points of helm standard deploy process. These changes making it possible to [track resources with logs](#proper-tracking-of-deployed-resources) without complex architectural solutions such as streaming of logs over grpc when using helm client with Tiller server.
+werf imports helm codebase and redefines key points of helm standard deploy process. These changes making it possible to [track resources with logs](#proper-tracking-of-deployed-resources) without complex architectural solutions such as streaming of logs over grpc when using helm client with Tiller server.
 
 ### Security advantage
 
 Typically Tiller is deployed into cluster with admin permissions. With werf user can setup fine grained access to cluster for example per project namespace.
 
-In contrast to Tiller, releases storage in Werf is not a static configuration of cluster installation. Thus Werf can store releases of each project right in the namespace of the project, so that neighbour projects does not have ability to see other releases if there is no access to these neighbour namespaces.
+In contrast to Tiller, releases storage in werf is not a static configuration of cluster installation. Thus werf can store releases of each project right in the namespace of the project, so that neighbour projects does not have ability to see other releases if there is no access to these neighbour namespaces.
 
 ### Installation advantage
 
@@ -31,7 +31,7 @@ As helm client and Tiller is built into werf there is no need for helm client in
 
 ## Proper tracking of deployed resources
 
-Werf tracks all chart resources until each resource reaches ready state and prints logs and info about current resources status, resources status changes during deploy process and "what werf is waiting for?".
+werf tracks all chart resources until each resource reaches ready state and prints logs and info about current resources status, resources status changes during deploy process and "what werf is waiting for?".
 
 With pure helm user has only the ability to wait for resources using `--wait` flag, but helm does not provide any interactive info about "what is going on now?" when using this flag.
 
@@ -41,11 +41,11 @@ Also werf fails fast when there is an error occurred during deploy process. With
 
 And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
 
-Werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
+werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
 
 ## Annotate and label chart resources
 
-Werf automatically appends annotations to all chart resources (including hooks), such as (for GitLab):
+werf automatically appends annotations to all chart resources (including hooks), such as (for GitLab):
 * `"project.werf.io/git": $CI_PROJECT_URL`;
 * `"ci.werf.io/commit": $CI_COMMIT_SHA`;
 * `"gitlab.ci.werf.io/pipeline-url":  $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID`;
@@ -61,17 +61,17 @@ Helm does not have this ability yet and will not have in the near future, [see i
 
 ## Parallel deploys are safe
 
-Werf uses locks system to prevent any parallel deploys or dismisses when working with a single release. Release is locked by name.
+werf uses locks system to prevent any parallel deploys or dismisses when working with a single release. Release is locked by name.
 
 Helm does not use any locks, so parallel deploys may lead to unexpected results.
 
 ## Builtin secrets support
 
-Werf has a builtin tools and abilities to work with secret files and secret values to store sensitive data right in the project repo. See [deploy essentials]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) and [working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html) for more info.
+werf has a builtin tools and abilities to work with secret files and secret values to store sensitive data right in the project repo. See [deploy essentials]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html) and [working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html) for more info.
 
 ## Integration with built images
 
-Werf extends helm with special templates functions such as `werf_container_image` and `werf_container_env` to generate images names for the images built with werf builder. See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+werf extends helm with special templates functions such as `werf_container_image` and `werf_container_env` to generate images names for the images built with werf builder. See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 
 Thus werf makes it super easy for the user to integrate custom built images into user templates: werf does the work of generating "the right" docker images names and tags, and werf makes sure that image will be pulled when it is necessary for Kubernetes to pull new image version.
 
@@ -92,11 +92,11 @@ During command execution werf:
 
 Helm chart requires `Chart.yaml` file in the root of the chart which should define chart name and version.
 
-Werf generates Chart metadata based on project `werf.yaml` therefore `Chart.yaml` file is not needed. If user have created `Chart.yaml` by itself, then werf will ignore it and print a warning.
+werf generates Chart metadata based on project `werf.yaml` therefore `Chart.yaml` file is not needed. If user have created `Chart.yaml` by itself, then werf will ignore it and print a warning.
 
 ## Fixed helm chart path in the project
 
-Werf requires [chart]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
+werf requires [chart]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#chart) to be placed in the `.helm` directory in the same directory where `werf.yaml` config is placed.
 
 Helm does not define a static place in the project where helm chart should be stored.
 
@@ -104,11 +104,11 @@ Helm does not define a static place in the project where helm chart should be st
 
 Errors like non-existing fields in resource configuration of chart templates are not shown by standard helm. No feedback is given to the user.
 
-Werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
+werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
 
 ## Three way merge patches and resources adoption
 
-Werf may use 3-way-merge patches and 2-way-merge patches (as Helm 2 does) with repair patches. There are different resource update methods and adoption, all of which are compatible with existing Helm 2 installations.
+werf may use 3-way-merge patches and 2-way-merge patches (as Helm 2 does) with repair patches. There are different resource update methods and adoption, all of which are compatible with existing Helm 2 installations.
 
 More info about resources update methods and patches is available [in the reference article]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html) and ["3-way merge in werf: deploying to Kubernetes via Helm “on steroids” medium article](https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe).
 

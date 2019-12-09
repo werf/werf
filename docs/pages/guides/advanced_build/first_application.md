@@ -23,12 +23,12 @@ Also, we will check that the application works and push the image in a Docker re
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
 * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
-### Select Werf version
+### Select werf version
 
-This command should be run prior running any Werf command in your shell session:
+This command should be run prior running any werf command in your shell session:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -36,7 +36,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Step 1: Add a config
 
-To implement these steps and requirements with Werf we will add a special file called `werf.yaml` to the application's source code.
+To implement these steps and requirements with werf we will add a special file called `werf.yaml` to the application's source code.
 
 1. Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
 
@@ -226,7 +226,7 @@ Let's build and run our first application.
 
 ## Step 3: Push image into Docker registry
 
-Werf can be used to push a built image into Docker registry.
+werf can be used to push a built image into Docker registry.
 
 1. Run local Docker registry:
 

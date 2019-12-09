@@ -7,17 +7,17 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается как быстро начать работу с Werf, используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker registry. В качестве примера приложения используется [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
+В статье рассматривается как быстро начать работу с werf, используя существующий в проекте Dockerfile. Мы выполним сборку Docker-образа приложения и загрузим его в Docker registry. В качестве примера приложения используется [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
 
 ## Требования
 
 * Минимальные знания [Docker](https://www.docker.com/) и структуры [Dockerfile](https://docs.docker.com/engine/reference/builder/).
-* Установленные [зависимости Werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
+* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
 * Установленный [Multiwerf](https://github.com/flant/multiwerf).
 
-### Выбор версии Werf
+### Выбор версии werf
 
-Перед началом работы с Werf необходимо выбрать версию Werf, которую вы будете использовать. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
+Перед началом работы с werf необходимо выбрать версию werf, которую вы будете использовать. Для выбора актуальной версии werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -81,7 +81,7 @@ source <(multiwerf use 1.0 beta)
 ## Что дальше?
 
 Вначале ознакомьтесь с документацией по теме:
-* [Werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
+* [werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
 * [Dockerfile Image: complete directive list]({{ site.base_url}}/documentation/configuration/dockerfile_image.html).
 * [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
 * [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).

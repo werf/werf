@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Release name
 
-Werf allows to define a custom release name template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) to generate a release name.
+werf allows to define a custom release name template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) to generate a release name.
 
 Custom release name template is defined in the [meta configuration section]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) of `werf.yaml`:
 
@@ -23,7 +23,7 @@ deploy:
 
 `deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name-slug) to generated helm release name. Default: `true`.
 
-`TEMPLATE` as well as any value of the config can include [Werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1). E.g. you can mix the value with an environment variable:
+`TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1). E.g. you can mix the value with an environment variable:
 
 {% raw %}
 ```yaml
@@ -35,7 +35,7 @@ deploy:
 
 ## Kubernetes namespace
 
-Werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) to generate a Kubernetes Namespace.
+werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) to generate a Kubernetes Namespace.
 
 Custom Kubernetes Namespace template is defined in the [meta configuration section]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) of `werf.yaml`:
 

@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 According to [ci-env description]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env) werf should define a set of `WERF_*` variables and perform some actions to integrate with CI/CD system.
 
-Werf uses following values for werf environment variables:
+werf uses following values for werf environment variables:
 
 ### WERF_IMAGES_REPO
 
@@ -55,7 +55,7 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 ### WERF_ENV
 
-GitLab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). Werf will detect current environment for the pipeline in gitlab and use it as environment parameter.
+GitLab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). werf will detect current environment for the pipeline in gitlab and use it as environment parameter.
 
 [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) value is taken from [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 

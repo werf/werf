@@ -7,9 +7,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Task overview
 
-How to deploy application into Kubernetes using Werf.
+How to deploy application into Kubernetes using werf.
 
-Werf uses Helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your Kubernetes cluster.
+werf uses Helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your Kubernetes cluster.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
    * Accessible from Kubernetes nodes to pull images from the Docker registry.
 
- * Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+ * Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
 
  * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
@@ -56,7 +56,7 @@ Where `backend` is a web server, `frontend` is a proxy for our application and a
 
 ## Application files
 
-Werf expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
+werf expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
 
 So let's create empty application directory on host machine:
 
@@ -107,7 +107,7 @@ The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a 
 
 ## Prepare deploy configuration
 
-Werf uses helm under the hood *to apply* Kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional Helm Go templates to generate image names and some more.
+werf uses helm under the hood *to apply* Kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional Helm Go templates to generate image names and some more.
 
 ### Backend configuration
 

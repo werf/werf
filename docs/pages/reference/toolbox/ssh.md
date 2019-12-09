@@ -24,4 +24,4 @@ Auth sock `SSH_AUTH_SOCK` will be used when working with remote git repos and wi
 
 ## Temporary ssh-agent
 
-Werf can start such an agent in some command. This ssh-agent process will terminate as werf command exits. Temporary ssh-agent process do not conflicts with default system ssh-agent in the case there is one.
+werf can start such an agent in some command. This ssh-agent process will terminate as werf command exits. Temporary ssh-agent process do not conflicts with default system ssh-agent in the case there is one.

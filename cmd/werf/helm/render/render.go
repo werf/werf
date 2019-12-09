@@ -29,7 +29,7 @@ func NewCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:                   "render",
-		Short:                 "Render Werf chart templates to stdout",
+		Short:                 "Render werf chart templates to stdout",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),

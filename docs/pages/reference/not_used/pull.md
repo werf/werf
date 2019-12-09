@@ -4,15 +4,15 @@ sidebar: documentation
 permalink: documentation/reference/registry/pull.html
 ---
 
-Werf does not have own pull command to download images from Docker registry. Regular [docker pull](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
+werf does not have own pull command to download images from Docker registry. Regular [docker pull](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
 
-There is a need to use existing old images as a cache to build new images to speed up the builds. This is default behavior when there is a single Werf build host with persistent local storage of images. No special actions required from the Werf user in such case.
+There is a need to use existing old images as a cache to build new images to speed up the builds. This is default behavior when there is a single werf build host with persistent local storage of images. No special actions required from the werf user in such case.
 
 However, if local storage of build host is not persistent or there are multiple build hosts, then stages cache should be pulled before running a new build. This action allows sharing stages cache between an arbitrary number of build hosts no matter whether the storage of this hosts is persisted or not.
 
 ## Distributed images cache
 
-It is not sufficient to pull just a image from the Docker registry. When you pull a image from a docker registry, you don't receive stages cache for this image in the Werf world.
+It is not sufficient to pull just a image from the Docker registry. When you pull a image from a docker registry, you don't receive stages cache for this image in the werf world.
 
 To enable stages cache sharing user must firstly push images _with a stages cache_ as it is described in [the push article]({{ site.baseurl }}/documentation/reference/registry/push.html).
 
@@ -29,16 +29,16 @@ Then [the werf pull command](#werf-pull) must be used to pull stages cache befor
 
 Command used to pull stages cache from the specified Docker registry. Call command before any of the build commands.
 
-Werf pull command optimized to pull only single cache stage for each image, that needed to rebuild _current state_ of the image.
+werf pull command optimized to pull only single cache stage for each image, that needed to rebuild _current state_ of the image.
 
-For example, there was a change in `beforeSetup` stage of the image since last project build. Werf pull command:
+For example, there was a change in `beforeSetup` stage of the image since last project build. werf pull command:
 
 1. Calculates current state of the stage cache and realizes, that there is a change in `beforeSetup` stage.
 2. Downloads `install` (the stage prior `beforeSetup`) stage from Docker registry. `beforeInstall` stage will not be downloaded, because only `install` stage is needed to rebuild `beforeSetup` and further stages.
 
 A pulled stage can be used by multiple images of the same `werf.yaml` config in the case when this stage is common between multiple images.
 
-In other words, Werf downloads from cache **last common stage** between old and new image state.
+In other words, werf downloads from cache **last common stage** between old and new image state.
 
 There is also an option to turn off this optimized behavior and always pull all stages.
 

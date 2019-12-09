@@ -22,12 +22,12 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ## Требования
 
 * Минимальные знания [Docker](https://www.docker.com/) и [инструкций Dockerfile'а](https://docs.docker.com/engine/reference/builder/).
-* Установленные [зависимости Werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
+* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
 * Установленный [Multiwerf](https://github.com/flant/multiwerf).
 
-### Выбор версии Werf
+### Выбор версии werf
 
-Перед началом работы необходимо выбрать версию Werf. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
+Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -35,7 +35,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Шаг 1: Добавление конфигурации
 
-Чтобы выполнить все необходимые шаги по сборке с помощью Werf, добавим специальный файл `werf.yaml` к исходному коду приложения.
+Чтобы выполнить все необходимые шаги по сборке с помощью werf, добавим специальный файл `werf.yaml` к исходному коду приложения.
 
 1. Клонируйте git-репозиторий [Symfony Demo Application](https://github.com/symfony/demo):
 
@@ -225,7 +225,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Шаг 3: Загрузите образ в Docker registry
 
-С помощью Werf можно пушить собранные образы в Docker registry.
+С помощью werf можно пушить собранные образы в Docker registry.
 
 1. Запустите локальный Docker registry:
 
@@ -233,7 +233,7 @@ source <(multiwerf use 1.0 beta)
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузите образ в Docker registry используя Werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
+2. Загрузите образ в Docker registry используя werf с пользовательской моделью тегирования, используя тег `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0
@@ -244,6 +244,6 @@ source <(multiwerf use 1.0 beta)
 В приведенном примере есть что улучшить:
 * Набор команд создания скрипта `start.sh` можно легко заменить на одну команду — git, а сам файл `start.sh` хранить в git-репозитории.
 * Если хранить файл в git-репозитории, то при его копировании можно сразу же (в той-же команде) указывать необходимые права.
-* Лучше использовать `composer install` вместо `composer update` чтобы устанавливать зависимости согласно версий, закрепленных в файлах `composer.lock`, `package.json` и `yarn.lock`. Также, при сборке необходима проверка этих файлов и запуск `composer install` при их изменении. Чтобы добиться этого, в Werf есть директива `stageDependencies`.
+* Лучше использовать `composer install` вместо `composer update` чтобы устанавливать зависимости согласно версий, закрепленных в файлах `composer.lock`, `package.json` и `yarn.lock`. Также, при сборке необходима проверка этих файлов и запуск `composer install` при их изменении. Чтобы добиться этого, в werf есть директива `stageDependencies`.
 
 Решение этих задач рассматривается в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) документации.

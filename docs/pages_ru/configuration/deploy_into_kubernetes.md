@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Имя релиза
 
-Werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) для генерации имени релиза.
+werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) для генерации имени релиза.
 
 Пользовательский шаблон имени релиза определяется в [секции мета-информации]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) в файле `werf.yaml`:
 
@@ -23,7 +23,7 @@ deploy:
 
 В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
 
-Т.к. в качестве значения для `deploy.helmRelease` указывается Go-шаблон, то возможно использование соответствующих [функций Werf]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1) (впрочем, как и для любых других параметров в конфигурации). Например, вы можете комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
+Т.к. в качестве значения для `deploy.helmRelease` указывается Go-шаблон, то возможно использование соответствующих [функций werf]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1) (впрочем, как и для любых других параметров в конфигурации). Например, вы можете комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
 {% raw %}
 ```yaml
 deploy:
@@ -34,7 +34,7 @@ deploy:
 
 ## Namespace в Kubernetes 
 
-Werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) для генерации имени namespace.
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) для генерации имени namespace.
 
 Пользовательский шаблон namespace Kubernetes определяется в [секции мета-информации]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) в файле `werf.yaml`:
 

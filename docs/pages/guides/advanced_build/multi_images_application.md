@@ -9,13 +9,13 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 Often a single application consists of several microservices. It can be microservices built using different technologies and programming languages. E.g., a Yii application which has logic application and worker application. The common practice is to place Dockerfiles into separate directories. So, with Dockerfile, you can't describe all components of the application in one file. As you need to describe image configuration in separate files, you can't share a part of configuration between images.
 
-Werf allows describing all images of a project in a one config. This approach gives you more convenience.
+werf allows describing all images of a project in a one config. This approach gives you more convenience.
 
 In this article, we will build an example application — [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app), to demonstrate how to describe multiple images in a one config.
 
 ## Requirements
 
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
 * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
@@ -88,7 +88,7 @@ shell:
 
 #### Appserver artifact
 
-Builds a Java code. Werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html)).
+Builds a Java code. werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html)).
 
 ```yaml
 artifact: appserver
@@ -146,7 +146,7 @@ ansible:
 
 ### Database
 
-It is the `database` image. This image base on the official image of the PostgreSQL server. Werf adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
+It is the `database` image. This image base on the official image of the PostgreSQL server. werf adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
 
 {% raw %}
 ```yaml

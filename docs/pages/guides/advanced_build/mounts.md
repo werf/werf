@@ -11,7 +11,7 @@ In this article, we will build an example Go application. Then we will optimize 
 
 ## Requirements
 
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
 * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
@@ -127,7 +127,7 @@ REPOSITORY                 TAG                   IMAGE ID          CREATED      
 image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
 
-You can check the size of all ancestor images in the output of the `werf build --stages-storage :local` command. After Werf built or used any image it outputs some information  like image name and tag, image size or image size difference, used instructions and commands.
+You can check the size of all ancestor images in the output of the `werf build --stages-storage :local` command. After werf built or used any image it outputs some information  like image name and tag, image size or image size difference, used instructions and commands.
 
 Pay attention, that the image size of the application is **above 1 GB**.
 

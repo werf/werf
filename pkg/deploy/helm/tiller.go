@@ -632,7 +632,7 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 	if currentDate.After(noDisableThreeWayMergeDeadline) {
 		if userSpecifiedThreeWayMergeMode != "" && userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
 			logboek.LogErrorF("  WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore!", userSpecifiedThreeWayMergeMode)
-			logboek.LogErrorF("  WARNING Werf will always use \"enabled\" three-way-merge-mode.")
+			logboek.LogErrorF("  WARNING werf will always use \"enabled\" three-way-merge-mode.")
 		}
 	} else if userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
 		logboek.LogHighlightF("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)

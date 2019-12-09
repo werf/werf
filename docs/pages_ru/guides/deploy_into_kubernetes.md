@@ -7,8 +7,8 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается выкат приложения в Kubernetes с помощью Werf. 
-Для деплоя приложений в Kubernetes Werf использует [Helm](https://helm.sh) (с некоторыми изменениями и дополнениями). 
+В статье рассматривается выкат приложения в Kubernetes с помощью werf. 
+Для деплоя приложений в Kubernetes werf использует [Helm](https://helm.sh) (с некоторыми изменениями и дополнениями). 
 В статье мы создадим простое web-приложение, соберем все необходимые для него образы, создадим Helm-шаблоны и выкатим приложение в кластер Kubernetes.
 
 ## Требования
@@ -17,15 +17,15 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
  * Работающий Docker registry.
    * Доступ от хостов Kubernetes с правами на push образов в Docker registry.
    * Доступ от хостов Kubernetes с правами на pull образов в Docker registry.
- * Установленные [зависимости Werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
+ * Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
  * Установленный [Multiwerf](https://github.com/flant/multiwerf).
  * Установленный и сконфигурированный `kubectl` для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
 **Внимание!** Далее в качестве адреса репозитория будет использоваться значение `:minikube` . Если вы используете собственный кластер Kubernetes и Docker registry, то указывайте репозиторий проекта в Docker registry вместо аргумента `:minikube`.
 
-### Выбор версии Werf
+### Выбор версии werf
 
-Перед началом работы необходимо выбрать версию Werf. Для выбора актуальной версии Werf в канале beta, релиза 1.0, выполним следующую команду:
+Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале beta, релиза 1.0, выполним следующую команду:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -56,7 +56,7 @@ mkdir myapp
 cd myapp
 ```
 
-Werf ожидает, что все файлы, необходимые для сборки и развертывания приложения, находятся в папке приложения (папке проекта) вместе с исходным кодом, если он имеется. В нашем примере в этой директорию будут храниться только конфигурации.
+werf ожидает, что все файлы, необходимые для сборки и развертывания приложения, находятся в папке приложения (папке проекта) вместе с исходным кодом, если он имеется. В нашем примере в этой директорию будут храниться только конфигурации.
 
 ## Подготовка образа
 
@@ -99,14 +99,14 @@ werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo 
 ```
 
 Название собранного образа приложения состоит из адреса Docker registry (`REPO`) и тега (`TAG`). 
-При указании `:minikube` в качестве адреса Docker registry Werf использует адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. 
-Так как в качестве тега был указан `myapp`, Werf загрузит в Docker registry следующий образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
+При указании `:minikube` в качестве адреса Docker registry werf использует адрес `werf-registry.kube-system.svc.cluster.local:5000/myapp`. 
+Так как в качестве тега был указан `myapp`, werf загрузит в Docker registry следующий образ `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Подготовка конфигурации деплоя
 
-Werf использует встроенный [Helm](helm.sh) *для применения* конфигурации в Kubernetes. 
-Для *описания* объектов Kubernetes Werf использует конфигурационные файлы Helm: шаблоны и файлы с параметрами (например, `values.yaml`). 
-Помимо этого, Werf поддерживает дополнительные файлы, такие как — файлы секретами и с секретными значениями (например `secret-values.yaml`), а также дополнительные Go-шаблоны для интеграции собранных образов.
+werf использует встроенный [Helm](helm.sh) *для применения* конфигурации в Kubernetes. 
+Для *описания* объектов Kubernetes werf использует конфигурационные файлы Helm: шаблоны и файлы с параметрами (например, `values.yaml`). 
+Помимо этого, werf поддерживает дополнительные файлы, такие как — файлы секретами и с секретными значениями (например `secret-values.yaml`), а также дополнительные Go-шаблоны для интеграции собранных образов.
 
 ### Backend
 
@@ -162,7 +162,7 @@ spec:
 ```
 {% endraw %}
 
-В конфигурации описываются Deployment `myapp-backend` и сервис для доступа к pod'ам. Особое внимание стоит уделить функциям Werf `werf_container_image` и `werf_container_env`. 
+В конфигурации описываются Deployment `myapp-backend` и сервис для доступа к pod'ам. Особое внимание стоит уделить функциям werf `werf_container_image` и `werf_container_env`. 
 
 Функция `werf_container_image` позволяет добавить поле `image` с корректным именем образа в конфигурацию, используя контекст и опциональное имя из `werf.yaml` в качестве параметров. 
 В нашем случае образ безымянный (`~`), поэтому функция принимает только контекст без имени. 
@@ -251,4 +251,4 @@ werf dismiss --env dev --with-namespace
 
 ## Читайте также
 
-Более подробно об особенностях и возможностях деплоя приложений с помощью Werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+Более подробно об особенностях и возможностях деплоя приложений с помощью werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).

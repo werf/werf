@@ -75,7 +75,7 @@ We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/confi
 
 > Why is werf not using multi-stage?
 * Historically, _imports_ appeared much earlier than Docker multi-stage, and
-* Werf gives more flexibility working with auxiliary images
+* werf gives more flexibility working with auxiliary images
 
 Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)). `import` is an array of records. Each record should contain the following:
 

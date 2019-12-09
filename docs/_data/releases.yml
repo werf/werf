@@ -7,7 +7,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NzI5Mjk1
   tag_name: v1.0.3-beta.8
   target_commitish: master
-  name: Werf v1.0.3-beta.8
+  name: werf v1.0.3-beta.8
   draft: false
   prerelease: false
   created_at: "2019-07-19T10:17:39Z"
@@ -37,7 +37,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NzEyMzY5
   tag_name: v1.0.3-beta.7
   target_commitish: master
-  name: Werf v1.0.3-beta.7
+  name: werf v1.0.3-beta.7
   draft: false
   prerelease: false
   created_at: "2019-07-18T17:16:06Z"
@@ -70,7 +70,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTk1ODg3
   tag_name: v1.0.3-beta.6
   target_commitish: master
-  name: Werf v1.0.3-beta.6
+  name: werf v1.0.3-beta.6
   draft: false
   prerelease: false
   created_at: "2019-07-13T16:16:25Z"
@@ -93,7 +93,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTgxMTE1
   tag_name: v1.0.3-beta.5
   target_commitish: master
-  name: Werf v1.0.3-beta.5
+  name: werf v1.0.3-beta.5
   draft: false
   prerelease: false
   created_at: "2019-07-12T14:30:37Z"
@@ -125,7 +125,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTc0ODY4
   tag_name: v1.0.3-beta.4
   target_commitish: master
-  name: Werf v1.0.3-beta.4
+  name: werf v1.0.3-beta.4
   draft: false
   prerelease: false
   created_at: "2019-07-12T09:58:58Z"
@@ -152,7 +152,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTYwNTg5
   tag_name: v1.0.3-beta.3
   target_commitish: master
-  name: Werf v1.0.3-beta.3
+  name: werf v1.0.3-beta.3
   draft: false
   prerelease: false
   created_at: "2019-07-11T18:02:25Z"
@@ -179,7 +179,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTU5OTU5
   tag_name: v1.0.3-beta.2
   target_commitish: master
-  name: Werf v1.0.3-beta.2
+  name: werf v1.0.3-beta.2
   draft: false
   prerelease: false
   created_at: "2019-07-11T17:34:28Z"
@@ -206,7 +206,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTUzNjQ2
   tag_name: v1.0.3-beta.1
   target_commitish: master
-  name: Werf v1.0.3-beta.1
+  name: werf v1.0.3-beta.1
   draft: false
   prerelease: false
   created_at: "2019-07-11T13:40:41Z"
@@ -281,7 +281,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NTA2MTg3
   tag_name: v1.0.3-alpha.9
   target_commitish: master
-  name: Werf v1.0.3-alpha.9
+  name: werf v1.0.3-alpha.9
   draft: false
   prerelease: false
   created_at: "2019-07-09T19:14:48Z"
@@ -308,7 +308,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4NDcxNTA0
   tag_name: v1.0.3-alpha.8
   target_commitish: master
-  name: Werf v1.0.3-alpha.8
+  name: werf v1.0.3-alpha.8
   draft: false
   prerelease: false
   created_at: "2019-07-08T13:14:12Z"
@@ -357,7 +357,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4Mzg3MTk5
   tag_name: v1.0.3-alpha.7
   target_commitish: master
-  name: Werf v1.0.3-alpha.7
+  name: werf v1.0.3-alpha.7
   draft: false
   prerelease: false
   created_at: "2019-07-03T11:04:44Z"
@@ -381,7 +381,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MzA5MzYz
   tag_name: v1.0.3-alpha.6
   target_commitish: master
-  name: Werf v1.0.3-alpha.6
+  name: werf v1.0.3-alpha.6
   draft: false
   prerelease: false
   created_at: "2019-06-29T11:27:51Z"
@@ -408,7 +408,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MzA0Njcz
   tag_name: v1.0.3-alpha.5
   target_commitish: master
-  name: Werf v1.0.3-alpha.5
+  name: werf v1.0.3-alpha.5
   draft: false
   prerelease: false
   created_at: "2019-06-28T21:27:18Z"
@@ -435,7 +435,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MzAzMTIz
   tag_name: v1.0.3-alpha.4
   target_commitish: master
-  name: Werf v1.0.3-alpha.4
+  name: werf v1.0.3-alpha.4
   draft: false
   prerelease: false
   created_at: "2019-06-28T19:41:41Z"
@@ -462,7 +462,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MTQzNzcy
   tag_name: v1.0.3-alpha.3
   target_commitish: master
-  name: Werf v1.0.3-alpha.3
+  name: werf v1.0.3-alpha.3
   draft: false
   prerelease: false
   created_at: "2019-06-21T13:14:56Z"
@@ -512,7 +512,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MDE1MzE0
   tag_name: v1.0.3-alpha.2
   target_commitish: master
-  name: Werf v1.0.3-alpha.2
+  name: werf v1.0.3-alpha.2
   draft: false
   prerelease: false
   created_at: "2019-06-15T11:32:43Z"
@@ -542,7 +542,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE4MDE1MjY1
   tag_name: v1.0.2-beta.4
   target_commitish: master
-  name: Werf v1.0.2-beta.4
+  name: werf v1.0.2-beta.4
   draft: false
   prerelease: false
   created_at: "2019-06-15T11:23:01Z"
@@ -569,7 +569,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3OTk1MjU0
   tag_name: v1.0.2-beta.3
   target_commitish: master
-  name: Werf v1.0.2-beta.3
+  name: werf v1.0.2-beta.3
   draft: false
   prerelease: false
   created_at: "2019-06-14T10:51:41Z"
@@ -596,7 +596,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3OTkzMjE5
   tag_name: v1.0.2-beta.2
   target_commitish: master
-  name: Werf v1.0.2-beta.2
+  name: werf v1.0.2-beta.2
   draft: false
   prerelease: false
   created_at: "2019-06-14T09:13:42Z"
@@ -623,7 +623,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3OTczNDUw
   tag_name: v1.0.3-alpha.1
   target_commitish: master
-  name: Werf v1.0.3-alpha.1
+  name: werf v1.0.3-alpha.1
   draft: false
   prerelease: false
   created_at: "2019-06-13T14:20:56Z"
@@ -691,7 +691,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3OTA3NDc5
   tag_name: v1.0.2-beta.1
   target_commitish: master
-  name: Werf v1.0.2-beta.1
+  name: werf v1.0.2-beta.1
   draft: false
   prerelease: false
   created_at: "2019-06-11T09:07:19Z"
@@ -731,7 +731,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3OTA3MTU3
   tag_name: v1.0.2-alpha.15
   target_commitish: master
-  name: Werf v1.0.2-alpha.15
+  name: werf v1.0.2-alpha.15
   draft: false
   prerelease: false
   created_at: "2019-06-11T08:59:50Z"
@@ -762,7 +762,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3ODkxMzY3
   tag_name: v1.0.2-alpha.14
   target_commitish: master
-  name: Werf v1.0.2-alpha.14
+  name: werf v1.0.2-alpha.14
   draft: false
   prerelease: false
   created_at: "2019-06-10T16:10:50Z"
@@ -791,7 +791,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3ODg5MTA1
   tag_name: v1.0.2-alpha.13
   target_commitish: master
-  name: Werf v1.0.2-alpha.13
+  name: werf v1.0.2-alpha.13
   draft: false
   prerelease: false
   created_at: "2019-06-10T14:39:03Z"
@@ -833,7 +833,7 @@ releases:
   node_id: MDc6UmVsZWFzZTE3ODU0NDYw
   tag_name: v1.0.2-alpha.12
   target_commitish: master
-  name: Werf v1.0.2-alpha.12
+  name: werf v1.0.2-alpha.12
   draft: false
   prerelease: false
   created_at: "2019-06-07T14:37:36Z"

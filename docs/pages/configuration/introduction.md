@@ -7,12 +7,12 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.k
 
 ## What is werf config?
 
-Application should be configured to use Werf. This configuration includes:
+Application should be configured to use werf. This configuration includes:
 
 1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
 2. Definition of the images to be built.
 
-Werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of config sections -- parts of YAML file separated by [three hyphens](http://yaml.org/spec/1.2/spec.html#id2800132):
+werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of config sections -- parts of YAML file separated by [three hyphens](http://yaml.org/spec/1.2/spec.html#id2800132):
 
 ```yaml
 CONFIG_SECTION
@@ -55,7 +55,7 @@ Changing project name leads to issues:
 1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and Docker registry manually.
 2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
 
-Werf cannot automatically resolve project name change. Described issues must be resolved manually.
+werf cannot automatically resolve project name change. Described issues must be resolved manually.
 
 #### Config version
 
@@ -99,7 +99,7 @@ Part of the configuration can be moved in ***separate template files*** and then
 
 > **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects
 
-Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
+werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>

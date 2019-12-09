@@ -5,9 +5,9 @@ permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-В настоящий момент Werf поддерживает только работу с [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), но мы планируем в [скором будущем](https://github.com/flant/werf/issues/1682) обеспечить поддержку top-10 популярных CI систем.
+В настоящий момент werf поддерживает только работу с [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), но мы планируем в [скором будущем](https://github.com/flant/werf/issues/1682) обеспечить поддержку top-10 популярных CI систем.
 
-Чтобы использовать Werf с любой CI/CD системой которая пока не поддерживается, необходимо выполнить шаги описанные [здесь]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env), с помощью собственного скрипта. Запуск такого скрипта нужно производить вместо вызова команды `werf ci-env`, но поведение скрипта должно быть похожим на результат выполнения команды `werf ci-env`. Запуск скрипта также должен осуществляться перед выполнением любых других команд werf, вначале задания CI/CD.
+Чтобы использовать werf с любой CI/CD системой которая пока не поддерживается, необходимо выполнить шаги описанные [здесь]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env), с помощью собственного скрипта. Запуск такого скрипта нужно производить вместо вызова команды `werf ci-env`, но поведение скрипта должно быть похожим на результат выполнения команды `werf ci-env`. Запуск скрипта также должен осуществляться перед выполнением любых других команд werf, вначале задания CI/CD.
 
 Необходимого результата можно добиться выполнив в скрипте некоторые действия и определив ряд переменных окружения из [списка]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#complete-list-of-ci-env-params-and-customizing) (далее рассмотрим эти шаги подробнее).
 

@@ -62,14 +62,14 @@ summary: |
 
 ***Git mapping*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git mapping_ contains the repository address and the version (branch, tag or commit hash).
 
-Werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
+werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
 The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-gitarchive-gitcache-gitlatestpatch) section.
 
 The configuration of the _git mapping_ supports filtering files, and you can use the set of _git mappings_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git mapping_ configuration — no subsequent `chown` required.
 
-Werf has support for submodules. Werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
+werf has support for submodules. werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
-> All project's submodules locked to a specific commit, so all collaborators receive the same content. Therefore, Werf **does not initialize, update submodules** and just uses these commits
+> All project's submodules locked to a specific commit, so all collaborators receive the same content. Therefore, werf **does not initialize, update submodules** and just uses these commits
 
 An example of a _git mapping_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
@@ -92,7 +92,7 @@ Most commits in the real application repository relate to updating the code of t
 
 ### Remote repositories
 
-Building an application image may depend on source files in other repositories. Werf provides the ability to add files from remote repositories too. Werf can detect changes in local repositories and remote repositories.
+Building an application image may depend on source files in other repositories. werf provides the ability to add files from remote repositories too. werf can detect changes in local repositories and remote repositories.
 
 ## Syntax of a git mapping
 
@@ -168,7 +168,7 @@ git:
   includePaths: assets
 ```
 
-> Werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same
+> werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same
 
 ### Changing an owner
 
@@ -295,7 +295,7 @@ git:
 
 ## Working with remote repositories
 
-Werf may use remote repositories as file sources. For this purpose, the _git mapping_ configuration contains an `url` parameter where you should specify the repository address. Werf supports `https` and `git+ssh` protocols.
+werf may use remote repositories as file sources. For this purpose, the _git mapping_ configuration contains an `url` parameter where you should specify the repository address. werf supports `https` and `git+ssh` protocols.
 
 ### https
 
@@ -323,7 +323,7 @@ In this example, the [env](http://masterminds.github.io/sprig/os.html) method fr
 
 ### git, ssh
 
-Werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by GitHub, Bitbucket, GitLab, Gogs, Gitolite, etc. Most often the repository address looks as follows:
+werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by GitHub, Bitbucket, GitLab, Gogs, Gitolite, etc. Most often the repository address looks as follows:
 
 ```yaml
 git:
@@ -335,7 +335,7 @@ To successfully work with remote repositories via ssh, you should understand how
 
 #### Working with ssh keys
 
-Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. Werf mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
+Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. werf mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
 
 The ssh-agent is determined as follows:
 

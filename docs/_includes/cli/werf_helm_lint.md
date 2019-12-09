@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run lint procedure for the Werf chart
+Run lint procedure for the werf chart
 
 {{ header }} Syntax
 

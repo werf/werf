@@ -27,7 +27,7 @@ layout: default
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
-                            Werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
+                            werf интегрирует <code>git</code>, <code>Helm</code> и <code>Docker</code>.
                         </li>
                         <li>
                             Может быть встроена в любую CI/CD-систему (например, GitLab CI) <br/>для построения пайплайнов, используя предложенный набор команд:
@@ -42,7 +42,7 @@ layout: default
                             Open Source, написана на Go.
                         </li>
                         <li>
-                            Werf — это не SAAS, а представитель высокоуровневых <br/>CI/CD-инструментов нового поколения.
+                            werf — это не SAAS, а представитель высокоуровневых <br/>CI/CD-инструментов нового поколения.
                         </li>
                     </ul>
                 </div>

@@ -12,7 +12,7 @@ When git branch or git tag has been deleted, a set of _stages_ which were built 
 It is necessary to periodically clean up _images repo_ and _stages storage_.
 Otherwise, it will be filled with **stale images**.
 
-Werf has an efficient multi-level images cleaning. There are following cleaning approaches:
+werf has an efficient multi-level images cleaning. There are following cleaning approaches:
 
 1. [**Cleaning by policies**](#cleaning-by-policies)
 2. [**Manual cleaning**](#manual-cleaning)
@@ -43,10 +43,10 @@ These policies determine which _images_ to delete and which not to.
 
 * **by branches:**
     * Every new commit updates an image for the git branch (there is the only one docker tag for each published git branch).
-    * Werf deletes an image from _images repo_ when the corresponding git branch does not exist. The image always remains, while the corresponding git branch exists.
+    * werf deletes an image from _images repo_ when the corresponding git branch does not exist. The image always remains, while the corresponding git branch exists.
     * The policy covers images tagged by werf with `--tag-git-branch` option.
 * **by commits:**
-    * Werf deletes an image from _images repo_ when the corresponding git commit does not exist.
+    * werf deletes an image from _images repo_ when the corresponding git commit does not exist.
     * For the remaining images, the following policies apply:
       * _git-commit-strategy-expiry-days_.
       Keep published _images_ in the _images repo_ for the **specified maximum days** since image published.
@@ -59,7 +59,7 @@ These policies determine which _images_ to delete and which not to.
       Value can be specified by `--git-commit-strategy-limit` or `$WERF_GIT_COMMIT_STRATEGY_LIMIT`.
     * The policy covers images tagged by werf with `--tag-git-commit` option.
 * **by tags:**
-    * Werf deletes an image from _images repo_ when the corresponding git tag does not exist.
+    * werf deletes an image from _images repo_ when the corresponding git tag does not exist.
     * For the remaining images, the following policies apply:
        * _git-tag-strategy-expiry-days_.
        Keep published _images_ in the _images repo_ for the **specified maximum days** since image published.
@@ -84,7 +84,7 @@ The functionality can be disabled by option `--without-kube`.
 
 #### Connecting to Kubernetes
 
-Werf gets information about Kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
+werf gets information about Kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
 
 ### Cleanup stages storage
 

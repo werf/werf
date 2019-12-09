@@ -39,7 +39,7 @@ When specifying the host mount point, you can choose an arbitrary file or folder
 - `build_dir` is a collectively shared directory, stored between builds (`~/.werf/shared_context/mounts/projects/<project name>/<mount id>/`).
 Project images can use this common directory to share and store assembly data (e.g., cache).
 
-> Werf binds host mount folders for reading/writing on each stage build.
+> werf binds host mount folders for reading/writing on each stage build.
 If you need to keep assembly data from these directories in an image, you should copy them to another directory during build
 
 On `from` stage werf adds mount points definitions to stage image labels.

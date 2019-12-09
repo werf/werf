@@ -5,11 +5,11 @@ permalink: documentation/reference/deploy_process/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf is a compatible alternative to [Helm 2](https://helm.sh), which uses improved deploy process.
+werf is a compatible alternative to [Helm 2](https://helm.sh), which uses improved deploy process.
 
-Werf has 2 main commands to work with Kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster.
+werf has 2 main commands to work with Kubernetes: [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or upgrade app in the cluster, and [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)  — to uninstall app from cluster.
 
-Deployed resources are tracked with different configurable modes, logs and Kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. Werf can set arbitrary annotations and labels to all Kubernetes resources of the project being deployed.
+Deployed resources are tracked with different configurable modes, logs and Kubernetes events are shown for the resources, images built by werf are integrated into deploy configuration [templates](#templates) seamlessly. werf can set arbitrary annotations and labels to all Kubernetes resources of the project being deployed.
 
 Configuration is described with Helm compatible [chart](#chart).
 
@@ -348,7 +348,7 @@ Each release have a single name and multiple versions. On each werf deploy invoc
 
 ### Releases storage
 
-Each release version is stored in the Kubernetes cluster itself. Werf can store releases in ConfigMaps or Secrets in arbitrary namespaces.
+Each release version is stored in the Kubernetes cluster itself. werf can store releases in ConfigMaps or Secrets in arbitrary namespaces.
 
 By default werf stores releases in the ConfigMaps in the `kube-system` namespace to be fully compatible with [Helm 2](https://helm.sh) default installations. Releases storage can be configured by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
@@ -370,9 +370,9 @@ NOTE: Changing release status in ConfigMap labels will not affect real release s
 
 #### Helm compatibility notice
 
-Werf is fully compatible with already existing Helm 2 installations as long as releases storage is configured the same way as in helm. User might need to configure release storage with options `--helm-release-storage-namespace` and `--helm-release-storage-type` if existing helm installation uses non default releases storage.
+werf is fully compatible with already existing Helm 2 installations as long as releases storage is configured the same way as in helm. User might need to configure release storage with options `--helm-release-storage-namespace` and `--helm-release-storage-type` if existing helm installation uses non default releases storage.
 
-Releases created by werf can be inspected and viewed with helm commands, such as `helm list` and `helm get`. Werf can also upgrade already existing releases originally created by helm.
+Releases created by werf can be inspected and viewed with helm commands, such as `helm list` and `helm get`. werf can also upgrade already existing releases originally created by helm.
 
 Furthermore werf and Helm 2 installation could work in the same cluster at the same time.
 
@@ -396,7 +396,7 @@ For example for project named `symfony-demo` there will be following Helm Releas
 * `symfony-demo-test` for the `test` environment;
 * `symfony-demo-prod` for the `prod` environment.
 
-Release name could be redefined by deploy option `--release NAME`. In that case Werf will use specified name as is.
+Release name could be redefined by deploy option `--release NAME`. In that case werf will use specified name as is.
 
 Custom release name can also be defined in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#release-name).
 
@@ -415,7 +415,7 @@ For example for project named `symfony-demo` there will be following Kubernetes 
 * `symfony-demo-test` for the `test` environment;
 * `symfony-demo-prod` for the `prod` environment.
 
-Kubernetes Namespace could be redefined by deploy option `--namespace NAMESPACE`. In that case Werf will use specified name as is.
+Kubernetes Namespace could be redefined by deploy option `--namespace NAMESPACE`. In that case werf will use specified name as is.
 
 Custom Kubernetes Namespace can also be defined in the werf.yaml configuration [by setting `deploy.namespace`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace).
 
@@ -436,19 +436,19 @@ When running `werf deploy` command werf starts deploy process which includes fol
  5. Track all release resources till readiness state reached printing logs and other info along the way.
  6. Run `post-install` or `post-upgrade` [hooks](#helm-hooks) and track each of the hooks till successful or failed termination printing logs and other info along the way.
 
-NOTE: Werf will delete all newly created resources immediately during current deploy process if this deploy process fails at any step specified above!
+NOTE: werf will delete all newly created resources immediately during current deploy process if this deploy process fails at any step specified above!
 
 During execution of helm hooks on the steps 2 and 6 werf will track these hooks resources until successful termination. Tracking [can be configured](#resource-tracking-configuration) for each hook resource.
 
 On the step 5 werf tracks all release resources until each resource reaches "ready" state. All resources are tracked at the same time. During tracking werf unifies info from all release resources in realtime into single text output and periodically prints so called status progress table. Tracking [can be configured](#resource-tracking-configuration) for each resource.
 
-Werf shows logs of resources Pods only until pod reaches "ready" state, except for Jobs. For Pods of a Job logs will be shown till Pods are terminated.
+werf shows logs of resources Pods only until pod reaches "ready" state, except for Jobs. For Pods of a Job logs will be shown till Pods are terminated.
 
 Internally [kubedog library](https://github.com/flant/kubedog) is used to track resources. Deployments, StatefulSets, DaemonSets and Jobs are supported for tracking now. Service, Ingress, PVC and other are [soon to come](https://github.com/flant/werf/issues/1637).
 
 ### Method of applying changes
 
-Werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster, which is the best option. However there are different resource update methods are available.
+werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster, which is the best option. However there are different resource update methods are available.
 
 See more info in the articles:
  - [resources update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);
@@ -478,7 +478,7 @@ metadata:
 
 There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
 
-Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. Werf recreates Kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks Kubernetes resources are not deleted after execution.
+Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. werf recreates Kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks Kubernetes resources are not deleted after execution.
 
 ### Resource tracking configuration
 
@@ -537,13 +537,13 @@ By default 1 failure per replica is allowed before considering whole deploy proc
 
 `"werf.io/log-regex": RE2_REGEX`
 
-Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to all logs of all containers of all Pods owned by resource with this annotation. Werf will show only those log lines that fit specified regex. By default werf will show all log lines.
+Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to all logs of all containers of all Pods owned by resource with this annotation. werf will show only those log lines that fit specified regex. By default werf will show all log lines.
 
 #### Log regex for container
 
 `"werf.io/log-regex-for-CONTAINER_NAME": RE2_REGEX`
 
-Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to logs of specified container by name `CONTAINER_NAME` of all Pods owned by resource with this annotation. Werf will show only those log lines that fit specified regex. By default werf will show all log lines.
+Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to logs of specified container by name `CONTAINER_NAME` of all Pods owned by resource with this annotation. werf will show only those log lines that fit specified regex. By default werf will show all log lines.
 
 #### Skip logs
 
@@ -573,13 +573,13 @@ Set to `true` to enable additional debug info for resource including Kubernetes 
 
 #### Auto annotations
 
-Werf automatically sets following builtin annotations to all chart resources deployed:
+werf automatically sets following builtin annotations to all chart resources deployed:
 
  * `"werf.io/version": FULL_WERF_VERSION` — werf version that being used when running `werf deploy` command;
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
  * `"project.werf.io/env": ENV` — environment name specified with `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-Werf also sets auto annotations with info from the used CI/CD system (GitLab CI for example)  when using `werf ci-env` command prior to run `werf deploy` command. For example [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
+werf also sets auto annotations with info from the used CI/CD system (GitLab CI for example)  when using `werf ci-env` command prior to run `werf deploy` command. For example [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
 
 For more info about CI/CD integration check out following pages:
 

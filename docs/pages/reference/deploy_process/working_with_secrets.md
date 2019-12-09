@@ -5,7 +5,7 @@ permalink: documentation/reference/deploy_process/working_with_secrets.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Werf secrets engine is recommended for storing database passwords, files with encryption certificates, etc.
+werf secrets engine is recommended for storing database passwords, files with encryption certificates, etc.
 
 The idea is that sensitive data must be stored in a repository served by an application and remain independent from any specific server.
 

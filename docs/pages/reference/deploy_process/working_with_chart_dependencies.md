@@ -47,7 +47,7 @@ All Chart Repositories that are used in `requirements.yaml` should be configured
 * Use [werf helm repo search]({{ site.baseurl }}/documentation/cli/management/helm/repo_search.html) to search for a keyword in charts of configured Chart Repositories.
 * Use [werf helm repo fetch]({{ site.baseurl }}/documentation/cli/management/helm/repo_fetch.html) to download chart by chart reference.
 
-Werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use [werf helm repo init]({{ site.baseurl }}/documentation/cli/management/helm/repo_init.html) command to initialize necessary settings and configure default Chart Repositories.
+werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use [werf helm repo init]({{ site.baseurl }}/documentation/cli/management/helm/repo_init.html) command to initialize necessary settings and configure default Chart Repositories.
 
 ## Subchart and values
 
