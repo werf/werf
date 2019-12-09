@@ -2,67 +2,73 @@
 title: Stapel
 sidebar: documentation
 permalink: documentation/development/stapel.html
-author: Timofey Kirillov <timofey.kirillo@flant.com>
+author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-<div id="outdatedWarning" class="docs__outdated active">
-    Статья в процессе перевода.
-</div>
+## Обзор
 
-## Overview
+Stapel — это [LFS-дистрибутив](http://www.linuxfromscratch.org/lfs/view/stable) Linux, который содержит:
 
-Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux distribution, which contains:
+* Glibc.
+* Gnu cli tools (install, patch, find, wget, grep, rsync и другие).
+* Git cli util.
+* Bash.
+* Python.
+* Ansible.
 
- * Glibc;
- * Gnu cli tools (install, patch, find, wget, grep, rsync and other);
- * Git cli util.
- * Bash.
- * Python interpreter and Ansible.
+Инструменты, содержащиеся в Stapel, расположены в нестандартных директориях. 
+Исполняемые файлы, библиотеки и другие связанные файлы расположены в следующих директориях:
 
-Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following dirs:
+* `/.werf/stapel/(etc|lib|lib64|libexec)`;
+* `/.werf/stapel/x86_64-lfs-linux-gnu/bin`;
+* `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`.
 
- * `/.werf/stapel/(etc|lib|lib64|libexec)`;
- * `/.werf/stapel/x86_64-lfs-linux-gnu/bin`;
- * `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`.
+В основе Stapel лежат библиотеки Glibc и linker (`/.werf/stapel/lib/libc-VERSION.so` и `/.werf/stapel/x86_64-lfs-linux-gnu/bin/ld`). 
+Все инструменты в директории `/.werf/stapel` скомпилированы и связаны только с библиотеками, находящимися в директории `/.werf/stapel`. 
+Поэтому, Stapel — самодостаточный набор инструментов и библиотек без каких-либо внешних зависимостей, с независимым Glibc. 
+Это позволяет запускать инструменты Stapel в произвольном окружении, независимо от дистрибутива Linux и версий библиотек в этом дистрибутиве.
 
-The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSION.so` and `/.werf/stapel/x86_64-lfs-linux-gnu/bin/ld`). All tools from `/.werf/stapel` are compiled and linked only agains libraries contained in `/.werf/stapel`. So stapel is a self-contained distribution of tools and libraries without external dependencies with an independent Glibc, which allows running these tools in arbitrary environment (independently of linux distribution and libraries versions in this distribution).
+Файловая система Stapel (`/.werf/stapel`) спроектирована исходя из расчета, что она будет монтироваться в сборочный контейнер. 
+Так как в инструментах Stapel нет внешних зависимостей, образ Stapel может быть смонтирован в любой базовый образ (Alpine Linux + musl libc, или  Ubuntu + glibc — не важно) и инструменты будут работать одинаково.
 
-Stapel filesystem `/.werf/stapel` is intent to be mounted into build container based on some base image. Tools from stapel can then be used for some purposes. As stapel tools does not have external dependencies stapel image can be mounted into any base image (alpine linux with musl libc, or ubuntu with glibc — does not matter) and tools will work as expected.
+werf монтирует _образ Stapel_ в каждый сборочный контейнер во время процесса сборки Docker-образа _сборщиком Stapel_. 
+Это делает доступным работу Ansible, выполнение операций с Git и других важных функций. 
+Читайте подробнее о _сборщике Stapel_ в соответствующей [статье]({{ site.baseurl }}/documentation/reference/build_process.html#stapel-образ-и-stapel-артефакт).
 
-werf mounts _stapel image_ into each build container when building docker images with _stapel builder_ to enable ansible, git service operations and for other service purposes. More info about _stapel builder_ are available [in the article]({{ site.baseurl }}/documentation/reference/build_process.html#stapel-image-and-artifact).
+## Обновление Stapel
 
-## Rebuild stapel
+Образ Stapel периодически требует обновления, например, для Ansible или версии [LFS-дистрибутива](http://www.linuxfromscratch.org/lfs/view/stable) Linux.
 
-Stapel image needs to be updated time to time to update ansible or when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
+Для обновления образа Stapel необходимо выполнить следующие шаги:
 
-1. Make necessary changes to build instructions in `stapel` directory.
-2. Update omnibus bundle:
+1. Внести соответствующие изменения в сборочные инструкции в директории `stapel`.
+2. Обновить `omnibus bundle`:
     ```bash
-    cd stapel
+    cd stapel/omnibus
     bundle update
     git add -p Gemfile Gemfile.lock
     ```
-3. Pull previous stapel images cache:
+3. Скачать кэш образов Stapel предыдущих версий:
     ```bash
     scripts/stapel/pull_cache.sh
     ```
-4. Increment current version in `scripts/stapel/version.sh` environment variable `CURRENT_STAPEL_VERSION`.
-5. Build new stapel images:
+4. Изменить текущую версию Stapel в скрипте `scripts/stapel/version.sh`, увеличив значение в переменной окружения `CURRENT_STAPEL_VERSION`.
+5. Выполнить сборку новых образов Stapel:
     ```bash
     scripts/stapel/build.sh
     ```
-6. Publish new stapel images:
+6. Опубликовать собранные образы:
     ```bash
     scripts/stapel/publish.sh
     ```
-7. As new stapel version is done and published, then change `PREVIOUS_STAPEL_VERSION` environment variable in `scripts/stapel/version.sh` to the same value as `CURRENT_STAPEL_VERSION` and commit changes to the repo.
+7. После того, как новая версия Stapel опубликована, изменить значение переменной окружения `PREVIOUS_STAPEL_VERSION` в скрипте `scripts/stapel/version.sh` на тоже самое значение, которое вы указали в переменной `CURRENT_STAPEL_VERSION` и выполнить коммит изменений в репозиторий.
 
-## How build works
+## Как работает сборка
 
-Stapel image builder consists of 2 docker stages: base and final.
+Сборка образа Stapel состоит из двух Docker-стадий: base и final.
 
-Base stage is an ubuntu based image used to build LFS system and additional omnibus packages.
+Стадия base — образ на основе Ubuntu, используемый для сборки LFS-системы и дополнительных omnibus-пакетов.
 
-Final stage is a pure scratch image which imports only necessary `/.werf/stapel` files.
+Стадия final — чистый scratch-образ, в который импортируются необходимые файлы в папку `/.werf/stapel`.
 
-NOTE: Both base and final docker stages are being published during `scripts/stapel/publish.sh` procedure to enable cache during next stapel rebuild.
+ЗАМЕЧАНИЕ: Обе Docker-стадии, — и base и final, публикуются с помощью скрипта `scripts/stapel/publish.sh` для того, чтобы сделать доступным кэширование при следующей сборке образа Stapel.

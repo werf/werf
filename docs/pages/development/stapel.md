@@ -2,7 +2,7 @@
 title: Stapel
 sidebar: documentation
 permalink: documentation/development/stapel.html
-author: Timofey Kirillov <timofey.kirillo@flant.com>
+author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 <div id="outdatedWarning" class="docs__outdated active">
@@ -17,7 +17,8 @@ Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux 
  * Gnu cli tools (install, patch, find, wget, grep, rsync and other);
  * Git cli util.
  * Bash.
- * Python interpreter and Ansible.
+ * Python interpreter.
+ * Ansible.
 
 Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following dirs:
 
@@ -38,7 +39,7 @@ Stapel image needs to be updated time to time to update ansible or when new vers
 1. Make necessary changes to build instructions in `stapel` directory.
 2. Update omnibus bundle:
     ```bash
-    cd stapel
+    cd stapel/omnibus
     bundle update
     git add -p Gemfile Gemfile.lock
     ```
