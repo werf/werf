@@ -1,0 +1,8 @@
+configVersion: 1
+project: ansible-path-redefined
+---
+image: ~
+from: golang:1.12-alpine3.9
+ansible:
+  install:
+  - shell: go version
