@@ -5,10 +5,6 @@ permalink: documentation/development/stapel.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-<div id="outdatedWarning" class="docs__outdated active">
-    Статья в процессе перевода.
-</div>
-
 ## Overview
 
 Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux distribution, which contains:
@@ -32,7 +28,7 @@ Stapel filesystem `/.werf/stapel` is intent to be mounted into build container b
 
 werf mounts _stapel image_ into each build container when building docker images with _stapel builder_ to enable ansible, git service operations and for other service purposes. More info about _stapel builder_ are available [in the article]({{ site.baseurl }}/documentation/reference/build_process.html#stapel-image-and-artifact).
 
-## Rebuild stapel
+## Change, update and rebuild stapel
 
 Stapel image needs to be updated time to time to update ansible or when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
 
@@ -43,27 +39,18 @@ Stapel image needs to be updated time to time to update ansible or when new vers
     bundle update
     git add -p Gemfile Gemfile.lock
     ```
-3. Pull previous stapel images cache:
-    ```bash
-    scripts/stapel/pull_cache.sh
-    ```
-4. Increment current version in `scripts/stapel/version.sh` environment variable `CURRENT_STAPEL_VERSION`.
-5. Build new stapel images:
+3. Build new stapel images:
     ```bash
     scripts/stapel/build.sh
     ```
-6. Publish new stapel images:
+   This command will create `flant/werf-stapel:dev` and secondary `flant/werf-stapel-base:dev` docker images.
+4. To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
     ```bash
-    scripts/stapel/publish.sh
+    export WERF_STAPEL_IMAGE_VERSION=dev
+    werf build ...
     ```
-7. As new stapel version is done and published, then change `PREVIOUS_STAPEL_VERSION` environment variable in `scripts/stapel/version.sh` to the same value as `CURRENT_STAPEL_VERSION` and commit changes to the repo.
-
-## How build works
-
-Stapel image builder consists of 2 docker stages: base and final.
-
-Base stage is an ubuntu based image used to build LFS system and additional omnibus packages.
-
-Final stage is a pure scratch image which imports only necessary `/.werf/stapel` files.
-
-NOTE: Both base and final docker stages are being published during `scripts/stapel/publish.sh` procedure to enable cache during next stapel rebuild.
+5. Publish new stapel images:
+    ```bash
+    scripts/stapel/publish.sh NEW_VERSION
+    ```
+6. As new stapel version has been published change `VERSION` golang constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.
