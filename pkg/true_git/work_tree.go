@@ -83,7 +83,13 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 
 	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
 	workTreeDir := filepath.Join(workTreeCacheDir, "worktree")
-	repoToCacheLinkFilePath := filepath.Join(repoDir, "werf_work_tree_cache_dir")
+
+	realRepoDir, err := GetRealRepoDir(repoDir)
+	if err != nil {
+		return "", fmt.Errorf("unable to get real repo dir of repo %s: %s", repoDir, err)
+	}
+	repoToCacheLinkFilePath := filepath.Join(realRepoDir, "werf_work_tree_cache_dir")
+
 	currentCommit := ""
 
 	isWorkTreeDirExist := false
@@ -238,4 +244,17 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	}
 
 	return nil
+}
+
+func GetRealRepoDir(repoDir string) (string, error) {
+	gitArgs := []string{"--git-dir", repoDir, "rev-parse", "--git-dir"}
+
+	cmd := exec.Command("git", gitArgs...)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("'git --git-dir %s rev-parse --git-dir' failed: %s:\n%s", repoDir, err, output)
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
