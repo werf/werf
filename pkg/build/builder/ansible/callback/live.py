@@ -270,21 +270,22 @@ class CallbackModule(LiveCallbackHelpers):
     def _display_msg(self, task, result, color):
         if task.action in self.SQUASH_LOOP_MODULES and 'results' in result:
             if len(result['results']) > 0:
-                return self._display_msg(task, result['results'][0], color)
+                self.LogArgs(stringc(result['results'][0], color), "\n")
+                return
 
         # prevent dublication of stdout in case of live_stdout
         if not self._live_stdout_listener.is_live_stdout():
-            stdout = result.get('stdout', None)
+            stdout = result.get('stdout', result.get('module_stdout', ''))
             if stdout:
                 self.LogArgs(vt100.bold, "stdout:", vt100.reset, "\n")
                 self.LogArgs(self._indent('  ', stdout), "\n")
-            stderr = result.get('stderr', '')
+            stderr = result.get('stderr', result.get('module_stderr', ''))
             if stderr:
                 self.LogArgs(vt100.bold, "stderr:", vt100.reset, "\n")
                 self.LogArgs(self._indent('  ', stringc(stderr, C.COLOR_ERROR)), "\n")
 
         if self._msg_is_needed(task, result):
-            self.LogArgs(stringc(result['msg'], color), "\n")
+            self.LogArgs(stringc(u"\n".join(self._flatten(result['msg'])), color), "\n")
 
         if 'rc' in result:
             exitCode = result['rc']
@@ -308,7 +309,7 @@ class CallbackModule(LiveCallbackHelpers):
         #if (self._display.verbosity > 0 or '_ansible_verbose_always' in result) and '_ansible_verbose_override' not in result:
         if task.args.get('msg'):
             color = C.COLOR_OK
-            msg = result.get('msg', '')
+            msg = u"\n".join(self._flatten(result.get('msg', '')))
         if task.args.get('var'):
             var_key = task.args.get('var')
             if isinstance(var_key, (list, dict)):
@@ -452,7 +453,7 @@ class CallbackModule(LiveCallbackHelpers):
 
 
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result, **kwargs):
         self._display.v("TASK action=%s FAILED => %s" % (result._task.action, json.dumps(result._result, indent=4)))
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
@@ -463,7 +464,7 @@ class CallbackModule(LiveCallbackHelpers):
             self._display_msg(task, result._result, C.COLOR_ERROR)
 
         except Exception as e:
-            logboek.Log(e)
+            logboek.Log(u"{0}\n".format(e).encode("utf-8"))
         finally:
             logboek.LogProcessFail()
 

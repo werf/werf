@@ -41,7 +41,7 @@ become_flags = -E -H`
 }
 
 func (b *Ansible) assetsHosts() string {
-	format := "localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=%s"
+	format := "localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=%s\n"
 	return fmt.Sprintf(format, stapel.PythonBinPath())
 }
 

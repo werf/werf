@@ -306,6 +306,36 @@ RUN ./configure --prefix=$TOOLS --enable-symcryptrun --localstatedir=/.werf/stap
 RUN make
 RUN make install
 
+# util-linux
+RUN echo "util-linux" && cd $LFS/sources && \
+mkdir util-linux && \
+tar xf util-linux-*.tar.* -C util-linux --strip-components 1
+WORKDIR $LFS/sources/util-linux
+RUN ./configure --prefix=$TOOLS --without-python --disable-makeinstall-chown --without-systemdsystemunitdir PKG_CONFIG=""
+RUN make
+RUN make install
+
+# glib
+RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt update
+RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt install -y python3-pip xsltproc
+RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin pip3 install meson ninja
+RUN echo "glib" && cd $LFS/sources && \
+mkdir glib && \
+tar xf glib-*.tar* -C glib --strip-components 1
+WORKDIR $LFS/sources/glib
+RUN LDFLAGS="-Wl,-rpath-link,$TOOLS/embedded/lib,--library-path,$TOOLS/embedded/lib" meson _build -Diconv=external -Dman=false --prefix=$TOOLS -Dselinux=disabled
+RUN ninja -C _build
+RUN ninja -C _build install
+
+# libxml2
+RUN echo "libxml2" && cd $LFS/sources && \
+mkdir libxml2 && \
+tar xf libxml2-*.tar.* -C libxml2 --strip-components 1
+WORKDIR $LFS/sources/libxml2
+RUN ./configure --prefix=$TOOLS --disable-static --with-history --with-python=$TOOLS/embedded/bin/python --with-iconv=no
+RUN make
+RUN make install
+
 # Restore PATH *not to* use stapel build tools anymore
 ENV PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -322,17 +352,15 @@ RUN bash -ec "echo '142.93.108.123 gonum.org www.gonum.org' >> /etc/hosts && go 
 
 ADD cmd /werf/cmd
 ADD pkg /werf/pkg
-RUN go build -o /.werf/stapel/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/flant/logboek/c_lib
-RUN cp /root/go/pkg/mod/github.com/flant/logboek@*/logboek.py /.werf/stapel/embedded/lib/python2.7
-RUN cp /werf/pkg/build/builder/ansible/crypt.py /.werf/stapel/embedded/lib/python2.7
-
+RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/flant/logboek/c_lib
+RUN cp /root/go/pkg/mod/github.com/flant/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
+RUN cp /werf/pkg/build/builder/ansible/crypt.py $TOOLS/embedded/lib/python2.7
 
 # Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)
 RUN mkdir -p $TOOLS/ansible_tools_overlay/bin $TOOLS/ansible_tools_overlay/lib
 
 # Shadow /usr/bin/tar with gnu tar (needed for unarchive ansible module in alpine based image)
 RUN ln -fs $TOOLS/embedded/bin/tar $TOOLS/ansible_tools_overlay/bin/tar
-
 
 # Binaries and libraries built and linked for ubuntu:18.04
 RUN mkdir -p $TOOLS/ubuntu_tools/bin $TOOLS/ubuntu_tools/lib $TOOLS/ubuntu_tools/lib/python2.7 $TOOLS/ubuntu_tools/lib/python2.7
@@ -361,9 +389,7 @@ cp -r /usr/lib/python2.7/dist-packages/apt $TOOLS/ubuntu_tools/lib/python2.7/ &&
 cp -r /usr/lib/python2.7/dist-packages/aptsources $TOOLS/ubuntu_tools/lib/python2.7/ && \
 cp /lib/x86_64-linux-gnu/libsystemd.so.0.21.0 $TOOLS/ubuntu_tools/lib && \
 cp /lib/x86_64-linux-gnu/libsystemd.so.0 $TOOLS/ubuntu_tools/lib && \
-cp /usr/bin/apt-extracttemplates $TOOLS/ubuntu_tools/bin
-
-RUN \
+cp /usr/bin/apt-extracttemplates $TOOLS/ubuntu_tools/bin && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0   $TOOLS/embedded/lib/libapt-private.so.0.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0.0 $TOOLS/embedded/lib/libapt-private.so.0.0.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-pkg.so.5.0   $TOOLS/embedded/lib/libapt-pkg.so.5.0 && \
@@ -382,70 +408,74 @@ ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt $TOOLS/embedded/lib/python2.7/apt &
 ln -fs $TOOLS/ubuntu_tools/lib/python2.7/aptsources $TOOLS/embedded/lib/python2.7/aptsources && \
 ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0.21.0 $TOOLS/embedded/lib/libsystemd.so.0.21.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0 $TOOLS/embedded/lib/libsystemd.so.0 && \
-ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extracttemplates
-
-RUN \
+ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extracttemplates && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
 
 # TODO: FIXME: https://github.com/flant/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
+
 # yum-utils package needed for ansible yum module to work
-#RUN apt install -y yum-utils
-#RUN \
-#cp -r /usr/lib/python2.7/dist-packages/yumutils $TOOLS/embedded/lib/python2.7/ && \
-#cp -r /usr/lib/python2.7/dist-packages/yum $TOOLS/embedded/lib/python2.7/ && \
-#cp -r /usr/lib/python2.7/dist-packages/rpm $TOOLS/embedded/lib/python2.7/ && \
-#ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpm.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpm.so && \
-#ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpmb.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpmb.so && \
-#ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpms.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpms.so && \
-#cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8.0.1 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8.0.1 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpm.so.8.0.1 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpm.so.8 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpmio.so.8 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpmio.so.8.0.1 $TOOLS/embedded/lib/ && \
-#cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8 $TOOLS/embedded/lib/ && \
-#cp /lib/x86_64-linux-gnu/libcap.so.2.25 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libcap.so.2 $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/liblua5.2.so.0 $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libdb-5.3.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libelf.so.1 $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libplc4.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libplds4.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnspr4.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_nis.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_compat.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_nis-2.27.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_files-2.27.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_nisplus-2.27.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_nisplus.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_hesiod-2.27.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_dns.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_hesiod.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_dns-2.27.so $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_files.so.2 $TOOLS/lib && \
-#cp /lib/x86_64-linux-gnu/libnss_compat-2.27.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_files.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_dns.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_nis.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_nisplus.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss3.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_hesiod.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnss_compat.so $TOOLS/lib && \
-#cp /usr/lib/x86_64-linux-gnu/libnssutil3.so $TOOLS/lib && \
-#cp -r /usr/lib/x86_64-linux-gnu/nss $TOOLS/lib
-#
-#RUN \
-#ln -fs $TOOLS/embedded/lib/librpmbuild.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8.0.1 && \
-#ln -fs $TOOLS/embedded/lib/librpmsign.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8.0.1 && \
-#ln -fs $TOOLS/embedded/lib/librpm.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpm.so.8.0.1 && \
-#ln -fs $TOOLS/embedded/lib/librpm.so.8 $TOOLS/ansible_tools_overlay/lib/librpm.so.8 && \
-#ln -fs $TOOLS/embedded/lib/librpmio.so.8 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8 && \
-#ln -fs $TOOLS/embedded/lib/librpmsign.so.8 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8 && \
-#ln -fs $TOOLS/embedded/lib/librpmio.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8.0.1 && \
-#ln -fs $TOOLS/embedded/lib/librpmbuild.so.8 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8
+RUN apt update && \
+apt install -y libcurl4-openssl-dev libssl-dev && \
+$TOOLS/embedded/bin/pip install urlgrabber && \
+apt install -y yum-utils
+
+RUN \
+cp -r /usr/lib/python2.7/dist-packages/yumutils $TOOLS/embedded/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/yum $TOOLS/embedded/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/rpmUtils $TOOLS/embedded/lib/python2.7 && \
+cp -r /usr/lib/python2.7/dist-packages/rpm $TOOLS/embedded/lib/python2.7 && \
+ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpm.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpm.so && \
+ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpmb.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpmb.so && \
+ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpms.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpms.so && \
+cp /usr/lib/python2.7/dist-packages/sqlitecachec.py $TOOLS/embedded/lib/python2.7 && \
+cp /usr/lib/python2.7/dist-packages/_sqlitecache.so $TOOLS/embedded/lib/python2.7 && \
+cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8.0.1 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8.0.1 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpm.so.8.0.1 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpm.so.8 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpmio.so.8 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpmio.so.8.0.1 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8 $TOOLS/embedded/lib/ && \
+cp /lib/x86_64-linux-gnu/libcap.so.2.25 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libcap.so.2 $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/liblua5.2.so.0 $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libdb-5.3.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libelf.so.1 $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libplc4.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libplds4.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnspr4.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_nis.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_compat.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_nis-2.27.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_files-2.27.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_nisplus-2.27.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_nisplus.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_hesiod-2.27.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_dns.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_hesiod.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_dns-2.27.so $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_files.so.2 $TOOLS/lib && \
+cp /lib/x86_64-linux-gnu/libnss_compat-2.27.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_files.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_dns.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_nis.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_nisplus.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss3.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_hesiod.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnss_compat.so $TOOLS/lib && \
+cp /usr/lib/x86_64-linux-gnu/libnssutil3.so $TOOLS/lib && \
+cp -r /usr/lib/x86_64-linux-gnu/nss $TOOLS/lib && \
+ln -fs $TOOLS/embedded/lib/librpmbuild.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8.0.1 && \
+ln -fs $TOOLS/embedded/lib/librpmsign.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8.0.1 && \
+ln -fs $TOOLS/embedded/lib/librpm.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpm.so.8.0.1 && \
+ln -fs $TOOLS/embedded/lib/librpm.so.8 $TOOLS/ansible_tools_overlay/lib/librpm.so.8 && \
+ln -fs $TOOLS/embedded/lib/librpmio.so.8 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8 && \
+ln -fs $TOOLS/embedded/lib/librpmsign.so.8 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8 && \
+ln -fs $TOOLS/embedded/lib/librpmio.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8.0.1 && \
+ln -fs $TOOLS/embedded/lib/librpmbuild.so.8 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8
 
 
 # Cleanup stapel: only runtime libs and binaries are needed
@@ -484,8 +514,6 @@ $TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/windows \
 $TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/storage \
 $TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/cloud \
 $TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/network \
-$TOOLS/embedded/lib/python2.7/site-packages/pip \
-$TOOLS/embedded/lib/python2.7/site-packages/setuptools \
 $TOOLS/embedded/lib/python2.7/site-packages/*.dist-info \
 $TOOLS/embedded/share/aclocal \
 $TOOLS/embedded/share/doc \

@@ -56,6 +56,7 @@ require (
 	github.com/mattn/go-isatty v0.0.7
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moby/buildkit v0.3.3
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
 	github.com/onsi/ginkgo v1.8.0

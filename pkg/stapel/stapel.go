@@ -11,7 +11,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 )
 
-const VERSION = "0.3.1"
+const VERSION = "0.5.0"
 
 func getVersion() string {
 	version := VERSION
