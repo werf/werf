@@ -287,27 +287,3 @@ layout: default
         </div>
     </div>
 </div>
-
-<div class="popup" data-popup="slack">
-    <div class="popup__content">
-        <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
-        <div class="popup__title">
-            Присоединяйтесь к англоязычному комьюнити в Slack <a href="https://cncf.io" target="_blank">CNCF</a>
-        </div>
-        <div class="popup__subtitle">
-            Шаг 1:
-        </div>
-        <a href="{{ site.social_links[page.lang].slack_1 }}" target="_blank" class="page__btn page__btn_w popup__btn">
-            Получить приглашение в Slack CNCF
-        </a>
-        <div class="popup__subtitle">
-            Шаг 2:
-        </div>
-        <a href="{{ site.social_links[page.lang].slack_2 }}" target="_blank" class="page__btn page__btn_w popup__btn">
-            Войти в канал #werf
-        </a>
-        <div class="popup__text">
-            Мы выбрали Slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.
-        </div>
-    </div>
-</div>
