@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("Stapel builder with ansible", func() {
+var _ = Describe("Stapel builder with ansible", func() {
 	Context("when building image based on alpine, ubuntu or centos", func() {
 		AfterEach(func() {
 			werfPurge("general", werfexec.CommandOptions{})
