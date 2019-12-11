@@ -500,17 +500,22 @@ All of these annotations can be combined and used together for resource.
 
 **TIP** Use `"werf.io/track-termination-mode": NonBlocking` when you need a StatefulSet with `OnDelete` manual update strategy, but you don't need to block deploy process till StatefulSet is updated immediately.
 
-**TIP** Show service messages example:
+#### Examples of using annotations
 
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif)
-
-**TIP** Skip logs example:
-
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif)
-
-**TIP** NonBlocking track termination mode example:
-
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif)
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'show-service-messages')">show-service-messages</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'skip-logs')">skip-logs</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'track-termination-mode')">NonBlocking track-termination-mode</a>
+</div>
+<div id="show-service-messages" class="tabs__content active">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif" />
+</div>
+<div id="skip-logs" class="tabs__content">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif" />
+</div>
+<div id="track-termination-mode" class="tabs__content">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif" />
+</div>
 
 #### Track termination mode
 

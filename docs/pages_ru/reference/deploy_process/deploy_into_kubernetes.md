@@ -504,17 +504,24 @@ metadata:
 
 **СОВЕТ** Используйте аннотацию `"werf.io/track-termination-mode": NonBlocking`, когда описываете в релизе объект StatefulSet с ручной стратегией выката (параметр `OnDelete`), и не хотите блокировать весь процесс деплоя из-за этого объекта, дожидаясь его обновления.
 
-**СОВЕТ** Пример использования аннотации `werf.io/show-service-messages`:
+#### Примеры использования аннотаций
 
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif)
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'show-service-messages')">show-service-messages</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'skip-logs')">skip-logs</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'track-termination-mode')">NonBlocking track-termination-mode</a>
+</div>
 
-**СОВЕТ** Пример использования аннотации `werf.io/skip-logs`:
+<div id="show-service-messages" class="tabs__content active">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif" />
+</div>
+<div id="skip-logs" class="tabs__content">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif" />
+</div>
 
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif)
-
-**СОВЕТ** Пример использования аннотации `werf.io/track-termination-mode` с указанным значеним `NonBlocking`:
-
-![Demo](https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif)
+<div id="track-termination-mode" class="tabs__content">
+  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif" />
+</div>
 
 #### Track termination mode
 
