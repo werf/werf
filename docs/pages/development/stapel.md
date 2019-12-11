@@ -9,18 +9,18 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux distribution, which contains:
 
- * Glibc;
- * Gnu cli tools (install, patch, find, wget, grep, rsync and other);
- * Git cli util.
- * Bash.
- * Python interpreter.
- * Ansible.
+ * Glibc
+ * Gnu cli tools (install, patch, find, wget, grep, rsync and other)
+ * Git cli util
+ * Bash
+ * Python interpreter
+ * Ansible
 
-Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following dirs:
+Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following directories:
 
- * `/.werf/stapel/(etc|lib|lib64|libexec)`;
- * `/.werf/stapel/x86_64-lfs-linux-gnu/bin`;
- * `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`.
+ * `/.werf/stapel/(etc|lib|lib64|libexec)`
+ * `/.werf/stapel/x86_64-lfs-linux-gnu/bin`
+ * `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`
 
 The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSION.so` and `/.werf/stapel/x86_64-lfs-linux-gnu/bin/ld`). All tools from `/.werf/stapel` are compiled and linked only agains libraries contained in `/.werf/stapel`. So stapel is a self-contained distribution of tools and libraries without external dependencies with an independent Glibc, which allows running these tools in arbitrary environment (independently of linux distribution and libraries versions in this distribution).
 
@@ -53,4 +53,4 @@ Stapel image needs to be updated time to time to update ansible or when new vers
     ```bash
     scripts/stapel/publish.sh NEW_VERSION
     ```
-6. As new stapel version has been published change `VERSION` golang constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.
+6. As new stapel version has been published change `VERSION` Go constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.

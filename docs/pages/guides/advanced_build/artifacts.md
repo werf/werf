@@ -164,7 +164,7 @@ import:
 
 In the optimized config, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` image.
 
-Pay attention, that `go-booking` image based on the ubuntu image, but not on the golang image.
+Pay attention, that `go-booking` image based on the `ubuntu` image, but not on the `golang` image.
 
 Build the application with the modified config:
 ```yaml
