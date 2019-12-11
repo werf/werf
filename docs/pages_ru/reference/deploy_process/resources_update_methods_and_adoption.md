@@ -5,37 +5,36 @@ permalink: documentation/reference/deploy_process/resources_update_methods_and_a
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-<div id="outdatedWarning" class="docs__outdated active">
-    Статья в процессе перевода.
-</div>
+Трехстороннее слияние — способ применения изменений к ресурсам Kubernetes, который для каждого ресурса берет его предыдущую конфигурацию, новую конфигурацию и его текущее состояние, а затем вычисляет патч исправлений и применяет его к ресурсу в кластере.
+Этот метод используется командой `kubectl apply`.
 
-> Three way merge is under development now. This page contains implementation notes and other debug and development info about resources update method which werf currently uses
-
-Three way merge is a way of applying changes to Kubernetes resources which uses previous resource configuration, new resource configuration and current resource state to calculate and then apply a three-way-merge patch with new changes for for each resource. This method used by the `kubectl apply` command.
+werf полностью совместим с Helm 2, который использует применение патчей методом двухстороннего слияния. Этот метод подразумевает создание патча между предыдущим и новым состоянием ресурсов чарта.
 
 werf is fully compatible with the Helm 2, which makes use of two-way-merge patches. This method implies creating patches between previous chart resource configuration and a new one.
+У метода двустороннего слияния есть проблема: конфигурация ресурса в чарте может расходиться с состоянием ресурса в кластере, если пользователь вносит изменения вручную (например, с помощью команды `kubectl edit`).
+Предположим, что в чарте у ресурса указано значение `replicas=5`, но после деплоя чарта конфигурация ресурса была изменена вручную — установлено `replicas=3` с помощью команды `kubectl edit`.
+Последующий вызов деплоя не установит `replicas=5`, как вы могли ожидать, т.к. метод двухстороннего слияния не учитывает реальную конфигурацию ресурса, т.е. не учитывает его текущее состояние.
 
-Two-way-merge method have a problem: chart resource configuration gets out of sync with the current resource state when user suddenly makes changes to the current resource state (via `kubectl edit` command for example). For example if you have `replicas=5` in the chart template and set `replicas=3` in the live resource state (by `kubectl edit` command), then subsequent werf deploy calls will not set replicas to 5 as expected, because two-way-merge patches does not take into account current live resource state.
+## Методы обновления ресурсов
 
-## Resources update methods
+В настоящий момент werf переходит с двухстороннего метода обновления ресурсов, применяемого раньше по умолчанию, на трехсторонний и сейчас доступны следующие режимы работы:
 
-werf currently migrating from two-way-merge to three-way-merge method. Following methods of resources update are avaiable:
+ 1. Двухстороннее слияние с патчами исправления.
+ 2. Наложение патчей трехстороннего слияния.
 
- 1. Two-way-merge and repair patches.
- 2. Three-way-merge patches.
+### Двухстороннее слияние с патчами исправления
 
-### Two-way-merge and repair patches
-
-With this method werf still applies two-way-merge patches. The following annotations are set into each chart resource by the werf when updating these resources:
+Используя этот метод, werf применяет к ресурсам патчи исправления, полученные в результате работы метода двухстороннего слияния. 
+При обновлении ресурсов werf устанавливает у каждого ресурса чарта следующие аннотации:
  * `debug.werf.io/repair-patch`;
  * `debug.werf.io/repair-patch-errors`;
  * `debug.werf.io/repair-messages`.
 
-Annotation `debug.werf.io/repair-patch` contains calculated patch json between current resource state and new chart resource configuration.
+В аннотацию `debug.werf.io/repair-patch` сохраняется расхождение текущего состояния ресурса и новой конфигурацией.
 
-This patch can be manually applied to repair current resource state to be in sync with the desired chart resource configuration.
+Этот патч необходимо применить вручную, чтобы привести текущее состояние ресурса в соответствии с конфигурацией ресурса, указанной в чарте.
 
-For example, if resource contains the following repair patch:
+Например, если у ресурса в аннотации указан следующий патч:
 
 ```yaml
 metadata:
@@ -43,97 +42,105 @@ metadata:
     "debug.werf.io/repair-patch": '{"data":{"node.conf":"PROPER CONTENT"}}'
 ```
 
-Then user can repair resource state with the following command:
+То пользователь может синхронизировать текущее состояние ресурса с его конфигурацией в чарте, выполнив следующую команду:
 
 ```bash
 kubectl -n mynamespace patch cm/myconfigmap '{"data":{"node.conf":"PROPER CONTENT"}}'
 ```
 
-Also during deploy process a WARNING message will be written to the screen if repair-patch needs to be applied by an administrator.
+Кроме того, в процессе деплоя werf выводит предупреждение (сообщение с префиксом WARNING) о сформированном патче, который должен быть применен администратором.
 
-Annotation `debug.werf.io/repair-patch-errors` will contain errors occurred when creating a repair patch, deploy process in this case will not be interrupted.
+Аннотация `debug.werf.io/repair-patch-errors` содержит ошибки, возникшие в процессе создания патча.
+Процесс деплоя, в случае появления такой ошибки, не будет прерван.
 
-Annotation `debug.werf.io/repair-messages` will contain warnings written to the deploy log along with debug developer messages.
+Аннотация `debug.werf.io/repair-messages` содержит предупреждения, которые werf также выводит в журнал, плюс отладочную информацию, которая можеть быть полезна разработчику.
 
-### Three-way-merge patches
+### Наложение патчей трехстороннего слияния
 
-With this method werf will apply three-way-merge patches which take into accout resource version from the previous release, resource version from current chart template and live resource version from cluster to calculate a patch. This patch should transform resource state to match chart template configuration.
+С помощью этого метода werf будет применять метод трехстороннего слияния с наложением патчей, которые учитывают предыдущую конфигурацию ресурса, новую конфигурацию ресурса и текущее состояние ресурса в кластере. 
+Такой патч должен изменить ресурс таким образом, чтобы он соответствовал описанной в чарте конфигурации.
 
-## Selecting resources update method
+## Выбор метода обновления ресурсов
 
-To select resources update method werf has an option called `WERF_THREE_WAY_MERGE_MODE` (or `--three-way-merge-mode` cli option), which can have one of the following values:
+Для выбора метода обновления ресурсов werf использует переменную окружения `WERF_THREE_WAY_MERGE_MODE` или CLI-параметр `--three-way-merge-mode`, которые могут иметь одно из следующих значений:
 
- - "disabled" — do not use three-way-merge patches during updates neither for already existing nor new releases, use two-way-merge and repair patches method for all releases;
- - "enabled" — always use three-way-merge patches method during updates for already existing and new releases;
- - "onlyNewReleases" — new releases created since that mode is active will use three-way-merge patches method during updates, while already existing releases continue to use old helm two-way-merge and repair patches method.
+- "disabled" — не использовать патчи трехстороннего слияния ни для уже существующих, ни для новых релизов. Использовать двухстороннее слияние с патчами исправлений для всех релизов;
+- "enabled" — всегда использовать патчи трехстороннего слияния во время обновления — как для существующих, так и для новых релизов;
+- "onlyNewReleases" — новые релизы, созданные после включения этого режима, будут использовать патчи трехстороннего слияния во время обновления, в то время как уже существующие релизы продолжат обновляться с использованием двухстороннего слияния.
 
-Default resource update method before 01.12.2019 is `disabled`.
+Начиная с 01.12.2019 метод обновления ресурсов по умолчанию — `onlyNewReleases`.
 
-After 01.12.2019 default mode will be `onlyNewReleases`.
+После 15.12.2019 метод обновления ресурсов по умолчанию будет — `enabled`.
 
-After 15.12.2019 default mode will be `enabled`.
+После 01.03.2020 werf не будет использовать переменную окружения `WERF_THREE_WAY_MERGE_MODE` (и CLI-параметр `--three-way-merge-mode`), а всегда будет применять метод трехстороннего слияния.
 
-After 01.03.2020 there will be no `WERF_THREE_WAY_MERGE_MODE` option to disable three-way-merge, werf will always use three-way-merge patches method.
+Для переключения метода обновления ресурсов с двухстороннего на трехсторонний необходимо установить `WERF_THREE_WAY_MERGE_MODE=enabled` и наоборот — для переключения метода обновления ресурсов с трехстороннего назад на двухсторонний необходимо установить `WERF_THREE_WAY_MERGE_MODE=disabled`.
 
-Default update method could be redefined with `WERF_THREE_WAY_MERGE_MODE` option.
+## Работа совместно с HPA
 
-Already existing release can be switched to use three-way-merge patches method by setting `WERF_THREE_WAY_MERGE_MODE=enabled`.
+Функционал горизонтального автомасштабирования подов ([Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)) автоматически изменяет количество реплик контроллера (Replication Controller, Deployment  или ReplicaSet).
 
-The release that already uses three-way-merge patches method can be switched back to two-way-merge and repair patches by setting `WERF_THREE_WAY_MERGE_MODE=disabled`.
+Если включить HPA и явно указать в шаблоне чарта количество реплик (параметр `spec.replicas`), то при деплое работа HPA будет учитываться так, как если бы вручную изменили параметр `spec.replicas`. 
+Т.е. если в результате работы HPA изменится количество реплик, то при деплое, независимо от метода обновления ресурсов, это изменение будет учтено и войдет либо в патч исправления, в случае двухстороннего метода слияния, либо ресурс будет изменен после наложения патча работы трехстороннего метода слияния.
 
-## Deal with HPA
-
-[The Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) automatically scales the number of pods in a replication controller, deployment or replica set.
-
-When HPA is enabled and user has set `spec.replicas` to static number in chart templates, then repair patch may detect a change in the live state of the object `spec.replicas` field, because this field has been changed by the autoscaler. To disable such repair patches user may either delete `spec.replicas` from chart configuration or define [`werf.io/set-replicas-only-on-creation` annotation](#werf-io-set-replicas-only-on-creation).
+Исключить такое поведение можно либо удалив из чарта явное указание реплик в параметре `spec.replicas`, либо установив у ресурса аннотацию [`werf.io/set-replicas-only-on-creation`](#werf-io-set-replicas-only-on-creation).
 
 #### `werf.io/set-replicas-only-on-creation`
 
-This annotation tells werf that resource `spec.replicas` field value from chart template should only be used when initializing a new resource.
+Данная аннотация указывает werf, что параметр `spec.replicas` ресурса должен изменяться в соответствии с конфигурацией чарта только при инициализации нового ресурса. 
+Соответственно, werf будет игнорировать фактическое изменение параметра `spec.replicas` ресурса при последующих его обновлениях в процессе деплоя.
 
-werf will ignore `spec.replicas` field changes on subsequent resource updates.
+Эту аннотацию рекомендуется устанавливать при включенном [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
 
-This annotation should be turned on when [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) is enabled.
+## Работа совместно с VPA
 
-## Deal with VPA
+Функционал вертикального автомасштабирования подов [Vertical Pod Autoscaler](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) может выдавать рекомендации по установлению ресурсам параметров `CPU requests` и `memory requests` либо может автоматически их изменять.
 
-[The Vertical Pod Autoscaler](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) can recommend values for CPU and memory requests, or it can automatically update values for CPU and memory requests.
+Если включить VPA и явно указать в шаблоне чарта параметры использования ресурсов (параметр `resources`), то при деплое работа VPA будет учитываться так, как если бы вручную изменили эти параметры. 
+Т.е. если в результате работы VPA изменятся параметры использования ресурсов, то при деплое, независимо от метода обновления ресурсов, это изменение будет учтено и войдет либо в патч исправления, в случае двухстороннего метода слияния, либо ресурс будет изменен после наложения патча работы трехстороннего метода слияния.
 
-When VPA is enabled and user has set `resources` to some static settings in chart templates, then repair patch may detect a change in the live state of the obje ct `resources` field, because this field has been changed by the autoscaler. To disable such repair patches user may either delete `resources` settings from chart configuration or define [`werf.io/set-resources-only-on-creation` annotation](#werf-io-set-resources-only-on-creation).
+Исключить такое поведение можно либо удалив из чарта явное указание количества ресурсов (параметр `resources`), либо установив аннотацию [`werf.io/set-resources-only-on-creation` annotation](#werf-io-set-resources-only-on-creation) у соответствующего ресурса.
 
 #### `werf.io/set-resources-only-on-creation`
 
-This annotation tells werf that resource `resources` field value from chart template should only be used when initializing a new resource.
+Данная аннотация указывает werf, что параметр `resources` у объекта в кластере должен изменяться в соответствии с конфигурацией чарта только при инициализации нового объекта. 
+Соответственно, werf будет игнорировать фактическое изменение параметра `resources` объекта кластера при последующих его обновлениях в процессе деплоя.
 
-werf will ignore `resources` field changes on subsequent resource updates.
+Эту аннотацию рекомендуется устанавливать при включенном [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler).
 
-This annotation should be turned on when [VPA](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler) is enabled.
+## Принятие изменений ресурсов
 
-## Resources adoption
+Возможны 2 случая, когда указанный в чарте ресурс уже существует в кластере. Они рассматриваются далее.
 
-There are 2 cases when resource defined in the chart already exists in the cluster.
+### Установка нового релиза
 
-### Installing new release
+При установке нового релиза ресурс может уже существовать в кластере.
 
-When installing a new release a resource can already exists in the cluster. In this case werf will exit with an error. A resource that already exists will not be marked as adopted into the release. New release will be installed in the FAILED state and deleting this failed release will not cause werf to delete not adopted during release installation resources.
+В этом случае werf завершит процесс деплоя с ошибкой.
+Ресурс, который уже существует в кластере, не будет помечен как принятый в релиз. 
+Новый релиз будет установлен со статусом FAILED, и удаление этого релиза не приведет к удалению ресурсов, которые не были помечены как принятые в релиз.
 
-### Updating release
+### Обновление релиза
 
-User can define a new resource in the chart templates of already existing release. In this case werf will also exit with an error. A resource that already exists will not be marked as adopted into the release.
+Пользователь может определить новый ресурс в шаблонах чарта уже существующего релиза. 
+В этом случае werf также завершит процесс деплоя с ошибкой.
+Ресурс, который уже существует в кластере, не будет помечен как принятый в релиз.
 
-### How to adopt resource
+### Способы принятия существующего ресурса в релиз
 
-To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the resource manifest in the chart and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart.
+Чтобы разрешить принятие в релиз конфигурации уже существующего ресурса необходимо установить аннотацию `werf.io/allow-adoption-by-release=RELEASENAME` в манифест реального ресурса и запустить процесс деплоя. 
+При принятии ресурса в релиз, werf создаст патч с использованием метода трехстороннего слияния, чтобы привести состояние существующего ресурса к описанной в чарте конфигурации.
 
-NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption, three-way-merge patch will be used anyway during adoption process.
+Обратите внимание, что изменение параметра `WERF_THREE_WAY_MERGE_MODE` не влияет на настройки принятия ресурсов, т.к. в любом случае применяется метод трехстороннего слияния.
 
-#### Three way merge patches and adoption
+#### Патчи трехстороннего слияния и принятие ресурса
 
-Three way merge patches are always used when adopting already existing resource into the release (`WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adopter).
+При принятии существующего ресурса в релиз, всегда используются патчи трехстороннего слияния (параметр `WERF_THREE_WAY_MERGE_MODE` не влияют на это поведение).
 
-**NOTE** After adoption live resource manifest may not fully match resource manifest in the chart. In the cases when additional fields are defined in the live resource — these fields will not be deleted and stay in the live resource version.
+**ЗАМЕЧАНИЕ** После принятия ресурса его действующий манифест может не полностью соответствовать конфигурации ресурса в чарте. 
+Если у принимаемого в релиз ресурса установлены поля, не описанные в конфигурации ресурса в чарте, то эти поля не будут удалены, т.о. фактически останутся у ресурса, но будут отсутствовать в конфигурации ресурса в релизе.
 
-For example, let's say we have an already existing Deploy in the cluster with the following spec:
+Например, допустим что у нас есть существующий в кластере объект Deployment со следующей конфигурацией:
 
 ```yaml
 apiVersion: apps/v1
@@ -164,7 +171,7 @@ spec:
         image: ubuntu:18.04
 ```
 
-And following Deployment is defined in the chart templates:
+Допустим, что в шаблоне чарта у этого объекта следующая конфигурация:
 
 ```yaml
 apiVersion: apps/v1
@@ -189,4 +196,6 @@ spec:
         image: ubuntu:18.04
 ```
 
-After adoption werf will change `replicas=1` to `replicas=2`. Extra data `metadata.annotations.extra=data`, `spec.template.metadata.labels.mylable=myvalue` and `spec.template.spec.containers[]` container named `additional` will stay in the final live resource version, because these fields are not defined in the chart template. User should remove such fields manually if it is needed.
+При принятии ресурса в процессе деплоя werf изменит `replicas=1` на `replicas=2`. 
+Остальные данные ресурса, такие как `metadata.annotations.extra=data`, `spec.template.metadata.labels.mylable=myvalue` и секция контейнера `additional` в `spec.template.spec.containers[]`, останутся у реального объекта, т.к. они не включены в шаблон чарта. 
+Пользователь должен удалить такие части объекта самостоятельно, если это необходимо.
