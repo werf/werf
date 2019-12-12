@@ -122,19 +122,19 @@ layout: default
     <div class="page__container">
         <ul class="features__list">
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_easy"></div>
-                <div class="features__list-item-title">Easy to start</div>
-                <div class="features__list-item-text">Remain regular build process with Dockerfile. Take your project and put into werf easily right now.</div>
-            </li>
-            <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_config"></div>
-                <div class="features__list-item-title">Compact configuration file</div>
-                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using Go templates.</div>
-            </li>
-            <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Complete application lifecycle management</div>
                 <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
+                <div class="features__list-item-title">Comfortable deployment to <span>Kubernetes</span></div>
+                <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-title">Easy to start</div>
+                <div class="features__list-item-text">Remain regular build process with Dockerfile. Take your project and put into werf easily right now.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>
@@ -153,9 +153,9 @@ layout: default
             </li>
             <li class="features__list-item"></li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
-                <div class="features__list-item-title">Comfortable deployment to <span>Kubernetes</span></div>
-                <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
+                <div class="features__list-item-icon features__list-item-icon_config"></div>
+                <div class="features__list-item-title">Compact configuration file</div>
+                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using Go templates.</div>
             </li>
             <li class="features__list-item"></li>
         </ul>        
@@ -289,4 +289,3 @@ layout: default
         </div>
     </div>
 </div>
-
