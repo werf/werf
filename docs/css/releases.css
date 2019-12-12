@@ -175,3 +175,21 @@
   background-color: #0066FF;
   color: white;
 }
+
+.releases__content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.releases__menu-item  {
+    margin-right: 5px;
+    margin-right: 10px;
+    position: relative;
+}
+
+.releases__version  {
+    font-size: 30px;
+}
+
