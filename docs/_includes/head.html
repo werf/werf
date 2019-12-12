@@ -3,9 +3,10 @@
 <meta name="viewport" content="width=1260">
 <meta name="description" content="{% if page.summary %}{{ page.summary | strip_html | strip_newlines | truncate: 160 }}{% endif %}">
 <meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+{% if page.multilang %}
 <link rel="alternate" hreflang="ru" href="{{ site.site_urls["ru"] }}{{ site.baseurl}}{{ page.url }}" />
 <link rel="alternate" hreflang="en" href="{{ site.site_urls["en"] }}{{ site.baseurl}}{{ page.url }}" />
-
+{% endif %}
 <title>{{ page.title }} | {{ site.site_title }}</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ site.baseurl }}/apple-touch-icon.png">

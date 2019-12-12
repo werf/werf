@@ -59,15 +59,22 @@ defaults:
       sidebar: sidebar
       topnav: topnav
       sitemap_include: true
+      multilang: true
   - scope:
       path: "pages_ru"
       type: "pages"
     values:
       lang: ru
   - scope:
+      path: "pages/cli"
+      type: "pages"
+    values:
+      multilang: false
+  - scope:
       path: "pages_ru/cli"
       type: "pages"
     values:
+      multilang: false
       sitemap_include: false
 
 
