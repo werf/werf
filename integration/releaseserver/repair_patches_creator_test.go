@@ -9,6 +9,7 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/integration/utils"
 	"github.com/flant/werf/integration/utils/werfexec"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -38,18 +39,26 @@ var _ = Describe("Repair patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
 
+		GetAndUpdateMycm1:
 			mycm1, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			mycm1.Data = make(map[string]string)
 			mycm1.Data["newKey"] = "newValue"
 			_, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Update(mycm1)
+			if errors.IsConflict(err) {
+				goto GetAndUpdateMycm1
+			}
 			Expect(err).NotTo(HaveOccurred())
 
+		GetAndUpdateMydeploy1:
 			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			var replicas int32 = 2
 			mydeploy1.Spec.Replicas = &replicas
 			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy1)
+			if errors.IsConflict(err) {
+				goto GetAndUpdateMydeploy1
+			}
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(werfDeploy("repair_patches_creator_app1-001", werfexec.CommandOptions{

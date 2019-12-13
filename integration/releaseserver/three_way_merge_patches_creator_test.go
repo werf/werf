@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -174,6 +175,7 @@ var _ = Describe("Three way merge patches creator", func() {
 			By("changing release resources manually")
 
 			changeResourcesManually := func() {
+			GetAndUpdateMydeploy1:
 				mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 
@@ -182,22 +184,25 @@ var _ = Describe("Three way merge patches creator", func() {
 				}
 				mydeploy1.Spec.Replicas = new(int32)
 				*mydeploy1.Spec.Replicas = 2
-
 				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy1)
+				if errors.IsConflict(err) {
+					goto GetAndUpdateMydeploy1
+				}
 				Expect(err).NotTo(HaveOccurred())
 
+			GetAndUpdateMycm1:
 				mycm1, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
-
 				delete(mycm1.Data, "moloko")
 				mycm1.Data["aloe"] = "cactus"
 				mycm1.Data["testo"] = "cheburek"
-
 				mycm1.Annotations["extraKey"] = "value"
 				mycm1.Labels = make(map[string]string)
 				mycm1.Labels["extraKey"] = "value"
-
 				_, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Update(mycm1)
+				if errors.IsConflict(err) {
+					goto GetAndUpdateMycm1
+				}
 				Expect(err).NotTo(HaveOccurred())
 			}
 

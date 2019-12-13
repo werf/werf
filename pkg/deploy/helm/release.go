@@ -100,7 +100,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 		}
 
 		deletedHooks := map[string]bool{}
-		msg := fmt.Sprintf("Deleting helm hooks getting from existing release revisions (%d)", len(resp.Releases))
+		msg := fmt.Sprintf("Deleting helm hooks from all existing release revisions (%d)", len(resp.Releases))
 		if err := logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 			for _, rev := range resp.Releases {
 				revHooksToDelete := map[string]Template{}
@@ -120,13 +120,13 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 				}
 
 				if len(revHooksToDelete) != 0 {
-					msg := fmt.Sprintf("Processing helm hooks getting from revision %d", rev.Version)
+					msg := fmt.Sprintf("Processing release %s revision %d", releaseName, rev.Version)
 					_ = logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 						for hookId, hookTemplate := range revHooksToDelete {
 							deletedHooks[hookId] = true
 
 							if err := removeReleaseNamespacedResource(hookTemplate, rev.Namespace); err != nil {
-								logboek.LogErrorF("WARNING: Deleting helm hook %s failed: %s", hookTemplate.Metadata.Name, err)
+								logboek.LogErrorF("WARNING: Failed to delete helm hook %s: %s", hookTemplate.Metadata.Name, err)
 							}
 						}
 
