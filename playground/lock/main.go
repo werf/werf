@@ -5,22 +5,22 @@ import (
 	"os"
 	"time"
 
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 )
 
 func main() {
-	err := lock.Init(werf.GetServiceDir())
+	err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks"))
 	if err != nil {
 		panic(err)
 	}
 
-	opts := lock.LockOptions{}
+	opts := shluz.LockOptions{}
 
 	if os.Getenv("READONLY") == "1" {
 		opts.ReadOnly = true
 	}
 
-	err = lock.WithLock("helo", opts, func() error {
+	err = shluz.WithLock("helo", opts, func() error {
 		fmt.Printf("Lock acquired! Sleep for 10 seconds \n")
 		time.Sleep(10 * time.Second)
 		return nil

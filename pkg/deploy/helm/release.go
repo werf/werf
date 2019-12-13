@@ -15,7 +15,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -176,7 +176,7 @@ type ChartOptions struct {
 
 func withLockedHelmRelease(releaseName string, f func() error) error {
 	lockName := fmt.Sprintf("helm_release.%s-kube_context.%s", releaseName, helmSettings.KubeContext)
-	return lock.WithLock(lockName, lock.LockOptions{}, f)
+	return shluz.WithLock(lockName, shluz.LockOptions{}, f)
 }
 
 func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) error {

@@ -2,12 +2,14 @@ package deploy
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
@@ -15,7 +17,6 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -114,7 +115,7 @@ func runDeploy() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(werf.GetServiceDir()); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

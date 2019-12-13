@@ -9,8 +9,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 )
 
@@ -26,7 +26,7 @@ func HostCleanup(options HostCleanupOptions) error {
 		DryRun:         options.DryRun,
 	}
 
-	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	return shluz.WithLock("host-cleanup", shluz.LockOptions{Timeout: time.Second * 600}, func() error {
 		if err := logboek.LogProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeContainersCleanup(commonOptions)
 		}); err != nil {
@@ -39,7 +39,7 @@ func HostCleanup(options HostCleanupOptions) error {
 			return nil
 		}
 
-		return lock.WithLock("gc", lock.LockOptions{}, func() error {
+		return shluz.WithLock("gc", shluz.LockOptions{}, func() error {
 			if err := tmp_manager.GC(commonOptions.DryRun); err != nil {
 				return fmt.Errorf("tmp files gc failed: %s", err)
 			}
@@ -60,7 +60,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
 			imageLockName := image.ImageLockName(imgName)
-			isLocked, err := lock.TryLock(imageLockName, lock.TryLockOptions{})
+			isLocked, err := shluz.TryLock(imageLockName, shluz.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
 			}
@@ -70,7 +70,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 				continue
 			}
 
-			lock.Unlock(imageLockName) // no need to hold a lock
+			shluz.Unlock(imageLockName) // no need to hold a lock
 
 			imagesToRemove = append(imagesToRemove, img)
 		} else {
@@ -112,7 +112,7 @@ func safeContainersCleanup(options CommonOptions) error {
 
 		err := func() error {
 			containerLockName := image.ContainerLockName(containerName)
-			isLocked, err := lock.TryLock(containerLockName, lock.TryLockOptions{})
+			isLocked, err := shluz.TryLock(containerLockName, shluz.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
 			}
@@ -121,7 +121,7 @@ func safeContainersCleanup(options CommonOptions) error {
 				logboek.LogInfoF("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
-			defer lock.Unlock(containerLockName)
+			defer shluz.Unlock(containerLockName)
 
 			if err := containersRemove([]types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)

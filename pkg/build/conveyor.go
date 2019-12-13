@@ -9,7 +9,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -103,14 +103,14 @@ func (c *Conveyor) ReInitRuntimeFields() {
 	c.globalLocks = nil
 }
 
-func (c *Conveyor) AcquireGlobalLock(name string, opts lock.LockOptions) error {
+func (c *Conveyor) AcquireGlobalLock(name string, opts shluz.LockOptions) error {
 	for _, lockName := range c.globalLocks {
 		if lockName == name {
 			return nil
 		}
 	}
 
-	if err := lock.Lock(name, opts); err != nil {
+	if err := shluz.Lock(name, opts); err != nil {
 		return err
 	}
 
@@ -129,7 +129,7 @@ func (c *Conveyor) ReleaseGlobalLock(name string) error {
 	}
 
 	if ind >= 0 {
-		if err := lock.Unlock(name); err != nil {
+		if err := shluz.Unlock(name); err != nil {
 			return err
 		}
 		c.globalLocks = append(c.globalLocks[:ind], c.globalLocks[ind+1:]...)
@@ -142,7 +142,7 @@ func (c *Conveyor) ReleaseAllGlobalLocks() error {
 	for len(c.globalLocks) > 0 {
 		var lockName string
 		lockName, c.globalLocks = c.globalLocks[0], c.globalLocks[1:]
-		if err := lock.Unlock(lockName); err != nil {
+		if err := shluz.Unlock(lockName); err != nil {
 			return err
 		}
 	}
@@ -183,7 +183,7 @@ func (c *Conveyor) buildStages(stageRepo string, opts BuildStagesOptions) error 
 	if err != nil {
 		return err
 	}
-	defer lock.Unlock(lockName)
+	defer shluz.Unlock(lockName)
 
 	return c.runPhases(phases)
 }
@@ -228,7 +228,7 @@ func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts Publi
 	if err != nil {
 		return err
 	}
-	defer lock.Unlock(lockName)
+	defer shluz.Unlock(lockName)
 
 	return c.runPhases(phases)
 }
@@ -267,7 +267,7 @@ func (c *Conveyor) buildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 	if err != nil {
 		return err
 	}
-	defer lock.Unlock(lockName)
+	defer shluz.Unlock(lockName)
 
 	return c.runPhases(phases)
 }
@@ -293,7 +293,7 @@ func (c *Conveyor) projectName() string {
 
 func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
 	lockName := fmt.Sprintf("%s.images", c.projectName())
-	err := lock.Lock(lockName, lock.LockOptions{ReadOnly: true})
+	err := shluz.Lock(lockName, shluz.LockOptions{ReadOnly: true})
 	if err != nil {
 		return "", fmt.Errorf("error locking %s: %s", lockName, err)
 	}

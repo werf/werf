@@ -14,7 +14,7 @@ import (
 
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -51,7 +51,7 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 func imagesCleanup(options ImagesCleanupOptions) error {
 	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", options.CommonRepoOptions.ImagesRepoManager.ImagesRepo())
-	return lock.WithLock(imagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	return shluz.WithLock(imagesCleanupLockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImagesByImageName, err := repoImagesByImageName(options.CommonRepoOptions)
 		if err != nil {
 			return err

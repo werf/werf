@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/shluz"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -13,7 +15,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -68,7 +69,7 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(werf.GetServiceDir()); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

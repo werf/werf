@@ -2,16 +2,17 @@ package build_and_publish
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -102,7 +103,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(werf.GetServiceDir()); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

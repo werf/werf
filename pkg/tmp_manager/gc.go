@@ -11,7 +11,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -21,7 +21,7 @@ var (
 )
 
 func runGC() error {
-	return lock.WithLock("gc", lock.LockOptions{}, func() error {
+	return shluz.WithLock("gc", shluz.LockOptions{}, func() error {
 		return GC(false)
 	})
 }

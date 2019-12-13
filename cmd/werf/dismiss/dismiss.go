@@ -2,17 +2,18 @@ package dismiss
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -81,7 +82,7 @@ func runDismiss() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(werf.GetServiceDir()); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 
