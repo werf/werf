@@ -122,19 +122,19 @@ layout: default
     <div class="page__container">
         <ul class="features__list">
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_easy"></div>
-                <div class="features__list-item-title">Легко начать</div>
-                <div class="features__list-item-text">Начните использовать werf с существующим Dockerfile.</div>
-            </li>
-            <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_config"></div>
-                <div class="features__list-item-title">Компактный файл конфигурации</div>
-                <div class="features__list-item-text">Собирайте несколько образов, используя один файл конфигурации, повторно используйте общие части с помощью Go-шаблонов.</div>
-            </li>
-            <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Полный цикл управления жизненным циклом приложения</div>
                 <div class="features__list-item-text">Управляйте процессом сборки, выкатом приложения в Kubernetes и очисткой неиспользуемых образов.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
+                <div class="features__list-item-title">Удобный деплой в <span>Kubernetes</span></div>
+                <div class="features__list-item-text">Выкатывайте приложение в Kubernetes, используя стандартный менеджер пакетов с интерактивным отслеживанием процесса и получением событий и логов в режиме реального времени.</div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-title">Легко начать</div>
+                <div class="features__list-item-text">Начните использовать werf с существующим Dockerfile.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>
@@ -153,9 +153,9 @@ layout: default
             </li>
             <li class="features__list-item"></li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
-                <div class="features__list-item-title">Удобный деплой в <span>Kubernetes</span></div>
-                <div class="features__list-item-text">Выкатывайте приложение в Kubernetes, используя стандартный менеджер пакетов с интерактивным отслеживанием процесса и получением событий и логов в режиме реального времени.</div>
+                <div class="features__list-item-icon features__list-item-icon_config"></div>
+                <div class="features__list-item-title">Компактный файл конфигурации</div>
+                <div class="features__list-item-text">Собирайте несколько образов, используя один файл конфигурации, повторно используйте общие части с помощью Go-шаблонов.</div>
             </li>
             <li class="features__list-item"></li>
         </ul>        
