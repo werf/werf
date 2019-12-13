@@ -615,18 +615,18 @@ If resource manifest in the chart contains logical or syntax errors then werf wi
 For example, having following typos in the chart templates (`envs` instead of `env` and `redinessProbe` instead of `readinessProbe`):
 
 ```
-      containers:
-      - name: main
-        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.04
-        redinessProbe:
-          tcpSocket:
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-      envs:
-      - name: MYVAR
-        value: myvalue
+containers:
+- name: main
+  command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+  image: ubuntu:18.04
+  redinessProbe:
+    tcpSocket:
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+envs:
+- name: MYVAR
+  value: myvalue
 ```
 
 Validation output will be like:

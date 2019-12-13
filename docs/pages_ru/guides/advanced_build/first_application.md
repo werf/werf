@@ -37,14 +37,14 @@ source <(multiwerf use 1.0 beta)
 
 Чтобы выполнить все необходимые шаги по сборке с помощью werf, добавим специальный файл `werf.yaml` к исходному коду приложения.
 
-1. Склонируем Git-репозиторий [Symfony Demo Application](https://github.com/symfony/demo):
+1.  Склонируем Git-репозиторий [Symfony Demo Application](https://github.com/symfony/demo):
 
     ```shell
     git clone https://github.com/symfony/symfony-demo.git
     cd symfony-demo
     ```
 
-2. В корневой папке проекта создадим файл `werf.yaml` следующего содержания:
+2.  В корневой папке проекта создадим файл `werf.yaml` следующего содержания:
 
     <div class="tabs">
       <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'Ansible')">Ansible</a>
@@ -227,13 +227,13 @@ source <(multiwerf use 1.0 beta)
 
 С помощью werf можно опубликовать собранные образы в Docker registry.
 
-1. Запустим локальный Docker registry:
+1.  Запустим локальный Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузим образ в Docker registry, используя тег `v0.1.0`:
+2.  Загрузим образ в Docker registry, используя тег `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0

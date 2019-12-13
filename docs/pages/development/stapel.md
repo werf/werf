@@ -32,25 +32,25 @@ werf mounts _stapel image_ into each build container when building docker images
 
 Stapel image needs to be updated time to time to update ansible or when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
 
-1. Make necessary changes to build instructions in `stapel` directory.
-2. Update omnibus bundle:
+1.  Make necessary changes to build instructions in `stapel` directory.
+2.  Update omnibus bundle:
     ```bash
     cd stapel/omnibus
     bundle update
     git add -p Gemfile Gemfile.lock
     ```
-3. Build new stapel images:
+3.  Build new stapel images:
     ```bash
     scripts/stapel/build.sh
     ```
-   This command will create `flant/werf-stapel:dev` and secondary `flant/werf-stapel-base:dev` docker images.
-4. To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
+    This command will create `flant/werf-stapel:dev` and secondary `flant/werf-stapel-base:dev` docker images.
+4.  To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
     ```bash
     export WERF_STAPEL_IMAGE_VERSION=dev
     werf build ...
     ```
-5. Publish new stapel images:
+5.  Publish new stapel images:
     ```bash
     scripts/stapel/publish.sh NEW_VERSION
     ```
-6. As new stapel version has been published change `VERSION` Go constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.
+6.  As new stapel version has been published change `VERSION` Go constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.
