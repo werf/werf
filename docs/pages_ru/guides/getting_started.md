@@ -27,14 +27,14 @@ source <(multiwerf use 1.0 beta)
 
 Добавим файл `werf.yaml`, описывающий конфигурацию сборки образа приложения с использованием существующего в проекте [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
 
-1. Склонируем репозиторий приложения [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app):
+1.  Склонируем репозиторий приложения [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app):
 
     ```shell
     git clone https://github.com/dockersamples/linux_tweet_app.git
     cd linux_tweet_app
     ```
 
-1. В корневой папке приложения создадим файл `werf.yaml` со следующим содержимым:
+1.  В корневой папке приложения создадим файл `werf.yaml` со следующим содержимым:
 
     ```yaml
     project: g-started
@@ -46,19 +46,19 @@ source <(multiwerf use 1.0 beta)
 
 ## Шаг 2: Сборка приложения
 
-1. Соберём образ приложения, выполнив команду в корневой папке:
+1.  Соберём образ приложения, выполнив команду в корневой папке:
 
     ```shell
     werf build --stages-storage :local
     ```
 
-1. Запустим контейнер на основе собранного образа:
+1.  Запустим контейнер на основе собранного образа:
 
     ```shell
     werf run --stages-storage :local --docker-options="-d -p 80:80"
     ```
 
-1. Проверим, что приложение запустилось и отвечает корректно, открыв в web-браузере `http://localhost:80` либо выполнив:
+1.  Проверим, что приложение запустилось и отвечает корректно, открыв в web-браузере `http://localhost:80` либо выполнив:
 
     ```shell
     curl localhost:80
@@ -66,13 +66,13 @@ source <(multiwerf use 1.0 beta)
 
 ## Шаг 3: Публикация образа в Docker registry
 
-1. Запустим Docker registry локально:
+1.  Запустим Docker registry локально:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Загрузим образ приложения в Docker registry, предварительно протегировав его тегом `v0.1.0`:
+2.  Загрузим образ приложения в Docker registry, предварительно протегировав его тегом `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/g-started --tag-custom v0.1.0

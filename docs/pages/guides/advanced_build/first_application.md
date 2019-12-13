@@ -38,7 +38,7 @@ source <(multiwerf use 1.0 beta)
 
 To implement these steps and requirements with werf we will add a special file called `werf.yaml` to the application's source code.
 
-1. Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
+1.  Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
 
     ```shell
     git clone https://github.com/symfony/symfony-demo.git
@@ -228,13 +228,13 @@ Let's build and run our first application.
 
 werf can be used to push a built image into Docker registry.
 
-1. Run local Docker registry:
+1.  Run local Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Publish image with werf using custom tagging strategy with docker tag `v0.1.0`:
+2.  Publish image with werf using custom tagging strategy with docker tag `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0

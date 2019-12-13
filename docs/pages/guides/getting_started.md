@@ -7,8 +7,8 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-This tutorial demonstrates how you can easily start using werf with Dockerfile. 
-We will build the application image and publish it to the local Docker registry. 
+This tutorial demonstrates how you can easily start using werf with Dockerfile.
+We will build the application image and publish it to the local Docker registry.
 For example, we choose simple project — [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app).
 
 ## Requirements
@@ -29,7 +29,7 @@ source <(multiwerf use 1.0 beta)
 
 Add a special file called `werf.yaml` to the source code and define application image based on project [Dockerfile](https://github.com/dockersamples/linux_tweet_app/blob/master/Dockerfile).
 
-1. Clone the [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app) repository to get the source code:
+1.  Clone the [Linux Tweet App](https://github.com/dockersamples/linux_tweet_app) repository to get the source code:
 
     ```shell
     git clone https://github.com/dockersamples/linux_tweet_app.git
@@ -68,13 +68,13 @@ Add a special file called `werf.yaml` to the source code and define application 
 
 ## Step 3: Publish built image to Docker registry
 
-1. Run local Docker registry:
+1.  Run local Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Publish image using custom tagging strategy with docker tag `v0.1.0`:
+2.  Publish image using custom tagging strategy with docker tag `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/g-started --tag-custom v0.1.0
@@ -91,4 +91,3 @@ Firstly, you can plunge into the relevant documentation:
 Or go further:
 * [Deploy an application to a Kubernetes cluster]({{ site.base_url}}/documentation/guides/deploy_into_kubernetes.html).
 * [Advanced build with Stapel image]({{ site.base_url}}/documentation/guides/advanced_build/first_application.html).
-
