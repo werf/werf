@@ -117,6 +117,16 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	}
 
 	for ind, stage := range s.dockerStages {
+		for relatedStageIndex, relatedStage := range s.dockerStages {
+			if ind == relatedStageIndex {
+				continue
+			}
+
+			if stage.BaseName == relatedStage.Name {
+				stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+			}
+		}
+
 		for _, cmd := range stage.Commands {
 			switch c := cmd.(type) {
 			case *instructions.CopyCommand:

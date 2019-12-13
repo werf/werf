@@ -3,10 +3,15 @@ configVersion: 1
 ---
 image: dockerfile_image
 dockerfile: Dockerfile
+target: dockerfile_image
 args:
   TEST: test
 addHost:
 - "docker:10.180.0.1"
+---
+image: dockerfile_image_based_on_stage
+dockerfile: Dockerfile
+target: dockerfile_image_based_on_stage
 ---
 {{ range (list "image" "artifact") }}
 {{ . }}: stapel_{{ . }}_shell

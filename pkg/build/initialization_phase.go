@@ -657,7 +657,6 @@ func resolveDockerStagesFromValue(stages []instructions.Stage) {
 					if val, ok := nameToIndex[c.From]; ok {
 						c.From = val
 					}
-
 				}
 			}
 		}

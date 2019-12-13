@@ -61,7 +61,14 @@ var _ = Describe("persistent stage signatures", func() {
 		Entry("dockerfile_image", entry{
 			imageName: "dockerfile_image",
 			expectedSignatures: []string{
-				"dockerfile:             a79718002a846e77f5c6cbc6998506b81a4631fef9f1cb288b33150984e9d27d",
+				"dockerfile:             2dbd745e5f0b42a6eed2c244e5a2d5c74fe3a29dbfe88d25ea4205c4011d5f77",
+			},
+			skipOnWindows: true,
+		}),
+		Entry("dockerfile_image_based_on_stage", entry{
+			imageName: "dockerfile_image_based_on_stage",
+			expectedSignatures: []string{
+				"dockerfile:             5c4d5ceed2f87b8819c3e1a93232877cf1ed53faed5b97031d79658ecc5d55db",
 			},
 			skipOnWindows: true,
 		}),
