@@ -2,6 +2,9 @@ package cleanup
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
 
@@ -10,13 +13,11 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
-}
+var CmdData struct{}
 
 var CommonCmdData common.CmdData
 
@@ -64,7 +65,7 @@ func runSync() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(werf.GetServiceDir()); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/flant/werf/pkg/docker_registry"
 	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 
@@ -109,11 +109,11 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 //
 //		err := func() error {
 //			imageLockName := imagePkg.ImageLockName(stageImageName)
-//			if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
+//			if err := shluz.Lock(imageLockName, shluz.LockOptions{}); err != nil {
 //				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 //			}
 //
-//			defer lock.Unlock(imageLockName)
+//			defer shluz.Unlock(imageLockName)
 //
 //			stageImage := c.GetStageImage(stage.GetImage().Name())
 //
@@ -229,10 +229,10 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 				err := func() error {
 					imageLockName := imagePkg.ImageLockName(imageName)
-					if err = lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
+					if err = shluz.Lock(imageLockName, shluz.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
-					defer lock.Unlock(imageLockName)
+					defer shluz.Unlock(imageLockName)
 
 					pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
 
