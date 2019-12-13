@@ -69,7 +69,7 @@ func run(imageName string) error {
 
 	tmp_manager.AutoGCEnabled = false
 
-	if err := lock.Init(); err != nil {
+	if err := lock.Init(werf.GetServiceDir()); err != nil {
 		return err
 	}
 

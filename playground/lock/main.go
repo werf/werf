@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	err := lock.Init()
+	err := lock.Init(werf.GetServiceDir())
 	if err != nil {
 		panic(err)
 	}

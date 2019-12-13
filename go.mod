@@ -39,6 +39,7 @@ require (
 	github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
+	github.com/gofrs/flock v0.7.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
 	github.com/google/go-containerregistry v0.0.0-20190623150931-ca8b66cb1b79
