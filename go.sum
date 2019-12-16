@@ -196,11 +196,12 @@ github.com/flant/kubedog v0.3.5-0.20191203110420-8e1ebc998a40/go.mod h1:mQ0PeK5c
 github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad h1:82R0jQRFFwzJ+FIBYcqNdq0R96AiAD9g3r5wm0SrE30=
 github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad/go.mod h1:mQ0PeK5cntODe4lWEhrhIFtNZHAG/AiI7KmRpLSEKDk=
 github.com/flant/logboek v0.0.0-20190416104940-91fee3a3fc8d/go.mod h1:WirgB39yMTvPGKqrAE3zlsG/02of4rr5lXh1EiwO5P0=
+github.com/flant/logboek v0.2.5/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349 h1:ANKnp53Kl4sspROTuIai9aAVRed4ZEX/dZI9Tj0gEPE=
 github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
-github.com/flant/shluz v0.0.0-20191213124048-ca892145639b h1:kHW/kZc+T9q38yOSDNnOrAChY4r5dws/2+f2R/aPdKw=
-github.com/flant/shluz v0.0.0-20191213124048-ca892145639b/go.mod h1:qJdWxW6qaO9DcfZDttljItZSi2flZDhivagh2smhOJk=
+github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2 h1:Ub9bCx27gm93uWs4DaSnasX2hC7gvWTQ6KDwl4oKBe8=
+github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2/go.mod h1:A8tow8a6JcCXi29Qio1sFpnoCL1r3WZLdPbLHbZnkmg=
 github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:rZfgFAXFS/z/lEd6LJmf9HVZ1LkgYiHx5pHhV5DR16M=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
