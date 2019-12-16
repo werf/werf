@@ -65,6 +65,8 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("should fail to install package without a key and succeed with the key", func(done Done) {
+			Skip("https://github.com/flant/werf/issues/2000")
+
 			gotNoPubkey := false
 			Expect(werfBuild("apt_key1-001", werfexec.CommandOptions{
 				OutputLineHandler: func(line string) {
@@ -96,6 +98,8 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("should fail to install package without a key and succeed with the key", func(done Done) {
+			Skip("https://github.com/flant/werf/issues/2000")
+
 			Expect(werfBuild("apt_key2", werfexec.CommandOptions{})).To(Succeed())
 			close(done)
 		}, 120)
