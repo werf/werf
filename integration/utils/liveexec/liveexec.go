@@ -1,4 +1,4 @@
-package werfexec
+package liveexec
 
 import (
 	"fmt"
@@ -7,19 +7,23 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
-	. "github.com/onsi/ginkgo"
-
+	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega/gexec"
 )
 
-type CommandOptions struct {
+// ExecCommandOptions is an options for ExecCommand
+type ExecCommandOptions struct {
 	Env               map[string]string
 	OutputLineHandler func(string)
 }
 
-func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string) error {
-	cmd := exec.Command(werfBinPath, arg...)
+// ExecCommand allows handling output of executed command in realtime by CommandOptions.OutputLineHandler.
+// User could set expectations on the output lines in the CommandOptions.OutputLineHandler to fail fast
+// and give immediate feedback of failed assertion during command execution.
+func ExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) error {
+	cmd := exec.Command(binPath, arg...)
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
@@ -28,7 +32,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 	}
 
 	absDir, _ := filepath.Abs(dir)
-	_, _ = fmt.Fprintf(GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, werfBinPath, strings.Join(arg, " "))
+	_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, binPath, strings.Join(arg, " "))
 
 	stdoutReadPipe, stdoutWritePipe, err := os.Pipe()
 	if err != nil {
@@ -47,12 +51,42 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 		return fmt.Errorf("error starting command: %s", err)
 	}
 
-	go func() {
-		<-session.Exited
+	doForceTermination := make(chan *os.ProcessState, 0)
+	var exitCode int
 
-		// Initiate EOF for consumeOutputUntilEOF
-		stdoutWritePipe.Close()
-		stderrWritePipe.Close()
+	go func() {
+		// https://github.com/golang/go/issues/24050
+
+		process, err := os.FindProcess(session.Command.Process.Pid)
+		if err == nil {
+			processState, err := process.Wait()
+			if err == nil {
+				// Detected terminated process. Give 30 seconds for session
+				// to detect process termination by itself,
+				// after that terminate output consumer forcefully.
+				time.Sleep(30 * time.Second)
+				doForceTermination <- processState
+			}
+		}
+	}()
+
+	go func() {
+		select {
+		case processState := <-doForceTermination:
+			exitCode = processState.ExitCode()
+
+			_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "[DEBUG] Do force termination of %d with exit code %d\n", processState.Pid(), exitCode)
+
+			// Initiate EOF for consumeOutputUntilEOF
+			stdoutWritePipe.Close()
+			stderrWritePipe.Close()
+
+		case <-session.Exited:
+			exitCode = session.ExitCode()
+			// Initiate EOF for consumeOutputUntilEOF
+			stdoutWritePipe.Close()
+			stderrWritePipe.Close()
+		}
 	}()
 
 	lineBuf := make([]byte, 0, 4096)
@@ -62,7 +96,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 				line := string(lineBuf)
 				lineBuf = lineBuf[:0]
 
-				_, _ = fmt.Fprintf(GinkgoWriter, "[DEBUG] OUTPUT LINE: %s\n", line)
+				_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "[DEBUG] OUTPUT LINE: %s\n", line)
 
 				if opts.OutputLineHandler != nil {
 					func() {
@@ -94,7 +128,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 		return fmt.Errorf("unable to consume command output: %s", err)
 	}
 
-	if exitCode := session.ExitCode(); exitCode != 0 {
+	if exitCode != 0 {
 		return fmt.Errorf("exit code %d", exitCode)
 	}
 	return nil

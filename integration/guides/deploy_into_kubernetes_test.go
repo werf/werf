@@ -29,6 +29,12 @@ var _ = Describe("Deploy into kubernetes", func() {
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
 		)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			werfBinPath,
+			"dismiss", "--env", "test", "--with-namespace",
+		)
 	})
 
 	It("application should be built, published and deployed", func() {
@@ -59,12 +65,6 @@ var _ = Describe("Deploy into kubernetes", func() {
 			testDirPath,
 			werfBinPath,
 			werfDeployArgs...,
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"dismiss", "--env", "test",
 		)
 	})
 })

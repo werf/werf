@@ -8,7 +8,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/integration/utils"
-	"github.com/flant/werf/integration/utils/werfexec"
+	"github.com/flant/werf/integration/utils/liveexec"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,11 +31,11 @@ var _ = Describe("Repair patches creator", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("repair_patches_creator_app1-002", werfexec.CommandOptions{})
+			werfDismiss("repair_patches_creator_app1-002", liveexec.ExecCommandOptions{})
 		})
 
 		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func(done Done) {
-			Expect(werfDeploy("repair_patches_creator_app1-001", werfexec.CommandOptions{
+			Expect(werfDeploy("repair_patches_creator_app1-001", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
 
@@ -61,7 +61,7 @@ var _ = Describe("Repair patches creator", func() {
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(werfDeploy("repair_patches_creator_app1-001", werfexec.CommandOptions{
+			Expect(werfDeploy("repair_patches_creator_app1-001", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
 
@@ -80,7 +80,7 @@ var _ = Describe("Repair patches creator", func() {
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{"spec":{"replicas":1}}`))
 
-			Expect(werfDeploy("repair_patches_creator_app1-002", werfexec.CommandOptions{
+			Expect(werfDeploy("repair_patches_creator_app1-002", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
 

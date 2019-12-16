@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/integration/utils/werfexec"
+	"github.com/flant/werf/integration/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -75,13 +75,13 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app1", werfexec.CommandOptions{})
+			werfDismiss("kubedog_multitrack_app1", liveexec.ExecCommandOptions{})
 		})
 
 		It("should report Deployment is ready before werf exit", func(done Done) {
 			gotDeploymentReadyLine := false
 
-			Expect(werfDeploy("kubedog_multitrack_app1", werfexec.CommandOptions{
+			Expect(werfDeploy("kubedog_multitrack_app1", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
 						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
@@ -103,7 +103,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app2", werfexec.CommandOptions{})
+			werfDismiss("kubedog_multitrack_app2", liveexec.ExecCommandOptions{})
 		})
 
 		It("should report ImagePullBackoff occured in Deployment and werf should fail", func(done Done) {
@@ -111,7 +111,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
-			Expect(werfDeploy("kubedog_multitrack_app2", werfexec.CommandOptions{
+			Expect(werfDeploy("kubedog_multitrack_app2", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true
