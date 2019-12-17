@@ -1,21 +1,27 @@
-name: Main
+name: Tests
 on:
-  pull_request:
-    branches:
-    - master
-  push:
-    branches:
-    - master
+  issue_comment:
+    types: [created, edited]
+  schedule:
+  - cron:  '0 22 * * *'
 env:
   GO111MODULE: on
 
 jobs:
+  stub:
+    name: Stub
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Stub
+      run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
 
   download_go_modules:
     name: Download go modules
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
+    if: (github.event.issue.pull_request != '' && contains(github.event.comment.body, '/run tests')) || github.event_name == 'schedule'
     steps:
 
     - name: Set up Go 1.13
