@@ -1,4 +1,4 @@
-name: Tests
+name: Main
 on:
   issue_comment:
     types: [created, deleted]
