@@ -1,11 +1,8 @@
 name: Main
 on:
-  pull_request:
-    branches:
-    - master
-  push:
-    branches:
-    - master
+  issue_comment:
+  schedule:
+  - cron:  '0 22 * * *'
 env:
   GO111MODULE: on
 
@@ -16,6 +13,7 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
+    if: (github.event.issue.pull_request != '' && contains(github.event.comment.body, '/run tests')) || github.event.schedule
     steps:
 
     - name: Set up Go 1.13
