@@ -1,6 +1,7 @@
 name: Tests
 on:
-  issue_comment: [created]
+  issue_comment:
+    type: [created]
   schedule:
   - cron:  '0 22 * * *'
 env:
