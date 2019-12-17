@@ -1,8 +1,5 @@
 name: Main
 on:
-  pull_request:
-    branches:
-      - master
   issue_comment:
     types: [created, deleted]
   schedule:
