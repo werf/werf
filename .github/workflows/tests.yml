@@ -1,6 +1,6 @@
-name: Main
+name: Tests
 on:
-  issue_comment:
+  issue_comment: [created]
   schedule:
   - cron:  '0 22 * * *'
 env:
