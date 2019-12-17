@@ -3,7 +3,7 @@ on:
   issue_comment:
     type: [created]
   schedule:
-  - cron:  '0 22 * * *'
+  - cron:  '*/5 * * * *'
 env:
   GO111MODULE: on
 
