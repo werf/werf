@@ -12,12 +12,12 @@ ___
 
 <!-- WERF DOCS PARTIAL BEGIN: Overview -->
 
-Werf is an Open Source CLI tool written in Golang to implement your application delivery fast & easy. To benefit from it, you just need to describe your application's configuration (how to build it and deploy it into Kubernetes) in a Git repo acting as the single source of truth. In short, that's what we call GitOps today.
+Werf is an Open Source CLI tool written in Golang, designed to simplify and speed up the delivery of applications. To use it, you need to describe the configuration of your application (in other words, how to build and deploy it to Kubernetes) and save it to a Git repo - the latter acts as a single source of truth. In short, that's what we call GitOps today.
 
-* Werf builds Docker images using Dockerfiles or alternative fast builder based on the custom syntax. It also cleans Docker Registry from unused images.
-* Werf deploys your application into Kubernetes using a chart in Helm-compatible format with handy customizations and improved deploy tracking, errors detection and output.
+* Werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker Registry.
+* Werf deploys your application to Kubernetes using the Helm-compatible chart format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
-While werf is not a complete CI/CD system itself, it is a tool that can be embedded into any existing CI/CD system literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
+Werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system while literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -53,39 +53,39 @@ While werf is not a complete CI/CD system itself, it is a tool that can be embed
 ### Building
 
 - Conveniently build as many images as needed for a single project.
-- Building images by Dockerfile or Stapel builder instructions.
-- Parallel builds on a single host (using file locks).
+- Build images using Dockerfiles or Stapel builder instructions.
+- Concurrent builds on a single host (using file locks).
 - Distributed builds (coming soon) [#1614](https://github.com/flant/werf/issues/1614).
-- Advanced build with Stapel:
+- Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
-  - Building images with Ansible tasks or Shell scripts.
-  - Sharing a common cache between builds using mounts.
-  - Reducing image size by detaching source data and build tools.
-- Building one image from config on the top of another image from the same config.
-- Debug tools for build process inspection.
+  - Build images with Ansible tasks or Shell scripts.
+  - Share a common cache between builds using mounts.
+  - Reduce image size by detaching source data and build tools.
+- Build one image from config on top of another image based on the same config.
+- Debugging tools to inspect the building process.
 - Detailed output.
 
 ### Publishing
 
-- Store images in one or several Docker repositories by the following patterns:
+- Store images in the single or multiple Docker repositories using the following naming patterns:
   - `IMAGES_REPO:[IMAGE_NAME-]TAG` using `monorepo` mode.
   - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `multirepo` mode.
 - Different image tagging strategies:
-  - Tag image by git tag, branch or commit.
-  - Content based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
+  - Tagging images by binding them to git tag, branch, or commit.
+  - Content-based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
 
 ### Deploy
 
-- Deploy an application into Kubernetes and check that application is deployed correctly.
-  - Track all application resources status.
-  - Control of resources readiness.
+- Deploy an application to Kubernetes and check if it is deployed correctly.
+  - Track statuses of all application resources.
+  - Control the readiness of resources.
   - Control of the deployment process with annotations.
-- Full visibility both of the deploy process and of the final result.
+- Full visibility of both the deployment process and the final result.
   - Logging and error reporting.
-  - Periodical status reports during deploy process.
-  - Easy debugging of problems without unnecessary kubectl invocations.
-- Fail CI pipeline fast when problem detected.
-  - Early resources failures detection during deploy process without need to wait full timeout.
+  - Periodical status reporting during the deployment phase.
+  - Effortless debugging of problems without unnecessary kubectl invocations.
+- Immediate CI pipeline failure if some problem is detected.
+  - Early detection of resource failures during the deploying process without having to wait for a full timeout.
 - Full compatibility with Helm 2.
 - Ability to limit deploy user access using RBAC definition (Tiller is compiled into Werf and run from the deploy user outside of cluster).
 - Parallel deploys on a single host (using file locks).
