@@ -1,4 +1,4 @@
-name: Tests
+name: Run tests
 on:
   issue_comment:
     types: [created, edited]
@@ -9,11 +9,11 @@ env:
 
 jobs:
   stub:
-    name: Stub
+    name: Greeting
     runs-on: ubuntu-latest
     steps:
 
-    - name: Stub
+    - name: Greeting
       run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
 
   download_go_modules:
@@ -21,17 +21,45 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
-    if: (github.event.issue.pull_request != '' && contains(github.event.comment.body, '/run tests')) || github.event_name == 'schedule'
+    if: (github.event.issue.pull_request != '' && github.event.issue.state == 'open' && contains(github.event.comment.body, '/run tests')) || github.event_name == 'schedule'
     steps:
+
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
         go-version: 1.13
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v1
 
     - name: Download modules
       run: go mod download
@@ -74,8 +102,36 @@ jobs:
       run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
       shell: bash
 
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
     - name: Checkout code
       uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Build
       run: go build -tags "dfrunmount dfssh" github.com/flant/werf/cmd/werf
@@ -97,9 +153,6 @@ jobs:
         go-version: 1.13
       id: go
 
-    - name: Checkout code
-      uses: actions/checkout@v1
-
     - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
@@ -109,6 +162,37 @@ jobs:
     - name: Unpack go modules
       run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
       shell: bash
+
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Prepare environment
       run: |
@@ -143,9 +227,6 @@ jobs:
         go-version: 1.13
       id: go
 
-    - name: Checkout code
-      uses: actions/checkout@v1
-
     - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
@@ -155,6 +236,37 @@ jobs:
     - name: Unpack go modules
       run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
       shell: bash
+
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Prepare environment
       run: |
@@ -204,9 +316,6 @@ jobs:
         go-version: 1.13
       id: go
 
-    - name: Checkout code
-      uses: actions/checkout@v1
-
     - name: Download go modules artifact
       uses: actions/download-artifact@master
       with:
@@ -216,6 +325,37 @@ jobs:
     - name: Unpack go modules
       run: mkdir -p $HOME/go/pkg/mod && tar -xzvf go_modules.tar.gz -C $HOME/go/pkg/mod
       shell: bash
+
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Prepare environment
       run: |
@@ -273,8 +413,36 @@ jobs:
         go-version: 1.13
       id: go
 
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
     - name: Checkout code
       uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Prepare environment
       run: |
@@ -306,8 +474,36 @@ jobs:
         go-version: 1.13
       id: go
 
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
     - name: Checkout code
       uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Prepare environment
       run: |
@@ -346,8 +542,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+      if: github.event_name == 'issue_comment'
+
+    - name: Checkout code (${{ steps.result.outputs.pr_sha }})
+      uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'issue_comment'
+
     - name: Checkout code
       uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.result.outputs.pr_sha }}
+      if: github.event_name == 'schedule'
 
     - name: Download coverage artifact
       uses: actions/download-artifact@master
