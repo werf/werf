@@ -4,7 +4,7 @@ permalink: documentation/index.html
 sidebar: documentation
 ---
 
-The documentation of Werf comprises ~100 articles. They include common use cases (getting started, deploying to Kubernetes, CI/CD integration and more), a comprehensive description of its functions & architecture, CLI, and commands.
+The documentation of Werf comprises ~100 articles. They include common use cases (getting started, deploying to Kubernetes, CI/CD integration and more), a comprehensive description of functions & architecture, CLI, and commands.
 
 We recommend to start off with our **Guides** section:
 
@@ -30,16 +30,16 @@ In the [Overview]({{ site.baseurl }}/documentation/configuration/introduction.ht
 * Config processing steps.
 * Supported Go templates functions.
 
-Other section articles give detailed information about [Dockerfile Image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
+Other section articles provide detailed information about [Dockerfile Image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html), [Stapel Image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [Stapel Artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) directives and their features of usage.
 
-**Reference** section is dedicated to Werf main processes:
+The **Reference** section covers essential Werf processes:
 
 * [Build process]({{ site.baseurl }}/documentation/reference/build_process.html).
 * [Publish process]({{ site.baseurl }}/documentation/reference/publish_process.html).
 * [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 * [Cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
-Each article describes a certain process: process composition, available options and features.
+Each article describes a cpecific process: process composition, available options and features.
 
 Also, this section includes articles with base primitives and general tools:
 
@@ -48,6 +48,6 @@ Also, this section includes articles with base primitives and general tools:
 * [Development and debug]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html).
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-Werf is a CLI utility, so if you want to find a description of both basic commands needed to provide the CI/CD process and service commands that provide advanced functionality — use **CLI Commands** section.
+Werf is a CLI utility, so if you want to find a description of both basic commands required for the CI/CD process and service commands that provide advanced functionality — use the **CLI Commands** section.
 
-[**Development** section]({{ site.baseurl }}/documentation/development/stapel.html) contains service and maintenance manuals and other docs which help developers to understand how some werf subsystem works, how to maintain some subsystem in the actual state, how to write and build new code for the werf, etc.
+The [**Development** section]({{ site.baseurl }}/documentation/development/stapel.html) contains service and maintenance manuals and other docs that help developers to understand how a specific werf subsystem works, how to maintain said subsystem in the actual state, how to write and build new code for the werf, etc.
