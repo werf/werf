@@ -39,7 +39,7 @@ The **Reference** section covers essential Werf processes:
 * [Deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 * [Cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
-Each article describes a cpecific process: process composition, available options and features.
+Each article describes a specific process: its composition, available options and features.
 
 Also, this section includes articles with base primitives and general tools:
 
