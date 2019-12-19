@@ -17,18 +17,19 @@ func PrepareWerfChart(projectName, chartDir, env string, m secret.Manager, secre
 	}
 
 	for _, path := range secretValues {
-		err = werfChart.SetSecretValuesFile(path, m)
-		if err != nil {
+		if err = werfChart.SetSecretValuesFile(path, m); err != nil {
 			return nil, err
 		}
 	}
 
 	if serviceValues != nil {
-		err = werfChart.SetServiceValues(serviceValues)
+		if err = werfChart.SetServiceValues(serviceValues); err != nil {
+			return nil, err
+		}
 	}
 
 	if debug() {
-		fmt.Fprintf(logboek.GetOutStream(), "Werf chart: %#v\n", werfChart)
+		fmt.Fprintf(logboek.GetOutStream(), "werf chart: %#v\n", werfChart)
 	}
 
 	return werfChart, nil

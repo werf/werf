@@ -5,7 +5,7 @@ permalink: documentation/reference/deploy_process/working_with_secrets.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Werf secrets engine is recommended for storing database passwords, files with encryption certificates, etc.
+werf secrets engine is recommended for storing database passwords, files with encryption certificates, etc.
 
 The idea is that sensitive data must be stored in a repository served by an application and remain independent from any specific server.
 
@@ -16,7 +16,7 @@ A key is required for encryption and decryption of data. There are two locations
 * from a special `.werf_secret_key` file in the project root
 * from `~/.werf/global_secret_key` (globally)
 
-> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html) returns AES-128 encryption key.
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html) returns AES-128 encryption key
 
 You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ site.baseurl }}/documentation/cli/management/helm/secret/generate_secret_key.html).
 
@@ -26,7 +26,7 @@ If an environment variable is available in the environment where werf is launche
 
 In a local environment, you can declare it from the console.
 
-For Gitlab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
+For GitLab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
 
 ### Working with the .werf_secret_key file
 
@@ -49,14 +49,14 @@ mysql:
   db: 1000db50be293432129acb741de54209a33bf479ae2e0f53462b5053c30da7584e31a589f5206cfa4a8e249d20
 ```
 
-To manage secret values files use the following commands: 
+To manage secret values files use the following commands:
 - [werf helm secret values edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/edit.html)
 - [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/encrypt.html)
 - [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/values/decrypt.html)
 
 ### Using in a chart template
 
-The secret values files are decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). Thus, use is not different from common values:
+The secret values files are decoded in the course of deployment and used in helm as [additional values](https://helm.sh/docs/topics/chart_template_guide/values_files/). Thus, use is not different from common values:
 
 {% raw %}
 ```yaml
@@ -71,11 +71,11 @@ env:
 
 ## Secret file encryption
 
-Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. 
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored.
 
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
-To manage secret files use the following commands: 
+To manage secret files use the following commands:
 - [werf helm secret file edit command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/edit.html)
 - [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/encrypt.html)
 - [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/cli/management/helm/secret/file/decrypt.html)

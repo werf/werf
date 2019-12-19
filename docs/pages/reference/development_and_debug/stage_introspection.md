@@ -8,7 +8,7 @@ summary: |
   <div class="highlight"><pre class="highlight">
   <code><span class="c"># introspect a specific stage</span>
   werf build <span class="nt">--introspect-stage</span> <span class="o">[</span>IMAGE_NAME/]STAGE_NAME
-  
+
   <span class="c"># introspect a stage before or after execution of a dysfunctional set of instructions</span>
   werf build <span class="nt">--introspect-error</span>
   werf build <span class="nt">--introspect-before-error</span></code>

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -272,7 +271,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 		localGitRepo = &git_repo.Local{
 			Base:   git_repo.Base{Name: "own"},
 			Path:   c.projectDir,
-			GitDir: path.Join(c.projectDir, ".git"),
+			GitDir: filepath.Join(c.projectDir, ".git"),
 		}
 	}
 
@@ -383,11 +382,6 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			cwd := gitMapping.Cwd
-			if cwd == "" {
-				cwd = "/"
-			}
-
 			if empty, err := gitMapping.IsEmpty(); err != nil {
 				return err
 			} else if !empty {
@@ -404,22 +398,6 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 	}
 
 	return nonEmptyGitMappings, nil
-}
-
-func urlScheme(urlString string) (string, error) {
-	u, err := url.Parse(urlString)
-	if err != nil {
-		if strings.HasSuffix(err.Error(), "first path segment in URL cannot contain colon") {
-			for _, protocol := range []string{"git", "ssh"} {
-				if strings.HasPrefix(urlString, fmt.Sprintf("%s@", protocol)) {
-					return "ssh", nil
-				}
-			}
-		}
-		return "", err
-	}
-
-	return u.Scheme, nil
 }
 
 func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitMapping {
@@ -441,8 +419,6 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitMapping {
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
-	gitMapping.As = localGitMappingConfig.As
-
 	gitMapping.Name = "own"
 
 	gitMapping.GitRepoInterface = localGitRepo
@@ -455,7 +431,7 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_
 func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitMapping {
 	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
-		stageDependencies = stageDependenciesToMap(local.StageDependencies)
+		stageDependencies = stageDependenciesToMap(local.GitMappingStageDependencies())
 	}
 
 	gitMapping := &stage.GitMapping{
@@ -466,12 +442,12 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 
-		RepoPath: path.Join("/", local.Add),
+		RepoPath: local.GitMappingAdd(),
 
-		Cwd:                local.Add,
-		To:                 local.To,
-		ExcludePaths:       local.ExcludePaths,
-		IncludePaths:       local.IncludePaths,
+		Cwd:                local.GitMappingAdd(),
+		To:                 local.GitMappingTo(),
+		ExcludePaths:       local.GitMappingExcludePath(),
+		IncludePaths:       local.GitMappingIncludePaths(),
 		Owner:              local.Owner,
 		Group:              local.Group,
 		StagesDependencies: stageDependencies,
@@ -481,7 +457,7 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 }
 
 func getImagePatchesDir(imageName string, c *Conveyor) string {
-	return path.Join(c.tmpDir, imageName, "patch")
+	return filepath.Join(c.tmpDir, imageName, "patch")
 }
 
 func getImagePatchesContainerDir(c *Conveyor) string {
@@ -489,7 +465,7 @@ func getImagePatchesContainerDir(c *Conveyor) string {
 }
 
 func getImageArchivesDir(imageName string, c *Conveyor) string {
-	return path.Join(c.tmpDir, imageName, "archive")
+	return filepath.Join(c.tmpDir, imageName, "archive")
 }
 
 func getImageArchivesContainerDir(c *Conveyor) string {
@@ -497,7 +473,7 @@ func getImageArchivesContainerDir(c *Conveyor) string {
 }
 
 func getImageScriptsDir(imageName string, c *Conveyor) string {
-	return path.Join(c.tmpDir, imageName, "scripts")
+	return filepath.Join(c.tmpDir, imageName, "scripts")
 }
 
 func getImageScriptsContainerDir(c *Conveyor) string {
@@ -526,8 +502,9 @@ func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Inte
 func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor) (*Image, error) {
 	image := &Image{}
 	image.name = imageFromDockerfileConfig.Name
+	image.isDockerfileImage = true
 
-	contextDir := path.Join(c.projectDir, imageFromDockerfileConfig.Context)
+	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
 
 	rel, err := filepath.Rel(c.projectDir, contextDir)
 	if err != nil || strings.HasPrefix(rel, "../") {
@@ -541,7 +518,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		return nil, fmt.Errorf("context folder %s is not found", contextDir)
 	}
 
-	dockerfilePath := path.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
+	dockerfilePath := filepath.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
 	rel, err = filepath.Rel(c.projectDir, dockerfilePath)
 	if err != nil || strings.HasPrefix(rel, "../") {
 		return nil, fmt.Errorf("unsupported dockerfile %s.\n Only dockerfile specified inside project directory %s supported", dockerfilePath, c.projectDir)
@@ -680,7 +657,6 @@ func resolveDockerStagesFromValue(stages []instructions.Stage) {
 					if val, ok := nameToIndex[c.From]; ok {
 						c.From = val
 					}
-
 				}
 			}
 		}

@@ -9,15 +9,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/integration/utils"
-	utilsDocker "github.com/flant/werf/integration/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils"
+	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
-var _ = Describe("images purge command", func() {
-	var testDirPath string
-
+var _ = Describe("purging images", func() {
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
@@ -62,73 +59,77 @@ var _ = Describe("images purge command", func() {
 		)
 	})
 
-	Context("when deployed images in kubernetes are not taken in account", func() {
-		BeforeEach(func() {
-			Ω(os.Setenv("WERF_WITHOUT_KUBE", "1")).Should(Succeed())
-		})
+	for _, werfArgs := range [][]string{
+		{"images", "purge"},
+		{"purge"},
+	} {
+		commandToCheck := strings.Join(werfArgs, " ") + " command"
+		commandWerfArgs := werfArgs
 
-		It("should work properly with non-existent registry repository (registry exists)", func() {
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				"images", "purge",
-			)
-		})
-
-		It("should remove images built with werf", func() {
-			amount := 4
-			for i := 0; i < amount; i++ {
+		Describe(commandToCheck, func() {
+			It("should work properly with non-existent registry repository (registry exists)", func() {
 				utils.RunSucceedCommand(
 					testDirPath,
-					"git",
-					"commit", "--allow-empty", "--allow-empty-message", "-m", "",
+					werfBinPath,
+					commandWerfArgs...,
 				)
+			})
 
-				out := utils.SucceedCommandOutput(
-					testDirPath,
-					"git",
-					"rev-parse", "HEAD",
-				)
-				commit := strings.TrimSpace(out)
+			It("should remove images built with werf", func() {
+				amount := 4
+				for i := 0; i < amount; i++ {
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"commit", "--allow-empty", "--allow-empty-message", "-m", "",
+					)
+
+					out := utils.SucceedCommandOutputString(
+						testDirPath,
+						"git",
+						"rev-parse", "HEAD",
+					)
+					commit := strings.TrimSpace(out)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-custom", commit,
+					)
+				}
+
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				Ω(tags).Should(HaveLen(amount))
 
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
-					"build-and-publish", "--tag-custom", commit,
+					commandWerfArgs...,
 				)
-			}
 
-			tags := utils.RegistryRepositoryList(registryProjectRepository)
-			Ω(tags).Should(HaveLen(amount))
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				Ω(tags).Should(HaveLen(0))
+			})
 
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				"images", "purge",
-			)
+			It("should not remove images built without werf", func() {
+				Ω(utilsDocker.CliPull("alpine")).Should(Succeed(), "docker pull")
+				Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
+				defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
 
-			tags = utils.RegistryRepositoryList(registryProjectRepository)
-			Ω(tags).Should(HaveLen(0))
+				Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
+
+				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				Ω(tags).Should(HaveLen(1))
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					commandWerfArgs...,
+				)
+
+				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				Ω(tags).Should(HaveLen(1))
+			})
 		})
-
-		It("should not remove images built without werf", func() {
-			Ω(utilsDocker.CliPull("alpine")).Should(Succeed(), "docker pull")
-			Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
-			defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
-
-			Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
-
-			tags := utils.RegistryRepositoryList(registryProjectRepository)
-			Ω(tags).Should(HaveLen(1))
-
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				"images", "purge",
-			)
-
-			tags = utils.RegistryRepositoryList(registryProjectRepository)
-			Ω(tags).Should(HaveLen(1))
-		})
-	})
+	}
 })

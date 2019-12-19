@@ -29,7 +29,7 @@ shell:
   - su -c 'composer update' app
   setup:
   - "echo '#!/bin/bash' >> /app/start.sh"
-  - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+  - echo 'php -S 0.0.0.0:8000 -t public/' >> /app/start.sh
   - echo `date` > /app/version.txt
   - chown app:app /app/start.sh /app/version.txt
   - chmod +x /app/start.sh

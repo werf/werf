@@ -7,7 +7,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -103,7 +103,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 		if p.LockImages {
 			imageLockName := imagePkg.ImageLockName(i.Name())
-			if err := c.AcquireGlobalLock(imageLockName, lock.LockOptions{}); err != nil {
+			if err := c.AcquireGlobalLock(imageLockName, shluz.LockOptions{}); err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
 

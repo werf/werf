@@ -62,14 +62,14 @@ summary: |
 
 ***Git mapping*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git mapping_ contains the repository address and the version (branch, tag or commit hash).
 
-Werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
+werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
 The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-gitarchive-gitcache-gitlatestpatch) section.
 
 The configuration of the _git mapping_ supports filtering files, and you can use the set of _git mappings_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git mapping_ configuration — no subsequent `chown` required.
 
-Werf has support for submodules. Werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
+werf has support for submodules. werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
-> All project's submodules locked to a specific commit, so all collaborators receive the same content. Therefore, Werf **does not initialize, update submodules** and just uses these commits
+> All project's submodules locked to a specific commit, so all collaborators receive the same content. Therefore, werf **does not initialize, update submodules** and just uses these commits
 
 An example of a _git mapping_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
@@ -92,7 +92,7 @@ Most commits in the real application repository relate to updating the code of t
 
 ### Remote repositories
 
-Building an application image may depend on source files in other repositories. Werf provides the ability to add files from remote repositories too. Werf can detect changes in local repositories and remote repositories.
+Building an application image may depend on source files in other repositories. werf provides the ability to add files from remote repositories too. werf can detect changes in local repositories and remote repositories.
 
 ## Syntax of a git mapping
 
@@ -125,13 +125,16 @@ git:
 
 This is the simple _git mapping_ configuration that adds the entire content from the repository to the `/app` directory in the image.
 
-If the repository contains the following structure:
-
-![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_01.png)
-
-Then the image contains this structure:
-
-![image files tree]({{ site.baseurl }}/images/build/git_mapping_02.png)
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn btn__example1 active" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-source')">Git repo structure</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example1" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-dest')">Result image structure</a>
+</div>
+<div id="git-mapping-01-source" class="tabs__content tab__example1 active">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_01.png" alt="git repository files tree" />
+</div>
+<div id="git-mapping-01-dest" class="tabs__content tab__example1">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_02.png" alt="image files tree" />
+</div>
 
 Multiple _git mappings_ may be specified:
 
@@ -143,13 +146,17 @@ git:
   to: /static
 ```
 
-If the repository contains the following structure:
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn btn__example2 active" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-source')">Git repo structure</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example2" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-dest')">Result image structure</a>
+</div>
+<div id="git-mapping-02-source" class="tabs__content tab__example2 active">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_03.png" alt="git repository files tree" />
+</div>
+<div id="git-mapping-02-dest" class="tabs__content tab__example2">
+  <img src="{{ site.baseurl }}/images/build/git_mapping_04.png" alt="image files tree" />
+</div>
 
-![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_03.png)
-
-Then the image contains this structure:
-
-![image files tree]({{ site.baseurl }}/images/build/git_mapping_04.png)
 
 It should be noted, that _git mapping_ configuration doesn't specify a directory to be transferred like `cp -r /src /app`. `add` parameter specifies a directory content that will be recursively transferred from the repository. That is if the `/assets` directory needs to be transferred to the `/app/assets` directory, then the name **assets** should be written twice, or `includePaths` [filter](#using-filters) can be used.
 
@@ -168,17 +175,7 @@ git:
   includePaths: assets
 ```
 
-> Werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same.
-
-### Copying of file
-
-Copying the content, not the specified directory, from `add` path also applies to files. To transfer the file to the image, you must specify its name twice — once in `add`, and again in `to`. This provides an ability to rename the file:
-
-```yaml
-git:
-- add: /config/prod.yaml
-  to: /app/conf/production.yaml
-```
+> werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same
 
 ### Changing an owner
 
@@ -226,7 +223,7 @@ git:
   - '**/*-test.*'
 ```
 
-This is the git mapping configuration that adds `.php` and `.js` files from `/src` except files with suffixes that starts with `-dev.` or `-test.`.
+This is the _git mapping_ configuration that adds `.php` and `.js` files from `/src` except files with suffixes that starts with `-dev.` or `-test.`.
 
 To determine whether the file matches the mask the following algorithm is applied:
  - take for the check the next absolute file path inside the repository;
@@ -237,7 +234,7 @@ To determine whether the file matches the mask the following algorithm is applie
    - the path in `add` is concatenated with the mask or raw path from include or exclude config directive and concatenated with additional suffix pattern `**/*`;
    - two paths are compared with the use of glob patterns: if file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`), the algorithm is ended.
 
-> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
+> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter
 
 Masks may contain the following patterns:
 
@@ -279,7 +276,7 @@ git:
 
 ### Target paths overlapping
 
-If multiple git mappings are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
+If multiple _git mappings_ are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
 
 ```yaml
 git:
@@ -289,7 +286,7 @@ git:
   to: /app/assets
 ```
 
-When processing a config, werf calculates the possible intersections among all git mappings concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the git mapping. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git mappings.
+When processing a config, werf calculates the possible intersections among all _git mappings_ concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the _git mapping_. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git mappings.
 
 Implicit `excludePaths` example:
 
@@ -305,7 +302,7 @@ git:
 
 ## Working with remote repositories
 
-Werf may use remote repositories as file sources. For this purpose, the _git mapping_ configuration contains an `url` parameter where you should specify the repository address. Werf supports `https` and `git+ssh` protocols.
+werf may use remote repositories as file sources. For this purpose, the _git mapping_ configuration contains an `url` parameter where you should specify the repository address. werf supports `https` and `git+ssh` protocols.
 
 ### https
 
@@ -333,7 +330,7 @@ In this example, the [env](http://masterminds.github.io/sprig/os.html) method fr
 
 ### git, ssh
 
-Werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by GitHub, Bitbucket, GitLab, Gogs, Gitolite, etc. Most often the repository address looks as follows:
+werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by GitHub, Bitbucket, GitLab, Gogs, Gitolite, etc. Most often the repository address looks as follows:
 
 ```yaml
 git:
@@ -345,7 +342,7 @@ To successfully work with remote repositories via ssh, you should understand how
 
 #### Working with ssh keys
 
-Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. Werf mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
+Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. werf mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
 
 The ssh-agent is determined as follows:
 
@@ -416,6 +413,6 @@ You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset
 
 ### _git stages_ and rebasing
 
-Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. 
-These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_). 
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built.
+These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_).
 So, if any saved commit is not in a git repository (e.g., after rebasing) then werf rebuilds that stage with latest commits at the next build.

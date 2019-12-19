@@ -76,7 +76,7 @@ ansible:
     copy:
       content: |
         #!/bin/bash
-        php bin/console server:run 0.0.0.0:8000
+        php -S 0.0.0.0:8000 -t public/
       dest: /app/start.sh
       owner: app
       group: app

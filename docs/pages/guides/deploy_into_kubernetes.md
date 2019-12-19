@@ -7,27 +7,27 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Task overview
 
-How to deploy application into Kubernetes using Werf.
+How to deploy application into Kubernetes using werf.
 
-Werf uses Helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
+werf uses Helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your Kubernetes cluster.
 
 ## Requirements
 
- * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with docker-registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with Docker registry.
 
- * Working docker-registry.
+ * Working Docker registry.
 
-   * Accessible from a host machine to push images to the registry and read info about images being deployed.
+   * Accessible from a host machine to push images to the Docker registry and read info about images being deployed.
 
-   * Accessible from kubernetes nodes to pull images from the registry.
+   * Accessible from Kubernetes nodes to pull images from the Docker registry.
 
- * Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+ * Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
 
- * Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
+ * Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
- * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
+ * Installed `kubectl` on a host machine configured to access your Kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
-**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
+**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own Kubernetes and Docker registry installation, specify your own `REPO` address instead of `:minikube`.
 
 ### Select werf version
 
@@ -41,7 +41,7 @@ source <(multiwerf use 1.0 beta)
 
 Our example application is a simple web application. To run this application we only need a web server.
 
-Desirable kubernetes layout:
+Desirable Kubernetes layout:
 
      .----------------------.
      | backend (Deployment) |
@@ -52,11 +52,11 @@ Desirable kubernetes layout:
       | frontend (Ingress) |
       '--------------------'
 
-Where `backend` is a web server, `frontend` is a proxy for our application and also it is an entry point server to access kubernetes cluster from outside.
+Where `backend` is a web server, `frontend` is a proxy for our application and also it is an entry point server to access Kubernetes cluster from outside.
 
 ## Application files
 
-Werf expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
+werf expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
 
 So let's create empty application directory on host machine:
 
@@ -103,11 +103,11 @@ Build and push an image with the following command:
 werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo :minikube
 ```
 
-The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. As we have specified `myapp` as a tag, for our example werf will push into the docker-registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
+The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. As we have specified `myapp` as a tag, for our example werf will push into the Docker registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Prepare deploy configuration
 
-Werf uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional helm golang templates to generate image names and some more.
+werf uses helm under the hood *to apply* Kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional Helm Go templates to generate image names and some more.
 
 ### Backend configuration
 
@@ -176,11 +176,11 @@ Construction {% raw %}`{{ werf_container_image . | indent 8 }}`{% endraw %} is a
 
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 
-Go template function `werf_container_image` is the valid way to specify image **from config** in kubernetes resource configuration. 
+Go template function `werf_container_image` is the valid way to specify image **from config** in Kubernetes resource configuration. 
 There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
-Construction {% raw %}`{{ werf_container_env . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the kubernetes resource. 
-It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
+Construction {% raw %}`{{ werf_container_env . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the Kubernetes resource. 
+It is needed for Kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
 
 Finally, in this configuration Service `myapp-backend` specified to access Pods of Deployment `myapp-backend`.
 
@@ -223,17 +223,17 @@ Run deploy with werf:
 werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp --env dev
 ```
 
-With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).
+With this command werf will create all Kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).
 
 [Environment]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment) `--env` is a required param needed to generate helm release name and kubernetes namespace.
 
 Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name).
 
-Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` and specified environment `dev`. Check docs for details about [kubernetes namespace generation]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
+Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) `myapp` and specified environment `dev`. Check docs for details about [Kubernetes namespace generation]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
 
 ## Check your application
 
-Now it is time to know the IP address of your kubernetes cluster. If you use minikube get it with (in the most cases the IP address will be `192.168.99.100`):
+Now it is time to know the IP address of your Kubernetes cluster. If you use minikube get it with (in the most cases the IP address will be `192.168.99.100`):
 
 ```shell
 minikube ip
@@ -247,7 +247,7 @@ Make sure that host name `myapp.local` is resolving to this IP address on your m
 
 Then you can check application by url: `http://myapp.local`.
 
-## Delete application from kubernetes
+## Delete application from Kubernetes
 
 To completely remove deployed application run this dismiss werf command:
 

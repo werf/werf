@@ -58,7 +58,7 @@ artifact: "application assets"
 
 Unlike with _image_, _artifact stage conveyor_ has no _gitCache_ and _gitLatestPatch_ stages.
 
-> Werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
+> werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions
 
 Read about working with _git repositories_ in the corresponding [article]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
 
@@ -190,7 +190,7 @@ Git latest patch stage is supposed to be updated on every commit, which brings n
 
 For example: import git into *stapel artifact* and rebuild assets in this artifact only when dependent assets files in git has changes. For every other change in git where non-dependent files has been changed assets will not be rebuilt.
 
-However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build golang application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
+However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build Go application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
 
 ```
 git:

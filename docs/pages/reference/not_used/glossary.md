@@ -4,19 +4,19 @@ sidebar: documentation
 permalink: documentation/reference/glossary.html
 ---
 
-## Werf config
-— is a configuration to build docker images by Werf described in `werf.yaml` file and supplement `.werf/**/*.tmpl` files.
+## werf config
+— is a configuration to build docker images by werf described in `werf.yaml` file and supplement `.werf/**/*.tmpl` files.
 
-## Werf name
+## werf name
 
 FIXME: project name and config
 
-_Werf name_ is either:
+_werf name_ is either:
 
 * a last element of git repository path from `remote.origin.url` git config parameter;
 * or directory name, where config reside, in the case when no git repository used or `remote.origin.url` parameter is absent.
 
-_Werf name_ can be explicitly specified with `--name` basic option of the most werf commands.
+_werf name_ can be explicitly specified with `--name` basic option of the most werf commands.
 
 ## Image
 — is the named set of rules to build one docker image.

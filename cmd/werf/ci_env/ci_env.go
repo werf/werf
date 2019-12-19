@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/shluz"
+
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -13,7 +15,6 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -34,7 +35,7 @@ func NewCmd() *cobra.Command {
 		Long: `Generate werf environment variables for specified CI system.
 
 Currently supported only GitLab CI`,
-		Example: `  # Load generated werf environment variables on gitlab job runner
+		Example: `  # Load generated werf environment variables on GitLab job runner
   $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)`,
 		RunE: runCIEnv,
 	}
@@ -56,7 +57,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

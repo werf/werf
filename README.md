@@ -12,10 +12,10 @@ ___
 
 <!-- WERF DOCS PARTIAL BEGIN: Overview -->
 
-Werf is an Open Source CLI tool written in Golang, designed to simplify and speed up the delivery of applications. To use it, you need to describe the configuration of your application (in other words, how to build and deploy it to Kubernetes) and save it to a Git repo - the latter acts as a single source of truth. In short, that's what we call GitOps today.
+**werf** is an Open Source CLI tool written in Golang, designed to simplify and speed up the delivery of applications. To use it, you need to describe the configuration of your application (in other words, how to build and deploy it to Kubernetes) and save it to a Git repo - the latter acts as a single source of truth. In short, that's what we call GitOps today.
 
-* Werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker Registry.
-* Werf deploys your application to Kubernetes using the Helm-compatible chart format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
+* werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker Registry.
+* werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
 Werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system while literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
 
@@ -26,7 +26,8 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - [Features](#features)
 - [Installation](#installation)
   - [Install Dependencies](#install-dependencies)
-  - [Install Werf](#install-werf)
+  - [Install werf](#install-werf)
+- [Getting started](#getting-started)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
 - [Docs and Support](#docs-and-support)
 - [License](#license)
@@ -40,13 +41,18 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
  - Build images with Dockerfiles.
  - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
  - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
- - Werf is a CLI tool written in Golang which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - werf is a CLI tool written in Go which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - Cross-platform development: Linux based containers are supported on Linux, macOS, and Windows.
 
 ## Coming soon
 
-- 3-way-merge [#1616](https://github.com/flant/werf/issues/1616).
-- Content based tagging [#1184](https://github.com/flant/werf/issues/1184).
-- Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
+- ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
+- Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
+- Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
+- Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
+- Distributed builds with common Docker registry [#1614](https://github.com/flant/werf/issues/1614).
+- Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
+- Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
 
 ## Complete features list
 
@@ -87,7 +93,7 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Immediate CI pipeline failure if some problem is detected.
   - Early detection of resource failures during the deploying process without having to wait for a full timeout.
 - Full compatibility with Helm 2.
-- Ability to limit deploy user access using RBAC definition (Tiller is compiled into Werf and run from the deploy user outside of cluster).
+- Ability to limit deploy user access using RBAC definition (Tiller is compiled into werf and run from the deploy user outside of cluster).
 - Parallel deploys on a single host (using file locks).
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
 - Allow continuous delivery of new images tagged by the same name (by git branch for example).
@@ -95,7 +101,7 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 ### Cleanup
 
 - Local and Docker registry cleaning by customizable policies.
-- Keeping images that used in Kubernetes clusters. Werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
+- Keeping images that used in Kubernetes clusters. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -123,14 +129,14 @@ sudo usermod -aG docker $USER
 - Minimal required version is 1.9.0.
 - To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-## Install Werf
+## Install werf
 
-### Method 1 (recommended): using Multiwerf
+### Method 1 (recommended): using multiwerf
 
-[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
-* downloads Werf binary builds;
+[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf, which:
+* downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
-* automatically updates Werf binary (can be disabled).
+* automatically updates werf binary (can be disabled).
 
 ```bash
 # add ~/bin into PATH
@@ -144,7 +150,7 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 source <(multiwerf use 1.0 beta)
 ```
 
-> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` enstead of `source <(multiwerf use 1.0 beta)`
+> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` instead of `source <(multiwerf use 1.0 beta)`
 
 ### Method 2: download binary
 
@@ -178,21 +184,37 @@ go get github.com/flant/werf/cmd/werf
 
 <!-- WERF DOCS PARTIAL END -->
 
+# Getting started
+
+<!-- WERF DOCS PARTIAL BEGIN: Getting started -->
+
+The following guides demonstrate the main features and help you get started using werf:
+- [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with existing Dockerfile.
+- [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with werf builder.
+- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy the application into Kubernetes using werf built images.
+- [GitLab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
+- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate werf with any CI/CD system.
+- [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
+- [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).
+- [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — reduce image size with artifacts (Go/Revel).
+
+<!-- WERF DOCS PARTIAL END -->
+
 # Backward Compatibility Promise
 
 <!-- WERF DOCS PARTIAL BEGIN: Backward Compatibility Promise -->
 
-> _Note:_ This promise was introduced with Werf 1.0 and does not apply to previous versions or to dapp releases.
+> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
 
-Werf is versioned with [Semantic Versioning](https://semver.org). This means that major releases (1.0, 2.0) are
-allowed to break backward compatibility. In case of Werf this means that update to the next major release _may_
+werf is versioned with [Semantic Versioning](https://semver.org). This means that major releases (1.0, 2.0) are
+allowed to break backward compatibility. In case of werf this means that update to the next major release _may_
 require to do a full re-deploy of applications or to perform other non-scriptable actions.
 
 Minor releases (1.1, 1.2, etc.) may introduce new "big" features, but must do so without significant backward compatibility breaks with major branch (1.x).
-In case of Werf this means that update to the next minor release is mostly smooth, but _may_ require to run a provided upgrade script.
+In case of werf this means that update to the next minor release is mostly smooth, but _may_ require to run a provided upgrade script.
 
 Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility with minor branch (1.1.x).
-In case of Werf this means that update to the next patch release should be smooth and can be done automatically.
+In case of werf this means that update to the next patch release should be smooth and can be done automatically.
 
 Patch releases are divided to channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
 Version without prerelease part is considered to be from a stable channel.
@@ -216,12 +238,11 @@ Version without prerelease part is considered to be from a stable channel.
 
 <!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
-[Make your first Werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
+[Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-Werf’s developers are always in contact with community though Slack and Telegram. Join us!
+We are always in contact with community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
 
-- English-speaking community in [CNCF Slack channel #werf](https://cloud-native.slack.com/messages/CHY2THYUU)
-- Russian community in [Telegram Chat #werf_ru](https://t.me/werf_ru)
+> Russian-speaking community can contact with us in [Telegram Chat](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
 

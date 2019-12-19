@@ -15,7 +15,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 )
 
 type Remote struct {
@@ -304,7 +304,7 @@ func (repo *Remote) getWorkTreeDir() (string, error) {
 
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
 	lockName := fmt.Sprintf("remote_git_mapping.%s", repo.Name)
-	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
+	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: 600 * time.Second}, f)
 }
 
 func (repo *Remote) TagsList() ([]string, error) {

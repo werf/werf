@@ -21,7 +21,7 @@ require (
 	github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
 	github.com/docker/compose-on-kubernetes v0.4.23 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v1.14.0-0.20190319215453-e7b5f7dbe98c
+	github.com/docker/docker v1.4.2-0.20190319215453-e7b5f7dbe98c
 	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go v1.5.1-1
 	github.com/docker/go-connections v0.4.0
@@ -35,10 +35,12 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
-	github.com/flant/kubedog v0.3.5-0.20190923111717-5fda2f77f960
+	github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad
 	github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349
+	github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
+	github.com/gofrs/flock v0.7.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
 	github.com/google/go-containerregistry v0.0.0-20190623150931-ca8b66cb1b79
@@ -53,8 +55,10 @@ require (
 	github.com/hashicorp/uuid v0.0.0-20160311170451-ebb0a03e909c // indirect
 	github.com/ishidawataru/sctp v0.0.0-20180213033435-07191f837fed // indirect
 	github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63
+	github.com/mattn/go-isatty v0.0.7
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moby/buildkit v0.3.3
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
 	github.com/onsi/ginkgo v1.8.0
@@ -90,7 +94,7 @@ require (
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
-	gopkg.in/src-d/go-billy.v4 v4.3.0 // indirect
+	gopkg.in/src-d/go-billy.v4 v4.3.0
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.11.0
 	gopkg.in/yaml.v2 v2.2.2
@@ -111,7 +115,7 @@ require (
 	sigs.k8s.io/yaml v1.1.0
 )
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20191111155056-4a61afe6bf10
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20191216114509-460380ca08d4
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 
@@ -160,3 +164,5 @@ replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918161442
 replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.0.0-20190918162410-e45c26d066f2
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.0.0-20190918161628-92eb3cb7496c
+
+go 1.13

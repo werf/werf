@@ -8,12 +8,10 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"github.com/flant/werf/integration/utils"
+	"github.com/flant/werf/pkg/testing/utils"
 )
 
-var _ = Describe("Getting started", func() {
-	var testDirPath string
-
+var _ = Describe("Deploy into kubernetes", func() {
 	requiredSuiteEnvs = append(
 		requiredSuiteEnvs,
 		"WERF_TEST_K8S_DOCKER_REGISTRY",
@@ -22,7 +20,6 @@ var _ = Describe("Getting started", func() {
 	)
 
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("deploy_into_kubernetes"), testDirPath)
 	})
 
@@ -31,6 +28,12 @@ var _ = Describe("Getting started", func() {
 			testDirPath,
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
+		)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			werfBinPath,
+			"dismiss", "--env", "test", "--with-namespace",
 		)
 	})
 
@@ -41,7 +44,7 @@ var _ = Describe("Getting started", func() {
 			"build", "-s", ":local",
 		)
 
-		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), "deploy_into_kubernetes")
+		imagesRepo := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
@@ -62,12 +65,6 @@ var _ = Describe("Getting started", func() {
 			testDirPath,
 			werfBinPath,
 			werfDeployArgs...,
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"dismiss", "--env", "test",
 		)
 	})
 })

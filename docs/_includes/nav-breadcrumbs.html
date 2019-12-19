@@ -1,5 +1,5 @@
 <ol class="breadcrumbs">
-   <li><a href="{{ site.baseurl }}/">Home</a></li>
+   <li><a href="{{ site.baseurl }}/">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
 
    {% capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
    {% assign splitted_url_parts = page_url_without_index_html | split: '/' %}
@@ -8,7 +8,12 @@
       {% capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
       {% capture next_prepender %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
 
-      {% assign breadcrumb = site.data.breadcrumbs[current_breadcrumb_url] %}
+      {% if page.lang == "ru" %}
+        {% assign breadcrumb = site.data.breadcrumbs_ru[current_breadcrumb_url] %}
+      {% else %}
+        {% assign breadcrumb = site.data.breadcrumbs[current_breadcrumb_url] %}
+      {% endif %}
+
       {% if breadcrumb %}
       <li>
          <a href="{{ site.baseurl }}{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>

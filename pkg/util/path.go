@@ -9,7 +9,7 @@ import (
 func ExpandPath(path string) string {
 	var result string
 
-	if path == "~" || strings.HasPrefix(path, "~/") {
+	if strings.HasPrefix(path, "~") {
 		usr, err := user.Current()
 		if err != nil {
 			panic(err)

@@ -7,15 +7,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"github.com/flant/werf/integration/utils"
-	utilsDocker "github.com/flant/werf/integration/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils"
+	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("Advanced build/Artifacts", func() {
-	var testDirPath string
-
 	BeforeEach(func() {
-		testDirPath = tmpPath()
 		utils.CopyIn(fixturePath("artifacts"), testDirPath)
 	})
 

@@ -2,7 +2,9 @@ package cleanup
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
+
+	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
 
@@ -13,7 +15,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -68,7 +69,7 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 
@@ -133,7 +134,7 @@ func runCleanup() error {
 	}
 
 	var localRepo cleaning.GitRepo
-	gitDir := path.Join(projectDir, ".git")
+	gitDir := filepath.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
 	} else if exist {
@@ -150,7 +151,7 @@ func runCleanup() error {
 
 	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
-		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
+		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
 	}
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{

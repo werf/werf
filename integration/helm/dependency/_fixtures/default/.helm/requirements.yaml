@@ -1,0 +1,10 @@
+dependencies:
+- name: mysql
+  version: ~1.4.0
+  repository: "@stable"
+- name: redis
+  version: ~9.5.0
+  repository: "@stable"
+- name: rabbitmq
+  version: ~6.12.0
+  repository: "@stable"

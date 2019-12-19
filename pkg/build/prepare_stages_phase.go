@@ -36,9 +36,10 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 	var prevImage, prevBuiltImage imagePkg.ImageInterface
 
-	err = image.PrepareBaseImage(c)
-	if err != nil {
-		return fmt.Errorf("prepare base image %s failed: %s", image.GetBaseImage().Name(), err)
+	if !image.isDockerfileImage {
+		if err = image.PrepareBaseImage(c); err != nil {
+			return fmt.Errorf("prepare base image %s failed: %s", image.GetBaseImage().Name(), err)
+		}
 	}
 
 	prevImage = image.baseImage

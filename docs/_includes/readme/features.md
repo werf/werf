@@ -5,13 +5,18 @@
  - Build images with Dockerfiles.
  - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
  - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
- - Werf is a CLI tool written in Golang which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - werf is a CLI tool written in Go which can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - Cross-platform development: Linux based containers are supported on Linux, macOS, and Windows.
 
 ## Coming soon
 
-- 3-way-merge [#1616](https://github.com/flant/werf/issues/1616).
-- Content based tagging [#1184](https://github.com/flant/werf/issues/1184).
-- Distributed builds with common registry [#1614](https://github.com/flant/werf/issues/1614).
+- ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
+- Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
+- Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
+- Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
+- Distributed builds with common Docker registry [#1614](https://github.com/flant/werf/issues/1614).
+- Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
+- Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
 
 ## Complete features list
 
@@ -52,7 +57,7 @@
 - Fail CI pipeline fast when problem detected.
   - Early resources failures detection during deploy process without need to wait full timeout.
 - Full compatibility with Helm 2.
-- Ability to limit deploy user access using RBAC definition (Tiller is compiled into Werf and run from the deploy user outside of cluster).
+- Ability to limit deploy user access using RBAC definition (Tiller is compiled into werf and run from the deploy user outside of cluster).
 - Parallel deploys on a single host (using file locks).
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
 - Allow continuous delivery of new images tagged by the same name (by git branch for example).
@@ -60,4 +65,4 @@
 ### Cleanup
 
 - Local and Docker registry cleaning by customizable policies.
-- Keeping images that used in Kubernetes clusters. Werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
+- Keeping images that used in Kubernetes clusters. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.

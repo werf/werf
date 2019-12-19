@@ -12,6 +12,7 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/flant/werf/pkg/util/secretvalues"
 )
 
 type LintOptions struct {
@@ -54,17 +55,23 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	if err != nil {
 		return err
 	}
+	helm.SetReleaseLogSecretValuesToMask(werfChart.SecretValuesToMask)
 
-	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFiles)
+	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)
 
-	return helm.Lint(
+	if err := helm.Lint(
 		os.Stdout,
 		werfChart.ChartDir,
 		namespace,
 		append(werfChart.Values, opts.Values...),
+		werfChart.SecretValues,
 		append(werfChart.Set, opts.Set...),
 		append(werfChart.SetString, opts.SetString...),
 		helm.LintOptions{Strict: true},
-	)
+	); err != nil {
+		return fmt.Errorf("%s", secretvalues.MaskSecretValuesInString(werfChart.SecretValuesToMask, err.Error()))
+	}
+
+	return nil
 }

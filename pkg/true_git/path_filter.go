@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -15,32 +16,32 @@ type PathFilter struct {
 }
 
 func (f *PathFilter) IsFilePathValid(filePath string) bool {
-	return IsFilePathValid(filePath, f.BasePath, f.IncludePaths, f.ExcludePaths)
+	return isFilePathValid(filePath, f.BasePath, f.IncludePaths, f.ExcludePaths)
 }
 
 func (f *PathFilter) TrimFileBasePath(filePath string) string {
-	return TrimFileBasePath(filePath, f.BasePath)
+	return trimFileBasePath(filePath, f.BasePath)
 }
 
 func (f *PathFilter) String() string {
 	return fmt.Sprintf("BasePath=`%s`, IncludePaths=%v, ExcludePaths=%v", f.BasePath, f.IncludePaths, f.ExcludePaths)
 }
 
-func IsFilePathValid(filePath, basePath string, includePaths, excludePaths []string) bool {
-	if !IsFileInBasePath(filePath, basePath) {
+func isFilePathValid(filePath, basePath string, includePaths, excludePaths []string) bool {
+	if !isRel(filePath, basePath) {
 		return false
 	}
 
-	filePathInBasePath := TrimFileBasePath(filePath, basePath)
+	relFilePath := rel(filePath, basePath)
 
 	if len(includePaths) > 0 {
-		if !IsFilePathMatchesOneOfPatterns(filePathInBasePath, includePaths) {
+		if !isPathMatchedOneOfPatterns(relFilePath, includePaths) {
 			return false
 		}
 	}
 
 	if len(excludePaths) > 0 {
-		if IsFilePathMatchesOneOfPatterns(filePathInBasePath, excludePaths) {
+		if isPathMatchedOneOfPatterns(relFilePath, excludePaths) {
 			return false
 		}
 	}
@@ -48,21 +49,27 @@ func IsFilePathValid(filePath, basePath string, includePaths, excludePaths []str
 	return true
 }
 
-/*
- * basePath can be path to a directory or a file.
- */
-func IsFileInBasePath(filePath, basePath string) bool {
-	filePath = NormalizeAbsolutePath(filePath)
-	basePath = NormalizeAbsolutePath(basePath)
-
-	if filePath == basePath {
+func isRel(targetPath, basePath string) bool {
+	if basePath == "" {
 		return true
 	}
-
-	return strings.HasPrefix(filePath, NormalizeDirectoryPrefix(basePath))
+	return strings.HasPrefix(targetPath+string(os.PathSeparator), basePath+string(os.PathSeparator))
 }
 
-func IsFilePathMatchesPattern(filePath, pattern string) bool {
+func rel(targetPath, basePath string) string {
+	if basePath == "" {
+		return targetPath
+	}
+
+	relPath, err := filepath.Rel(basePath, targetPath)
+	if err != nil {
+		panic(err)
+	}
+
+	return relPath
+}
+
+func isPathMatchedPattern(filePath, pattern string) bool {
 	matched, err := doublestar.PathMatch(pattern, filePath)
 	if err != nil {
 		panic(err)
@@ -82,13 +89,13 @@ func IsFilePathMatchesPattern(filePath, pattern string) bool {
 	return false
 }
 
-func IsFilePathMatchesOneOfPatterns(filePath string, patterns []string) bool {
+func isPathMatchedOneOfPatterns(path string, patterns []string) bool {
 	for _, pattern := range patterns {
-		if IsFileInBasePath(filePath, pattern) {
+		if isRel(path, pattern) {
 			return true
 		}
 
-		if IsFilePathMatchesPattern(filePath, pattern) {
+		if isPathMatchedPattern(path, pattern) {
 			return true
 		}
 	}
@@ -96,10 +103,7 @@ func IsFilePathMatchesOneOfPatterns(filePath string, patterns []string) bool {
 	return false
 }
 
-func TrimFileBasePath(filePath, basePath string) string {
-	filePath = NormalizeAbsolutePath(filePath)
-	basePath = NormalizeAbsolutePath(basePath)
-
+func trimFileBasePath(filePath, basePath string) string {
 	if filePath == basePath {
 		// filePath path is always a path to a file, not a directory.
 		// Thus if BasePath is equal filePath, then BasePath is a path to the file.
@@ -107,16 +111,5 @@ func TrimFileBasePath(filePath, basePath string) string {
 		return filepath.Base(filePath)
 	}
 
-	return strings.TrimPrefix(filePath, NormalizeDirectoryPrefix(basePath))
-}
-
-func NormalizeAbsolutePath(path string) string {
-	return filepath.Clean(filepath.Join("/", path))
-}
-
-func NormalizeDirectoryPrefix(directoryPrefix string) string {
-	if directoryPrefix == "/" {
-		return directoryPrefix
-	}
-	return directoryPrefix + "/"
+	return rel(filePath, basePath)
 }

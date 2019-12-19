@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +47,7 @@ type CmdData struct {
 	HelmReleaseStorageType           *string
 	StatusProgressPeriodSeconds      *int64
 	HooksStatusProgressPeriodSeconds *int64
+	ReleasesHistoryMax               *int
 
 	Set             *[]string
 	SetString       *[]string
@@ -122,7 +123,7 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
-	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironment("WERF_WITHOUT_KUBE"), "Do not skip deployed kubernetes images (default $WERF_KUBE_CONTEXT)")
+	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironment("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_KUBE_CONTEXT)")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -231,6 +232,28 @@ func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 	)
 }
 
+func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReleasesHistoryMax = new(int)
+
+	defaultValueP, err := getIntEnvVar("WERF_RELEASES_HISTORY_MAX")
+	if err != nil {
+		TerminateWithError(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err), 1)
+	}
+
+	var defaultValue int
+	if defaultValueP != nil {
+		defaultValue = int(*defaultValueP)
+	}
+
+	cmd.Flags().IntVarP(
+		cmdData.ReleasesHistoryMax,
+		"releases-history-max",
+		"",
+		defaultValue,
+		"Max releases to keep in release storage. Can be set by environment variable $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.",
+	)
+}
+
 func statusProgressPeriodDefaultValue() *int64 {
 	defaultValue := int64(5)
 
@@ -296,6 +319,12 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SkipTlsVerifyRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironment("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
+
+	// legacy
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "insecure-repo", "", GetBoolEnvironment("WERF_INSECURE_REPO"), "Skip TLS certificate validation when accessing a registry (default $WERF_INSECURE_REPO)")
+	if err := cmd.Flags().MarkHidden("insecure-repo"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
@@ -618,7 +647,7 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 
 func GetWerfConfigPath(projectDir string) (string, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
-		werfConfigPath := path.Join(projectDir, werfConfigName)
+		werfConfigPath := filepath.Join(projectDir, werfConfigName)
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
 			return "", err
 		} else if exist {
@@ -636,10 +665,10 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	if *cmdData.Dir != "" {
-		if path.IsAbs(*cmdData.Dir) {
+		if filepath.IsAbs(*cmdData.Dir) {
 			return *cmdData.Dir, nil
 		} else {
-			return path.Clean(path.Join(currentDir, *cmdData.Dir)), nil
+			return filepath.Clean(filepath.Join(currentDir, *cmdData.Dir)), nil
 		}
 	}
 

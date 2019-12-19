@@ -5,11 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/lock"
+
+	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 var (
@@ -17,7 +21,7 @@ var (
 )
 
 func runGC() error {
-	return lock.WithLock("gc", lock.LockOptions{}, func() error {
+	return shluz.WithLock("gc", shluz.LockOptions{}, func() error {
 		return GC(false)
 	})
 }
@@ -107,8 +111,16 @@ func gc(dryRun bool) error {
 		}
 
 		if !dryRun {
-			if err := removeProjectDirs(projectDirsToRemove); err != nil {
-				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+			if runtime.GOOS == "windows" {
+				for _, path := range projectDirsToRemove {
+					if err := os.RemoveAll(path); err != nil {
+						removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp project dir %s: %s", path, err))
+					}
+				}
+			} else {
+				if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
+					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+				}
 			}
 		}
 	}

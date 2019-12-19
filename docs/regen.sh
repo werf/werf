@@ -15,3 +15,8 @@ mkdir -p $README_PARTIALS_DIR
 
 WERF_HELM_HOME="~/.helm" werf docs --dir $CLI_PARTIALS_DIR --log-terminal-width=100
 werf docs --split-readme --readme $README --dir $README_PARTIALS_DIR
+
+README=$SOURCE/../README_ru.md
+README_PARTIALS_DIR=$SOURCE/_includes/readme_ru
+
+werf docs --split-readme --readme $README --dir $README_PARTIALS_DIR

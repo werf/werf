@@ -101,7 +101,7 @@ func ValidateHelmRelease(name string) error {
 }
 
 func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
-	return len(data) == 0 || regexp.Match([]byte(data)) && len(data) < maxSize
+	return len(data) == 0 || regexp.Match([]byte(data)) && len(data) <= maxSize
 }
 
 func slug(data string, maxSize int) string {

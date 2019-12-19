@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -93,7 +92,7 @@ func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(path.Dir(werfConfigPath))
+		defaultProjectName, err := GetProjectName(filepath.Dir(werfConfigPath))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
@@ -107,7 +106,7 @@ func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig
 			"##############################################################################################################################\n" +
 			"###           WARNING! Project name cannot be changed later without rebuilding and redeploying your application!           ###\n" +
 			"###       Project name should be unique within group of projects that shares build hosts and deployed into the same        ###\n" +
-			"###                    kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
+			"###                    Kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
 			"### Read more about meta config section: https://werf.io/documentation/configuration/introduction.html#meta-config-section ###\n" +
 			"##############################################################################################################################"
 
@@ -123,9 +122,9 @@ func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig
 }
 
 func GetProjectName(projectDir string) (string, error) {
-	name := path.Base(projectDir)
+	name := filepath.Base(projectDir)
 
-	if exist, err := util.DirExists(path.Join(projectDir, ".git")); err != nil {
+	if exist, err := util.DirExists(filepath.Join(projectDir, ".git")); err != nil {
 		return "", err
 	} else if exist {
 		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
@@ -151,7 +150,7 @@ func GetProjectName(projectDir string) (string, error) {
 func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 	localGitRepo := &git_repo.Local{
 		Path:   projectDir,
-		GitDir: path.Join(projectDir, ".git"),
+		GitDir: filepath.Join(projectDir, ".git"),
 	}
 
 	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()
@@ -475,15 +474,15 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 		return nil, err
 	}
 
+	if err := werfConfig.validateImagesFrom(); err != nil {
+		return nil, err
+	}
+
 	if err := werfConfig.associateImportsArtifacts(); err != nil {
 		return nil, err
 	}
 
 	if err := werfConfig.exportsAutoExcluding(); err != nil {
-		return nil, err
-	}
-
-	if err := werfConfig.associateImagesFrom(); err != nil {
 		return nil, err
 	}
 

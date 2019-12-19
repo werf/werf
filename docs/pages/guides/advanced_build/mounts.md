@@ -7,12 +7,12 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
+In this article, we will build an example Go application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
 ## Requirements
 
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
-* Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
 
@@ -24,7 +24,7 @@ source <(multiwerf use 1.0 beta)
 
 ## Sample application
 
-The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [GO](https://golang.org/) for [Revel Framework](https://github.com/revel).
+The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [Go](https://golang.org/) for [Revel Framework](https://github.com/revel).
 
 ### Building
 
@@ -76,7 +76,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
@@ -127,7 +127,7 @@ REPOSITORY                 TAG                   IMAGE ID          CREATED      
 image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
 
-You can check the size of all ancestor images in the output of the `werf build --stages-storage :local` command. After Werf built or used any image it outputs some information  like image name and tag, image size or image size difference, used instructions and commands.
+You can check the size of all ancestor images in the output of the `werf build --stages-storage :local` command. After werf built or used any image it outputs some information  like image name and tag, image size or image size difference, used instructions and commands.
 
 Pay attention, that the image size of the application is **above 1 GB**.
 
@@ -247,7 +247,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 
-# GO-template for exporting environment variables
+# Go template for exporting environment variables
 {{- define "export golang vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
@@ -348,7 +348,7 @@ The output will be like this:
 
 Also, approximately `77MB` of space occupy files in directories mounted with `from: tmp_dir`. These files also excluded from the image and deleted from the host at the end of image building.
 
-The total size difference between images with and without using mounts is about 730 MB (the result of 1.04 GB — 335 MB).
+The total size difference between images with and without using mounts is about `730MB` (the result of 1.04GB — 335MB).
 
 **Our example shows that with using werf mounts the image size smaller by more than 68% than the original image size!**
 

@@ -76,6 +76,6 @@ werf images cleanup [options]
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --without-kube=false:
-            Do not skip deployed kubernetes images (default $WERF_KUBE_CONTEXT)
+            Do not skip deployed Kubernetes images (default $WERF_KUBE_CONTEXT)
 ```
 

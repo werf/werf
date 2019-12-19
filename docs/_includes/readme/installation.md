@@ -20,14 +20,14 @@ sudo usermod -aG docker $USER
 - Minimal required version is 1.9.0.
 - To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-## Install Werf
+## Install werf
 
-### Method 1 (recommended): using Multiwerf
+### Method 1 (recommended): using multiwerf
 
-[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
-* downloads Werf binary builds;
+[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf, which:
+* downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
-* automatically updates Werf binary (can be disabled).
+* automatically updates werf binary (can be disabled).
 
 ```bash
 # add ~/bin into PATH
@@ -41,7 +41,7 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 source <(multiwerf use 1.0 beta)
 ```
 
-> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` enstead of `source <(multiwerf use 1.0 beta)`
+> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` instead of `source <(multiwerf use 1.0 beta)`
 
 ### Method 2: download binary
 

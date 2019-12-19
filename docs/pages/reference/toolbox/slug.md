@@ -7,9 +7,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 In some cases, text from environment variables or parameters can't be used as is because it can contain unacceptable symbols.
 
-To take into account restrictions for docker images names, helm releases names and kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
+To take into account restrictions for docker images names, helm releases names and Kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
 
-There are 3 types of slug built into Werf:
+There are 3 types of slug built into werf:
 
 1. Helm Release name slug.
 2. Kubernetes Namespace slug.
@@ -19,7 +19,7 @@ There are commands for each type of slug available which apply algorithms for pr
 
 ## Basic algorithm
 
-Werf checks the text for compliance with slug **requirements**, and if text complies with slug requirements — werf does not modify it. Otherwise, werf performs **transformations** of the text to comply the requirements and add a dash symbol followed by a hash suffix based on the source text. A hash algorithm is a [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash).
+werf checks the text for compliance with slug **requirements**, and if text complies with slug requirements — werf does not modify it. Otherwise, werf performs **transformations** of the text to comply the requirements and add a dash symbol followed by a hash suffix based on the source text. A hash algorithm is a [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash).
 
 The following steps perform, when werf applies transformations of the text in slug:
 * Converting UTF-8 latin characters to their ASCII counterpart;
@@ -47,7 +47,7 @@ The transformations are the same for all slugs, because these transformations ar
 
 Slug can be applied to arbitrary string with [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
 
-Also Werf applies slug automatically when used in CI/CD systems such as Gitlab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
+Also werf applies slug automatically when used in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
  * apply slug automatically to params that are derived automatically from CI/CD systems environment;
  * do not apply slug automatically to params that are specified manually with `--tag-*`, `--release` or `--namespace`, this way params are only validated to confirm with the requirements.
 

@@ -2,11 +2,7 @@
 {% assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
 
 <div class="main-container page__container">
-    <div class="publications publications_{{ include.language }}">
-        <div class="publications__lng">
-            <a href="{{ site.baseurl }}/publications.html" class="publications__btn{% if include.language == 'en' %} active{% endif %}">English</a>
-            <a href="{{ site.baseurl }}/publications_ru.html" class="publications__btn{% if include.language == 'ru' %} active{% endif %}">Russian</a>
-        </div>
+    <div class="publications">
         {% for year in publications_by_year %}
             <div class="publications__year">
                 {{ year.name }}

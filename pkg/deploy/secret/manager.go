@@ -75,7 +75,7 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 				werfSecretKeyPath = path
 				break
 			} else {
-				notFoundIn = append(notFoundIn, fmt.Sprintf("%s", path))
+				notFoundIn = append(notFoundIn, path)
 			}
 		}
 

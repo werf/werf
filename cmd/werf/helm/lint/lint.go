@@ -2,6 +2,9 @@ package lint
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
 
@@ -11,7 +14,6 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -21,7 +23,7 @@ var CommonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "lint",
-		Short:                 "Run lint procedure for the Werf chart",
+		Short:                 "Run lint procedure for the werf chart",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
@@ -52,7 +54,7 @@ func runLint() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/shluz"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -16,7 +18,6 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -29,7 +30,7 @@ func NewCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:                   "render",
-		Short:                 "Render Werf chart templates to stdout",
+		Short:                 "Render werf chart templates to stdout",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
@@ -72,7 +73,7 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

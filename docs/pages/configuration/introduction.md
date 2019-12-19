@@ -7,12 +7,12 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.k
 
 ## What is werf config?
 
-Application should be configured to use Werf. This configuration includes:
+Application should be configured to use werf. This configuration includes:
 
 1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
 2. Definition of the images to be built.
 
-Werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of config sections -- parts of YAML file separated by three hyphens (http://yaml.org/spec/1.2/spec.html#id2800132):
+werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of config sections -- parts of YAML file separated by [three hyphens](http://yaml.org/spec/1.2/spec.html#id2800132):
 
 ```yaml
 CONFIG_SECTION
@@ -32,7 +32,7 @@ More types can be added in the future.
 
 ### Meta config section
 
-```
+```yaml
 project: PROJECT_NAME
 configVersion: CONFIG_VERSION
 OTHER_FIELDS
@@ -45,17 +45,17 @@ Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_V
 
 `project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)). This is single required field of meta configuration.
 
-Project name should be unique within group of projects that shares build hosts and deployed into the same kubernetes cluster (i.e. unique across all groups within the same gitlab).
+Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab).
 
 Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
 
 **WARNING**. You should never change project name, once it has been set up, unless you know what you are doing.
 
 Changing project name leads to issues:
-1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and docker registry manually.
+1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and Docker registry manually.
 2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
 
-Werf cannot automatically resolve project name change. Described issues must be resolved manually.
+werf cannot automatically resolve project name change. Described issues must be resolved manually.
 
 #### Config version
 
@@ -67,7 +67,7 @@ Each image config section defines instructions to build one independent docker i
 
 Config section with the key `image: IMAGE_NAME` is the image config section. `image` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
 
-```
+```yaml
 image: IMAGE_NAME_1
 OTHER_FIELDS
 ---
@@ -88,25 +88,18 @@ Config section with the key `artifact: IMAGE_NAME` is the artifact config sectio
 
 ### Minimal config example
 
-Currently Werf requires to define meta config section and at least one image config section. Image config sections will be fully optional soon.
-
-Example of minimal werf config:
-
 ```yaml
 project: my-project
 configVersion: 1
----
-image: ~
-from: alpine:latest
 ```
 
 ## Organizing configuration
 
 Part of the configuration can be moved in ***separate template files*** and then included into __werf.yaml__. _Template files_ should live in the ***.werf*** directory with **.tmpl** extension (any nesting is supported).
 
-> **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects.
+> **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects
 
-Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
+werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>
@@ -197,7 +190,7 @@ ansible:
 </div>
 </div>
 
-> If there are templates with the same name werf will use template defined in _werf.yaml_ or the latest described in _templates files_.
+> If there are templates with the same name werf will use template defined in _werf.yaml_ or the latest described in _templates files_
 
 If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in [include](#include) function.
 
@@ -260,7 +253,7 @@ shell:
 </div>
 </div>
 
-<div class="details active">
+<div class="details">
 <a href="javascript:void(0)" class="details__summary">.werf/artifact/storefront.tmpl</a>
 <div class="details__content" markdown="1">
 
@@ -285,10 +278,10 @@ shell:
 ## Processing of config
 
 The following steps could describe the processing of a YAML configuration file:
-1. Reading `werf.yaml` and extra templates from `.werf` directory;
-2. Executing Go templates;
-3. Saving dump into `.werf.render.yaml` (that file will remain after build and will be available until next render);
-4. Splitting rendered YAML file into separate config sections (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132);
+1. Reading `werf.yaml` and extra templates from `.werf` directory.
+2. Executing Go templates.
+3. Saving dump into `.werf.render.yaml` (this file remains after the command execution and will be removed automatically with GC procedure).
+4. Splitting rendered YAML file into separate config sections (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132).
 5. Validating each config section:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
   * Validating werf syntax.
@@ -380,6 +373,12 @@ Go templates are available within YAML configuration. The following functions ar
 
 * `.Files.Get` function for getting project file content:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
+  <div class="tabs">
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+  </div>
+  
+  <div id="ansible" class="tabs__content active" markdown="1">
   {% raw %}
   ```yaml
   project: my-project
@@ -397,3 +396,24 @@ Go templates are available within YAML configuration. The following functions ar
         dest: /etc/nginx/nginx.conf
   ```
   {% endraw %}
+  </div>
+  
+  <div id="shell" class="tabs__content" markdown="1">
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+  
+  image: app
+  from: alpine
+  shell:
+    setup:
+    - |
+      head -c -1 <<EOF | tee file > /etc/nginx/nginx.conf
+  {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+      EOF
+  ```
+  {% endraw %}
+  </div>
+  

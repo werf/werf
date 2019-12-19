@@ -9,7 +9,7 @@ import (
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 )
 
 type StageImage struct {
@@ -82,10 +82,10 @@ func (i *StageImage) SyncDockerState() error {
 
 func (i *StageImage) Build(options BuildOptions) error {
 	containerLockName := ContainerLockName(i.container.Name())
-	if err := lock.Lock(containerLockName, lock.LockOptions{}); err != nil {
+	if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 	}
-	defer lock.Unlock(containerLockName)
+	defer shluz.Unlock(containerLockName)
 
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {

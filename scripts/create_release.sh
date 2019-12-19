@@ -35,7 +35,7 @@ docker run --rm \
     --volume ~/.ssh/known_hosts:/root/.ssh/known_hosts \
     --volume $(pwd):/werf \
     --workdir /werf \
-    flant/werf-builder:1.1.1 \
+    flant/werf-builder:1.2.0 \
     bash -ec "set -e; source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_build $VERSION"
 
 ( publish_binaries $VERSION ) || ( echo "Failed to publish release binaries!" 1>&2 && exit 1 )

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/shluz"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -18,7 +20,6 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -107,7 +108,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

@@ -2,17 +2,18 @@ package dismiss
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -64,6 +65,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupKubeContext(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
 
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
@@ -80,7 +82,7 @@ func runDismiss() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 
@@ -95,6 +97,7 @@ func runDismiss() error {
 			KubeContext:                 *CommonCmdData.KubeContext,
 			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
+			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
@@ -141,7 +144,7 @@ func runDismiss() error {
 	logboek.LogF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
 	logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
 	logboek.LogF("Using helm release name: %s\n", release)
-	logboek.LogF("Using kubernetes namespace: %s\n", namespace)
+	logboek.LogF("Using Kubernetes namespace: %s\n", namespace)
 
 	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,

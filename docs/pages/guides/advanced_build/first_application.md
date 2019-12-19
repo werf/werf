@@ -15,20 +15,20 @@ In this tutorial, we will build an image of simple PHP [Symfony application](htt
 1. Installing other project dependencies with the composer.
 1. Adding the application code to the `/app` directory of the resulting image.
    This directory and all files in it should belong to `app:app`.
-1. Setting up the IP address that the web server will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
+1. Setting up the IP address that the web server will listen to. This is done with a setting in `/apt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
 
-Also, we will check that the application works and push the image in a docker registry.
+Also, we will check that the application works and push the image in a Docker registry.
 
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [Werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
-* Installed [Multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
-### Select Werf version
+### Select werf version
 
-This command should be run prior running any Werf command in your shell session:
+This command should be run prior running any werf command in your shell session:
 
 ```shell
 source <(multiwerf use 1.0 beta)
@@ -36,9 +36,9 @@ source <(multiwerf use 1.0 beta)
 
 ## Step 1: Add a config
 
-To implement these steps and requirements with Werf we will add a special file called `werf.yaml` to the application's source code.
+To implement these steps and requirements with werf we will add a special file called `werf.yaml` to the application's source code.
 
-1. Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
+1.  Clone the [Symfony Demo Application](https://github.com/symfony/demo) repository to get the source code:
 
     ```shell
     git clone https://github.com/symfony/symfony-demo.git
@@ -134,7 +134,7 @@ To implement these steps and requirements with Werf we will add a special file c
         copy:
           content: |
             #!/bin/bash
-            php bin/console server:run 0.0.0.0:8000
+            php -S 0.0.0.0:8000 -t public/
           dest: /app/start.sh
           owner: app
           group: app
@@ -185,7 +185,7 @@ To implement these steps and requirements with Werf we will add a special file c
       - su -c 'composer update' app
       setup:
       - "echo '#!/bin/bash' >> /app/start.sh"
-      - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+      - echo 'php -S 0.0.0.0:8000 -t public/' >> /app/start.sh
       - echo `date` > /app/version.txt
       - chown app:app /app/start.sh /app/version.txt
       - chmod +x /app/start.sh
@@ -224,17 +224,17 @@ Let's build and run our first application.
     curl localhost:8000
     ```
 
-## Step 3: Push image into docker registry
+## Step 3: Push image into Docker registry
 
-Werf can be used to push a built image into docker-registry.
+werf can be used to push a built image into Docker registry.
 
-1. Run local docker-registry:
+1.  Run local Docker registry:
 
     ```shell
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Publish image with werf using custom tagging strategy with docker tag `v0.1.0`:
+2.  Publish image with werf using custom tagging strategy with docker tag `v0.1.0`:
 
     ```shell
     werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0

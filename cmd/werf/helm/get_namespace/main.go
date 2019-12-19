@@ -2,10 +2,12 @@ package get_namespace
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +38,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

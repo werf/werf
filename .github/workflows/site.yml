@@ -1,0 +1,62 @@
+name: Deploy Site
+on:
+  push:
+    branches:
+    - multiwerf
+  release:
+    types: [published]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  stub:
+    name: Greeting
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Greeting
+      run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'release'
+    steps:
+
+    - name: Trigger Job
+      run: |
+        curl -X POST \
+             -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
+             -F "ref=master" \
+             ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
+
+  deploy_test:
+    name: Deploy Test
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request != '' && github.event.issue.state == 'open' && contains(github.event.comment.body, '/review docs')
+    steps:
+
+    - name: Get related PR info
+      uses: octokit/request-action@v2.x
+      id: request
+      with:
+        route: GET /repos/:repository/pulls/:pull_number
+        repository: ${{ github.repository }}
+        pull_number: ${{ github.event.issue.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Save PR SHA
+      id: result
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+        json: ${{ steps.request.outputs.data }}
+        pr_sha: "head.sha"
+
+    - name: Trigger Job
+      run: |
+        curl -X POST \
+             -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
+             -F "ref=master" \
+             -F "variables[review_sha]=${{ steps.result.outputs.pr_sha }}" \
+             ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline

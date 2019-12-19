@@ -1,8 +1,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=1300">
+<meta name="viewport" content="width=1260">
 <meta name="description" content="{% if page.summary %}{{ page.summary | strip_html | strip_newlines | truncate: 160 }}{% endif %}">
 <meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+{% if page.multilang %}
+<link rel="alternate" hreflang="ru" href="{{ site.site_urls["ru"] }}{{ site.baseurl}}{{ page.url }}" />
+<link rel="alternate" hreflang="en" href="{{ site.site_urls["en"] }}{{ site.baseurl}}{{ page.url }}" />
+{% endif %}
 <title>{{ page.title }} | {{ site.site_title }}</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ site.baseurl }}/apple-touch-icon.png">
@@ -13,7 +17,7 @@
 <meta name="msapplication-TileColor" content="#ffc40d">
 <meta name="theme-color" content="#ffffff">
 
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i|Work+Sans:100,200,300,400,500,600,700,800,900&display=swap&subset=cyrillic" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
 
 <link rel="stylesheet" href="{{ site.baseurl }}/css/normalize.css">
 <link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css">
@@ -37,6 +41,7 @@
 <script src="{{ site.baseurl }}/js/toc.js"></script>
 <script src="{{ site.baseurl }}/js/details.js"></script>
 <script src="{{ site.baseurl }}/js/tab.js"></script>
+<script src="{{ site.baseurl }}/js/popup.js"></script>
 <script src="{{ site.baseurl }}/js/customscripts.js"></script>
 
 <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->

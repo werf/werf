@@ -2,7 +2,10 @@ package run
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
+
+	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
 
@@ -11,7 +14,6 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -149,7 +151,7 @@ func runRun() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 
@@ -199,8 +201,8 @@ func runRun() error {
 	}()
 
 	imageName := CmdData.ImageName
-	if imageName == "" && len(werfConfig.StapelImages) == 1 {
-		imageName = werfConfig.StapelImages[0].Name
+	if imageName == "" && len(werfConfig.GetAllImages()) == 1 {
+		imageName = werfConfig.GetAllImages()[0].GetName()
 	}
 
 	if !werfConfig.HasImage(imageName) {

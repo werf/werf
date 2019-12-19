@@ -54,7 +54,7 @@ loop:
 			}
 		}
 
-		extraExcludePath, err := filepath.Rel(filepath.Join(c.GetTo()), filepath.Join("/", expIncludePath))
+		extraExcludePath, err := filepath.Rel(path.Join(c.GetTo()), path.Join("/", expIncludePath)) // TODO rel
 		if err != nil {
 			panic(err)
 		}

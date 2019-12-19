@@ -2,7 +2,7 @@
 
 ### Additional python sources
 
-Werf repo contains additional callbacks for Ansible in `pkg/build/builder/ansible` directory. These *.py files
+werf repo contains additional callbacks for Ansible in `pkg/build/builder/ansible` directory. These *.py files
 are converted into go sources with [esc](https://github.com/mjibson/esc) utility and commited to vcs.
 
 Changes commit process:
@@ -30,7 +30,7 @@ go generate ./...
 ### Ease development
 
 `werf.py` and `live.py` are copied into tmp directory that mounted into stage contatainer. To ease
-development of ansible callbacks, Werf can create hardlinks for werf.py and live.py if
+development of ansible callbacks, werf can create hardlinks for werf.py and live.py if
 `WERF_DEBUG_ANSIBLE_WERF_PY_PATH` or `WERF_DEBUG_ANSIBLE_LIVE_PY_PATH` environment variables are set.
 
 Hardlinks are not possible between different devices or filesystems, so you need to use --tmp-dir flag.

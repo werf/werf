@@ -2,6 +2,9 @@ package purge
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
 
@@ -10,7 +13,6 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -63,7 +65,7 @@ func runPurge() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := lock.Init(); err != nil {
+	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

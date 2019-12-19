@@ -109,7 +109,6 @@ docker:
   CMD: <cmd>
   WORKDIR: <workdir>
   USER: <user>
-  STOPSIGNAL: <stopsignal>
   HEALTHCHECK: <healthcheck>
 asLayers: <bool>
 ```

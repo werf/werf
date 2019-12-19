@@ -7,7 +7,7 @@ summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTZB0BLxL7mRUFxkrOMaj310CQgb5D5H_V0gXe7QYsTu3kKkdwchg--A1EoEP2CtKbO8pp2qARfeoOK/pub?w=2031&amp;h=144" data-featherlight="image">
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vTZB0BLxL7mRUFxkrOMaj310CQgb5D5H_V0gXe7QYsTu3kKkdwchg--A1EoEP2CtKbO8pp2qARfeoOK/pub?w=1016&amp;h=72">
   </a>
-  
+
     <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">docker</span><span class="pi">:</span>
     <span class="na">VOLUME</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;volume&gt;</span>
@@ -21,7 +21,6 @@ summary: |
     <span class="na">CMD</span><span class="pi">:</span> <span class="s">&lt;cmd&gt;</span>
     <span class="na">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
     <span class="na">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
-    <span class="na">STOPSIGNAL</span><span class="pi">:</span> <span class="s">&lt;stopsignal&gt;</span>
     <span class="na">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre></div></div>
 ---
 
@@ -35,7 +34,6 @@ summary: |
 * `EXPOSE` to inform Docker that the container listens on the specified network ports at runtime (read more [here](https://docs.docker.com/engine/reference/builder/#expose))
 * `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)).
 * `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)).
-* `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 These instructions can be specified in the `docker` config directive.
@@ -52,7 +50,7 @@ docker:
     LC_ALL: en_US.UTF-8
 ```
 
-Defined docker instructions are applied on the last stage called `docker_instructions`. 
+Defined docker instructions are applied on the last stage called `docker_instructions`.
 Thus, instructions do not affect other stages, ones just will be applied to a built image.
 
 If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) with these variables.

@@ -28,9 +28,5 @@ type Container interface {
 }
 
 func debugUserStageChecksum() bool {
-	if os.Getenv("WERF_DEBUG_USER_STAGE_CHECKSUM") == "1" {
-		return true
-	}
-
-	return false
+	return os.Getenv("WERF_DEBUG_USER_STAGE_CHECKSUM") == "1"
 }

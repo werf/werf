@@ -81,7 +81,12 @@ func Init(tmpDirOption, homeDirOption string) error {
 	} else if homeDirOption != "" {
 		homeDir = homeDirOption
 	} else {
-		homeDir = filepath.Join(os.Getenv("HOME"), ".werf")
+		userHomeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("get user home dir failed: %s", err)
+		}
+
+		homeDir = filepath.Join(userHomeDir, ".werf")
 	}
 
 	// TODO: options + update purgeHomeWerfFiles

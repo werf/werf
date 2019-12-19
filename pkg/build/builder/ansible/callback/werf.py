@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     version_added: "2.4"
     description:
         - Solo mode with live stdout for raw and script tasks
-        - Werf specific error messages
+        - werf specific error messages
     requirements:
       - set as stdout callback in configuration
 '''
@@ -37,8 +37,8 @@ class CallbackModule(CallbackModule_live):
         self.super_ref = super(CallbackModule, self)
         self.super_ref.__init__()
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.super_ref.v2_runner_on_failed(result, ignore_errors)
+    def v2_runner_on_failed(self, result, **kwargs):
+        self.super_ref.v2_runner_on_failed(result, **kwargs)
 
         # get config sections from werf
         # task config text is in a last tag

@@ -5,7 +5,7 @@ permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf for now only supports [Gitlab CI system]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html). Support for top-10 popular CI systems [coming soon](https://github.com/flant/werf/issues/1682).
+werf for now only supports [GitLab CI system]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html). Support for top-10 popular CI systems [coming soon](https://github.com/flant/werf/issues/1682).
 
 To use werf with any CI/CD system that does not supported yet user should perform procedures described in the [what is ci-env]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env) by own script.
 
@@ -15,16 +15,18 @@ The behaviour of `werf ci-env` command should be resembled (without actual using
 
 ### Docker registry integration
 
-According to [docker registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
+According to [Docker registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
 
-Create temporal docker config in the current job dir:
+Create temporal docker config and define images repo:
 
 ```bash
-mkdir .docker
-export DOCKER_CONFIG=$(pwd)/.docker
-export WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO
+TMP_DOCKER_CONFIG=$(mktemp -d)
+DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+[[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
+export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
+export WERF_IMAGES_REPO=registry.company.com/project
 ```
 
 ### Git integration
@@ -61,9 +63,12 @@ Variables to define:
 Copy following script and place into `werf-ci-env.sh` in the root of the project:
 
 ```bash
-mkdir .docker
-export DOCKER_CONFIG=$(pwd)/.docker
-export WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO
+TMP_DOCKER_CONFIG=$(mktemp -d)
+DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+[[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
+export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
+export WERF_IMAGES_REPO=registry.company.com/project
+
 docker login -u USER -p PASSWORD $WERF_IMAGES_REPO
 
 export WERF_TAG_GIT_TAG=GIT_TAG
@@ -80,14 +85,13 @@ export WERF_LOG_TERMINAL_WIDTH=95
 ```
 
 This script needs to be customized to your CI/CD system: change `WERF_*` environment variables values to the real ones. Consult with the following pages to get an idea and examples of how to retrieve real values for werf variables:
- * [Gitlab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)
+ * [GitLab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)
 
 Copy following script and place into `werf-ci-env-cleanup.sh`:
 
 ```bash
-rm -rf .docker
+rm -rf $TMP_DOCKER_CONFIG
 ```
 
-`werf-ci-env.sh` should be called in the beginning of everr CI/CD job prior running any werf commands.
+`werf-ci-env.sh` should be called in the beginning of every CI/CD job prior running any werf commands.
 `werf-ci-env-cleanup.sh` should be called in the end of every CI/CD job.
-

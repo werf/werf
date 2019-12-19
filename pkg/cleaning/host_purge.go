@@ -2,14 +2,16 @@ package cleaning
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/stapel"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/tmp_manager"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -88,14 +90,15 @@ func purgeHomeWerfFiles(dryRun bool) error {
 		return nil
 	}
 
-	args := []string{
-		"--rm",
-		"--volume", fmt.Sprintf("%s:%s", werf.GetHomeDir(), werf.GetHomeDir()),
-		stapel.ImageName(),
-		stapel.RmBinPath(), "-rf",
+	if runtime.GOOS == "windows" {
+		for _, path := range pathsToRemove {
+			if err := os.RemoveAll(path); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	} else {
+		return util.RemoveHostDirsWithLinuxContainer(werf.GetHomeDir(), pathsToRemove)
 	}
-
-	args = append(args, pathsToRemove...)
-
-	return docker.CliRun(args...)
 }

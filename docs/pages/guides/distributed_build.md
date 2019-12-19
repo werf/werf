@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-Werf can store [_stages cache_]({{ site.baseurl }}/documentation/reference/stages_and_images.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
+werf can store [_stages cache_]({{ site.baseurl }}/documentation/reference/stages_and_images.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
 * **Dynamic resources.** You can setup a dynamic allocation of resources for building by using cloud providers. These resources can be temporary, so in build time a stages cache may be absent.
 * **More than one build nodes.** If you have more than one nodes (hosts) for building images, you need to synchronize stages cache before building an image.
 
@@ -18,7 +18,7 @@ Distributed build assumes the following steps:
 
 In this tutorial, we setup the CI/CD process using GitLab CI and two persistent build nodes with a distributed build.
 
-> The same approach described in this tutorial is also appliable when there are arbitrary number of dynamically allocated build nodes, instead of fixed number of persistent build nodes.
+> The same approach described in this tutorial is also appliable when there are arbitrary number of dynamically allocated build nodes, instead of fixed number of persistent build nodes
 
 ## Requirements
 
@@ -38,11 +38,11 @@ In this tutorial, we setup the CI/CD process using GitLab CI and two persistent 
 
 ![]({{ site.baseurl }}/images/howto_distributed_build1.png)
 
-> We don't recommend to run werf in docker for now as it can give an unexpected result.
+> We don't recommend to run werf in docker for now as it can give an unexpected result
 
 To set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with shell executor is needed to run werf.
 
-Build nodes need access to the application git repository and to the docker registry, while the deployment node additionally needs access to the kubernetes cluster.
+Build nodes need access to the application git repository and to the Docker registry, while the deployment node additionally needs access to the kubernetes cluster.
 
 ## Pipeline
 
@@ -93,7 +93,7 @@ Two main steps allow distributing cache work.
 
 There are two runners with the `build` tag in your project, so build jobs runs on a random runner from both.
 
-> It is essential to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in bp or push commands) otherwise cleanup won't work.
+> It is essential to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in bp or push commands) otherwise cleanup won't work
 
 ### Deploy stage
 
@@ -127,7 +127,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
 * it is important to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in `werf deploy`) otherwise you can't use werf templates functions `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images));
-* we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
+* we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which contains an URL of the environment. You can use it in your helm templates, e.g. to configure ingress.
 
 #### Test
@@ -173,15 +173,15 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stages
 
-Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on _build nodes_. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+werf has an efficient cleanup functionality which can help you to avoid overflow Docker registry and disk space on _build nodes_. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
-In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
+In the results of werf works, we have images in a Docker registry and a build cache. Build cache exists only on build node and to the Docker registry werf push only built images.
 
 There are two stages — `cleanup_registry` and `cleanup_builder`, in the `.gitlab-ci.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `.gitlab-ci.yml` file) is essential.
 
-The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/documentation/reference/cleaning_process.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the kubernetes cluster. That is why at this stage we need to use deploy runner. From kubernetes cluster, werf gets info about images are currently used by pods.
+The first step in the cleanup process is to clean Docker registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/documentation/reference/cleaning_process.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the Kubernetes cluster. That is why at this stage we need to use deploy runner. From kubernetes cluster, werf gets info about images are currently used by pods.
 
-The second step — is to clean up cache on the build node **after** registry has been cleaned. The important word is — after, because werf will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
+The second step — is to clean up cache on the build node **after** Docker registry has been cleaned. The important word is — after, because werf will use info from the Docker registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
 
 Add the following lines to `.gitlab-ci.yml` file:
 
@@ -209,7 +209,7 @@ Cleanup builder:
 
 To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_IMAGES_CLEANUP_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_IMAGES_CLEANUP_PASSWORD` and a value consisting of `Personal Access Token`.
 
-> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in the Docker registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`
 
 For the demo project create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
@@ -344,13 +344,13 @@ With the added `.gitlab-ci.yml`, you can build the application on any runner wit
 
 When `werf pull` executed, werf looks into config, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
 
-> If you need to pull images of every stage you can use `--all` option with `werf pull` command.
+> If you need to pull images of every stage you can use `--all` option with `werf pull` command
 
 Make changes in the config and push it. Retry build stage several times and compare job logs. You will see that werf uses cache and build only stage with changes and stages after that stage, according to the stage conveyor.
 
 ## Conclusions
 
-Werf can use a distributed cache and can work with:
+werf can use a distributed cache and can work with:
 * **Dynamic resources.** You can start build node on-demand, pull stages cache and build n image.
 * **More than one build nodes.** You can have more than one build nodes in your environment.
 

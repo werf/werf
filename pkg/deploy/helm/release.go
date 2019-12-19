@@ -3,7 +3,6 @@ package helm
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,7 +15,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -101,7 +100,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 		}
 
 		deletedHooks := map[string]bool{}
-		msg := fmt.Sprintf("Deleting helm hooks getting from existing release revisions (%d)", len(resp.Releases))
+		msg := fmt.Sprintf("Deleting helm hooks from all existing release revisions (%d)", len(resp.Releases))
 		if err := logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 			for _, rev := range resp.Releases {
 				revHooksToDelete := map[string]Template{}
@@ -121,13 +120,13 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 				}
 
 				if len(revHooksToDelete) != 0 {
-					msg := fmt.Sprintf("Processing helm hooks getting from revision %d", rev.Version)
+					msg := fmt.Sprintf("Processing release %s revision %d", releaseName, rev.Version)
 					_ = logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
 						for hookId, hookTemplate := range revHooksToDelete {
 							deletedHooks[hookId] = true
 
 							if err := removeReleaseNamespacedResource(hookTemplate, rev.Namespace); err != nil {
-								logboek.LogErrorF("WARNING: Deleting helm hook %s failed: %s", hookTemplate.Metadata.Name, err)
+								logboek.LogErrorF("WARNING: Failed to delete helm hook %s: %s", hookTemplate.Metadata.Name, err)
 							}
 						}
 
@@ -159,9 +158,10 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 }
 
 type ChartValuesOptions struct {
-	Set       []string
-	SetString []string
-	Values    []string
+	SecretValues []map[string]interface{}
+	Set          []string
+	SetString    []string
+	Values       []string
 }
 
 type ChartOptions struct {
@@ -176,7 +176,7 @@ type ChartOptions struct {
 
 func withLockedHelmRelease(releaseName string, f func() error) error {
 	lockName := fmt.Sprintf("helm_release.%s-kube_context.%s", releaseName, helmSettings.KubeContext)
-	return lock.WithLock(lockName, lock.LockOptions{}, f)
+	return shluz.WithLock(lockName, shluz.LockOptions{}, f)
 }
 
 func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) error {
@@ -411,6 +411,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				chartPath,
 				releaseName,
 				opts.Values,
+				opts.SecretValues,
 				opts.Set,
 				opts.SetString,
 				opts.ThreeWayMergeMode,
@@ -454,6 +455,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				releaseName,
 				namespace,
 				opts.Values,
+				opts.SecretValues,
 				opts.Set,
 				opts.SetString,
 				opts.ThreeWayMergeMode,
@@ -475,7 +477,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		var templatesFromChart ChartTemplates
 
 		if err := logboek.LogProcessInline("Getting chart templates", logboek.LogProcessInlineOptions{}, func() error {
-			templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.Set, opts.SetString)
+			templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
 			return err
 		}); err != nil {
 			return err
@@ -655,7 +657,7 @@ func removeResource(name, kind, namespace string) error {
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
-	dirPath := path.Dir(filePath)
+	dirPath := filepath.Dir(filePath)
 
 	if fileExist, err := util.FileExists(filePath); err != nil {
 		return err

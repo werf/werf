@@ -1,5 +1,5 @@
 ---
-title: Gitlab CI/CD integration
+title: GitLab CI/CD integration
 sidebar: documentation
 permalink: documentation/guides/gitlab_ci_cd_integration.html
 author: Artem Kladov <artem.kladov@flant.com>
@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-Setup CI/CD process using GitLab CI and Werf.
+Setup CI/CD process using GitLab CI and werf.
 
 ## Requirements
 
@@ -15,15 +15,15 @@ To begin, you'll need the following:
 * Kubernetes cluster and the kubectl CLI tool configured to communicate with the cluster;
 * Server with GitLab above 10.x version (or account on [SaaS GitLab](https://gitlab.com/));
 * Docker registry (GitLab embedded or somewhere else);
-* An application you can successfully build and deploy with Werf.
+* An application you can successfully build and deploy with werf.
 
 ## Infrastructure
 
 ![scheme]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
 
 * Kubernetes cluster
-* GitLab with docker registry enabled
-* Werf node (node for build and for deploy)
+* GitLab with enabled Docker registry
+* werf node (node for build and for deploy)
 
 Pay attention, that both the build process and the deployment process run on the same node — this is the only right way to use local stages storage specified with `--stages-storage :local` (distributed stages storage not supported yet, will be added soon).
 
@@ -31,20 +31,20 @@ We don't recommend to run werf in docker as it can give an unexpected result.
 
 In order to set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with `shell` executor is needed to run `werf`.
 
-Werf use `~/.werf/` folder to store build cache and other files. Werf assumes this folder is preserved for all pipelines. That is why for build processes we don't recommend you to use environments which are don't preserve a GitLab runner's state (files between runs), e.g. some cloud environments.
+werf use `~/.werf/` folder to store build cache and other files. werf assumes this folder is preserved for all pipelines. That is why for build processes we don't recommend you to use environments which are don't preserve a GitLab runner's state (files between runs), e.g. some cloud environments.
 
-The deployment process needs access to the cluster through the kubectl, and therefore you need to setup kubectl on a Werf node. Werf will use default kubectl context for deploy unless you specify otherwise (e.g. with the `--kube-context` option or `$WERF_KUBE_CONTEXT` environment variable).
+The deployment process needs access to the cluster through the kubectl, and therefore you need to setup kubectl on a werf node. werf will use default kubectl context for deploy unless you specify otherwise (e.g. with the `--kube-context` option or `$WERF_KUBE_CONTEXT` environment variable).
 
-Eventually, Werf node needs access:
-- to the application git repository
-- to the docker registry
-- to the kubernetes cluster.
+Eventually, werf node needs access:
+- to the application git repository;
+- to the Docker registry;
+- to the Kubernetes cluster.
 
 You need to set up GitLab runner with `werf` tags.
 
 ### Setup runner
 
-On the Werf node, you need to install and set up GitLab runner. Follow these steps:
+On the werf node, you need to install and set up GitLab runner. Follow these steps:
 
 1. Create GitLab project and push project code into it.
 1. Get a registration token for the runner: in your GitLab project open `Settings` —> `CI/CD`, expand `Runners` and find the token in the section `Setup a specific Runner manually`.
@@ -61,8 +61,8 @@ On the Werf node, you need to install and set up GitLab runner. Follow these ste
    ```
 
 1. [Install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl (of course if they are not already installed).
-1. Install [Werf dependencies]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
-1. Install [Multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+1. Install [werf dependencies]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
+1. Install [multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
    ```bash
    sudo su gitlab-runner
@@ -96,7 +96,7 @@ stages:
 We've defined the following stages:
 * `build` — stage for building application images;
 * `deploy` — stage for deploying built images on environments such as — stage, test, review, production or any other;
-* `cleanup` — stage for cleaning up registry and build cache.
+* `cleanup` — stage for cleaning up Docker registry and build cache.
 
 ### Build stage
 
@@ -117,9 +117,9 @@ Build:
 
 Cleanup will use schedule, and it is not necessary to rebuild images on running cleanup job. Therefore we need to specify `except: schedules` in the build stage above.
 
-For registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
+For Docker registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
 
-If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container Docker registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
 
 ### Deploy stage
 
@@ -153,7 +153,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
-To configure deployment of your application according to the environment you can use `.Values.global.env` variable in Go-template's blocks of your `helm` templates - werf sets `global.env` parameter according to the CI environment.
+To configure deployment of your application according to the environment you can use `.Values.global.env` variable in Go template's blocks of your `helm` templates - werf sets `global.env` parameter according to the CI environment.
 
 #### Review
 
@@ -200,7 +200,7 @@ We've defined two jobs:
 
     The `url` parameter of the job you can use in you helm templates to set up e.g. ingress.
 2. Stop review.
-    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
+    In this job, werf will delete helm release and delete Kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
 
 Review jobs needn't run on pushes to git master branch, because review environment is for developers.
 
@@ -253,9 +253,9 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stage
 
-Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+werf has an efficient cleanup functionality which can help you to avoid overflow Docker registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 
-In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
+In the results of werf works, we have images in a Docker registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
 
 There is a `cleanup` stage in the `.gitlab-ci.yml` file for the cleanup process.
 
@@ -286,7 +286,7 @@ Cleanup stage will start only by schedule. You can define schedule in `CI/CD` �
 
 > How it works:
    - `werf ci-env` creates a temporary docker configuration file for each GitLab job, sets the path to that file in the DOCKER_CONFIG variable, and exports it;
-   - `docker login` uses a temporary configuration file from DOCKER_CONFIG environment for registry authentication;
+   - `docker login` uses a temporary configuration file from DOCKER_CONFIG environment for Docker registry authentication;
    - `werf cleanup` also uses a temporary configuration file from DOCKER_CONFIG.
 
 

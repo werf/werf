@@ -14,19 +14,11 @@ type WerfConfig struct {
 }
 
 func (c *WerfConfig) HasImageOrArtifact(imageName string) bool {
-	if c.HasImage(imageName) || c.GetArtifact(imageName) != nil {
-		return true
-	}
-
-	return false
+	return c.HasImage(imageName) || c.GetArtifact(imageName) != nil
 }
 
 func (c *WerfConfig) HasImage(imageName string) bool {
-	if c.GetImage(imageName) != nil {
-		return true
-	}
-
-	return false
+	return c.GetImage(imageName) != nil
 }
 
 func (c *WerfConfig) GetAllImages() []ImageInterface {
@@ -219,7 +211,7 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 	return nil
 }
 
-func (c *WerfConfig) associateImagesFrom() error {
+func (c *WerfConfig) validateImagesFrom() error {
 	for _, image := range c.StapelImages {
 		if err := c.validateImageFrom(image.StapelImageBase); err != nil {
 			return err

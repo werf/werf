@@ -35,14 +35,14 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		return err
 	}
 
-	bin, err := editor()
+	bin, binArgs, err := editor()
 	if err != nil {
 		return err
 	}
 
+	args := append(binArgs, tmpFilePath)
 	editIteration := func() error {
-		cmd := exec.Command(bin, tmpFilePath)
-		cmd.Env = os.Environ()
+		cmd := exec.Command(bin, args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
@@ -74,6 +74,9 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		if !bytes.Equal(data, newData) {
 			if values {
 				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
+				if err != nil {
+					return err
+				}
 			}
 
 			if err := SaveGeneratedData(filePath, newEncodedData); err != nil {
@@ -179,10 +182,13 @@ func createTmpEditedFile(filePath string, data []byte) error {
 	return nil
 }
 
-func editor() (string, error) {
-	editor := os.Getenv("EDITOR")
-	if editor != "" {
-		return editor, nil
+func editor() (string, []string, error) {
+	var editorArgs []string
+
+	editorValue := os.Getenv("EDITOR")
+	if editorValue != "" {
+		editorFields := strings.Fields(editorValue)
+		return editorFields[0], editorFields[1:], nil
 	}
 
 	for _, bin := range []string{"vim", "vi", "nano"} {
@@ -192,10 +198,10 @@ func editor() (string, error) {
 			continue
 		}
 
-		return bin, nil
+		return bin, editorArgs, nil
 	}
 
-	return "", fmt.Errorf("editor not detected")
+	return "", editorArgs, fmt.Errorf("editor not detected")
 }
 
 func prepareResultValuesData(data, encodedData, newData, newEncodedData []byte) ([]byte, error) {

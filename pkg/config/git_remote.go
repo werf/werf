@@ -2,7 +2,6 @@ package config
 
 type GitRemote struct {
 	*GitRemoteExport
-	As   string
 	Name string
 	Url  string
 

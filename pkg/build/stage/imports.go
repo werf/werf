@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"sort"
@@ -70,7 +71,7 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface
 	for _, elm := range s.imports {
 		importContainerTmpPath := s.importContainerTmpPath(elm)
 
-		artifactTmpPath := filepath.Join(importContainerTmpPath, filepath.Base(elm.Add))
+		artifactTmpPath := path.Join(importContainerTmpPath, path.Base(elm.Add))
 
 		command := generateSafeCp(artifactTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
 
@@ -110,7 +111,7 @@ func (s *ImportsStage) PreRunHook(c Conveyor) error {
 func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 	importContainerTmpPath := s.importContainerTmpPath(i)
 
-	artifactTmpPath := filepath.Join(importContainerTmpPath, filepath.Base(i.Add))
+	artifactTmpPath := path.Join(importContainerTmpPath, path.Base(i.Add))
 
 	imageCommand := generateSafeCp(i.Add, artifactTmpPath, "", "", []string{}, []string{})
 
@@ -126,6 +127,10 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 		dockerImageName = c.GetImageLatestStageImageName(i.ImageName)
 	} else {
 		dockerImageName = c.GetImageLatestStageImageName(i.ArtifactName)
+	}
+
+	if err := os.MkdirAll(importImageTmp, os.ModePerm); err != nil {
+		return err
 	}
 
 	args := []string{
@@ -164,7 +169,7 @@ func (s *ImportsStage) importImageTmpDirs(i *config.Import) (string, string) {
 		importNamePathPart = slug.Slug(i.ArtifactName)
 	}
 
-	importImageTmpDir := path.Join(s.imageTmpDir, "import", importNamePathPart)
+	importImageTmpDir := filepath.Join(s.imageTmpDir, "import", importNamePathPart)
 	importImageContainerTmpDir := path.Join(s.containerWerfDir, "import", importNamePathPart)
 
 	return importImageTmpDir, importImageContainerTmpDir

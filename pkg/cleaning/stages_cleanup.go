@@ -12,7 +12,7 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/shluz"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -51,7 +51,7 @@ func stagesCleanup(options StagesCleanupOptions) error {
 	}
 
 	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", commonProjectOptions.ProjectName)
-	return lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	return shluz.WithLock(projectStagesCleanupLockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(commonRepoOptions)
 		if err != nil {
 			return err
@@ -109,7 +109,9 @@ func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, opt
 
 func exceptRepoImageStagesByImageId(repoImageStages []docker_registry.RepoImage, imageId string) ([]docker_registry.RepoImage, error) {
 	repoImageStage, err := findRepoImageStageByImageId(repoImageStages, imageId)
-	if repoImageStage == nil {
+	if err != nil {
+		return nil, err
+	} else if repoImageStage == nil {
 		return repoImageStages, nil
 	}
 
@@ -176,7 +178,9 @@ func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.Rep
 
 func exceptRepoImageStagesBySignature(repoImageStages []docker_registry.RepoImage, signature string) ([]docker_registry.RepoImage, error) {
 	repoImageStage, err := findRepoImageStageBySignature(repoImageStages, signature)
-	if repoImageStage == nil {
+	if err != nil {
+		return nil, err
+	} else if repoImageStage == nil {
 		return repoImageStages, nil
 	}
 

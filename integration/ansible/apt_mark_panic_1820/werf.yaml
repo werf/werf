@@ -1,0 +1,14 @@
+configVersion: 1
+project: ansible-apt-mark-panic-1820
+
+{{- range $_, $fromImg := (list "ubuntu:16.04" "ubuntu:18.04") }}
+---
+image: {{ $fromImg | replace ":" "-" | replace "." "-" }}
+from: {{ $fromImg }}
+ansible:
+  install:
+  - name: Install essential utils
+    apt:
+      name: apt-transport-https
+      update_cache: yes
+{{- end }}
