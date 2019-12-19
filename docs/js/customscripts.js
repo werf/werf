@@ -5,7 +5,7 @@ $('#mysidebar').height($(".nav").height());
 $( document ).ready(function() {
     var wh = $(window).height();
     var sh = $("#mysidebar").height();
-    
+
     if (sh + 100 > wh) {
         $( "#mysidebar" ).parent().addClass("layout-sidebar__sidebar_a");
     }
@@ -59,56 +59,76 @@ $( document ).ready(function() {
     var currentRelease, currentChannel;
 
     currentRelease = $('#werfVersion').text();
-    currentChannel = releasesInfo.releases[currentRelease] && releasesInfo.releases[currentRelease][0];
-    if ((currentRelease == 'master') || (currentRelease == 'latest')) {
-        currentChannel = currentRelease;
+    currentChannel = '';    //releasesInfo.releases[currentRelease] && releasesInfo.releases[currentRelease][0];
+    for ( channel of releasesInfo.orderedChannels ){
+       _current_channel = releasesInfo.channels.channels.filter(function( el ){
+          // console.log('1-'+currentRelease + ',v-' + el.version + ',c-' + el.name);
+
+          return ((el.version == currentRelease) && (el.name == channel));
+       });
+       if ( _current_channel.length) { currentChannel = channel; break; }
+    };
+
+    if (channel == 'review' ) {
+        currentChannel = 'review';
     }
 
-    if (!( currentRelease in releasesInfo['releases'] )) {
-      $('#outdatedWarning').addClass('active');
-    }
+    // if (!( currentRelease in releasesInfo['releases'] )) {
+    //   $('#outdatedWarning').addClass('active');
+    // }
 
     var menu = $('#doc-versions-menu');
 
     var toggler;
-    
+
     var submenu = $('<ul class="header__submenu">');
-    $.each(releasesInfo.orderedReleases, function(i, release) {
-      if (!(releasesInfo.releases[release])) { releasesInfo.releases[release] = [release] };
-      var channel = releasesInfo.releases[release][0];
-      if (!((channel == 'master') || (channel == 'latest'))) { channel = 'v' + channel.replace(' ','-'); };
-      var link = $('<a href="/' + channel + '">');
-      if (releasesInfo.releases[release]) {
-        link.append('<span class="header__submenu-item-channel">' + releasesInfo.releases[release][0] + '</span>');
+    $.each(releasesInfo.orderedChannels, function(i, channel) {
+      var release = ''
+      // if (!(releasesInfo.channels.channels[release])) { releasesInfo.releases[release] = [release] };
+      // var channel = releasesInfo.releases[release][0];
+      channel_version = '';
+      if (channel != 'review' ) {
+         var _channel_version = releasesInfo.channels.channels.filter(function( el ){
+            return el.name == channel;
+         })[0];
+
+         if (_channel_version ) {
+           channel_version = _channel_version.version;
+          };
+      } else {
+        channel_version = 'review';
+      };
+      if (channel_version) {
+        var link = $('<a href="/v' + releasesInfo.channels.group + '-' + channel + '">');
+        if (channel != 'review' ) {
+          link.append('<span class="header__submenu-item-channel"> ' + channel + '</span>');
+          link.append('<span class="header__submenu-item-release"> — ' + channel_version + '</span>');
+        };
+        var item = $('<li class="header__submenu-item">');
+        item.html(link);
+        if ( ( channel !=  currentChannel) ) {
+            submenu.append(item);
+        };
       }
-      if (!((channel == 'master') || (channel == 'latest'))) {
-        link.append('<span class="header__submenu-item-release"> – ' + release + '</span>');
-      };
-      var item = $('<li class="header__submenu-item">');
-      item.html(link);
-      if ( ( release !=  currentRelease) ) {
-          submenu.append(item);
-      };
     });
 
-    if ((submenu[0]) && (submenu[0].children) && (submenu[0].children.length)) {       
-      menu.append($('<div class="header__submenu-container">').append(submenu)); 
+    if ((submenu[0]) && (submenu[0].children) && (submenu[0].children.length)) {
+      menu.append($('<div class="header__submenu-container">').append(submenu));
       menu.addClass('header__menu-item header__menu-item_parent');
       toggler = $('<a href="#">');
     } else {
-      menu.addClass('header__menu-item'); 
+      menu.addClass('header__menu-item');
       toggler = $('<span class="header__menu-item-static">');
     };
-
     toggler.append(currentChannel || 'Versions');
-    if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'latest'))) {
+    if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'review'))) {
       toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
     }
-    menu.prepend(toggler);    
+    menu.prepend(toggler);
     $('.header__menu').addClass('header__menu_active')
   });
 
-  // Update github counters 
+  // Update github counters
   $( document ).ready(function() {
     $.get("https://api.github.com/repos/flant/werf", function(data) {
       $(".gh_counter").each(function( index ) {
@@ -127,7 +147,7 @@ $( document ).ready(function() {
         }
       });
     });
-    
+
   });
 
   $( document ).ready(function() {
@@ -192,13 +212,13 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-  
+
   $('h1:contains("Installation")').each(function( index ) {
     var $title = $(this);
     var $btn1 = $title.next('p');
     var $btn2 = $btn1.next('p');
     var $btn3 = $btn2.next('p');
-    
+
     var new_btns = $('<div class="publications__install-btns">');
     new_btns.append($($btn1.html()).addClass('releases__btn'));
     new_btns.append($($btn2.html()).addClass('releases__btn'));
