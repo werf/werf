@@ -24,7 +24,7 @@
     	"github.com/onsi/gomega"
     	"github.com/onsi/gomega/gexec"
 
-    	"github.com/flant/werf/integration/utils"
+	"github.com/flant/werf/pkg/testing/utils"
     )
 
     func TestSuite(t *testing.T) {
@@ -166,7 +166,7 @@ var _ = Describe("COMPONENT", func() {
 
 ### Catch and test werf output in realtime
 
-`github.com/flant/werf/integration/utils/liveexec` package provides execution of external commands with realtime output handling and ability to fail fast when expectation of output was not met. Example of liveexec usage:
+`github.com/flant/werf/pkg/testing/utils/liveexec` package provides execution of external commands with realtime output handling and ability to fail fast when expectation of output was not met. Example of liveexec usage:
 
 ```
 func werfDeploy(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

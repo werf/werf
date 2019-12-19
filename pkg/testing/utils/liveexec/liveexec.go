@@ -7,10 +7,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
+	"github.com/flant/werf/pkg/testing/utils/gexec"
 	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega/gexec"
 )
 
 // ExecCommandOptions is an options for ExecCommand
@@ -51,42 +50,14 @@ func ExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) er
 		return fmt.Errorf("error starting command: %s", err)
 	}
 
-	doForceTermination := make(chan *os.ProcessState, 0)
 	var exitCode int
 
 	go func() {
-		// https://github.com/golang/go/issues/24050
-
-		process, err := os.FindProcess(session.Command.Process.Pid)
-		if err == nil {
-			processState, err := process.Wait()
-			if err == nil {
-				// Detected terminated process. Give 30 seconds for session
-				// to detect process termination by itself,
-				// after that terminate output consumer forcefully.
-				time.Sleep(30 * time.Second)
-				doForceTermination <- processState
-			}
-		}
-	}()
-
-	go func() {
-		select {
-		case processState := <-doForceTermination:
-			exitCode = processState.ExitCode()
-
-			_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "[DEBUG] Do force termination of %d with exit code %d\n", processState.Pid(), exitCode)
-
-			// Initiate EOF for consumeOutputUntilEOF
-			stdoutWritePipe.Close()
-			stderrWritePipe.Close()
-
-		case <-session.Exited:
-			exitCode = session.ExitCode()
-			// Initiate EOF for consumeOutputUntilEOF
-			stdoutWritePipe.Close()
-			stderrWritePipe.Close()
-		}
+		<-session.Exited
+		exitCode = session.ExitCode()
+		// Initiate EOF for consumeOutputUntilEOF
+		stdoutWritePipe.Close()
+		stderrWritePipe.Close()
 	}()
 
 	lineBuf := make([]byte, 0, 4096)
