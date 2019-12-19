@@ -22,6 +22,10 @@
         {
           "name": "stable",
           "version": "v1.0.6-rc.6"
+        },
+        {
+          "name": "rock-solid",
+          "version": "v1.0.6-rc.6"
         }
       ]
     }
