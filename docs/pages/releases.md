@@ -27,14 +27,14 @@ layout: default
 
 <div class="releases__menu">
 {% for channel in channels_sorted_reverse %}
-{% assign channel_latest_version = latest_group_versions | where: "name",  channel.name | map: "version" | first %}
+{% assign channel_latest_version = latest_group_versions | where: "name",  channel.name | map: "version" | first | default: nil %}
 {% assign channel_latest_version_info = site.data.releases.releases | where: "tag_name", channel_latest_version | first %}
     <div class="releases__menu-item">
         <div class="releases__menu-item-header">            
             <div class="releases__menu-item-title">
                 {{ channel.title }}
             </div>
-            {% if version != empty  %}
+            {% if channel_latest_version != nil  %}
                 <a href="{{ channel_latest_version_info.html_url }}" class="releases__btn">
                 {{ channel_latest_version }}
                 </a>
