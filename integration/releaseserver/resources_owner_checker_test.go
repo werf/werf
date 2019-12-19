@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/integration/utils"
-	"github.com/flant/werf/integration/utils/werfexec"
+	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/liveexec"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,14 +32,14 @@ var _ = Describe("Resources owner checker", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("resources_owner_checker_app1-003", werfexec.CommandOptions{})
+			werfDismiss("resources_owner_checker_app1-003", liveexec.ExecCommandOptions{})
 		})
 
 		It("should set owner-release refs during rollback operation https://github.com/flant/werf/issues/1902", func() {
 			By("creating deployed release in FAILED state without service.werf.io/owner-release annotations (emulating already existing old werf release)")
 
-			Expect(werfDeploy("resources_owner_checker_app1-001", werfexec.CommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
-			Expect(werfDeploy("resources_owner_checker_app1-002", werfexec.CommandOptions{}, "--three-way-merge-mode", "disabled")).NotTo(Succeed())
+			Expect(werfDeploy("resources_owner_checker_app1-001", liveexec.ExecCommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
+			Expect(werfDeploy("resources_owner_checker_app1-002", liveexec.ExecCommandOptions{}, "--three-way-merge-mode", "disabled")).NotTo(Succeed())
 
 		GetAndUpdateReleaseCm:
 			releaseCm, err := kube.Kubernetes.CoreV1().ConfigMaps("kube-system").Get(fmt.Sprintf("%s.v2", releaseName), metav1.GetOptions{})
@@ -64,7 +64,7 @@ var _ = Describe("Resources owner checker", func() {
 			By("updating old release should set owner-release references to the existing resources")
 
 			// Should succeed without "inconsistent state detected" error
-			Expect(werfDeploy("resources_owner_checker_app1-003", werfexec.CommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
+			Expect(werfDeploy("resources_owner_checker_app1-003", liveexec.ExecCommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
 
 			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())

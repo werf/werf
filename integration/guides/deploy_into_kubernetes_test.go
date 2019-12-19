@@ -8,7 +8,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"github.com/flant/werf/integration/utils"
+	"github.com/flant/werf/pkg/testing/utils"
 )
 
 var _ = Describe("Deploy into kubernetes", func() {
@@ -28,6 +28,12 @@ var _ = Describe("Deploy into kubernetes", func() {
 			testDirPath,
 			werfBinPath,
 			"stages", "purge", "-s", ":local", "--force",
+		)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			werfBinPath,
+			"dismiss", "--env", "test", "--with-namespace",
 		)
 	})
 
@@ -59,12 +65,6 @@ var _ = Describe("Deploy into kubernetes", func() {
 			testDirPath,
 			werfBinPath,
 			werfDeployArgs...,
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"dismiss", "--env", "test",
 		)
 	})
 })

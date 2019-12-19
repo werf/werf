@@ -5,13 +5,14 @@ package releaseserver_test
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/integration/utils"
-	"github.com/flant/werf/integration/utils/resourcesfactory"
-	"github.com/flant/werf/integration/utils/werfexec"
+	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/liveexec"
+	"github.com/flant/werf/pkg/testing/utils/resourcesfactory"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -34,7 +35,7 @@ var _ = Describe("Resources adopter", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("resources_adopter_app1-002", werfexec.CommandOptions{})
+			werfDismiss("resources_adopter_app1-002", liveexec.ExecCommandOptions{})
 		})
 
 		It("should fail to install release; should not delete already existing resources on failed release removal when reinstalling release; should delete new resources created during failed release installation when reinstalling release; should adopt already existing resources by annotation", func(done Done) {
@@ -112,7 +113,7 @@ spec:
 
 			gotMydeploy2AlreadyExists := false
 			gotMydeploy4AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-001", werfexec.CommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy2 already exists in the cluster") != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -124,11 +125,27 @@ spec:
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
 
-			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
-			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))
+			for {
+				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+				if err == nil {
+					time.Sleep(200 * time.Millisecond)
+				} else if errors.IsNotFound(err) {
+					break
+				} else {
+					Fail(fmt.Sprintf("error accessing deploy/mydeploy1: %s", err))
+				}
+			}
 
-			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy3", metav1.GetOptions{})
-			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy3 should return not found error, got %v", err))
+			for {
+				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy3", metav1.GetOptions{})
+				if err == nil {
+					time.Sleep(200 * time.Millisecond)
+				} else if errors.IsNotFound(err) {
+					break
+				} else {
+					Fail(fmt.Sprintf("error accessing deploy/mydeploy3: %s", err))
+				}
+			}
 
 			mydeploy2AfterInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
@@ -140,7 +157,7 @@ spec:
 
 			By("reinstalling release after first failure")
 
-			Expect(werfDeploy("resources_adopter_app1-001", werfexec.CommandOptions{})).NotTo(Succeed())
+			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{})).NotTo(Succeed())
 
 			By("reinstalling release with adoption annotations set to wrong release name")
 
@@ -168,7 +185,7 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-001", werfexec.CommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy2 already exists in the cluster") != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -206,7 +223,7 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-001", werfexec.CommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, "Deployment/mydeploy2 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 					Expect(strings.Index(line, "Deployment/mydeploy4 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
@@ -282,7 +299,7 @@ spec:
 			By("updating release with a new resource added to the chart that already exists in the cluster")
 
 			gotMydeploy5AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-002", werfexec.CommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy5 already exists in the cluster") != -1 {
 						gotMydeploy5AlreadyExists = true
@@ -302,7 +319,7 @@ spec:
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(werfDeploy("resources_adopter_app1-002", werfexec.CommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, "Deployment/mydeploy5 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
@@ -310,7 +327,7 @@ spec:
 
 			By("deleting release from cluster with all adopted resources")
 
-			Expect(werfDismiss("resources_adopter_app1-002", werfexec.CommandOptions{})).To(Succeed())
+			Expect(werfDismiss("resources_adopter_app1-002", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))

@@ -274,13 +274,11 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        ./scripts/ci/bats.sh
         ./scripts/ci/parallel.sh
         ./scripts/ci/git.sh
 
         export GOBIN=$GITHUB_WORKSPACE/bin/tests
         go install github.com/onsi/ginkgo/ginkgo
-        go install github.com/google/go-containerregistry/cmd/crane # bats tests
         echo "::add-path::$GOBIN"
 
         ./scripts/tests/werf_with_coverage.sh
@@ -288,8 +286,7 @@ jobs:
 
     - name: Test
       run: |
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration -keepGoing -p -r integration
-        WERF_TEST_K8S_DISABLED=1 bats -r $GITHUB_WORKSPACE/tests --jobs 5
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo -tags integration -r integration
       shell: bash
 
     - name: Upload coverage artifact
@@ -305,7 +302,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+        k8s_version: [1.15, 1.16]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -384,7 +381,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo --tags integration_k8s -keepGoing -p -r integration
+        WERF_TEST_WERF_BINARY_PATH=$GITHUB_WORKSPACE/bin/tests/werf ginkgo -tags integration_k8s -r integration
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -454,7 +451,7 @@ jobs:
       shell: bash
 
     - name: Test
-      run: ginkgo --tags integration -keepGoing -p -r integration
+      run: ginkgo -tags integration -r integration
       shell: bash
 
   integration_k8s_tests_on_self_hosted_runners:
@@ -464,7 +461,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, windows]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+        k8s_version: [1.15, 1.16]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -524,7 +521,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        ginkgo --tags integration_k8s -keepGoing -nodes 2 -r integration
+        ginkgo -tags integration_k8s -r integration
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -537,8 +534,8 @@ jobs:
     - unit_tests
     - integration_tests
     - integration_k8s_tests
-#    - integration_tests_on_self_hosted_runners
-#    - integration_k8s_tests_on_self_hosted_runners
+    - integration_tests_on_self_hosted_runners
+    - integration_k8s_tests_on_self_hosted_runners
     runs-on: ubuntu-latest
     steps:
 

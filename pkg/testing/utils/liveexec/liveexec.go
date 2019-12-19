@@ -1,4 +1,4 @@
-package werfexec
+package liveexec
 
 import (
 	"fmt"
@@ -8,18 +8,21 @@ import (
 	"path/filepath"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
-
-	"github.com/onsi/gomega/gexec"
+	"github.com/flant/werf/pkg/testing/utils/gexec"
+	"github.com/onsi/ginkgo"
 )
 
-type CommandOptions struct {
+// ExecCommandOptions is an options for ExecCommand
+type ExecCommandOptions struct {
 	Env               map[string]string
 	OutputLineHandler func(string)
 }
 
-func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string) error {
-	cmd := exec.Command(werfBinPath, arg...)
+// ExecCommand allows handling output of executed command in realtime by CommandOptions.OutputLineHandler.
+// User could set expectations on the output lines in the CommandOptions.OutputLineHandler to fail fast
+// and give immediate feedback of failed assertion during command execution.
+func ExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) error {
+	cmd := exec.Command(binPath, arg...)
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
@@ -28,7 +31,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 	}
 
 	absDir, _ := filepath.Abs(dir)
-	_, _ = fmt.Fprintf(GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, werfBinPath, strings.Join(arg, " "))
+	_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "\n[DEBUG] COMMAND in %s: %s %s\n\n", absDir, binPath, strings.Join(arg, " "))
 
 	stdoutReadPipe, stdoutWritePipe, err := os.Pipe()
 	if err != nil {
@@ -47,9 +50,11 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 		return fmt.Errorf("error starting command: %s", err)
 	}
 
+	var exitCode int
+
 	go func() {
 		<-session.Exited
-
+		exitCode = session.ExitCode()
 		// Initiate EOF for consumeOutputUntilEOF
 		stdoutWritePipe.Close()
 		stderrWritePipe.Close()
@@ -62,7 +67,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 				line := string(lineBuf)
 				lineBuf = lineBuf[:0]
 
-				_, _ = fmt.Fprintf(GinkgoWriter, "[DEBUG] OUTPUT LINE: %s\n", line)
+				_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, "[DEBUG] OUTPUT LINE: %s\n", line)
 
 				if opts.OutputLineHandler != nil {
 					func() {
@@ -94,7 +99,7 @@ func ExecWerfCommand(dir, werfBinPath string, opts CommandOptions, arg ...string
 		return fmt.Errorf("unable to consume command output: %s", err)
 	}
 
-	if exitCode := session.ExitCode(); exitCode != 0 {
+	if exitCode != 0 {
 		return fmt.Errorf("exit code %d", exitCode)
 	}
 	return nil

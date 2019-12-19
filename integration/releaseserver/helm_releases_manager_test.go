@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/integration/utils"
-	"github.com/flant/werf/integration/utils/werfexec"
+	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,12 +31,12 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max option has been specified from the beginning", func() {
 		AfterEach(func() {
-			werfDismiss("helm_releases_manager_app1-001", werfexec.CommandOptions{})
+			werfDismiss("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})
 		})
 
 		It("should keep no more than specified number of releases", func(done Done) {
 			for i := 0; i < 20; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", werfexec.CommandOptions{
+				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName)) <= 5).To(BeTrue())
@@ -44,27 +44,27 @@ var _ = Describe("Helm releases manager", func() {
 			Expect(len(getReleasesHistory(releaseName))).To(Equal(5))
 
 			close(done)
-		}, 120)
+		}, 600)
 	})
 
 	Context("when releases-history-max was not specified initially and then specified", func() {
 		AfterEach(func() {
-			werfDismiss("helm_releases_manager_app1-001", werfexec.CommandOptions{})
+			werfDismiss("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})
 		})
 
 		It("should keep no more than specified number of releases", func(done Done) {
 			for i := 0; i < 20; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", werfexec.CommandOptions{})).Should(Succeed())
+				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
 			Expect(len(getReleasesHistory(releaseName))).To(Equal(20))
 
 			for i := 0; i < 5; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", werfexec.CommandOptions{}, "--releases-history-max=5")).Should(Succeed())
+				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName))).To(Equal(5))
 			}
 
 			close(done)
-		}, 120)
+		}, 600)
 	})
 })
 

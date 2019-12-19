@@ -1,4 +1,4 @@
-// +build integration
+// +build integration integration_k8s
 
 package ansible_test
 
@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/flant/werf/integration/utils"
+	"github.com/flant/werf/pkg/testing/utils"
 )
 
 func TestSuite(t *testing.T) {

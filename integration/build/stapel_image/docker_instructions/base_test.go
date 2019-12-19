@@ -12,8 +12,8 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/integration/utils"
-	utilsDocker "github.com/flant/werf/integration/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils"
+	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 type entry struct {

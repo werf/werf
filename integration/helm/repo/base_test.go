@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/werf/integration/utils"
+	"github.com/flant/werf/pkg/testing/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
