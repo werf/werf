@@ -90,10 +90,10 @@ layout: default
     {% endfor %}
 
     <div id="all" class="tabs__content">
-    {% for release in site.data.releases.releases %}
         <div class="releases__info">
             <p>This is a list of all of the releases (Alpha, Beta, Early-Access, Stable and Rock-Solid) combined in chronological order.</p>
         </div>
+    {% for release in site.data.releases.releases %}
             <div class="releases__title">
                 <a href="{{ release.html_url }}">
                     {{ release.tag_name }}
