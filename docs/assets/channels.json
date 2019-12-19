@@ -1,1 +1,1 @@
-{"orderedChannels":["stable","ea","rc","beta","alpha"],"orderedReleases":[],"releases":{}}
+{"channels":{"ts":"1576728237","date":"2019-12-19T04:03:57Z","group":"1.0","channels":[{"name":"alpha","version":"v1.0.6-rc.6"},{"name":"beta","version":"v1.0.6-rc.6"},{"name":"ea","version":"v1.0.3-rc.6"},{"name":"stable","version":"v1.0.2-rc.6"}]},"orderedChannels":["rock-solid","stable","ea","beta","alpha"]}
