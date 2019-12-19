@@ -143,7 +143,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -302,7 +302,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        k8s_version: [1.15, 1.16]
+        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
 
     runs-on: ${{ matrix.os }}
     steps:
