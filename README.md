@@ -17,7 +17,7 @@ ___
 * werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker Registry.
 * werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
-Werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system while literally "connecting the dots" to implement these practices for your application. We consider it a new generation of high-level CI/CD tools.
+Werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -25,8 +25,8 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Install Dependencies](#install-dependencies)
-  - [Install werf](#install-werf)
+  - [Installing Dependencies](#install-dependencies)
+  - [Installing werf](#install-werf)
 - [Getting started](#getting-started)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
 - [Docs and Support](#docs-and-support)
@@ -36,44 +36,44 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <!-- WERF DOCS PARTIAL BEGIN: Features -->
 
- - Complete application lifecycle management: build and publish images, deploy application into Kubernetes and cleanup unused images by policies.
- - Application build and deploy specification (as many components as needed) completely described in one git repository with source code (single source of truth).
- - Build images with Dockerfiles.
- - Alternatively, build images with custom syntax to take advantage of Ansible builder and incremental rebuilds based on git history.
- - Helm 2 compatible chart and complex deploy process with logging, tracking, early errors detection and annotations to customize tracking logic of specific resources.
- - werf is a CLI tool written in Go which can be embedded into any existing CI/CD system to implement CI/CD for your application.
- - Cross-platform development: Linux based containers are supported on Linux, macOS, and Windows.
+ - Full application lifecycle management: build and publish images, deploy an application to Kubernetes, and remove unused images based on policies.
+ - The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
+ - Build images using Dockerfiles.
+ - Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
+ - werf supports Helm 2-compatible charts and complex deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
+ - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
+ - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
 ## Coming soon
 
 - ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
-- Easy local development of applications with werf [#1940](https://github.com/flant/werf/issues/1940).
-- Content addressable tagging scheme [#1184](https://github.com/flant/werf/issues/1184).
-- Proven approaches and recipes for most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
-- Distributed builds with common Docker registry [#1614](https://github.com/flant/werf/issues/1614).
-- Helm 3 support [#1606](https://github.com/flant/werf/issues/1606).
-- Userspace builds without Docker daemon (as in kaniko) [#1618](https://github.com/flant/werf/issues/1618).
+- Develop applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
+- Content-based tagging [#1184](https://github.com/flant/werf/issues/1184).
+- Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
+- Distributed builds with the shared Docker registry [#1614](https://github.com/flant/werf/issues/1614).
+- Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
+- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
 
 ## Complete features list
 
 ### Building
 
-- Conveniently build as many images as needed for a single project.
+- Effortlessly build as many images as you like in one project.
 - Build images using Dockerfiles or Stapel builder instructions.
-- Concurrent builds on a single host (using file locks).
-- Distributed builds (coming soon) [#1614](https://github.com/flant/werf/issues/1614).
+- Build images concurrently on a single host (using file locks).
+- Build images distributedly (coming soon) [#1614](https://github.com/flant/werf/issues/1614).
 - Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
   - Build images with Ansible tasks or Shell scripts.
   - Share a common cache between builds using mounts.
-  - Reduce image size by detaching source data and build tools.
-- Build one image from config on top of another image based on the same config.
-- Debugging tools to inspect the building process.
+  - Reduce image size by detaching source data and building tools.
+- Build one image on top of another based on the same config.
+- Debugging tools for inspecting the build process.
 - Detailed output.
 
 ### Publishing
 
-- Store images in the single or multiple Docker repositories using the following naming patterns:
+- Store images in one or multiple Docker repositories using the following naming patterns:
   - `IMAGES_REPO:[IMAGE_NAME-]TAG` using `monorepo` mode.
   - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `multirepo` mode.
 - Different image tagging strategies:
@@ -83,25 +83,25 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 ### Deploy
 
 - Deploy an application to Kubernetes and check if it is deployed correctly.
-  - Track statuses of all application resources.
+  - Track the statuses of all application resources.
   - Control the readiness of resources.
-  - Control of the deployment process with annotations.
+  - Control the deployment process with annotations.
 - Full visibility of both the deployment process and the final result.
   - Logging and error reporting.
-  - Periodical status reporting during the deployment phase.
-  - Effortless debugging of problems without unnecessary kubectl invocations.
-- Immediate CI pipeline failure if some problem is detected.
-  - Early detection of resource failures during the deploying process without having to wait for a full timeout.
+  - Regular status reporting during the deployment phase.
+  - Debug problems effortlessly without unnecessary kubectl invocations.
+- Prompt CI pipeline failure in case of a problem.
+  - Instant detection of resource failures during the deployment process without having to wait for a timeout.
 - Full compatibility with Helm 2.
-- Ability to limit deploy user access using RBAC definition (Tiller is compiled into werf and run from the deploy user outside of cluster).
-- Parallel deploys on a single host (using file locks).
+- Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).
+- Parallel builds on a single host (using file locks).
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
-- Allow continuous delivery of new images tagged by the same name (by git branch for example).
+- Сontinuous delivery of images with permanent tags (e.g., when using a branch-based tagging strategy).
 
 ### Cleanup
 
-- Local and Docker registry cleaning by customizable policies.
-- Keeping images that used in Kubernetes clusters. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
+- Clean up local and Docker registries by enforcing customizable policies.
+- Keep images that are being used in the Kubernetes cluster. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -126,17 +126,17 @@ sudo usermod -aG docker $USER
 
 [Git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
-- Minimal required version is 1.9.0.
-- To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
+- Minimum required version is 1.9.0.
+- Version 2.14.0 or newer is required to use [Git Submodules](https://git-scm.com/docs/gitsubmodules).
 
 ## Install werf
 
-### Method 1 (recommended): using multiwerf
+### Method 1 (recommended): by using multiwerf
 
-[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf, which:
+[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf. It:
 * downloads werf binary builds;
-* manages multiple versions of binaries installed on a single host, that can be used at the same time;
-* automatically updates werf binary (can be disabled).
+* manages multiple versions of binaries installed on a single host (they can be used concurrently);
+* automatically updates werf binary (this option may be disabled).
 
 ```bash
 # add ~/bin into PATH
@@ -152,9 +152,9 @@ source <(multiwerf use 1.0 beta)
 
 > _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` instead of `source <(multiwerf use 1.0 beta)`
 
-### Method 2: download binary
+### Method 2: by downloading binary package
 
-The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion)
+The latest release is available at [this page](https://bintray.com/flant/werf/werf/_latestVersion)
 
 ##### MacOS
 
@@ -176,7 +176,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 
 Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-windows-amd64-v1.0.3-beta.9.exe)
 
-### Method 3: from source
+### Method 3: by compiling from source
 
 ```
 go get github.com/flant/werf/cmd/werf
