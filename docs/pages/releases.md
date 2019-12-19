@@ -15,6 +15,11 @@ layout: default
     Release channels
 </div>
 
+<!-- Releases description -->
+<div class="releases__info">
+    Werf releases progress through each channel from Alpha → Beta → Early-Access → Stable → Rock-Solid. You can think of each release on a lower channel as a release-candidate for the next channel. Once a release is considered bug-free, it is promoted to the next channel.
+</div>
+
 <!-- latest version per channel -->
 {% assign channels_sorted = site.data.channels_info.channels | sort: "stability" %}
 {% assign channels_sorted_reverse = site.data.channels_info.channels | sort: "stability" | reverse  %}
@@ -29,11 +34,9 @@ layout: default
                 {{ channel.title }}
             </div>
             {% if version != empty  %}
-            <a href="{{ channel_latest_version_info.html_url }}" class="releases__btn">
-            {{ channel_latest_version }}
-            </a>
-            {% else %}
-            <span class="releases__btn" >—</span>
+                <a href="{{ channel_latest_version_info.html_url }}" class="releases__btn">
+                {{ channel_latest_version }}
+                </a>
             {% endif %}
         </div>        
         <div class="releases__menu-item-description">
@@ -41,13 +44,6 @@ layout: default
         </div>
     </div>
   {% endfor %}
-</div>
-
-<!-- Releases description -->
-<div class="releases__info">
-
-    <p>Werf releases progress through each channel from Alpha → Beta → Early-Access → Stable → Rock-Solid. You can think of each release on a lower channel as a release-candidate for the next channel. Once a release is considered bug-free, it is promoted to the next channel.</p>
-
 </div>
 
 <div class="releases__block-title">
@@ -66,7 +62,7 @@ layout: default
     <div id="{{ channel.name }}" class="tabs__content{% if channel == channels_sorted_reverse[1] %} active{% endif %}">
     <div class="releases__info">
         <p>{{ channel.tooltip[page.lang] }}</p>
-        <p>{{ channel.description[page.lang] }}</p>
+        <p class="releases__info-text">{{ channel.description[page.lang] }}</p>
     </div>
 
     {% assign channel_history = site.data.releases_history.history | reverse | where: "group", "1.0"  | where: "name", channel.name %}
@@ -84,7 +80,7 @@ layout: default
             </div>
         {% endfor %}
     {% else %}
-        <div class="releases__info">
+        <div class="releases__info releases__info_notification">
             <p>There are no versions on the channel yet, but they will appear soon.</p>
         </div>
     {% endif %}
