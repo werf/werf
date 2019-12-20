@@ -17,7 +17,7 @@ layout: default
 
 <!-- Releases description -->
 <div class="releases__info">
-    Werf releases progress through each channel from Alpha → Beta → Early-Access → Stable → Rock-Solid. You can think of each release on a lower channel as a release-candidate for the next channel. Once a release is considered bug-free, it is promoted to the next channel.
+    Each werf release progresses through all release channels, starting with Alpha → Beta → Early-Access → Stable → Rock-Solid. You can think of each release on a lower channel as a release-candidate for the higher one. Once a release is considered bug-free, it is promoted to the next channel.
 </div>
 
 <!-- latest version per channel -->
