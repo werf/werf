@@ -17,7 +17,7 @@ ___
 * werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker Registry.
 * werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
-Werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
+werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -47,7 +47,7 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 ## Coming soon
 
 - ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
-- Develop applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
+- Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
 - Content-based tagging [#1184](https://github.com/flant/werf/issues/1184).
 - Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
 - Distributed builds with the shared Docker registry [#1614](https://github.com/flant/werf/issues/1614).
@@ -80,9 +80,9 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
   - Tagging images by binding them to git tag, branch, or commit.
   - Content-based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
 
-### Deploy
+### Deploying
 
-- Deploy an application to Kubernetes and check if it is deployed correctly.
+- Deploy an application to Kubernetes and check if it has been deployed correctly.
   - Track the statuses of all application resources.
   - Control the readiness of resources.
   - Control the deployment process with annotations.
@@ -100,7 +100,7 @@ Werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 ### Cleanup
 
-- Clean up local and Docker registries by enforcing customizable policies.
+- Clean up local and Docker registry by enforcing customizable policies.
 - Keep images that are being used in the Kubernetes cluster. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
 <!-- WERF DOCS PARTIAL END -->
@@ -136,7 +136,7 @@ sudo usermod -aG docker $USER
 [multiwerf](https://github.com/flant/multiwerf) is a version manager for werf. It:
 * downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host (they can be used concurrently);
-* automatically updates werf binary (this option may be disabled).
+* automatically updates werf binary (this option can be disabled).
 
 ```bash
 # add ~/bin into PATH
@@ -188,10 +188,10 @@ go get github.com/flant/werf/cmd/werf
 
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
-The following guides demonstrate the main features and help you get started using werf:
-- [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with existing Dockerfile.
+Following guides demonstrate the key features of werf and help you to start using it:
+- [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with an existing Dockerfile.
 - [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with werf builder.
-- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy the application into Kubernetes using werf built images.
+- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy an application to the Kubernetes cluster using werf built images.
 - [GitLab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
 - [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate werf with any CI/CD system.
 - [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
@@ -206,30 +206,29 @@ The following guides demonstrate the main features and help you get started usin
 
 > _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
 
-werf is versioned with [Semantic Versioning](https://semver.org). This means that major releases (1.0, 2.0) are
-allowed to break backward compatibility. In case of werf this means that update to the next major release _may_
+werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_
 require to do a full re-deploy of applications or to perform other non-scriptable actions.
 
-Minor releases (1.1, 1.2, etc.) may introduce new "big" features, but must do so without significant backward compatibility breaks with major branch (1.x).
-In case of werf this means that update to the next minor release is mostly smooth, but _may_ require to run a provided upgrade script.
+Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
+In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
 
-Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility with minor branch (1.1.x).
-In case of werf this means that update to the next patch release should be smooth and can be done automatically.
+Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
+In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
 
-Patch releases are divided to channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
-Version without prerelease part is considered to be from a stable channel.
+Patch releases are divided into channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
+The version without a prerelease part is considered to have originated in a stable channel.
 
-- `stable` channel (1.1.0, 1.1.1, 1.1.2, etc.). This is a general available version and recommended for usage in critical environments with tight SLA.
-  We **guarantee** backward compatibility between `stable` releases within minor branch (1.1.x).
-- `ea` channel versions are mostly safe to use and we encourage to use this version everywhere.
-  We **guarantee** backward compatibility between `ea` releases within minor branch (1.1.x).
-  We **guarantee** that `ea` release should become a `stable` release not earlier than 2 weeks of broad testing.
-- `rc` channel (2.3.2-rc.2). These releases are mostly safe to use and can even be used in non critical environments or for local development.
+- `stable` channel (1.1.0, 1.1.1, 1.1.2, etc.). This version is recommended for use in critical environments with tight SLAs.
+  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
+- `ea` channel versions are mostly safe to use. These versions are suitable for all environments.
+  We **guarantee** backward compatibility between `ea` releases within the minor branch (1.1.x).
+  We **guarantee** that `ea` release should become a `stable` release after at least 2 weeks of broad testing.
+- `rc` channel (2.3.2-rc.2). These releases are mostly safe to use and can be used in non-critical environments or for local development.
   We do **not guarantee** backward compatibility between `rc` releases.
-  We **guarantee** that `rc` release should become `ea` not earlier than 1 week after internal tests.
-- `beta` channel (1.2.2-beta.0). These releases are for more broad testing of new features to catch regressions.
+  We **guarantee** that `rc` release should become `ea` after at least 1 week of internal testing.
+- `beta` channel (1.2.2-beta.0). These releases are for broad testing of new features to catch regressions.
   We do **not guarantee** backward compatibility between `beta` releases.
-- `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features, but are unstable.
+- `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features but are unstable.
   We do **not guarantee** backward compatibility between `alpha` releases.
 
 <!-- WERF DOCS PARTIAL END -->
@@ -240,9 +239,9 @@ Version without prerelease part is considered to be from a stable channel.
 
 [Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-We are always in contact with community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
+We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
 
-> Russian-speaking community can contact with us in [Telegram Chat](https://t.me/werf_ru)
+> Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
 
