@@ -5,35 +5,35 @@ permalink: documentation/reference/build_process.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Build process is a step required by werf to build images defined in the werf configuration.
+werf uses the Build process to build images defined in the werf configuration.
 
 ## Dockerfile image
 
-werf uses Dockerfile as a main way to describe how to build an image. Image built with Dockerfile will be referred to as **dockerfile image** ([more info about dockerfile image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
+werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
 
-### How dockerfile image built
+### How a dockerfile image is being built
 
-To build dockerfile image werf creates a single [stage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages) called `dockerfile`.
+To build a dockerfile image, werf creates a single [stage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages) called `dockerfile`.
 
-How `dockerfile` stage is built:
+How the `dockerfile` stage is being built:
 
- 1. Stage signature is calculated based on specified `Dockerfile` and its context. This signature represents result image state.
- 2. If image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), then werf does not issue a new docker build.
- 3. If image with this signature is not found in the [stage storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), then werf issues a regular docker build. werf uses usual build command of builtin docker client (same as in `docker build` command). Local docker cache will be created and used as usually with the regular docker client.
- 4. After docker image is built werf puts result `dockerfile` stage into [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) (by tagging result docker image with a calculated signature) when using [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
+ 1. Stage signature is calculated based on specified `Dockerfile` and its contents. This signature represents the resulting image state.
+ 2. If an image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), then werf does not perform a new docker build.
+ 3. If there is no image with the specified signature in the [stage storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage), werf performs a regular docker build. werf uses standard build command of the built-in docker client (that is analogous to the `docker build` command). The local docker cache will be created and used as is the case with the regular docker client.
+ 4. When the docker image is complere, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) (while tagging the resulting docker image with the calculated signature) if the [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) parameter is set.
 
-See [configuration artictle]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
+See the [configuration article]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
 
-## Stapel image and artifact
+## Stapel image and artifacts
 
-werf also has an alternative way to build images with so called stapel builder, which:
+Also, werf has an alternative tool for building images. The so-called stapel builder:
 
- * Provides integration with git and incremental rebuilds based on the git repo history.
- * Allows using of ansible tasks to describe instructions needed to build the image.
- * Allows sharing a common cache between builds with mounts.
- * Reduces image size by detaching source data and build tools.
+ * provides an integration with git and incremental rebuilds based on the git repo history;
+ * allows using ansible tasks to describe instructions needed to build an image;
+ * allows sharing a common cache between builds with mounts;
+ * reduces image size by detaching source data and build tools.
 
-Image built with stapel builder will be referred to as **stapel image**.
+Image built with stapel builder will be referred to as a **stapel image**.
 
 See [stapel image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) articles for more details.
 
