@@ -302,7 +302,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+        k8s_version: [1.15]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -461,7 +461,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, windows]
-        k8s_version: [1.15, 1.16]
+        k8s_version: [1.15]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
