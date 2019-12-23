@@ -40,7 +40,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Image publishing procedure
 
-Generally, the publishing process in the Docker world consists of the following steps:
+Generally, the publishing process in the Docker ecosystem consists of the following steps:
 
 ```bash
 docker tag REPO:TAG
@@ -61,7 +61,7 @@ To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_imag
  2. Push the newly created image into the Docker registry.
  3. Delete the temporary image created in the first step.
 
-This procedure will be referred to as an **image publishing procedure**.
+This procedure will be referred to as the **image publishing procedure**.
 
 The result of this procedure is an image named using the [*rules for naming images*](#images-naming) and pushed into the Docker registry. All these steps are performed with the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or the [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
@@ -110,9 +110,9 @@ Any combination of tagging parameters can be used simultaneously in the [werf pu
 
 ## Examples
 
-### Two images for a git tag
+### Linking images to a git tag
 
-Given `werf.yaml` with 2 images — `backend` and `frontend`.
+Let's suppose `werf.yaml` defines two images: `backend` and `frontend`.
 
 The following command:
 
@@ -120,13 +120,13 @@ The following command:
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-tag v1.2.0
 ```
 
-produces the following image names respectively:
+produces the following image names, respectively:
  * `registry.hello.com/web/core/system/backend:v1.2.0`;
  * `registry.hello.com/web/core/system/frontend:v1.2.0`.
 
-### Two images for a git branch
+### Linking images to a git branch
 
-Given `werf.yaml` with 2 images — `backend` and `frontend`.
+Let's suppose `werf.yaml` defines two images: `backend` and `frontend`.
 
 The following command:
 
@@ -134,13 +134,13 @@ The following command:
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch my-feature-x
 ```
 
-produces the following image names respectively:
+produces the following image names, respectively:
  * `registry.hello.com/web/core/system/backend:my-feature-x`;
  * `registry.hello.com/web/core/system/frontend:my-feature-x`.
 
-### Two images for a git branch with special characters in the name
+### Linking images to a git branch with special characters in the name
 
-Given `werf.yaml` with 2 images — `backend` and `frontend`.
+Once again, we have a `werf.yaml` file with two defined images: `backend` and `frontend`.
 
 The following command:
 
@@ -148,36 +148,36 @@ The following command:
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch $(werf slugify --format docker-tag "Features/MyFeature#169")
 ```
 
-produces the following image names respectively:
+produces the following image names, respectively:
  * `registry.hello.com/web/core/system/backend:features-myfeature169-3167bc8c`;
  * `registry.hello.com/web/core/system/frontend:features-myfeature169-3167bc8c`.
 
-Note that [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) command will generate a valid docker tag. See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+Note that the [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) command generates a valid docker tag. Learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-### Two images in GitLab CI job
+### Linking images to a GitLab CI job
 
-Given `werf.yaml` config with 2 images — `backend` and `frontend`.
+Let's say we have a `werf.yaml` configuration file that defines two images, `backend` and `frontend`.
 
-The following command runs in GitLab CI job for project named `web/core/system`, in the git branch named `core/feature/ADD_SETTINGS`, Docker registry is configured as `registry.hello.com/web/core/system`:
+Running the following command in a GitLab CI job for a project named `web/core/system` with the git branch set as `core/feature/ADD_SETTINGS` and the Docker registry configured as `registry.hello.com/web/core/system`:
 
 ```bash
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
 
-Image names in the result are:
+yields the following image names:
  * `registry.hello.com/web/core/system/backend:core-feature-add-settings-df80fdc3`;
  * `registry.hello.com/web/core/system/frontend:core-feature-add-settings-df80fdc3`.
 
-Note that werf automatically applies slug to the result docker image tag: `core/feature/ADD_SETTINGS` will be converted to `core-feature-add-settings-df80fdc3`. This convertation occurs in `werf ci-env` command, which will determine git branch from GitLab CI environment, automatically apply slug to this branch name and set `WERF_TAG_GIT_BRANCH` (which is alternative way to specify `--tag-git-branch` param). See [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+Note that werf automatically applies slug to the resulting tag of the docker image: `core/feature/ADD_SETTINGS` is converted to `core-feature-add-settings-df80fdc3`. This conversion occurs in the `werf ci-env` command, which determines the name of a git branch from the GitLab CI environment, automatically slugs it and sets `WERF_TAG_GIT_BRANCH` (which is alternative way to set the `--tag-git-branch` parameter). See [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-### Unnamed image in GitLab CI job
+### Unnamed image and a GitLab CI job
 
-Given werf.yaml with single unnamed image. The following command runs in GitLab CI job for project named `web/core/queue`, in the git-tag named `v2.3.1`, Docker registry is configured as `registry.hello.com/web/core/queue`:
+Let's suppose we have a werf.yaml with a single unnamed image. Running the following command in the GitLab CI job for the project named `web/core/queue` with the git-tag named `v2.3.1` and a Docker registry configured as `registry.hello.com/web/core/queue`:
 
 ```bash
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
 
-Image name in the result is `registry.hello.com/web/core/queue:v2.3.1`.
+yields the following result: `registry.hello.com/web/core/queue:v2.3.1`.
