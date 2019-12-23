@@ -18,7 +18,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Инфраструктура
 
-![scheme]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
+![scheme]({% asset howto_gitlabci_scheme.png @path %})
 
 * Кластер Kubernetes.
 * GitLab со встроенным Docker registry.

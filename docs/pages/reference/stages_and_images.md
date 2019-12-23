@@ -120,8 +120,8 @@ Left column consists of short descriptions of dependencies, right includes relat
 {% endfor %}
 </div>
 
-<link rel="stylesheet" href="{{ site.baseurl }}/css/stages.css">
-<script src="{{ site.baseurl }}/js/jquery-3.1.0.min.js"></script>
+{% asset stages.css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script>
 function application() {
   if ($("a[id=image-from-dockerfile-dependencies]").hasClass('active')) {

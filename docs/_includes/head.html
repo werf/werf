@@ -19,30 +19,30 @@
 
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
 
-<link rel="stylesheet" href="{{ site.baseurl }}/css/normalize.css">
-<link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css">
+{% asset normalize.css %}
+{% asset syntax.css %}
 
 <!-- <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"> !-->
 
-<link rel="stylesheet" href="{{ site.baseurl }}/css/tab.css">
-<link rel="stylesheet" href="{{ site.baseurl }}/css/header.css">
-<link rel="stylesheet" href="{{ site.baseurl }}/css/docs.css">
-<link rel="stylesheet" href="{{ site.baseurl }}/css/index.css">
-<link rel="stylesheet" href="{{ site.baseurl }}/css/featherlight.min.css">
+{% asset tab.css %}
+{% asset header.css %}
+{% asset docs.css %}
+{% asset index.css %}
+{% asset featherlight.min.css %}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-<script src="{{ site.baseurl }}/js/jquery.navgoco.min.js"></script>
-
+{% asset jquery.navgoco.min.js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
-<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
-<script src="{{ site.baseurl }}/js/featherlight.min.js"></script>
-<script src="{{ site.baseurl }}/js/toc.js"></script>
-<script src="{{ site.baseurl }}/js/details.js"></script>
-<script src="{{ site.baseurl }}/js/tab.js"></script>
-<script src="{{ site.baseurl }}/js/popup.js"></script>
-<script src="{{ site.baseurl }}/js/customscripts.js"></script>
+{% asset masonry.pkgd.min.js %}
+{% asset featherlight.min.js %}
+{% asset toc.js %}
+{% asset details.js %}
+{% asset tab.js %}
+{% asset popup.js %}
+{% asset channels.js %}
+{% asset customscripts.js %}
 
 <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
