@@ -44,7 +44,10 @@ func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) 
 	}
 
 	if err != nil {
-		return fmt.Errorf("command failed: %s\r\n%s", err, res)
+		if exitError, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("exit code %d", exitError.ExitCode())
+		}
+		return err
 	}
 	return nil
 }
