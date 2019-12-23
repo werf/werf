@@ -5,17 +5,17 @@ permalink: documentation/reference/stages_and_images.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-We propose to divide the assembly proccess into steps, intermediate images (like layers in Docker), with clear functions and assignments.
-In werf, such step is called [stage](#stages) and result [image](#images) consists of a set of built stages.
-All stages are kept in a [stages storage](#stages-storage) and defining build cache of application (not really cache but part of building context).
+We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.
+In werf, we call every such step a [stage](#stages). So the final [image](#images) consists of a set of built stages.
+All stages are kept in a [stages storage](#stages-storage). You can view it as a building cache of an application, however, that isn't a cache but merely a part of a building context.
 
 ## Stages
 
-Stages are steps in the assembly process, building blocks for constructing images.
-A ***stage*** is built from a logically grouped set of config instructions, taking into account the assembly conditions and rules.
-Each _stage_ relates to one Docker image.
+Stages are steps in the assembly process. They act as building blocks for constructing images.
+A ***stage*** is built from a logically grouped set of config instructions. It takes into account the assembly conditions and rules.
+Each _stage_ relates to a single Docker image.
 
-The werf assembly process assumes a sequential build of stages using _stage conveyor_.  A _stage conveyor_ is a sequence with the predefined order and set of stages. werf uses different _stage conveyor_ for assembling a particular type of build object.
+The werf assembly process involves a sequential build of stages using the _stage conveyor_.  A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble veroius types of images depending on their configuration.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'dockerfile-image-tab')">Dockerfile Image</a>
@@ -41,16 +41,16 @@ The werf assembly process assumes a sequential build of stages using _stage conv
 </a>
 </div>
 
-**User only needs to write a config correсtly the rest of the work with stages are done by werf.**
+**The user only needs to write a correct configuration: werf performs the rest of the work with stages**
 
-For every _stage_ at each build, werf calculates build stage identifier called _stage signature_.
-Each _stage_ is assembled in an ***assembly container*** based on the previous _stage_, and saved in [stages storage](#stages-storage).
-The _stage signature_ is used for [tagging](#stage-naming) _stage_ in _stages storage_.
-werf does not build stages that already exist in _stages storage_ (like caching in Docker, but more complex).
+For each _stage_ at every build, werf calculates the unique identifier of the stage called _stage signature_.
+Each _stage_ is assembled in an ***assembly container*** that is based on the previous _stage_, and saved in the [stages storage](#stages-storage).
+The _stage signature_ is used for [tagging](#stage-naming) a _stage_ in the _stages storage_.
+werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
-The ***stage signature*** is the checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies) and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped.
+The ***stage signature*** is calculated as the checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies) and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped.
 
-It means that the _stage conveyor_, can be reduced to several _stages_ or even to single _from_ stage.
+It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=572&amp;h=577" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=286&amp;h=288">
@@ -58,17 +58,18 @@ It means that the _stage conveyor_, can be reduced to several _stages_ or even t
 
 ## Stage dependencies
 
-_Stage dependency_ is some piece of data that affects stage _signature_. Stage dependency may be represented by:
+_Stage dependency_ is a piece of data that affects the stage _signature_. Stage dependency may be represented by:
 
- - some file from git repo with its content;
- - instructions to build stage specified in `werf.yaml`;
- - arbitrary string specified by user in `werf.yaml`; etc.
+ - some file from a git repo with its contents;
+ - instructions to build stage defined in the `werf.yaml`;
+ - the arbitrary string specified by the user in the `werf.yaml`; 
+ - and so on.
 
-Most _stage dependencies_ are specified in `werf.yaml`, others relate to a runtime.
+Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-Tables below represent Dockerfile image, Stapel image and [Stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
-Each row describes dependencies for certain stage.
-Left column consists of short descriptions of dependencies, right includes related `werf.yaml` directives and contains relevant references for more information.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
+Each row describes dependencies for a certain stage.
+Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
 <div class="tabs">
   <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn">Dockerfile Image</a>
@@ -157,27 +158,27 @@ $.noConflict();
 
 ## Stages storage
 
-_Stages storage_ keeps project stages.
-Stages can be stored in Docker Repo or locally, on a host machine.
+The _stages storage_ contains the stages of the project.
+Stages can be stored in the Docker Repo or locally on a host machine.
 
-Most commands use _stages_ and require specified _stages storage_, defined by `--stages-storage` option or `WERF_STAGES_STORAGE` environment variable.
-At the moment, only local storage, `:local`, is supported.
+Most commands use _stages_ and require the reference to a specific _stages storage_, defined by the `--stages-storage` option or `WERF_STAGES_STORAGE` environment variable.
+At the moment, only the local storage, `:local`, is supported.
 
 ### Stage naming
 
-_Stages_ in _local stages storage_ are named by the following schema — `werf-stages-storage/PROJECT_NAME:STAGE_SIGNATURE`.
+_Stages_ in the _local stages storage_ are named using the following schema — `werf-stages-storage/PROJECT_NAME:STAGE_SIGNATURE`.
 
 ## Images
 
-_Image_ is a **ready-to-use** Docker image, corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
+_Image_ is a **ready-to-use** Docker image corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
 
-As it is written [above](#stages), _stages_ are steps in the assembly process, building blocks for constructing _images_.
-_Stages_ are not intended for direct use, unlike images. The main difference between images and stages is [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to stored meta-information.
-The _stages storage_ cleanup is only based on the related images in _images repo_.
+As mentioned [above](#stages), _stages_ are steps in the assembly process. They act as building blocks for constructing _images_.
+Unlike images, _stages_ are not intended for the direct use. The main difference between images and stages is in [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to the stored meta-information.
+The process of cleaning up the _stages storage_ is only based on the related images in the _images repo_.
 
-werf creates _images_ using _stages storage_.
-Currently, _images_ can only be created in a [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and be saved in _images repo_.
+werf creates _images_ using the _stages storage_.
+Currently, _images_ can only be created during the [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and saved in the _images repo_.
 
 Images should be defined in the werf configuration file `werf.yaml`.
 
-[See more info about build process]({{ site.baseurl }}/documentation/reference/build_process.html).
+[Learn more about the build process]({{ site.baseurl }}/documentation/reference/build_process.html).
