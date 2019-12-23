@@ -348,6 +348,6 @@ spec:
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
 
 			close(done)
-		}, 300)
+		}, 600)
 	})
 })
