@@ -44,7 +44,7 @@ The werf assembly process involves a sequential build of stages using the _stage
 **The user only needs to write a correct configuration: werf performs the rest of the work with stages**
 
 For each _stage_ at every build, werf calculates the unique identifier of the stage called _stage signature_.
-Each _stage_ is assembled in an ***assembly container*** that is based on the previous _stage_, and saved in the [stages storage](#stages-storage).
+Each _stage_ is assembled in the ***assembly container*** that is based on the previous _stage_ and saved in the [stages storage](#stages-storage).
 The _stage signature_ is used for [tagging](#stage-naming) a _stage_ in the _stages storage_.
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
