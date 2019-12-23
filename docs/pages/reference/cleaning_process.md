@@ -5,9 +5,9 @@ permalink: documentation/reference/cleaning_process.html
 author: Artem Kladov <artem.kladov@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-While building and publishing, werf creates sets of docker layers and does not delete them.
+While building and publishing, werf creates sets of docker layers but does not delete them.
 As a result, _stages storage_ and _images repo_ are steadily growing and consuming more and more space.
-Also, an interrupted build process leaves staled images.
+Also, an interrupted build process leaves stalled images.
 When a git branch or a git tag gets deleted, a set of _stages_ that were built for this _image_ remains in the _images repo_ and _stages storage_.
 So, it is necessary to clean up the _images repo_ and _stages storage_ periodically. Otherwise, 
 they will be filled with the **stale images**.
@@ -20,12 +20,12 @@ werf has an efficient multi-level image cleaning system. It supports the followi
 
 ## Cleaning by policies
 
-Cleaning by policies helps to organize automatic periodical cleaning of stale images.
+Cleaning by policies helps to organize automatic periodical cleaning of stuck images.
 It implies regular gradual cleaning according to cleaning policies.
 This is the safest way of cleaning because it does not affect your production environment.
 
 The cleaning by policies method includes the steps in the following order:
-1. [**Cleanup of the images repo**](#cleanup-images-repo) cleans _images repo_ from staled images according to the cleaning policies.
+1. [**Cleanup of the images repo**](#cleanup-images-repo) cleans _images repo_ from stale images according to the cleaning policies.
 2. [**Cleanup of the stages storage**](#cleanup-stages-storage) synchronizes _stages storage_ with the _images repo_.
 
 These steps are combined in the single top-level command [cleanup]({{ site.baseurl }}/documentation/cli/main/cleanup.html).  
