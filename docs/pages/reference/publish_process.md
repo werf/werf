@@ -38,9 +38,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 <!--The result of this procedure is multiple images from stages cache of image pushed into the Docker registry.-->
 
-## Images publish procedure
+## Image publishing procedure
 
-Normally in the Docker world publish process consists of the following steps:
+Generally, the publishing process in the Docker world consists of the following steps:
 
 ```bash
 docker tag REPO:TAG
@@ -48,47 +48,47 @@ docker push REPO:TAG
 docker rmi REPO:TAG
 ```
 
- 1. Get a name or an id of the local built image.
- 2. Create new temporary image name alias for this image, which consists of two parts:
+ 1. Getting a name or an id of the created local image.
+ 2. Creating a temporary alias-image for the above image that consists of two parts:
      - [docker repository name](https://docs.docker.com/glossary/?term=repository) with embedded Docker registry address;
      - [docker tag name](https://docs.docker.com/glossary/?term=tag).
- 3. Push image by newly created alias into Docker registry.
- 4. Delete temporary image name alias.
+ 3. Pushing an alias into the Docker registry.
+ 4. Deleting a temporary alias.
 
-To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from the config werf implements another logic:
+To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) from the config, werf implements another logic:
 
- 1. Create **a new image** based on built image with the specified name, store internal service information about tagging schema in this image (using docker labels). This information is referred to as image **meta-information**. werf uses this information in [deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and [cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
- 2. Push newly created image into Docker registry.
- 3. Delete temporary image created in the 1'st step.
+ 1. Create **a new image** based on the built image with the specified name and save the internal service information about tagging schema to this image (using docker labels). This information is referred to as an image **meta-information**. werf uses this information in the [deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#integration-with-built-images) and the [cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+ 2. Push the newly created image into the Docker registry.
+ 3. Delete the temporary image created in the first step.
 
-This procedure will be referred as **images publish procedure**.
+This procedure will be referred to as an **image publishing procedure**.
 
-The result of this procedure is an image named by the [*image naming rules*](#images-naming) pushed into the Docker registry. All of these steps are performed with [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
+The result of this procedure is an image named using the [*rules for naming images*](#images-naming) and pushed into the Docker registry. All these steps are performed with the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or the [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
-## Images naming
+## Naming images
 
-During images publish procedure werf constructs resulting images names using:
+During the image publishing procedure, werf forms the image name using:
  * _images repo_ param;
  * _images repo mode_ param;
- * image name from werf.yaml;
+ * image name from the werf.yaml;
  * tag param.
 
-Resulting docker image name constructed as [`DOCKER_REPOSITORY`](https://docs.docker.com/glossary/?term=repository)`:`[`TAG`](https://docs.docker.com/engine/reference/commandline/tag).
+The final name of the docker image has the form [`DOCKER_REPOSITORY`](https://docs.docker.com/glossary/?term=repository)`:`[`TAG`](https://docs.docker.com/engine/reference/commandline/tag).
 
-There are _images repo_ and _images repo mode_ params defined where and how to store images.
-If werf project contains single nameless image, then _images repo_ used as docker repository without changes and resulting docker image name costructed by the following pattern: `IMAGES_REPO:TAG`.
+The _images repo_ and _images repo mode_ params define where and how to store images.
+If the werf project contains only one nameless image, then the _images repo_ is used as a docker repository as it is, and the resulting name of a docker image gets the following form: `IMAGES_REPO:TAG`.
 
-Otherwise, werf constructs resulting docker image name for each image based on _images repo mode_:  
-- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for `monorepo` mode;
-- `IMAGES_REPO/IMAGE_NAME:TAG` pattern for `multirepo` mode.
+Otherwise, werf constructs the resulting name of a docker image for every image depending on the _images repo mode_:  
+- `IMAGES_REPO:IMAGE_NAME-TAG` pattern for a `monorepo` mode;
+- `IMAGES_REPO/IMAGE_NAME:TAG` pattern for a `multirepo` mode.
 
-_Images repo_ param should be specified by `--images-repo` option or `$WERF_IMAGES_REPO`.
+The _images repo_ param should be specified by the `--images-repo` option or `$WERF_IMAGES_REPO`.
 
-_Images repo mode_ param should be specified by `--images-repo-mode` option or `$WERF_IMAGES_REPO_MODE`.
+The _images repo mode_ param should be specified by the `--images-repo-mode` option or `$WERF_IMAGES_REPO_MODE`.
 
-> Image naming behavior should be the same for publish, deploy and cleaning processes. Otherwise, the pipeline can be failed and also you can lose images and stages during the cleanup
+> The image naming behavior should be the same for publishing, deploying, and cleaning processes. Otherwise, the pipeline may fail, and you may end up losing images and stages during the cleanup.
 
-*Docker tag* is taken from `--tag-*` params:
+The *docker tag* is taken from `--tag-*` params:
 
 | option                     | description                                                                     |
 | -------------------------- | ------------------------------------------------------------------------------- |
@@ -97,20 +97,20 @@ _Images repo mode_ param should be specified by `--images-repo-mode` option or `
 | `--tag-git-commit COMMIT`  | Use git-commit tagging strategy and tag by the specified git commit hash        |
 | `--tag-custom TAG`         | Use custom tagging strategy and tag by the specified arbitrary tag              |
 
-All specified tag params text will be validated to confirm with the docker images tag rules. User may want to apply slug algorithm to the specified tag, see [more info about slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+All the specified tag params will be validated for the conformity with the tagging rules for docker images. User may apply the slug algorithm to the specified tag, learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-Also using tag options a user specifies not only tag value but also tagging strategy.
-Tagging strategy affects on [certain policies in cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
+Also, user specifies both the tag value and the tagging strategy by using --tag-* options.
+The tagging strategy affects [certain policies in the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
-Every `--tag-git-*` option requires `TAG`, `BRANCH` or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where CI job is running in the detached git worktree for specific commit and current git-tag or git-branch or git-commit is passed to job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for GitLab CI).
+Every `--tag-git-*` option requires a `TAG`, `BRANCH`, or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where a CI job is running in the detached git worktree for the specific commit, and the current git-tag, git-branch, or git-commit is passed to the job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for the GitLab CI).
 
 ### Combining parameters
 
-Any combination of tag parameters can be used simultaneously in [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). As a result, werf will publish a separate image for each tag parameter of each image in a project.
+Any combination of tagging parameters can be used simultaneously in the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). As a result, werf will publish a separate image for each tagging parameter of every image in a project.
 
 ## Examples
 
-### Two images for git tag
+### Two images for a git tag
 
 Given `werf.yaml` with 2 images — `backend` and `frontend`.
 
@@ -124,7 +124,7 @@ produces the following image names respectively:
  * `registry.hello.com/web/core/system/backend:v1.2.0`;
  * `registry.hello.com/web/core/system/frontend:v1.2.0`.
 
-### Two images for git branch
+### Two images for a git branch
 
 Given `werf.yaml` with 2 images — `backend` and `frontend`.
 
@@ -138,7 +138,7 @@ produces the following image names respectively:
  * `registry.hello.com/web/core/system/backend:my-feature-x`;
  * `registry.hello.com/web/core/system/frontend:my-feature-x`.
 
-### Two images for git branch with special chars in name
+### Two images for a git branch with special characters in the name
 
 Given `werf.yaml` with 2 images — `backend` and `frontend`.
 
