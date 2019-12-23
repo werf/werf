@@ -111,5 +111,5 @@ These steps are combined in a single top-level command [purge]({{ site.baseurl }
 
 You can clean up the host machine with the following commands:
 
-* The [cleanup host machine command]({{ site.baseurl }}/documentation/cli/management/host/cleanup.html) deletes the old unused werf cache and data for **all projects** on the host machine.
+* The [cleanup host machine command]({{ site.baseurl }}/documentation/cli/management/host/cleanup.html) deletes an obsolete non-used werf cache and data for **all projects** on the host machine.
 * The [purge host machine command]({{ site.baseurl }}/documentation/cli/management/host/purge.html) purges werf _images_, _stages_, cache, and other data for **all projects** on the host machine.
