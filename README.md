@@ -98,7 +98,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
 - Сontinuous delivery of images with permanent tags (e.g., when using a branch-based tagging strategy).
 
-### Cleanup
+### Cleaning up
 
 - Clean up local and Docker registry by enforcing customizable policies.
 - Keep images that are being used in the Kubernetes cluster. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
@@ -109,7 +109,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <!-- WERF DOCS PARTIAL BEGIN: Installation -->
 
-## Install Dependencies
+## Installing Dependencies
 
 ### Docker
 
@@ -129,7 +129,7 @@ sudo usermod -aG docker $USER
 - Minimum required version is 1.9.0.
 - Version 2.14.0 or newer is required to use [Git Submodules](https://git-scm.com/docs/gitsubmodules).
 
-## Install werf
+## Installing werf
 
 ### Method 1 (recommended): by using multiwerf
 
