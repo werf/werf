@@ -30,6 +30,9 @@ exclude:
 
 highlighter: rouge
 
+plugins:
+- jekyll-assets
+
 markdown: kramdown
 kramdown:
  input: GFM

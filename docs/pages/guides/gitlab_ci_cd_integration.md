@@ -19,7 +19,7 @@ To begin, you'll need the following:
 
 ## Infrastructure
 
-![scheme]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
+![scheme]({% asset howto_gitlabci_scheme.png @path %})
 
 * Kubernetes cluster
 * GitLab with enabled Docker registry

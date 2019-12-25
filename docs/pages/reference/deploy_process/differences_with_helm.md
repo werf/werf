@@ -35,7 +35,7 @@ werf tracks all chart resources until each resource reaches ready state and prin
 
 With pure helm user has only the ability to wait for resources using `--wait` flag, but helm does not provide any interactive info about "what is going on now?" when using this flag.
 
-![Comparison between werf and Helm]({{ site.baseurl }}/images/deploy/werf_and_helm.gif)
+![Comparison between werf and Helm]({% asset deploy/werf_and_helm.gif @path %})
 
 Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
 

@@ -5,7 +5,7 @@ sidebar: documentation
 layout: default
 ---
 
-<link rel="stylesheet" href="{{ site.baseurl }}/css/releases.css">
+{% asset releases.css %}
 
 {% assign releases = site.data.releases.releases %}
 
