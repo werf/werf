@@ -18,10 +18,15 @@ const (
 )
 
 var (
+	ForbiddenGitVersionsConstraintValues = []string{"2.22.0"}
+)
+
+var (
 	gitVersion *semver.Version
 
-	minGitVersionErrorMsg     = fmt.Sprintf("Git version >= %s required", MinGitVersionConstraintValue)
-	submodulesVersionErrorMsg = fmt.Sprintf("To use git submodules install git >= %s", MinGitVersionWithSubmodulesConstraintValue)
+	minGitVersionErrorMsg       = fmt.Sprintf("Git version >= %s required", MinGitVersionConstraintValue)
+	forbiddenGitVersionErrorMsg = fmt.Sprintf("Forbidden git versions: %s", strings.Join(ForbiddenGitVersionsConstraintValues, ", "))
+	submodulesVersionErrorMsg   = fmt.Sprintf("To use git submodules install git >= %s", MinGitVersionWithSubmodulesConstraintValue)
 
 	outStream, errStream io.Writer
 )
@@ -50,8 +55,9 @@ func Init(opts Options) error {
 	vObj, err := semver.NewVersion(v)
 	if err != nil {
 		errMsg := strings.Join([]string{
-			fmt.Sprintf("unexpected git version spec %s", v),
+			fmt.Sprintf("Unexpected git version spec %s", v),
 			minGitVersionErrorMsg,
+			forbiddenGitVersionErrorMsg,
 			submodulesVersionErrorMsg,
 		}, ".\n")
 
@@ -59,7 +65,7 @@ func Init(opts Options) error {
 	}
 	gitVersion = vObj
 
-	if err := checkMinVersionConstraint(); err != nil {
+	if err := checkVersionConstraints(); err != nil {
 		return err
 	}
 
@@ -76,8 +82,9 @@ func getGitCliVersion() (string, error) {
 	err := cmd.Run()
 	if err != nil {
 		errMsg := strings.Join([]string{
-			fmt.Sprintf("git version command failed: %s", err),
+			fmt.Sprintf("Git version command failed: %s", err),
 			minGitVersionErrorMsg,
+			forbiddenGitVersionErrorMsg,
 			submodulesVersionErrorMsg,
 		}, ".\n")
 
@@ -99,20 +106,34 @@ func getGitCliVersion() (string, error) {
 	return version, nil
 }
 
-func checkMinVersionConstraint() error {
-	constraint, err := semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionConstraintValue))
+func checkVersionConstraints() error {
+	constraints := []*semver.Constraints{}
+
+	minVersionConstraints, err := semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionConstraintValue))
 	if err != nil {
 		panic(err)
 	}
+	constraints = append(constraints, minVersionConstraints)
 
-	if !constraint.Check(gitVersion) {
-		errMsg := strings.Join([]string{
-			strings.ToLower(minGitVersionErrorMsg),
-			submodulesVersionErrorMsg,
-			fmt.Sprintf("Your git version is %s", gitVersion.String()),
-		}, ".\n")
+	for _, cv := range ForbiddenGitVersionsConstraintValues {
+		forbiddenVersionsConstraints, err := semver.NewConstraint(fmt.Sprintf("!= %s", cv))
+		if err != nil {
+			panic(err)
+		}
+		constraints = append(constraints, forbiddenVersionsConstraints)
+	}
 
-		return errors.New(errMsg)
+	for i := range constraints {
+		if !constraints[i].Check(gitVersion) {
+			errMsg := strings.Join([]string{
+				minGitVersionErrorMsg,
+				forbiddenGitVersionErrorMsg,
+				submodulesVersionErrorMsg,
+				fmt.Sprintf("Your git version is %s", gitVersion.String()),
+			}, ".\n")
+
+			return errors.New(errMsg)
+		}
 	}
 
 	return nil

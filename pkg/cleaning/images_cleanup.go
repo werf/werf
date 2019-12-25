@@ -12,9 +12,9 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -479,7 +479,7 @@ func getReplicationControllersImages(kubernetesClient kubernetes.Interface) ([]s
 
 func getDeploymentsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1beta1().Deployments("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().Deployments("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
