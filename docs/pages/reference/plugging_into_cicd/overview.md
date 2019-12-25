@@ -94,7 +94,7 @@ Current git-tag or git-branch will be used to tag [images]({{ site.baseurl }}/do
 
 Image related with git-tag and git-branch will be kept in the Docker registry according to [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
-This mode makes use of [werf publish params]({{ site.baseurl }}/documentation/reference/publish_process.html#images-naming): `--tag-git-tag` or `--tag-git-branch` — automatically choosing appropriate one. These params also used in the [werf deploy command]({{ site.baseurl }}/documentation/cli/main/deploy.html).
+This mode makes use of [werf publish params]({{ site.baseurl }}/documentation/reference/publish_process.html#naming-images): `--tag-git-tag` or `--tag-git-branch` — automatically choosing appropriate one. These params also used in the [werf deploy command]({{ site.baseurl }}/documentation/cli/main/deploy.html).
 
 This tagging mode is selected by `--tagging-strategy=tag-or-branch` option of [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html).
 

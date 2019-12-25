@@ -24,7 +24,7 @@ How the `dockerfile` stage is being built:
 
 See the [configuration article]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
 
-## Stapel image and artifacts
+## Stapel image and artifact
 
 Also, werf has an alternative tool for building images. The so-called stapel builder:
 
