@@ -495,7 +495,7 @@ func getDeploymentsImages(kubernetesClient kubernetes.Interface) ([]string, erro
 
 func getStatefulSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1beta1().StatefulSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().StatefulSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
