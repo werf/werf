@@ -166,7 +166,7 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly and growing community</div>
-            <div class="community__subtitle">Werf’s developers are always in contact with the community<br/> in Twitter, Slack and Telegram.</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community<br/> in Twitter, Slack and Telegram.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
@@ -273,7 +273,7 @@ layout: default
                 Detailed documentation
             </div>
             <div class="documentation__info-text">
-                Werf documentation comprises over 100 articles on typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and a thorough description of functions & architecture.
+                werf documentation comprises over 100 articles on typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and a thorough description of functions & architecture.
             </div>
         </div>
         <div class="documentation__btns">

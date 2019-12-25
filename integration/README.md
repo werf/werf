@@ -110,7 +110,7 @@
 
 ## Testing a werf project
 
-### Werf project name generation
+### werf project name generation
 
 When running tests with `ginkgo` (or `go test`) werf temporary project name will be generated for each separate `It` statement. This behaviour is defined for the each test suite in `setup_test.go` file.
 
