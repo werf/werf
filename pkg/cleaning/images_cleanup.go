@@ -511,7 +511,7 @@ func getStatefulSetsImages(kubernetesClient kubernetes.Interface) ([]string, err
 
 func getDaemonSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.ExtensionsV1beta1().DaemonSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().DaemonSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -527,7 +527,7 @@ func getDaemonSetsImages(kubernetesClient kubernetes.Interface) ([]string, error
 
 func getReplicaSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.ExtensionsV1beta1().ReplicaSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().ReplicaSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
