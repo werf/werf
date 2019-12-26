@@ -72,13 +72,13 @@ These policies determine which _images_ will be deleted while leaving all others
        Value can be specified by `--git-tag-strategy-limit` or `$WERF_GIT_TAG_STRATEGY_LIMIT`.
     * The policy covers images tagged by werf with `--tag-git-tag` flag.
 
-**Please note** that cleanup affects only images built by werf **and** images tagged by werf with one of the following arguments: `--tag-git-branch`, `--tag-git-tag` or `--tag-git-commit`.
+**Please note** that cleanup affects only images built and published by werf with one of the following arguments: `--tag-git-branch`, `--tag-git-tag` or `--tag-git-commit`.
 All other images in the _images repo_ stay intact.
 
 #### Whitelisting images
 
 The image always remains in the _images repo_ as long as the Kubernetes object that uses the image exists.
-In the Kubernetes cluster, werf scans the following kinds of objects: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
+werf scans the following kinds of objects in the Kubernetes cluster: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
 The functionality can be disabled via the flag `--without-kube`.
 
