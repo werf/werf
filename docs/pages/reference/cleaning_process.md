@@ -25,8 +25,8 @@ It implies regular gradual cleaning according to cleaning policies.
 This is the safest way of cleaning because it does not affect your production environment.
 
 The cleaning by policies method includes the steps in the following order:
-1. [**Cleanup of the images repo**](#cleanup-images-repo) cleans _images repo_ from stale images according to the cleaning policies.
-2. [**Cleanup of the stages storage**](#cleanup-stages-storage) synchronizes _stages storage_ with the _images repo_.
+1. [**Cleaning up the images repo**](#cleaning-up-the-images-repo) cleans _images repo_ from stale images according to the cleaning policies.
+2. [**Cleaning up stages storage**](#cleaning-up-stages-storage) synchronizes _stages storage_ with the _images repo_.
 
 These steps are combined in the single top-level command [cleanup]({{ site.baseurl }}/documentation/cli/main/cleanup.html).  
 
@@ -50,7 +50,7 @@ These policies determine which _images_ will be deleted while leaving all others
     * For the remaining images, the following policies apply:
       * _git-commit-strategy-expiry-days_.
       Keep published _images_ in the _images repo_ for the **specified maximum number of days** since the image was published.
-      The republished image will be kept for the **specified maximum nimber of days** since the new publication date.
+      The republished image will be kept for the **specified maximum number of days** since the new publication date.
       No days limit is set by default; -1 disables the limit.
       The value can be specified by `--git-commit-strategy-expiry-days` option or `$WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS`.
       * _git-commit-strategy-limit_.

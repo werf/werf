@@ -63,7 +63,7 @@ To publish an [image]({{ site.baseurl }}/documentation/reference/stages_and_imag
 
 This procedure will be referred to as the **image publishing procedure**.
 
-The result of this procedure is an image named using the [*rules for naming images*](#images-naming) and pushed into the Docker registry. All these steps are performed with the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or the [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
+The result of this procedure is an image named using the [*rules for naming images*](#naming-images) and pushed into the Docker registry. All these steps are performed with the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or the [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
 
 ## Naming images
 
