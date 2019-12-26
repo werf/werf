@@ -29,9 +29,9 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - [Installation](#installation)
   - [Installing Dependencies](#installing-dependencies)
   - [Installing werf](#installing-werf)
-- [Getting started](#getting-started)
+- [Getting Started](#getting-started)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
-- [Docs and Support](#docs-and-support)
+- [Documentation and Support](#documentation-and-support)
 - [License](#license)
 
 # Features
@@ -46,7 +46,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
  - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
  - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
-## Coming soon
+## Coming Soon
 
 - ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
 - Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
@@ -56,7 +56,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
 
-## Complete features list
+## Complete List of Features
 
 ### Building
 
@@ -186,7 +186,7 @@ go get github.com/flant/werf/cmd/werf
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Getting started
+# Getting Started
 
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
@@ -206,7 +206,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 
 <!-- WERF DOCS PARTIAL BEGIN: Backward Compatibility Promise -->
 
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
+> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases
 
 werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_
 require to do a full re-deploy of applications or to perform other non-scriptable actions.
@@ -235,13 +235,13 @@ The version without a prerelease part is considered to have originated in a stab
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Docs and support
+# Documentation and Support
 
 <!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
 [Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
+We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU), and [Telegram](https://t.me/werf_io). Join us!
 
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 

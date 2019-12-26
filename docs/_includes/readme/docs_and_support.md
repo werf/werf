@@ -2,7 +2,7 @@
 
 [Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
+We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU), and [Telegram](https://t.me/werf_io). Join us!
 
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
