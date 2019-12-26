@@ -109,9 +109,9 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 # Installation
 
-<!-- WERF DOCS PARTIAL BEGIN: Installation -->
-
 ## Installing Dependencies
+
+<!-- WERF DOCS PARTIAL BEGIN: Installing Dependencies -->
 
 ### Docker
 
@@ -119,7 +119,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 Manage Docker as a non-root user. Create the **docker** group and add your user to the group:
 
-```bash
+```shell
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
@@ -131,57 +131,98 @@ sudo usermod -aG docker $USER
 - Minimum required version is 1.9.0.
 - Version 2.14.0 or newer is required to use [Git Submodules](https://git-scm.com/docs/gitsubmodules).
 
+<!-- WERF DOCS PARTIAL END -->
+
 ## Installing werf
 
-### Method 1 (recommended): by using multiwerf
+There are a lot of ways to install werf, but using [multiwerf](https://github.com/flant/multiwerf) is a recommended practice both for local development and CI usage. 
 
-[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf. It:
-* downloads werf binary builds;
-* manages multiple versions of binaries installed on a single host (they can be used concurrently);
-* automatically updates werf binary (this option can be disabled).
+> The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html)
 
-```bash
+<!-- WERF DOCS PARTIAL BEGIN: Installing with multiwerf -->
+
+#### Unix shell (sh, bash, zsh)
+
+##### Installing multiwerf
+
+```shell
 # add ~/bin into PATH
+export PATH=$PATH:$HOME/bin
 echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-exec bash
 
 # install multiwerf into ~/bin directory
 mkdir -p ~/bin
 cd ~/bin
 curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
-source <(multiwerf use 1.0 beta)
 ```
 
-> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` instead of `source <(multiwerf use 1.0 beta)`
+##### Add werf alias to the current shell session
 
-### Method 2: by downloading binary package
-
-The latest release is available at [this page](https://bintray.com/flant/werf/werf/_latestVersion)
-
-##### MacOS
-
-```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-darwin-amd64-v1.0.3-beta.9 -o /tmp/werf
-chmod +x /tmp/werf
-sudo mv /tmp/werf /usr/local/bin/werf
+```shell
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
-##### Linux
+##### CI usage tip
 
-```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-linux-amd64-v1.0.3-beta.9 -o /tmp/werf
-chmod +x /tmp/werf
-sudo mv /tmp/werf /usr/local/bin/werf
+To ensure that multiwerf is exist and executable use `type` command:
+
+```shell
+type multiwerf && . $(multiwerf use 1.0 stable --as-file)
 ```
 
-##### Windows
+The command prints a message to stderr in case if multiwerf is not found. Thus, diagnostic in CI environment becomes simpler. 
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-windows-amd64-v1.0.3-beta.9.exe)
+##### Optional: run command on terminal startup
 
-### Method 3: by compiling from source
-
+```shell
+echo '. $(multiwerf use 1.0 stable --as-file)' >> ~/.bashrc
 ```
-go get github.com/flant/werf/cmd/werf
+
+#### Windows
+
+##### PowerShell
+
+###### Installing multiwerf
+
+```shell
+$MULTIWERF_BIN_PATH = "C:\ProgramData\multiwerf\bin"
+mkdir $MULTIWERF_BIN_PATH
+
+Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
+
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + "$MULTIWERF_BIN_PATH",
+    [EnvironmentVariableTarget]::Machine)
+
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+###### Add werf alias to the current shell session
+
+```shell
+Invoke-Expression -Command "multiwerf use 1.0 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
+. $WERF_USE_SCRIPT_PATH.Trim()
+```
+
+##### cmd.exe
+
+###### Installing multiwerf
+
+```shell
+set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
+mkdir %MULTIWERF_BIN_PATH%
+bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
+setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
+
+# after that open new cmd.exe session and start using multiwerf
+```
+
+###### Add werf alias to the current shell session
+
+```shell
+FOR /F "tokens=*" %g IN ('multiwerf use 1.0 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
+%WERF_USE_SCRIPT_PATH%
 ```
 
 <!-- WERF DOCS PARTIAL END -->
