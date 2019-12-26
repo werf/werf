@@ -39,7 +39,7 @@ channels:
     stability: 4
     title: Rock-Solid
     description:
-      en: This is the most stable channel and recommended for usage in critical environments with tight SLA. We guarantee backward compatibility between b>Rock-Solid</b releases within minor branch (1.1.x). We guarantee that <b>Stable</b> release should become a <b>Rock-Solid</b> release not earlier than 2 weeks of broad testing.
+      en: This is the most stable channel and recommended for usage in critical environments with tight SLA. We guarantee backward compatibility between <b>Rock-Solid</b> releases within minor branch (1.1.x). We guarantee that <b>Stable</b> release should become a <b>Rock-Solid</b> release not earlier than 2 weeks of broad testing.
       ru: Канал обновлений <b>Rock-Solid</b> рекомендуется использовать в критичных окружениях с высоким SLA. Мы гарантируем обратную совместимость между версиями канала обновлений <b>Rock-Solid</b> в пределах минорной версии (1.1.x). Мы гарантируем, что версия из канала обновлений <b>Stable</b> перейдет в канал обновлений <b>Rock-Solid</b> не ранее чем через 2 недели плотного тестирования.
     tooltip:
       en: For usage in <b>critical environments</b> with tight SLA
