@@ -99,7 +99,7 @@ The *docker tag* is taken from `--tag-*` params:
 
 All the specified tag params will be validated for the conformity with the tagging rules for docker images. User may apply the slug algorithm to the specified tag, learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
-Also, user specifies both the tag value and the tagging strategy by using --tag-* options.
+Also, user specifies both the tag value and the tagging strategy by using `--tag-*` options.
 The tagging strategy affects [certain policies in the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
 Every `--tag-git-*` option requires a `TAG`, `BRANCH`, or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where a CI job is running in the detached git worktree for the specific commit, and the current git-tag, git-branch, or git-commit is passed to the job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for the GitLab CI).

@@ -14,9 +14,9 @@ ___
 
 <!-- WERF DOCS PARTIAL BEGIN: Overview -->
 
-**werf** is an Open Source CLI tool written in Go, designed to simplify and speed up the delivery of applications. To use it, you need to describe the configuration of your application (in other words, how to build and deploy it to Kubernetes) and save it to a Git repo — the latter acts as a single source of truth. In short, that's what we call GitOps today.
+**werf** is an Open Source CLI tool written in Go, designed to simplify and speed up the delivery of applications. To use it, you need to describe the configuration of your application (in other words, how to build and deploy it to Kubernetes) and store it in a Git repo — the latter acts as a single source of truth. In short, that's what we call GitOps today.
 
-* werf builds Docker images using Dockerfiles or an alternative builder-tool based on the custom syntax. It also deletes unused images from the Docker registry.
+* werf builds Docker images using Dockerfiles or an alternative fast built-in builder based on the custom syntax. It also deletes unused images from the Docker registry.
 * werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
 werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
@@ -42,7 +42,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
  - The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
  - Build images using Dockerfiles.
  - Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
- - werf supports Helm 2-compatible charts and complex deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
+ - werf supports Helm 2-compatible charts and complex fault-tolerant deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
  - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
  - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
@@ -92,7 +92,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
   - Logging and error reporting.
   - Regular status reporting during the deployment phase.
   - Debug problems effortlessly without unnecessary kubectl invocations.
-- Prompt CI pipeline failure in case of a problem.
+- Prompt CI pipeline failure in case of a problem (i.e. fail fast).
   - Instant detection of resource failures during the deployment process without having to wait for a timeout.
 - Full compatibility with Helm 2.
 - Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).
