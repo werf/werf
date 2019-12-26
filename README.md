@@ -258,21 +258,24 @@ In the case of werf, this means that an update to the next minor release goes sm
 Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
 In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
 
-Patch releases are divided into channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
-The version without a prerelease part is considered to have originated in a stable channel.
+All changes go through all stability channels:
 
-- `stable` channel (1.1.0, 1.1.1, 1.1.2, etc.). This version is recommended for use in critical environments with tight SLAs.
-  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
-- `ea` channel versions are mostly safe to use. These versions are suitable for all environments.
-  We **guarantee** backward compatibility between `ea` releases within the minor branch (1.1.x).
-  We **guarantee** that `ea` release should become a `stable` release after at least 2 weeks of broad testing.
-- `rc` channel (2.3.2-rc.2). These releases are mostly safe to use and can be used in non-critical environments or for local development.
-  We do **not guarantee** backward compatibility between `rc` releases.
-  We **guarantee** that `rc` release should become `ea` after at least 1 week of internal testing.
-- `beta` channel (1.2.2-beta.0). These releases are for broad testing of new features to catch regressions.
-  We do **not guarantee** backward compatibility between `beta` releases.
-- `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features but are unstable.
+- `alpha` channel can bring new features but can be unstable.
   We do **not guarantee** backward compatibility between `alpha` releases.
+- `beta` channel is for more broad testing of new features to catch regressions.
+  We do **not guarantee** backward compatibility between `beta` releases.
+- `ea` channel is mostly safe to use and can even be used in non-critical environments or for local development.
+  We do **not guarantee** backward compatibility between `ea` releases.
+- `stable` channel is mostly safe to use and we encourage to use this version everywhere.
+  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests.
+  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
+- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLA.
+  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than 2 weeks of broad testing.
+  We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
+
+The relations between channels and werf releases described in [multiwerf.json](https://github.com/flant/werf/blob/multiwerf/multiwerf.json). The using of werf by channel should be organized with [multiwerf](https://github.com/flant/multiwerf).   
+  
+Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software and saving an acceptable development speed at the same time.
 
 <!-- WERF DOCS PARTIAL END -->
 
