@@ -11,7 +11,7 @@ layout: default
                 GitOps CLI tool
             </h1>
             <div class="welcome__subtitle">
-                 Deliver your application fast & easy.<br/>Open Source. Written in Go.
+                 Deliver your application quickly & easily.<br/>Open Source. Written in Go.
             </div>
             <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
@@ -61,16 +61,16 @@ layout: default
     <ul class="intro-extra">
         <li class="intro-extra__item">
             <div class="intro-extra__item-title">
-                Comfortable deployment
+                Effortless deployment
             </div>
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
                     <li>Full compatibility with Helm.</li>
                     <li>Easy RBAC definition.</li>
-                    <li>Applied deploy configuration in Kubernetes does not guarantee a rolled out functioning application. With werf you receive that guarantee.</li>
-                    <li>werf fails fast when a problem has been detected in the CI/CD job allowing faster debug of new application versions without unnecessary kubectl invocations.</li>
-                    <li>Configurable resource errors detector and resource readiness detector using resource annotations.</li>
-                    <li>Rich logging and error reporting.</li>
+                    <li>Applying deployment configuration in Kubernetes does not guarantee the successful deployment of an application and its fully functional state. With werf, you get that guarantee.</li>
+                    <li>werf immediately fails if some problem is detected in the CI/CD job, thus allowing faster debugging of new versions of an application without unnecessary kubectl invocations.</li>
+                    <li>Configurable resource error and resource readiness detectors based on resource annotations.</li>
+                    <li>Rich logging and error reporting capabilities.</li>
                 </ul>
             </div>
         </li>
@@ -80,10 +80,10 @@ layout: default
             </div>
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
-                    <li>Build images with Dockerfiles or advanced image builder with incremental rebuilds based on the git history and ansible.</li>
-                    <li>Publish images to the Docker registry using advanced image naming schemas.</li>
-                    <li>Deploy application images into Kubernetes cluster.</li>
-                    <li>Cleanup Docker registry from unused images based on policies.</li>
+                    <li>Build images with Dockerfiles or with an advanced image builder that supports incremental rebuilds based on the git history and ansible.</li>
+                    <li>Publish images to the registry using advanced image naming schemas.</li>
+                    <li>Deploy application images to the Kubernetes cluster.</li>
+                    <li>Clean up your Docker registry by deleting unused images that meet specific conditions.</li>
                 </ul>
             </div>
         </li>
@@ -106,7 +106,7 @@ layout: default
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">1400</div>
                     <div class="stats__list-item-title">installations</div>
-                    <div class="stats__list-item-subtitle">of large and small projects</div>
+                    <div class="stats__list-item-subtitle">for large and small projects</div>
                 </li>
                 <li class="stats__list-item">
                     <div class="stats__list-item-num gh_counter">1010</div>
@@ -124,39 +124,39 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Complete application lifecycle management</div>
-                <div class="features__list-item-text">Manage image building process, deploy applications into Kubernetes and remove unused images easily.</div>
+                <div class="features__list-item-text">Manage the image building process, deploy an application to Kubernetes, easily remove unused images.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
-                <div class="features__list-item-title">Comfortable deployment to <span>Kubernetes</span></div>
+                <div class="features__list-item-title">Effortless deployment to <span>Kubernetes</span></div>
                 <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to start</div>
-                <div class="features__list-item-text">Remain regular build process with Dockerfile. Take your project and put into werf easily right now.</div>
+                <div class="features__list-item-text">Keep your regular Dockerfile-based building process intact. Integrate werf into your project and put it to full use.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_size"></div>
                 <div class="features__list-item-title">Reduce image size</div>
-                <div class="features__list-item-text">Detach source data and build tools using artifacts, mounts and stapel.</div>
+                <div class="features__list-item-text">Detach source data and build tools using artifacts, mounts, and stapel.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_ansible"></div>
                 <div class="features__list-item-title">Build images with <span>Ansible</span></div>
-                <div class="features__list-item-text">Use the powerful and popular infrastructure-as-a-code tool.</div>
+                <div class="features__list-item-text">Use the popular and powerful infrastructure-as-a-code tool.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_debug"></div>
-                <div class="features__list-item-title">Advanced tools for debugging the build process</div>
-                <div class="features__list-item-text">In the process of assembling, you can access a certain stage using introspection options.</div>
+                <div class="features__list-item-title">Advanced debugging tools for the building process</div>
+                <div class="features__list-item-text">During assembly, you can access any stage using introspection options.</div>
             </li>
-            <li class="features__list-item"></li>
-            <li class="features__list-item">
+             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
-                <div class="features__list-item-text">Build multiple images with a single configuration file, share common configuration parts using Go templates.</div>
+                <div class="features__list-item-text">Build multiple images using a single configuration file, share common configuration snippets via Go templates.</div>
             </li>
+            <li class="features__list-item"></li>
             <li class="features__list-item"></li>
         </ul>        
     </div>
@@ -165,8 +165,8 @@ layout: default
 <div class="community">
     <div class="page__container">
         <div class="community__content">
-            <div class="community__title">Friendly growing community</div>
-            <div class="community__subtitle">We are always in contact with community through<br/> Twitter, Slack and Telegram.</div>
+            <div class="community__title">Friendly and growing community</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community<br/> in Twitter, Slack and Telegram.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
@@ -196,22 +196,22 @@ layout: default
                     <div class="roadmap__goals-title">Goals</div>
                     <ul class="roadmap__goals-list">
                         <li class="roadmap__goals-list-item">
-                            Feature complete version of werf which works well in an environment with a single dedicated persistent host to run all werf operations (build, deploy and cleanup).
+                            Feature-complete version of werf that works well in an environment with a single dedicated, persistent host to run all werf operations (build, deploy, and cleanup).
                         </li>
                         <li class="roadmap__goals-list-item">
                             Proven approaches and recipes <br/>
-                            for most popular CI systems.
+                            for most of the popular CI systems.
                         </li>
                         <li class="roadmap__goals-list-item">
-                            Building images completely in userspace, <br/>
-                            a container or Kubernetes cluster.
+                            Build images in a userspace, <br/>
+                            in a container or a Kubernetes cluster.
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="roadmap__steps">
                 <div class="roadmap__steps-content">
-                    <div class="roadmap__steps-title">Steps</div>
+                    <div class="roadmap__steps-title">Milestones</div>
                     <ul class="roadmap__steps-list">
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
@@ -235,7 +235,7 @@ layout: default
                             <a href="https://github.com/flant/werf/issues/1617" class="roadmap__steps-list-item-issue" target="_blank">#1617</a>
                             <span class="roadmap__steps-list-item-text">
                                 Proven approaches and recipes<br/>
-                                for most popular CI systems.
+                                for most of the popular CI systems.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
@@ -253,7 +253,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1618">
                             <a href="https://github.com/flant/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
                             <span class="roadmap__steps-list-item-text">
-                                Userspace builds without Docker daemon<br/>
+                                Userspace builds that do not require Docker daemon<br/>
                                 (as in <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">kaniko</a>).
                             </span>
                         </li>
@@ -270,10 +270,10 @@ layout: default
         </div>
         <div class="documentation__info">
             <div class="documentation__info-title">
-                Complete documentation
+                Detailed documentation
             </div>
             <div class="documentation__info-text">
-                Documentation of werf comprises ~100 articles which include common use cases (getting started, deploy to Kubernetes, CI/CD integration and more), comprehensive description of its functions & architecture, as well as CLI, commands.
+                werf documentation comprises over 100 articles on typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and a thorough description of functions & architecture.
             </div>
         </div>
         <div class="documentation__btns">
