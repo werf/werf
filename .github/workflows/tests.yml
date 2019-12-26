@@ -1,25 +1,40 @@
 name: Run tests
 on:
-  push:
-    branches:
-    - master
-    - 'test-*'
+  pull_request:
+    types: [labeled]
+  schedule:
+  - cron:  '0 22 * * *'
 env:
   GO111MODULE: on
 
 jobs:
+
   stub:
     name: Greeting
     runs-on: ubuntu-latest
     steps:
+
     - name: Greeting
       run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
+
+  unlabel:
+    name: Unlabel
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.label.id == 1745044226 # execute tests label
+    steps:
+
+    - uses: actions/github-script@0.3.0
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.issues.removeLabel({...context.issue, name: '${{github.event.label.name}}'})
 
   download_go_modules:
     name: Download go modules
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
     steps:
 
     - name: Set up Go 1.13
