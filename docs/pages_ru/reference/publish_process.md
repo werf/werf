@@ -42,7 +42,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Процесс публикации образа при обычной работе с Docker, состоит из следующих этапов:
 
-```bash
+```shell
 docker tag REPO:TAG
 docker push REPO:TAG
 docker rmi REPO:TAG
@@ -120,7 +120,7 @@ docker rmi REPO:TAG
 
 Выполнение команды:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-tag v1.2.0
 ```
 
@@ -134,7 +134,7 @@ werf publish --stages-storage :local --images-repo registry.hello.com/web/core/s
 
 Выполнение команды:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch my-feature-x
 ```
 
@@ -148,7 +148,7 @@ werf publish --stages-storage :local --images-repo registry.hello.com/web/core/s
 
 Выполнение команды:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch $(werf slugify --format docker-tag "Features/MyFeature#169")
 ```
 
@@ -164,7 +164,7 @@ werf publish --stages-storage :local --images-repo registry.hello.com/web/core/s
 
 Запуск следующей команды в задании pipeline GitLab CI для ветки `core/feature/ADD_SETTINGS`:
 
-```bash
+```shell
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
@@ -181,7 +181,7 @@ werf publish --stages-storage :local
 
 Запуск следующей команды в задании pipeline GitLab CI для тега `v2.3.`:
 
-```bash
+```shell
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```

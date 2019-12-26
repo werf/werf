@@ -7,13 +7,13 @@ Print version
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf version [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for version
 ```

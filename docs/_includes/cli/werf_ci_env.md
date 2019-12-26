@@ -9,20 +9,20 @@ Currently supported only GitLab CI
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf ci-env CI_SYSTEM [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Load generated werf environment variables on GitLab job runner
   $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

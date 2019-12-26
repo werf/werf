@@ -56,7 +56,7 @@ author: Artem Kladov <artem.kladov@flant.com>
    * используем `shell` в качестве executor для runner'а.
 1. Добавим пользователя `gitlab-runner` в группу `docker`.
 
-   ```bash
+   ```shell
    sudo usermod -aG docker gitlab-runner
    ```
 
@@ -64,7 +64,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
 1. Установим [multiwerf](https://github.com/flant/multiwerf) пользователем `gitlab-runner`:
 
-   ```bash
+   ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
@@ -72,7 +72,7 @@ author: Artem Kladov <artem.kladov@flant.com>
    ```
 
 1. Скопируем файл конфигурации `kubectl` в домашнюю папку пользователя `gitlab-runner`.
-   ```bash
+   ```shell
    mkdir -p /home/gitlab-runner/.kube &&
    sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube

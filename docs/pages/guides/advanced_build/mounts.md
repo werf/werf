@@ -85,24 +85,24 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 {% endraw %}
 
 Build the application by executing the following command in the `booking` directory:
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 You should see a running container with a `go-booking` name, like this:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -116,13 +116,13 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Determine the image size by executing:
 
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
-```bash
+```shell
 REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
 image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
@@ -256,7 +256,7 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 {% endraw %}
 
 Build the application with the modified config:
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
@@ -264,22 +264,22 @@ werf build --stages-storage :local
 
 Before running the modified application, you need to stop and remove running `go-booking` container we built. Otherwise, the new container can't start or bind to 9000 port on localhost. E.g., execute the following command to stop and remove the `go-booking` container:
 
-```bash
+```shell
 docker stop go-booking && docker rm go-booking
 ```
 
 Run the modified application by executing the following command:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 You should see a running container with a `go-booking` name, like this:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -292,13 +292,13 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 Determine the image size of optimized build, by executing:
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
-```bash
+```shell
 REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
 image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      335 MB
 ```
@@ -307,12 +307,12 @@ image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes
 
 The `~/.werf/shared_context/mounts/projects/hotel-booking/` path contains directories mounted with `from: build_dir` directives in the `werf.yaml` file. Execute the following command to analyze:
 
-```bash
+```shell
 tree -L 3 ~/.werf/shared_context/mounts/projects/hotel-booking
 ```
 
 The output will be like this (some lines skipped):
-```bash
+```shell
 /home/user/.werf/shared_context/mounts/projects/hotel-booking
 ├── usr-local-go-a179aaae
 │   ├── api
@@ -332,12 +332,12 @@ The output will be like this (some lines skipped):
 As you may see, there are separate directories on the host for every mount in config exists.
 
 Check the directories size, by executing:
-```bash
+```shell
 sudo du -kh --max-depth=1 ~/.werf/shared_context/mounts/projects/hotel-booking
 ```
 
 The output will be like this:
-```bash
+```shell
 49M     /home/user/.werf/shared_context/mounts/projects/hotel-booking/var-cache-apt-28143ccf
 122M    /home/user/.werf/shared_context/mounts/projects/hotel-booking/usr-local-src-f1bad46a
 423M    /home/user/.werf/shared_context/mounts/projects/hotel-booking/usr-local-go-a179aaae

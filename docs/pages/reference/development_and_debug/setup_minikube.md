@@ -30,7 +30,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 2. Start minikube:
 
    {% raw %}
-   ```
+   ```shell
    minikube start
    ```
    {% endraw %}
@@ -38,7 +38,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 3. Enable minikube registry addon:
 
    {% raw %}
-   ```
+   ```shell
    minikube addons enable registry
    ```
    {% endraw %}
@@ -46,7 +46,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 4. Run custom `werf-registry` service with the binding to 5000 port:
 
    {% raw %}
-   ```
+   ```shell
    kubectl -n kube-system expose rc/registry --type=ClusterIP --port=5000 --target-port=5000 --name=werf-registry --selector='actual-registry=true'
    ```
    {% endraw %}
@@ -54,7 +54,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 5. Setup registry domain in minikube VM:
 
    {% raw %}
-   ```
+   ```shell
    export REGISTRY_IP=$(kubectl -n kube-system get svc/werf-registry -o=template={{.spec.clusterIP}})
    minikube ssh "echo '$REGISTRY_IP werf-registry.kube-system.svc.cluster.local' | sudo tee -a /etc/hosts"
    ```
@@ -63,7 +63,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 6. Setup registry domain in host system:
 
    {% raw %}
-   ```
+   ```shell
    echo "127.0.0.1 werf-registry.kube-system.svc.cluster.local" | sudo tee -a /etc/hosts
    ```
    {% endraw %}
@@ -71,7 +71,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 7. Run port forwarder on host system in a separate terminal:
 
    {% raw %}
-   ```
+   ```shell
    kubectl port-forward --namespace kube-system service/werf-registry 5000
    ```
    {% endraw %}
@@ -79,7 +79,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 8. Check connectivity on host system:
 
    {% raw %}
-   ```
+   ```shell
    curl -X GET werf-registry.kube-system.svc.cluster.local:5000/v2/_catalog
    ```
    {% endraw %}

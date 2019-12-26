@@ -86,7 +86,7 @@ Tagging mode determines how [images]({{ site.baseurl }}/documentation/reference/
 
 The only available mode of ci-env for now is *tag-or-branch* mode.
 
-*Content based tagging* support and corresponding ci-env tagging mode is [coming soon](https://github.com/flant/werf/issues/1184).
+*Content-based tagging* support and corresponding ci-env tagging mode is [coming soon](https://github.com/flant/werf/issues/1184).
 
 ### tag-or-branch
 
@@ -113,7 +113,7 @@ Ci-env command passes all parameters to werf using environment variables, see [p
 
 **NOTE** werf ci-env command prints bash script which exports [werf params using environment variables](#pass-cli-params-as-environment-variables). So to actually use ci-env command user must `source` command output using bash. For example:
 
-```
+```shell
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf build-and-publish --stages-storage :local
 ```
@@ -122,7 +122,7 @@ Sourcing ci-env command output will also result in printing all exported variabl
 
 Example of `werf ci-env` command output script without sourcing:
 
-```bash
+```shell
 ### DOCKER CONFIG
 echo '### DOCKER CONFIG'
 export DOCKER_CONFIG="/tmp/werf-docker-config-204033515"
@@ -188,7 +188,7 @@ Examples:
 
 Exception to this rule is `--add-label` and `--add-annotation` params, which can be specified multiple times. To specify this params using environment variables use following pattern: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. For example:
 
-```bash
+```shell
 export WERF_ADD_ANNOTATION_MYANNOTATION_1="annoName1=annoValue1"
 export WERF_ADD_ANNOTATION_MYANNOTATION_2="annoName2=annoValue2"
 export WERF_ADD_LABEL_MYLABEL_1="labelName1=labelValue1"

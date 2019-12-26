@@ -7,13 +7,13 @@ Run lint procedure for the werf chart
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm lint [options]
 ```
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
@@ -24,7 +24,7 @@ werf helm lint [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

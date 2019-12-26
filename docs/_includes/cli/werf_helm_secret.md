@@ -7,7 +7,7 @@ Work with secrets
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for secret
 ```

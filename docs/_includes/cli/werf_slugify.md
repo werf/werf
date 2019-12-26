@@ -7,13 +7,13 @@ Print slugged string by specified format
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf slugify STRING [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   $ werf slugify -f kubernetes-namespace feature-fix-2
   feature-fix-2
 
@@ -39,7 +39,7 @@ werf slugify STRING [options]
 
 {{ header }} Options
 
-```bash
+```shell
   -f, --format='':
               r|helm-release:         suitable for Helm Release
              ns|kubernetes-namespace: suitable for Kubernetes Namespace

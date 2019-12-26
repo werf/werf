@@ -7,13 +7,13 @@ Print Helm Release name that will be used in current configuration with specifie
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm get-release [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

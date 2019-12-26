@@ -20,13 +20,13 @@ result in an error, and the chart will not be saved locally.
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm repo fetch [chart URL | repo/chartname] [...] [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --ca-file='':
             verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file='':

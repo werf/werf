@@ -19,7 +19,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
-		buf.WriteString("{{ header }} Options\n\n```bash\n")
+		buf.WriteString("{{ header }} Options\n\n```shell\n")
 		buf.WriteString(templates.FlagsUsages(flags))
 		buf.WriteString("```\n\n")
 	}
@@ -27,7 +27,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("{{ header }} Options inherited from parent commands\n\n```bash\n")
+		buf.WriteString("{{ header }} Options inherited from parent commands\n\n```shell\n")
 		buf.WriteString(templates.FlagsUsages(parentFlags))
 		buf.WriteString("```\n\n")
 	}
@@ -40,7 +40,7 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 		return nil
 	}
 
-	buf.WriteString("{{ header }} Environments\n\n```bash\n")
+	buf.WriteString("{{ header }} Environments\n\n```shell\n")
 	buf.WriteString(environments)
 	buf.WriteString("\n```\n\n")
 
@@ -71,12 +71,12 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 
 	if cmd.Runnable() {
 		buf.WriteString("{{ header }} Syntax\n\n")
-		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", templates.UsageLine(cmd)))
+		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", templates.UsageLine(cmd)))
 	}
 
 	if len(cmd.Example) > 0 {
 		buf.WriteString("{{ header }} Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
+		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
 	}
 
 	if err := printEnvironments(buf, cmd); err != nil {

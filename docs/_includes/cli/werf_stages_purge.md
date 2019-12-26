@@ -7,13 +7,13 @@ Purge project stages from stages storage
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf stages purge [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

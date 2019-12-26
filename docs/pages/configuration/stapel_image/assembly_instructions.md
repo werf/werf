@@ -219,7 +219,7 @@ beforeInstall:
 werf performs _user stage_ commands as follows:
 - generates temporary script on host machine
 
-    ```bash
+    ```shell
     #!/.werf/stapel/embedded/bin/bash -e
 
     apt-get update
@@ -264,7 +264,7 @@ _Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To r
 this tasks with `ansible-playbook` command werf mounts this directory structure
 into the _user stage assembly container_:
 
-```bash
+```shell
 /.werf/ansible-workdir
 ├── ansible.cfg
 ├── hosts
@@ -316,7 +316,7 @@ werf produces this `playbook.yml` for _install_ stage:
 werf plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
 command:
 
-```bash
+```shell
 $ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
 $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
@@ -493,13 +493,13 @@ shell:
 {% endraw %}
 
 First build renders _beforeInstall command_ into:
-```bash
+```shell
 echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
 ```
 
 Build for the next commit renders _beforeInstall command_ into:
 
-```bash
+```shell
 echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
 ```
 

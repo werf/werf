@@ -7,7 +7,7 @@ Work with images
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for images
 ```

@@ -7,13 +7,13 @@ Init default chart repositories configuration
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm repo init [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --helm-home='~/.helm':
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:

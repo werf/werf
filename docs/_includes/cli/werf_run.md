@@ -7,13 +7,13 @@ Run container for specified project image
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Run specified image
   $ werf run --stages-storage :local application
 
@@ -30,7 +30,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 
 {{ header }} Options
 
-```bash
+```shell
       --bash=false:
             Use predefined docker options and command for debug
       --dir='':

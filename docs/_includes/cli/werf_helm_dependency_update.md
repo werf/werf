@@ -20,13 +20,13 @@ in the requirements.yaml file, but (b) at the wrong version.
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm dependency update [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --helm-home='~/.helm':

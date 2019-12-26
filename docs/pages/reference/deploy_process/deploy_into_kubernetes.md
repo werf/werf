@@ -597,7 +597,7 @@ User can pass arbitrary additional annotations and labels using cli options `--a
 
 For example, to set annotations and labels `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` to all Kubernetes resources from chart use following werf deploy invocation:
 
-```bash
+```shell
 werf deploy \
   --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
   --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \

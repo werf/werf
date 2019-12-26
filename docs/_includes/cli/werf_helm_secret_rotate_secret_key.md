@@ -15,13 +15,13 @@ Command will extract data with the old key, generate new secret data and rewrite
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 ```
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY      Use specified secret key to extract secrets for the deploy. Recommended way 
                         to set secret key in CI-system. 
                         
@@ -33,7 +33,7 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:

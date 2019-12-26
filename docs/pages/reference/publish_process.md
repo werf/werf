@@ -42,7 +42,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Generally, the publishing process in the Docker ecosystem consists of the following steps:
 
-```bash
+```shell
 docker tag REPO:TAG
 docker push REPO:TAG
 docker rmi REPO:TAG
@@ -116,7 +116,7 @@ Let's suppose `werf.yaml` defines two images: `backend` and `frontend`.
 
 The following command:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-tag v1.2.0
 ```
 
@@ -130,7 +130,7 @@ Let's suppose `werf.yaml` defines two images: `backend` and `frontend`.
 
 The following command:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch my-feature-x
 ```
 
@@ -144,7 +144,7 @@ Once again, we have a `werf.yaml` file with two defined images: `backend` and `f
 
 The following command:
 
-```bash
+```shell
 werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-git-branch $(werf slugify --format docker-tag "Features/MyFeature#169")
 ```
 
@@ -160,7 +160,7 @@ Let's say we have a `werf.yaml` configuration file that defines two images, `bac
 
 Running the following command in a GitLab CI job for a project named `web/core/system` with the git branch set as `core/feature/ADD_SETTINGS` and the Docker registry configured as `registry.hello.com/web/core/system`:
 
-```bash
+```shell
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
@@ -175,7 +175,7 @@ Note that werf automatically applies slug to the resulting tag of the docker ima
 
 Let's suppose we have a werf.yaml with a single unnamed image. Running the following command in the GitLab CI job for the project named `web/core/queue` with the git-tag named `v2.3.1` and a Docker registry configured as `registry.hello.com/web/core/queue`:
 
-```bash
+```shell
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf publish --stages-storage :local
 ```
