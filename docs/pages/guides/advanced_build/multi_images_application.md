@@ -23,7 +23,7 @@ In this article, we will build an example application — [AtSea Shop](https://g
 This command should be run prior running any werf command in your shell session:
 
 ```shell
-source <(multiwerf use 1.0 beta)
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
 ## Building the application

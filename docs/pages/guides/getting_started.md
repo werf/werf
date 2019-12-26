@@ -22,7 +22,7 @@ For example, we choose simple project — [Linux Tweet App](https://github.com/d
 This command should be run prior running any werf command in your shell session:
 
 ```shell
-source <(multiwerf use 1.0 beta)
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
 ## Step 1: Add a werf configuration
