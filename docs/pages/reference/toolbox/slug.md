@@ -5,53 +5,53 @@ permalink: documentation/reference/toolbox/slug.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-In some cases, text from environment variables or parameters can't be used as is because it can contain unacceptable symbols.
+In some cases, environment variables or parameters can't be used as-is since they contain invalid characters.
 
-To take into account restrictions for docker images names, helm releases names and Kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
+To meet the requirements for naming docker images, helm releases, and Kubernetes namespaces, werf applies a unified slug algorithm when generating names. This algorithm excludes unacceptable symbols and ensures the uniqueness of the result for each unique input.
 
-There are 3 types of slug built into werf:
+There are three types of slugs embedded in werf:
 
 1. Helm Release name slug.
 2. Kubernetes Namespace slug.
 3. Docker tag slug.
 
-There are commands for each type of slug available which apply algorithms for provided input text. You can use these commands upon your needs.
+There are commands for applying every type of slug (you can use them depending on your needs). They apply algorithms to the provided input text.
 
 ## Basic algorithm
 
-werf checks the text for compliance with slug **requirements**, and if text complies with slug requirements — werf does not modify it. Otherwise, werf performs **transformations** of the text to comply the requirements and add a dash symbol followed by a hash suffix based on the source text. A hash algorithm is a [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash).
+werf checks if an input meets slug **requirements**. If an input complies with them, werf leaves it unaltered. Otherwise, werf **transforms** characters to comply with the requirements while adding a dash symbol followed by a source-based hash suffix at the end. The [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash) hashing algorithm is used.
 
-The following steps perform, when werf applies transformations of the text in slug:
-* Converting UTF-8 latin characters to their ASCII counterpart;
-* Replacing some special symbols with dash symbol (`~><+=:;.,[]{}()_&`);
-* Removing all non-recognized characters (leaving lowercase alphanumerical characters and dashes);
-* Removing starting and ending dashes;
-* Reducing multiple dashes sequences to one dash.
-* Trimming the length of the data so that result will fit maximum bytes limit.
+While transforming the input in the slug, werf performs the following actions:
+* Converts UTF-8 Latin characters to their ASCII counterparts;
+* Replaces certain special symbols with a dash (`~><+=:;.,[]{}()_&`);
+* Removes non-recognized characters (only lowercase alphanumerical characters and dashes remain);
+* Removes starting and ending dashes;
+* Replaces sequences of dashes with a single dash.
+* Trims the length of the string so that result stays within the maximum bytes limit.
 
-The transformations are the same for all slugs, because these transformations are restricted enough to be compatible with any of the slug requirements.
+The actions are the same for all slugs since they are restrictive enough to satisfy the requirements of any slug.
 
-### Helm Release name requirements
-* it has only alphanumerical ASCII characters, underscores and dashes;
-* it contains no more, than 53 bytes.
+### The requirements for naming Helm Releases
+* only alphanumerical ASCII characters, underscores, and dashes are allowed;
+* the length is limited to 53 bytes.
 
-### Kubernetes Namespace requirements (which are [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements)
-* it has only alphanumerical ASCII characters and dashes;
-* it contains no more, than 63 bytes.
+### The requirements for naming Kubernetes Namespaces (a [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements)
+* only alphanumerical ASCII characters, and dashes are allowed;
+* the length is limited to 63 bytes.
 
-### Docker Tag requirements
-* it must be valid ASCII and may contain lowercase and uppercase ASCII characters, digits, underscores, periods and dashes;
-* it contains no more, than 128 bytes.
+### The requirements for naming Docker Tags
+* the tag must be made of valid ASCII and can contain lowercase and uppercase ASCII characters, digits, underscores, periods, and dashes;
+* the length is limited to 128 bytes.
 
 ## Usage
 
-Slug can be applied to arbitrary string with [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
+The slug may be applied to an arbitrary string via the [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
 
-Also werf applies slug automatically when used in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for details. The main principles are:
- * apply slug automatically to params that are derived automatically from CI/CD systems environment;
- * do not apply slug automatically to params that are specified manually with `--tag-*`, `--release` or `--namespace`, this way params are only validated to confirm with the requirements.
+werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for more details. The basic principles are:
+ * the slug is auto-applied to parameters that are automatically obtained from the environment of CI/CD systems;
+ * the slug isn't auto-applied to parameters that are specified manually via `--tag-*`, `--release` or `--namespace`; in this case, parameters are only validated to comply with the requirements.
 
-To apply slug to params specified manually with `--tag-*`, `--release` or `--namespace` user should call [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) explicitly, for example:
+The user should run the [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) explicitly to apply slug to parameters specified manually with `--tag-*`, `--release`, or `--namespace` user should call , for example:
 
 ```
 werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...
