@@ -5,9 +5,9 @@ permalink: documentation/reference/plugging_into_cicd/overview.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-werf represents the new breed of CI/CD tools that integrates lowlevel building, cleaning and deploying tools into a single tool, which can easily be plugged into any existing CI/CD system. This is possible because werf follows established concepts of all such systems.
+werf represents the new generation of CI/CD tools that integrates low-level building, cleaning, and deploying tools into a single instrument, making it easily pluggable into any existing CI/CD system. All this was made possible by werf following established concepts of all such systems.
 
-werf plugs into CI/CD system using so called *ci-env command*. Ci-env command is responsible to gather required info from CI/CD system and define corresponding werf params using environment variables which will be referred to as *ci-env*.
+werf plugs into a CI/CD system via the so-called *ci-env command*. Ci-env command gathers all required information from the CI/CD system and defines corresponding werf parameters with environment variables that will be referred to as *ci-env*.
 
 ![ci-env]({% asset plugging_into_cicd.svg @path %})
 
