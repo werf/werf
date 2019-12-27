@@ -17,7 +17,7 @@ JSON
     curlResponse=$(mktemp)
     status=$(curl -s -w %{http_code} -o $curlResponse \
         --request POST \
-        --header "Authorization: token $GITHUB_TOKEN" \
+        --header "Authorization: token $PUBLISH_GITHUB_TOKEN" \
         --header "Accept: application/vnd.github.v3+json" \
         --data "$GHPAYLOAD" \
         https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases

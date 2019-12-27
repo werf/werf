@@ -13,7 +13,7 @@ JSON
     curlResponse=$(mktemp)
     status=$(curl -s -w %{http_code} -o $curlResponse \
         --request POST \
-        --user $BINTRAY_AUTH \
+        --user $PUBLISH_BINTRAY_AUTH \
         --header "Content-type: application/json" \
         --data "$PAYLOAD" \
         https://api.bintray.com/packages/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/versions
@@ -43,7 +43,7 @@ bintray_upload_file_into_version() {
     status=$(curl -s -w %{http_code} -o $curlResponse \
         --header "Content-type: application/binary" \
         --request PUT \
-        --user $BINTRAY_AUTH \
+        --user $PUBLISH_BINTRAY_AUTH \
         --upload-file $UPLOAD_FILE_PATH \
         https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/$VERSION/$VERSION/$DESTINATION_PATH
     )
@@ -71,7 +71,7 @@ bintray_publish_files_in_version() {
     curlResponse=$(mktemp)
     status=$(curl -s -w '%{http_code}' -o "$curlResponse" \
         --request POST \
-        --user "$BINTRAY_AUTH" \
+        --user "$PUBLISH_BINTRAY_AUTH" \
         --header "Content-type: application/json" \
         "https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/${VERSION}/publish"
     )
