@@ -7,7 +7,7 @@ Work with secret files
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for file
 ```

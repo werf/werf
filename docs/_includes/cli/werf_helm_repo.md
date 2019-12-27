@@ -12,7 +12,7 @@ It can be used:
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for repo
 ```

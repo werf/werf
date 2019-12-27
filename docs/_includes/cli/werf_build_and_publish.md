@@ -21,13 +21,13 @@ these images from werf.yaml
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf build-and-publish [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Build and publish all images from werf.yaml into specified docker repo, built stages will be placed locally; tag images with the mytag tag using custom tagging strategy
   $ werf build-and-publish --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom mytag
 
@@ -45,13 +45,13 @@ werf build-and-publish [IMAGE_NAME...] [options]
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

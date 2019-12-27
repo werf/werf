@@ -22,7 +22,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Создадим временную папку для конфигураций docker на базе существующей и определим Docker registry для публикации собранных образов:
 
-```bash
+```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
@@ -61,7 +61,7 @@ export WERF_IMAGES_REPO=registry.company.com/project
 
 В корневой папке проекта создадим bash-скрипт `werf-ci-env.sh` со следующим содержанием:
 
-```bash
+```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
@@ -87,7 +87,7 @@ export WERF_LOG_TERMINAL_WIDTH=95
 
 Также создадим скрипт `werf-ci-env-cleanup.sh` со следующим содержимым:
 
-```bash
+```shell
 rm -rf $TMP_DOCKER_CONFIG
 ```
 

@@ -46,7 +46,7 @@ metadata:
 
 Then user can repair resource state with the following command:
 
-```bash
+```shell
 kubectl -n mynamespace patch cm/myconfigmap '{"data":{"node.conf":"PROPER CONTENT"}}'
 ```
 

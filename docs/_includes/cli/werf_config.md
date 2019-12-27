@@ -7,7 +7,7 @@ Work with werf.yaml
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for config
 ```

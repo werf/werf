@@ -10,13 +10,13 @@ looks for matches
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm repo search [keyword] [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --col-width=60:
             specifies the max column width of output
       --helm-home='~/.helm':

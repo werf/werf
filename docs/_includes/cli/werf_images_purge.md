@@ -7,13 +7,13 @@ Purge project images from images repo
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf images purge [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

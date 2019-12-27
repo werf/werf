@@ -34,23 +34,23 @@ Stapel image needs to be updated time to time to update ansible or when new vers
 
 1.  Make necessary changes to build instructions in `stapel` directory.
 2.  Update omnibus bundle:
-    ```bash
+    ```shell
     cd stapel/omnibus
     bundle update
     git add -p Gemfile Gemfile.lock
     ```
 3.  Build new stapel images:
-    ```bash
+    ```shell
     scripts/stapel/build.sh
     ```
     This command will create `flant/werf-stapel:dev` and secondary `flant/werf-stapel-base:dev` docker images.
 4.  To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
-    ```bash
+    ```shell
     export WERF_STAPEL_IMAGE_VERSION=dev
     werf build ...
     ```
 5.  Publish new stapel images:
-    ```bash
+    ```shell
     scripts/stapel/publish.sh NEW_VERSION
     ```
 6.  As new stapel version has been published change `VERSION` Go constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.

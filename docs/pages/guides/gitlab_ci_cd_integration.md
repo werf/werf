@@ -56,7 +56,7 @@ On the werf node, you need to install and set up GitLab runner. Follow these ste
     * enter executor `shell` for runner;
 1. Add the `gitlab-runner` user into the `docker` group.
 
-   ```bash
+   ```shell
    sudo usermod -aG docker gitlab-runner
    ```
 
@@ -64,7 +64,7 @@ On the werf node, you need to install and set up GitLab runner. Follow these ste
 1. Install [werf dependencies]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
 1. Install [multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
-   ```bash
+   ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
@@ -72,7 +72,7 @@ On the werf node, you need to install and set up GitLab runner. Follow these ste
    ```
 
 1. Copy kubectl config to the home folder of the `gitlab-runner` user.
-   ```bash
+   ```shell
    mkdir -p /home/gitlab-runner/.kube &&
    sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube

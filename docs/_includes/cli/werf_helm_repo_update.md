@@ -10,13 +10,13 @@ Information is cached locally, where it is used by commands like 'werf helm repo
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm repo update [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --helm-home='~/.helm':
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:

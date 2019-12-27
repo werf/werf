@@ -8,13 +8,13 @@ For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .we
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm secret generate-secret-key [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Export encryption key
   $ export WERF_SECRET_KEY=$(werf helm secret generate-secret-key)
 
@@ -24,7 +24,7 @@ werf helm secret generate-secret-key [options]
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for generate-secret-key
 ```

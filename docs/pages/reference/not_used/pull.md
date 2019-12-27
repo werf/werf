@@ -50,7 +50,7 @@ There is also an option to turn off this optimized behavior and always pull all 
 
 ### Pull stages cache
 
-```bash
+```shell
 werf pull registry.hello.com/taxi/backend
 ```
 

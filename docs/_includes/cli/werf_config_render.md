@@ -7,13 +7,13 @@ Render werf.yaml
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf config render [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:

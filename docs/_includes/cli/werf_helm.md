@@ -7,7 +7,7 @@ Manage application deployment with helm
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for helm
 ```

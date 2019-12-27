@@ -7,13 +7,13 @@ List image and artifact names defined in werf.yaml
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf config list [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:

@@ -13,13 +13,13 @@ werf.yaml
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf build [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Build stages of all images from werf.yaml, built stages will be placed locally
   $ werf stages build --stages-storage :local
 
@@ -36,13 +36,13 @@ werf build [IMAGE_NAME...] [options]
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

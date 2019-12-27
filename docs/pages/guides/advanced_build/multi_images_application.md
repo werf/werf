@@ -211,7 +211,7 @@ git:
 
 Clone the [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app) repository:
 
-```bash
+```shell
 git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 ```
 
@@ -373,7 +373,7 @@ The NGINX in the `reverse_proxy` image listen on SSL ports and need a key and ce
 
 Execute the following command in the root folder of the project to create them:
 
-```bash
+```shell
 mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=atseashop.com;" -sha256 -keyout reverse_proxy/certs/revprox_key -x509 -days 365 -out reverse_proxy/certs/revprox_cert
 ```
 
@@ -381,7 +381,7 @@ mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=a
 
 Execute the following command in the root folder of the project to build all images:
 
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
@@ -389,7 +389,7 @@ werf build --stages-storage :local
 
 To have an ability to open the example by the `http://atseashop.com` URL, add the `atseashop.com` name pointing to the address of your local interface into your `/etc/hosts` file. E.g.:
 
-```bash
+```shell
 sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 ```
 
@@ -397,7 +397,7 @@ sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 
 To run the application images, execute the following commands from the root folder of the project:
 
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d --name payment_gw" payment_gw  &&
 werf run --stages-storage :local --docker-options="-d --name database -p 5432:5432" database &&
 werf run --stages-storage :local --docker-options="-d --name app -p 8080:8080 --link database:database" app &&
@@ -405,7 +405,7 @@ werf run --stages-storage :local --docker-options="-d --name reverse_proxy -p 80
 ```
 
 Check that all containers are running, by executing:
-```bash
+```shell
 docker ps
 ```
 
@@ -417,7 +417,7 @@ Wait for about 30 seconds or a bit more for all the containers to be ready, then
 
 To stop application containers execute the following command:
 
-```bash
+```shell
 docker stop reverse_proxy app database payment_gw
 ```
 

@@ -53,7 +53,7 @@ werf automatically applies slug in CI/CD systems such as GitLab CI. See [pluggin
 
 The user should run the [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) explicitly to apply slug to parameters specified manually with `--tag-*`, `--release`, or `--namespace` user should call , for example:
 
-```
+```shell
 werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...
 werf deploy --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...
 ```

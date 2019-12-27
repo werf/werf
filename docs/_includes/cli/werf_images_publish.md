@@ -13,20 +13,20 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf images publish [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging strategy
   $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

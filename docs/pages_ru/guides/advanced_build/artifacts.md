@@ -68,24 +68,24 @@ ansible:
 
 Соберём образ приложения, выполнив следующую команду в папке `booking`:
 
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
 ### Запуск
 
 Запустим приложение, выполнив следующую команду в папке `booking`:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking"  go-booking -- /app/run.sh
 ```
 
 Убедитесь, что контейнер запустился, выполнив следующую команду:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 Вы должны увидеть запущенный контейнер `go-booking`, например, вывод может быть подобен следующему:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -97,13 +97,13 @@ CONTAINER ID  IMAGE                                          COMMAND        CREA
 Получим размер собранного образа, выполнив:
 
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 Пример вывода:
-```bash
+```shell
 REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
 image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
@@ -169,22 +169,22 @@ werf build --stages-storage :local
 
 Перед запуском измененного приложения нужно остановить и удалить запущенный контейнер `go-booking`, собранный и запущенный ранее. В противном случае новый контейнер не сможет запуститься из-за того, что контейнер с таким именем уже существует, порт 9000 занят. Например, выполните следующие команды для остановки и удаления контейнера `go-booking`:
 
-```bash
+```shell
 docker stop go-booking && docker rm go-booking
 ```
 
 Запустим измененное приложение, выполнив следующую команду:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
 ```
 
 Убедитесь, что контейнер запустился, выполнив следующую команду:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 Вы должны увидеть запущенный контейнер `go-booking`, например, вывод может быть следующим:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -195,13 +195,13 @@ CONTAINER ID  IMAGE                                          COMMAND        CREA
 
 Получим размер образа, выполнив:
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 Пример вывода:
-```bash
+```shell
 REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
 image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      103 MB
 ```

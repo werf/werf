@@ -116,7 +116,7 @@ werf автоматически добавляет и другие аннота�
 
 **ЗАМЕЧАНИЕ** Команда `werf ci-env` возвращает bash-скрипт, команды которого экпортируют необходимые [переменные окружения werf](#передача-cli-параметров-через-переменные-окружения). Поэтому, применение команды `werf ci-env` подразумевает использование ее вывода в bash-команде `source`. Например:
 
-```
+```shell
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf build-and-publish --stages-storage :local
 ```
@@ -125,7 +125,7 @@ werf build-and-publish --stages-storage :local
 
 Пример вывода команды `werf ci-env` (без направления вывода в `source`):
 
-```bash
+```shell
 ### DOCKER CONFIG
 echo '### DOCKER CONFIG'
 export DOCKER_CONFIG="/tmp/werf-docker-config-204033515"
@@ -192,7 +192,7 @@ echo 'export WERF_LOG_TERMINAL_WIDTH="95"'
 
 Исключением из этого правила являются параметры `--add-label` и `--add-annotation`, которые могут быть указаны несколько раз. Чтобы указать эти параметры используя переменные окружения нужно использовать следующий шаблон: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. Например:
 
-```bash
+```shell
 export WERF_ADD_ANNOTATION_MYANNOTATION_1="annoName1=annoValue1"
 export WERF_ADD_ANNOTATION_MYANNOTATION_2="annoName2=annoValue2"
 export WERF_ADD_LABEL_MYLABEL_1="labelName1=labelValue1"

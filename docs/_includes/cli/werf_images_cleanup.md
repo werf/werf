@@ -7,13 +7,13 @@ Cleanup project images from images repo
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf images cleanup [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

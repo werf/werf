@@ -7,7 +7,7 @@ Work with werf cache and data of all projects on the host machine
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for host
 ```

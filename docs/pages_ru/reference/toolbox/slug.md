@@ -55,7 +55,7 @@ werf проверяет текст на соответствие требова�
 
 Чтобы слагифицировать вручную параметры, указываемые с помощью опций `--tag-*`, `--release` или `--namespace`, необходимо явно выполнить команду [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html), например:
 
-```
+```shell
 werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...
 werf deploy --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...
 ```

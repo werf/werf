@@ -7,13 +7,13 @@ Render werf chart templates to stdout
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm render [options]
 ```
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
@@ -24,7 +24,7 @@ werf helm render [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --add-annotation=[]:
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.

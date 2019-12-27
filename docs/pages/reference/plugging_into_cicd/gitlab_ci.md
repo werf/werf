@@ -74,6 +74,6 @@ Other variables are configured in the common way described in the [overview arti
 
 GitLab CI is turned on in [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) by required positional argument:
 
-```
+```shell
 werf ci-env gitlab --tagging-strategy ...
 ```

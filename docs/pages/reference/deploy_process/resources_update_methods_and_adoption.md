@@ -41,7 +41,7 @@ metadata:
 
 Then user can repair resource state with the following command:
 
-```bash
+```shell
 kubectl -n mynamespace patch cm/myconfigmap '{"data":{"node.conf":"PROPER CONTENT"}}'
 ```
 
@@ -85,7 +85,7 @@ When HPA is enabled and user has set `spec.replicas` to static number in chart t
 
 #### `werf.io/set-replicas-only-on-creation`
 
-```
+```yaml
 "werf.io/set-replicas-only-on-creation": "true"
 ```
 
@@ -103,7 +103,7 @@ When VPA is enabled and user has set `resources` to some static settings in char
 
 #### `werf.io/set-resources-only-on-creation`
 
-```
+```yaml
 "werf.io/set-resources-only-on-creation": "true"
 ```
 

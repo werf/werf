@@ -604,7 +604,7 @@ werf автоматически устанавливает следующие в
 
 Например, для установки аннотаций и меток `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` всем ресурсам Kubernetes в чарте, можно использовать  следующий вызов команды деплоя:
 
-```bash
+```shell
 werf deploy \
   --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
   --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \

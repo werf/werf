@@ -8,13 +8,13 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm secret encrypt [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Encrypt data in interactive mode
   $ werf helm secret encrypt
   Enter secret: 
@@ -26,7 +26,7 @@ werf helm secret encrypt [options]
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
@@ -37,7 +37,7 @@ werf helm secret encrypt [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:

@@ -21,13 +21,13 @@ change it: [https://werf.io/documentation/reference/deploy_process/deploy_into_k
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf deploy [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging strategy; helm release name and namespace will be named as 'myproject-dev'
   $ werf deploy --stages-storage :local --env dev --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
 
@@ -37,7 +37,7 @@ werf deploy [options]
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
@@ -48,7 +48,7 @@ werf deploy [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --add-annotation=[]:
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
