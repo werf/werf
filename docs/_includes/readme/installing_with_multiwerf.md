@@ -23,13 +23,13 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 
 ##### CI usage tip
 
-To ensure that multiwerf is exist and executable use `type` command:
+To ensure that multiwerf exists and is executable, use the `type` command:
 
 ```shell
 type multiwerf && . $(multiwerf use 1.0 stable --as-file)
 ```
 
-The command prints a message to stderr in case if multiwerf is not found. Thus, diagnostic in CI environment becomes simpler. 
+The command prints a message to stderr if multiwerf is not found. Thus, diagnostics in a CI environment becomes simpler. 
 
 ##### Optional: run command on terminal startup
 

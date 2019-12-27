@@ -17,15 +17,17 @@ All changes go through all stability channels:
   We do **not guarantee** backward compatibility between `alpha` releases.
 - `beta` channel is for more broad testing of new features to catch regressions.
   We do **not guarantee** backward compatibility between `beta` releases.
-- `ea` channel is mostly safe to use and can even be used in non-critical environments or for local development.
+- `ea` channel is mostly safe and can be used in non-critical environments or for local development.
   We do **not guarantee** backward compatibility between `ea` releases.
-- `stable` channel is mostly safe to use and we encourage to use this version everywhere.
+- `stable` channel is mostly safe and we encourage you to use this version everywhere.
   We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests.
   We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
-- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLA.
-  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than 2 weeks of broad testing.
+- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
+  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
   We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
 
-The relations between channels and werf releases described in [multiwerf.json](https://github.com/flant/werf/blob/multiwerf/multiwerf.json). The using of werf by channel should be organized with [multiwerf](https://github.com/flant/multiwerf).   
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/flant/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
+
+> When using release channels, you do not specify a version, because the version is managed automatically within the channel
   
-Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software and saving an acceptable development speed at the same time.
+Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.

@@ -19,10 +19,10 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 The command `multiwerf use MAJOR.MINOR CHANNEL` allows using the actual werf binary and to be always up-to-date. 
 You can use this command both in **CI** and **on the local machine**. 
-The command returns a script or a path to the script file (when used with an `--as-file` option) that must be used as an argument to the` source` command. As a result, the current version of werf will be available **during the shell session**.
+The command returns a script or a path to the script file (when used with an `--as-file` option) that must be used as an argument to the `source` command. As a result, the current version of werf will be available **during the shell session**.
 
 The script can be divided into two logic parts: updating and creating werf alias or the definition of the function depending on shell type. 
-The update part consists of multiwerf self-update and getting the actual werf binary for specified `MAJOR.MINOR` version and `CHANNEL` (read more about werf versioning in [Backward Compatibility Promise](https://github.com/flant/werf#backward-compatibility-promise) section).
+The update part performs multiwerf self-update and gets the actual werf binary for the specified `MAJOR.MINOR` version and `CHANNEL` (read more about werf versioning in the [Backward Compatibility Promise](https://github.com/flant/werf#backward-compatibility-promise) section).
 The update is performed by the `multiwerf update` command. 
 If the script is launched for the first time or there is no suitable werf binary found locally, these steps are being run consistently. 
 Otherwise, the update runs in the background, and werf alias or a function binds to the existing werf binary based on local channel mapping.
