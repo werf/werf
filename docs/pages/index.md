@@ -88,7 +88,7 @@ layout: default
             </div>
         </li>
     </ul>
-    <a href="https://github.com/flant/werf/blob/master/README.md#complete-features-list" target="_blank" class="page__btn page__btn_o intro__btn">
+    <a href="https://github.com/flant/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
         Check out a complete features list
     </a>
 </div>

@@ -4,11 +4,11 @@
  - The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
  - Build images using Dockerfiles.
  - Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
- - werf supports Helm 2-compatible charts and complex deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
+ - werf supports Helm 2-compatible charts and complex fault-tolerant deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
  - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
  - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
-## Coming soon
+## Coming Soon
 
 - ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
 - Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
@@ -18,7 +18,7 @@
 - Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
 
-## Complete features list
+## Complete List of Features
 
 ### Building
 
@@ -54,7 +54,7 @@
   - Logging and error reporting.
   - Regular status reporting during the deployment phase.
   - Debug problems effortlessly without unnecessary kubectl invocations.
-- Prompt CI pipeline failure in case of a problem.
+- Prompt CI pipeline failure in case of a problem (i.e. fail fast).
   - Instant detection of resource failures during the deployment process without having to wait for a timeout.
 - Full compatibility with Helm 2.
 - Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).

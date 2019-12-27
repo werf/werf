@@ -29,9 +29,9 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - [Installation](#installation)
   - [Installing Dependencies](#installing-dependencies)
   - [Installing werf](#installing-werf)
-- [Getting started](#getting-started)
+- [Getting Started](#getting-started)
 - [Backward Compatibility Promise](#backward-compatibility-promise)
-- [Docs and Support](#docs-and-support)
+- [Documentation and Support](#documentation-and-support)
 - [License](#license)
 
 # Features
@@ -46,7 +46,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
  - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
  - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
-## Coming soon
+## Coming Soon
 
 - ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
 - Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
@@ -56,7 +56,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
 
-## Complete features list
+## Complete List of Features
 
 ### Building
 
@@ -109,9 +109,9 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 # Installation
 
-<!-- WERF DOCS PARTIAL BEGIN: Installation -->
-
 ## Installing Dependencies
+
+<!-- WERF DOCS PARTIAL BEGIN: Installing Dependencies -->
 
 ### Docker
 
@@ -119,7 +119,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 Manage Docker as a non-root user. Create the **docker** group and add your user to the group:
 
-```bash
+```shell
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
@@ -131,62 +131,103 @@ sudo usermod -aG docker $USER
 - Minimum required version is 1.9.0.
 - Version 2.14.0 or newer is required to use [Git Submodules](https://git-scm.com/docs/gitsubmodules).
 
+<!-- WERF DOCS PARTIAL END -->
+
 ## Installing werf
 
-### Method 1 (recommended): by using multiwerf
+There are a lot of ways to install werf, but using [multiwerf](https://github.com/flant/multiwerf) is a recommended practice both for local development and CI usage. 
 
-[multiwerf](https://github.com/flant/multiwerf) is a version manager for werf. It:
-* downloads werf binary builds;
-* manages multiple versions of binaries installed on a single host (they can be used concurrently);
-* automatically updates werf binary (this option can be disabled).
+> The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html)
 
-```bash
+<!-- WERF DOCS PARTIAL BEGIN: Installing with multiwerf -->
+
+#### Unix shell (sh, bash, zsh)
+
+##### Installing multiwerf
+
+```shell
 # add ~/bin into PATH
+export PATH=$PATH:$HOME/bin
 echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-exec bash
 
 # install multiwerf into ~/bin directory
 mkdir -p ~/bin
 cd ~/bin
 curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
-source <(multiwerf use 1.0 beta)
 ```
 
-> _Note:_ If you are using bash versions before 4.0 (e.g. 3.2 is default for MacOS users), you must use `source /dev/stdin <<<"$(multiwerf use 1.0 beta)"` instead of `source <(multiwerf use 1.0 beta)`
+##### Add werf alias to the current shell session
 
-### Method 2: by downloading binary package
-
-The latest release is available at [this page](https://bintray.com/flant/werf/werf/_latestVersion)
-
-##### MacOS
-
-```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-darwin-amd64-v1.0.3-beta.9 -o /tmp/werf
-chmod +x /tmp/werf
-sudo mv /tmp/werf /usr/local/bin/werf
+```shell
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
-##### Linux
+##### CI usage tip
 
-```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-linux-amd64-v1.0.3-beta.9 -o /tmp/werf
-chmod +x /tmp/werf
-sudo mv /tmp/werf /usr/local/bin/werf
+To ensure that multiwerf exists and is executable, use the `type` command:
+
+```shell
+type multiwerf && . $(multiwerf use 1.0 stable --as-file)
 ```
 
-##### Windows
+The command prints a message to stderr if multiwerf is not found. Thus, diagnostics in a CI environment becomes simpler. 
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.3-beta.9/werf-windows-amd64-v1.0.3-beta.9.exe)
+##### Optional: run command on terminal startup
 
-### Method 3: by compiling from source
-
+```shell
+echo '. $(multiwerf use 1.0 stable --as-file)' >> ~/.bashrc
 ```
-go get github.com/flant/werf/cmd/werf
+
+#### Windows
+
+##### PowerShell
+
+###### Installing multiwerf
+
+```shell
+$MULTIWERF_BIN_PATH = "C:\ProgramData\multiwerf\bin"
+mkdir $MULTIWERF_BIN_PATH
+
+Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
+
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + "$MULTIWERF_BIN_PATH",
+    [EnvironmentVariableTarget]::Machine)
+
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+###### Add werf alias to the current shell session
+
+```shell
+Invoke-Expression -Command "multiwerf use 1.0 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
+. $WERF_USE_SCRIPT_PATH.Trim()
+```
+
+##### cmd.exe
+
+###### Installing multiwerf
+
+```shell
+set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
+mkdir %MULTIWERF_BIN_PATH%
+bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
+setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
+
+# after that open new cmd.exe session and start using multiwerf
+```
+
+###### Add werf alias to the current shell session
+
+```shell
+FOR /F "tokens=*" %g IN ('multiwerf use 1.0 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
+%WERF_USE_SCRIPT_PATH%
 ```
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Getting started
+# Getting Started
 
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
@@ -206,7 +247,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 
 <!-- WERF DOCS PARTIAL BEGIN: Backward Compatibility Promise -->
 
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases.
+> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases
 
 werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_
 require to do a full re-deploy of applications or to perform other non-scriptable actions.
@@ -217,31 +258,36 @@ In the case of werf, this means that an update to the next minor release goes sm
 Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
 In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
 
-Patch releases are divided into channels. Channel is a prefix in a prerelease part of version (1.1.0-alpha.2, 1.1.0-beta.3, 1.1.0-ea.1).
-The version without a prerelease part is considered to have originated in a stable channel.
+All changes go through all stability channels:
 
-- `stable` channel (1.1.0, 1.1.1, 1.1.2, etc.). This version is recommended for use in critical environments with tight SLAs.
-  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
-- `ea` channel versions are mostly safe to use. These versions are suitable for all environments.
-  We **guarantee** backward compatibility between `ea` releases within the minor branch (1.1.x).
-  We **guarantee** that `ea` release should become a `stable` release after at least 2 weeks of broad testing.
-- `rc` channel (2.3.2-rc.2). These releases are mostly safe to use and can be used in non-critical environments or for local development.
-  We do **not guarantee** backward compatibility between `rc` releases.
-  We **guarantee** that `rc` release should become `ea` after at least 1 week of internal testing.
-- `beta` channel (1.2.2-beta.0). These releases are for broad testing of new features to catch regressions.
-  We do **not guarantee** backward compatibility between `beta` releases.
-- `alpha` channel (1.2.2-alpha.12, 2.0.0-alpha.5, etc.). These releases can bring new features but are unstable.
+- `alpha` channel can bring new features but can be unstable.
   We do **not guarantee** backward compatibility between `alpha` releases.
+- `beta` channel is for more broad testing of new features to catch regressions.
+  We do **not guarantee** backward compatibility between `beta` releases.
+- `ea` channel is mostly safe and can be used in non-critical environments or for local development.
+  We do **not guarantee** backward compatibility between `ea` releases.
+- `stable` channel is mostly safe and we encourage you to use this version everywhere.
+  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests.
+  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
+- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
+  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
+  We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
+
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/flant/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
+
+> When using release channels, you do not specify a version, because the version is managed automatically within the channel
+  
+Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Docs and support
+# Documentation and Support
 
 <!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
 [Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
-We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU) and [Telegram](https://t.me/werf_io). Join us!
+We are always in contact with the community through [Twitter](https://twitter.com/werf_io), [Slack](https://cloud-native.slack.com/messages/CHY2THYUU), and [Telegram](https://t.me/werf_io). Join us!
 
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
