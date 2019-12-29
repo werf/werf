@@ -58,7 +58,7 @@ Also, werf can automatically pass/set various other *annotations* by analyzing t
 
 ### CI/CD configuration integration
 
-There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., used environment variables), and other data. Typical environments are: *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
+There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., environment variables used), and other data. Typical environments are: *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
 
 werf also uses the concept of an *environment name* in the [deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment).
 
@@ -107,20 +107,20 @@ The above tagging mode is selected by setting the `--tagging-strategy=tag-or-bra
 
 ## How ci-env works
 
-Ci-env command passes all parameters to werf using environment variables, see [pass cli params as environment variables below](#pass-cli-params-as-environment-variables).
+The ci-env command passes all parameters to werf via environment variables, see the [pass cli params as environment variables](#pass-cli-params-as-environment-variables) section below.
 
-[`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) should be called in the begin of any CI/CD job prior running any other werf commands.
+The [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) must be called at the beginning of any CI/CD job before running any other werf command.
 
-**NOTE** werf ci-env command prints bash script which exports [werf params using environment variables](#pass-cli-params-as-environment-variables). So to actually use ci-env command user must `source` command output using bash. For example:
+**NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-params-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for command output. For example:
 
 ```
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf build-and-publish --stages-storage :local
 ```
 
-Sourcing ci-env command output will also result in printing all exported variables with values to the screen.
+Sourcing ci-env command output will also print all exported variables with their respective values to the screen.
 
-Example of `werf ci-env` command output script without sourcing:
+Here is an example output of the `werf ci-env` command's script without sourcing:
 
 ```bash
 ### DOCKER CONFIG
@@ -175,18 +175,18 @@ export WERF_LOG_TERMINAL_WIDTH="95"
 echo 'export WERF_LOG_TERMINAL_WIDTH="95"'
 ```
 
-### Pass CLI params as environment variables
+### Pass CLI parameters as environment variables
 
-Any parameter of any werf command (except ci-env command itself) that can be passed via CLI, can also be passed using environment variables.
+Any parameter of any werf command (except ci-env command itself) that can be passed via CLI can also be passed using environment variables.
 
-There is a common rule of conversion of CLI param to environment variable name: environment variable have `WERF_` prefix, consists of capital letters, underscore symbol `_` instead of dash `-`.
+There is a common rule of conversion of a CLI parameter into the name of an environment variable: an environment variable gets `WERF_` prefix, consists of capital letters, and dashes `-` are replaced with underscore symbols `_`.
 
 Examples:
- * `--tag-git-tag=mytag` can be specified by `WERF_TAG_GIT_TAG=mytag`;
- * `--env=staging` can be specified by `WERF_ENV=staging`;
- * `--images-repo=myregistry.myhost.com/project/x` can be specified by `WERF_IMAGES_REPO=myregistry.myhost.com/project/x`; etc.
+ * `--tag-git-tag=mytag` is the same as `WERF_TAG_GIT_TAG=mytag`;
+ * `--env=staging` may be replaced by `WERF_ENV=staging`;
+ * `--images-repo=myregistry.myhost.com/project/x` is the same as `WERF_IMAGES_REPO=myregistry.myhost.com/project/x`; etc.
 
-Exception to this rule is `--add-label` and `--add-annotation` params, which can be specified multiple times. To specify this params using environment variables use following pattern: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. For example:
+The `--add-label` and `--add-annotation` parameters are an exception to this rule. They can be specified multiple times. Use the following template to set these parameters by environment variables: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. For example:
 
 ```bash
 export WERF_ADD_ANNOTATION_MYANNOTATION_1="annoName1=annoValue1"
@@ -195,23 +195,23 @@ export WERF_ADD_LABEL_MYLABEL_1="labelName1=labelValue1"
 export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 ```
 
-Note that `_MYANNOTATION_1`, `_MYANNOTATION_2`, `_MYLABEL_1`, `_MYLABEL_2` suffixes does not affect annotations and labels names or values and used only to differentiate between multiple environment variables.
+Note that `_MYANNOTATION_1`, `_MYANNOTATION_2`, `_MYLABEL_1`, `_MYLABEL_2` suffixes do not affect names or values of annotations and labels, and are used solely to differentiate between multiple environment variables.
 
 ### Docker registry login
 
-As noted in the [Docker registry integration](#docker-registry-integration) werf performs autologin into detected docker registry.
+As noted in the [Docker registry integration](#docker-registry-integration), werf performs autologin into the detected docker registry.
 
-Ci-env command always creates a new temporal [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files).
+The ci-env command always creates a new temporary [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files).
 
-Temporal docker config needed so that parallel running jobs cannot interfere with each other. Also temporal docker config is a more secure way, than logging into Docker registry using system-wide default docker config (`~/.docker`).
+The temporary docker config prevents the mutual interference of jobs running concurrently. The temporary docker config-based approach is also more secure than logging into the Docker registry using the system-wide default docker config (`~/.docker`).
 
-If `DOCKER_CONFIG` variable is defined or there is `~/.docker`, then werf will *copy* this already existing config into a new temporal one. So any *docker logins* already made before running `werf ci-env` command will still be active and available using this new temporal config.
+If a `DOCKER_CONFIG` variable is defined or there is a `~/.docker` file, then werf would *copy* this already existing config into a new, temporary one. So any *docker logins* performed before running the `werf ci-env` command will still be active and available using this new temporary config.
 
-After new tmp config was created werf performs additional login into detected Docker registry.
+After the new tmp config has been created, werf performs additional login into the detected Docker registry.
 
-As a result of [Docker registry integration procedure](#docker-registry-integration) `werf ci-env` will export `DOCKER_CONFIG` variable with new temporal docker config.
+As a result of a [Docker registry integration procedure](#docker-registry-integration), `werf ci-env` will export a `DOCKER_CONFIG` variable that contains a path to the new temporary docker config.
 
-This config then will be used by any following werf command and also can be used by `docker login` command to perform any additional custom logins on your needs.
+This config then will be utilized by all subsequent werf commands. Also, it can be used by a `docker login` command to perform any additional custom logins depending on your needs.
 
 ### Complete list of ci-env params and customizing
 
