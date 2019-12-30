@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [labeled]
   schedule:
-  - cron:  '0 22 * * *'
+  - cron:  '0 16 * * *'
 env:
   GO111MODULE: on
 
@@ -240,7 +240,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [windows]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -272,7 +272,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [windows]
         k8s_version: [1.15]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
