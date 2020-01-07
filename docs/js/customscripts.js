@@ -56,71 +56,65 @@ $(function() {
 $(document).ready(function () {
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
 
-  var currentRelease, currentChannel;
   var menu = $('#doc-versions-menu');
   var toggler;
   var currentRelease = $('#werfVersion').text();
-  if (!currentRelease) {
-    currentRelease = 'local'
-  }
-  ;
-  var currentChannel = 'local';    //releasesInfo.releases[currentRelease] && releasesInfo.releases[currentRelease][0];
+  var currentChannel = $('#werfChannel').text();
+  if (!currentRelease) currentRelease = 'local';
+  if (!currentChannel) currentChannel = 'local';
+
   var releasesInfo = window.releasesInfo;
 
   if (typeof releasesInfo === 'undefined' || releasesInfo == null) {
-    console.log('releasesInfo is not defined, localmode - ' + typeof releasesInfo);
-    var releasesInfo = {};
+    console.log('releasesInfo is not defined, assume local mode');
+    releasesInfo = {};
   } else {
-    for (channel of releasesInfo.orderedChannels) {
-      _current_channel = releasesInfo.channels.channels.filter(function (el) {
-        return ((el.version == currentRelease) && (el.name == channel));
-      });
-      if (_current_channel.length) {
-        currentChannel = channel;
-        break;
+
+    if (currentChannel === 'root') {
+      for (channel of releasesInfo.orderedChannels) {
+        _current_channel = releasesInfo.channels.channels.filter(function (el) {
+          return ((el.version == currentRelease) && (el.name == channel));
+        });
+        if (_current_channel.length) {
+          currentChannel = releasesInfo.channels.group + '-' + channel;
+          break;
+        }
       }
     }
-    ;
-
-    // if (!( currentRelease in releasesInfo['releases'] )) {
-    //   $('#outdatedWarning').addClass('active');
-    // }
 
     var submenu = $('<ul class="header__submenu">');
     $.each(releasesInfo.orderedChannels, function (i, channel) {
-      var release = ''
+      var release = '';
       var channel_version = '';
-      if (channel != 'review') {
+      if (channel !== 'review') {
         var _channel_version = releasesInfo.channels.channels.filter(function (el) {
-          return el.name == channel;
+          return el.name === channel;
         })[0];
 
         if (_channel_version) {
           channel_version = _channel_version.version;
         }
-        ;
+
       } else {
         channel_version = 'review';
       }
-      ;
+
       if (channel_version) {
         var link = $('<a href="/v' + releasesInfo.channels.group + '-' + channel + '">');
-        if (channel != 'review') {
-          link.append('<span class="header__submenu-item-channel"> ' + channel + '</span>');
+        if (channel !== 'review') {
+          link.append('<span class="header__submenu-item-channel"> ' + releasesInfo.channels.group + '-' + channel + '</span>');
           link.append('<span class="header__submenu-item-release"> — ' + channel_version + '</span>');
         }
-        ;
+
         var item = $('<li class="header__submenu-item">');
         item.html(link);
-        if ((channel != currentChannel)) {
+        if ((releasesInfo.channels.group + '-' + channel !== currentChannel)) {
           submenu.append(item);
         }
-        ;
       }
     });
 
   }
-  ;
 
   if (submenu && submenu[0] && submenu[0].children && submenu[0].children.length) {
     menu.append($('<div class="header__submenu-container">').append(submenu));
@@ -130,74 +124,75 @@ $(document).ready(function () {
     menu.addClass('header__menu-item');
     toggler = $('<span class="header__menu-item-static">');
   }
-  ;
+
   toggler.append(currentChannel || 'Versions');
-  if (currentChannel && !((currentChannel == 'master') || (currentChannel == 'review'))) {
+  if (currentChannel && !((currentChannel === 'local') || (currentChannel === 'review'))) {
     toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
   }
   menu.prepend(toggler);
   $('.header__menu').addClass('header__menu_active')
 
-  // Update github counters
-  $(document).ready(function () {
-    $.get("https://api.github.com/repos/flant/werf", function (data) {
-      $(".gh_counter").each(function (index) {
-        $(this).text(data.stargazers_count)
-      });
+});
+
+
+// Update github counters
+$(document).ready(function () {
+  $.get("https://api.github.com/repos/flant/werf", function (data) {
+    $(".gh_counter").each(function (index) {
+      $(this).text(data.stargazers_count)
     });
   });
+});
 
-  // Update roadmap steps
-  $(document).ready(function () {
-    $('[data-roadmap-step]').each(function (index) {
-      var $step = $(this);
-      $.get('https://api.github.com/repos/flant/werf/issues/' + $step.data('roadmap-step'), function (data) {
-        if (data.state == 'closed') {
-          $step.addClass('roadmap__steps-list-item_closed');
-        }
-      });
-    });
 
-  });
-
-  $(document).ready(function () {
-    var $header = $('.header');
-
-    function updateHeader() {
-      if ($(document).scrollTop() == 0) {
-        $header.removeClass('header_active');
-      } else {
-        $header.addClass('header_active');
-      }
-    }
-
-    $(window).scroll(function () {
-      updateHeader();
-    });
-    updateHeader();
-  });
-
-  $(document).ready(function () {
-    $('.header__menu-icon_search').on('click tap', function () {
-      $('.topsearch').toggleClass('topsearch_active');
-      $('.header').toggleClass('header_search');
-      if ($('.topsearch').hasClass('topsearch_active')) {
-        $('.topsearch__input').focus();
-      } else {
-        $('.topsearch__input').blur();
-      }
-    });
-
-    $('body').on('click tap', function (e) {
-      if ($(e.target).closest('.topsearch').length === 0 && $(e.target).closest('.header').length === 0) {
-        $('.header').toggleClass('header_search');
-        $('.topsearch').removeClass('topsearch_active');
+// Update roadmap steps
+$(document).ready(function () {
+  $('[data-roadmap-step]').each(function (index) {
+    var $step = $(this);
+    $.get('https://api.github.com/repos/flant/werf/issues/' + $step.data('roadmap-step'), function (data) {
+      if (data.state == 'closed') {
+        $step.addClass('roadmap__steps-list-item_closed');
       }
     });
   });
 
 });
 
+$(document).ready(function () {
+  var $header = $('.header');
+
+  function updateHeader() {
+    if ($(document).scrollTop() == 0) {
+      $header.removeClass('header_active');
+    } else {
+      $header.addClass('header_active');
+    }
+  }
+
+  $(window).scroll(function () {
+    updateHeader();
+  });
+  updateHeader();
+});
+
+$(document).ready(function () {
+  $('.header__menu-icon_search').on('click tap', function () {
+    $('.topsearch').toggleClass('topsearch_active');
+    $('.header').toggleClass('header_search');
+    if ($('.topsearch').hasClass('topsearch_active')) {
+      $('.topsearch__input').focus();
+    } else {
+      $('.topsearch__input').blur();
+    }
+  });
+
+  $('body').on('click tap', function (e) {
+    if ($(e.target).closest('.topsearch').length === 0 && $(e.target).closest('.header').length === 0) {
+      $('.header').toggleClass('header_search');
+      $('.topsearch').removeClass('topsearch_active');
+    }
+  });
+});
 
 $(document).ready(function() {
   var adjustAnchor = function() {
