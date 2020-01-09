@@ -2,6 +2,7 @@ module github.com/flant/werf
 
 require (
 	cloud.google.com/go v0.38.0
+	github.com/DATA-DOG/go-sqlmock v1.4.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -92,6 +93,7 @@ require (
 	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	google.golang.org/grpc v1.23.0
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/src-d/go-billy.v4 v4.3.0

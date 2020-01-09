@@ -130,6 +130,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 			HelmReleaseStorageType:      helmReleaseStorageType,
 			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
 			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
+			InitNamespace:               true,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
