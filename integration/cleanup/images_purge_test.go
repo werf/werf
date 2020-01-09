@@ -112,7 +112,7 @@ var _ = Describe("purging images", func() {
 			})
 
 			It("should not remove images built without werf", func() {
-				Ω(utilsDocker.CliPull("alpine")).Should(Succeed(), "docker pull")
+				Ω(utilsDocker.Pull("alpine")).Should(Succeed(), "docker pull")
 				Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
 				defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
 
