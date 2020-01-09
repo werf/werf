@@ -15,7 +15,7 @@ do
 done
 
 ./cc-test-reporter sum-coverage \
-  -p=$(ls -1q coverage/*.codeclimate.json | wc -l) \
+  -p="$(ls -1q coverage/*.codeclimate.json | wc -l)" \
   coverage/*.codeclimate.json
 
 ./cc-test-reporter upload-coverage

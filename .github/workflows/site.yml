@@ -1,4 +1,4 @@
-name: Deploy Site
+name: Site deployment
 on:
   pull_request:
     types: [labeled]
