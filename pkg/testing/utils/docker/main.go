@@ -83,13 +83,21 @@ func ContainerStopAndRemove(containerName string) {
 }
 
 func ImageRemoveIfExists(imageName string) {
+	if IsImageExist(imageName) {
+		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+	}
+}
+
+func IsImageExist(imageName string) bool {
 	_, err := imageInspect(imageName)
 	if err == nil {
-		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+		return true
 	} else {
 		if !strings.HasPrefix(err.Error(), "Error: No such image") {
 			Ω(err).ShouldNot(HaveOccurred())
 		}
+
+		return false
 	}
 }
 

@@ -38,7 +38,16 @@ var stubs = gostub.New()
 var registry, registryContainerName string
 var registryProjectRepository string
 
+var suiteImage1 = "hello-world"
+var suiteImage2 = "alpine"
+
 var _ = SynchronizedBeforeSuite(func() []byte {
+	for _, suiteImage := range []string{suiteImage1, suiteImage2} {
+		if !utilsDocker.IsImageExist(suiteImage) {
+			Ω(utilsDocker.Pull(suiteImage)).Should(Succeed(), "docker pull")
+		}
+	}
+
 	computedPathToWerf := utils.ProcessWerfBinPath()
 	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
