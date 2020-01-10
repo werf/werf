@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"github.com/prashantv/gostub"
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
@@ -35,6 +36,7 @@ var requiredSuiteEnvs []string
 var tmpDir string
 var testDirPath string
 var werfBinPath string
+var stubs = gostub.New()
 var registry, registryContainerName string
 var registryProjectRepository string
 
@@ -59,7 +61,7 @@ var _ = BeforeEach(func() {
 
 	testDirPath = tmpPath()
 
-	utils.BeforeEachOverrideWerfProjectName()
+	utils.BeforeEachOverrideWerfProjectName(stubs)
 
 	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
 })
@@ -68,7 +70,7 @@ var _ = AfterEach(func() {
 	err := os.RemoveAll(tmpDir)
 	Ω(err).ShouldNot(HaveOccurred())
 
-	utils.ResetEnviron()
+	stubs.Reset()
 })
 
 func tmpPath(paths ...string) string {

@@ -67,6 +67,7 @@ require (
 	github.com/opentracing/opentracing-go v0.0.0-20171003133519-1361b9cd60be // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/pkg/profile v1.2.1 // indirect
+	github.com/prashantv/gostub v1.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0

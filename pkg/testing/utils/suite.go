@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/prashantv/gostub"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -59,9 +60,9 @@ func WerfBinArgs(userArgs ...string) []string {
 	return args
 }
 
-func BeforeEachOverrideWerfProjectName() {
+func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
 	projectName := "werf-integration-test-" + strconv.Itoa(os.Getpid()) + "-" + GetRandomString(10)
-	Ω(os.Setenv("WERF_PROJECT_NAME", projectName)).ShouldNot(HaveOccurred())
+	stubs.SetEnv("WERF_PROJECT_NAME", projectName)
 }
 
 func ProjectName() string {
@@ -89,22 +90,4 @@ func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
 	}
 
 	return hasRequirements
-}
-
-var environ = os.Environ()
-
-func ResetEnviron() {
-	os.Clearenv()
-	for _, env := range environ {
-		// ignore dynamic variables (e.g. "=ExitCode" windows variable)
-		if strings.HasPrefix(env, "=") {
-			continue
-		}
-
-		parts := strings.SplitN(env, "=", 2)
-		envName := parts[0]
-		envValue := parts[1]
-
-		Ω(os.Setenv(envName, envValue)).Should(Succeed(), env)
-	}
 }

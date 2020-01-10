@@ -3,7 +3,6 @@
 package dependency_test
 
 import (
-	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
@@ -16,7 +15,7 @@ var _ = Describe("helm dependency", func() {
 	BeforeEach(func() {
 		utils.CopyIn(fixturePath("default"), testDirPath)
 
-		Ω(os.Setenv("WERF_HELM_HOME", filepath.Join(testDirPath, ".helm"))).Should(Succeed())
+		stubs.SetEnv("WERF_HELM_HOME", filepath.Join(testDirPath, ".helm"))
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,

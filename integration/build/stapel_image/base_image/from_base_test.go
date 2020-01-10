@@ -4,7 +4,6 @@ package base_image_test
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -24,9 +23,6 @@ var _ = Describe("from and fromLatest", func() {
 	fromBaseRepoImageState1IDFunc := func() string { return fromBaseRepoImageState1ID }
 	fromBaseRepoImageState2IDFunc := func() string { return fromBaseRepoImageState2ID }
 
-	state1Image := "hello-world"
-	state2Image := "alpine"
-
 	registryProjectRepositoryLatestAs := func(imageName string) {
 		Ω(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
 		Ω(utilsDocker.CliTag(imageName, registryProjectRepository)).Should(Succeed(), "docker tag")
@@ -37,16 +33,13 @@ var _ = Describe("from and fromLatest", func() {
 	BeforeEach(func() {
 		testDirPath = fixturePath("from_and_from_latest")
 
-		Ω(utilsDocker.Pull(state1Image)).Should(Succeed(), "docker pull")
-		Ω(utilsDocker.Pull(state2Image)).Should(Succeed(), "docker pull")
-
-		fromBaseRepoImageState1ID = utilsDocker.ImageID(state1Image)
-		fromBaseRepoImageState2ID = utilsDocker.ImageID(state2Image)
+		fromBaseRepoImageState1ID = utilsDocker.ImageID(suiteImage1)
+		fromBaseRepoImageState2ID = utilsDocker.ImageID(suiteImage2)
 
 		fromImage = registryProjectRepository
 
-		Ω(os.Setenv("FROM_IMAGE", fromImage))
-		Ω(os.Setenv("FROM_LATEST", "false"))
+		stubs.SetEnv("FROM_IMAGE", fromImage)
+		stubs.SetEnv("FROM_LATEST", "false")
 	})
 
 	type entry struct {
@@ -57,7 +50,7 @@ var _ = Describe("from and fromLatest", func() {
 	}
 
 	entryItBody := func(e entry) {
-		Ω(os.Setenv("FROM_LATEST", strconv.FormatBool(e.fromLatest)))
+		stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 		res, err := utils.RunCommand(
 			testDirPath,
@@ -118,7 +111,7 @@ var _ = Describe("from and fromLatest", func() {
 
 			Context("when local from image exist", func() {
 				BeforeEach(func() {
-					Ω(utilsDocker.CliTag(state1Image, fromImage)).Should(Succeed(), "docker tag")
+					Ω(utilsDocker.CliTag(suiteImage1, fromImage)).Should(Succeed(), "docker tag")
 				})
 
 				AfterEach(func() {
@@ -157,7 +150,7 @@ var _ = Describe("from and fromLatest", func() {
 
 		Context("when registry from image exists", func() {
 			BeforeEach(func() {
-				registryProjectRepositoryLatestAs(state2Image)
+				registryProjectRepositoryLatestAs(suiteImage2)
 			})
 
 			AfterEach(func() {
@@ -219,8 +212,8 @@ var _ = Describe("from and fromLatest", func() {
 
 				Context("when from image exists locally", func() {
 					BeforeEach(func() {
-						Ω(utilsDocker.Pull(state1Image)).Should(Succeed(), "docker pull")
-						Ω(utilsDocker.CliTag(state1Image, registryProjectRepository)).Should(Succeed(), "docker tag")
+						Ω(utilsDocker.Pull(suiteImage1)).Should(Succeed(), "docker pull")
+						Ω(utilsDocker.CliTag(suiteImage1, registryProjectRepository)).Should(Succeed(), "docker tag")
 					})
 
 					DescribeTable("checking from stage logic",
@@ -251,7 +244,7 @@ var _ = Describe("from and fromLatest", func() {
 
 	Context("when from stage is built", func() {
 		BeforeEach(func() {
-			registryProjectRepositoryLatestAs(state2Image)
+			registryProjectRepositoryLatestAs(suiteImage2)
 		})
 
 		AfterEach(func() {
@@ -264,7 +257,7 @@ var _ = Describe("from and fromLatest", func() {
 		}
 
 		entryWithPreBuildItBody := func(e entryWithPreBuild) {
-			Ω(os.Setenv("FROM_LATEST", strconv.FormatBool(e.fromLatest)))
+			stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 			utils.RunSucceedCommand(
 				testDirPath,
@@ -319,7 +312,7 @@ var _ = Describe("from and fromLatest", func() {
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
 						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
-						registryProjectRepositoryLatestAs(state1Image)
+						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
 						fromLatest: false,
@@ -334,7 +327,7 @@ var _ = Describe("from and fromLatest", func() {
 				Entry("should be rebuilt with actual image (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
 						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
-						registryProjectRepositoryLatestAs(state1Image)
+						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
 						fromLatest: true,
@@ -359,7 +352,7 @@ var _ = Describe("fromCacheVersion", func() {
 	It("should be rebuilt", func() {
 		specStep := func(fromCacheVersion string) {
 			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
-			Ω(os.Setenv("FROM_CACHE_VERSION", fromCacheVersion)).Should(Succeed())
+			stubs.SetEnv("FROM_CACHE_VERSION", fromCacheVersion)
 
 			output := utils.SucceedCommandOutputString(
 				testDirPath,

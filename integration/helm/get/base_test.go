@@ -4,7 +4,6 @@ package get_test
 
 import (
 	"fmt"
-	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,7 +16,7 @@ var _ = Describe("helm get-something", func() {
 
 	BeforeEach(func() {
 		utils.CopyIn(fixturePath("base"), testDirPath)
-		Ω(os.Setenv("WERF_ENV", envName)).ShouldNot(HaveOccurred())
+		stubs.SetEnv("WERF_ENV", envName)
 	})
 
 	It("should receive release name (default scheme)", func() {

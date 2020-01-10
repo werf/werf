@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/prashantv/gostub"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -30,6 +32,7 @@ var requiredSuiteEnvs []string
 
 var testDirPath string
 var werfBinPath string
+var stubs = gostub.New()
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
@@ -43,8 +46,8 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = BeforeEach(func() {
-	utils.BeforeEachOverrideWerfProjectName()
-	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+	utils.BeforeEachOverrideWerfProjectName(stubs)
+	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 })
 
 var _ = AfterEach(func() {
@@ -54,7 +57,7 @@ var _ = AfterEach(func() {
 		"stages", "purge", "-s", ":local", "--force",
 	)
 
-	utils.ResetEnviron()
+	stubs.Reset()
 })
 
 func fixturePath(paths ...string) string {

@@ -24,8 +24,8 @@ var _ = BeforeEach(func() {
 		Skip("skip on windows")
 	}
 
-	Ω(os.Setenv("WERF_HELM_HOME", "~/.helm")).Should(Succeed())
-	Ω(os.Setenv("WERF_LOG_TERMINAL_WIDTH", "100")).Should(Succeed())
+	stubs.SetEnv("WERF_HELM_HOME", "~/.helm")
+	stubs.SetEnv("WERF_LOG_TERMINAL_WIDTH", "100")
 })
 
 var itBody = func(entry entry) {
