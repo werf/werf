@@ -61,7 +61,7 @@ require (
 	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moby/buildkit v0.3.3
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
-	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.5.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20171029140428-b1a47cfbdd75 // indirect
 	github.com/opentracing/opentracing-go v0.0.0-20171003133519-1361b9cd60be // indirect

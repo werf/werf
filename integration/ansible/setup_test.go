@@ -14,7 +14,7 @@ import (
 
 func TestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Release server suite")
+	ginkgo.RunSpecs(t, "Ansible suite")
 }
 
 var werfBinPath string

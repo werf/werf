@@ -4,33 +4,19 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 project_dir=$script_dir/../..
 project_bin_tests_dir=$project_dir/bin/tests
 
-generate_binary() {
-    cd $project_dir
-    go test -tags "dfrunmount dfssh integration_coverage" -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o $project_bin_tests_dir/werf.test
+mkdir -p "$project_bin_tests_dir"
+cd "$project_dir"
 
-    cat <<'EOF' > $project_bin_tests_dir/werf
-#!/bin/bash
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    CYGWIN*|MINGW*|MSYS*) binary_name=werf_with_coverage.exe;;
+    *)                    binary_name=werf_with_coverage
+esac
 
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-EOF
+go test -ldflags="-s -w" -tags "dfrunmount dfssh integration_coverage" -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o "$project_bin_tests_dir"/$binary_name
 
-    # Project dir is embedded into script
-    cat <<EOF >> $project_bin_tests_dir/werf
-project_dir=$project_dir
-EOF
+if [[ -x "$(command -v upx)" ]]; then
+  upx "$project_bin_tests_dir"/$binary_name
+fi
 
-    cat <<'EOF' >> $project_bin_tests_dir/werf
-
-coverage_dir=${WERF_TEST_COVERAGE_DIR:-$project_dir/tests_coverage}
-mkdir -p $coverage_dir
-
-coverage_file_name="$(date +%s.%N | sha256sum | cut -c 1-10)-$(date +%s).out"
-coverage_file_path="$coverage_dir/$coverage_file_name"
-
-exec $script_dir/werf.test -test.coverprofile=$coverage_file_path "$@"
-EOF
-}
-
-mkdir -p $project_bin_tests_dir
-generate_binary
-chmod +x $project_bin_tests_dir/werf
+chmod +x "$project_bin_tests_dir"/$binary_name

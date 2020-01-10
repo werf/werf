@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -30,15 +31,32 @@ func GetTempDir() (string, error) {
 	return dir, nil
 }
 
+var werfBinPath string
+
 func ProcessWerfBinPath() string {
-	path := os.Getenv("WERF_TEST_WERF_BINARY_PATH")
-	if path == "" {
+	werfBinPath = os.Getenv("WERF_TEST_BINARY_PATH")
+	if werfBinPath == "" {
 		var err error
-		path, err = gexec.Build("github.com/flant/werf/cmd/werf")
+		werfBinPath, err = gexec.Build("github.com/flant/werf/cmd/werf")
 		Ω(err).ShouldNot(HaveOccurred())
 	}
 
-	return path
+	return werfBinPath
+}
+
+func WerfBinArgs(userArgs ...string) []string {
+	var args []string
+	if os.Getenv("WERF_TEST_BINARY_PATH") != "" && os.Getenv("WERF_TEST_COVERAGE_DIR") != "" {
+		coverageFilePath := filepath.Join(
+			os.Getenv("WERF_TEST_COVERAGE_DIR"),
+			fmt.Sprintf("%s-%s.out", strconv.FormatInt(time.Now().UTC().UnixNano(), 10), GetRandomString(10)),
+		)
+		args = append(args, fmt.Sprintf("-test.coverprofile=%s", coverageFilePath))
+	}
+
+	args = append(args, userArgs...)
+
+	return args
 }
 
 func BeforeEachOverrideWerfProjectName() {
