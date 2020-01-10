@@ -354,21 +354,7 @@ global:
 
 По умолчанию, werf хранит информацию о релизах в объектах ConfigMap в namespace `kube-system`, что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
 
-Для получения информации обо всех созданных релизах, нужно использовать команду: `kubectl -n kube-system get cm`. Имена объектов ConfigMap, содержащих информацию о релизах, имеют следующий шаблон имени — `RELEASE_NAME.RELEASE_VERSION`. Наибольший номер `RELEASE_VERSION` соответствует последней развернутой версии. В ConfigMap, содержащих информацию о релизах, также есть метки (labels) по которым можно получить информацию о статусе релиза:
-
-```yaml
-kind: ConfigMap
-metadata:
-  ...
-  labels:
-    MODIFIED_AT: "1562938540"
-    NAME: werfio-test
-    OWNER: TILLER
-    STATUS: DEPLOYED
-    VERSION: "165"
-```
-
-**ЗАМЕЧАНИЕ:** Изменение статуса релиза в метках ConfigMap не повлияет на реальный статус релиза, так как метки содержат информацию только для справочных целей и поиска/фильтрации объектов. Реальное состояние релиза хранится в ключе `data` ConfigMap.
+Для получения информации обо всех созданных релизах можно использовать команду [werf helm ls]({{ site.baseurl }}/documentation/cli/management/helm/ls.html), а для посмотра истории конкретного релиза [werf helm history]({{ site.baseurl }}/documentation/cli/management/helm/history.html). 
 
 #### Замечание о совместимости с Helm
 

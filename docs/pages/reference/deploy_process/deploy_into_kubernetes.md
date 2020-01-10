@@ -352,21 +352,7 @@ Each release version is stored in the Kubernetes cluster itself. werf can store 
 
 By default werf stores releases in the ConfigMaps in the `kube-system` namespace to be fully compatible with [Helm 2](https://helm.sh) default installations. Releases storage can be configured by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
-To inspect all created releases user can run: `kubectl -n kube-system get cm`. ConfigMaps names are constructed as `RELEASE_NAME.RELEASE_VERSION`. The biggest `RELEASE_VERSION` number is the last deployed version. ConfigMaps also have labels by which release status can be inspected:
-
-```yaml
-kind: ConfigMap
-metadata:
-  ...
-  labels:
-    MODIFIED_AT: "1562938540"
-    NAME: werfio-test
-    OWNER: TILLER
-    STATUS: DEPLOYED
-    VERSION: "165"
-```
-
-NOTE: Changing release status in ConfigMap labels will not affect real release status, because ConfigMap labels serve only for informational and filtration purposes, the real release status is stored in the ConfigMap data.
+The command [werf helm list]({{ site.baseurl }}/documentation/cli/management/helm/list.html) can be used to list releases created with werf. Also, user can fetch history of certain release with command [werf helm history]({{ site.baseurl }}/documentation/cli/management/helm/history.html).
 
 #### Helm compatibility notice
 
