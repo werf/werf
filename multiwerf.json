@@ -5,15 +5,15 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.0.6-rc.11"
+          "version": "v1.0.6-ea.1"
         },
         {
           "name": "beta",
-          "version": "v1.0.6-rc.11"
+          "version": "v1.0.6-ea.1"
         },
         {
           "name": "ea",
-          "version": "v1.0.6-rc.6"
+          "version": "v1.0.6-ea.1"
         },
         {
           "name": "stable",
