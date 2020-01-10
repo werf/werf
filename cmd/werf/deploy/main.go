@@ -142,6 +142,7 @@ func runDeploy() error {
 			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
 			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
 			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
+			InitNamespace:               true,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
