@@ -172,6 +172,21 @@ func cmdExecute(cmd *cobra.Command, args []string) error {
 	return cmd.Execute()
 }
 
+func Pull(imageName string) error {
+tryPull:
+	err := CliPull(imageName)
+	if err != nil {
+		if strings.Index(err.Error(), "Client.Timeout exceeded while awaiting headers") != -1 {
+			goto tryPull
+		}
+
+		if (strings.Index(err.Error(), "proxyconnect tcp: dial tcp") != 1) && (strings.Index(err.Error(), "i/o timeout") != -1) {
+			goto tryPull
+		}
+	}
+	return err
+}
+
 func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
 	ctx := context.Background()
 	images, err := apiClient.ImageList(ctx, options)
