@@ -4,7 +4,6 @@ package base_image_test
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -45,8 +44,8 @@ var _ = Describe("from and fromLatest", func() {
 
 		fromImage = registryProjectRepository
 
-		Ω(os.Setenv("FROM_IMAGE", fromImage))
-		Ω(os.Setenv("FROM_LATEST", "false"))
+		stubs.SetEnv("FROM_IMAGE", fromImage)
+		stubs.SetEnv("FROM_LATEST", "false")
 	})
 
 	type entry struct {
@@ -57,7 +56,7 @@ var _ = Describe("from and fromLatest", func() {
 	}
 
 	entryItBody := func(e entry) {
-		Ω(os.Setenv("FROM_LATEST", strconv.FormatBool(e.fromLatest)))
+		stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 		res, err := utils.RunCommand(
 			testDirPath,
@@ -264,7 +263,7 @@ var _ = Describe("from and fromLatest", func() {
 		}
 
 		entryWithPreBuildItBody := func(e entryWithPreBuild) {
-			Ω(os.Setenv("FROM_LATEST", strconv.FormatBool(e.fromLatest)))
+			stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 			utils.RunSucceedCommand(
 				testDirPath,
@@ -359,7 +358,7 @@ var _ = Describe("fromCacheVersion", func() {
 	It("should be rebuilt", func() {
 		specStep := func(fromCacheVersion string) {
 			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
-			Ω(os.Setenv("FROM_CACHE_VERSION", fromCacheVersion)).Should(Succeed())
+			stubs.SetEnv("FROM_CACHE_VERSION", fromCacheVersion)
 
 			output := utils.SucceedCommandOutputString(
 				testDirPath,

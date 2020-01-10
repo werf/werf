@@ -3,7 +3,6 @@
 package docker_instruction_test
 
 import (
-	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -25,7 +24,7 @@ var itBody = func(e entry) {
 	testDirPath = fixturePath("base")
 
 	for envName, envValue := range e.envs {
-		Ω(os.Setenv(envName, envValue))
+		stubs.SetEnv(envName, envValue)
 	}
 
 	utils.RunSucceedCommand(

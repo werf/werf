@@ -4,7 +4,6 @@ package cleanup_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -44,12 +43,12 @@ var _ = Describe("cleaning stages", func() {
 		)
 		commit = strings.TrimSpace(out)
 
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
-		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
+		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 
-		Ω(os.Setenv("WERF_WITHOUT_KUBE", "1")).Should(Succeed())
+		stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 
-		Ω(os.Setenv("FROM_CACHE_VERSION", "x")).Should(Succeed())
+		stubs.SetEnv("FROM_CACHE_VERSION", "x")
 	})
 
 	AfterEach(func() {
@@ -111,7 +110,7 @@ var _ = Describe("cleaning stages", func() {
 								"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
 							)
 
-							Ω(os.Setenv("WERF_LOG_PRETTY", "0")).Should(Succeed())
+							stubs.SetEnv("WERF_LOG_PRETTY", "0")
 						})
 
 						It("should skip stage image with related running container", func() {
@@ -137,7 +136,7 @@ var _ = Describe("cleaning stages", func() {
 				}
 
 				It(itMsg, func() {
-					Ω(os.Setenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", boundedPolicyValue)).Should(Succeed())
+					stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", boundedPolicyValue)
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -148,7 +147,7 @@ var _ = Describe("cleaning stages", func() {
 					countAfterFirstBuild := LocalProjectStagesCount()
 					Ω(countAfterFirstBuild).Should(Equal(countAfterFirstBuild))
 
-					Ω(os.Setenv("FROM_CACHE_VERSION", "fully rebuild")).Should(Succeed())
+					stubs.SetEnv("FROM_CACHE_VERSION", "fully rebuild")
 
 					utils.RunSucceedCommand(
 						testDirPath,

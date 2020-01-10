@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prashantv/gostub"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -32,6 +34,7 @@ var requiredSuiteEnvs []string
 
 var testDirPath string
 var werfBinPath string
+var stubs = gostub.New()
 var registry, registryContainerName string
 var registryProjectRepository string
 
@@ -50,10 +53,10 @@ var _ = SynchronizedAfterSuite(func() {
 })
 
 var _ = BeforeEach(func() {
-	utils.BeforeEachOverrideWerfProjectName()
+	utils.BeforeEachOverrideWerfProjectName(stubs)
 	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
 
-	Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 })
 
 var _ = AfterEach(func() {
@@ -63,7 +66,7 @@ var _ = AfterEach(func() {
 		"stages", "purge", "-s", ":local", "--force",
 	)
 
-	utils.ResetEnviron()
+	stubs.Reset()
 })
 
 func fixturePath(paths ...string) string {

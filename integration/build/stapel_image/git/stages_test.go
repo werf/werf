@@ -4,7 +4,6 @@ package git_test
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
@@ -329,7 +328,7 @@ var _ = Describe("user stages", func() {
 						specSteps = append(specSteps, stagesSpecStep{
 							byText: "BEFORE_INSTALL_CACHE_VERSION changed: beforeInstall stage should be built",
 							beforeBuildHookFunc: func() {
-								Ω(os.Setenv("BEFORE_INSTALL_CACHE_VERSION", "1")).Should(Succeed())
+								stubs.SetEnv("BEFORE_INSTALL_CACHE_VERSION", "1")
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
@@ -363,7 +362,7 @@ var _ = Describe("user stages", func() {
 							specSteps = append(specSteps, stagesSpecStep{
 								byText: fmt.Sprintf("%s changed: %s stage should be built", envName, boundedUserStage),
 								beforeBuildHookFunc: func() {
-									Ω(os.Setenv(envName, "2")).Should(Succeed())
+									stubs.SetEnv(envName, "2")
 								},
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
@@ -495,7 +494,7 @@ var _ = Describe("user stages", func() {
 				toBuildBeforeInstallStageStep := stagesSpecStep{
 					byText: "BEFORE_INSTALL_CACHE_VERSION changed: beforeInstall stage should be built",
 					beforeBuildHookFunc: func() {
-						Ω(os.Setenv("BEFORE_INSTALL_CACHE_VERSION", "1")).Should(Succeed())
+						stubs.SetEnv("BEFORE_INSTALL_CACHE_VERSION", "1")
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
@@ -534,7 +533,7 @@ var _ = Describe("user stages", func() {
 						specSteps = append(specSteps, stagesSpecStep{
 							byText: fmt.Sprintf("%s changed: %s stage should be built", envName, boundedUserStage),
 							beforeBuildHookFunc: func() {
-								Ω(os.Setenv(envName, "2")).Should(Succeed())
+								stubs.SetEnv(envName, "2")
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
