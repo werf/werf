@@ -797,6 +797,15 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	return nil
 }
 
+func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {
+	if len(args) < minArgs {
+		PrintHelp(cmd)
+		return fmt.Errorf("requires at least %d arg(s), received %d", minArgs, len(args))
+	}
+
+	return nil
+}
+
 func ValidateMaximumNArgs(maxArgs int, args []string, cmd *cobra.Command) error {
 	if len(args) > maxArgs {
 		PrintHelp(cmd)

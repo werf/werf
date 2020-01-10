@@ -41,6 +41,7 @@ import (
 	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
 	host_purge "github.com/flant/werf/cmd/werf/host/purge"
 
+	helm_delete "github.com/flant/werf/cmd/werf/helm/delete"
 	helm_dependency "github.com/flant/werf/cmd/werf/helm/dependency"
 	helm_deploy_chart "github.com/flant/werf/cmd/werf/helm/deploy_chart"
 	helm_get "github.com/flant/werf/cmd/werf/helm/get"
@@ -200,6 +201,7 @@ func helmCmd() *cobra.Command {
 		helm_lint.NewCmd(),
 		helm_render.NewCmd(),
 		helm_ls.NewCmd(),
+		helm_delete.NewCmd(),
 		helm_get.NewCmd(),
 		secretCmd(),
 		helm_repo.NewRepoCmd(),
