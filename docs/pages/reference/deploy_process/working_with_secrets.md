@@ -56,7 +56,7 @@ To manage secret values files use the following commands:
 
 ### Using in a chart template
 
-The secret values files are decoded in the course of deployment and used in helm as [additional values](https://helm.sh/docs/topics/chart_template_guide/values_files/). Thus, use is not different from common values:
+The secret values files are decoded in the course of deployment and used in helm as [additional values](https://helm.sh/docs/chart_template_guide/values_files/). Thus, use is not different from common values:
 
 {% raw %}
 ```yaml
