@@ -31,7 +31,7 @@ project.werf.io/git=$CI_PROJECT_URL
 
 ### WERF_ADD_ANNOTATION_CI_COMMIT
 
-The value of [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit) is taken from the [`CI_COMMIT_SHA`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed as follows:
+The value of [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit) is extracted from the [`CI_COMMIT_SHA`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed as follows:
 
 ```
 ci.werf.io/commit=$CI_COMMIT_SHA
@@ -39,7 +39,7 @@ ci.werf.io/commit=$CI_COMMIT_SHA
 
 ### WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL
 
-The value of `WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL` is taken from the [`CI_PIPELINE_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed in the following way:
+The value of `WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL` is derived from the [`CI_PIPELINE_ID`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed in the following way:
 
 ```
 gitlab.ci.werf.io/pipeline-url=$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID
@@ -57,11 +57,11 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 GitLab supports [environments](https://docs.gitlab.com/ce/ci/environments.html). werf will detect the current environment for the GitLab pipeline and use it as an environment parameter.
 
-The value of [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) is taken from the [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
+The value of [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) is extracted from the [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
 ### Other variables
 
-Other variables are configured in the common way described in the [overview article]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html):
+Other variables are configured in the regular way described in the [overview article]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html):
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
  * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
  * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
@@ -72,7 +72,7 @@ Other variables are configured in the common way described in the [overview arti
 
 ## How to use
 
-The integration with GitLab CI is turned on with the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) by providing the required positional argument:
+You can turn on the integration with GitLab CI by invoking the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) with the required positional argument:
 
 ```
 werf ci-env gitlab --tagging-strategy ...
