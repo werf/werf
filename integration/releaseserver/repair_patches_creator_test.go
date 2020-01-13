@@ -51,7 +51,7 @@ var _ = Describe("Repair patches creator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy1:
-			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			var replicas int32 = 2
 			mydeploy1.Spec.Replicas = &replicas
@@ -75,7 +75,7 @@ var _ = Describe("Repair patches creator", func() {
 			_, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Patch("mycm1", types.StrategicMergePatchType, []byte(mycm1.Annotations["debug.werf.io/repair-patch"]))
 			Expect(err).NotTo(HaveOccurred())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{"spec":{"replicas":1}}`))
@@ -92,7 +92,7 @@ var _ = Describe("Repair patches creator", func() {
 			Expect(string(d)).To(Equal(`{"aloe":"aloha","moloko":"omlet","newKey":"newValue"}`))
 			Expect(mycm1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{}`))
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{}`))
 
