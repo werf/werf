@@ -38,7 +38,7 @@ var _ = Describe("Resources adopter", func() {
 			werfDismiss("resources_adopter_app1-002", liveexec.ExecCommandOptions{})
 		})
 
-		It("should fail to install release; should not delete already existing resources on failed release removal when reinstalling release; should delete new resources created during failed release installation when reinstalling release; should adopt already existing resources by annotation", func(done Done) {
+		It("should fail to install release; should not delete already existing resources on failed release removal when reinstalling release; should delete new resources created during failed release installation when reinstalling release; should adopt already existing resources by annotation", func() {
 			By("creating mydeploy2 and mydeploy4 using API in the cluster before installing release")
 
 			_, err := kube.Kubernetes.CoreV1().Namespaces().Create(resourcesfactory.NewNamespace(fmt.Sprintf(`
@@ -346,8 +346,6 @@ spec:
 
 			_, err = kube.Kubernetes.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
-
-			close(done)
-		}, 600)
+		})
 	})
 })

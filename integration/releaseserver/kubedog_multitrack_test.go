@@ -70,7 +70,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			werfDismiss("kubedog_multitrack_app1", liveexec.ExecCommandOptions{})
 		})
 
-		It("should report Deployment is ready before werf exit", func(done Done) {
+		It("should report Deployment is ready before werf exit", func() {
 			gotDeploymentReadyLine := false
 
 			Expect(werfDeploy("kubedog_multitrack_app1", liveexec.ExecCommandOptions{
@@ -86,9 +86,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			})).Should(Succeed())
 
 			Expect(gotDeploymentReadyLine).Should(BeTrue())
-
-			close(done)
-		}, 120)
+		})
 	})
 
 	Context("when chart contains resource with invalid docker image", func() {
@@ -96,7 +94,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			werfDismiss("kubedog_multitrack_app2", liveexec.ExecCommandOptions{})
 		})
 
-		It("should report ImagePullBackoff occured in Deployment and werf should fail", func(done Done) {
+		It("should report ImagePullBackoff occured in Deployment and werf should fail", func() {
 			gotImagePullBackoffLine := false
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
@@ -122,8 +120,6 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			Expect(gotImagePullBackoffLine).Should(BeTrue())
 			Expect(gotAllowedErrorsWarning).Should(BeTrue())
 			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
-
-			close(done)
-		}, 120)
+		})
 	})
 })
