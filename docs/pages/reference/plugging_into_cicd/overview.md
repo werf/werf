@@ -11,11 +11,11 @@ werf plugs into a CI/CD system via the so-called *ci-env command*. Ci-env comman
 
 ![ci-env]({% asset plugging_into_cicd.svg @path %})
 
-In the following chapters we will see:
- * [what is ci-env](#what-is-ci-env) — what information werf gathers from CI/CD system and why;
- * [ci-env tagging modes](#ci-env-tagging-modes) — about different [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) tagging modes available;
- * [how ci-env works](#how-ci-env-works) — how *ci-env command* should be used and how it passes info to other werf commands;
- * [complete list of ci-env params and customizing](#other-ci-env-params-and-customizing) — complete list of all ci-env params passed to other werf commands and how to customize common params.
+In the sections below you will learn:
+ * [what is ci-env](#what-is-ci-env) — what information werf gathers from the CI/CD system and why;
+ * [ci-env tagging modes](#ci-env-tagging-modes) — what [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) tagging modes are available;
+ * [how ci-env works](#how-ci-env-works) — how *ci-env command* should be used and how it passes information to other werf commands;
+ * [complete list of ci-env params and customizing](#other-ci-env-params-and-customizing) — the complete list of all ci-env params passed to other werf commands and how to customize common parameters.
 
 ## What is ci-env?
 
@@ -24,7 +24,7 @@ werf gathers data from CI/CD systems with the *ci-env command* and sets modes of
  * Git integration;
  * CI/CD pipelines integration;
  * CI/CD configuration integration;
- * Configure modes of operation in CI/CD systems.
+ * Configuring modes of operation in CI/CD systems.
 
 ### Docker registry integration
 
@@ -32,21 +32,21 @@ Typically, a CI/CD system can provide each job with:
  1. Docker registry address.
  2. Credentials to access the Docker registry.
 
-werf ci-env command should provide authorization for all subsequent commands, allowing them to log in to the detected Docker registry using the discovered credentials. Learn more [about the docker login below](#docker-registry-login). Also, the [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) variable will be set as a result.
+werf ci-env command should provide authorization for all subsequent commands, allowing them to log in to the detected Docker registry using discovered credentials. Learn more [about the docker login below](#docker-registry-login). Also, the [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) variable will be set as a result.
 
-The address of the Docker registry will also be used as a value for the `--images-repo` parameter. Thus, the [`WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO`](#werf_images_repo) variable will be set.
+The address of the Docker registry will also be used as the basis for the `--images-repo` parameter. Thus, the [`WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO`](#werf_images_repo) variable will be set.
 
 ### Git integration
 
-Typically, a CI/CD system that uses git runs each job in the detached commit state of the git worktree. And the current git-commit, git-tag, or git-branch is passed to the job using environment variables.
+Typically, a CI/CD system that uses git runs each job in the detached commit state of the git worktree. And the current git-commit, git-tag, or git-branch is passed to the job via environment variables.
 
-The werf ci-env command detects the current git-commit, git-tag, or git-branch and uses them to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` configuration file. The particular use of the git information depends on the chosen tagging scheme, [see more info below](#ci-env-tagging-modes).
+The werf ci-env command detects the current git-commit, git-tag, or git-branch and uses them to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` configuration file. The particular use of the information provided by git depends on the chosen tagging scheme, [see more info below](#ci-env-tagging-modes).
 
 In this case, the [`WERF_TAG_GIT_TAG=GIT_TAG`](#werf_tag_git_tag) or [`WERF_TAG_GIT_BRANCH=GIT_BRANCH`](#werf_tag_git_branch) variable will be set.
 
 ### CI/CD pipelines integration
 
-werf can embed any information into annotations and labels of the deployed Kubernetes resources. Usually, a CI/CD system exposes various information such as a link to a CI/CD web page of the project, link to the job itself, job and pipeline IDs, and so forth, to users.
+werf can embed any information into annotations and labels of deployed Kubernetes resources. Usually, a CI/CD system exposes various information such as a link to a CI/CD web page of the project, link to the job itself, job and pipeline IDs, and so forth, to users.
 
 The `werf ci-env` command automatically finds the URL of the CI/CD web page of the project and embeds it into annotations of every resource deployed with werf.
 
@@ -58,25 +58,25 @@ Also, werf can automatically pass/set various other *annotations* by analyzing t
 
 ### CI/CD configuration integration
 
-There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., environment variables used), and other data. Typical environments are: *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
+There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., environment variables used), and other data. Typical environments are *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
 
 werf also uses the concept of an *environment name* in the [deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment).
 
-The `werf ci-env` command identifies the current environment name of the CI/CD system and passes it to all subsequent werf commands automatically. werf favors the slugged name of the environment if the CI/CD system exports such a name.
+The `werf ci-env` command identifies the current environment name of the CI/CD system and passes it to all subsequent werf commands automatically. werf prefers the slugged name of the environment if the CI/CD system exports such a name.
 
 Also, the [`WERF_ENV=ENV`](#werf_env) environment variable will be set.
 
 ### Configure modes of operation in CI/CD systems
 
 The ci-env command configures [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) in the following manner:
- * keep no more than 10 images built for git-tags. This behaviour is determined by setting the [`WERF_GIT_TAG_STRATEGY_LIMIT=10`](#werf_git_tag_strategy_limit) environmental variable;
- * keep images built for git-tags for no more than 30 days. This behaviour is determined by setting the [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30`](#werf_git_tag_strategy_expiry_days) environmental variable.
+ * keep no more than 10 images built for git-tags. You can control this behaviour by setting the [`WERF_GIT_TAG_STRATEGY_LIMIT=10`](#werf_git_tag_strategy_limit) environmental variable;
+ * keep images built for git-tags for no more than 30 days. You can control this behaviour by setting the [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30`](#werf_git_tag_strategy_expiry_days) environmental variable.
 
-If the CI/CD system has support for the outout of text of different colors, thwn the `werf ci-env` will set the [`WERF_LOG_COLOR_MODE=on`](#werf_log_color_mode) environment variable.
+If the CI/CD system has support for the output of text in different colors, the `werf ci-env` will then set the [`WERF_LOG_COLOR_MODE=on`](#werf_log_color_mode) environment variable.
 
-Logging the project directory where werf runs will be forced if the [`WERF_LOG_PROJECT_DIR=1`](#werf_log_project_dir) environment variable is set (by default, werf does not print the directory). Such logging helps to debug problems within the CI/CD system by providing a convenient standard output.
+Logging the project directory where werf runs will be forced if the [`WERF_LOG_PROJECT_DIR=1`](#werf_log_project_dir) environment variable is set (by default, werf does not print the contents of the directory). Such logging helps to debug problems within the CI/CD system by providing a convenient standard output.
 
-The `werf ci-env` command enables the so-called process exterminator. Some CI/CD systems kill job processes with a `SIGKILL` Linux signal when the user hits the `Cancel` button in the user interface. In this case, child processes continue to run until termination. If the process exterminator is enabled, werf constantly checks for its parent processes' PIDs in the background. If one of them has died, then werf terminates on its own. The [`WERF_ENABLE_PROCESS_EXTERMINATOR=1`](#werf_enable_process_exterminator) environment variable enables this mode in the CI/CD system (it is disabled by default). 
+The `werf ci-env` command enables the so-called process exterminator. Some CI/CD systems kill job processes with a `SIGKILL` Linux signal when the user hits the `Cancel` button in the user interface. In this case, child processes continue to run until termination. If the process exterminator is enabled, werf constantly checks for its parent processes' PIDs in the background. If one of them has died, werf terminates on its own. The [`WERF_ENABLE_PROCESS_EXTERMINATOR=1`](#werf_enable_process_exterminator) environment variable enables this mode in the CI/CD system (it is disabled by default). 
 
 The `werf ci-env` command sets the logging output width to 100 symbols since it is an experimentally proven universal width that fits most modern screens. In this case, the [`WERF_LOG_TERMINAL_WIDTH=100`](#werf_log_terminal_width) variable will be set.
 
@@ -90,7 +90,7 @@ The support for *content-based tagging* and a corresponding ci-env tagging mode 
 
 ### tag-or-branch
 
-The current git-tag or git-branch is used to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) that are described in the `werf.yaml` and built by werf.
+The current git-tag or git-branch is used to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` and built by werf.
 
 An image, associated with a corresponding git-tag or git-branch, will be kept in the Docker registry in accordance with [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
@@ -102,7 +102,7 @@ The above tagging mode is selected by setting the `--tagging-strategy=tag-or-bra
   <br />
   <br />
   For example:
-  - the branch `developer-feature` is valid, and the tag will not change;
+  - the branch `developer-feature` is valid, and the tag would remain unchanged;
   - the branch `developer/feature` is not valid, and the resulting tag will be corrected to `developer-feature-6e0628fc`.
 
 ## How ci-env works
@@ -111,7 +111,7 @@ The ci-env command passes all parameters to werf via environment variables, see 
 
 The [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) must be called at the beginning of any CI/CD job before running any other werf command.
 
-**NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-params-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for command output. For example:
+**NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-params-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
 
 ```
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
@@ -179,12 +179,12 @@ echo 'export WERF_LOG_TERMINAL_WIDTH="95"'
 
 Any parameter of any werf command (except ci-env command itself) that can be passed via CLI can also be passed using environment variables.
 
-There is a common rule of conversion of a CLI parameter into the name of an environment variable: an environment variable gets `WERF_` prefix, consists of capital letters, and dashes `-` are replaced with underscore symbols `_`.
+There is a common rule of conversion of a CLI parameter into the name of an environment variable: an environment variable gets `WERF_` prefix, consists of capital letters, and dashes `-` are replaced with underscores `_`.
 
 Examples:
  * `--tag-git-tag=mytag` is the same as `WERF_TAG_GIT_TAG=mytag`;
  * `--env=staging` may be replaced by `WERF_ENV=staging`;
- * `--images-repo=myregistry.myhost.com/project/x` is the same as `WERF_IMAGES_REPO=myregistry.myhost.com/project/x`; etc.
+ * `--images-repo=myregistry.myhost.com/project/x` is the same as `WERF_IMAGES_REPO=myregistry.myhost.com/project/x`; and so on.
 
 The `--add-label` and `--add-annotation` parameters are an exception to this rule. They can be specified multiple times. Use the following template to set these parameters by environment variables: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. For example:
 
@@ -201,15 +201,15 @@ Note that `_MYANNOTATION_1`, `_MYANNOTATION_2`, `_MYLABEL_1`, `_MYLABEL_2` suffi
 
 As noted in the [Docker registry integration](#docker-registry-integration), werf performs autologin into the detected docker registry.
 
-The ci-env command always creates a new temporary [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files).
+The ci-env command creates a new temporary [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) in all cases.
 
 The temporary docker config prevents the mutual interference of jobs running concurrently. The temporary docker config-based approach is also more secure than logging into the Docker registry using the system-wide default docker config (`~/.docker`).
 
-If a `DOCKER_CONFIG` variable is defined or there is a `~/.docker` file, then werf would *copy* this already existing config into a new, temporary one. So any *docker logins* performed before running the `werf ci-env` command will still be active and available using this new temporary config.
+If a `DOCKER_CONFIG` variable is defined or there is a `~/.docker` file, then werf would *copy* this existing config into a new, temporary one. So any *docker logins* performed before running the `werf ci-env` command will still be active and available using this new temporary config.
 
 After the new tmp config has been created, werf performs additional login into the detected Docker registry.
 
-As a result of a [Docker registry integration procedure](#docker-registry-integration), `werf ci-env` will export a `DOCKER_CONFIG` variable that contains a path to the new temporary docker config.
+As a result of a [Docker registry integration procedure](#docker-registry-integration), `werf ci-env` would export a `DOCKER_CONFIG` variable that contains a path to the new temporary docker config.
 
 This config then will be utilized by all subsequent werf commands. Also, it can be used by a `docker login` command to perform any additional custom logins depending on your needs.
 
