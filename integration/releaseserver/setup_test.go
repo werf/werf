@@ -34,6 +34,7 @@ var _ = ginkgo.SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = ginkgo.BeforeEach(func() {
+	stubs.SetEnv("WERF_LOG_PRETTY", "0")
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 })
 
