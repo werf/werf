@@ -48,10 +48,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Download go modules
-      run: go mod download
-      shell: bash
-
 #    - name: Install upx (ubuntu-latest)
 #      run: sudo apt-get install upx
 #      if: matrix.os == 'ubuntu-latest'
@@ -78,10 +74,10 @@ jobs:
         ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
 
         # integration tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration --tags integration
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration integration
 
         # integration_k8s tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration_k8s --tags integration_k8s
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration_k8s integration_k8s
 
         # werf with coverage binary
         ./scripts/tests/werf_with_coverage.sh
