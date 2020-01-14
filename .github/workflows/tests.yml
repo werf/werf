@@ -148,11 +148,16 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        find . -type f -name '*.test' -exec chmod +x {} \;
+        find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
       shell: bash
 
     - name: Test
-      run: ./scripts/ci/unit_tests_runner.sh
+      run: |
+        test_binaries=$(find . -type f \( -name '*.test' -or -name '*.test.exe' \))
+        for test_binary in $test_binaries; do
+          coverage_file_name="$(openssl rand -hex 6)-$(date +"%H_%M_%S")_coverage.out"
+          $test_binary -test.v -test.coverprofile="$WERF_TEST_COVERAGE_DIR"/"$coverage_file_name"
+        done
       shell: bash
 
     - name: Upload coverage artifact
@@ -303,9 +308,9 @@ jobs:
       matrix:
         os: [macOS, windows]
         extra-find-args:
-        - "-name 'guides.test'"
-        - "-name 'git.test'"
-        - "! -name 'git.test' ! -name 'guides.test'"
+        - "-name 'guides.test*'"
+        - "-name 'git.test*'"
+        - "! -name 'git.test*' ! -name 'guides.test*'"
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -336,10 +341,15 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        go build github.com/onsi/ginkgo/ginkgo
+        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
+        git clone https://github.com/flant/ginkgo.git fork
+        cd fork/ginkgo
+        go build .
+        mv ginkgo $GITHUB_WORKSPACE
+        cd $GITHUB_WORKSPACE
 
         chmod +x werf_with_coverage
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do chmod +x $test_binary; done
 
         export DOCKER_CONFIG=$(mktemp -d)
@@ -347,24 +357,11 @@ jobs:
         echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
       shell: bash
 
-    - name: Test (macOS)
+    - name: Test
       run: |
-        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
-      if: matrix.os == 'macOS'
-
-    # TODO: ginkgo CLI cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-    - name: Test (windows)
-      run: |
-        export WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage
-        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        for test_binary in $test_binaries; do
-          cd $(dirname "$test_binary")
-          $test_binary
-        done
-      shell: bash
-      if: matrix.os == 'windows'
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
@@ -410,10 +407,15 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
-        go build github.com/onsi/ginkgo/ginkgo
+        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
+        git clone https://github.com/flant/ginkgo.git fork
+        cd fork/ginkgo
+        go build .
+        mv ginkgo $GITHUB_WORKSPACE
+        cd $GITHUB_WORKSPACE
 
         chmod +x werf_with_coverage
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do chmod +x $test_binary; done
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
@@ -430,34 +432,16 @@ jobs:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
 
-    - name: Test (macOS)
+    - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'macOS'
-
-    # TODO: ginkgo CLI cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-    - name: Test (windows)
-      run: |
-        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        export WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage
-        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test')
-        for test_binary in $test_binaries; do
-          cd $(dirname "$test_binary")
-          $test_binary
-        done
-      shell: bash
-      env:
-        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'windows'
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
