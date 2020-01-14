@@ -51,11 +51,13 @@ jobs:
 #    - name: Install upx (ubuntu-latest)
 #      run: sudo apt-get install upx
 #      if: matrix.os == 'ubuntu-latest'
-#
-#    - name: Install upx (macOS-latest)
-#      run: brew install upx
-#      if: matrix.os == 'macOS-latest'
-#
+
+    # To compress werf_with_coverage binary for macOS
+    # This fixes related with monkey patching panic (panic: permission denied [recovered])
+    - name: Install upx (macOS-latest)
+      run: brew install upx
+      if: matrix.os == 'macOS-latest'
+
 #    - name: Install upx (windows-latest)
 #      run: |
 #        mkdir bin

@@ -26,7 +26,7 @@ for package_path in $package_paths; do
      continue
   fi
 
-	if [[ -x "$(command -v upx)" ]]; then
-	  upx "$test_binary_path"
-  fi
+#	if [[ -x "$(command -v upx)" ]]; then
+#	  upx "$test_binary_path"
+#  fi
 done
