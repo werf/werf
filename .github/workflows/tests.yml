@@ -166,6 +166,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        extra-find-args:
+        - "-name 'guides.test'"
+        - "-name 'git.test'"
+        - "! -name 'git.test' ! -name 'guides.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -206,7 +210,7 @@ jobs:
 
     - name: Test
       run: |
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
 
@@ -296,6 +300,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS, windows]
+        extra-find-args:
+        - "-name 'guides.test'"
+        - "-name 'git.test'"
+        - "! -name 'git.test' ! -name 'guides.test'"
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -339,7 +347,7 @@ jobs:
 
     - name: Test (macOS)
       run: |
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       if: matrix.os == 'macOS'
@@ -348,7 +356,7 @@ jobs:
     - name: Test (windows)
       run: |
         export WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage
-        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test')
+        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         for test_binary in $test_binaries; do
           cd $(dirname "$test_binary")
           $test_binary
