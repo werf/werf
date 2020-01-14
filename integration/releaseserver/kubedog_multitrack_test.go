@@ -12,6 +12,14 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func releaseResourcesStatusProgressLine(outputLine string) string {
+	prefix := "│ │ │ "
+	if strings.HasPrefix(outputLine, prefix) {
+		return strings.Trim(outputLine, prefix)
+	}
+	return ""
+}
+
 type DeploymentState struct {
 	Deployment       string
 	Replicas         string
@@ -75,11 +83,13 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 			Expect(werfDeploy("kubedog_multitrack_app1", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if mydeploy1 := mydeploy1State(strings.TrimSpace(line)); mydeploy1 != nil {
-						unknownDeploymentStateForbidden(mydeploy1)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
 
-						if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
-							gotDeploymentReadyLine = true
+							if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
+								gotDeploymentReadyLine = true
+							}
 						}
 					}
 				},
@@ -111,8 +121,10 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 						gotImagePullBackoffLine = true
 					}
 
-					if mydeploy1 := mydeploy1State(strings.TrimSpace(line)); mydeploy1 != nil {
-						unknownDeploymentStateForbidden(mydeploy1)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
+						}
 					}
 				},
 			})).Should(MatchError("exit code 1"))

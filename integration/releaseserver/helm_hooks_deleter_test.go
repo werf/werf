@@ -28,9 +28,9 @@ var _ = Describe("Helm hooks deleter", func() {
 
 			Expect(werfDeploy("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(line).ShouldNot(ContainSubstring("NOTICE Will not delete Job/migrate: resource does not belong to the helm release"), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/migrate: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.Contains(line, "Deleting resource Job/migrate from release") {
+					if strings.HasPrefix(line, "│ Deleting resource Job/migrate from release") {
 						gotDeletingHookLine = true
 					}
 				},
@@ -78,9 +78,9 @@ var _ = Describe("Helm hooks deleter", func() {
 			// Update release, hook should be deleted by before-hook-creation policy and created again
 			Expect(werfDeploy("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(line).ShouldNot(ContainSubstring("NOTICE Will not delete Job/myhook: resource does not belong to the helm release"), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/myhook: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.Contains(line, "Deleting resource Job/myhook from release") {
+					if strings.HasPrefix(line, "│ Deleting resource Job/myhook from release") {
 						gotDeletingHookLine = true
 					}
 				},
