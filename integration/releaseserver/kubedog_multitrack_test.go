@@ -35,7 +35,7 @@ type DeploymentState struct {
 func mydeploy1State(statusProgressLine string) *DeploymentState {
 	fields := strings.Fields(statusProgressLine)
 
-	if len(fields) == 4 && fields[0] == deploymentName("mydeploy1") {
+	if len(fields) == 4 && fields[0] == "mydeploy1" {
 		ds := &DeploymentState{
 			Deployment:         fields[0],
 			Replicas:           fields[1],
@@ -111,13 +111,13 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 			Expect(werfDeploy("kubedog_multitrack_app2", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, fmt.Sprintf(`1/1 allowed errors occurred for deploy/%s: continue tracking`, deploymentName("mydeploy1"))) != -1 {
+					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true
 					}
-					if strings.Index(line, fmt.Sprintf(`Allowed failures count for deploy/%s exceeded 1 errors: stop tracking immediately!`, deploymentName("mydeploy1"))) != -1 {
+					if strings.Index(line, `Allowed failures count for deploy/mydeploy1 exceeded 1 errors: stop tracking immediately!`) != -1 {
 						gotAllowedErrorsExceeded = true
 					}
-					if strings.Index(line, fmt.Sprintf("deploy/%s ERROR:", deploymentName("mydeploy1"))) != -1 && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
+					if strings.Index(line, "deploy/mydeploy1 ERROR:") != -1 && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
 						gotImagePullBackoffLine = true
 					}
 
