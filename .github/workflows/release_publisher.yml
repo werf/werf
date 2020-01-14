@@ -7,7 +7,7 @@ env:
   GO111MODULE: on
 jobs:
   publish_release:
-    name: Publish multiwerf release
+    name: Publish werf release
     runs-on: [self-hosted, linux]
     steps:
     - name: Set up Go 1.13

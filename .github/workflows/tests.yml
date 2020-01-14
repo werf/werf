@@ -48,28 +48,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
 
-    - name: Download go modules
-      run: go mod download
-      shell: bash
+#    - name: Install upx (ubuntu-latest)
+#      run: sudo apt-get install upx
+#      if: matrix.os == 'ubuntu-latest'
 
-    - name: Install upx (ubuntu-latest)
-      run: sudo apt-get install upx
-      if: matrix.os == 'ubuntu-latest'
-
+    # To compress werf_with_coverage binary for macOS
+    # This fixes related with monkey patching panic (panic: permission denied [recovered])
     - name: Install upx (macOS-latest)
       run: brew install upx
       if: matrix.os == 'macOS-latest'
 
-    - name: Install upx (windows-latest)
-      run: |
-        mkdir bin
-        echo "::add-path::$GITHUB_WORKSPACE/bin"
-
-        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
-        unzip upx-3.95-win64.zip
-        mv upx-3.95-win64/upx.exe bin
-      shell: bash
-      if: matrix.os == 'windows-latest'
+#    - name: Install upx (windows-latest)
+#      run: |
+#        mkdir bin
+#        echo "::add-path::$GITHUB_WORKSPACE/bin"
+#
+#        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
+#        unzip upx-3.95-win64.zip
+#        mv upx-3.95-win64/upx.exe bin
+#      shell: bash
+#      if: matrix.os == 'windows-latest'
 
     - name: Compile tests binaries
       run: |
@@ -78,10 +76,10 @@ jobs:
         ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
 
         # integration tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration --tags integration
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration integration
 
         # integration_k8s tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration_k8s --tags integration_k8s
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration_k8s integration_k8s
 
         # werf with coverage binary
         ./scripts/tests/werf_with_coverage.sh
@@ -170,6 +168,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        extra-find-args:
+        - "-name 'guides.test'"
+        - "-name 'git.test'"
+        - "! -name 'git.test' ! -name 'guides.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -210,7 +212,7 @@ jobs:
 
     - name: Test
       run: |
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
 
@@ -300,6 +302,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS, windows]
+        extra-find-args:
+        - "-name 'guides.test'"
+        - "-name 'git.test'"
+        - "! -name 'git.test' ! -name 'guides.test'"
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -335,11 +341,15 @@ jobs:
         chmod +x werf_with_coverage
         test_binaries=$(find integration -type f -name '*.test')
         for test_binary in $test_binaries; do chmod +x $test_binary; done
+
+        export DOCKER_CONFIG=$(mktemp -d)
+        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
+        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
       shell: bash
 
     - name: Test (macOS)
       run: |
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       if: matrix.os == 'macOS'
@@ -348,7 +358,7 @@ jobs:
     - name: Test (windows)
       run: |
         export WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage
-        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test')
+        test_binaries=$(find $GITHUB_WORKSPACE/integration -type f -name '*.test' ${{ matrix.extra-find-args }})
         for test_binary in $test_binaries; do
           cd $(dirname "$test_binary")
           $test_binary
@@ -407,6 +417,10 @@ jobs:
         for test_binary in $test_binaries; do chmod +x $test_binary; done
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+
+        export DOCKER_CONFIG=$(mktemp -d)
+        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
+        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
       shell: bash
       env:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
