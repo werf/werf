@@ -27,7 +27,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 	Context("when deploying an existing release with the onlyNewReleases 3wm mode", func() {
 		AfterEach(func() {
-			werfDismiss("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{})
+			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should not use 3wm patches during release update", func(done Done) {
@@ -71,7 +71,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 	Context("when deploying a new release with the onlyNewReleases 3wm mode", func() {
 		AfterEach(func() {
-			werfDismiss("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{})
+			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should use 3wm patches during release installation and subsequent update", func(done Done) {
@@ -115,7 +115,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 	Context("when deploying an existing release with the enabled 3wm mode", func() {
 		AfterEach(func() {
-			werfDismiss("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{})
+			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should use 3wm patches during release update", func(done Done) {
@@ -162,7 +162,7 @@ var _ = Describe("Three way merge patches creator", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{})
+			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should bring resources to the chart state with 3wm paches", func(done Done) {
@@ -278,7 +278,7 @@ var _ = Describe("Three way merge patches creator", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("three_way_merge_patches_creator_app2-002", liveexec.ExecCommandOptions{})
+			utils.RunCommand("three_way_merge_patches_creator_app2-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should stop changing replicas and resources on redeploy when user sets set-replicas/resources-only-on-creation annotation to the resource", func(done Done) {

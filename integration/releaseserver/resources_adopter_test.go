@@ -35,7 +35,7 @@ var _ = Describe("Resources adopter", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("resources_adopter_app1-002", liveexec.ExecCommandOptions{})
+			utils.RunCommand("resources_adopter_app1-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should fail to install release; should not delete already existing resources on failed release removal when reinstalling release; should delete new resources created during failed release installation when reinstalling release; should adopt already existing resources by annotation", func(done Done) {
@@ -67,7 +67,7 @@ spec:
         service: mydeploy2
     spec:
       containers:
-      - name: mycontainer1 
+      - name: mycontainer1
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
         image: ubuntu:18.04
       - name: mycontainer2
@@ -98,7 +98,7 @@ spec:
         helo: world
     spec:
       containers:
-      - name: main 
+      - name: main
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
         image: ubuntu:18.04
         env:
@@ -290,7 +290,7 @@ spec:
         service: mydeploy5
     spec:
       containers:
-      - name: main 
+      - name: main
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
         image: ubuntu:18.04
 `))

@@ -20,7 +20,7 @@ import (
 var _ = Describe("Helm hooks deleter", func() {
 	Context("when installing chart with post-install Job hook and hook-succeeded delete policy", func() {
 		AfterEach(func() {
-			werfDismiss("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{})
+			utils.RunCommand("helm_hooks_deleter_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/flant/werf/issues/1885", func(done Done) {
@@ -55,7 +55,7 @@ var _ = Describe("Helm hooks deleter", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{})
+			utils.RunCommand("helm_hooks_deleter_app2", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func(done Done) {

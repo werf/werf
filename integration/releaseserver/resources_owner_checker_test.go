@@ -32,7 +32,7 @@ var _ = Describe("Resources owner checker", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("resources_owner_checker_app1-003", liveexec.ExecCommandOptions{})
+			utils.RunCommand("resources_owner_checker_app1-003", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should set owner-release refs during rollback operation https://github.com/flant/werf/issues/1902", func() {

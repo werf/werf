@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/werf/pkg/testing/utils"
 	"github.com/flant/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
@@ -75,7 +76,7 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app1", liveexec.ExecCommandOptions{})
+			utils.RunCommand("kubedog_multitrack_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should report Deployment is ready before werf exit", func(done Done) {
@@ -103,7 +104,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app2", liveexec.ExecCommandOptions{})
+			utils.RunCommand("kubedog_multitrack_app2", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should report ImagePullBackoff occured in Deployment and werf should fail", func(done Done) {

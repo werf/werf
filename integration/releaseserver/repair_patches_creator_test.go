@@ -31,7 +31,7 @@ var _ = Describe("Repair patches creator", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("repair_patches_creator_app1-002", liveexec.ExecCommandOptions{})
+			utils.RunCommand("repair_patches_creator_app1-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
 		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func(done Done) {
