@@ -52,24 +52,24 @@ jobs:
       run: go mod download
       shell: bash
 
-    - name: Install upx (ubuntu-latest)
-      run: sudo apt-get install upx
-      if: matrix.os == 'ubuntu-latest'
-
-    - name: Install upx (macOS-latest)
-      run: brew install upx
-      if: matrix.os == 'macOS-latest'
-
-    - name: Install upx (windows-latest)
-      run: |
-        mkdir bin
-        echo "::add-path::$GITHUB_WORKSPACE/bin"
-
-        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
-        unzip upx-3.95-win64.zip
-        mv upx-3.95-win64/upx.exe bin
-      shell: bash
-      if: matrix.os == 'windows-latest'
+#    - name: Install upx (ubuntu-latest)
+#      run: sudo apt-get install upx
+#      if: matrix.os == 'ubuntu-latest'
+#
+#    - name: Install upx (macOS-latest)
+#      run: brew install upx
+#      if: matrix.os == 'macOS-latest'
+#
+#    - name: Install upx (windows-latest)
+#      run: |
+#        mkdir bin
+#        echo "::add-path::$GITHUB_WORKSPACE/bin"
+#
+#        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
+#        unzip upx-3.95-win64.zip
+#        mv upx-3.95-win64/upx.exe bin
+#      shell: bash
+#      if: matrix.os == 'windows-latest'
 
     - name: Compile tests binaries
       run: |
