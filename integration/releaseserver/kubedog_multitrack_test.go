@@ -6,11 +6,20 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/werf/pkg/testing/utils"
 	"github.com/flant/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+func releaseResourcesStatusProgressLine(outputLine string) string {
+	prefix := "│ │ │ "
+	if strings.HasPrefix(outputLine, prefix) {
+		return strings.Trim(outputLine, prefix)
+	}
+	return ""
+}
 
 type DeploymentState struct {
 	Deployment       string
@@ -27,7 +36,7 @@ type DeploymentState struct {
 func mydeploy1State(statusProgressLine string) *DeploymentState {
 	fields := strings.Fields(statusProgressLine)
 
-	if len(fields) == 4 && fields[0] == deploymentName("mydeploy1") {
+	if len(fields) == 4 && fields[0] == "mydeploy1" {
 		ds := &DeploymentState{
 			Deployment:         fields[0],
 			Replicas:           fields[1],
@@ -64,55 +73,61 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 	Expect(ds.UpToDate).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s UP-TO-DATE should not be reported", ds.Deployment))
 }
 
-var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
+var _ = XDescribe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app1", liveexec.ExecCommandOptions{})
+			utils.RunCommand("kubedog_multitrack_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should report Deployment is ready before werf exit", func() {
+		It("should report Deployment is ready before werf exit", func(done Done) {
 			gotDeploymentReadyLine := false
 
 			Expect(werfDeploy("kubedog_multitrack_app1", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if mydeploy1 := mydeploy1State(strings.TrimSpace(line)); mydeploy1 != nil {
-						unknownDeploymentStateForbidden(mydeploy1)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
 
-						if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
-							gotDeploymentReadyLine = true
+							if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
+								gotDeploymentReadyLine = true
+							}
 						}
 					}
 				},
 			})).Should(Succeed())
 
 			Expect(gotDeploymentReadyLine).Should(BeTrue())
-		})
+
+			close(done)
+		}, 120)
 	})
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			werfDismiss("kubedog_multitrack_app2", liveexec.ExecCommandOptions{})
+			utils.RunCommand("kubedog_multitrack_app2", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should report ImagePullBackoff occured in Deployment and werf should fail", func() {
+		It("should report ImagePullBackoff occured in Deployment and werf should fail", func(done Done) {
 			gotImagePullBackoffLine := false
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
 			Expect(werfDeploy("kubedog_multitrack_app2", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, fmt.Sprintf(`1/1 allowed errors occurred for deploy/%s: continue tracking`, deploymentName("mydeploy1"))) != -1 {
+					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true
 					}
-					if strings.Index(line, fmt.Sprintf(`Allowed failures count for deploy/%s exceeded 1 errors: stop tracking immediately!`, deploymentName("mydeploy1"))) != -1 {
+					if strings.Index(line, `Allowed failures count for deploy/mydeploy1 exceeded 1 errors: stop tracking immediately!`) != -1 {
 						gotAllowedErrorsExceeded = true
 					}
-					if strings.Index(line, fmt.Sprintf("deploy/%s ERROR:", deploymentName("mydeploy1"))) != -1 && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
+					if strings.Index(line, "deploy/mydeploy1 ERROR:") != -1 && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
 						gotImagePullBackoffLine = true
 					}
 
-					if mydeploy1 := mydeploy1State(strings.TrimSpace(line)); mydeploy1 != nil {
-						unknownDeploymentStateForbidden(mydeploy1)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+							unknownDeploymentStateForbidden(mydeploy1)
+						}
 					}
 				},
 			})).Should(MatchError("exit code 1"))
@@ -120,6 +135,8 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			Expect(gotImagePullBackoffLine).Should(BeTrue())
 			Expect(gotAllowedErrorsWarning).Should(BeTrue())
 			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
-		})
+
+			close(done)
+		}, 120)
 	})
 })

@@ -17,7 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Repair patches creator", func() {
+var _ = XDescribe("Repair patches creator", func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
@@ -31,10 +31,10 @@ var _ = Describe("Repair patches creator", func() {
 		})
 
 		AfterEach(func() {
-			werfDismiss("repair_patches_creator_app1-002", liveexec.ExecCommandOptions{})
+			utils.RunCommand("repair_patches_creator_app1-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func() {
+		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func(done Done) {
 			Expect(werfDeploy("repair_patches_creator_app1-001", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
@@ -51,7 +51,7 @@ var _ = Describe("Repair patches creator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy1:
-			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
+			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			var replicas int32 = 2
 			mydeploy1.Spec.Replicas = &replicas
@@ -75,7 +75,7 @@ var _ = Describe("Repair patches creator", func() {
 			_, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Patch("mycm1", types.StrategicMergePatchType, []byte(mycm1.Annotations["debug.werf.io/repair-patch"]))
 			Expect(err).NotTo(HaveOccurred())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
+			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{"spec":{"replicas":1}}`))
@@ -92,9 +92,11 @@ var _ = Describe("Repair patches creator", func() {
 			Expect(string(d)).To(Equal(`{"aloe":"aloha","moloko":"omlet","newKey":"newValue"}`))
 			Expect(mycm1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{}`))
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
+			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{}`))
-		})
+
+			close(done)
+		}, 120)
 	})
 })
