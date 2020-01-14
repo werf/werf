@@ -7,7 +7,7 @@ Manage a chart's dependencies
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for dependency
 ```

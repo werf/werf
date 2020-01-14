@@ -3,17 +3,17 @@
 package repo_test
 
 import (
-	"os"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/testing/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/flant/werf/pkg/testing/utils"
 )
 
 var _ = Describe("helm repo", func() {
 	BeforeEach(func() {
-		Ω(os.Setenv("WERF_HELM_HOME", filepath.Join(testDirPath, ".helm"))).Should(Succeed())
+		stubs.SetEnv("WERF_HELM_HOME", filepath.Join(testDirPath, ".helm"))
 	})
 
 	It("helm should be configured", func() {

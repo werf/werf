@@ -7,7 +7,7 @@ Work with secret values files
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for values
 ```

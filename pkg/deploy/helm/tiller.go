@@ -89,6 +89,8 @@ type InitOptions struct {
 	HelmReleaseStorageNamespace string
 	HelmReleaseStorageType      string
 
+	InitNamespace bool
+
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
 
@@ -140,14 +142,16 @@ func Init(options InitOptions) error {
 		return err
 	}
 
-	if _, err := clientset.CoreV1().Namespaces().Get(options.HelmReleaseStorageNamespace, metav1.GetOptions{}); err != nil {
-		if kubeErrors.IsNotFound(err) {
-			if _, err := clientset.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: options.HelmReleaseStorageNamespace}}); err != nil {
-				return fmt.Errorf("unable to create helm release storage namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
+	if options.InitNamespace {
+		if _, err := clientset.CoreV1().Namespaces().Get(options.HelmReleaseStorageNamespace, metav1.GetOptions{}); err != nil {
+			if kubeErrors.IsNotFound(err) {
+				if _, err := clientset.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: options.HelmReleaseStorageNamespace}}); err != nil {
+					return fmt.Errorf("unable to create helm release storage namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
+				}
+				logboek.LogInfoF("Created helm release storage namespace '%s'\n", options.HelmReleaseStorageNamespace)
+			} else {
+				return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 			}
-			logboek.LogInfoF("Created helm release storage namespace '%s'\n", options.HelmReleaseStorageNamespace)
-		} else {
-			return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 		}
 	}
 

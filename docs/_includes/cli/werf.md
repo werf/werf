@@ -9,7 +9,7 @@ Find more information at [https://werf.io](https://werf.io)
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for werf
 ```

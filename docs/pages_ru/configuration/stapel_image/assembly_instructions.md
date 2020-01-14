@@ -195,7 +195,7 @@ beforeInstall:
 werf выполнит команды стадии следующим образом::
 - на хост-машине сгенерируется временный скрипт:
 
-    ```bash
+    ```shell
     #!/.werf/stapel/embedded/bin/bash -e
 
     apt-get update
@@ -238,7 +238,7 @@ ansible:
 
 Сборочные инструкции _ansible_ —  это массив Ansible-заданий для соответствующей _пользовательской стадии_. Для запуска этих заданий с помощью `ansible-playbook` werf монтирует следующую структуру папок в _сборочный контейнер_:
 
-```bash
+```shell
 /.werf/ansible-workdir
 ├── ansible.cfg
 ├── hosts
@@ -287,7 +287,7 @@ ansible:
 
 werf выполняет playbook _пользовательской стадии_ в сборочном контейнере стадии с помощью команды `playbook-ansible`:
 
-```bash
+```shell
 $ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
 $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
@@ -453,13 +453,13 @@ shell:
 {% endraw %}
 
 Первая сборка высчитает сигнатуру стадии _beforeInstall_ на основе команды наример такой (хэш коммита конечно будет другой):
-```bash
+```shell
 echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
 ```
 
 После очередного коммита, при сборке сигнатура стадии _beforeInstall_ уже будет другой (с других хэшем коммита), например:
 
-```bash
+```shell
 echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
 ```
 

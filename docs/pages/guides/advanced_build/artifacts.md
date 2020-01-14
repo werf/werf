@@ -23,8 +23,8 @@ In this article, we will build an example GO application. Then we will optimize 
 
 This command should be run prior running any werf command in your shell session:
 
-```
-source <(multiwerf use 1.0 beta)
+```shell
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
 ## Sample application
@@ -69,24 +69,24 @@ The config describes instructions to build one image — `go-booking`.
 
 Build the application by executing the following command in the `booking` directory:
 
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking"  go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 You should see a running container with the `go-booking` name, like this:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -100,13 +100,13 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Determine the image size by executing:
 
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
-```bash
+```shell
 REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
 image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
@@ -175,22 +175,22 @@ werf build --stages-storage :local
 
 Before running the modified application, you need to stop and remove running `go-booking` container we built. Otherwise, the new container can't start or bind to 9000 port on localhost. E.g., execute the following command to stop and remove the `go-booking` container:
 
-```bash
+```shell
 docker stop go-booking && docker rm go-booking
 ```
 
 Run the modified application by executing the following command:
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```bash
+```shell
 docker ps -f "name=go-booking"
 ```
 
 You should see a running container with the `go-booking` name, like this:
-```bash
+```shell
 CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
@@ -203,13 +203,13 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 Determine the image size of optimized build, by executing:
 {% raw %}
-```bash
+```shell
 docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
-```bash
+```shell
 REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
 image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      103 MB
 ```

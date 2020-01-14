@@ -83,13 +83,21 @@ func ContainerStopAndRemove(containerName string) {
 }
 
 func ImageRemoveIfExists(imageName string) {
+	if IsImageExist(imageName) {
+		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+	}
+}
+
+func IsImageExist(imageName string) bool {
 	_, err := imageInspect(imageName)
 	if err == nil {
-		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+		return true
 	} else {
 		if !strings.HasPrefix(err.Error(), "Error: No such image") {
 			Ω(err).ShouldNot(HaveOccurred())
 		}
+
+		return false
 	}
 }
 
@@ -170,6 +178,21 @@ func cmdExecute(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
 	return cmd.Execute()
+}
+
+func Pull(imageName string) error {
+tryPull:
+	err := CliPull(imageName)
+	if err != nil {
+		if strings.Index(err.Error(), "Client.Timeout exceeded while awaiting headers") != -1 {
+			goto tryPull
+		}
+
+		if (strings.Index(err.Error(), "proxyconnect tcp: dial tcp") != 1) && (strings.Index(err.Error(), "i/o timeout") != -1) {
+			goto tryPull
+		}
+	}
+	return err
 }
 
 func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {

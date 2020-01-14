@@ -21,7 +21,7 @@ According to [Docker registry integration]({{ site.baseurl }}/documentation/refe
 
 Create temporal docker config and define images repo:
 
-```bash
+```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
@@ -62,7 +62,7 @@ Variables to define:
 
 Copy following script and place into `werf-ci-env.sh` in the root of the project:
 
-```bash
+```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
@@ -89,7 +89,7 @@ This script needs to be customized to your CI/CD system: change `WERF_*` environ
 
 Copy following script and place into `werf-ci-env-cleanup.sh`:
 
-```bash
+```shell
 rm -rf $TMP_DOCKER_CONFIG
 ```
 

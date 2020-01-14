@@ -30,6 +30,10 @@ type RunCommandOptions struct {
 }
 
 func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
+	if command == werfBinPath {
+		args = WerfBinArgs(args...)
+	}
+
 	cmd := exec.Command(command, args...)
 
 	if dir != "" {

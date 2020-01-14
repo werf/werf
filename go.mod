@@ -2,6 +2,7 @@ module github.com/flant/werf
 
 require (
 	cloud.google.com/go v0.38.0
+	github.com/DATA-DOG/go-sqlmock v1.4.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -61,12 +62,13 @@ require (
 	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moby/buildkit v0.3.3
 	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
-	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.5.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20171029140428-b1a47cfbdd75 // indirect
 	github.com/opentracing/opentracing-go v0.0.0-20171003133519-1361b9cd60be // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/pkg/profile v1.2.1 // indirect
+	github.com/prashantv/gostub v1.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0
@@ -92,6 +94,7 @@ require (
 	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	google.golang.org/grpc v1.23.0
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/src-d/go-billy.v4 v4.3.0

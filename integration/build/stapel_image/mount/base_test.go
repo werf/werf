@@ -3,8 +3,6 @@
 package mount_test
 
 import (
-	"os"
-
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -21,7 +19,7 @@ type entry struct {
 var itBody = func(e entry) {
 	utils.CopyIn(e.fixturePath, testDirPath)
 
-	Ω(os.Setenv("FROM_CACHE_VERSION", "1"))
+	stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
 	output := utils.SucceedCommandOutputString(
 		testDirPath,
@@ -33,7 +31,7 @@ var itBody = func(e entry) {
 		Ω(output).Should(match)
 	}
 
-	Ω(os.Setenv("FROM_CACHE_VERSION", "2"))
+	stubs.SetEnv("FROM_CACHE_VERSION", "2")
 
 	output = utils.SucceedCommandOutputString(
 		testDirPath,

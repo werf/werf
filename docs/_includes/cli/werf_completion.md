@@ -7,20 +7,20 @@ Generate bash completion scripts
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf completion [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Load completion run
   $ source <(werf completion)
 ```
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for completion
 ```

@@ -3,7 +3,6 @@
 package cleanup_test
 
 import (
-	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -47,8 +46,8 @@ var _ = Describe("purging images", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
-		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
+		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
 	AfterEach(func() {
@@ -112,7 +111,7 @@ var _ = Describe("purging images", func() {
 			})
 
 			It("should not remove images built without werf", func() {
-				Ω(utilsDocker.CliPull("alpine")).Should(Succeed(), "docker pull")
+				Ω(utilsDocker.Pull("alpine")).Should(Succeed(), "docker pull")
 				Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
 				defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
 

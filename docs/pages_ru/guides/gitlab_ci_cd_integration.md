@@ -56,7 +56,7 @@ author: Artem Kladov <artem.kladov@flant.com>
    * используем `shell` в качестве executor для runner'а.
 1. Добавим пользователя `gitlab-runner` в группу `docker`.
 
-   ```bash
+   ```shell
    sudo usermod -aG docker gitlab-runner
    ```
 
@@ -64,7 +64,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
 1. Установим [multiwerf](https://github.com/flant/multiwerf) пользователем `gitlab-runner`:
 
-   ```bash
+   ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
@@ -72,7 +72,7 @@ author: Artem Kladov <artem.kladov@flant.com>
    ```
 
 1. Скопируем файл конфигурации `kubectl` в домашнюю папку пользователя `gitlab-runner`.
-   ```bash
+   ```shell
    mkdir -p /home/gitlab-runner/.kube &&
    sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
@@ -104,7 +104,7 @@ stages:
 Build:
   stage: build
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf build-and-publish --stages-storage :local
   tags:
@@ -140,7 +140,7 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     ## Следующая команда непосредственно выполняет деплой
     - werf deploy --stages-storage :local
@@ -182,7 +182,7 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf dismiss --with-namespace
   environment:
@@ -277,7 +277,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local
@@ -305,7 +305,7 @@ stages:
 Build:
   stage: build
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf build-and-publish --stages-storage :local
   tags:
@@ -316,7 +316,7 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf deploy --stages-storage :local
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
@@ -340,7 +340,7 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf dismiss --with-namespace
   environment:
@@ -379,7 +379,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type multiwerf && . $(multiwerf use 1.0 stable --as-file)
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local

@@ -18,6 +18,7 @@ publish_binaries() {
       done
 
     ( bintray_upload_file_into_version $VERSION $RELEASE_BUILD_DIR/$VERSION/SHA256SUMS SHA256SUMS ) || ( exit 1 )
+    ( bintray_publish_files_in_version "$VERSION" ) || ( echo "Failed to publish uploaded files in version $VERSION" 1>&2 && exit 1 )
 }
 
 sign_binaries() {

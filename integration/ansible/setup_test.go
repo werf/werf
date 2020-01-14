@@ -5,6 +5,8 @@ package ansible_test
 import (
 	"testing"
 
+	"github.com/prashantv/gostub"
+
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -14,10 +16,11 @@ import (
 
 func TestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Release server suite")
+	ginkgo.RunSpecs(t, "Ansible suite")
 }
 
 var werfBinPath string
+var stubs = gostub.New()
 
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
@@ -31,9 +34,9 @@ var _ = ginkgo.SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = ginkgo.BeforeEach(func() {
-	utils.BeforeEachOverrideWerfProjectName()
+	utils.BeforeEachOverrideWerfProjectName(stubs)
 })
 
 var _ = ginkgo.AfterEach(func() {
-	utils.ResetEnviron()
+	stubs.Reset()
 })

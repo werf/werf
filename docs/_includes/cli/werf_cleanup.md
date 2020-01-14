@@ -14,19 +14,19 @@ with other werf commands such as build, deploy and host cleanup.
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf cleanup [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

@@ -113,7 +113,7 @@ The [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.
 
 **NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-params-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
 
-```
+```shell
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
 werf build-and-publish --stages-storage :local
 ```
@@ -122,7 +122,7 @@ Sourcing ci-env command output will also print all exported variables with their
 
 Here is an example output of the `werf ci-env` command's script without sourcing:
 
-```bash
+```shell
 ### DOCKER CONFIG
 echo '### DOCKER CONFIG'
 export DOCKER_CONFIG="/tmp/werf-docker-config-204033515"
@@ -188,7 +188,7 @@ Examples:
 
 The `--add-label` and `--add-annotation` parameters are an exception to this rule. They can be specified multiple times. Use the following template to set these parameters by environment variables: `WERF_ADD_ANNOTATION_<ARBITRARY_VARIABLE_NAME_SUFFIX>="annoName1=annoValue1"`. For example:
 
-```bash
+```shell
 export WERF_ADD_ANNOTATION_MYANNOTATION_1="annoName1=annoValue1"
 export WERF_ADD_ANNOTATION_MYANNOTATION_2="annoName2=annoValue2"
 export WERF_ADD_LABEL_MYLABEL_1="labelName1=labelValue1"

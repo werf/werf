@@ -23,23 +23,21 @@ var _ = Describe("Helm hooks deleter", func() {
 			werfDismiss("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{})
 		})
 
-		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/flant/werf/issues/1885", func(done Done) {
+		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/flant/werf/issues/1885", func() {
 			gotDeletingHookLine := false
 
 			Expect(werfDeploy("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/migrate: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(line).ShouldNot(ContainSubstring("NOTICE Will not delete Job/migrate: resource does not belong to the helm release"), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.HasPrefix(line, "│ Deleting resource Job/migrate from release") {
+					if strings.Contains(line, "Deleting resource Job/migrate from release") {
 						gotDeletingHookLine = true
 					}
 				},
 			})).Should(Succeed())
 
 			Expect(gotDeletingHookLine).Should(BeTrue())
-
-			close(done)
-		}, 120)
+		})
 	})
 
 	Context("when releasing a chart containing a hook with before-hook-creation delete policy", func() {
@@ -58,7 +56,7 @@ var _ = Describe("Helm hooks deleter", func() {
 			werfDismiss("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{})
 		})
 
-		It("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func(done Done) {
+		It("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func() {
 			hookName := "myhook"
 
 			Expect(werfDeploy("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{})).Should(Succeed())
@@ -80,9 +78,9 @@ var _ = Describe("Helm hooks deleter", func() {
 			// Update release, hook should be deleted by before-hook-creation policy and created again
 			Expect(werfDeploy("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/myhook: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(line).ShouldNot(ContainSubstring("NOTICE Will not delete Job/myhook: resource does not belong to the helm release"), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.HasPrefix(line, "│ Deleting resource Job/myhook from release") {
+					if strings.Contains(line, "Deleting resource Job/myhook from release") {
 						gotDeletingHookLine = true
 					}
 				},
@@ -92,8 +90,6 @@ var _ = Describe("Helm hooks deleter", func() {
 			newHookObj, err = kube.Kubernetes.BatchV1().Jobs(namespace).Get(hookName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newHookObj.UID).NotTo(Equal(hookObj.UID))
-
-			close(done)
-		}, 120)
+		})
 	})
 })

@@ -14,13 +14,13 @@ cluster will also be deleted.
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf purge [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

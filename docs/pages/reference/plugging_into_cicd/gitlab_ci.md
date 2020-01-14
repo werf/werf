@@ -74,6 +74,6 @@ Other variables are configured in the regular way described in the [overview art
 
 You can turn on the integration with GitLab CI by invoking the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) with the required positional argument:
 
-```
+```shell
 werf ci-env gitlab --tagging-strategy ...
 ```

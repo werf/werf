@@ -7,13 +7,13 @@ Deploy Helm chart specified by path
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease
 
@@ -24,7 +24,7 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --ca-file='':
             verify certificates of HTTPS-enabled servers using this CA bundle (if using CHART as a  
             chart reference)

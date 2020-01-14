@@ -7,7 +7,7 @@ Work with stages, which are cache for images
 
 {{ header }} Options
 
-```bash
+```shell
   -h, --help=false:
             help for stages
 ```

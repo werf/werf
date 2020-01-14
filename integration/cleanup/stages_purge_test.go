@@ -3,7 +3,6 @@
 package cleanup_test
 
 import (
-	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -34,8 +33,8 @@ var _ = Describe("purging stages", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
-		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
+		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
 	AfterEach(func() {
@@ -86,7 +85,7 @@ var _ = Describe("purging stages", func() {
 						"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
 					)
 
-					Ω(os.Setenv("WERF_LOG_PRETTY", "0")).Should(Succeed())
+					stubs.SetEnv("WERF_LOG_PRETTY", "0")
 				})
 
 				It("should fail with specific error", func() {

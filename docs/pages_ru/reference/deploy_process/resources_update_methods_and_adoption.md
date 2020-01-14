@@ -44,7 +44,7 @@ metadata:
 
 То пользователь может синхронизировать текущее состояние ресурса с его конфигурацией в чарте, выполнив следующую команду:
 
-```bash
+```shell
 kubectl -n mynamespace patch cm/myconfigmap '{"data":{"node.conf":"PROPER CONTENT"}}'
 ```
 

@@ -15,13 +15,13 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf dismiss [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
   $ werf dismiss --env dev
 
@@ -34,7 +34,7 @@ werf dismiss [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

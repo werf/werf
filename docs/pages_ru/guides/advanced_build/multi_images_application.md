@@ -22,10 +22,10 @@ werf позволяет описать все образы проекта в о�
 
 ### Выбор версии werf
 
-Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале beta, релиза 1.0, выполним следующую команду:
+Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале stable, релиза 1.0, выполним следующую команду:
 
 ```shell
-source <(multiwerf use 1.0 beta)
+. $(multiwerf use 1.0 stable --as-file)
 ```
 
 ## Сборка приложения
@@ -223,7 +223,7 @@ git:
 
 Склонируем репозиторий с кодом приложения [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app):
 
-```bash
+```shell
 git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 ```
 
@@ -385,7 +385,7 @@ NGINX в образе `reverse_proxy` принимает запросы по SSL
 
 Для создания ключа и сертификата выполним следующую команду в корневой папке проекта:
 
-```bash
+```shell
 mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=atseashop.com;" -sha256 -keyout reverse_proxy/certs/revprox_key -x509 -days 365 -out reverse_proxy/certs/revprox_cert
 ```
 
@@ -393,14 +393,14 @@ mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=a
 
 Для сборки всех образов проекта, выполним следующую команду в корневой папке проекта:
 
-```bash
+```shell
 werf build --stages-storage :local
 ```
 
 ## Шаг 5: Добавление информации в файл /etc/hosts
 
 Чтобы пример открывался в браузере по имени `http://atseashop.com`, добавьте в файл `etc/hosts` строку для `atseashop.com` с адресом локального интерфейса. Например вот так:
-```bash
+```shell
 sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 ```
 
@@ -408,7 +408,7 @@ sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 
 Для запуска приложения, выполним следующие команды в корневой папке проекта:
 
-```bash
+```shell
 werf run --stages-storage :local --docker-options="-d --name payment_gw" payment_gw  &&
 werf run --stages-storage :local --docker-options="-d --name database -p 5432:5432" database &&
 werf run --stages-storage :local --docker-options="-d --name app -p 8080:8080 --link database:database" app &&
@@ -416,7 +416,7 @@ werf run --stages-storage :local --docker-options="-d --name reverse_proxy -p 80
 ```
 
 Проверьте что все контейнеры запустились, выполнив:
-```bash
+```shell
 docker ps
 ```
 
@@ -429,7 +429,7 @@ docker ps
 
 Для остановки контейнеров приложения выполним следующую команду:
 
-```bash
+```shell
 docker stop reverse_proxy app database payment_gw
 ```
 

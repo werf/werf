@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
+	"time"
+
+	"github.com/prashantv/gostub"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -30,20 +32,37 @@ func GetTempDir() (string, error) {
 	return dir, nil
 }
 
+var werfBinPath string
+
 func ProcessWerfBinPath() string {
-	path := os.Getenv("WERF_TEST_WERF_BINARY_PATH")
-	if path == "" {
+	werfBinPath = os.Getenv("WERF_TEST_BINARY_PATH")
+	if werfBinPath == "" {
 		var err error
-		path, err = gexec.Build("github.com/flant/werf/cmd/werf")
+		werfBinPath, err = gexec.Build("github.com/flant/werf/cmd/werf")
 		Ω(err).ShouldNot(HaveOccurred())
 	}
 
-	return path
+	return werfBinPath
 }
 
-func BeforeEachOverrideWerfProjectName() {
+func WerfBinArgs(userArgs ...string) []string {
+	var args []string
+	if os.Getenv("WERF_TEST_BINARY_PATH") != "" && os.Getenv("WERF_TEST_COVERAGE_DIR") != "" {
+		coverageFilePath := filepath.Join(
+			os.Getenv("WERF_TEST_COVERAGE_DIR"),
+			fmt.Sprintf("%s-%s.out", strconv.FormatInt(time.Now().UTC().UnixNano(), 10), GetRandomString(10)),
+		)
+		args = append(args, fmt.Sprintf("-test.coverprofile=%s", coverageFilePath))
+	}
+
+	args = append(args, userArgs...)
+
+	return args
+}
+
+func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
 	projectName := "werf-integration-test-" + strconv.Itoa(os.Getpid()) + "-" + GetRandomString(10)
-	Ω(os.Setenv("WERF_PROJECT_NAME", projectName)).ShouldNot(HaveOccurred())
+	stubs.SetEnv("WERF_PROJECT_NAME", projectName)
 }
 
 func ProjectName() string {
@@ -71,22 +90,4 @@ func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
 	}
 
 	return hasRequirements
-}
-
-var environ = os.Environ()
-
-func ResetEnviron() {
-	os.Clearenv()
-	for _, env := range environ {
-		// ignore dynamic variables (e.g. "=ExitCode" windows variable)
-		if strings.HasPrefix(env, "=") {
-			continue
-		}
-
-		parts := strings.SplitN(env, "=", 2)
-		envName := parts[0]
-		envValue := parts[1]
-
-		Ω(os.Setenv(envName, envValue)).Should(Succeed(), env)
-	}
 }

@@ -3,7 +3,6 @@
 package cleanup_test
 
 import (
-	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -46,8 +45,8 @@ var _ = Describe("cleaning images", func() {
 			"commit", "-m", "Initial commit",
 		)
 
-		Ω(os.Setenv("WERF_IMAGES_REPO", registryProjectRepository)).Should(Succeed())
-		Ω(os.Setenv("WERF_STAGES_STORAGE", ":local")).Should(Succeed())
+		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
+		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
 	AfterEach(func() {
@@ -68,7 +67,7 @@ var _ = Describe("cleaning images", func() {
 		Describe(commandToCheck, func() {
 			Context("when deployed images in kubernetes are not taken in account", func() {
 				BeforeEach(func() {
-					Ω(os.Setenv("WERF_WITHOUT_KUBE", "1")).Should(Succeed())
+					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 				})
 
 				It("should work properly with non-existent registry repository", func() {

@@ -88,7 +88,7 @@ layout: default
             </div>
         </li>
     </ul>
-    <a href="https://github.com/flant/werf/blob/master/README.md#complete-features-list" target="_blank" class="page__btn page__btn_o intro__btn">
+    <a href="https://github.com/flant/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
         Check out a complete features list
     </a>
 </div>
@@ -166,7 +166,7 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly and growing community</div>
-            <div class="community__subtitle">werf’s developers are always in contact with the community<br/> in Twitter, Slack and Telegram.</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community<br/> in Twitter and Slack.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
@@ -175,10 +175,6 @@ layout: default
                 <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
                     Join via Slack
-                </a>
-                <a href="{{ site.social_links[page.lang].telegram }}" target="_blank" class="page__btn page__btn_w community__btn">
-                    <span class="page__icon page__icon_telegram"></span>
-                    Join via Telegram
                 </a>
             </div>
         </div>

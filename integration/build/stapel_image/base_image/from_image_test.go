@@ -4,7 +4,6 @@ package base_image_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -16,7 +15,7 @@ import (
 
 var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfterBuildChecks func(appConfigName, fromImageConfigName string)) {
 	By(fmt.Sprintf("fromCacheVersion: %s", "0"))
-	Ω(os.Setenv("FROM_CACHE_VERSION", "0")).Should(Succeed())
+	stubs.SetEnv("FROM_CACHE_VERSION", "0")
 
 	output := utils.SucceedCommandOutputString(
 		testDirPath,
@@ -29,7 +28,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 
 	By(fmt.Sprintf("fromCacheVersion: %s", "1"))
-	Ω(os.Setenv("FROM_CACHE_VERSION", "1")).Should(Succeed())
+	stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
 	output = utils.SucceedCommandOutputString(
 		testDirPath,

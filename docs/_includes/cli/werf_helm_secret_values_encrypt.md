@@ -8,20 +8,20 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm secret values encrypt [FILE_PATH] [options]
 ```
 
 {{ header }} Examples
 
-```bash
+```shell
   # Encrypt and save result in file
   $ werf helm secret values encrypt test.yaml -o .helm/secret-values.yaml
 ```
 
 {{ header }} Environments
 
-```bash
+```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
                     set secret key in CI-system. 
                     
@@ -32,7 +32,7 @@ werf helm secret values encrypt [FILE_PATH] [options]
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:

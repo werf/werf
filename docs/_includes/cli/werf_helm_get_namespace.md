@@ -7,13 +7,13 @@ Print Kubernetes Namespace that will be used in current configuration with speci
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm get-namespace [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

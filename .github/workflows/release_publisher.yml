@@ -1,0 +1,26 @@
+name: Release publisher
+on:
+  push:
+    tags:
+    - 'v*'
+env:
+  GO111MODULE: on
+jobs:
+  publish_release:
+    name: Publish multiwerf release
+    runs-on: [self-hosted, linux]
+    steps:
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Publish
+      run: |
+        ./scripts/publish_release.sh ${GITHUB_REF#refs/tags/}
+      shell: bash
+      env:
+        PUBLISH_BINTRAY_AUTH: ${{ secrets.PUBLISH_BINTRAY_AUTH }}
+        PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}

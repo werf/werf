@@ -7,13 +7,13 @@ Add a chart repository
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm repo add [NAME] [URL] [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --ca-file='':
             verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file='':

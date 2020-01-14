@@ -16,13 +16,13 @@ dependencies to mirror the requirements.yaml file and generate a lock file.
 
 {{ header }} Syntax
 
-```bash
+```shell
 werf helm dependency build [options]
 ```
 
 {{ header }} Options
 
-```bash
+```shell
       --dir='':
             Change to the specified directory to find werf.yaml config
       --helm-home='~/.helm':
