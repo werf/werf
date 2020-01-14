@@ -22,7 +22,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		It("should successfully build image using arbitrary ansible modules", func(done Done) {
 			Expect(werfBuild("general", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when building stapel image based on centos 6 and 7", func() {
@@ -33,7 +33,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		It("successfully installs packages using yum module", func(done Done) {
 			Expect(werfBuild("yum1", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when building stapel image based on centos 8", func() {
@@ -45,7 +45,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			Skip("FIXME https://github.com/flant/werf/issues/1983")
 			Expect(werfBuild("yum2", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when become_user task option used", func() {
@@ -57,7 +57,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			Skip("FIXME https://github.com/flant/werf/issues/1806")
 			Expect(werfBuild("become_user", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when using apt_key module used (1)", func() {
@@ -90,7 +90,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			Expect(gotPackageInstallDone).To(BeTrue())
 
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when using apt_key module used (2)", func() {
@@ -103,7 +103,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 			Expect(werfBuild("apt_key2", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when apt-mark from apt module used (https://github.com/flant/werf/issues/1820)", func() {
@@ -114,7 +114,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		It("should not panic in all supported ubuntu versions", func(done Done) {
 			Expect(werfBuild("apt_mark_panic_1820", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when using yarn module to install nodejs packages", func() {
@@ -128,7 +128,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			Expect(setGitRepoState("yarn", "yarn_repo", "initial commit")).To(Succeed())
 			Expect(werfBuild("yarn", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 
 	Context("when installing python requirements using ansible and python files contain utf-8 chars", func() {
@@ -157,6 +157,6 @@ var _ = Describe("Stapel builder with ansible", func() {
 		It("PATH should not be redefined in stapel build container", func(done Done) {
 			Expect(werfBuild("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{})).To(Succeed())
 			close(done)
-		}, 300)
+		}, 500)
 	})
 })
