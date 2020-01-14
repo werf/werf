@@ -52,7 +52,7 @@ var _ = Describe("Resources owner checker", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy1:
-			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			delete(mydeploy1.Annotations, "service.werf.io/owner-release")
 			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy1)
@@ -66,7 +66,7 @@ var _ = Describe("Resources owner checker", func() {
 			// Should succeed without "inconsistent state detected" error
 			Expect(werfDeploy("resources_owner_checker_app1-003", liveexec.ExecCommandOptions{}, "--three-way-merge-mode", "disabled")).To(Succeed())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get(deploymentName("mydeploy1"), metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy1.Annotations["service.werf.io/owner-release"]).To(Equal(releaseName))
 		})
