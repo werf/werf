@@ -194,7 +194,7 @@ entries:
                 url: /documentation/cli/management/config/render.html
 
               - title: config list
-                url: /documentation/cli/management/config/render.html
+                url: /documentation/cli/management/config/list.html
 
               - title: stages build
                 url: /documentation/cli/management/stages/build.html
