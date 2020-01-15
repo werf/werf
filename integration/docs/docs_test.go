@@ -29,7 +29,7 @@ var _ = BeforeEach(func() {
 })
 
 var itBody = func(entry entry) {
-	resolvedExpectationPath, err := filepath.EvalSymlinks(fixturePath(entry.fixturesDir, "expectation"))
+	resolvedExpectationPath, err := filepath.EvalSymlinks(utils.FixturePath(entry.fixturesDir, "expectation"))
 	Ω(err).ShouldNot(HaveOccurred())
 
 	utils.CopyIn(resolvedExpectationPath, filepath.Join(testDirPath, "expectation"))
@@ -92,7 +92,7 @@ var _ = DescribeTable("docs", itBody,
 	Entry("readme", entry{
 		fixturesDir: "readme",
 		extraArgsFunc: func() []string {
-			readmePath, err := filepath.Abs(fixturePath("readme", "README.md"))
+			readmePath, err := filepath.Abs(utils.FixturePath("readme", "README.md"))
 			Ω(err).ShouldNot(HaveOccurred())
 
 			return []string{"--split-readme", "--readme", readmePath}

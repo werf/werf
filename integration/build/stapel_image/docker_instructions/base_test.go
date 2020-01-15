@@ -21,7 +21,7 @@ type entry struct {
 }
 
 var itBody = func(e entry) {
-	testDirPath = fixturePath("base")
+	testDirPath = utils.FixturePath("base")
 
 	for envName, envValue := range e.envs {
 		stubs.SetEnv(envName, envValue)

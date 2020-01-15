@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("helm render", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("base"), testDirPath)
+		utils.CopyIn(utils.FixturePath("base"), testDirPath)
 	})
 
 	It("should be rendered", func() {

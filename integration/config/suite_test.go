@@ -3,7 +3,6 @@
 package config_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -41,8 +40,3 @@ var _ = BeforeEach(func() {
 var _ = AfterEach(func() {
 	stubs.Reset()
 })
-
-func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{"_fixtures"}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

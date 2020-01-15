@@ -43,7 +43,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 
 var _ = Describe("fromImage", func() {
 	BeforeEach(func() {
-		testDirPath = fixturePath("from_image")
+		testDirPath = utils.FixturePath("from_image")
 	})
 
 	It("should be rebuilt", func() {
@@ -67,7 +67,7 @@ var _ = Describe("fromImage", func() {
 
 var _ = Describe("fromImageArtifact", func() {
 	BeforeEach(func() {
-		testDirPath = fixturePath("from_image_artifact")
+		testDirPath = utils.FixturePath("from_image_artifact")
 	})
 
 	It("should be rebuilt", func() {

@@ -4,7 +4,6 @@ package repo_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/prashantv/gostub"
@@ -38,11 +37,8 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = BeforeEach(func() {
-	var err error
-	tmpDir, err = utils.GetTempDir()
-	Ω(err).ShouldNot(HaveOccurred())
-
-	testDirPath = tmpPath()
+	tmpDir = utils.GetTempDir()
+	testDirPath = tmpDir
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 })
@@ -53,8 +49,3 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func tmpPath(paths ...string) string {
-	pathsToJoin := append([]string{tmpDir}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

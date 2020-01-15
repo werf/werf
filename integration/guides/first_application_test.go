@@ -30,7 +30,7 @@ var _ = Describe("Advanced build/First application", func() {
 				"clone", "https://github.com/symfony/symfony-demo.git", testDirPath,
 			)
 
-			utils.CopyIn(fixturePath("first_application", boundedBuilder), testDirPath)
+			utils.CopyIn(utils.FixturePath("first_application", boundedBuilder), testDirPath)
 
 			utils.RunSucceedCommand(
 				testDirPath,

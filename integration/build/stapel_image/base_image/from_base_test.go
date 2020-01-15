@@ -31,7 +31,7 @@ var _ = Describe("from and fromLatest", func() {
 	}
 
 	BeforeEach(func() {
-		testDirPath = fixturePath("from_and_from_latest")
+		testDirPath = utils.FixturePath("from_and_from_latest")
 
 		fromBaseRepoImageState1ID = utilsDocker.ImageID(suiteImage1)
 		fromBaseRepoImageState2ID = utilsDocker.ImageID(suiteImage2)
@@ -346,7 +346,7 @@ var _ = Describe("from and fromLatest", func() {
 
 var _ = Describe("fromCacheVersion", func() {
 	BeforeEach(func() {
-		testDirPath = fixturePath("from_cache_version")
+		testDirPath = utils.FixturePath("from_cache_version")
 	})
 
 	It("should be rebuilt", func() {

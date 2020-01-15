@@ -27,7 +27,7 @@ var _ = Describe("Getting started", func() {
 			"clone", "https://github.com/dockersamples/linux_tweet_app.git", testDirPath,
 		)
 
-		utils.CopyIn(fixturePath("getting_started"), testDirPath)
+		utils.CopyIn(utils.FixturePath("getting_started"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

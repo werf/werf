@@ -33,7 +33,7 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 				Skip("skip on windows")
 			}
 
-			commonBeforeEach(testDirPath, fixturePath(append(fixturesPathParts, fixturePathFolder)...))
+			commonBeforeEach(testDirPath, utils.FixturePath(append(fixturesPathParts, fixturePathFolder)...))
 
 			projectAddedFilePath := filepath.Join(entry.dirToAdd, "file")
 			containerAddedDirPath := path.Join(gitToPath, entry.dirToAdd)

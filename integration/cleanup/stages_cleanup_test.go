@@ -16,7 +16,7 @@ var _ = Describe("cleaning stages", func() {
 	var commit string
 
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("stages_cleanup"), testDirPath)
+		utils.CopyIn(utils.FixturePath("stages_cleanup"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

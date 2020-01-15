@@ -26,7 +26,7 @@ var _ = It("should generate secret key", func() {
 })
 
 var _ = It("should rotate secret key", func() {
-	utils.CopyIn(fixturePath("rotate_secret_key"), testDirPath)
+	utils.CopyIn(utils.FixturePath("rotate_secret_key"), testDirPath)
 
 	res, err := ioutil.ReadFile(filepath.Join(testDirPath, ".werf_secret_key"))
 	Ω(err).ShouldNot(HaveOccurred())
@@ -64,7 +64,7 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 	var encryptedSecret = "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 	})
 
 	It("should be encrypted", func() {

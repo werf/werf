@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("persistent stage signatures", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("signature"), testDirPath)
+		utils.CopyIn(utils.FixturePath("signature"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

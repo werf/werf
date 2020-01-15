@@ -5,7 +5,6 @@ package mount_test
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/prashantv/gostub"
@@ -47,11 +46,8 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = BeforeEach(func() {
-	var err error
-	tmpDir, err = utils.GetTempDir()
-	Ω(err).ShouldNot(HaveOccurred())
-
-	testDirPath = tmpPath()
+	tmpDir = utils.GetTempDir()
+	testDirPath = tmpDir
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
@@ -69,18 +65,3 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func tmpPath(paths ...string) string {
-	pathsToJoin := append([]string{tmpDir}, paths...)
-	return filepath.Join(pathsToJoin...)
-}
-
-func fixturePath(paths ...string) string {
-	absFixturesPath, err := filepath.Abs("_fixtures")
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "getting absolute fixtures path failed: %s", err)
-		os.Exit(1)
-	}
-	pathsToJoin := append([]string{absFixturesPath}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

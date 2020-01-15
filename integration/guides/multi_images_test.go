@@ -27,7 +27,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 			"clone", "https://github.com/dockersamples/atsea-sample-shop-app.git", testDirPath,
 		)
 
-		utils.CopyIn(fixturePath("multi_images"), testDirPath)
+		utils.CopyIn(utils.FixturePath("multi_images"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

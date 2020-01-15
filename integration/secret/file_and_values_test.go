@@ -26,12 +26,12 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 	}
 
 	var decryptItBody = func(secretType string) {
-		utils.CopyIn(fixturePath(secretType), testDirPath)
+		utils.CopyIn(utils.FixturePath(secretType), testDirPath)
 		decryptAndCheckFileOrValues(secretType, "encrypted_secret")
 	}
 
 	var encryptItBody = func(secretType string) {
-		utils.CopyIn(fixturePath(secretType), testDirPath)
+		utils.CopyIn(utils.FixturePath(secretType), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,
