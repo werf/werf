@@ -14,9 +14,9 @@
     </div>
     <div class="footer__gen">
         {% if page.lang == "ru" %}
-        Дата генерации сайта: {{ site.time | date: "%e.%m.%Y"  }}
+        Дата генерации сайта: {{ site.time | date: "%e.%m.%Y, %H:%M"  }}
         {% else %}
-        Site last generated: {{ site.time | date: "%b %-d, %Y"  }}
+        Site last generated: {{ site.time | date: "%b %-d, %Y at %H:%M"  }}
         {% endif %}
     </div>
     <div id="werfVersion" hidden>{{ site.werfVersion }}</div>
