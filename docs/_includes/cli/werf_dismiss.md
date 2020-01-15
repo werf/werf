@@ -56,8 +56,21 @@ werf dismiss [options]
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --log-color-mode='auto':
+            Set log color mode.
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
+            terminal) modes.
+            Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
+            true).
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml)

@@ -45,6 +45,10 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -69,6 +73,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
+	common.SetupLogOptions(&CommonCmdData, cmd)
 	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
