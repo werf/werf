@@ -11,12 +11,6 @@ Get release templates and values by release name
 werf helm get RELEASE_NAME [options]
 ```
 
-{{ header }} Environments
-
-```shell
-
-```
-
 {{ header }} Options
 
 ```shell

@@ -40,9 +40,11 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 		return nil
 	}
 
-	buf.WriteString("{{ header }} Environments\n\n```shell\n")
-	buf.WriteString(environments)
-	buf.WriteString("\n```\n\n")
+	if environments != "" {
+		buf.WriteString("{{ header }} Environments\n\n```shell\n")
+		buf.WriteString(environments)
+		buf.WriteString("\n```\n\n")
+	}
 
 	return nil
 }
