@@ -11,12 +11,6 @@ Fetch release history
 werf helm history RELEASE_NAME [options]
 ```
 
-{{ header }} Environments
-
-```shell
-
-```
-
 {{ header }} Options
 
 ```shell

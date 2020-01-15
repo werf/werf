@@ -11,12 +11,6 @@ Rollback a release to the specified revision
 werf helm rollback RELEASE_NAME REVISION [options]
 ```
 
-{{ header }} Environments
-
-```shell
-
-```
-
 {{ header }} Options
 
 ```shell

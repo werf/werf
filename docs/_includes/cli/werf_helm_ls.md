@@ -11,12 +11,6 @@ List werf releases
 werf helm ls [FILTER] [options]
 ```
 
-{{ header }} Environments
-
-```shell
-
-```
-
 {{ header }} Options
 
 ```shell

@@ -11,12 +11,6 @@ Delete release from Kubernetes with all resources associated with the last relea
 werf helm delete RELEASE_NAME [options]
 ```
 
-{{ header }} Environments
-
-```shell
-
-```
-
 {{ header }} Options
 
 ```shell
