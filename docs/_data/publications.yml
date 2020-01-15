@@ -3,6 +3,20 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Announcing werf 1.0 stable: The state & future of our GitOps tool"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/announcing-werf-1-0-stable-813b664a06ae"
+    img: "/images/publications/en_140120.png"
+    created: 2020-01-14
+    comment: |
+      <p>In this article, timed to coincide with the werf release, we will provide a detailed description of what this version can and cannot do, as well as discuss our plans for future versions. However, let’s start with what the term “GitOps” means and what role werf has in the process of continuous integration and continuous delivery (CI/CD).</p>
+  - title: "3-way merge in werf: deploying to Kubernetes via Helm “on steroids”"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe"
+    img: "/images/publications/en_261119.png"
+    created: 2019-11-26
+    comment: |
+      <p>Let’s start with a theory. What are three-way-merge patches? How they’ve been invented, and why they are so essential for CI/CD processes with a Kubernetes-based infrastructure? And later, we will discuss the 3-way-merge process in werf, what modes are used by default, and how can you manage all this stuff.</p>
   - title: "Building and deploying lots of microservices using werf and GitLab CI"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/building-and-deploying-lots-of-microservices-using-werf-and-gitlab-ci-3ce2b7d19450"
@@ -48,6 +62,27 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Представляем werf 1.0 stable: при чём тут GitOps, статус и планы"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/481306/"
+    img: "/images/publications/ru_140120.png"
+    created: 2020-01-14
+    comment: |
+      <p>В этой приуроченной к релизу статье мы подробнее рассмотрим, что предоставляет и не предоставляет данная версия, а также наши планы на будущие версии. Но начнём мы с того, что разберёмся в понимании термина «GitOps» и роли werf в процессах непрерывной интеграции и доставки приложений (CI/CD).</p>
+  - title: "Запуск команд в процессе доставки нового релиза приложения в Kubernetes"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/476320/"
+    img: "/images/publications/ru_171219.png"
+    created: 2019-12-17
+    comment: |
+      <p>В своей практике мы часто сталкиваемся с задачей адаптации клиентских приложений для запуска в Kubernetes. При проведении данных работ возникает ряд типовых проблем. Одну из них мы недавно осветили в статье <a href="https://habr.com/ru/company/flant/blog/471582/">Локальные файлы при переносе приложения в Kubernetes</a>, а о другой, связанной уже с процессами CI/CD, — расскажем в этом материале.</p>
+  - title: "3-way merge в werf: деплой в Kubernetes с Helm «на стероидах»"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/476646/"
+    img: "/images/publications/ru_211119.png"
+    created: 2019-11-21
+    comment: |
+      <p>Что такое 3-way-merge-патчи, как люди пришли к подходу с их генерацией и почему они важны в CI/CD-процессах с инфраструктурой на базе Kubernetes? Что представляет собой 3-way-merge в werf, какие режимы используются по умолчанию и как этим управлять.</p>
   - title: "Сборка и деплой однотипных микросервисов с werf и GitLab CI"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/469541/"
