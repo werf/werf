@@ -20,7 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Three way merge patches creator", func() {
+var _ = Describe("Three way merge patches creator", func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})

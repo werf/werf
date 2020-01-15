@@ -73,7 +73,7 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 	Expect(ds.UpToDate).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s UP-TO-DATE should not be reported", ds.Deployment))
 }
 
-var _ = XDescribe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
+var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
 			utils.RunCommand("kubedog_multitrack_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")

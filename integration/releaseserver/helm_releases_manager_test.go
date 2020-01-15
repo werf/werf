@@ -17,7 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Helm releases manager", func() {
+var _ = Describe("Helm releases manager", func() {
 	var projectName, releaseName string
 
 	BeforeEach(func() {

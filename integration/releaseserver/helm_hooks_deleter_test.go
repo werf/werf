@@ -17,7 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Helm hooks deleter", func() {
+var _ = Describe("Helm hooks deleter", func() {
 	Context("when installing chart with post-install Job hook and hook-succeeded delete policy", func() {
 		AfterEach(func() {
 			utils.RunCommand("helm_hooks_deleter_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
