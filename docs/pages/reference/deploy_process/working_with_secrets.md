@@ -84,7 +84,7 @@ To manage secret files use the following commands:
 
 The `werf_secret_file` runtime function allows using decrypted file content in a template. The required function argument is a secret file path relative to `.helm/secret` directory.
 
-Using the decrypted secret `.helm/backend-saml/tls.key` in a template may appear as follows:
+Using the decrypted secret `.helm/secret/backend-saml/tls.key` in a template may appear as follows:
 
 {% raw %}
 ```yaml
