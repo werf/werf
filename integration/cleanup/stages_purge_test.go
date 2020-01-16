@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("purging stages", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

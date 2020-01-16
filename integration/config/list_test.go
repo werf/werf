@@ -16,7 +16,7 @@ type listEntry struct {
 }
 
 var listItBody = func(entry listEntry) {
-	testDirPath = fixturePath("list")
+	testDirPath = utils.FixturePath("list")
 
 	werfArgs := []string{"config", "list"}
 	werfArgs = append(werfArgs, entry.extraArgs...)

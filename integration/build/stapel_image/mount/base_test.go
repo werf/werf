@@ -48,7 +48,7 @@ var itBody = func(e entry) {
 
 var _ = DescribeTable("base", itBody,
 	Entry("tmp_dir", entry{
-		fixturePath: fixturePath("tmp_dir"),
+		fixturePath: utils.FixturePath("tmp_dir"),
 		expectedFirstBuildOutputMatchers: []types.GomegaMatcher{
 			ContainSubstring("Result number is 2"),
 		},
@@ -57,7 +57,7 @@ var _ = DescribeTable("base", itBody,
 		},
 	}),
 	Entry("build_dir", entry{
-		fixturePath: fixturePath("build_dir"),
+		fixturePath: utils.FixturePath("build_dir"),
 		expectedFirstBuildOutputMatchers: []types.GomegaMatcher{
 			ContainSubstring("Result number is 2"),
 		},
@@ -66,7 +66,7 @@ var _ = DescribeTable("base", itBody,
 		},
 	}),
 	Entry("from_path", entry{
-		fixturePath: fixturePath("from_path"),
+		fixturePath: utils.FixturePath("from_path"),
 		expectedFirstBuildOutputMatchers: []types.GomegaMatcher{
 			ContainSubstring("Result number is 4"),
 		},

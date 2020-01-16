@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("purging images", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
 		utils.RunSucceedCommand(
 			testDirPath,

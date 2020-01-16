@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("helm dependency", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
 		stubs.SetEnv("WERF_HELM_HOME", filepath.Join(testDirPath, ".helm"))
 		utils.RunSucceedCommand(

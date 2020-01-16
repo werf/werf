@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("Advanced build/Mounts", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("mounts"), testDirPath)
+		utils.CopyIn(utils.FixturePath("mounts"), testDirPath)
 	})
 
 	AfterEach(func() {

@@ -4,7 +4,6 @@ package common_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/prashantv/gostub"
@@ -38,11 +37,8 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 })
 
 var _ = BeforeEach(func() {
-	var err error
-	tmpDir, err = utils.GetTempDir()
-	Ω(err).ShouldNot(HaveOccurred())
-
-	testDirPath = tmpPath()
+	tmpDir = utils.GetTempDir()
+	testDirPath = tmpDir
 })
 
 var _ = AfterEach(func() {
@@ -51,13 +47,3 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func tmpPath(paths ...string) string {
-	pathsToJoin := append([]string{tmpDir}, paths...)
-	return filepath.Join(pathsToJoin...)
-}
-
-func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{"_fixtures"}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

@@ -5,7 +5,6 @@ package base_image_test
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -77,8 +76,3 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{"_fixtures"}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

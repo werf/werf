@@ -102,7 +102,7 @@ var _ = Describe("file lifecycle", func() {
 
 	BeforeEach(func() {
 		fixturesPathParts = []string{"file_lifecycle"}
-		commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+		commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 	})
 
 	type test struct {

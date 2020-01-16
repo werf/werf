@@ -15,7 +15,7 @@ var _ = Describe("helm get-something", func() {
 	envName := "test"
 
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("base"), testDirPath)
+		utils.CopyIn(utils.FixturePath("base"), testDirPath)
 		stubs.SetEnv("WERF_ENV", envName)
 	})
 

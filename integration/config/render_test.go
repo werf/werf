@@ -17,7 +17,7 @@ type renderEntry struct {
 }
 
 var renderItBody = func(entry renderEntry) {
-	testDirPath = fixturePath("render")
+	testDirPath = utils.FixturePath("render")
 
 	werfArgs := []string{"config", "render"}
 	werfArgs = append(werfArgs, entry.extraArgs...)

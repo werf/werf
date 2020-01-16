@@ -20,7 +20,7 @@ var _ = Describe("Deploy into kubernetes", func() {
 	)
 
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("deploy_into_kubernetes"), testDirPath)
+		utils.CopyIn(utils.FixturePath("deploy_into_kubernetes"), testDirPath)
 	})
 
 	AfterEach(func() {

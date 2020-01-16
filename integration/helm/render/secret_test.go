@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("helm render with secrets", func() {
 	BeforeEach(func() {
-		utils.CopyIn(fixturePath("secret"), testDirPath)
+		utils.CopyIn(utils.FixturePath("secret"), testDirPath)
 	})
 
 	It("should be rendered", func() {

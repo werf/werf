@@ -5,7 +5,6 @@ package docker_instruction_test
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/prashantv/gostub"
@@ -59,8 +58,3 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{"_fixtures"}, paths...)
-	return filepath.Join(pathsToJoin...)
-}

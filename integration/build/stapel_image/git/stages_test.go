@@ -63,7 +63,7 @@ var _ = Describe("git stages", func() {
 
 		BeforeEach(func() {
 			fixturesPathParts = append(fixturesPathParts, "image")
-			commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+			commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 		})
 
 		It("gitArchive stage should be built", func() {
@@ -228,7 +228,7 @@ var _ = Describe("git stages", func() {
 
 		BeforeEach(func() {
 			fixturesPathParts = append(fixturesPathParts, "artifact")
-			commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+			commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 		})
 
 		It("gitArchive stage should be built", func() {
@@ -319,7 +319,7 @@ var _ = Describe("user stages", func() {
 		Context("when stageDependencies are not defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
-				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 			})
 
 			Context("when gitArchive stage is built", func() {
@@ -404,7 +404,7 @@ var _ = Describe("user stages", func() {
 		Context("when stageDependencies are defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "with_stage_dependencies")
-				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 			})
 
 			Context("when gitArchive stage is built", func() {
@@ -487,7 +487,7 @@ var _ = Describe("user stages", func() {
 		Context("when stageDependencies are not defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
-				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 			})
 
 			Context("when gitArchive stage is built", func() {
@@ -555,7 +555,7 @@ var _ = Describe("user stages", func() {
 		Context("when stageDependencies are defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "with_stage_dependencies")
-				commonBeforeEach(testDirPath, fixturePath(fixturesPathParts...))
+				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 			})
 
 			Context("when gitArchive stage is built", func() {

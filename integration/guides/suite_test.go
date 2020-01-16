@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -55,11 +54,8 @@ var _ = SynchronizedAfterSuite(func() {
 })
 
 var _ = BeforeEach(func() {
-	var err error
-	tmpDir, err = utils.GetTempDir()
-	Ω(err).ShouldNot(HaveOccurred())
-
-	testDirPath = tmpPath()
+	tmpDir = utils.GetTempDir()
+	testDirPath = tmpDir
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 
@@ -72,16 +68,6 @@ var _ = AfterEach(func() {
 
 	stubs.Reset()
 })
-
-func tmpPath(paths ...string) string {
-	pathsToJoin := append([]string{tmpDir}, paths...)
-	return filepath.Join(pathsToJoin...)
-}
-
-func fixturePath(paths ...string) string {
-	pathsToJoin := append([]string{"_fixtures"}, paths...)
-	return filepath.Join(pathsToJoin...)
-}
 
 func waitTillHostReadyAndCheckResponseBody(url string, maxAttempts int, bodySubstring string) {
 	utils.WaitTillHostReadyToRespond(url, maxAttempts)

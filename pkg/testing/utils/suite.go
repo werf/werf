@@ -16,20 +16,16 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-func GetTempDir() (string, error) {
+func GetTempDir() string {
 	dir, err := ioutil.TempDir("", "werf-integration-tests-")
-	if err != nil {
-		return "", err
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	if runtime.GOOS == "darwin" {
 		dir, err = filepath.EvalSymlinks(dir)
-		if err != nil {
-			return "", fmt.Errorf("eval symlinks of path %s failed: %s", dir, err)
-		}
+		Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("eval symlinks of path %s failed: %s", dir, err))
 	}
 
-	return dir, nil
+	return dir
 }
 
 var werfBinPath string
@@ -67,7 +63,7 @@ func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
 
 func ProjectName() string {
 	val := os.Getenv("WERF_PROJECT_NAME")
-	Expect(val).NotTo(BeEmpty())
+	Ω(val).NotTo(BeEmpty())
 	return val
 }
 
@@ -90,4 +86,13 @@ func MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs []string) bool {
 	}
 
 	return hasRequirements
+}
+
+func FixturePath(paths ...string) string {
+	absFixturesPath, err := filepath.Abs("_fixtures")
+	if err != nil {
+		panic(err)
+	}
+	pathsToJoin := append([]string{absFixturesPath}, paths...)
+	return filepath.Join(pathsToJoin...)
 }
