@@ -18,16 +18,23 @@ jobs:
       run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
 
   unlabel:
-    name: Unlabel
+    name: Optional unlabeling
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.label.id == 1753518893 # review docs label
     steps:
 
-      - uses: actions/github-script@0.3.0
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.issues.removeLabel({...context.issue, name: '${{github.event.label.name}}'})
+    - uses: actions/github-script@0.3.0
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const eventLabelName = '${{github.event.label.name}}'
+          const response = await github.issues.listLabelsOnIssue({...context.issue})
+          for (const label of response.data) {
+            if (label.name === eventLabelName) {
+              github.issues.removeLabel({...context.issue, name: eventLabelName})
+              break
+            }
+          }
 
   deploy:
     name: Deploy
