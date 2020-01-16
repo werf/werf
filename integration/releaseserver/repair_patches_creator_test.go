@@ -34,7 +34,7 @@ var _ = Describe("Repair patches creator", func() {
 			utils.RunCommand("repair_patches_creator_app1-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func(done Done) {
+		It("should generate werf.io/repair-patch annotations on objects which has been changed in cluster and out of sync with the chart configuration", func() {
 			Expect(werfDeploy("repair_patches_creator_app1-001", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 			})).To(Succeed())
@@ -95,8 +95,6 @@ var _ = Describe("Repair patches creator", func() {
 			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
 			Expect(mydeploy1.Annotations["debug.werf.io/repair-patch"]).To(Equal(`{}`))
-
-			close(done)
-		}, 120)
+		})
 	})
 })
