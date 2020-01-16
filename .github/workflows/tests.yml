@@ -41,7 +41,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+#        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
     runs-on: ${{ matrix.os }}
     if: github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
     steps:
@@ -130,7 +131,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+#        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -313,7 +315,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS, windows]
+#        os: [macOS, windows]
+        os: [macOS]
         extra-find-args:
         - "-name 'guides.test*'"
         - "-name 'git.test*'"
@@ -382,7 +385,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS, windows]
+#        os: [macOS, windows]
+        os: [macOS]
         k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
