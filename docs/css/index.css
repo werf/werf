@@ -976,7 +976,6 @@ ul.intro__list_c2 > li {
 }
 
 .footer__github {
-    flex: 1;
     margin-left: 130px;
     display: flex;
     flex-direction: row;
