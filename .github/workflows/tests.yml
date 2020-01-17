@@ -4,6 +4,8 @@ on:
     types: [labeled]
   schedule:
   - cron:  '0 */6 * * *'
+  repository_dispatch:
+    types: [master-tests]
 env:
   GO111MODULE: on
 

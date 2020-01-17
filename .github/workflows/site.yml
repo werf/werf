@@ -7,6 +7,8 @@ on:
     - multiwerf
   release:
     types: [published]
+  repository_dispatch:
+    types: [site-deploy]
 
 jobs:
   stub:
@@ -39,7 +41,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'release' || (github.event_name == 'pull_request' && github.event.label.id == 1753518893) # review docs label
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'push' || github.event_name == 'release' || (github.event_name == 'pull_request' && github.event.label.id == 1753518893) # review docs label
     steps:
 
     # TODO: variables[review_sha]=${{ github.sha }} (currently, werf does not fetch PRs' refs)
