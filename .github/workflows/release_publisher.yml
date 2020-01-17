@@ -5,6 +5,7 @@ on:
     - 'v*'
 env:
   GO111MODULE: on
+
 jobs:
   publish_release:
     name: Publish werf release
