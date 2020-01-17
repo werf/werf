@@ -46,7 +46,7 @@ jobs:
 #        os: [ubuntu-latest, macOS-latest, windows-latest]
         os: [ubuntu-latest, macOS-latest]
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
+    if: github.event_name == 'schedule' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
     steps:
 
     - name: Set up Go 1.13
