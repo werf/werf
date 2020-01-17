@@ -487,7 +487,7 @@ jobs:
           sed -i -e "s|/home/runner/work/werf/werf|github.com/flant/werf|g" {} +
 
         find tests_coverage -type f -exec \
-          sed -i -e "s|/Users/runner/runners/2.163.1/work/werf/werf|github.com/flant/werf|g" {} +
+          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/flant/werf|g" {} +
 
         find tests_coverage -type f -exec \
           sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/flant/werf/cmd/werf/main.go|g' {} +
