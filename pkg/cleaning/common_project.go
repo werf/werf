@@ -5,7 +5,7 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/image"
 )
 
 const (
@@ -34,5 +34,5 @@ func werfLabel(options CommonProjectOptions) string {
 }
 
 func stageCacheReference(options CommonProjectOptions) string {
-	return fmt.Sprintf(build.LocalImageStageImageNameFormat, options.ProjectName)
+	return fmt.Sprintf(image.LocalImageStageImageNameFormat, options.ProjectName)
 }

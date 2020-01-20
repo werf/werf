@@ -5,17 +5,11 @@ import (
 	"strings"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
-)
-
-const (
-	BuildCacheVersion = "1"
-
-	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
-	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s"
 )
 
 func NewSignaturesPhase(lockImages bool) *SignaturesPhase {
@@ -80,7 +74,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 			return err
 		}
 
-		checksumArgs := []string{stageDependencies, BuildCacheVersion}
+		checksumArgs := []string{stageDependencies, imagePkg.BuildCacheVersion}
 
 		if prevStage != nil {
 			checksumArgs = append(checksumArgs, prevStage.GetSignature())
@@ -92,7 +86,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 		logboek.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
 
-		imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
+		imageName := fmt.Sprintf(imagePkg.LocalImageStageImageFormat, c.projectName(), stageSig)
 
 		i := c.GetOrCreateImage(prevImage, imageName)
 		s.SetImage(i)

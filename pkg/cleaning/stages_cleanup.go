@@ -9,10 +9,10 @@ import (
 	"github.com/docker/docker/api/types"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/build"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/shluz"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -194,7 +194,7 @@ func exceptRepoImageStagesBySignature(repoImageStages []docker_registry.RepoImag
 
 func findRepoImageStageBySignature(repoImageStages []docker_registry.RepoImage, signature string) (*docker_registry.RepoImage, error) {
 	for _, repoImageStage := range repoImageStages {
-		if repoImageStage.Tag == fmt.Sprintf(build.RepoImageStageTagFormat, signature) {
+		if repoImageStage.Tag == fmt.Sprintf(image.RepoImageStageTagFormat, signature) {
 			return &repoImageStage, nil
 		}
 	}
@@ -334,7 +334,7 @@ func findImageStageBySignature(imageStages []types.ImageSummary, signature strin
 }
 
 func stageCacheImage(signature string, options CommonProjectOptions) string {
-	return fmt.Sprintf(build.LocalImageStageImageFormat, options.ProjectName, signature)
+	return fmt.Sprintf(image.LocalImageStageImageFormat, options.ProjectName, signature)
 }
 
 func findImageStageByImageId(imageStages []types.ImageSummary, imageId string) *types.ImageSummary {

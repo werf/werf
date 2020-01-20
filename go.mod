@@ -94,6 +94,7 @@ require (
 	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
 	google.golang.org/grpc v1.23.0
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
