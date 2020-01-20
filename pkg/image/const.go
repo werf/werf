@@ -17,5 +17,13 @@ const (
 
 	WerfTagStrategyLabel = "werf-tag-strategy"
 
+	BuildCacheVersion = "1"
+
 	StageContainerNamePrefix = "werf.build."
+
+	LocalImageStageImageNamePrefix = "werf-stages-storage/"
+	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
+	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s"
+
+	RepoImageStageTagFormat = "image-stage-%s"
 )

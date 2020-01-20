@@ -33,8 +33,8 @@ type IntrospectTarget struct {
 }
 
 func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageName string) bool {
-	for _, stage := range opts.Targets {
-		if (stage.ImageName == "*" || stage.ImageName == imageName) && stage.StageName == stageName {
+	for _, s := range opts.Targets {
+		if (s.ImageName == "*" || s.ImageName == imageName) && s.StageName == stageName {
 			return true
 		}
 	}
@@ -128,7 +128,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 						imagePkg.WerfDockerImageName:   img.Name(),
 						imagePkg.WerfLabel:             c.projectName(),
 						imagePkg.WerfVersionLabel:      werf.Version,
-						imagePkg.WerfCacheVersionLabel: BuildCacheVersion,
+						imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
 						imagePkg.WerfImageLabel:        "false",
 					} {
 						buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))

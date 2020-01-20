@@ -60,7 +60,7 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 			imagePkg.WerfDockerImageName:   stageImage.Name(),
 			imagePkg.WerfLabel:             c.projectName(),
 			imagePkg.WerfVersionLabel:      werf.Version,
-			imagePkg.WerfCacheVersionLabel: BuildCacheVersion,
+			imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
 			imagePkg.WerfImageLabel:        "false",
 		})
 
