@@ -43,8 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     if: github.event_name == 'repository_dispatch' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
     steps:
@@ -78,6 +77,11 @@ jobs:
 #        mv upx-3.95-win64/upx.exe bin
 #      shell: bash
 #      if: matrix.os == 'windows-latest'
+
+    # FIXME: https://github.community/t5/GitHub-Actions/Windows-tests-worked-yesterday-broken-today/m-p/43614
+    - name: Override bash shell PATH (windows-latest)
+      run: echo "::add-path::C:\Program Files\Git\bin"
+      if: matrix.os == 'windows-latest'
 
     - name: Compile tests binaries
       run: |
@@ -133,8 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -152,6 +155,11 @@ jobs:
       with:
         name: "${{ matrix.os }}_unit_tests_binaries"
         path: .
+
+    # FIXME: https://github.community/t5/GitHub-Actions/Windows-tests-worked-yesterday-broken-today/m-p/43614
+    - name: Override bash shell PATH (windows-latest)
+      run: echo "::add-path::C:\Program Files\Git\bin"
+      if: matrix.os == 'windows-latest'
 
     - name: Prepare environment
       run: |
@@ -387,8 +395,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [macOS, windows]
-        os: [macOS]
+        os: [macOS, windows]
         k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
