@@ -39,6 +39,8 @@ import (
 	stage_image "github.com/flant/werf/cmd/werf/stage/image"
 
 	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
+	host_project_list "github.com/flant/werf/cmd/werf/host/project/list"
+	host_project_purge "github.com/flant/werf/cmd/werf/host/project/purge"
 	host_purge "github.com/flant/werf/cmd/werf/host/purge"
 
 	helm_delete "github.com/flant/werf/cmd/werf/helm/delete"
@@ -216,16 +218,28 @@ func helmCmd() *cobra.Command {
 }
 
 func hostCmd() *cobra.Command {
-	cmd := &cobra.Command{
+	hostCmd := &cobra.Command{
 		Use:   "host",
 		Short: "Work with werf cache and data of all projects on the host machine",
 	}
-	cmd.AddCommand(
-		host_cleanup.NewCmd(),
-		host_purge.NewCmd(),
+
+	projectCmd := &cobra.Command{
+		Use:   "project",
+		Short: "Work with projects",
+	}
+
+	projectCmd.AddCommand(
+		host_project_list.NewCmd(),
+		host_project_purge.NewCmd(),
 	)
 
-	return cmd
+	hostCmd.AddCommand(
+		host_cleanup.NewCmd(),
+		host_purge.NewCmd(),
+		projectCmd,
+	)
+
+	return hostCmd
 }
 
 func secretCmd() *cobra.Command {

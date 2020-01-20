@@ -310,6 +310,12 @@ entries:
               - title: host cleanup
                 url: /documentation/cli/management/host/cleanup.html
 
+              - title: host project list
+                url: /documentation/cli/management/host/project/list.html
+
+              - title: host project purge
+                url: /documentation/cli/management/host/project/purge.html
+
               - title: host purge
                 url: /documentation/cli/management/host/purge.html
 
