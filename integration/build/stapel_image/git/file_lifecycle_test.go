@@ -18,6 +18,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("file lifecycle", func() {
@@ -83,16 +84,16 @@ var _ = Describe("file lifecycle", func() {
 		var cmd []string
 		var extraDockerOptions []string
 		if entry.delete {
-			cmd = append(cmd, utils.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, false))
+			cmd = append(cmd, docker.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, false))
 		} else {
-			cmd = append(cmd, utils.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, true))
+			cmd = append(cmd, docker.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, true))
 			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)", shellescape.Quote(path.Join(gitToPath, entry.relPath)), strconv.FormatUint(uint64(entry.perm), 8)))
 			cmd = append(cmd, fmt.Sprintf("diff %s %s", shellescape.Quote(path.Join(gitToPath, entry.relPath)), shellescape.Quote(path.Join("/host", entry.relPath))))
 
 			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", testDirPath, "/host"))
 		}
 
-		utils.RunSucceedContainerCommandWithStapel(
+		docker.RunSucceedContainerCommandWithStapel(
 			werfBinPath,
 			testDirPath,
 			extraDockerOptions,
@@ -273,7 +274,7 @@ var _ = Describe("file lifecycle", func() {
 					cmd = append(cmd, fmt.Sprintf("diff <(%s) <(echo %s)", readlinkCmd, shellescape.Quote(entry.link)))
 				}
 
-				utils.RunSucceedContainerCommandWithStapel(
+				docker.RunSucceedContainerCommandWithStapel(
 					werfBinPath,
 					testDirPath,
 					[]string{},
