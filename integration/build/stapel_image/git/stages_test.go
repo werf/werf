@@ -11,6 +11,7 @@ import (
 	"github.com/onsi/gomega/types"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("git stages", func() {
@@ -638,7 +639,7 @@ func checkResultedFilesChecksum(testDirPath string) {
 	resultFilesChecksum := filesChecksumCommand("/app")
 	diffCommand := fmt.Sprintf("diff <(%s) <(%s)", resultFilesChecksum, expectedFilesChecksum)
 
-	utils.RunSucceedContainerCommandWithStapel(
+	docker.RunSucceedContainerCommandWithStapel(
 		werfBinPath,
 		testDirPath,
 		[]string{fmt.Sprintf("-v %s:%s", testDirPath, containerTestDirPath)},

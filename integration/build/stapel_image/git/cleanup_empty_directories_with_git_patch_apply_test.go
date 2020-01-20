@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("cleanup empty directories with git patch apply", func() {
@@ -49,7 +50,7 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			)
 
 			By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerAddedDirPath)))
-			utils.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerAddedDirPath)
+			docker.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerAddedDirPath)
 
 			By(fmt.Sprintf("Remove file %s", shellescape.Quote(projectAddedFilePath)))
 
@@ -74,13 +75,13 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			for _, relDirPath := range entry.shouldBeDeleted {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s does not exist", shellescape.Quote(containerDirPath)))
-				utils.CheckContainerDirectoryDoesNotExist(werfBinPath, testDirPath, containerDirPath)
+				docker.CheckContainerDirectoryDoesNotExist(werfBinPath, testDirPath, containerDirPath)
 			}
 
 			for _, relDirPath := range entry.shouldBeSkipped {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerDirPath)))
-				utils.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerDirPath)
+				docker.CheckContainerDirectoryExists(werfBinPath, testDirPath, containerDirPath)
 			}
 		}
 	}

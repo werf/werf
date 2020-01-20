@@ -1,4 +1,4 @@
-package utils
+package docker
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/stapel"
+	"github.com/flant/werf/pkg/testing/utils"
 )
 
 func init() {
@@ -49,13 +50,13 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 		"run", "--docker-options", strings.Join(dockerOptions, " "), "--", stapel.BashBinPath(), "-ec",
 	}
 	containerCommand := strings.Join(cmds, " && ")
-	werfArgs := append(baseWerfArgs, ShelloutPack(containerCommand))
+	werfArgs := append(baseWerfArgs, utils.ShelloutPack(containerCommand))
 
-	_, err = RunCommandWithOptions(
+	_, err = utils.RunCommandWithOptions(
 		projectPath,
 		werfBinPath,
 		werfArgs,
-		RunCommandOptions{},
+		utils.RunCommandOptions{},
 	)
 
 	errorDesc := fmt.Sprintf("%[2]s (dir: %[1]s)", projectPath, strings.Join(append(baseWerfArgs, containerCommand), " "))

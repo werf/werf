@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/gomega/types"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 type entry struct {
@@ -43,7 +44,7 @@ var itBody = func(e entry) {
 		Ω(output).Should(match)
 	}
 
-	utils.RunSucceedContainerCommandWithStapel(werfBinPath, testDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
+	docker.RunSucceedContainerCommandWithStapel(werfBinPath, testDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
 }
 
 var _ = DescribeTable("base", itBody,
