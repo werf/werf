@@ -22,7 +22,7 @@ layout: default
             -->
             <div class="welcome__extra-content">
                 <div class="welcome__extra-content-title">
-                    CLI tool to construct CI/CD pipelines
+                    CLI tool to use in CI/CD pipelines
                 </div>
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
@@ -151,14 +151,14 @@ layout: default
                 <div class="features__list-item-title">Advanced debugging tools for the building process</div>
                 <div class="features__list-item-text">During assembly, you can access any stage using introspection options.</div>
             </li>
-             <li class="features__list-item">
+            <li class="features__list-item"></li>
+            <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Compact configuration file</div>
                 <div class="features__list-item-text">Build multiple images using a single configuration file, share common configuration snippets via Go templates.</div>
             </li>
             <li class="features__list-item"></li>
-            <li class="features__list-item"></li>
-        </ul>        
+        </ul>
     </div>
 </div>
 
