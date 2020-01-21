@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Advanced build/Multi images", func() {
@@ -43,7 +44,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(paymentGWContainerName) }()
 
-		databaseContainerHostPort := utils.GetFreeTCPHostPort()
+		databaseContainerHostPort := net.GetFreeTCPHostPort()
 		databaseContainerName := fmt.Sprintf("database_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
@@ -52,7 +53,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(databaseContainerName) }()
 
-		appContainerHostPort := utils.GetFreeTCPHostPort()
+		appContainerHostPort := net.GetFreeTCPHostPort()
 		appContainerName := fmt.Sprintf("app_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
@@ -61,8 +62,8 @@ var _ = Describe("Advanced build/Multi images", func() {
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(appContainerName) }()
 
-		reverseProxyContainerHostPort80 := utils.GetFreeTCPHostPort()
-		reverseProxyContainerHostPort443 := utils.GetFreeTCPHostPort()
+		reverseProxyContainerHostPort80 := net.GetFreeTCPHostPort()
+		reverseProxyContainerHostPort443 := net.GetFreeTCPHostPort()
 		reverseProxyContainerName := fmt.Sprintf("reverse_proxy_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,

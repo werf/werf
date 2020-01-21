@@ -1,13 +1,25 @@
-package utils
+package net
 
 import (
 	"fmt"
 	"net"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/flant/shluz"
+
+	"github.com/flant/werf/pkg/util"
 )
+
+func init() {
+	if err := shluz.Init(util.ExpandPath(filepath.Join("~/.werf", "service", "locks"))); err != nil {
+		panic(err)
+	}
+}
 
 const DefaultWaitTillHostReadyToRespondMaxAttempts = 60
 
@@ -35,6 +47,13 @@ func GetFreeTCPHostPort() int {
 
 	port := ln.Addr().(*net.TCPAddr).Port
 	Ω(ln.Close()).Should(Succeed(), "ln close")
+
+	lockName := fmt.Sprintf("GetFreeTCPHostPort:%s", strconv.Itoa(port))
+	isAcquired, err := shluz.TryLock(lockName, shluz.TryLockOptions{ReadOnly: false})
+	Ω(err).ShouldNot(HaveOccurred(), "lock port")
+	if !isAcquired {
+		return GetFreeTCPHostPort()
+	}
 
 	return port
 }
