@@ -325,8 +325,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [macOS, windows]
-        os: [macOS]
+        os: [macOS, windows]
         extra-find-args:
         - "-name 'guides.test*'"
         - "-name 'git.test*'"
