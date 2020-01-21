@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Advanced build/First application", func() {
@@ -38,7 +39,7 @@ var _ = Describe("Advanced build/First application", func() {
 				"build", "-s", ":local",
 			)
 
-			containerHostPort := utils.GetFreeTCPHostPort()
+			containerHostPort := net.GetFreeTCPHostPort()
 			containerName := fmt.Sprintf("symfony_demo_%s_%s", boundedBuilder, utils.GetRandomString(10))
 			utils.RunSucceedCommand(
 				testDirPath,
@@ -50,7 +51,7 @@ var _ = Describe("Advanced build/First application", func() {
 			url := fmt.Sprintf("http://localhost:%d", containerHostPort)
 			waitTillHostReadyAndCheckResponseBody(
 				url,
-				utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
+				net.DefaultWaitTillHostReadyToRespondMaxAttempts,
 				"Symfony Demo application",
 			)
 

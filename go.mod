@@ -38,7 +38,7 @@ require (
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
 	github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad
 	github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349
-	github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2
+	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
 	github.com/gofrs/flock v0.7.1

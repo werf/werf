@@ -241,6 +241,8 @@ github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349/go.mod h1:eEQXX0UO
 github.com/flant/multiwerf v1.2.3 h1:zfaO/b5OKg4z2uo4fEgpS8uqcdt2FoXAYlA+K01RTn0=
 github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2 h1:Ub9bCx27gm93uWs4DaSnasX2hC7gvWTQ6KDwl4oKBe8=
 github.com/flant/shluz v0.0.0-20191217184635-c09679d23ed2/go.mod h1:A8tow8a6JcCXi29Qio1sFpnoCL1r3WZLdPbLHbZnkmg=
+github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53 h1:bylKNudqBJDddRG2WAC8gDkHsHqnIWUUnV+y6FHrVLU=
+github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53/go.mod h1:A8tow8a6JcCXi29Qio1sFpnoCL1r3WZLdPbLHbZnkmg=
 github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:rZfgFAXFS/z/lEd6LJmf9HVZ1LkgYiHx5pHhV5DR16M=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 h1:BHsljHzVlRcyQhjrss6TZTdY2VfCqZPbv5k3iBFa2ZQ=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=

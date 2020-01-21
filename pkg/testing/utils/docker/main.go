@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var cli *command.DockerCli
@@ -119,7 +120,7 @@ func LocalDockerRegistryRun() (string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
 	imageName := "registry"
 
-	hostPort := strconv.Itoa(utils.GetFreeTCPHostPort())
+	hostPort := strconv.Itoa(net.GetFreeTCPHostPort())
 	dockerCliRunArgs := []string{
 		"-d",
 		"-p", fmt.Sprintf("%s:5000", hostPort),
@@ -133,7 +134,7 @@ func LocalDockerRegistryRun() (string, string) {
 	registry := fmt.Sprintf("localhost:%s", hostPort)
 	registryWithScheme := fmt.Sprintf("http://%s", registry)
 
-	utils.WaitTillHostReadyToRespond(registryWithScheme, utils.DefaultWaitTillHostReadyToRespondMaxAttempts)
+	net.WaitTillHostReadyToRespond(registryWithScheme, net.DefaultWaitTillHostReadyToRespondMaxAttempts)
 
 	return registry, containerName
 }

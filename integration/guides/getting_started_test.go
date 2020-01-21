@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Getting started", func() {
@@ -35,7 +36,7 @@ var _ = Describe("Getting started", func() {
 			"build", "-s", ":local",
 		)
 
-		containerHostPort := utils.GetFreeTCPHostPort()
+		containerHostPort := net.GetFreeTCPHostPort()
 		containerName := fmt.Sprintf("getting_started_%s", utils.GetRandomString(10))
 
 		utils.RunSucceedCommand(
@@ -48,7 +49,7 @@ var _ = Describe("Getting started", func() {
 		url := fmt.Sprintf("http://localhost:%d", containerHostPort)
 		waitTillHostReadyAndCheckResponseBody(
 			url,
-			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
+			net.DefaultWaitTillHostReadyToRespondMaxAttempts,
 			"Linux Tweet App!",
 		)
 
