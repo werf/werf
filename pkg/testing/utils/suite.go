@@ -20,7 +20,7 @@ func GetTempDir() string {
 	dir, err := ioutil.TempDir("", "werf-integration-tests-")
 	Ω(err).ShouldNot(HaveOccurred())
 
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		dir, err = filepath.EvalSymlinks(dir)
 		Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("eval symlinks of path %s failed: %s", dir, err))
 	}

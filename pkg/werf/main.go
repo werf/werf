@@ -67,7 +67,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 		tmpDir = os.TempDir()
 	}
 
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		dir, err := filepath.EvalSymlinks(tmpDir)
 		if err != nil {
 			return fmt.Errorf("eval symlinks of path %s failed: %s", tmpDir, err)
