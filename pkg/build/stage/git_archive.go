@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/flant/werf/pkg/image"
@@ -42,12 +43,14 @@ func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
 
-		commit, err := gitMapping.GitRepo().FindCommitIdByMessage(GitArchiveResetCommitRegex)
-		if err != nil {
-			return "", err
-		}
+		if os.Getenv("DISABLE_GIT_ARCHIVE_RESET_COMMIT") != "1" {
+			commit, err := gitMapping.GitRepo().FindCommitIdByMessage(GitArchiveResetCommitRegex)
+			if err != nil {
+				return "", err
+			}
 
-		args = append(args, commit)
+			args = append(args, commit)
+		}
 	}
 
 	sort.Strings(args)
