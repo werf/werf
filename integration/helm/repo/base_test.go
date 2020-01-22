@@ -1,5 +1,3 @@
-// +build integration
-
 package repo_test
 
 import (

@@ -13,8 +13,6 @@
 2. Create test setup file `integration/mytest/setup_test.go` with the following content:
 
     ```
-    // +build integration integration_k8s
-
     package mytest_test
 
     import (
@@ -57,27 +55,13 @@
     })
     ```
 
-    **NOTE**: Both `integration` and `integration_k8s` build tags should be specified in the file `setup_test.go` to run your test correctly in CI-system of the werf project. Although, for the test case files you may not need to specify both tags, see more info below.
-
     **NOTE**: Go package should be named with suffix `_test` (i.e. `mytest_test`).
 
 3. The actual tests should reside separately from the setup code in `setup_test.go` file. Create a new file with arbitrary name for the new test case.
 
     For example, let's test a component named "Config loader" (this name usually goes to the `Describe` ginkgo statement, see example below). All tests for this component will reside in the file `integration/mytest/config_loader_test.go` (note that `_test.go` suffix is required for all go test files).
 
-4. If your test need a connection to kubernetes, then place both `integration` and `integration_k8` build tags on the first line of the file:
-
-    ```
-    // +build integration integration_k8s
-    ```
-
-    If your test does not need a connection to kubernetes, then place `integration` tag only:
-
-    ```
-    // +build integration
-    ```
-
-5. Use `Describe`, `Context`, `It` and other ginkgo statements to organize tests inside your file. For example:
+4. Use `Describe`, `Context`, `It` and other ginkgo statements to organize tests inside your file. For example:
 
     ```
     var _ = Describe("Config loader", func() {
@@ -109,7 +93,7 @@
     })
     ```
 
-6. Place more files with `_test.go` to test more cases under the same test suite in the directory `integration/mytest`.
+5. Place more files with `_test.go` to test more cases under the same test suite in the directory `integration/mytest`.
 
 ## Testing a werf project
 

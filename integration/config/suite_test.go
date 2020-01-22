@@ -1,5 +1,3 @@
-// +build integration integration_k8s
-
 package config_test
 
 import (

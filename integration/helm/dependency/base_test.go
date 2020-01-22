@@ -1,5 +1,3 @@
-// +build integration
-
 package dependency_test
 
 import (

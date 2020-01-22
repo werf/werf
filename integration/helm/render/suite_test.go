@@ -1,5 +1,3 @@
-// +build integration integration_k8s
-
 package render_test
 
 import (

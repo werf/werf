@@ -90,10 +90,10 @@ jobs:
         ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
 
         # integration tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration integration
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration
 
         # integration_k8s tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration_k8s integration_k8s
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration_k8s ./precompiled_tests_binaries/integration_k8s
 
         # werf with coverage binary
         ./scripts/tests/werf_with_coverage.sh
@@ -290,7 +290,7 @@ jobs:
         go build github.com/onsi/ginkgo/ginkgo
 
         chmod +x werf_with_coverage
-        find integration -type f -name '*.test' -exec chmod +x {} \;
+        find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
       shell: bash
@@ -305,7 +305,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration -type f -name '*.test')
+        test_binaries=$(find integration_k8s -type f -name '*.test')
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
@@ -434,7 +434,7 @@ jobs:
         cd $GITHUB_WORKSPACE
 
         chmod +x werf_with_coverage
-        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do chmod +x $test_binary; done
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
@@ -454,7 +454,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:

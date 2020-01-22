@@ -1,5 +1,3 @@
-// +build integration
-
 package ansible_test
 
 import (

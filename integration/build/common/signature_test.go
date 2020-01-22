@@ -1,5 +1,3 @@
-// +build integration
-
 package common_test
 
 import (
