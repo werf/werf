@@ -5,11 +5,11 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.0.7"
+          "version": "v1.0.8"
         },
         {
           "name": "beta",
-          "version": "v1.0.7"
+          "version": "v1.0.8"
         },
         {
           "name": "ea",
