@@ -5,11 +5,12 @@ import (
 	"path/filepath"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -20,6 +21,7 @@ type Conveyor struct {
 
 	stageImages                     map[string]*image.StageImage
 	buildingGitStageNameByImageName map[string]stage.StageName
+	localGitRepo                    *git_repo.Local
 	remoteGitRepos                  map[string]*git_repo.Remote
 	imagesBySignature               map[string]image.ImageInterface
 	globalLocks                     []string
@@ -96,6 +98,7 @@ func (c *Conveyor) ReInitRuntimeFields() {
 
 	c.buildingGitStageNameByImageName = make(map[string]stage.StageName)
 
+	c.localGitRepo = nil
 	c.remoteGitRepos = make(map[string]*git_repo.Remote)
 
 	c.tmpDir = filepath.Join(c.baseTmpDir, string(util.GenerateConsistentRandomString(10)))
