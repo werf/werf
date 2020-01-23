@@ -268,11 +268,15 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 
 	var localGitRepo *git_repo.Local
 	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo = &git_repo.Local{
-			Base:   git_repo.Base{Name: "own"},
-			Path:   c.projectDir,
-			GitDir: filepath.Join(c.projectDir, ".git"),
+		if c.localGitRepo == nil {
+			c.localGitRepo = &git_repo.Local{
+				Base:   git_repo.Base{Name: "own"},
+				Path:   c.projectDir,
+				GitDir: filepath.Join(c.projectDir, ".git"),
+			}
 		}
+
+		localGitRepo = c.localGitRepo
 	}
 
 	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
