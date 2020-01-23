@@ -1,9 +1,8 @@
-// +build integration
-
 package guides_test
 
 import (
 	"fmt"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 
@@ -14,6 +13,10 @@ import (
 
 var _ = Describe("Advanced build/Artifacts", func() {
 	BeforeEach(func() {
+		if runtime.GOOS == "windows" {
+			Skip("skip")
+		}
+
 		utils.CopyIn(utils.FixturePath("artifacts"), testDirPath)
 	})
 

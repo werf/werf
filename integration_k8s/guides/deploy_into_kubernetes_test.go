@@ -1,5 +1,3 @@
-// +build integration_k8s
-
 package guides_test
 
 import (

@@ -1,5 +1,3 @@
-// +build integration
-
 package base_image_test
 
 import (

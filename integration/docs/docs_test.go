@@ -1,5 +1,3 @@
-// +build integration
-
 package docs_test
 
 import (
@@ -20,7 +18,7 @@ type entry struct {
 }
 
 var _ = BeforeEach(func() {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		Skip("skip on windows")
 	}
 
