@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	AutoGCEnabled = true
+	AutoGCEnabled = os.Getenv("WERF_DISABLE_AUTO_GC") != "1"
 )
 
 func runGC() error {
