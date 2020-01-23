@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/flant/werf/pkg/werf"
 )
@@ -98,14 +97,6 @@ func newTmpFile(prefix string) (string, error) {
 	err = newFile.Close()
 	if err != nil {
 		return "", err
-	}
-
-	if runtime.GOOS == "darwin" {
-		dir, err := filepath.EvalSymlinks(path)
-		if err != nil {
-			return "", fmt.Errorf("eval symlinks of path %s failed: %s", path, err)
-		}
-		path = dir
 	}
 
 	return path, nil
