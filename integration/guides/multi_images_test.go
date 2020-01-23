@@ -2,6 +2,7 @@ package guides_test
 
 import (
 	"fmt"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 
@@ -11,6 +12,12 @@ import (
 )
 
 var _ = Describe("Advanced build/Multi images", func() {
+	BeforeEach(func() {
+		if runtime.GOOS == "windows" {
+			Skip("skip")
+		}
+	})
+
 	AfterEach(func() {
 		utils.RunSucceedCommand(
 			testDirPath,
