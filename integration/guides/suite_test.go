@@ -8,10 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prashantv/gostub"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"github.com/prashantv/gostub"
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
@@ -24,7 +25,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Guides Suite")
+	RunSpecs(t, "Guides Suite")
 }
 
 var requiredSuiteTools = []string{"git", "docker"}

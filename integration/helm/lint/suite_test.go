@@ -15,7 +15,7 @@ import (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Helm/Lint Suite")
+	RunSpecs(t, "Helm/Lint Suite")
 }
 
 var testDirPath string

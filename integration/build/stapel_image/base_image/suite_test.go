@@ -23,7 +23,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Build/Stapel Image/Base Image Suite")
+	RunSpecs(t, "Build/Stapel Image/Base Image Suite")
 }
 
 var requiredSuiteTools = []string{"docker"}

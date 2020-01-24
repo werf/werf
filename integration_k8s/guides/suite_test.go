@@ -23,7 +23,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Guides Suite")
+	RunSpecs(t, "Guides Suite")
 }
 
 var requiredSuiteTools = []string{"git", "docker"}

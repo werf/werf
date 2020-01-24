@@ -15,7 +15,7 @@ import (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Helm/Repo Suite")
+	RunSpecs(t, "Helm/Repo Suite")
 }
 
 var testDirPath string

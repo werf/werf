@@ -95,7 +95,7 @@ var _ = Describe("purging images", func() {
 					)
 				}
 
-				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(amount))
 
 				utils.RunSucceedCommand(
@@ -104,7 +104,7 @@ var _ = Describe("purging images", func() {
 					commandWerfArgs...,
 				)
 
-				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(0))
 			})
 
@@ -115,7 +115,7 @@ var _ = Describe("purging images", func() {
 
 				Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
 
-				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
@@ -124,7 +124,7 @@ var _ = Describe("purging images", func() {
 					commandWerfArgs...,
 				)
 
-				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 			})
 		})

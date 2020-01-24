@@ -26,7 +26,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Cleanup Suite")
+	RunSpecs(t, "Cleanup Suite")
 }
 
 var requiredSuiteTools = []string{"git", "docker"}

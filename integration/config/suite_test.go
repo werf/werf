@@ -13,7 +13,7 @@ import (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Config Suite")
+	RunSpecs(t, "Config Suite")
 }
 
 var testDirPath string
