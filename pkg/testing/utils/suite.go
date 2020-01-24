@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prashantv/gostub"
@@ -57,7 +58,13 @@ func WerfBinArgs(userArgs ...string) []string {
 }
 
 func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
-	projectName := "werf-integration-test-" + strconv.Itoa(os.Getpid()) + "-" + GetRandomString(10)
+	packageId := strings.Split(filepath.Base(os.Args[0]), ".")[0] // .test .test.exe
+	projectName := strings.Join([]string{
+		"werf-test",
+		packageId,
+		strconv.Itoa(os.Getpid()),
+		GetRandomString(10),
+	}, "-")
 	stubs.SetEnv("WERF_PROJECT_NAME", projectName)
 }
 
