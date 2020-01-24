@@ -28,7 +28,7 @@ func RegistryRepositoryList(reference string) []string {
 
 func LocalDockerRegistryRun() (string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
-	imageName := "registry"
+	imageName := "flant/werf-test:registry"
 
 	dockerCliRunArgs := []string{
 		"-d",
