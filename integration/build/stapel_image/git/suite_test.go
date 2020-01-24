@@ -49,6 +49,12 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
+	utils.RunSucceedCommand(
+		testDirPath,
+		werfBinPath,
+		"stages", "purge", "-s", ":local", "--force",
+	)
+
 	err := os.RemoveAll(tmpDir)
 	Ω(err).ShouldNot(HaveOccurred())
 

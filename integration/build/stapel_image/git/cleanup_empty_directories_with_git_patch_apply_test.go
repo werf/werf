@@ -88,14 +88,6 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 		fixturesPathParts = []string{"cleanup_empty_directories_with_git_patch_apply"}
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
 	DescribeTable("base",
 		removingEmptyDirectoriesItBody("base"),
 		Entry("should remove empty directory (dir)", removingEmptyDirectoriesEntry{

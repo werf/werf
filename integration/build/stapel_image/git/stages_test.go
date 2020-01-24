@@ -21,14 +21,6 @@ var _ = Describe("git stages", func() {
 		specSteps = []stagesSpecStep{}
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
 	Context("when using image", func() {
 		toBuildGitArchiveStageStep := stagesSpecStep{
 			byText:                     "First build: gitArchive stage should be built",
@@ -260,14 +252,6 @@ var _ = Describe("user stages", func() {
 	BeforeEach(func() {
 		fixturesPathParts = []string{"user_stages"}
 		specSteps = []stagesSpecStep{}
-	})
-
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
 	})
 
 	Context("when using image", func() {
