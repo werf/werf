@@ -85,7 +85,7 @@ ansible:
       dest: /run/secrets/revprox_key
 ---
 image: database
-from: postgres:11
+from: flant/werf-test:postgres_11 # without host volume /var/lib/postgresql/data
 docker:
   ENV:
     POSTGRES_USER: gordonuser
