@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/pkg/testing/utils"
+	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("cleaning images", func() {
@@ -92,7 +93,7 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-branch", testBranch,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(ContainElement(testBranch))
 
 						utils.RunSucceedCommand(
@@ -101,7 +102,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).ShouldNot(ContainElement(testBranch))
 					})
 
@@ -130,7 +131,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(ContainElement(testBranch))
 
 						utils.RunSucceedCommand(
@@ -145,7 +146,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).ShouldNot(ContainElement(testBranch))
 					})
 				})
@@ -172,7 +173,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(ContainElement(testTag))
 
 						utils.RunSucceedCommand(
@@ -187,7 +188,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).ShouldNot(ContainElement(testTag))
 					})
 
@@ -204,7 +205,7 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-tag", testTag,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(1))
 
 						werfArgs := append(basicWerfArgs, "--git-tag-strategy-expiry-days", "0")
@@ -214,7 +215,7 @@ var _ = Describe("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(0))
 					})
 
@@ -233,7 +234,7 @@ var _ = Describe("cleaning images", func() {
 							)
 						}
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(3))
 
 						werfArgs := append(basicWerfArgs, "--git-tag-strategy-limit", "1")
@@ -243,7 +244,7 @@ var _ = Describe("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(1))
 					})
 				})
@@ -256,7 +257,7 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-commit", "8a99331ce0f918b411423223f4060e9688e03f6a",
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(1))
 
 						utils.RunSucceedCommand(
@@ -265,7 +266,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(0))
 					})
 
@@ -289,7 +290,7 @@ var _ = Describe("cleaning images", func() {
 							basicWerfArgs...,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(ContainElement(commit))
 					})
 
@@ -307,7 +308,7 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-commit", commit,
 						)
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(1))
 
 						werfArgs := append(basicWerfArgs, "--git-commit-strategy-expiry-days", "0")
@@ -317,7 +318,7 @@ var _ = Describe("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(0))
 					})
 
@@ -344,7 +345,7 @@ var _ = Describe("cleaning images", func() {
 							)
 						}
 
-						tags := utils.RegistryRepositoryList(registryProjectRepository)
+						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(amount))
 
 						werfArgs := append(basicWerfArgs, "--git-commit-strategy-limit", "2")
@@ -354,7 +355,7 @@ var _ = Describe("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = utils.RegistryRepositoryList(registryProjectRepository)
+						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 						Ω(tags).Should(HaveLen(2))
 					})
 				})

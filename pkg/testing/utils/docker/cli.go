@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/docker/go-connections/nat"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -19,9 +20,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var cli *command.DockerCli
@@ -116,27 +114,21 @@ func ImageInspect(imageName string) *types.ImageInspect {
 	return inspect
 }
 
-func LocalDockerRegistryRun() (string, string) {
-	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
-	imageName := "registry"
+func ContainerInspect(ref string) types.ContainerJSON {
+	ctx := context.Background()
+	inspect, err := apiClient.ContainerInspect(ctx, ref)
+	Ω(err).ShouldNot(HaveOccurred())
+	return inspect
+}
 
-	hostPort := strconv.Itoa(net.GetFreeTCPHostPort())
-	dockerCliRunArgs := []string{
-		"-d",
-		"-p", fmt.Sprintf("%s:5000", hostPort),
-		"-e", "REGISTRY_STORAGE_DELETE_ENABLED=true",
-		"--name", containerName,
-		imageName,
-	}
-	err := CliRun(dockerCliRunArgs...)
-	Ω(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
-
-	registry := fmt.Sprintf("localhost:%s", hostPort)
-	registryWithScheme := fmt.Sprintf("http://%s", registry)
-
-	net.WaitTillHostReadyToRespond(registryWithScheme, net.DefaultWaitTillHostReadyToRespondMaxAttempts)
-
-	return registry, containerName
+func ContainerHostPort(ref, containerPortNumberAndProtocol string) string {
+	inspect := ContainerInspect(ref)
+	Ω(inspect.NetworkSettings).ShouldNot(BeNil())
+	portMap := inspect.NetworkSettings.Ports
+	Ω(portMap).ShouldNot(BeEmpty())
+	portBindings := portMap[nat.Port(containerPortNumberAndProtocol)]
+	Ω(portBindings).ShouldNot(HaveCap(1))
+	return portBindings[0].HostPort
 }
 
 func CliRun(args ...string) error {

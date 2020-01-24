@@ -22,7 +22,9 @@ var _ = Describe("from and fromLatest", func() {
 	fromBaseRepoImageState2IDFunc := func() string { return fromBaseRepoImageState2ID }
 
 	registryProjectRepositoryLatestAs := func(imageName string) {
-		Ω(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
+		if !utilsDocker.IsImageExist(imageName) {
+			Ω(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
+		}
 		Ω(utilsDocker.CliTag(imageName, registryProjectRepository)).Should(Succeed(), "docker tag")
 		Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
 		Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
@@ -210,7 +212,6 @@ var _ = Describe("from and fromLatest", func() {
 
 				Context("when from image exists locally", func() {
 					BeforeEach(func() {
-						Ω(utilsDocker.Pull(suiteImage1)).Should(Succeed(), "docker pull")
 						Ω(utilsDocker.CliTag(suiteImage1, registryProjectRepository)).Should(Succeed(), "docker tag")
 					})
 

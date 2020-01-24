@@ -7,7 +7,6 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
-	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Advanced build/Mounts", func() {
@@ -30,19 +29,18 @@ var _ = Describe("Advanced build/Mounts", func() {
 			"build", "-s", ":local",
 		)
 
-		containerHostPort := net.GetFreeTCPHostPort()
 		containerName := fmt.Sprintf("go_booking_mounts_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:9000 --name %s", containerHostPort, containerName), "go-booking", "--", "/app/run.sh",
+			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :9000 --name %s", containerName), "go-booking", "--", "/app/run.sh",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
-		url := fmt.Sprintf("http://localhost:%d", containerHostPort)
+		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "9000/tcp"))
 		waitTillHostReadyAndCheckResponseBody(
 			url,
-			net.DefaultWaitTillHostReadyToRespondMaxAttempts,
+			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
 			"revel framework booking demo",
 		)
 	})

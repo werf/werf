@@ -95,7 +95,7 @@ var _ = Describe("purging images", func() {
 					)
 				}
 
-				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(amount))
 
 				utils.RunSucceedCommand(
@@ -104,18 +104,18 @@ var _ = Describe("purging images", func() {
 					commandWerfArgs...,
 				)
 
-				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(0))
 			})
 
 			It("should not remove images built without werf", func() {
-				Ω(utilsDocker.Pull("alpine")).Should(Succeed(), "docker pull")
-				Ω(utilsDocker.CliTag("alpine", registryProjectRepository)).Should(Succeed(), "docker tag")
+				Ω(utilsDocker.Pull("flant/werf-test:hello-world")).Should(Succeed(), "docker pull")
+				Ω(utilsDocker.CliTag("flant/werf-test:hello-world", registryProjectRepository)).Should(Succeed(), "docker tag")
 				defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
 
 				Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
 
-				tags := utils.RegistryRepositoryList(registryProjectRepository)
+				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
@@ -124,7 +124,7 @@ var _ = Describe("purging images", func() {
 					commandWerfArgs...,
 				)
 
-				tags = utils.RegistryRepositoryList(registryProjectRepository)
+				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
 				Ω(tags).Should(HaveLen(1))
 			})
 		})

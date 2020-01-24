@@ -7,7 +7,6 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
-	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Advanced build/First application", func() {
@@ -37,19 +36,18 @@ var _ = Describe("Advanced build/First application", func() {
 				"build", "-s", ":local",
 			)
 
-			containerHostPort := net.GetFreeTCPHostPort()
 			containerName := fmt.Sprintf("symfony_demo_%s_%s", boundedBuilder, utils.GetRandomString(10))
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:8000 --name %s", containerHostPort, containerName), "--", "/app/start.sh",
+				"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :8000 --name %s", containerName), "--", "/app/start.sh",
 			)
 			defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
-			url := fmt.Sprintf("http://localhost:%d", containerHostPort)
+			url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "8000/tcp"))
 			waitTillHostReadyAndCheckResponseBody(
 				url,
-				net.DefaultWaitTillHostReadyToRespondMaxAttempts,
+				utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
 				"Symfony Demo application",
 			)
 

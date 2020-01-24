@@ -23,7 +23,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Integration Build/Stapel Image/Base Image Suite")
+	RunSpecs(t, "Build/Stapel Image/Base Image Suite")
 }
 
 var requiredSuiteTools = []string{"docker"}
@@ -35,8 +35,8 @@ var stubs = gostub.New()
 var registry, registryContainerName string
 var registryProjectRepository string
 
-var suiteImage1 = "hello-world"
-var suiteImage2 = "alpine"
+var suiteImage1 = "flant/werf-test:base-image-suite-image1"
+var suiteImage2 = "flant/werf-test:base-image-suite-image2"
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	for _, suiteImage := range []string{suiteImage1, suiteImage2} {
