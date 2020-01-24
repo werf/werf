@@ -7,7 +7,6 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
-	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 var _ = Describe("Getting started", func() {
@@ -34,20 +33,19 @@ var _ = Describe("Getting started", func() {
 			"build", "-s", ":local",
 		)
 
-		containerHostPort := net.GetFreeTCPHostPort()
 		containerName := fmt.Sprintf("getting_started_%s", utils.GetRandomString(10))
 
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p %d:80 --name %s", containerHostPort, containerName),
+			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :80 --name %s", containerName),
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
-		url := fmt.Sprintf("http://localhost:%d", containerHostPort)
+		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "80/tcp"))
 		waitTillHostReadyAndCheckResponseBody(
 			url,
-			net.DefaultWaitTillHostReadyToRespondMaxAttempts,
+			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
 			"Linux Tweet App!",
 		)
 

@@ -15,7 +15,6 @@ import (
 
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
-	"github.com/flant/werf/pkg/testing/utils/net"
 )
 
 func TestIntegration(t *testing.T) {
@@ -69,7 +68,7 @@ var _ = AfterEach(func() {
 })
 
 func waitTillHostReadyAndCheckResponseBody(url string, maxAttempts int, bodySubstring string) {
-	net.WaitTillHostReadyToRespond(url, maxAttempts)
+	utils.WaitTillHostReadyToRespond(url, maxAttempts)
 
 	resp, err := http.Get(url)
 	Ω(err).ShouldNot(HaveOccurred())
