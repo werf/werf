@@ -376,11 +376,19 @@ jobs:
         echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
       shell: bash
 
-    - name: Test
+    - name: Test (macos)
+      run: |
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      if: matrix.os == 'macos'
+
+    - name: Test (windows)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
         WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
+      if: matrix.os == 'windows'
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
@@ -451,7 +459,19 @@ jobs:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
 
-    - name: Test
+    - name: Test (macos)
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      env:
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+      if: matrix.os == 'macos'
+
+    - name: Test (windows)
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
@@ -461,6 +481,7 @@ jobs:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+      if: matrix.os == 'windows'
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
