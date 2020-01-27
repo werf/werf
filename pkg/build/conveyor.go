@@ -4,32 +4,19 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/util"
+
+	"github.com/flant/werf/pkg/stages_storage"
+
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/util"
 )
 
 type Conveyor struct {
-	*conveyorPermanentFields
-
-	imagesInOrder []*Image
-
-	stageImages                     map[string]*image.StageImage
-	buildingGitStageNameByImageName map[string]stage.StageName
-	localGitRepo                    *git_repo.Local
-	remoteGitRepos                  map[string]*git_repo.Remote
-	imagesBySignature               map[string]image.ImageInterface
-	globalLocks                     []string
-
-	tmpDir string
-}
-
-type conveyorPermanentFields struct {
 	werfConfig          *config.WerfConfig
 	imageNamesToProcess []string
 
@@ -43,27 +30,47 @@ type conveyorPermanentFields struct {
 	sshAuthSock string
 
 	gitReposCaches map[string]*stage.GitRepoCache
+
+	imagesInOrder []*Image
+
+	stageImages                     map[string]*image.StageImage
+	buildingGitStageNameByImageName map[string]stage.StageName
+	localGitRepo                    *git_repo.Local
+	remoteGitRepos                  map[string]*git_repo.Remote
+	imagesBySignature               map[string]image.ImageInterface
+
+	tmpDir string
+
+	StagesStorage            stages_storage.StagesStorage
+	StagesStorageCache       stages_storage.Cache
+	StagesStorageLockManager stages_storage.LockManager
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
 	c := &Conveyor{
-		conveyorPermanentFields: &conveyorPermanentFields{
-			werfConfig:          werfConfig,
-			imageNamesToProcess: imageNamesToProcess,
+		werfConfig:          werfConfig,
+		imageNamesToProcess: imageNamesToProcess,
 
-			projectDir:       projectDir,
-			containerWerfDir: "/.werf",
-			baseTmpDir:       baseTmpDir,
+		projectDir:       projectDir,
+		containerWerfDir: "/.werf",
+		baseTmpDir:       baseTmpDir,
 
-			sshAuthSock: sshAuthSock,
+		sshAuthSock: sshAuthSock,
 
-			gitReposCaches: make(map[string]*stage.GitRepoCache),
+		stageImages:                     make(map[string]*image.StageImage),
+		gitReposCaches:                  make(map[string]*stage.GitRepoCache),
+		baseImagesRepoIdsCache:          make(map[string]string),
+		baseImagesRepoErrCache:          make(map[string]error),
+		imagesInOrder:                   []*Image{},
+		imagesBySignature:               make(map[string]image.ImageInterface),
+		buildingGitStageNameByImageName: make(map[string]stage.StageName),
+		remoteGitRepos:                  make(map[string]*git_repo.Remote),
+		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
 
-			baseImagesRepoIdsCache: make(map[string]string),
-			baseImagesRepoErrCache: make(map[string]error),
-		},
+		StagesStorage:            &stages_storage.LocalStagesStorage{},
+		StagesStorageLockManager: &stages_storage.FileLockManager{},
+		StagesStorageCache:       &stages_storage.MemoryCache{},
 	}
-	c.ReInitRuntimeFields()
 
 	return c
 }
@@ -89,104 +96,21 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 	return c.gitReposCaches[gitRepoName]
 }
 
-func (c *Conveyor) ReInitRuntimeFields() {
-	c.imagesInOrder = []*Image{}
-
-	c.stageImages = make(map[string]*image.StageImage)
-
-	c.imagesBySignature = make(map[string]image.ImageInterface)
-
-	c.buildingGitStageNameByImageName = make(map[string]stage.StageName)
-
-	c.localGitRepo = nil
-	c.remoteGitRepos = make(map[string]*git_repo.Remote)
-
-	c.tmpDir = filepath.Join(c.baseTmpDir, string(util.GenerateConsistentRandomString(10)))
-
-	c.globalLocks = nil
-}
-
-func (c *Conveyor) AcquireGlobalLock(name string, opts shluz.LockOptions) error {
-	for _, lockName := range c.globalLocks {
-		if lockName == name {
-			return nil
-		}
-	}
-
-	if err := shluz.Lock(name, opts); err != nil {
-		return err
-	}
-
-	c.globalLocks = append(c.globalLocks, name)
-
-	return nil
-}
-
-func (c *Conveyor) ReleaseGlobalLock(name string) error {
-	ind := -1
-	for i, lockName := range c.globalLocks {
-		if lockName == name {
-			ind = i
-			break
-		}
-	}
-
-	if ind >= 0 {
-		if err := shluz.Unlock(name); err != nil {
-			return err
-		}
-		c.globalLocks = append(c.globalLocks[:ind], c.globalLocks[ind+1:]...)
-	}
-
-	return nil
-}
-
-func (c *Conveyor) ReleaseAllGlobalLocks() error {
-	for len(c.globalLocks) > 0 {
-		var lockName string
-		lockName, c.globalLocks = c.globalLocks[0], c.globalLocks[1:]
-		if err := shluz.Unlock(lockName); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 type Phase interface {
 	Run(*Conveyor) error
 }
 
 func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
-restart:
-	if err := c.buildStages(stageRepo, opts); err != nil {
-		if isConveyorShouldBeResetError(err) {
-			c.ReleaseAllGlobalLocks()
-			c.ReInitRuntimeFields()
-			goto restart
-		}
-
-		return err
-	}
-
-	return nil
-}
-
-func (c *Conveyor) buildStages(stageRepo string, opts BuildStagesOptions) error {
-	var err error
-
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase(true))
-	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
 
-	lockName, err := c.lockAllImagesReadOnly()
-	if err != nil {
-		return err
+	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+		return fmt.Errorf("error locking all images read only: %s", err)
 	}
-	defer shluz.Unlock(lockName)
+	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
 	return c.runPhases(phases)
 }
@@ -219,19 +143,16 @@ func (c *Conveyor) ShouldBeBuilt() error {
 }
 
 func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
-	var err error
-
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase(false))
 	phases = append(phases, NewShouldBeBuiltPhase())
 	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
-	lockName, err := c.lockAllImagesReadOnly()
-	if err != nil {
-		return err
+	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+		return fmt.Errorf("error locking all images read only: %s", err)
 	}
-	defer shluz.Unlock(lockName)
+	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
 	return c.runPhases(phases)
 }
@@ -242,35 +163,17 @@ type BuildAndPublishOptions struct {
 }
 
 func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
-restart:
-	if err := c.buildAndPublish(stagesRepo, imagesRepoManager, opts); err != nil {
-		if isConveyorShouldBeResetError(err) {
-			c.ReInitRuntimeFields()
-			goto restart
-		}
-
-		return err
-	}
-
-	return nil
-}
-
-func (c *Conveyor) buildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
-	var err error
-
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase(true))
-	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
 	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
 
-	lockName, err := c.lockAllImagesReadOnly()
-	if err != nil {
-		return err
+	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+		return fmt.Errorf("error locking all images read only: %s", err)
 	}
-	defer shluz.Unlock(lockName)
+	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
 	return c.runPhases(phases)
 }
@@ -282,7 +185,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 		err := phase.Run(c)
 
 		if err != nil {
-			c.ReleaseAllGlobalLocks()
+			c.StagesStorageLockManager.ReleaseAllStageLocks()
 			return err
 		}
 	}
@@ -292,15 +195,6 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 
 func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
-}
-
-func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
-	lockName := fmt.Sprintf("%s.images", c.projectName())
-	err := shluz.Lock(lockName, shluz.LockOptions{ReadOnly: true})
-	if err != nil {
-		return "", fmt.Errorf("error locking %s: %s", lockName, err)
-	}
-	return lockName, nil
 }
 
 func (c *Conveyor) GetStageImage(name string) *image.StageImage {

@@ -99,6 +99,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
+	common.SetupStagesStorageCache(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&CommonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
@@ -185,7 +186,12 @@ func runRun() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesRepo(&CommonCmdData)
+	_, err = common.GetStagesStorage(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(&CommonCmdData)
 	if err != nil {
 		return err
 	}

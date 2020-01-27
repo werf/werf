@@ -54,6 +54,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupTag(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
+	common.SetupStagesStorageCache(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepoMode(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo")
@@ -113,7 +114,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesRepo(commonCmdData)
+	_, err = common.GetStagesStorage(commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(commonCmdData)
 	if err != nil {
 		return err
 	}

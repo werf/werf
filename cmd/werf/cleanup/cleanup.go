@@ -51,6 +51,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
+	common.SetupStagesStorageCache(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
@@ -131,7 +132,12 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	stagesStorage, err := common.GetStagesStorage(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -181,7 +187,7 @@ func runCleanup() error {
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ProjectName:       projectName,
 		ImagesRepoManager: imagesRepoManager,
-		StagesStorage:     stagesRepo,
+		StagesStorage:     stagesStorage,
 		ImagesNames:       imagesNames,
 		DryRun:            *CommonCmdData.DryRun,
 	}

@@ -81,6 +81,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupStagesStorage(&CommonCmdData, cmd)
+	common.SetupStagesStorageCache(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
@@ -160,7 +161,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	stagesStorage, err := common.GetStagesStorage(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -201,7 +202,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 
-	if err = c.BuildAndPublish(stagesRepo, imagesRepoManager, opts); err != nil {
+	if err = c.BuildAndPublish(stagesStorage, imagesRepoManager, opts); err != nil {
 		return err
 	}
 
