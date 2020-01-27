@@ -47,6 +47,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
+	common.SetupStagesStorageCache(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 	common.SetupInsecureRegistry(&CommonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
@@ -91,7 +92,12 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	_, err = common.GetStagesRepo(&CommonCmdData)
+	_, err = common.GetStagesStorage(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(&CommonCmdData)
 	if err != nil {
 		return err
 	}

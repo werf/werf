@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/stages_storage"
+
 	"github.com/flant/werf/pkg/config"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -107,7 +109,7 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error)
 
 func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage)
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.Labels())
 		if commit == "" {
 			return false, nil
 		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
@@ -118,6 +120,18 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	}
 
 	return false, nil
+}
+
+func (s *BaseStage) SelectCacheImage(images []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error) {
+	var oldestImage *stages_storage.ImageInfo
+	for _, img := range images {
+		if oldestImage == nil {
+			oldestImage = img
+		} else if img.CreatedAt.Before(oldestImage.CreatedAt) {
+			oldestImage = img
+		}
+	}
+	return oldestImage, nil
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.ImageInterface) error {

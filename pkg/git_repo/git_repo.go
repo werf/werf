@@ -51,6 +51,7 @@ type GitRepo interface {
 	TagCommit(tag string) (string, error)
 	IsCommitExists(commit string) (bool, error)
 	FindCommitIdByMessage(regex string) (string, error)
+	IsAncestor(ancestorCommit, descendantCommit string) (bool, error)
 
 	CreatePatch(PatchOptions) (Patch, error)
 	CreateArchive(ArchiveOptions) (Archive, error)

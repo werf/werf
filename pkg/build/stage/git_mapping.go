@@ -270,7 +270,7 @@ func (gp *GitMapping) ApplyPatchCommand(prevBuiltImage, image image.ImageInterfa
 }
 
 func (gp *GitMapping) GetCommitsToPatch(prevBuiltImage image.ImageInterface) (string, string, error) {
-	fromCommit := gp.GetGitCommitFromImageLabels(prevBuiltImage)
+	fromCommit := gp.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
 	if fromCommit == "" {
 		panic("Commit should be in prev built image labels!")
 	}
@@ -289,8 +289,8 @@ func (gp *GitMapping) AddGitCommitToImageLabels(image image.ImageInterface, comm
 	})
 }
 
-func (gp *GitMapping) GetGitCommitFromImageLabels(builtImage image.ImageInterface) string {
-	commit, ok := builtImage.Labels()[gp.ImageGitCommitLabel()]
+func (gp *GitMapping) GetGitCommitFromImageLabels(labels map[string]string) string {
+	commit, ok := labels[gp.ImageGitCommitLabel()]
 	if !ok {
 		return ""
 	}

@@ -1,6 +1,9 @@
 package stage
 
-import "github.com/flant/werf/pkg/image"
+import (
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/stages_storage"
+)
 
 type Interface interface {
 	Name() StageName
@@ -24,4 +27,6 @@ type Interface interface {
 
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
+
+	SelectCacheImage(images []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error)
 }
