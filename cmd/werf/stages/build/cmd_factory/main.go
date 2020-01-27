@@ -74,6 +74,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
+	common.SetupStagesStorageCache(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRegistry(commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
@@ -134,7 +135,12 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesRepo, err := common.GetStagesRepo(commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -165,7 +171,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 
-	if err = c.BuildStages(stagesRepo, opts); err != nil {
+	if err = c.BuildStages(stagesStorage, opts); err != nil {
 		return err
 	}
 
