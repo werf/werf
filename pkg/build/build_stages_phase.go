@@ -166,9 +166,12 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			return err
 		}
 
-		imageLockName := imagePkg.ImageLockName(img.Name())
-		if err := c.ReleaseGlobalLock(imageLockName); err != nil {
-			return fmt.Errorf("failed to unlock %s: %s", imageLockName, err)
+		if err := c.StagesStorage.StoreStageImage(img); err != nil {
+			return fmt.Errorf("unable to store image %s in stages storage %s: %s", img.Name(), c.StagesStorage.String(), err)
+		}
+
+		if err := c.StagesStorageLockManager.UnlockStage(c.projectName(), s.GetSignature()); err != nil {
+			return fmt.Errorf("failed to unlock %s: %s", s.GetSignature(), err)
 		}
 
 		prevStageImageSize = img.Inspect().Size
