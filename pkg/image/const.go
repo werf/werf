@@ -23,7 +23,7 @@ const (
 
 	LocalImageStageImageNamePrefix = "werf-stages-storage/"
 	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
-	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s"
+	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s-%s"
 
 	RepoImageStageTagFormat = "image-stage-%s"
 )

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/true_git"
+
 	"github.com/flant/werf/pkg/slug"
 
 	"gopkg.in/ini.v1"
@@ -42,6 +44,10 @@ func (repo *Remote) FindCommitIdByMessage(regex string) (string, error) {
 
 func (repo *Remote) IsEmpty() (bool, error) {
 	return repo.isEmpty(repo.GetClonePath())
+}
+
+func (repo *Remote) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GetClonePath())
 }
 
 func (repo *Remote) CloneAndFetch() error {

@@ -48,7 +48,7 @@ func (s *GitCacheStage) GetDependencies(_ Conveyor, _, prevBuiltImage image.Imag
 func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage image.ImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage)
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
 		if commit == "" {
 			return 0, fmt.Errorf("invalid stage image: can not find git commit in stage image labels: delete stage image %s manually and retry the build", prevBuiltImage.Name())
 		}
