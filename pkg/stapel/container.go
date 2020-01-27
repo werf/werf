@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/docker"
 )
 
 type container struct {
@@ -18,6 +18,15 @@ type container struct {
 func (c *container) Create() error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
+
+	if exist, err := docker.ImageExist(c.ImageName); err != nil {
+		return err
+	} else if !exist {
+		if err := docker.CliPullWithRetries(c.ImageName); err != nil {
+			return err
+		}
+	}
+
 	return docker.CliCreate(name, volume, c.ImageName)
 }
 

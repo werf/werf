@@ -1,9 +1,12 @@
 package docker
 
 import (
+	"strings"
+
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/flant/logboek"
 	"golang.org/x/net/context"
 )
 
@@ -37,6 +40,36 @@ func ImageInspect(ref string) (*types.ImageInspect, error) {
 	return &inspect, nil
 }
 
+const cliPullMaxAttempts = 5
+
+func CliPullWithRetries(args ...string) error {
+	var attempt int
+
+tryPull:
+	if err := CliPull(args...); err != nil {
+		if attempt < cliPullMaxAttempts {
+			specificErrors := []string{
+				"Client.Timeout exceeded while awaiting headers",
+				"TLS handshake timeout",
+				"i/o timeout",
+			}
+
+			for _, specificError := range specificErrors {
+				if strings.Index(err.Error(), specificError) != -1 {
+					attempt += 1
+
+					logboek.LogInfoF("Retrying (%d/%d) ...\n", attempt, cliPullMaxAttempts)
+					goto tryPull
+				}
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 func CliPull(args ...string) error {
 	cmd := image.NewPullCommand(cli)
 	cmd.SilenceErrors = true
@@ -59,6 +92,35 @@ func CliPush(args ...string) error {
 
 	err := cmd.Execute()
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+const cliPushMaxAttempts = 5
+
+func CliPushWithRetries(args ...string) error {
+	var attempt int
+
+tryPush:
+	if err := CliPush(args...); err != nil {
+		if attempt < cliPushMaxAttempts {
+			specificErrors := []string{
+				"TLS handshake timeout",
+				"i/o timeout",
+			}
+
+			for _, specificError := range specificErrors {
+				if strings.Index(err.Error(), specificError) != -1 {
+					attempt += 1
+
+					logboek.LogInfoF("Retrying (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+					goto tryPush
+				}
+			}
+		}
+
 		return err
 	}
 

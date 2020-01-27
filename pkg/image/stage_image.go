@@ -8,8 +8,8 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/docker"
 )
 
 type StageImage struct {
@@ -182,7 +182,7 @@ func (i *StageImage) Tag(name string) error {
 }
 
 func (i *StageImage) Pull() error {
-	if err := docker.CliPull(i.name); err != nil {
+	if err := docker.CliPullWithRetries(i.name); err != nil {
 		return err
 	}
 
@@ -192,13 +192,13 @@ func (i *StageImage) Pull() error {
 }
 
 func (i *StageImage) Push() error {
-	return docker.CliPush(i.name)
+	return docker.CliPushWithRetries(i.name)
 }
 
 func (i *StageImage) Import(name string) error {
 	importedImage := newBaseImage(name)
 
-	if err := docker.CliPull(name); err != nil {
+	if err := docker.CliPullWithRetries(name); err != nil {
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (i *StageImage) Export(name string) error {
 	}
 
 	if err := logboek.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LogProcessOptions{}, func() error {
-		return docker.CliPush(name)
+		return docker.CliPushWithRetries(name)
 	}); err != nil {
 		return err
 	}
