@@ -177,14 +177,40 @@ func Pull(imageName string) error {
 tryPull:
 	err := CliPull(imageName)
 	if err != nil {
-		if strings.Index(err.Error(), "Client.Timeout exceeded while awaiting headers") != -1 {
-			goto tryPull
+		specificErrors := []string{
+			"Client.Timeout exceeded while awaiting headers",
+			"TLS handshake timeout",
+			"i/o timeout",
 		}
 
-		if (strings.Index(err.Error(), "proxyconnect tcp: dial tcp") != 1) && (strings.Index(err.Error(), "i/o timeout") != -1) {
-			goto tryPull
+		for _, specificError := range specificErrors {
+			if strings.Index(err.Error(), specificError) != -1 {
+				fmt.Fprintf(GinkgoWriter, "Retrying pull ...")
+				goto tryPull
+			}
 		}
 	}
+
+	return err
+}
+
+func Push(imageName string) error {
+tryPush:
+	err := CliPush(imageName)
+	if err != nil {
+		specificErrors := []string{
+			"TLS handshake timeout",
+			"i/o timeout",
+		}
+
+		for _, specificError := range specificErrors {
+			if strings.Index(err.Error(), specificError) != -1 {
+				fmt.Fprintf(GinkgoWriter, "Retrying push ...")
+				goto tryPush
+			}
+		}
+	}
+
 	return err
 }
 
