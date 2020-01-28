@@ -107,6 +107,7 @@ tryPush:
 	if err := CliPush(args...); err != nil {
 		if attempt < cliPushMaxAttempts {
 			specificErrors := []string{
+				"Client.Timeout exceeded while awaiting headers",
 				"TLS handshake timeout",
 				"i/o timeout",
 			}
