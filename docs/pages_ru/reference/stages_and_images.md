@@ -65,7 +65,7 @@ _Зависимости стадии_ — это данные, которые н
  - произвольные строки указанные пользователем в `werf.yaml`
  - и т.п.
 
-Большиство _зависимостей стадии_ определяется в файле конфигурации `werf.yaml`, остальные — во время запуска.
+Большинство _зависимостей стадии_ определяется в файле конфигурации `werf.yaml`, остальные — во время запуска.
 
 Следующая таблица иллюстрирует зависимости в Dockerfile-образе, Stapel-образе и [Stapel-артефакте]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html).
 Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
@@ -125,23 +125,23 @@ _Зависимости стадии_ — это данные, которые н
 <script>
 function application() {
   if ($("a[id=image-from-dockerfile-dependencies]").hasClass('active')) {
-    $(".image").addClass('hidden')
-    $(".artifact").addClass('hidden')
+    $(".image").addClass('hidden');
+    $(".artifact").addClass('hidden');
     $(".image-from-dockerfile").removeClass('hidden')
   }
   else if ($("a[id=image-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".artifact").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".artifact").addClass('hidden');
     $(".image").removeClass('hidden')
   }
   else if ($("a[id=artifact-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".image").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".image").addClass('hidden');
     $(".artifact").removeClass('hidden')
   }
   else {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".image").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".image").addClass('hidden');
     $(".artifact").addClass('hidden')
   }
 }
@@ -151,7 +151,7 @@ $('.tabs').on('click', '.dependencies-btn', function() {
   application()
 });
 
-application()
+application();
 $.noConflict();
 </script>
 
@@ -174,10 +174,10 @@ _Образ_ — это **готовый к использованию** Docker-
 
 Как было написано [выше](#стадии), _стадии_ — это этапы сборочного процесса, кирпичи, из которых в итоге собирается конечный _образ_.
 _Стадии_, в отличие от конечных _образов_ не предназначены для прямого использования. Основное отличие между конечными образами и стадиями — разное поведение [политики очистки]({{ site.baseurl }}/documentation/reference/cleaning_process.html#очистка-по-политикам) по отношению к ним, я также различия в структуре хранимой мета-информации.
-Очистка _хранилища стадий_ основана только на наличии в _репозиториии образов_ связанных с соответствующими стадиями образов.
+Очистка _хранилища стадий_ основана только на наличии в _репозитории образов_ связанных с соответствующими стадиями образов.
 
 werf создает _образы_ используя _хранилище стадий_.
-На текущий момент, _образы_ создаются только в [_процессе публикации_]({{ site.baseurl }}/documentation/reference/publish_process.html) (publish) и хранятся в _репозиториии образов_.
+На текущий момент, _образы_ создаются только в [_процессе публикации_]({{ site.baseurl }}/documentation/reference/publish_process.html) (publish) и хранятся в _репозитории образов_.
 
 Конфигурация образов должна быть описана в файле конфигурации `werf.yaml`.
 

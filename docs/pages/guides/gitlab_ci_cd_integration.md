@@ -259,7 +259,7 @@ In the results of werf works, we have images in a Docker registry and a build ca
 
 There is a `cleanup` stage in the `.gitlab-ci.yml` file for the cleanup process.
 
-To use cleanup you should create `Personal Access Token` with necessary rights and login to the docker registy with it before cleanup.
+To use cleanup you should create `Personal Access Token` with necessary rights and login to the docker registry with it before cleanup.
 
 For demo project simply create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 

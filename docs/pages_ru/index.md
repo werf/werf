@@ -123,7 +123,7 @@ layout: default
         <ul class="features__list">
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
-                <div class="features__list-item-title">Полный цикл управления жизненным циклом приложения</div>
+                <div class="features__list-item-title">Управление полным жизненным циклом приложения</div>
                 <div class="features__list-item-text">Управляйте процессом сборки, выкатом приложения в Kubernetes и очисткой неиспользуемых образов.</div>
             </li>
             <li class="features__list-item">

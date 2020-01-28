@@ -73,7 +73,7 @@ With go templates user can:
  * define common text parts as named Go templates and reuse them in several places;
  * etc.
 
-[Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks), like `include` and `required`, can be used in templates.
+[Sprig functions](https://masterminds.github.io/sprig/) and [advanced functions](https://helm.sh/docs/howto/charts_tips_and_tricks/), like `include` and `required`, can be used in templates.
 
 Also user can place `*.tpl` files, which will not be rendered into Kubernetes specs. These files can be used to store arbitrary custom Go templates and definitions. All templates and definitions from `*.tpl` files will be available for the use in the `*.yaml` files.
 
@@ -274,7 +274,7 @@ global:
 
 Each value like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123` in the secret values map is a werf secret encoded value. Otherwise secret values map is the same as a regular values map. See more info [about secret values generation and working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
 
-File `.helm/secret-values.yaml` is the default secret values file. Additional user defined secret values can alternatively be passed via separate secret values files by sepcifying werf options `--secret-values=PATH_TO_FILE` (can be used multiple times to pass multiple files).
+File `.helm/secret-values.yaml` is the default secret values file. Additional user defined secret values can alternatively be passed via separate secret values files by specifying werf options `--secret-values=PATH_TO_FILE` (can be used multiple times to pass multiple files).
 
 #### Service values
 
@@ -462,7 +462,7 @@ metadata:
     "helm.sh/hook-weight": "1"
 ```
 
-There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-uprade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
+There are a lot of different helm hooks which come into play during deploy process. We have already seen `pre|post-install|upgrade` hooks in the [deploy process](#deploy-process), which are the most usually needed hooks to run such tasks as migrations (in `pre-upgrade` hooks) or some post deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
 
 Hooks are sorted in the ascending order specified by `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the names), then created and executed sequentially. werf recreates Kubernetes resource for each of the hook in the case when resource already exists in the cluster. Hooks Kubernetes resources are not deleted after execution.
 

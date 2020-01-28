@@ -2,6 +2,14 @@
 $('#mysidebar').height($(".nav").height());
 
 
+document.addEventListener("DOMContentLoaded", function() {
+  /**
+   * AnchorJS
+   */
+  anchors.add('h2,h3,h4,h5');
+
+});
+
 $( document ).ready(function() {
     var wh = $(window).height();
     var sh = $("#mysidebar").height();
@@ -13,11 +21,6 @@ $( document ).ready(function() {
     $('[data-toggle="tooltip"]').tooltip({
         placement : 'top'
     });
-
-    /**
-     * AnchorJS
-     */
-    anchors.add('h2,h3,h4,h5');
 
 });
 
@@ -65,6 +68,7 @@ $(document).ready(function () {
 
   var releasesInfo = window.releasesInfo;
 
+  let _current_channel;
   if (typeof releasesInfo === 'undefined' || releasesInfo == null) {
     console.log('releasesInfo is not defined, assume local mode');
     releasesInfo = {};
@@ -73,7 +77,7 @@ $(document).ready(function () {
     if (currentChannel === 'root') {
       for (channel of releasesInfo.orderedChannels) {
         _current_channel = releasesInfo.channels.channels.filter(function (el) {
-          return ((el.version == currentRelease) && (el.name == channel));
+          return ((el.version === currentRelease) && (el.name === channel));
         });
         if (_current_channel.length) {
           currentChannel = releasesInfo.channels.group + '-' + channel;
@@ -84,7 +88,6 @@ $(document).ready(function () {
 
     var submenu = $('<ul class="header__submenu">');
     $.each(releasesInfo.orderedChannels, function (i, channel) {
-      var release = '';
       var channel_version = '';
       if (channel !== 'review') {
         var _channel_version = releasesInfo.channels.channels.filter(function (el) {

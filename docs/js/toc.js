@@ -35,7 +35,7 @@
       none: function() { output.html(html); }
     };
 
-    var get_level = function(ele) { return parseInt(ele.nodeName.replace("H", ""), 10); }
+    var get_level = function(ele) { return parseInt(ele.nodeName.replace("H", ""), 10); };
     var highest_level = headers.map(function(_, ele) { return get_level(ele); }).get().sort()[0];
     var return_to_top = '<i class="icon-arrow-up back-to-top"> </i>';
 
@@ -54,18 +54,18 @@
         $(header).addClass('top-level-header').after(return_to_top);
       }
 
-      header_text = header.innerHTML.replace(/<\/?[^>]+(>|$)/g, "")
+      let header_text = header.innerHTML.replace(/<\/?[^>]+(>|$)/g, "");
 
       if (this_level === level) // same level as before; same indenting
         html += "<li><a href='#" + header.id + "'>" + header_text + "</a>";
       else if (this_level <= level){ // higher level than before; end parent ol
-        for(i = this_level; i < level; i++) {
+        for(let i = this_level; i < level; i++) {
           html += "</li></"+settings.listType+">"
         }
         html += "<li><a href='#" + header.id + "'>" + header_text + "</a>";
       }
       else if (this_level > level) { // lower level than before; expand the previous to contain a ol
-        for(i = this_level; i > level; i--) {
+        for(let i = this_level; i > level; i--) {
           html += "<"+settings.listType+"><li>"
         }
         html += "<a href='#" + header.id + "'>" + header_text + "</a>";

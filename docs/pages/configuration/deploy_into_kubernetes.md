@@ -23,7 +23,7 @@ deploy:
 
 `deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name-slug) to generated helm release name. Default: `true`.
 
-`TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates-1). E.g. you can mix the value with an environment variable:
+`TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates). E.g. you can mix the value with an environment variable:
 
 {% raw %}
 ```yaml

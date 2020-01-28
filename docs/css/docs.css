@@ -75,7 +75,7 @@
 }
 
 .sidebar__item_parent > a {
-    
+
 }
 
 .sidebar__item_parent > a:after {
@@ -536,7 +536,6 @@
     font-size: 16px;
     height: 40px;
     line-height: 40px;
-    font-size: 16px;
     font-weight: 600;
     font-style: normal;
     font-stretch: normal;

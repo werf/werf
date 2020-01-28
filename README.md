@@ -39,13 +39,13 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <!-- WERF DOCS PARTIAL BEGIN: Features -->
 
- - Full application lifecycle management: build and publish images, deploy an application to Kubernetes, and remove unused images based on policies.
- - The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
- - Build images using Dockerfiles.
- - Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
- - werf supports Helm 2-compatible charts and complex fault-tolerant deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
- - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
- - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
+- Full application lifecycle management: build and publish images, deploy an application to Kubernetes, and remove unused images based on policies.
+- The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
+- Build images using Dockerfiles.
+- Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
+- werf supports Helm 2-compatible charts and complex fault-tolerant deployment processes with logging, tracking, early error detection, and annotations to customize the tracking logic of specific resources.
+- werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
+- Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
 ## Coming Soon
 

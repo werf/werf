@@ -97,7 +97,7 @@ DOSKEY werf=%WERF_PATH% $*
 
 ### Способ 2: установка бинарного файла
 
-Выберите подходящую версию из [релизов на GitHub](https://github.com/flant/werf/releases) или на [bintray](https://bintray.com/flant/werf/werf/_latestVersion) и используйте один из предлженных подходов с выбранным URL-адресом.
+Выберите подходящую версию из [релизов на GitHub](https://github.com/flant/werf/releases) или на [bintray](https://bintray.com/flant/werf/werf/_latestVersion) и используйте один из предложенных подходов с выбранным URL-адресом.
 
 #### MacOS
 

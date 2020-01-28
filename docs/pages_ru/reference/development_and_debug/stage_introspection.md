@@ -21,7 +21,7 @@ summary: |
 
 Благодаря опциям интроспекции вы можете получить доступ к конкретной _стадии_ непосредственно в процессе сборки. 
 Во время интроспекции вы получаете такое же состояние контейнера, как и во время сборки, с теми же переменными окружения, с доступом к тем же служебным инструментам, используемым werf во время сборки. 
-Эти служебные инструменты  добавляются с помощью монтирования директорий из специального служебного контейнера — _stapel_ (доступен по адресу `/.werf/stapel` в _сборочном контейнеере_). По сути, интроспекция, — это запуск _сборочного контейнера_ в интерактивном режиме для работы в нем пользователя.
+Эти служебные инструменты  добавляются с помощью монтирования директорий из специального служебного контейнера — _stapel_ (доступен по адресу `/.werf/stapel` в _сборочном контейнере_). По сути, интроспекция, — это запуск _сборочного контейнера_ в интерактивном режиме для работы в нем пользователя.
 
 Параметр `--introspect-stage` может быть указан несколько раз для интроспекции нескольких стадий. Формат использования:
 
@@ -41,7 +41,7 @@ summary: |
 <iframe width="560" height="315" src="https://www.youtube.com/embed/GiEbEhF2Pes" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
 </div>
 
-Finally, when introspection is effected for applications that use **ansible**,  you can debug ansible playbooks in the _assembly container_ and subsequently transfer ansible tasks to the appropriate configuration _stages_.
+Наконец, при использовании интроспекции для приложений с **Ansible**, вы можете отлаживать Ansible-плейбуки в _сборочном контейнере_, а затем переносить их на необходимые _стадии_ конфигурации сборки.
 
 <div class="videoWrapper">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/TEpn0yFvJik" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
