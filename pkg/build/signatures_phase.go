@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
 
-func NewSignaturesPhase(lockImages bool) *SignaturesPhase {
-	return &SignaturesPhase{LockImages: lockImages}
+func NewSignaturesPhase(lockStages bool) *SignaturesPhase {
+	return &SignaturesPhase{LockStages: lockStages}
 }
 
 type SignaturesPhase struct {
-	LockImages bool
+	LockStages bool
 }
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
@@ -80,29 +81,49 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 			checksumArgs = append(checksumArgs, prevStage.GetSignature())
 		}
 
-		stageSig := util.Sha256Hash(checksumArgs...)
+		stageSig := util.MD5Hash(checksumArgs...)
 
 		s.SetSignature(stageSig)
 
 		logboek.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
 
-		imageName := fmt.Sprintf(imagePkg.LocalImageStageImageFormat, c.projectName(), stageSig)
-
-		i := c.GetOrCreateImage(prevImage, imageName)
-		s.SetImage(i)
-
-		if err = i.SyncDockerState(); err != nil {
-			return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+		imagesDescs, err := c.StagesStorage.GetImagesBySignature(c.projectName(), stageSig)
+		if err != nil {
+			return fmt.Errorf("unable to get images from stages storage %s by signature %s: %s", c.StagesStorage.String(), stageSig)
 		}
 
-		if p.LockImages {
-			imageLockName := imagePkg.ImageLockName(i.Name())
-			if err := c.AcquireGlobalLock(imageLockName, shluz.LockOptions{}); err != nil {
-				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
+		var imageExists bool
+		var i *imagePkg.StageImage
+
+		if len(imagesDescs) > 0 {
+			imgInfo, err := s.SelectCacheImage(imagesDescs)
+			if err != nil {
+				return err
 			}
 
-			if err = i.SyncDockerState(); err != nil {
-				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+			if imgInfo != nil {
+				fmt.Printf("-- SelectCacheImage => %v\n", imgInfo)
+				imageExists = true
+
+				i = c.GetOrCreateImage(prevImage, imgInfo.ImageName)
+				s.SetImage(i)
+
+				if err := c.StagesStorage.SyncStageImage(i); err != nil {
+					return fmt.Errorf("unable to fetch image %s from stages storage %s: %s", imgInfo.ImageName, c.StagesStorage.String(), err)
+				}
+			}
+		}
+
+		if !imageExists {
+			imageName := fmt.Sprintf(imagePkg.LocalImageStageImageFormat, c.projectName(), stageSig, util.UUIDToShortString(uuid.New()))
+
+			i = c.GetOrCreateImage(prevImage, imageName)
+			s.SetImage(i)
+
+			if p.LockStages {
+				if err := c.StagesStorageLockManager.LockStage(c.projectName(), stageSig); err != nil {
+					return fmt.Errorf("failed to lock %s: %s", stageSig, err)
+				}
 			}
 		}
 

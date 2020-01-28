@@ -46,6 +46,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
+	common.SetupStagesStorageCache(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage, read images from the specified images repo")
@@ -112,7 +113,12 @@ func runSync() error {
 		return err
 	}
 
-	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	stagesStorage, err := common.GetStagesStorage(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetStagesStorageCache(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -125,7 +131,7 @@ func runSync() error {
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ProjectName:       projectName,
 		ImagesRepoManager: imagesRepoManager,
-		StagesStorage:     stagesRepo,
+		StagesStorage:     stagesStorage,
 		ImagesNames:       imagesNames,
 		DryRun:            *CommonCmdData.DryRun,
 	}

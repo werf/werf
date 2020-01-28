@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/true_git"
+
 	"github.com/flant/werf/pkg/util"
 
 	"github.com/flant/logboek"
@@ -29,6 +31,10 @@ func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {
 
 func (repo *Local) IsEmpty() (bool, error) {
 	return repo.isEmpty(repo.Path)
+}
+
+func (repo *Local) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GitDir)
 }
 
 func (repo *Local) RemoteOriginUrl() (string, error) {

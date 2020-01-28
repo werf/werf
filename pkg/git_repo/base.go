@@ -28,8 +28,6 @@ var (
 type Base struct {
 	Name   string
 	TmpDir string
-
-	unreachableCommits []string
 }
 
 func (repo *Base) HeadCommit() (string, error) {
@@ -312,29 +310,6 @@ func (repo *Base) isCommitExists(repoPath, gitDir string, commit string) (bool, 
 		return false, nil
 	} else if err != nil {
 		return false, fmt.Errorf("bad commit `%s`: %s", commit, err)
-	}
-
-	if repo.unreachableCommits == nil {
-		fsckRes, err := true_git.Fsck(gitDir, true_git.FsckOptions{Unreachable: true, NoReflogs: true, Strict: true, Full: true})
-		if err != nil {
-			return false, fmt.Errorf("fsck failed: %s", err)
-		}
-
-		if debug() {
-			fmt.Printf("Got fsck result for git dir '%s': %#v\n", gitDir, fsckRes)
-		}
-
-		if fsckRes.UnreachableCommits != nil {
-			repo.unreachableCommits = fsckRes.UnreachableCommits
-		} else {
-			repo.unreachableCommits = make([]string, 0)
-		}
-	}
-
-	for _, unreachableCommit := range repo.unreachableCommits {
-		if commit == unreachableCommit {
-			return false, nil
-		}
 	}
 
 	return true, nil
