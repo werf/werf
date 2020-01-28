@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Executing commands while deploying your app’s new release in Kubernetes"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/custom-commands-deploying-in-kubernetes-df4ea4487f18"
+    img: "/images/publications/en_240120.png"
+    created: 2020-01-24
+    comment: |
+      <p>In <a href="https://flant.com/" target="_blank" rel="noopener nofollow">Flant</a>, we are often confronted with the challenge of adapting applications for running them in Kubernetes. When dealing with this challenge, we usually encounter many repetitive problems. We have already discussed one of them in the “<a target="_blank" rel="noopener" href="https://medium.com/flant-com/stateful-app-files-in-kubernetes-d015311e5e6b">Migrating your app to Kubernetes: what to do with files?</a>”. In this article, we’ll focus on another problem which relates to CI/CD processes for this time.</p>
   - title: "Announcing werf 1.0 stable: The state & future of our GitOps tool"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/announcing-werf-1-0-stable-813b664a06ae"
@@ -62,6 +69,13 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Динамическая сборка и деплой Docker-образов с werf на примере сайта версионированной документации"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/478690/"
+    img: "/images/publications/ru_160120.png"
+    created: 2020-01-16
+    comment: |
+      <p>Мы уже не раз рассказывали про свой GitOps-инструмент werf, а в этот раз хотели бы поделиться опытом сборки сайта с документацией самого проекта — werf.io (его русскоязычная версия — ru.werf.io). Это обычный статический сайт, однако его сборка интересна тем, что построена с использованием динамического количества артефактов.
   - title: "Представляем werf 1.0 stable: при чём тут GitOps, статус и планы"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/481306/"
