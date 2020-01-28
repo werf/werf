@@ -8,7 +8,7 @@ List werf releases
 {{ header }} Syntax
 
 ```shell
-werf helm ls [FILTER] [options]
+werf helm list [FILTER] [options]
 ```
 
 {{ header }} Options
@@ -29,7 +29,7 @@ werf helm ls [FILTER] [options]
             helm storage driver to use. One of 'configmap' or 'secret' (default                     
             $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
-            help for ls
+            help for list
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --kube-config='':

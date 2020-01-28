@@ -23,9 +23,9 @@ var CmdData struct {
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "ls [FILTER]",
+		Use:                   "list [FILTER]",
 		Short:                 "List werf releases",
-		Aliases:               []string{"list"},
+		Aliases:               []string{"ls"},
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(),

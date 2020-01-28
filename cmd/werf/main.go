@@ -52,7 +52,7 @@ import (
 	helm_get_release "github.com/flant/werf/cmd/werf/helm/get_release"
 	helm_history "github.com/flant/werf/cmd/werf/helm/history"
 	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
-	helm_ls "github.com/flant/werf/cmd/werf/helm/ls"
+	helm_list "github.com/flant/werf/cmd/werf/helm/list"
 	helm_render "github.com/flant/werf/cmd/werf/helm/render"
 	helm_repo "github.com/flant/werf/cmd/werf/helm/repo"
 	helm_rollback "github.com/flant/werf/cmd/werf/helm/rollback"
@@ -204,7 +204,7 @@ func helmCmd() *cobra.Command {
 		helm_deploy_chart.NewCmd(),
 		helm_lint.NewCmd(),
 		helm_render.NewCmd(),
-		helm_ls.NewCmd(),
+		helm_list.NewCmd(),
 		helm_delete.NewCmd(),
 		helm_rollback.NewCmd(),
 		helm_get.NewCmd(),
