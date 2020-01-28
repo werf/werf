@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/docker/go-connections/nat"
 
@@ -185,7 +186,8 @@ tryPull:
 
 		for _, specificError := range specificErrors {
 			if strings.Index(err.Error(), specificError) != -1 {
-				fmt.Fprintf(GinkgoWriter, "Retrying pull ...")
+				fmt.Fprintf(GinkgoWriter, "Retrying pull in 5 seconds ...")
+				time.Sleep(5 * time.Second)
 				goto tryPull
 			}
 		}
@@ -206,7 +208,8 @@ tryPush:
 
 		for _, specificError := range specificErrors {
 			if strings.Index(err.Error(), specificError) != -1 {
-				fmt.Fprintf(GinkgoWriter, "Retrying push ...")
+				fmt.Fprintf(GinkgoWriter, "Retrying push in 5 seconds ...")
+				time.Sleep(5 * time.Second)
 				goto tryPush
 			}
 		}
