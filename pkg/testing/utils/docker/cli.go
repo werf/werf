@@ -199,6 +199,7 @@ tryPush:
 	err := CliPush(imageName)
 	if err != nil {
 		specificErrors := []string{
+			"Client.Timeout exceeded while awaiting headers",
 			"TLS handshake timeout",
 			"i/o timeout",
 		}
