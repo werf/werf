@@ -11,7 +11,7 @@ if ($('#toc').is(':empty')) { $('#toc').hide(); }
 /* this offset helps account for the space taken up by the floating toolbar. */
 $('#toc').on('click tap', 'a', function() {
   var target = $(this.getAttribute('href'))
-    , scroll_target = target.offset().top
+    , scroll_target = target.offset().top;
 
   $(window).scrollTop(scroll_target - 110);
   return false

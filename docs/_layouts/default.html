@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html>
 <head>
   {% include head.html %}
   <script>
@@ -44,11 +45,11 @@
   <script>
     $(document).ready(function(){
 
-      $('table.datatable').DataTable( {
+      $('table.datatable').DataTable({
           paging: false,
           stateSave: true
-        }
-      );
+        });
+    });
   </script>
   {% endif %}
 
@@ -86,7 +87,7 @@
       s.async = true;
       s.src = "https://mc.yandex.ru/metrika/tag.js";
 
-      if (w.opera == "[object Opera]") {
+      if (w.opera === "[object Opera]") {
         d.addEventListener("DOMContentLoaded", f, false);
       } else { f(); }
     })(document, window, "yandex_metrika_callbacks2");

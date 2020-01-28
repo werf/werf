@@ -15,7 +15,7 @@ Two-way-merge method have a problem: chart resource configuration gets out of sy
 
 ## Resources update methods
 
-werf currently migrating from two-way-merge to three-way-merge method. Following methods of resources update are avaiable:
+werf currently migrating from two-way-merge to three-way-merge method. Following methods of resources update are available:
 
  1. Two-way-merge and repair patches.
  2. Three-way-merge patches.
@@ -53,7 +53,7 @@ Annotation `debug.werf.io/repair-messages` will contain warnings written to the 
 
 ### Three-way-merge patches
 
-With this method werf will apply three-way-merge patches which take into accout resource version from the previous release, resource version from current chart template and live resource version from cluster to calculate a patch. This patch should transform resource state to match chart template configuration.
+With this method werf will apply three-way-merge patches which take into account resource version from the previous release, resource version from current chart template and live resource version from cluster to calculate a patch. This patch should transform resource state to match chart template configuration.
 
 ## Selecting resources update method
 

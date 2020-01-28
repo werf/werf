@@ -283,8 +283,8 @@ The following steps could describe the processing of a YAML configuration file:
 3. Saving dump into `.werf.render.yaml` (this file remains after the command execution and will be removed automatically with GC procedure).
 4. Splitting rendered YAML file into separate config sections (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132).
 5. Validating each config section:
-  * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
-  * Validating werf syntax.
+   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
+   * Validating werf syntax.
 6. Generating a set of images.
 
 ### Go templates

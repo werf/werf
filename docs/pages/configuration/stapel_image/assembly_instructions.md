@@ -357,7 +357,7 @@ ansible:
   install:
   - copy:
       content: |
-{{ .Files.Get "/conf/etc/nginx.conf" | indent 8}}
+{{ .Files.Get "/conf/etc/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
 ```
 {% endraw %}
@@ -560,7 +560,7 @@ Mask that starts with `*` is treated as anchor name by yaml parser. So mask with
 - "*.rb"
 # single quotes also work
 - '**/*'
-# no star at the beggining, no quoting needed
+# no star at the beginning, no quoting needed
 - src/**/*.js
 ```
 

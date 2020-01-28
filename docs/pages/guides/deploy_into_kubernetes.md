@@ -189,7 +189,7 @@ Finally, in this configuration Service `myapp-backend` specified to access Pods 
 To describe `frontend` configuration place file `.helm/templates/090-frontend.yaml` with the following content:
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: myapp-frontend

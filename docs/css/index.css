@@ -114,7 +114,6 @@ html, body, .page {
 .page__input {
     padding: 0 24px;
     margin: 0;
-    border: 2px solid transparent;
     box-sizing: border-box;
     height: 56px;
     border-radius: 15px;
@@ -242,7 +241,7 @@ html, body, .page {
     .welcome {
         background-size: 50%;
         background-position: right 100px;
-    }    
+    }
 }
 
 @media (max-width: 1700px) {
@@ -277,7 +276,7 @@ html, body, .page {
 }
 
 .intro-extra__item {
-    width: 560px;    
+    width: 560px;
 }
 
 .intro-extra__item-title {
@@ -315,7 +314,7 @@ html, body, .page {
 }
 
 .intro__list li {
-    width: 100%;    
+    width: 100%;
     font-size: 16px;
     font-weight: normal;
     font-style: normal;
@@ -358,7 +357,7 @@ html, body, .page {
 }
 
 ul.intro__list ul li:first-child {
-    margin-top: 15px;   
+    margin-top: 15px;
 }
 
 ul.intro__list_c2 {
@@ -737,14 +736,14 @@ ul.intro__list_c2 > li {
     text-decoration: line-through;
 }
 
-.roadmap__steps-list-item_closed .roadmap__steps-list-item-issue, 
+.roadmap__steps-list-item_closed .roadmap__steps-list-item-issue,
 .roadmap__steps-list-item_closed .roadmap__steps-list-item-text {
     opacity: 0.3;
 }
 
 .roadmap__steps-list-item_closed::after {
     content: '';
-    display: inline-block;   
+    display: inline-block;
     width: 24px;
     height: 24px;
     margin-left: 10px;
@@ -1054,7 +1053,7 @@ code {
     left: 0px;
     background: rgba(50,50,50,0.7);
     width: 100%;
-    height: 100%;    
+    height: 100%;
     justify-content: center;
     align-items: center;
 }
@@ -1072,7 +1071,7 @@ code {
     background: #0166FF;
     box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
     text-align: center;
-    color: #fff;    
+    color: #fff;
 }
 
 .popup__content:before {
@@ -1150,7 +1149,7 @@ code {
     right: 12.5px;
     font-size: 18px;
     font-weight: 600;
-    color: #fff;    
+    color: #fff;
     text-decoration: none;
 }
 

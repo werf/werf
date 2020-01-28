@@ -114,7 +114,7 @@ werf использует встроенный [Helm](https://helm.sh) *для �
 
 {% raw %}
 ```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}-backend
@@ -179,7 +179,7 @@ spec:
 Создадим файл конфигурации frontend `.helm/templates/090-frontend.yaml` со следующим содержимым:
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: myapp-frontend

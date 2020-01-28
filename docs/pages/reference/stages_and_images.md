@@ -15,7 +15,7 @@ Stages are steps in the assembly process. They act as building blocks for constr
 A ***stage*** is built from a logically grouped set of config instructions. It takes into account the assembly conditions and rules.
 Each _stage_ relates to a single Docker image.
 
-The werf assembly process involves a sequential build of stages using the _stage conveyor_.  A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble veroius types of images depending on their configuration.
+The werf assembly process involves a sequential build of stages using the _stage conveyor_.  A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble various types of images depending on their configuration.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'dockerfile-image-tab')">Dockerfile Image</a>
@@ -126,23 +126,23 @@ Left column contains a short description of dependencies, right column includes 
 <script>
 function application() {
   if ($("a[id=image-from-dockerfile-dependencies]").hasClass('active')) {
-    $(".image").addClass('hidden')
-    $(".artifact").addClass('hidden')
+    $(".image").addClass('hidden');
+    $(".artifact").addClass('hidden');
     $(".image-from-dockerfile").removeClass('hidden')
   }
   else if ($("a[id=image-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".artifact").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".artifact").addClass('hidden');
     $(".image").removeClass('hidden')
   }
   else if ($("a[id=artifact-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".image").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".image").addClass('hidden');
     $(".artifact").removeClass('hidden')
   }
   else {
-    $(".image-from-dockerfile").addClass('hidden')
-    $(".image").addClass('hidden')
+    $(".image-from-dockerfile").addClass('hidden');
+    $(".image").addClass('hidden');
     $(".artifact").addClass('hidden')
   }
 }
@@ -152,7 +152,7 @@ $('.tabs').on('click', '.dependencies-btn', function() {
   application()
 });
 
-application()
+application();
 $.noConflict();
 </script>
 

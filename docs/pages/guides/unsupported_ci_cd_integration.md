@@ -9,7 +9,7 @@ werf for now only supports [GitLab CI system]({{ site.baseurl }}/documentation/r
 
 To use werf with any CI/CD system that does not supported yet user should perform procedures described in the [what is ci-env]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env) by own script.
 
-The behaviour of `werf ci-env` command should be resembled (without actual using of this command) prior running any werf command in the begin of CI/CD job. This is accoumplished by some actions and defining environment variables from [the list of environment variables]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#complete-list-of-ci-env-params-and-customizing).
+The behaviour of `werf ci-env` command should be resembled (without actual using of this command) prior running any werf command in the begin of CI/CD job. This is accomplished by some actions and defining environment variables from [the list of environment variables]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#complete-list-of-ci-env-params-and-customizing).
 
 ## Ci-env procedures
 
