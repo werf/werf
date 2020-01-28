@@ -24,6 +24,15 @@
           "version": "v1.0.6"
         }
       ]
+    },
+    {
+      "group": "1.1",
+      "channels": [
+        {
+          "name": "alpha",
+          "version": "v1.1.0-alpha.1"
+        }
+      ]
     }
   ]
 }
