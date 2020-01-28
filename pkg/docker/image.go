@@ -2,6 +2,7 @@ package docker
 
 import (
 	"strings"
+	"time"
 
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types"
@@ -58,7 +59,8 @@ tryPull:
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
 
-					logboek.LogInfoF("Retrying (%d/%d) ...\n", attempt, cliPullMaxAttempts)
+					logboek.LogInfoF("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPullMaxAttempts)
+					time.Sleep(5 * time.Second)
 					goto tryPull
 				}
 			}
@@ -107,6 +109,7 @@ tryPush:
 	if err := CliPush(args...); err != nil {
 		if attempt < cliPushMaxAttempts {
 			specificErrors := []string{
+				"Client.Timeout exceeded while awaiting headers",
 				"TLS handshake timeout",
 				"i/o timeout",
 			}
@@ -115,7 +118,8 @@ tryPush:
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
 
-					logboek.LogInfoF("Retrying (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+					logboek.LogInfoF("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+					time.Sleep(5 * time.Second)
 					goto tryPush
 				}
 			}
