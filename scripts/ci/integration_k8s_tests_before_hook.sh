@@ -13,7 +13,15 @@ if [[ -z "$WERF_TEST_K8S_DOCKER_REGISTRY" ]] || [[ -z "$WERF_TEST_K8S_DOCKER_REG
   exit 1
 fi
 
-echo $WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD | docker login $WERF_TEST_K8S_DOCKER_REGISTRY -u $WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME --password-stdin
+n=0
+while :
+do
+  n=$[$n+1]
+  echo $WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD | docker login $WERF_TEST_K8S_DOCKER_REGISTRY -u $WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME --password-stdin && break
+  [[ $n -ge 5 ]] && break
+  echo "Retrying login in 5 seconds ..."
+  sleep 5
+done
 
 export KUBECONFIG=$(mktemp -d)/config
 if [[ "$OSTYPE" == "darwin"* ]]; then
