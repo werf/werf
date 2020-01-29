@@ -77,24 +77,16 @@ ScanImages:
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, prevImage, prevBuiltImage image.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevImage.Labels())
-		fmt.Printf("gitMapping.GetGitCommitFromImageLabels %v -> %s\n", prevImage.Name(), commit)
-		if commit == "" {
-			latestCommit, err := gitMapping.LatestCommit()
-			if err != nil {
-				return "", err
-			}
-			commit = latestCommit
-			fmt.Printf("gitMapping.GetGitCommitFromImageLabels take latest commit -> %s\n", commit)
-		}
-
-		// FIXME
 		args = append(args, gitMapping.GetParamshash())
 	}
 
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *GitArchiveStage) GetNextStageDependencies(c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
 func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
