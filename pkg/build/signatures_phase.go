@@ -76,13 +76,15 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 		}
 
 		checksumArgs := []string{stageDependencies, imagePkg.BuildCacheVersion}
-
 		if prevStage != nil {
-			checksumArgs = append(checksumArgs, prevStage.GetSignature())
+			prevStageDependencies, err := prevStage.GetNextStageDependencies(c)
+			if err != nil {
+				return fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", prevStage.Name(), s.Name(), err)
+			}
+
+			checksumArgs = append(checksumArgs, prevStage.GetSignature(), prevStageDependencies)
 		}
-
-		stageSig := util.MD5Hash(checksumArgs...)
-
+		stageSig := util.Sha256Hash(checksumArgs...)
 		s.SetSignature(stageSig)
 
 		logboek.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
