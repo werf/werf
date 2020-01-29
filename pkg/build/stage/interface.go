@@ -13,6 +13,7 @@ type Interface interface {
 	ShouldBeReset(builtImage image.ImageInterface) (bool, error)
 
 	GetDependencies(c Conveyor, prevImage image.ImageInterface, prevBuiltImage image.ImageInterface) (string, error)
+	GetNextStageDependencies(c Conveyor) (string, error)
 
 	PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error
 
