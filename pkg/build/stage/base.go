@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/flant/werf/pkg/stages_storage"
@@ -101,6 +102,30 @@ func (s *BaseStage) Name() StageName {
 
 func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (string, error) {
 	panic("method must be implemented!")
+}
+
+func (s *BaseStage) GetNextStageDependencies(c Conveyor) (string, error) {
+	return "", nil
+}
+
+func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
+	var args []string
+	for _, gitMapping := range s.gitMappings {
+		if s.image.IsExists() {
+			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.Labels()))
+		} else {
+			latestCommit, err := gitMapping.LatestCommit()
+			if err != nil {
+				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %s", gitMapping.Name, err)
+			}
+			args = append(args, latestCommit)
+		}
+	}
+
+	fmt.Printf("Stage %s next stage dependencies: %v\n", s.Name(), args)
+	sort.Strings(args)
+
+	return util.Sha256Hash(args...), nil
 }
 
 func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error) {
