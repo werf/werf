@@ -46,6 +46,12 @@ func (storage *LocalStagesStorage) SyncStageImage(stageImage image.ImageInterfac
 
 func (storage *LocalStagesStorage) StoreStageImage(stageImage image.ImageInterface) error {
 	fmt.Printf("-- StoreImage %s\n", stageImage.Name())
+	if err := stageImage.TagBuiltImage(stageImage.Name()); err != nil {
+		return fmt.Errorf("unable to save image %s: %s")
+	}
+	if err := stageImage.SyncDockerState(); err != nil {
+		return fmt.Errorf("unable to sync docker state of image %s: %s", stageImage.Name(), err)
+	}
 	return nil
 }
 
