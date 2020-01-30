@@ -103,7 +103,7 @@ type Phase interface {
 func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase(true))
+	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
 
@@ -136,7 +136,7 @@ type PublishImagesOptions struct {
 func (c *Conveyor) ShouldBeBuilt() error {
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase(false))
+	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewShouldBeBuiltPhase())
 
 	return c.runPhases(phases)
@@ -145,7 +145,7 @@ func (c *Conveyor) ShouldBeBuilt() error {
 func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase(false))
+	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewShouldBeBuiltPhase())
 	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
@@ -165,7 +165,7 @@ type BuildAndPublishOptions struct {
 func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase(true))
+	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
 	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
