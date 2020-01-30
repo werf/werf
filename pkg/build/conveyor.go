@@ -8,8 +8,6 @@ import (
 
 	"github.com/flant/werf/pkg/stages_storage"
 
-	"github.com/flant/logboek"
-
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
@@ -96,12 +94,8 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 	return c.gitReposCaches[gitRepoName]
 }
 
-type Phase interface {
-	Run(*Conveyor) error
-}
-
 func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
-	var phases []Phase
+	/*var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewPrepareStagesPhase())
@@ -112,7 +106,58 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 	}
 	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
-	return c.runPhases(phases)
+	return c.runPhases(phases)*/
+
+	/*
+				images (по зависимостям), dependantImagesByStage
+				dependantImagesByStage строится в InitializationPhase, спросить у stage что она ждет.
+				Количество воркеров-goroutine ограничено.
+				Надо распределить images по воркерам.
+
+				for img := range images {
+					Goroutine {
+			    		phases = append(phases, NewBuildStage())
+
+				    	for phase = range phases {
+		                    phase.OnStart()
+
+					    	for stage = range stages {
+						    	for img = dependantImagesByStage[stage.name] {
+							    	wait <-imgChanMap[img]
+			    				}
+			    				phase.HandleStage(stage)
+				    		}
+						}
+
+			            close(imgChanMap[img])
+					} Goroutine
+				}
+	*/
+
+	if err := NewInitializationPhase().Run(c); err != nil {
+		return err
+	}
+
+	for _, img := range c.imagesInOrder {
+		phases := []Phase{NewBuildPhase(c, BuildPhaseOptions{
+			IntrospectOptions: opts.IntrospectOptions,
+			ImageBuildOptions: opts.ImageBuildOptions,
+		})}
+
+		for _, phase := range phases {
+			if err := phase.OnStart(img); err != nil {
+				return fmt.Errorf("phase %s on start failed: %s", phase.Name(), err)
+			}
+
+			for _, stg := range img.GetStages() {
+				if err := phase.HandleStage(img, stg); err != nil {
+					return fmt.Errorf("phase %s failed to handle stage %s: %s", phase.Name(), stg.Name(), err)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 type TagOptions struct {
@@ -134,27 +179,35 @@ type PublishImagesOptions struct {
 }
 
 func (c *Conveyor) ShouldBeBuilt() error {
-	var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewShouldBeBuiltPhase())
+	/*
+		var phases []Phase
+		phases = append(phases, NewInitializationPhase())
+		phases = append(phases, NewSignaturesPhase())
+		phases = append(phases, NewShouldBeBuiltPhase())
 
-	return c.runPhases(phases)
+		return c.runPhases(phases)
+	*/
+
+	return nil
 }
 
 func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
-	var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewShouldBeBuiltPhase())
-	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
+	/*
+		var phases []Phase
+		phases = append(phases, NewInitializationPhase())
+		phases = append(phases, NewSignaturesPhase())
+		phases = append(phases, NewShouldBeBuiltPhase())
+		phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
-	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-		return fmt.Errorf("error locking all images read only: %s", err)
-	}
-	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+		if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+			return fmt.Errorf("error locking all images read only: %s", err)
+		}
+		defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
-	return c.runPhases(phases)
+		return c.runPhases(phases)
+	*/
+
+	return nil
 }
 
 type BuildAndPublishOptions struct {
@@ -163,33 +216,38 @@ type BuildAndPublishOptions struct {
 }
 
 func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
-	var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewPrepareStagesPhase())
-	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
-	phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
+	/*
+		var phases []Phase
+		phases = append(phases, NewInitializationPhase())
+		phases = append(phases, NewSignaturesPhase())
+		phases = append(phases, NewPrepareStagesPhase())
+		phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
+		phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
 
-	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-		return fmt.Errorf("error locking all images read only: %s", err)
-	}
-	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+		if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+			return fmt.Errorf("error locking all images read only: %s", err)
+		}
+		defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
-	return c.runPhases(phases)
+		return c.runPhases(phases)
+	*/
+
+	return nil
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	logboek.LogOptionalLn()
+	/*
+		logboek.LogOptionalLn()
 
-	for _, phase := range phases {
-		err := phase.Run(c)
+		for _, phase := range phases {
+			err := phase.Run(c)
 
-		if err != nil {
-			c.StagesStorageLockManager.ReleaseAllStageLocks()
-			return err
+			if err != nil {
+				c.StagesStorageLockManager.ReleaseAllStageLocks()
+				return err
+			}
 		}
-	}
-
+	*/
 	return nil
 }
 
