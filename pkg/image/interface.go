@@ -12,10 +12,6 @@ type ImageInterface interface {
 	Inspect() *types.ImageInspect
 	Labels() map[string]string
 	ID() string
-	MustGetId() (string, error)
-
-	Container() Container
-	BuilderContainer() BuilderContainer
 
 	IsExists() bool
 
@@ -24,9 +20,16 @@ type ImageInterface interface {
 	Pull() error
 	Untag() error
 
-	SaveInCache() error
+	// TODO: build specifics for stapel builder and dockerfile builder
+	// TODO: should be under a single separate interface
+	Container() Container
+	BuilderContainer() BuilderContainer
+	DockerfileImageBuilder() *DockerfileImageBuilder
 
 	Build(BuildOptions) error
+	GetBuiltId() (string, error)
+	TagBuiltImage(name string) error
+
 	Introspect() error
 }
 

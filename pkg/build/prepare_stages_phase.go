@@ -3,6 +3,8 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/build/stage"
+
 	"github.com/flant/logboek"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/werf"
@@ -55,19 +57,38 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 			continue
 		}
 
-		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			imagePkg.WerfDockerImageName:   stageImage.Name(),
-			imagePkg.WerfLabel:             c.projectName(),
-			imagePkg.WerfVersionLabel:      werf.Version,
-			imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
-			imagePkg.WerfImageLabel:        "false",
-		})
+		switch certainStage := s.(type) {
+		case *stage.DockerfileStage:
+			var buildArgs []string
 
-		if c.sshAuthSock != "" {
-			imageRunOptions := stageImage.Container().RunOptions()
-			imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", c.sshAuthSock))
-			imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+			for key, value := range map[string]string{
+				imagePkg.WerfDockerImageName:   stageImage.Name(),
+				imagePkg.WerfLabel:             c.projectName(),
+				imagePkg.WerfVersionLabel:      werf.Version,
+				imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
+				imagePkg.WerfImageLabel:        "false",
+			} {
+				buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
+			}
+
+			buildArgs = append(buildArgs, certainStage.DockerBuildArgs()...)
+			stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
+
+		default:
+			imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
+			imageServiceCommitChangeOptions.AddLabel(map[string]string{
+				imagePkg.WerfDockerImageName:   stageImage.Name(),
+				imagePkg.WerfLabel:             c.projectName(),
+				imagePkg.WerfVersionLabel:      werf.Version,
+				imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
+				imagePkg.WerfImageLabel:        "false",
+			})
+
+			if c.sshAuthSock != "" {
+				imageRunOptions := stageImage.Container().RunOptions()
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", c.sshAuthSock))
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+			}
 		}
 
 		err := s.PrepareImage(c, prevBuiltImage, stageImage)

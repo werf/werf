@@ -145,7 +145,8 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
 }
 
-func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img image.ImageInterface) error {
+	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
 	return nil
 }
 
