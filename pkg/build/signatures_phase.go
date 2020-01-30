@@ -13,13 +13,11 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func NewSignaturesPhase(lockStages bool) *SignaturesPhase {
-	return &SignaturesPhase{LockStages: lockStages}
+func NewSignaturesPhase() *SignaturesPhase {
+	return &SignaturesPhase{}
 }
 
-type SignaturesPhase struct {
-	LockStages bool
-}
+type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
 	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
@@ -121,12 +119,6 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 			i = c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
-
-			if p.LockStages {
-				if err := c.StagesStorageLockManager.LockStage(c.projectName(), stageSig); err != nil {
-					return fmt.Errorf("failed to lock %s: %s", stageSig, err)
-				}
-			}
 		}
 
 		if err = s.AfterImageSyncDockerStateHook(c); err != nil {
