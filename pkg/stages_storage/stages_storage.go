@@ -21,7 +21,6 @@ type StagesStorage interface {
 	// lock по имени image чтобы не делать 2 раза pull одновременно
 	SyncStageImage(stageImage image.ImageInterface) error
 	StoreStageImage(stageImage image.ImageInterface) error
-	//InspectImage(imageName string) (*ImageInspect, error) ???
 
 	String() string
 }
