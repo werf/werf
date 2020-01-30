@@ -14,9 +14,10 @@ import (
 
 type StageImage struct {
 	*base
-	fromImage  *StageImage
-	container  *StageImageContainer
-	buildImage *build
+	fromImage              *StageImage
+	container              *StageImageContainer
+	buildImage             *build
+	dockerfileImageBuilder *DockerfileImageBuilder
 }
 
 func NewStageImage(fromImage *StageImage, name string) *StageImage {
@@ -81,6 +82,10 @@ func (i *StageImage) SyncDockerState() error {
 }
 
 func (i *StageImage) Build(options BuildOptions) error {
+	if i.dockerfileImageBuilder != nil {
+		return i.dockerfileImageBuilder.Build()
+	}
+
 	containerLockName := ContainerLockName(i.container.Name())
 	if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
@@ -151,21 +156,20 @@ func (i *StageImage) introspectBefore() error {
 	return nil
 }
 
-func (i *StageImage) SaveInCache() error {
-	buildImageId, err := i.buildImage.MustGetId()
+func (i *StageImage) GetBuiltId() (string, error) {
+	if i.dockerfileImageBuilder != nil {
+		return i.dockerfileImageBuilder.GetBuiltId()
+	} else {
+		return i.buildImage.MustGetId()
+	}
+}
+
+func (i *StageImage) TagBuiltImage(name string) error {
+	buildImageId, err := i.GetBuiltId()
 	if err != nil {
 		return err
 	}
-
-	if err := docker.CliTag(buildImageId, i.name); err != nil {
-		return err
-	}
-
-	if err := i.SyncDockerState(); err != nil {
-		return err
-	}
-
-	return nil
+	return docker.CliTag(buildImageId, i.name)
 }
 
 func (i *StageImage) Tag(name string) error {
@@ -173,12 +177,7 @@ func (i *StageImage) Tag(name string) error {
 	if err != nil {
 		return err
 	}
-
-	if err := docker.CliTag(imageId, name); err != nil {
-		return err
-	}
-
-	return nil
+	return docker.CliTag(imageId, name)
 }
 
 func (i *StageImage) Pull() error {
@@ -238,4 +237,11 @@ func (i *StageImage) Export(name string) error {
 	}
 
 	return nil
+}
+
+func (i *StageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
+	if i.dockerfileImageBuilder == nil {
+		i.dockerfileImageBuilder = NewDockerfileImageBuilder()
+	}
+	return i.dockerfileImageBuilder
 }
