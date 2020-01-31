@@ -105,7 +105,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 				fmt.Printf("-- SelectCacheImage => %v\n", imgInfo)
 				imageExists = true
 
-				i = c.GetOrCreateImage(prevImage, imgInfo.ImageName)
+				i = c.GetOrCreateStageImage(prevImage, imgInfo.ImageName)
 				s.SetImage(i)
 
 				if err := c.StagesStorage.SyncStageImage(i); err != nil {
@@ -117,7 +117,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 		if !imageExists {
 			imageName := fmt.Sprintf(imagePkg.LocalImageStageImageFormat, c.projectName(), stageSig, util.UUIDToShortString(uuid.New()))
 
-			i = c.GetOrCreateImage(prevImage, imageName)
+			i = c.GetOrCreateStageImage(prevImage, imageName)
 			s.SetImage(i)
 		}
 

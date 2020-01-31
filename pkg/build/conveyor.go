@@ -259,7 +259,7 @@ func (c *Conveyor) GetStageImage(name string) *image.StageImage {
 	return c.stageImages[name]
 }
 
-func (c *Conveyor) GetOrCreateImage(fromImage *image.StageImage, name string) *image.StageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *image.StageImage, name string) *image.StageImage {
 	if img, ok := c.stageImages[name]; ok {
 		return img
 	}
