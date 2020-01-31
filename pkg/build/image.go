@@ -92,7 +92,7 @@ func (i *Image) SetupBaseImage(c *Conveyor) {
 		baseImageName = c.GetImage(i.baseImageImageName).LatestStage().GetImage().Name()
 	}
 
-	i.baseImage = c.GetOrCreateImage(nil, baseImageName)
+	i.baseImage = c.GetOrCreateStageImage(nil, baseImageName)
 }
 
 func (i *Image) GetBaseImage() *image.StageImage {
