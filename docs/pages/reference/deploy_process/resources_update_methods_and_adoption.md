@@ -127,7 +127,7 @@ User can define a new resource in the chart templates of already existing releas
 
 ### How to adopt resource
 
-To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the resource manifest in the chart and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart.
+To allow adoption of already existing resource into werf release set `werf.io/allow-adoption-by-release=RELEASENAME` annotation to the kubernetes object (using `kubectl edit` for example), define resource in the chart templates and run werf deploy process. During adoption werf will generate a three-way-merge patch to bring existing resource to the state that is defined in the chart.
 
 NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption, three-way-merge patch will be used anyway during adoption process.
 
