@@ -9,6 +9,7 @@ type BuildOptions struct {
 
 type ImageInterface interface {
 	Name() string
+	SetName(name string)
 	Inspect() *types.ImageInspect
 	Labels() map[string]string
 	ID() string

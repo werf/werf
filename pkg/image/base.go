@@ -24,6 +24,10 @@ func (i *base) Name() string {
 	return i.name
 }
 
+func (i *base) SetName(name string) {
+	i.name = name
+}
+
 func (i *base) MustGetId() (string, error) {
 	if inspect, err := i.MustGetInspect(); err == nil {
 		return inspect.ID, nil
