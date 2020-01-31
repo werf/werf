@@ -46,7 +46,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	for _, v := range created {
 		switch value := asVersioned(v).(type) {
 		case *appsv1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -54,7 +54,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta1.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -62,7 +62,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta2.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -70,7 +70,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.Deployment:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "deploy")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -78,9 +78,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.DaemonSet:
-			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -88,9 +88,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.DaemonSet:
-			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -98,9 +98,9 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1beta2.DaemonSet:
-			// TODO: allowFailuresCountMultiplier equals 3 because typically there are only 3 nodes in the cluster.
+			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 3, "ds")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -108,7 +108,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -116,7 +116,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta1.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -124,7 +124,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta2.StatefulSet:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, extractSpecReplicas(value.Spec.Replicas), "sts")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -132,7 +132,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *batchv1.Job:
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 0, "job")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -160,8 +160,8 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	})
 }
 
-func makeMultitrackSpec(objMeta *metav1.ObjectMeta, allowFailuresCountMultiplier int, kind string) (*multitrack.MultitrackSpec, error) {
-	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, allowFailuresCountMultiplier)
+func makeMultitrackSpec(objMeta *metav1.ObjectMeta, failuresCountOptions allowedFailuresCountOptions, kind string) (*multitrack.MultitrackSpec, error) {
+	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, failuresCountOptions)
 	if err != nil {
 		logboek.LogErrorF("WARNING: %s\n", err)
 		return nil, nil
@@ -170,10 +170,22 @@ func makeMultitrackSpec(objMeta *metav1.ObjectMeta, allowFailuresCountMultiplier
 	return multitrackSpec, nil
 }
 
-func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, annotations map[string]string, allowFailuresCountMultiplier int) (*multitrack.MultitrackSpec, error) {
+type allowedFailuresCountOptions struct {
+	multiplier        int
+	defaultPerReplica int
+}
+
+func applyAllowedFailuresCountMultiplier(value, multiplier int) int {
+	if multiplier > 0 {
+		return value * multiplier
+	}
+	return value
+}
+
+func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, annotations map[string]string, failuresCountOptions allowedFailuresCountOptions) (*multitrack.MultitrackSpec, error) {
 	defaultAllowFailuresCount := new(int)
 	// Allow 1 fail per replica by default
-	*defaultAllowFailuresCount = 1 * allowFailuresCountMultiplier
+	*defaultAllowFailuresCount = applyAllowedFailuresCountMultiplier(failuresCountOptions.defaultPerReplica, failuresCountOptions.multiplier)
 
 	multitrackSpec := &multitrack.MultitrackSpec{
 		ResourceName:            metadataName,
@@ -232,7 +244,7 @@ mainLoop:
 			}
 
 			allowFailuresCount := new(int)
-			*allowFailuresCount = intValue * allowFailuresCountMultiplier
+			*allowFailuresCount = applyAllowedFailuresCountMultiplier(intValue, failuresCountOptions.multiplier)
 			multitrackSpec.AllowFailuresCount = allowFailuresCount
 		case LogRegexAnnoName:
 			regexpValue, err := regexp.Compile(annoValue)
@@ -307,7 +319,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		case *batchv1.Job:
 			specs := multitrack.MultitrackSpecs{}
 
-			spec, err := makeMultitrackSpec(&value.ObjectMeta, 0, "job")
+			spec, err := makeMultitrackSpec(&value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
