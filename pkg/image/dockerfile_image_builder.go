@@ -33,3 +33,8 @@ func (b *DockerfileImageBuilder) Build() error {
 	buildArgs := append(b.BuildArgs, fmt.Sprintf("--tag=%s", b.temporalId))
 	return docker.CliBuild(buildArgs...)
 }
+
+func (b *DockerfileImageBuilder) Cleanup() error {
+	// TODO: remove temporalId
+	return nil
+}
