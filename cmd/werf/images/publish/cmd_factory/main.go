@@ -154,7 +154,10 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		}
 	}()
 
-	opts := build.PublishImagesOptions{TagOptions: tagOpts}
+	opts := build.PublishImagesOptions{
+		ImagesToPublish: imagesToProcess,
+		TagOptions:      tagOpts,
+	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
