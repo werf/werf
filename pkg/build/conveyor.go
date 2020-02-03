@@ -163,6 +163,7 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 }
 
 type PublishImagesOptions struct {
+	ImagesToPublish []string
 	TagOptions
 }
 
@@ -313,17 +314,8 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 		}
 	}
 
-	var imagesToProcess []*Image
-	if len(c.imageNamesToProcess) == 0 {
-		imagesToProcess = c.imagesInOrder
-	} else {
-		for _, imageName := range c.imageNamesToProcess {
-			imagesToProcess = append(imagesToProcess, c.GetImage(imageName))
-		}
-	}
-
 ImagesProcessing:
-	for _, img := range imagesToProcess {
+	for _, img := range c.imagesInOrder {
 		for _, phase := range phases {
 			if err := phase.BeforeImageStages(img); err != nil {
 				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetName(), err)
