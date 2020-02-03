@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageCache(&CommonCmdData, cmd)
+	common.SetupStagesStorageLock(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 	common.SetupInsecureRegistry(&CommonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
@@ -97,7 +97,7 @@ func runPurge() error {
 		return err
 	}
 
-	_, err = common.GetStagesStorageCache(&CommonCmdData)
+	_, err = common.GetStagesStorageLock(&CommonCmdData)
 	if err != nil {
 		return err
 	}
