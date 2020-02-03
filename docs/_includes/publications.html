@@ -1,15 +1,15 @@
-{% assign publications = site.data.publications[include.language] | sort: 'created' | reverse %}
-{% assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
+{%- assign publications = site.data.publications[include.language] | sort: 'created' | reverse %}
+{%- assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
 
 <div class="main-container page__container">
     <div class="publications">
-        {% for year in publications_by_year %}
+        {%- for year in publications_by_year %}
             <div class="publications__year">
                 {{ year.name }}
             </div>
             <div class="publications__list">
                 <div class="publications__sizer"></div>
-                {% for publication in year.items %}
+                {%- for publication in year.items %}
                     <div class="publications__post">
                         <div class="publications__post-content">
                             <div class="publications__post-head" style="background-image: url('{{ publication.img }}')">
@@ -23,33 +23,33 @@
                                 <div class="publications__post-title">
                                     {{ publication.title }}
                                 </div>
-                                {% if publication.comment %}
+                                {%- if publication.comment %}
                                     <div class="publications__post-comment">
                                         {{ publication.comment }}
                                     </div>
-                                {% endif %}
+                                {%- endif %}
                                 <div class="publications__post-btns">
-                                    {% if publication.medium_url %}
+                                    {%- if publication.medium_url %}
                                         <a href="{{ publication.medium_url }}" class="publications__btn" target="_blank">
                                             {{ publication.medium_title }}
                                         </a>
-                                    {% endif %}
-                                    {% if publication.habr_url %}
+                                    {%- endif %}
+                                    {%- if publication.habr_url %}
                                         <a href="{{ publication.habr_url }}" class="publications__btn" target="_blank">
                                             {{ publication.habr_title }}
                                         </a>
-                                    {% endif %}
-                                    {% if publication.youtube_url %}
+                                    {%- endif %}
+                                    {%- if publication.youtube_url %}
                                         <a href="{{ publication.youtube_url }}" class="publications__btn" target="_blank">
                                             {{ publication.youtube_title }}
                                         </a>
-                                    {% endif %}
+                                    {%- endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                {% endfor %}
+                {%- endfor %}
                 </div>
-        {% endfor %}
+        {%- endfor %}
     </div>
 </div>

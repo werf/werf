@@ -371,7 +371,7 @@ Based on the environment werf will determine:
  1. Release name.
  2. Kubernetes namespace.
 
-Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI/CD system, see [CI/CD configuration integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#ci-cd-configuration-integration) for more info.
+Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI/CD system, see [CI/CD configuration integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#cicd-configuration-integration) for more info.
 
 ### Release name
 
@@ -394,7 +394,7 @@ This is default behaviour, which can be disabled by [setting `deploy.helmRelease
 
 ### Kubernetes namespace
 
-By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-configuration-doc) and `[[ env ]]` refers to the determined environment.
+By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) and `[[ env ]]` refers to the determined environment.
 
 For example for project named `symfony-demo` there will be following Kubernetes Namespaces depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;

@@ -15,7 +15,7 @@ In this article, we will build an example application — [AtSea Shop](https://g
 
 ## Requirements
 
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
 * Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version

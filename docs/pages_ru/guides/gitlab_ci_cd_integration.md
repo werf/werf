@@ -33,7 +33,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 Для хранения кэша сборки и служебных файлов werf использует папку `~/.werf`. Папка должна сохраняться и быть доступной на всех этапах pipeline. Это ещё одна из причин по которой мы рекомендуем отдавать предпочтение _shell executor_ вместо эфемерных окружений.
 
-Процесс деплоя требует наличия доступа к кластеру через `kubectl`, поэтому необходимо установить и настроить `kubectl` на узле, с которого вы будет запускаться werf.
+Процесс деплоя требует наличия доступа к кластеру через `kubectl`, поэтому необходимо установить и настроить `kubectl` на узле, с которого будет запускаться werf.
 Если не указывать конкретный контекст опцией `--kube-context` или переменной окружения `$WERF_KUBE_CONTEXT`, то werf будет использовать контекст `kubectl` по умолчанию.  
 
 В конечном счете werf требует наличия доступа:
@@ -61,7 +61,7 @@ author: Artem Kladov <artem.kladov@flant.com>
    ```
 
 1. Установим [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) и настроим `kubectl`, если они не были установлены ранее.
-1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
+1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#требования).
 1. Установим [multiwerf](https://github.com/flant/multiwerf) пользователем `gitlab-runner`:
 
    ```shell
@@ -265,7 +265,7 @@ Deploy to Production:
 
 Для работы очистки в файле `.gitlab-ci.yml` выделена отдельная стадия — `cleanup`.
 
-Чтобы использовать очистку необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в Docker registry перед очисткой.
+Чтобы использовать очистку, необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в Docker registry перед очисткой.
 
 Для вашего тестового проекта вы можете просто создать `Personal Access Token` а вашей учетной записи GitLab. Для этого откройте страницу `Settings` в GitLab (настройки вашего профиля), затем откройте раздел `Access Token`. Укажите имя токена, в разделе Scope отметьте `api` и нажмите `Create personal access token` — вы получите `Personal Access Token`.
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="{% if page.lang == "ru" %}ru{% else %}en{% endif %}">
 <head>
-  {% include head.html %}
+  {%- include head.html %}
   <script>
     $(document).ready(function() {
       // Initialize navgoco with default options
@@ -39,7 +39,7 @@
       $('[data-toggle="tooltip"]').tooltip()
     })
   </script>
-  {% if page.datatable == true %}
+  {%- if page.datatable == true %}
   <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css">
   <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.5/js/jquery.dataTables.js"></script>
   <script>
@@ -51,19 +51,19 @@
         });
     });
   </script>
-  {% endif %}
+  {%- endif %}
 
 </head>
 <body>
   <div class="page">
     <div class="page__content">
-      {% include topnav.html %}
+      {%- include topnav.html %}
 
       <!-- Page Content -->
       {{ content }}
     </div>
 
-    {% include footer.html %}
+    {%- include footer.html %}
   </div>
 
   <!-- Yandex.Metrika counter -->

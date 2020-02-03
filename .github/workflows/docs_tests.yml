@@ -1,0 +1,70 @@
+name: Documentation validation
+on:
+  push:
+    paths:
+      - 'cmd/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'README_ru.md'
+
+jobs:
+
+  check_cli_and_readme_partials:
+    name: Check CLI and README partials
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Test
+        run: |
+          ./scripts/ci/git.sh
+          go test ./integration/docs
+
+  check_links:
+    container: jekyll/builder:3
+    name: Check broken links
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lang: [ru, en]
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Prepare
+        run: |
+          cd docs
+          mkdir -m 777 .jekyll-cache _site
+          bundle install
+
+      - name: Build (ru)
+        if: matrix.lang == 'ru'
+        run: |
+          cd docs
+          cp -rf pages/cli pages_ru
+          bundle exec jekyll build --config _config.yml,_config_ru.yml
+
+      - name: Build (en)
+        if: matrix.lang == 'en'
+        run: |
+          cd docs
+          bundle exec jekyll build --config _config.yml
+
+      - name: Check links
+        run: |
+          cd docs
+          bundle exec htmlproofer \
+            --allow-hash-href \
+            --empty-alt-ignore \
+            --check_html \
+            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/" \
+            ./_site/

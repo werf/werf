@@ -1,10 +1,10 @@
 <div class="footer">
     <div class="footer__credits">
-        {% if page.lang == "ru" %}
+        {%- if page.lang == "ru" %}
         Сделано с <span class="page__icon page__icon_heart"></span>в компании <a href="{{ site.company_url }}" target="_blank">{{ site.company_name }}</a>
-        {% else %}
+        {%- else %}
         Made with <span class="page__icon page__icon_heart"></span>by <a href="{{ site.company_url }}" target="_blank">{{ site.company_name }}</a>
-        {% endif %}
+        {%- endif %}
     </div>
     <div class="footer__github">
         <span class="page__icon page__icon_github footer__github-icon"></span>
@@ -13,11 +13,11 @@
         </a>
     </div>
     <div class="footer__gen" id="siteGenerationTime" hidden>
-        {% if page.lang == "ru" %}
+        {%- if page.lang == "ru" %}
         Дата генерации сайта: {{ site.time | date: "%e.%m.%Y, %H:%M %z"  }}
-        {% else %}
+        {%- else %}
         Site last generated: {{ site.time | date: "%b %-d, %Y at %H:%M %z"  }}
-        {% endif %}
+        {%- endif %}
     </div>
     <div id="werfVersion" hidden>{{ site.werfVersion }}</div>
     <div id="werfChannel" hidden>{{ site.werfChannel }}</div>
