@@ -108,6 +108,11 @@ var _ = Describe("Stapel builder with ansible", func() {
 	})
 
 	Context("when using yarn module to install nodejs packages", func() {
+		BeforeEach(func() {
+			os.RemoveAll("yarn/.git")
+			os.RemoveAll("yarn_repo")
+		})
+
 		AfterEach(func() {
 			werfPurge("yarn", liveexec.ExecCommandOptions{})
 			os.RemoveAll("yarn/.git")
@@ -121,6 +126,11 @@ var _ = Describe("Stapel builder with ansible", func() {
 	})
 
 	Context("when installing python requirements using ansible and python files contain utf-8 chars", func() {
+		BeforeEach(func() {
+			os.RemoveAll("python_encoding/.git")
+			os.RemoveAll("python_encoding_repo")
+		})
+
 		AfterEach(func() {
 			werfPurge("python_encoding", liveexec.ExecCommandOptions{})
 			os.RemoveAll("python_encoding/.git")
