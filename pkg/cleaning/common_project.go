@@ -26,11 +26,16 @@ func projectImageStageFilterSet(options CommonProjectOptions) filters.Args {
 func projectFilterSet(options CommonProjectOptions) filters.Args {
 	filterSet := filters.NewArgs()
 	filterSet.Add("label", werfLabel(options))
+	filterSet.Add("label", werfBuildCacheVersionLabel())
 	return filterSet
 }
 
 func werfLabel(options CommonProjectOptions) string {
 	return fmt.Sprintf("werf=%s", options.ProjectName)
+}
+
+func werfBuildCacheVersionLabel() string {
+	return fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, image.BuildCacheVersion)
 }
 
 func stageCacheReference(options CommonProjectOptions) string {
