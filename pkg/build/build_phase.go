@@ -88,6 +88,12 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(img *Image) bool {
 }
 
 func (phase *BuildPhase) BeforeImageStages(img *Image) error {
+	phase.isBaseImagePrepared = false
+	phase.PrevStage = nil
+	phase.PrevImage = nil
+	phase.PrevBuiltImage = nil
+	phase.PrevStageImageSize = 0
+
 	img.SetupBaseImage(phase.Conveyor)
 
 	phase.PrevImage = img.GetBaseImage()
