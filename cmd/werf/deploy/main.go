@@ -88,7 +88,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageCache(&CommonCmdData, cmd)
+	common.SetupStagesStorageLock(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
@@ -194,7 +194,7 @@ func runDeploy() error {
 				return err
 			}
 
-			_, err = common.GetStagesStorageCache(&CommonCmdData)
+			_, err = common.GetStagesStorageLock(&CommonCmdData)
 			if err != nil {
 				return err
 			}

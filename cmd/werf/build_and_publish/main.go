@@ -81,7 +81,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageCache(&CommonCmdData, cmd)
+	common.SetupStagesStorageLock(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepoMode(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
