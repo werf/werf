@@ -299,7 +299,7 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 		return nil
 	}
 
-	switch certainStage := stg.(type) {
+	switch stg.(type) {
 	case *stage.DockerfileStage:
 		var buildArgs []string
 
@@ -313,7 +313,6 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 			buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
 		}
 
-		buildArgs = append(buildArgs, certainStage.DockerBuildArgs()...)
 		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
 
 	default:
