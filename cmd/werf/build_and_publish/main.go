@@ -195,7 +195,8 @@ func runBuildAndPublish(imagesToProcess []string) error {
 			IntrospectOptions: introspectOptions,
 		},
 		PublishImagesOptions: build.PublishImagesOptions{
-			TagOptions: tagOpts,
+			ImagesToPublish: imagesToProcess,
+			TagOptions:      tagOpts,
 		},
 	}
 

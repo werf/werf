@@ -25,7 +25,7 @@ func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opt
 
 type PublishImagesPhase struct {
 	BasePhase
-	WithStages       bool
+	ImagesToPublish  []string
 	TagsByScheme     map[tag_strategy.TagStrategy][]string
 	ImageRepoManager ImagesRepoManager
 }
@@ -51,7 +51,17 @@ func (phase *PublishImagesPhase) OnImageStage(img *Image, stg stage.Interface) (
 }
 
 func (phase *PublishImagesPhase) AfterImageStages(img *Image) error {
-	return phase.pushImage(img)
+	if len(phase.ImagesToPublish) == 0 {
+		return phase.pushImage(img)
+	}
+
+	for _, name := range phase.ImagesToPublish {
+		if name == img.GetName() {
+			return phase.pushImage(img)
+		}
+	}
+
+	return nil
 }
 
 func (phase *PublishImagesPhase) ImageProcessingShouldBeStopped(img *Image) bool {
