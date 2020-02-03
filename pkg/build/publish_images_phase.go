@@ -3,31 +3,62 @@ package build
 import (
 	"fmt"
 
+	image "github.com/flant/werf/pkg/image"
+
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
-
+	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/docker_registry"
-	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 )
 
-func NewPublishImagesPhase(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) *PublishImagesPhase {
+func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[tag_strategy.TagStrategy][]string{
 		tag_strategy.Custom:    opts.CustomTags,
 		tag_strategy.GitBranch: opts.TagsByGitBranch,
 		tag_strategy.GitTag:    opts.TagsByGitTag,
 		tag_strategy.GitCommit: opts.TagsByGitCommit,
 	}
-	return &PublishImagesPhase{TagsByScheme: tagsByScheme, ImageRepoManager: imagesRepoManager}
+	return &PublishImagesPhase{BasePhase: BasePhase{c}, TagsByScheme: tagsByScheme, ImageRepoManager: imagesRepoManager}
 }
 
 type PublishImagesPhase struct {
+	BasePhase
 	WithStages       bool
 	TagsByScheme     map[tag_strategy.TagStrategy][]string
 	ImageRepoManager ImagesRepoManager
 }
 
+func (phase *PublishImagesPhase) Name() string {
+	return "publish"
+}
+
+func (phase *PublishImagesPhase) BeforeImages() error {
+	return nil
+}
+
+func (phase *PublishImagesPhase) AfterImages() error {
+	return nil
+}
+
+func (phase *PublishImagesPhase) BeforeImageStages(img *Image) error {
+	return nil
+}
+
+func (phase *PublishImagesPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
+	return true, nil
+}
+
+func (phase *PublishImagesPhase) AfterImageStages(img *Image) error {
+	return phase.pushImage(img)
+}
+
+func (phase *PublishImagesPhase) ImageProcessingShouldBeStopped(img *Image) bool {
+	return false
+}
+
+/*
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
 	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
 	return logboek.LogProcess("Publishing images", logProcessOptions, func() error {
@@ -37,15 +68,6 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 
 func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
-
-	var imagesToPublish []*Image
-	if len(c.imageNamesToProcess) == 0 {
-		imagesToPublish = c.imagesInOrder
-	} else {
-		for _, imageName := range c.imageNamesToProcess {
-			imagesToPublish = append(imagesToPublish, c.GetImage(imageName))
-		}
-	}
 
 	for _, image := range imagesToPublish {
 		if image.isArtifact { // FIXME: distributed stages
@@ -106,7 +128,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 //		}
 //
 //		err := func() error {
-//			imageLockName := imagePkg.ImageLockName(stageImageName)
+//			imageLockName := image.ImageLockName(stageImageName)
 //			if err := shluz.Lock(imageLockName, shluz.LockOptions{}); err != nil {
 //				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 //			}
@@ -141,9 +163,10 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 //
 //	return nil
 //}
+*/
 
-func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
-	imageRepository := p.ImageRepoManager.ImageRepo(image.GetName())
+func (phase *PublishImagesPhase) pushImage(img *Image) error {
+	imageRepository := phase.ImageRepoManager.ImageRepo(img.GetName())
 
 	var existingTags []string
 	var err error
@@ -163,11 +186,11 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 		return fmt.Errorf("error fetch existing tags of image %s: %s", imageRepository, err)
 	}
 
-	stages := image.GetStages()
+	stages := img.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
 	var nonEmptySchemeInOrder []tag_strategy.TagStrategy
-	for strategy, tags := range p.TagsByScheme {
+	for strategy, tags := range phase.TagsByScheme {
 		if len(tags) == 0 {
 			continue
 		}
@@ -176,7 +199,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	}
 
 	for _, strategy := range nonEmptySchemeInOrder {
-		imageMetaTags := p.TagsByScheme[strategy]
+		imageMetaTags := phase.TagsByScheme[strategy]
 
 		if len(imageMetaTags) == 0 {
 			continue
@@ -186,8 +209,8 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 		err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logProcessOptions, func() error {
 		ProcessingTags:
 			for _, imageMetaTag := range imageMetaTags {
-				imageName := p.ImageRepoManager.ImageRepoWithTag(image.GetName(), imageMetaTag)
-				imageTag := p.ImageRepoManager.ImageRepoTag(image.GetName(), imageMetaTag)
+				imageName := phase.ImageRepoManager.ImageRepoWithTag(img.GetName(), imageMetaTag)
+				imageTag := phase.ImageRepoManager.ImageRepoTag(img.GetName(), imageMetaTag)
 				tagLogName := fmt.Sprintf("tag %s", imageTag)
 
 				if util.IsStringsContainValue(existingTags, imageTag) {
@@ -226,20 +249,20 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				}
 
 				err := func() error {
-					imageLockName := imagePkg.ImageLockName(imageName)
+					imageLockName := image.ImageLockName(imageName)
 					if err = shluz.Lock(imageLockName, shluz.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
 					defer shluz.Unlock(imageLockName)
 
-					pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
+					pushImage := image.NewImage(phase.Conveyor.GetStageImage(lastStageImage.Name()), imageName)
 
 					pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-						imagePkg.WerfDockerImageName:  imageName,
-						imagePkg.WerfTagStrategyLabel: string(strategy),
-						imagePkg.WerfImageLabel:       "true",
-						imagePkg.WerfImageNameLabel:   image.GetName(),
-						imagePkg.WerfImageTagLabel:    imageMetaTag,
+						image.WerfDockerImageName:  imageName,
+						image.WerfTagStrategyLabel: string(strategy),
+						image.WerfImageLabel:       "true",
+						image.WerfImageNameLabel:   img.GetName(),
+						image.WerfImageTagLabel:    imageMetaTag,
 					})
 
 					successInfoSectionFunc := func() {
@@ -253,7 +276,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					logProcessOptions := logboek.LogProcessOptions{SuccessInfoSectionFunc: successInfoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
 					return logboek.LogProcess(fmt.Sprintf("Publishing %s", tagLogName), logProcessOptions, func() error {
 						if err := logboek.LogProcess("Building final image with meta information", logboek.LogProcessOptions{}, func() error {
-							if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
+							if err := pushImage.Build(image.BuildOptions{}); err != nil {
 								return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, strategy, err)
 							}
 
