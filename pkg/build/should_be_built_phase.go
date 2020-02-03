@@ -7,46 +7,66 @@ import (
 	"github.com/flant/werf/pkg/build/stage"
 )
 
-type ShouldBeBuiltPhase struct{}
+type ShouldBeBuiltPhase struct {
+	BasePhase
 
-func NewShouldBeBuiltPhase() *ShouldBeBuiltPhase {
-	return &ShouldBeBuiltPhase{}
+	IsBadDockerfileImageExists bool
+	BadImages                  []*Image
+	BadStagesByImage           map[string][]stage.Interface
 }
 
-func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Checking built stages cache", logProcessOptions, func() error {
-		return p.run(c)
-	})
+func NewShouldBeBuiltPhase(c *Conveyor) *ShouldBeBuiltPhase {
+	return &ShouldBeBuiltPhase{BasePhase: BasePhase{c}, BadStagesByImage: make(map[string][]stage.Interface)}
 }
 
-func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
-	var isBadImageExist bool
-	var isBadDockerfileImageExist bool
+func (phase *ShouldBeBuiltPhase) Name() string {
+	return "shouldBeBuilt"
+}
 
-	for _, image := range c.imagesInOrder {
-		var badStages []stage.Interface
+func (phase *ShouldBeBuiltPhase) BeforeImageStages(img *Image) error {
+	return nil
+}
 
-		for _, s := range image.GetStages() {
-			i := s.GetImage()
-			if i.IsExists() {
-				continue
-			}
+func (phase *ShouldBeBuiltPhase) AfterImageStages(img *Image) error {
+	if len(phase.BadStagesByImage[img.GetName()]) > 0 {
+		phase.BadImages = append(phase.BadImages, img)
 
-			isBadImageExist = true
-			if !isBadDockerfileImageExist {
-				isBadDockerfileImageExist = image.isDockerfileImage
-			}
-
-			badStages = append(badStages, s)
-		}
-
-		for _, s := range badStages {
-			logboek.LogErrorF("%s %s is not exist in stages storage\n", image.LogDetailedName(), s.LogDetailedName())
+		if !phase.IsBadDockerfileImageExists {
+			phase.IsBadDockerfileImageExists = img.isDockerfileImage
 		}
 	}
 
-	if isBadImageExist {
+	return nil
+}
+
+func (phase *ShouldBeBuiltPhase) ImageProcessingShouldBeStopped(img *Image) bool {
+	return len(phase.BadStagesByImage[img.GetName()]) > 0
+}
+
+func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
+	if !stg.GetImage().IsExists() {
+		phase.BadStagesByImage[img.GetName()] = append(phase.BadStagesByImage[img.GetName()], stg)
+	}
+	return true, nil
+}
+
+func (phase *ShouldBeBuiltPhase) BeforeImages() error {
+	return nil
+}
+
+func (phase *ShouldBeBuiltPhase) AfterImages() error {
+	if len(phase.BadImages) == 0 {
+		return nil
+	}
+
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Built stages cache check", logProcessOptions, func() error {
+		for _, img := range phase.BadImages {
+			for _, stg := range phase.BadStagesByImage[img.GetName()] {
+				logboek.LogErrorF("%s %s is not exist in stages storage\n", img.LogDetailedName(), stg.LogDetailedName())
+			}
+		}
+
 		var reasonNumber int
 		reasonNumberFunc := func() string {
 			reasonNumber++
@@ -57,8 +77,8 @@ func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 		logboek.LogErrorLn(`There are some possible reasons:`)
 		logboek.LogErrorLn()
 
-		if isBadDockerfileImageExist {
-			logboek.LogErrorLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature: 
+		if phase.IsBadDockerfileImageExists {
+			logboek.LogErrorLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
 - .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
 - auto-generated file`)
 			logboek.LogErrorLn()
@@ -85,7 +105,5 @@ E.g.:
 		logboek.LogErrorLn()
 
 		return fmt.Errorf("stages required")
-	}
-
-	return nil
+	})
 }
