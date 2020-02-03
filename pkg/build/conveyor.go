@@ -94,72 +94,6 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 	return c.gitReposCaches[gitRepoName]
 }
 
-func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
-	/*var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewPrepareStagesPhase())
-	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
-
-	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-		return fmt.Errorf("error locking all images read only: %s", err)
-	}
-	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
-
-	return c.runPhases(phases)*/
-
-	/*
-				images (по зависимостям), dependantImagesByStage
-				dependantImagesByStage строится в InitializationPhase, спросить у stage что она ждет.
-				Количество воркеров-goroutine ограничено.
-				Надо распределить images по воркерам.
-
-				for img := range images {
-					Goroutine {
-			    		phases = append(phases, NewBuildStage())
-
-				    	for phase = range phases {
-		                    phase.OnStart()
-
-					    	for stage = range stages {
-						    	for img = dependantImagesByStage[stage.name] {
-							    	wait <-imgChanMap[img]
-			    				}
-			    				phase.HandleStage(stage)
-				    		}
-						}
-
-			            close(imgChanMap[img])
-					} Goroutine
-				}
-	*/
-
-	if err := NewInitializationPhase().Run(c); err != nil {
-		return err
-	}
-
-	for _, img := range c.imagesInOrder {
-		phases := []Phase{NewBuildPhase(c, BuildPhaseOptions{
-			IntrospectOptions: opts.IntrospectOptions,
-			ImageBuildOptions: opts.ImageBuildOptions,
-		})}
-
-		for _, phase := range phases {
-			if err := phase.OnStart(img); err != nil {
-				return fmt.Errorf("phase %s on start failed: %s", phase.Name(), err)
-			}
-
-			for _, stg := range img.GetStages() {
-				if err := phase.HandleStage(img, stg); err != nil {
-					return fmt.Errorf("phase %s failed to handle stage %s: %s", phase.Name(), stg.Name(), err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
 type TagOptions struct {
 	CustomTags      []string
 	TagsByGitTag    []string
@@ -174,39 +108,77 @@ type ImagesRepoManager interface {
 	ImageRepoWithTag(imageName, tag string) string
 }
 
+func (c *Conveyor) ShouldBeBuilt() error {
+	if err := NewInitializationPhase().Run(c); err != nil {
+		return err
+	}
+
+	phases := []Phase{
+		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewShouldBeBuiltPhase(c),
+	}
+
+	return c.runPhases(phases)
+}
+
+func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
+	/*var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewPrepareStagesPhase())
+	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
+
+	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+		return fmt.Errorf("error locking all images read only: %s", err)
+	}
+	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+
+	return c.runPhases(phases)*/
+
+	if err := NewInitializationPhase().Run(c); err != nil {
+		return err
+	}
+
+	phases := []Phase{NewBuildPhase(c, BuildPhaseOptions{
+		IntrospectOptions: opts.IntrospectOptions,
+		ImageBuildOptions: opts.ImageBuildOptions,
+	})}
+
+	return c.runPhases(phases)
+}
+
 type PublishImagesOptions struct {
 	TagOptions
 }
 
-func (c *Conveyor) ShouldBeBuilt() error {
-	/*
-		var phases []Phase
-		phases = append(phases, NewInitializationPhase())
-		phases = append(phases, NewSignaturesPhase())
-		phases = append(phases, NewShouldBeBuiltPhase())
-
-		return c.runPhases(phases)
-	*/
-
-	return nil
-}
-
 func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
+	if err := NewInitializationPhase().Run(c); err != nil {
+		return err
+	}
+
+	phases := []Phase{
+		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewShouldBeBuiltPhase(c),
+		NewPublishImagesPhase(c, imagesRepoManager, opts),
+	}
+
+	return c.runPhases(phases)
+
 	/*
-		var phases []Phase
-		phases = append(phases, NewInitializationPhase())
-		phases = append(phases, NewSignaturesPhase())
-		phases = append(phases, NewShouldBeBuiltPhase())
-		phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
+			var phases []Phase
+			phases = append(phases, NewInitializationPhase())
+			phases = append(phases, NewSignaturesPhase())
+			phases = append(phases, NewShouldBeBuiltPhase())
+			phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
-		if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-			return fmt.Errorf("error locking all images read only: %s", err)
-		}
-		defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+		TODO: locks
+			if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+				return fmt.Errorf("error locking all images read only: %s", err)
+			}
+			defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
 
-		return c.runPhases(phases)
+			return c.runPhases(phases)
 	*/
-
 	return nil
 }
 
@@ -216,6 +188,18 @@ type BuildAndPublishOptions struct {
 }
 
 func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
+	if err := NewInitializationPhase().Run(c); err != nil {
+		return err
+	}
+
+	phases := []Phase{
+		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
+		NewShouldBeBuiltPhase(c),
+		NewPublishImagesPhase(c, imagesRepoManager, opts.PublishImagesOptions),
+	}
+
+	return c.runPhases(phases)
+
 	/*
 		var phases []Phase
 		phases = append(phases, NewInitializationPhase())
@@ -236,7 +220,85 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	/*
+	// TODO: Parallelize builds
+	//images (по зависимостям), dependantImagesByStage
+	//dependantImagesByStage строится в InitializationPhase, спросить у stage что она ждет.
+	//Количество воркеров-goroutine ограничено.
+	//Надо распределить images по воркерам.
+	//
+	//for img := range images {
+	//	Goroutine {
+	//		phases = append(phases, NewBuildStage())
+	//
+	//    	for phase = range phases {
+	//            phase.OnStart()
+	//
+	//	    	for stage = range stages {
+	//		    	for img = dependantImagesByStage[stage.name] {
+	//			    	wait <-imgChanMap[img]
+	//				}
+	//				phase.HandleStage(stage)
+	//    		}
+	//		}
+	//
+	//        close(imgChanMap[img])
+	//	} Goroutine
+	//}
+
+	for _, phase := range phases {
+		if err := phase.BeforeImages(); err != nil {
+			return fmt.Errorf("phase %s before images handler failed: %s", phase.Name(), err)
+		}
+	}
+
+	var imagesToProcess []*Image
+	if len(c.imageNamesToProcess) == 0 {
+		imagesToProcess = c.imagesInOrder
+	} else {
+		for _, imageName := range c.imageNamesToProcess {
+			imagesToProcess = append(imagesToProcess, c.GetImage(imageName))
+		}
+	}
+
+ImagesProcessing:
+	for _, img := range imagesToProcess {
+		for _, phase := range phases {
+			if err := phase.BeforeImageStages(img); err != nil {
+				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetName(), err)
+			}
+
+			newStages := []stage.Interface{}
+			for _, stg := range img.GetStages() {
+				if keepStage, err := phase.OnImageStage(img, stg); err != nil {
+					return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetName(), stg.Name(), err)
+				} else if keepStage {
+					newStages = append(newStages, stg)
+				}
+			}
+			img.SetStages(newStages)
+
+			if err := phase.AfterImageStages(img); err != nil {
+				return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetName(), err)
+			}
+
+			if phase.ImageProcessingShouldBeStopped(img) {
+				continue ImagesProcessing
+			}
+		}
+	}
+
+	for _, phase := range phases {
+		if err := phase.AfterImages(); err != nil {
+			return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
+		}
+	}
+
+	return nil
+}
+
+/*
+TODO: locks and log
+func (c *Conveyor) runPhases(phases []Phase) error {
 		logboek.LogOptionalLn()
 
 		for _, phase := range phases {
@@ -247,9 +309,9 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 				return err
 			}
 		}
-	*/
 	return nil
 }
+*/
 
 func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
