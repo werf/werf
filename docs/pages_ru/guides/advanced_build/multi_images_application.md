@@ -12,12 +12,11 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 werf позволяет описать все образы проекта в одном конфигурационном файле и это действительно удобно.
 
-В данной статье рассматривается сборка тестового приложения [AtSea Shop](https://github.com
-/dockersamples/atsea-sample-shop-app) и демонстрируется описание сборки нескольких компонентов приложения в одном конфигурационном файле.
+В данной статье рассматривается сборка тестового приложения [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app) и демонстрируется описание сборки нескольких компонентов приложения в одном конфигурационном файле.
 
 ## Требования
 
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
+* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/flant/multiwerf).
 
 ### Выбор версии werf
@@ -187,7 +186,7 @@ git:
 ### Payment gateway
 
 Образ с именем `payment_gw` — образ демонстрационного приложения платежного шлюза. 
-По сути он не делает ничего кроме того, что пишет в stdout сообщения. 
+По сути он не делает ничего, кроме того что пишет в stdout сообщения. 
 Его роль в настоящем примере — быть еще одним компонентом (микросервисом) приложения.
 
 {% raw %}
@@ -229,7 +228,7 @@ git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 
 ## Шаг 2: Конфигурация werf.yaml
 
-Для сборки приложения со всеми его компонентами в **корневой папке** репозитория создадим файл `werf.yaml` со следующим содержанием:
+Для сборки приложения включая все его компоненты, в **корневой папке** репозитория создадим файл `werf.yaml` со следующим содержимым:
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">Полный файл <i>werf.yaml</i>...</a>

@@ -9,10 +9,10 @@
                 <!-- toggle sidebar button -->
                 <!-- entries without drop-downs appear here -->
 
-                {% assign topnav = site.data[page.topnav] %}
-                {% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
+                {%- assign topnav = site.data[page.topnav] %}
+                {%- assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
 
-                    {% for folder in topnav.topnav[page.lang] %}
+                    {%- for folder in topnav.topnav[page.lang] -%}
                         {% comment %}
                         Notice:
                             Liquid engine is very poor in working with boolean logic.
@@ -20,64 +20,64 @@
                             That's why below lines of li class are such ugly.
                         {% endcomment %}
                         <li class="header__menu-item
-                            {% if folder.folderitems %}header__menu-item_parent{% endif %}
-                            {% if folder.url.size>1 and page.url == folder.url %}header__menu-item_active{% endif %}
-                            {% if folder.url.size>1 and page.url != folder.url and page.url contains folder.url
-                            and page.url != '/documentation/guides/installation.html' %}header__menu-item_active{% endif %}
-                            {% if folder.url.size>1 and page.url == '/publications_ru.html'
-                            and folder.url == '/publications.html' %}header__menu-item_active{% endif %}
-                            {% if folder.url.size<2 and page.url.size<2 %}header__menu-item_active{% endif %}">
-                            {% if folder.title == 'Документация' or folder.title == 'Documentation' %}
+                            {%- if folder.folderitems %} header__menu-item_parent{% endif %}
+                            {%- if folder.url.size>1 and page.url == folder.url %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size>1 and page.url != folder.url and page.url contains folder.url
+                            and page.url != '/documentation/guides/installation.html' %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size>1 and page.url == '/publications_ru.html'
+                            and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
+                            {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
                             <a href="{{ site.baseurl}}{{ folder.url }}">{{ folder.title }}</a>
-                            {% else %}
+                            {%- else %}
                             <a href="{{ folder.url }}">{{ folder.title }}</a>
-                            {% endif %}
-                            {% if folder.folderitems %}
+                            {%- endif %}
+                            {%- if folder.folderitems %}
                             <div class="header__submenu-container">
                                 <ul class="header__submenu">
                                     {% for folderitem in folder.folderitems %}
-                                        {% if folderitem.external_url %}
+                                        {%- if folderitem.external_url %}
                                             <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-                                        {% elsif page.url contains folderitem.url %}
+                                        {%- elsif page.url contains folderitem.url %}
                                             <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                                        {% else %}
+                                        {%- else %}
                                             <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                                        {% endif %}
-                                    {% endfor %}
+                                        {%- endif %}
+                                    {%- endfor %}
                                 </ul>
                             </div>
-                            {% endif %}
+                            {%- endif %}
                         </li>
-                {% endfor %}
+                {%- endfor %}
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
-                {% for entry in topnav_dropdowns %}
-                {% for folder in entry.folders %}
+                {%- for entry in topnav_dropdowns %}
+                {%- for folder in entry.folders %}
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ folder.title }}<b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        {% for folderitem in folder.folderitems %}
-                        {% if folderitem.external_url %}
+                        {%- for folderitem in folder.folderitems %}
+                        {%- if folderitem.external_url %}
                         <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-                        {% elsif page.url contains folderitem.url %}
+                        {%- elsif page.url contains folderitem.url %}
                         <li class="dropdownActive"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                        {% else %}
+                        {%- else %}
                         <li><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-                        {% endif %}
-                        {% endfor %}
+                        {%- endif %}
+                        {%- endfor %}
                     </ul>
                 </li>
-                {% endfor %}
-                {% endfor %}
+                {%- endfor %}
+                {%- endfor %}
                 <li id="doc-versions-menu"></li>
-                {% if page.lang == "ru" %}
+                {%- if page.lang == "ru" %}
                 <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].telegram }}" target="_blank" class="page__icon page__icon_telegram"></a></li>
                 <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter"></a></li>
                 <li class="header__menu-icon"><a href="#" data-open-popup="slack" target="_blank" class="page__icon page__icon_slack"></a></li>
-                {% else %}
+                {%- else %}
                 <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter"></a></li>
                 <li class="header__menu-icon"><a href="#" data-open-popup="slack" target="_blank" class="page__icon page__icon_slack"></a></li>
-                {% endif %}
+                {%- endif %}
                 <li class="header__menu-icon"><a href="https://github.com/flant/werf" target="_blank" class="page__icon page__icon_github"></a></li>
                 <li class="header__menu-icon header__menu-icon_search"><a href="javascript:void(0)" class="page__icon page__icon_search"></a></li>
                 <!-- language button -->

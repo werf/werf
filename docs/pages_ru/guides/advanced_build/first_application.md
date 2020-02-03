@@ -22,7 +22,7 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ## Требования
 
 * Минимальные знания [Docker](https://www.docker.com/) и [инструкций Dockerfile'а](https://docs.docker.com/engine/reference/builder/).
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#install-dependencies).
+* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/flant/multiwerf).
 
 ### Выбор версии werf

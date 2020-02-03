@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 В настоящий момент werf поддерживает только работу с [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), но мы планируем в [скором будущем](https://github.com/flant/werf/issues/1682) обеспечить поддержку и других популярных CI-систем.
 
-Чтобы использовать werf с любой CI/CD системой необходимо написать собственный скрипт, следуя [инструкциям]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env). 
+Чтобы использовать werf с любой CI/CD системой необходимо написать собственный скрипт, следуя [инструкциям]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные). 
 Получившийся скрипт необходимо использовать вместо вызова команды `werf ci-env`. Так же, как и команда, скрипт должен выполняться перед использованием команд werf вначале задания CI/CD.
 
 В руководстве пошагово пройдём по основным моментам, которые необходимо учесть при написании скрипта.
@@ -32,24 +32,24 @@ export WERF_IMAGES_REPO=registry.company.com/project
 
 ### Интеграция с Git
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#git-integration) по интеграции с git необходимо определить следующие переменные:
+Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-git) по интеграции с git необходимо определить следующие переменные:
  * [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag);
  * [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch).
 
 ### Интеграция с CI/CD pipeline'ами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#ci-cd-pipelines-integration) по интеграции с CI/CD pipeline необходимо определить следующие переменные:
+Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd-pipeline) по интеграции с CI/CD pipeline необходимо определить следующие переменные:
  * [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git);
  * [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit).
 
 ### Интеграция с CI/CD процессами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#ci-cd-configuration-integration) по интеграции с CI/CD процессами необходимо определить следующие переменные:
+Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd) по интеграции с CI/CD процессами необходимо определить следующие переменные:
  * [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env).
 
 ### Общая интеграция с CI/CD системами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#configure-modes-of-operation-in-ci-cd-systems) по общей интеграции с CI/CD системами необходимо определить следующие переменные:
+Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#настройка-режима-работы-в-cicd-системе) по общей интеграции с CI/CD системами необходимо определить следующие переменные:
  * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
  * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
  * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_color_mode);

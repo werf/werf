@@ -3,15 +3,15 @@ layout: sidebar-nosidebar
 ---
 <div class="docs">
 
-    {% if page.lang == 'ru' %}
-    {% include outdated-warning_ru.html %}
-    {% else %}
-    {% include outdated-warning.html %}
-    {% endif %}
+    {%- if page.lang == 'ru' %}
+    {%- include outdated-warning_ru.html %}
+    {%- else %}
+    {%- include outdated-warning.html %}
+    {%- endif %}
 
     <h1 class="docs__title">{{ page.title }}</h1>
 
-    {% if page.simple_map == true %}
+    {%- if page.simple_map == true %}
 
     <script>
         $(document).ready ( function(){
@@ -19,9 +19,9 @@ layout: sidebar-nosidebar
         });
     </script>
 
-    {% include custom/{{page.map_name}}.html %}
+    {%- include custom/{{page.map_name}}.html %}
 
-    {% elsif page.complex_map == true %}
+    {%- elsif page.complex_map == true %}
 
     <script>
         $(document).ready ( function(){
@@ -29,46 +29,46 @@ layout: sidebar-nosidebar
         });
     </script>
 
-    {% include custom/{{page.map_name}}.html %}
+    {%- include custom/{{page.map_name}}.html %}
 
-    {% endif %}
+    {%- endif %}
 
     <div class="post-content">
 
-    {% if page.summary %}
+    {%- if page.summary %}
         <div class="summary">{{page.summary}}</div>
-    {% endif %}
+    {%- endif %}
 
-        {% unless page.toc == false %}
-        {% include toc.html %}
-        {% endunless %}
+        {%- unless page.toc == false %}
+        {%- include toc.html %}
+        {%- endunless %}
 
-        {% unless jekyll.environment == "production" %}
+        {%- unless jekyll.environment == "production" %}
 
-        {% if site.github_editme_path %}
+        {%- if site.github_editme_path %}
 
         <a target="_blank" href="https://github.com/{{site.github_editme_path}}/_pages/{{page.folder}}/{{page.url | remove: "/" | append: ".md"}}" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
-        {% endif %}
+        {%- endif %}
 
-        {% endunless %}
+        {%- endunless %}
 
     {{content}}
 
         <div class="tags">
-            {% if page.tags != null %}
+            {%- if page.tags != null %}
             <b>Tags: </b>
-            {% assign projectTags = site.data.tags.allowed-tags %}
-            {% for tag in page.tags %}
-            {% if projectTags contains tag %}
+            {%- assign projectTags = site.data.tags.allowed-tags %}
+            {%- for tag in page.tags %}
+            {%- if projectTags contains tag %}
             <a href="{{ "tag_" | append: tag | append: ".html" }}" class="btn btn-default navbar-btn cursorNorm" role="button">{{page.tagName}}{{tag}}</a>
-            {% endif %}
-            {% endfor %}
-            {% endif %}
+            {%- endif %}
+            {%- endfor %}
+            {%- endif %}
         </div>
 
-        {% if site.disqus %}
-    {% include disqus.html %}
-        {% endif %}
+        {%- if site.disqus %}
+    {%- include disqus.html %}
+        {%- endif %}
 
     </div>
 

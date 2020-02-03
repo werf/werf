@@ -1,5 +1,5 @@
 <div class="popup" data-popup="slack">
-{% if page.lang == "ru" %}
+{%- if page.lang == "ru" %}
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
         <div class="popup__title">
@@ -21,7 +21,7 @@
             Мы выбрали Slack CNCF, т.к. там зарегистрировано самое большое количество участников в области Kubernetes.
         </div>
     </div>
-{% else %}
+{%- else %}
     <div class="popup__content">
         <a href="javascript:void(0)" data-close-popup class="popup__close">✕</a>
         <div class="popup__title">
@@ -43,5 +43,5 @@
             We chose CNCF Slack because most of the Kubernetes community members are registered there.
         </div>
     </div>
-{% endif %}
+{%- endif %}
 </div>

@@ -15,7 +15,7 @@ In the sections below you will learn:
  * [what is ci-env](#what-is-ci-env) — what information werf gathers from the CI/CD system and why;
  * [ci-env tagging modes](#ci-env-tagging-modes) — what [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) tagging modes are available;
  * [how ci-env works](#how-ci-env-works) — how *ci-env command* should be used and how it passes information to other werf commands;
- * [complete list of ci-env params and customizing](#other-ci-env-params-and-customizing) — the complete list of all ci-env params passed to other werf commands and how to customize common parameters.
+ * [complete list of ci-env params and customizing](#a-complete-list-of-ci-env-parameters) — the complete list of all ci-env params passed to other werf commands and how to customize common parameters.
 
 ## What is ci-env?
 
@@ -107,11 +107,11 @@ The above tagging mode is selected by setting the `--tagging-strategy=tag-or-bra
 
 ## How ci-env works
 
-The ci-env command passes all parameters to werf via environment variables, see the [pass cli params as environment variables](#pass-cli-params-as-environment-variables) section below.
+The ci-env command passes all parameters to werf via environment variables, see the [pass cli params as environment variables](#pass-cli-parameters-as-environment-variables) section below.
 
 The [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) must be called at the beginning of any CI/CD job before running any other werf command.
 
-**NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-params-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
+**NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-parameters-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
 
 ```shell
 source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
@@ -237,39 +237,39 @@ Within the [git integration](#git-integration) procedure, [`werf ci-env` command
 
 #### WERF_ENV
 
-As part of the [CI/CD configuration integration](#ci-cd-configuration-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) identifies an environment name and defines the `--env` parameter based on the `WERF_ENV` environment variable.
+As part of the [CI/CD configuration integration](#cicd-configuration-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) identifies an environment name and defines the `--env` parameter based on the `WERF_ENV` environment variable.
 
 #### WERF_ADD_ANNOTATION_PROJECT_GIT
 
-Within the [CI/CD pipelines integration](#ci-cd-pipelines-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects the URL of a project's web page and sets an `--add-annotation` parameter using `WERF_ADD_ANNOTATION_PROJECT_GIT` environment variable.
+Within the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects the URL of a project's web page and sets an `--add-annotation` parameter using `WERF_ADD_ANNOTATION_PROJECT_GIT` environment variable.
 
 #### WERF_ADD_ANNOTATION_CI_COMMIT
 
-Under the [CI/CD pipelines integration](#ci-cd-pipelines-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects the current commit and sets an`--add-annotation` parameter using the `WERF_ADD_ANNOTATION_CI_COMMIT` environment variable.
+Under the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects the current commit and sets an`--add-annotation` parameter using the `WERF_ADD_ANNOTATION_CI_COMMIT` environment variable.
 
 #### WERF_GIT_TAG_STRATEGY_LIMIT
 
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--git-tag-strategy-limit` parameter using the `WERF_GIT_TAG_STRATEGY_LIMIT` environment variable.
+As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--git-tag-strategy-limit` parameter using the `WERF_GIT_TAG_STRATEGY_LIMIT` environment variable.
 
 #### WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS
 
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets an `--git-tag-strategy-expiry-days` parameter using the `WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS` environment variable.
+As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets an `--git-tag-strategy-expiry-days` parameter using the `WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS` environment variable.
 
 #### WERF_LOG_COLOR_MODE
 
-In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-color-mode` parameter using the `WERF_LOG_COLOR_MODE` environment variable.
+In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-color-mode` parameter using the `WERF_LOG_COLOR_MODE` environment variable.
 
 #### WERF_LOG_PROJECT_DIR
 
-In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-project-dir` parameter using the `WERF_LOG_PROJECT_DIR` environment variable.
+In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-project-dir` parameter using the `WERF_LOG_PROJECT_DIR` environment variable.
 
 #### WERF_ENABLE_PROCESS_EXTERMINATOR
 
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets an `--enable-process-exterminator` parameter based on the `WERF_ENABLE_PROCESS_EXTERMINATOR` environment variable.
+As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets an `--enable-process-exterminator` parameter based on the `WERF_ENABLE_PROCESS_EXTERMINATOR` environment variable.
 
 #### WERF_LOG_TERMINAL_WIDTH
 
-Within the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-ci-cd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-terminal-width` parameter using the `WERF_LOG_TERMINAL_WIDTH` environment variable.
+Within the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--log-terminal-width` parameter using the `WERF_LOG_TERMINAL_WIDTH` environment variable.
 
 ## Further reading
 

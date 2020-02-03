@@ -41,9 +41,9 @@ shell:
   - "remove-source"
 ```
 
-Однако, при использовании такого метода кэширование работать не будет, и установка инструментов сборки будет выполняться каждый раз.
+Однако при использовании такого метода кэширование работать не будет, и установка инструментов сборки будет выполняться каждый раз.
 
-Другой способ--- использование multi-stage сборки, которая поддерживается начиная с версии 17.05 Docker.
+Другой способ — использование multi-stage сборки, которая поддерживается начиная с версии 17.05 Docker.
 
 ```
 FROM node:latest AS storefront
@@ -71,13 +71,13 @@ CMD ["--spring.profiles.active=postgres"]
 
 Смысл такого подхода в следующем — описать несколько вспомогательных образов и выборочно копировать артефакты из одного образа в другой, оставляя все то, что не нужно в конечном образе.
 
-werf предлагает такой-же подход, но с использованием [_образов_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) и  [_артефактов_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section).
+werf предлагает такой-же подход, но с использованием [_образов_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-образа) и  [_артефактов_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-артефакта).
 
 > Почему werf не использует multi-stage сборку?
 * Исторически, возможность _импорта_ появилась значительно раньше чем в Docker появилась multi-stage сборка.
 * werf дает больше гибкости при работе со вспомогательными образами
 
-Импорт _ресурсов_ из _образов_ и _артефактов_ должен быть описан в директиве `import` в конфигурации [_образа_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) или [_артефакта_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)) куда импортируются файлы. `import` — массив записей, каждая из которых должна содержать следующие параметры:
+Импорт _ресурсов_ из _образов_ и _артефактов_ должен быть описан в директиве `import` в конфигурации [_образа_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-образа) или [_артефакта_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-артефакта)) куда импортируются файлы. `import` — массив записей, каждая из которых должна содержать следующие параметры:
 
 - `image: <image name>` или `artifact: <artifact name>`: _исходный образ_, имя образа из которого вы хотите копировать файлы или папки.
 - `add: <absolute path>`: _исходный путь_, абсолютный путь к файлу или папке в _исходном образе_ для копирования.

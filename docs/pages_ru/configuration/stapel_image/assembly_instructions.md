@@ -4,7 +4,7 @@ sidebar: documentation
 permalink: documentation/configuration/stapel_image/assembly_instructions.html
 summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72" alt="Инструкции сборки">
   </a>
 
   <div class="tabs">
@@ -52,7 +52,7 @@ summary: |
   <b>Запуск инструкций сборки при изменениях в git-репозитории</b>
 
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Запуск инструкций сборки при изменениях в git-репозитории">
   </a>
 ---
 
@@ -391,7 +391,7 @@ src: {{`{{item}}`}}
 
 ## Зависимости пользовательских стадий
 
-Одна из особенностей werf — возможность определять зависимости при которых происходит пересборка _стадии_.
+Одна из особенностей werf — возможность определять зависимости, при которых происходит пересборка _стадии_.
 Как указано в [справочнике]({{ site.baseurl }}/documentation/reference/stages_and_images.html), сборка _стадий_ выполняется последовательно, одна за другой, и для каждой _стадии_ высчитывается _сигнатура стадии_. У _сигнатур_ есть ряд зависимостей, при изменении которых _сигнатура стадии_ меняется, что служит для werf сигналом для пересборки стадии с измененной _сигнатурой_. Поскольку каждая следующая _стадия_ имеет зависимость, в том числе и от предыдущей _стадии_ согласно _конвейеру стадий_, при изменении сигнатуры какой-либо _стадии_, произойдет пересборка и _стадии_ с измененной сигнатурой и всех последующих _стадий_.
 
 _Сигнатура пользовательских стадий_ и соответственно пересборка _пользовательских стадий_ зависит от изменений:
@@ -439,7 +439,7 @@ shell:
 Сигнатура стадии _install_ изменилась, и запуск werf для сборки приведет к выполнению всех инструкций стадии _install_ и инструкций последующих _стадий_, т.е. _beforeSetup_ и _setup_.
 
 Сигнатура стадии может меняться также из-за использования переменных окружения и Go-шаблонов. 
-Если не уделять этому достаточное внимание при написание конфигурации, можно столкнуться с неожиданными пересборки стадий. Например:
+Если не уделять этому достаточное внимание при написании конфигурации, можно столкнуться с неожиданными пересборки стадий. Например:
 
 {% raw %}
 ```yaml
@@ -452,7 +452,7 @@ shell:
 ```
 {% endraw %}
 
-Первая сборка высчитает сигнатуру стадии _beforeInstall_ на основе команды например такой (хэш коммита конечно будет другой):
+Первая сборка высчитает сигнатуру стадии _beforeInstall_ на основе команды например такой (хэш коммита, конечно, будет другой):
 ```shell
 echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
 ```
@@ -468,7 +468,7 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 ## Зависимость от изменений в git-репозитории
 
 <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Зависимость от изменений в git-репозитории">
   </a>
 
 Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 

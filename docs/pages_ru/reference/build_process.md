@@ -59,7 +59,7 @@ werf использует специальный сервисный образ `
 
 Также, werf сбрасывает (использует специальные пустые значения) значение `ENTRYPOINT` базового образа, если указано значение `CMD` в конфигурации (`docker.CMD`).
 
-В противном случае, поведение werf аналогично [поведению Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
+В противном случае поведение werf аналогично [поведению Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
 
 ## Множественная сборка на одном хосте
 

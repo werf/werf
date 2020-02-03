@@ -35,7 +35,6 @@ plugins:
 markdown: kramdown
 kramdown:
  input: GFM
- auto_ids: false
  hard_wrap: false
  syntax_highlighter: rouge
 
