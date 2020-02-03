@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/flant/werf/pkg/stages_storage"
 
 	"github.com/docker/docker/pkg/stringid"
@@ -26,6 +28,30 @@ type BuildPhaseOptions struct {
 	SignaturesOnly    bool
 	ImageBuildOptions imagePkg.BuildOptions
 	IntrospectOptions IntrospectOptions
+}
+
+type BuildStagesOptions struct {
+	ImageBuildOptions image.BuildOptions
+	IntrospectOptions
+}
+
+type IntrospectOptions struct {
+	Targets []IntrospectTarget
+}
+
+type IntrospectTarget struct {
+	ImageName string
+	StageName string
+}
+
+func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageName string) bool {
+	for _, s := range opts.Targets {
+		if (s.ImageName == "*" || s.ImageName == imageName) && s.StageName == stageName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
@@ -75,6 +101,63 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	return nil
 }
+
+/*
+	TODO: calculating-signatures, prepare and build logs
+
+SIGNATURES LOGS
+func (p *SignaturesPhase) Run(c *Conveyor) error {
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Calculating signatures", logProcessOptions, func() error {
+		return logboek.WithoutIndent(func() error { return p.run(c) })
+	})
+}
+func (p *SignaturesPhase) run(c *Conveyor) error {
+	for _, image := range c.imagesInOrder {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+			return p.calculateImageSignatures(c, image)
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+PREPARE LOGS
+	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Preparing stages build instructions", logProcessOptions, func() error {
+		return p.run(c)
+	})
+func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
+	for _, image := range c.imagesInOrder {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+			return p.runImage(image, c)
+		}); err != nil {
+			return err
+		}
+	}
+
+
+BUILD LOGS
+logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
+	return logboek.LogProcess("Building stages", logProcessOptions, func() error {
+		return p.run(c)
+	})
+
+images := c.imagesInOrder
+	for _, image := range images {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+			return p.runImage(image, c)
+		}); err != nil {
+			return err
+		}
+	}
+
+
+	return nil
+}
+*/
 
 func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
 	defer func() {
@@ -126,16 +209,16 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 
 	logboek.LogInfoF("%s:%s %s\n", stg.Name(), strings.Repeat(" ", MaxStageNameLength-len(stg.Name())), stageSig)
 
-	imagesDescs, err := phase.Conveyor.StagesStorage.GetImagesBySignature(phase.Conveyor.projectName(), stageSig)
+	imagesDescs, err := phase.getImagesBySignature(string(stg.Name()), stageSig)
 	if err != nil {
-		return fmt.Errorf("unable to get images from stages storage %s by signature %s: %s", phase.Conveyor.StagesStorage.String(), stageSig)
+		return err
 	}
 
 	var imageExists bool
 	var i *image.StageImage
 
 	if len(imagesDescs) > 0 {
-		imgInfo, err := stg.SelectCacheImage(imagesDescs)
+		imgInfo, err := phase.selectStageImageInfoFromCache(stg, imagesDescs)
 		if err != nil {
 			return err
 		}
@@ -144,7 +227,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 			fmt.Printf("-- SelectCacheImage => %v\n", imgInfo)
 			imageExists = true
 
-			i = image.NewStageImage(phase.PrevImage, imgInfo.ImageName)
+			i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
 			stg.SetImage(i)
 
 			if err := phase.Conveyor.StagesStorage.SyncStageImage(i); err != nil {
@@ -154,7 +237,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	}
 
 	if !imageExists {
-		i = image.NewStageImage(phase.PrevImage, "")
+		i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, uuid.New().String())
 		stg.SetImage(i)
 	}
 
@@ -168,6 +251,29 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	}
 
 	return nil
+}
+
+func (phase *BuildPhase) getImagesBySignature(stageName, stageSignature string) ([]*stages_storage.ImageInfo, error) {
+	logboek.LogProcessStart(fmt.Sprintf("Getting stage %s images by signature %s", stageName, stageSignature), logboek.LogProcessStartOptions{})
+	imagesDescs, err := phase.Conveyor.StagesStorage.GetImagesBySignature(phase.Conveyor.projectName(), stageSignature)
+	if err != nil {
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		return nil, fmt.Errorf("unable to get images from stages storage %s by signature %s: %s", phase.Conveyor.StagesStorage.String(), stageSignature)
+	}
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+
+	return imagesDescs, nil
+}
+
+func (phase *BuildPhase) selectStageImageInfoFromCache(stg stage.Interface, imagesDescs []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error) {
+	logboek.LogProcessStart(fmt.Sprintf("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()), logboek.LogProcessStartOptions{})
+	imgInfo, err := stg.SelectCacheImage(imagesDescs)
+	if err != nil {
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		return nil, err
+	}
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+	return imgInfo, nil
 }
 
 func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
@@ -304,20 +410,20 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	}
 	defer phase.Conveyor.StagesStorageLockManager.UnlockStage(phase.Conveyor.projectName(), stg.GetSignature())
 
-	imagesDescs, err := phase.Conveyor.StagesStorage.GetImagesBySignature(phase.Conveyor.projectName(), stg.GetSignature())
+	imagesDescs, err := phase.getImagesBySignature(string(stg.Name()), stg.GetSignature())
 	if err != nil {
-		return fmt.Errorf("unable to get images from stages storage %s by signature %s: %s", phase.Conveyor.StagesStorage.String(), stg.GetSignature())
+		return err
 	}
 
 	if len(imagesDescs) > 0 {
-		imgInfo, err := stg.SelectCacheImage(imagesDescs)
+		imgInfo, err := phase.selectStageImageInfoFromCache(stg, imagesDescs)
 		if err != nil {
 			return err
 		}
 
 		if imgInfo != nil {
 			fmt.Printf("DISCARDING own built image: detected already existing image %s after build", imgInfo.ImageName)
-			i := image.NewStageImage(phase.PrevImage, imgInfo.ImageName)
+			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
 			stg.SetImage(i)
 
 			if err := phase.Conveyor.StagesStorage.SyncStageImage(i); err != nil {
@@ -328,7 +434,14 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		}
 	}
 
-	stageImage.SetName(phase.generateUniqStageImageName(stg.GetSignature(), imagesDescs))
+	newStageImageName := phase.generateUniqStageImageName(stg.GetSignature(), imagesDescs)
+
+	stageImageObj := phase.Conveyor.GetStageImage(stageImage.Name())
+	phase.Conveyor.UnsetStageImage(stageImageObj.Name())
+
+	stageImageObj.SetName(newStageImageName)
+	phase.Conveyor.SetStageImage(stageImageObj)
+
 	if err := phase.Conveyor.StagesStorage.StoreStageImage(stageImage); err != nil {
 		return fmt.Errorf("unable to store image %s into stages storage %s: %s", stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
 	}
@@ -340,7 +453,8 @@ func (phase *BuildPhase) generateUniqStageImageName(signature string, imagesDesc
 
 	for {
 		timeNow := time.Now().UTC()
-		uniqueID := fmt.Sprintf("%d%02d%02d%02d%02d%02d%d", timeNow.Year(), timeNow.Month(), timeNow.Day(), timeNow.Hour(), timeNow.Minute(), timeNow.Second(), timeNow.Nanosecond()/1000)
+		timeNowMicroseconds := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
+		uniqueID := fmt.Sprintf("%d", timeNowMicroseconds)
 		imageName = fmt.Sprintf(image.LocalImageStageImageFormat, phase.Conveyor.projectName(), signature, uniqueID)
 
 		for _, imgInfo := range imagesDescs {

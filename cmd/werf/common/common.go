@@ -55,10 +55,10 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage      *string
-	StagesStorageCache *string
-	ImagesRepo         *string
-	ImagesRepoMode     *string
+	StagesStorage     *string
+	StagesStorageLock *string
+	ImagesRepo        *string
+	ImagesRepoMode    *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -222,15 +222,15 @@ func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
 }
 
-func SetupStagesStorageCache(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesStorageCache = new(string)
+func SetupStagesStorageLock(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesStorageLock = new(string)
 
-	defaultValue := os.Getenv("WERF_STAGES_STORAGE_CACHE")
+	defaultValue := os.Getenv("WERF_STAGES_STORAGE_LOCK")
 	if defaultValue == "" {
-		defaultValue = ":memory"
+		defaultValue = ":local"
 	}
 
-	cmd.Flags().StringVarP(cmdData.StagesStorageCache, "stages-storage-cache", "c", defaultValue, "Cache for stages storage operations, stores docker-inspect results for now (default :memory or $WERF_STAGES_STORAGE if set)")
+	cmd.Flags().StringVarP(cmdData.StagesStorageLock, "stages-storage-cache", "c", defaultValue, "Lock address for multiple werf processes to work with a single stages storage (default :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for all werf processes that work with a single stages storage. :local address allows only execution of werf processes from a single host.")
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -635,11 +635,11 @@ func GetStagesStorage(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesStorage, nil
 }
 
-func GetStagesStorageCache(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesStorageCache != ":memory" {
-		return "", fmt.Errorf("only --stages-storage-cache :memory is supported for now, got '%s'", *cmdData.StagesStorageCache)
+func GetStagesStorageLock(cmdData *CmdData) (string, error) {
+	if *cmdData.StagesStorageLock != ":local" {
+		return "", fmt.Errorf("only --stages-storage-lock :local is supported for now, got '%s'", *cmdData.StagesStorageLock)
 	}
-	return *cmdData.StagesStorageCache, nil
+	return *cmdData.StagesStorageLock, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
