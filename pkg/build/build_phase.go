@@ -28,14 +28,14 @@ type BuildPhaseOptions struct {
 	IntrospectOptions IntrospectOptions
 }
 
-func NewBuildPhase(conveyor *Conveyor, opts BuildPhaseOptions) *BuildPhase {
-	return &BuildPhase{Conveyor: conveyor, BuildPhaseOptions: opts}
+func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
+	return &BuildPhase{BasePhase: BasePhase{c}, BuildPhaseOptions: opts}
 }
 
 type BuildPhase struct {
-	isBaseImagePrepared bool
+	BasePhase
 
-	Conveyor *Conveyor
+	isBaseImagePrepared bool
 
 	PrevStage          stage.Interface
 	PrevImage          *image.StageImage
@@ -49,7 +49,19 @@ func (phase *BuildPhase) Name() string {
 	return "build"
 }
 
-func (phase *BuildPhase) OnStart(img *Image) error {
+func (phase *BuildPhase) BeforeImages() error {
+	return nil
+}
+
+func (phase *BuildPhase) AfterImages() error {
+	return nil
+}
+
+func (phase *BuildPhase) ImageProcessingShouldBeStopped(img *Image) bool {
+	return false
+}
+
+func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	img.SetupBaseImage(phase.Conveyor)
 
 	phase.PrevImage = img.GetBaseImage()
@@ -60,34 +72,38 @@ func (phase *BuildPhase) OnStart(img *Image) error {
 	return nil
 }
 
-func (phase *BuildPhase) HandleStage(img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) AfterImageStages(img *Image) error {
+	return nil
+}
+
+func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
 	defer func() {
 		phase.PrevStage = stg
 	}()
 
 	isEmpty, err := stg.IsEmpty(phase.Conveyor, phase.PrevBuiltImage)
 	if err != nil {
-		return fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
+		return false, fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
 	if isEmpty {
 		logboek.LogInfoF("%s:%s <empty>\n", stg.Name(), strings.Repeat(" ", MaxStageNameLength-len(stg.Name())))
-		return nil
+		return false, nil
 	}
 
 	if err := phase.calculateStageSignature(img, stg); err != nil {
-		return err
+		return false, err
 	}
 	if phase.SignaturesOnly {
-		return nil
+		return true, nil
 	}
 	if err := phase.prepareStage(img, stg); err != nil {
-		return err
+		return false, err
 	}
 	if err := phase.buildStage(img, stg); err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
 func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface) error {
