@@ -86,6 +86,10 @@ func (i *Image) GetName() string {
 	return i.name
 }
 
+func (i *Image) GetLogName() string {
+	return i.LogName()
+}
+
 func (i *Image) SetupBaseImage(c *Conveyor) {
 	baseImageName := i.baseImageName
 	if i.baseImageImageName != "" {
