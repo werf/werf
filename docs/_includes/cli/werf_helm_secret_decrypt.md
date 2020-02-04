@@ -17,7 +17,7 @@ werf helm secret decrypt [options]
 ```shell
   # Decrypt data in interactive mode
   $ werf helm secret decrypt
-  Enter secret: 
+  Enter secret:
   test
 
   # Decrypt from a pipe
