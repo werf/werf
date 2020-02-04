@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: alpine
+from: ubuntu
 git:
 - to: /app
 shell:
