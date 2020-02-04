@@ -81,7 +81,7 @@ func secretDecrypt(m secret.Manager, options *GenerateOptions) error {
 			}
 		}
 
-		fmt.Printf(string(data))
+		fmt.Printf("%s", string(data))
 	}
 
 	return nil

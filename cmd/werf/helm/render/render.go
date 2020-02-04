@@ -173,7 +173,7 @@ func runRender(outputFilePath string) error {
 			return err
 		}
 	} else {
-		fmt.Printf(buf.String())
+		fmt.Printf("%s", buf.String())
 	}
 
 	return nil

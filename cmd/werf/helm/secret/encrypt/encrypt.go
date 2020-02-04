@@ -29,7 +29,7 @@ func NewCmd() *cobra.Command {
 Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 		Example: `  # Encrypt data in interactive mode
   $ werf helm secret encrypt
-  Enter secret: 
+  Enter secret:
   100044d3f6a2ffd6dd2b73fa8f50db5d61fb6ac04da29955c77d13bb44e937448ee4
 
   # Encrypt from a pipe and save result in file
@@ -104,7 +104,7 @@ func secretEncrypt(m secret.Manager) error {
 			return err
 		}
 	} else {
-		fmt.Printf(string(encodedData))
+		fmt.Printf("%s", string(encodedData))
 	}
 
 	return nil

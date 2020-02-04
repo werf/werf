@@ -74,7 +74,7 @@ func secretEncrypt(m secret.Manager, options *GenerateOptions) error {
 			return err
 		}
 	} else {
-		fmt.Printf(string(encodedData))
+		fmt.Printf("%s", string(encodedData))
 	}
 
 	return nil
