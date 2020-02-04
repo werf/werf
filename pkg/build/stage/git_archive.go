@@ -11,8 +11,6 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-const GitArchiveResetCommitRegex = "(\\[werf reset\\])|(\\[reset werf\\])"
-
 type NewGitArchiveStageOptions struct {
 	ArchivesDir          string
 	ScriptsDir           string

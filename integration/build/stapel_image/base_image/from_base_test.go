@@ -89,7 +89,7 @@ var _ = Describe("from and fromLatest", func() {
 							Not(ContainSubstring("Trying to get from base image id from registry")),
 							ContainSubstring("Pulling base image"),
 							Not(ContainSubstring("Building stage from")),
-							ContainSubstring(fmt.Sprintf("Error: prepare base image %s failed", fromImage)),
+							ContainSubstring(fmt.Sprintf("Error: phase build on image ~ stage from handler failed: prepare base image %s failed", fromImage)),
 						},
 						expectedErr: true,
 					})

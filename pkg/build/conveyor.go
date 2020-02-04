@@ -318,13 +318,13 @@ ImagesProcessing:
 	for _, img := range c.imagesInOrder {
 		for _, phase := range phases {
 			if err := phase.BeforeImageStages(img); err != nil {
-				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetName(), err)
+				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
 			}
 
 			newStages := []stage.Interface{}
 			for _, stg := range img.GetStages() {
 				if keepStage, err := phase.OnImageStage(img, stg); err != nil {
-					return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetName(), stg.Name(), err)
+					return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
 				} else if keepStage {
 					newStages = append(newStages, stg)
 				}
@@ -332,7 +332,7 @@ ImagesProcessing:
 			img.SetStages(newStages)
 
 			if err := phase.AfterImageStages(img); err != nil {
-				return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetName(), err)
+				return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
 			}
 
 			if phase.ImageProcessingShouldBeStopped(img) {
