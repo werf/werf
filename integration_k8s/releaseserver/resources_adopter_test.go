@@ -2,10 +2,8 @@ package releaseserver_test
 
 import (
 	"fmt"
-	"strings"
-	"time"
-
 	"k8s.io/apimachinery/pkg/api/errors"
+	"strings"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/testing/utils"
@@ -18,7 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Resources adopter", func() {
+var _ = Describe("Resources adopter", func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
@@ -122,28 +120,6 @@ spec:
 				},
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
-
-			for {
-				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
-				if err == nil {
-					time.Sleep(200 * time.Millisecond)
-				} else if errors.IsNotFound(err) {
-					break
-				} else {
-					Fail(fmt.Sprintf("error accessing deploy/mydeploy1: %s", err))
-				}
-			}
-
-			for {
-				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy3", metav1.GetOptions{})
-				if err == nil {
-					time.Sleep(200 * time.Millisecond)
-				} else if errors.IsNotFound(err) {
-					break
-				} else {
-					Fail(fmt.Sprintf("error accessing deploy/mydeploy3: %s", err))
-				}
-			}
 
 			mydeploy2AfterInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
