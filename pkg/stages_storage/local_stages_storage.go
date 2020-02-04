@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
 )
@@ -14,6 +15,8 @@ import (
 type LocalStagesStorage struct{}
 
 func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error) {
+	logboek.LogDebugF("-- GetImagesBySignature %s\n", signature)
+
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(image.LocalImageStageImageNameFormat, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
@@ -39,11 +42,12 @@ func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature s
 }
 
 func (storage *LocalStagesStorage) SyncStageImage(stageImage image.ImageInterface) error {
+	logboek.LogDebugF("-- SyncStageImage %s\n", stageImage.Name())
 	return stageImage.SyncDockerState()
 }
 
 func (storage *LocalStagesStorage) StoreStageImage(stageImage image.ImageInterface) error {
-	fmt.Printf("-- StoreImage %s\n", stageImage.Name())
+	logboek.LogDebugF("-- StoreImage %s\n", stageImage.Name())
 	if err := stageImage.TagBuiltImage(stageImage.Name()); err != nil {
 		return fmt.Errorf("unable to save image %s: %s", stageImage.Name(), err)
 	}
