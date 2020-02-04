@@ -25,6 +25,8 @@ werf host purge [options]
 {{ header }} Options
 
 ```shell
+      --debug=false:
+            Enable debug output.
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

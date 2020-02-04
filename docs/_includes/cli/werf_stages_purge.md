@@ -14,6 +14,8 @@ werf stages purge [options]
 {{ header }} Options
 
 ```shell
+      --debug=false:
+            Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
@@ -53,6 +55,11 @@ werf stages purge [options]
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+  -c, --stages-storage-cache=':local':
+            Lock address for multiple werf processes to work with a single stages storage (default  
+            :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for   
+            all werf processes that work with a single stages storage. :local address allows only   
+            execution of werf processes from a single host.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
