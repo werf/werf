@@ -34,6 +34,8 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 {{ header }} Options
 
 ```shell
+      --debug=false:
+            Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:
