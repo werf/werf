@@ -35,6 +35,8 @@ werf dismiss [options]
 {{ header }} Options
 
 ```shell
+      --debug=false:
+            Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':

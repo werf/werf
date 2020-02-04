@@ -60,6 +60,8 @@ werf deploy [options]
             Format: labelName=labelValue.
             Also can be specified in $WERF_ADD_LABEL* (e.g.                                         
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+      --debug=false:
+            Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
@@ -138,6 +140,11 @@ werf deploy [options]
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+  -c, --stages-storage-cache=':local':
+            Lock address for multiple werf processes to work with a single stages storage (default  
+            :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for   
+            all werf processes that work with a single stages storage. :local address allows only   
+            execution of werf processes from a single host.
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds

@@ -31,6 +31,8 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
       --cert-file='':
             identify HTTPS client using this SSL certificate file (if using CHART as a chart        
             reference)
+      --debug=false:
+            Enable debug output.
       --devel=false:
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored (if using CHART as a chart reference)
