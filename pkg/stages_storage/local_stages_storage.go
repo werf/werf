@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types/filters"
-
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
@@ -18,7 +17,9 @@ func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature s
 	fmt.Printf("-- GetImagesBySignature %s\n", signature)
 
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf("werf-stages-storage/%s:%s-*", projectName, signature))
+	filterSet.Add("reference", fmt.Sprintf(image.LocalImageStageImageNameFormat, projectName))
+	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
+
 	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
@@ -47,7 +48,7 @@ func (storage *LocalStagesStorage) SyncStageImage(stageImage image.ImageInterfac
 func (storage *LocalStagesStorage) StoreStageImage(stageImage image.ImageInterface) error {
 	fmt.Printf("-- StoreImage %s\n", stageImage.Name())
 	if err := stageImage.TagBuiltImage(stageImage.Name()); err != nil {
-		return fmt.Errorf("unable to save image %s: %s")
+		return fmt.Errorf("unable to save image %s: %s", stageImage.Name(), err)
 	}
 	if err := stageImage.SyncDockerState(); err != nil {
 		return fmt.Errorf("unable to sync docker state of image %s: %s", stageImage.Name(), err)

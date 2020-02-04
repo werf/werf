@@ -299,17 +299,20 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 		return nil
 	}
 
+	serviceLabels := map[string]string{
+		imagePkg.WerfDockerImageName:     stageImage.Name(),
+		imagePkg.WerfLabel:               phase.Conveyor.projectName(),
+		imagePkg.WerfVersionLabel:        werf.Version,
+		imagePkg.WerfCacheVersionLabel:   imagePkg.BuildCacheVersion,
+		imagePkg.WerfImageLabel:          "false",
+		imagePkg.WerfStageSignatureLabel: stg.GetSignature(),
+	}
+
 	switch stg.(type) {
 	case *stage.DockerfileStage:
 		var buildArgs []string
 
-		for key, value := range map[string]string{
-			imagePkg.WerfDockerImageName:   stageImage.Name(),
-			imagePkg.WerfLabel:             phase.Conveyor.projectName(),
-			imagePkg.WerfVersionLabel:      werf.Version,
-			imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
-			imagePkg.WerfImageLabel:        "false",
-		} {
+		for key, value := range serviceLabels {
 			buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
 		}
 
@@ -317,13 +320,7 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 
 	default:
 		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			imagePkg.WerfDockerImageName:   stageImage.Name(),
-			imagePkg.WerfLabel:             phase.Conveyor.projectName(),
-			imagePkg.WerfVersionLabel:      werf.Version,
-			imagePkg.WerfCacheVersionLabel: imagePkg.BuildCacheVersion,
-			imagePkg.WerfImageLabel:        "false",
-		})
+		imageServiceCommitChangeOptions.AddLabel(serviceLabels)
 
 		if phase.Conveyor.sshAuthSock != "" {
 			imageRunOptions := stageImage.Container().RunOptions()
