@@ -14,8 +14,6 @@ import (
 type LocalStagesStorage struct{}
 
 func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error) {
-	fmt.Printf("-- GetImagesBySignature %s\n", signature)
-
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(image.LocalImageStageImageNameFormat, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
@@ -41,7 +39,6 @@ func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature s
 }
 
 func (storage *LocalStagesStorage) SyncStageImage(stageImage image.ImageInterface) error {
-	fmt.Printf("-- SyncStageImage %s\n", stageImage.Name())
 	return stageImage.SyncDockerState()
 }
 
