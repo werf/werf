@@ -1,48 +1,17 @@
-name: Deploy Site
+name: Site deployment
 on:
-  pull_request:
-    types: [labeled]
   push:
     branches:
     - multiwerf
-  release:
-    types: [published]
+    paths:
+    - multiwerf.json
 
 jobs:
-  stub:
-    name: Greeting
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Greeting
-      run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
-
-  unlabel:
-    name: Unlabel
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.label.id == 1753518893 # review docs label
-    steps:
-
-      - uses: actions/github-script@0.3.0
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.issues.removeLabel({...context.issue, name: '${{github.event.label.name}}'})
 
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'release' || (github.event_name == 'pull_request' && github.event.label.id == 1753518893) # review docs label
     steps:
-
-    - name: Trigger Review Job
-      run: |
-        curl -X POST \
-             -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
-             -F "ref=master" \
-             -F "variables[review_sha]=${{ github.sha }}" \
-             ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
-      if: github.event_name == 'pull_request' && github.event.label.id == 1753518893 # review docs label
 
     - name: Trigger Main Job
       run: |
@@ -50,4 +19,3 @@ jobs:
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
              -F "ref=master" \
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
-      if: github.event_name == 'push' || github.event_name == 'release'
