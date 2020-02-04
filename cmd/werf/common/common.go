@@ -74,6 +74,7 @@ type CmdData struct {
 
 	StagesToIntrospect *[]string
 
+	Debug            *bool
 	LogPretty        *bool
 	LogColorMode     *string
 	LogProjectDir    *bool
@@ -363,9 +364,15 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
+	SetupDebug(cmdData, cmd)
 	SetupLogColor(cmdData, cmd)
 	SetupLogPretty(cmdData, cmd)
 	SetupTerminalWidth(cmdData, cmd)
+}
+
+func SetupDebug(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Debug = new(bool)
+	cmd.Flags().BoolVarP(cmdData.Debug, "debug", "", GetBoolEnvironment("WERF_DEBUG"), "Enable debug output.")
 }
 
 func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
@@ -778,6 +785,10 @@ func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 func ProcessLogOptions(cmdData *CmdData) error {
 	if err := ProcessLogColorMode(cmdData); err != nil {
 		return err
+	}
+
+	if *cmdData.Debug {
+		logging.EnableDebug()
 	}
 
 	if !*cmdData.LogPretty {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/flant/werf/pkg/stages_storage"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -122,7 +123,7 @@ func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 		}
 	}
 
-	fmt.Printf("Stage %s next stage dependencies: %v\n", s.Name(), args)
+	logboek.LogDebugF("Stage %s next stage dependencies: %v\n", s.Name(), args)
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
