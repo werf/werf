@@ -230,7 +230,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		}
 
 		if imgInfo != nil {
-			fmt.Printf("-- SelectCacheImage => %v\n", imgInfo)
+			logboek.LogDebugF("-- SelectCacheImage => %v\n", imgInfo)
 			imageExists = true
 
 			i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
@@ -260,45 +260,45 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 }
 
 func (phase *BuildPhase) storeStageImage(stageName, stageSignature string, stageImage image.ImageInterface) error {
-	logboek.LogProcessStart(fmt.Sprintf("Store stage %s signature %s image %s into stages storage", stageName, stageSignature, stageImage.Name()), logboek.LogProcessStartOptions{})
+	logboek.LogProcessStart(fmt.Sprintf("Store stage %s signature %s image %s into stages storage", stageName, stageSignature, stageImage.Name()), logboek.LogProcessStartOptions{Debug: true})
 	if err := phase.Conveyor.StagesStorage.StoreStageImage(stageImage); err != nil {
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{Debug: true})
 		return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stageName, stageSignature, stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
 	}
-	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{Debug: true})
 	return nil
 }
 
 func (phase *BuildPhase) syncStageImage(stageName, stageSignature string, stageImage image.ImageInterface) error {
-	logboek.LogProcessStart(fmt.Sprintf("Sync stage %s signature %s image %s from stages storage", stageName, stageSignature, stageImage.Name()), logboek.LogProcessStartOptions{})
+	logboek.LogProcessStart(fmt.Sprintf("Sync stage %s signature %s image %s from stages storage", stageName, stageSignature, stageImage.Name()), logboek.LogProcessStartOptions{Debug: true})
 	if err := phase.Conveyor.StagesStorage.SyncStageImage(stageImage); err != nil {
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{Debug: true})
 		return fmt.Errorf("unable to sync image %s from stages storage %s: %s", stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
 	}
-	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{Debug: true})
 	return nil
 }
 
 func (phase *BuildPhase) getImagesBySignature(stageName, stageSignature string) ([]*stages_storage.ImageInfo, error) {
-	logboek.LogProcessStart(fmt.Sprintf("Getting stage %s images by signature %s", stageName, stageSignature), logboek.LogProcessStartOptions{})
+	logboek.LogProcessStart(fmt.Sprintf("Getting stage %s images by signature %s", stageName, stageSignature), logboek.LogProcessStartOptions{Debug: true})
 	imagesDescs, err := phase.Conveyor.StagesStorage.GetImagesBySignature(phase.Conveyor.projectName(), stageSignature)
 	if err != nil {
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{Debug: true})
 		return nil, fmt.Errorf("unable to get images from stages storage %s by signature %s: %s", phase.Conveyor.StagesStorage.String(), stageSignature)
 	}
-	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{Debug: true})
 
 	return imagesDescs, nil
 }
 
 func (phase *BuildPhase) selectStageImageInfoFromCache(stg stage.Interface, imagesDescs []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error) {
-	logboek.LogProcessStart(fmt.Sprintf("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()), logboek.LogProcessStartOptions{})
+	logboek.LogProcessStart(fmt.Sprintf("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()), logboek.LogProcessStartOptions{Debug: true})
 	imgInfo, err := stg.SelectCacheImage(imagesDescs)
 	if err != nil {
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{Debug: true})
 		return nil, err
 	}
-	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{Debug: true})
 	return imgInfo, nil
 }
 

@@ -6,11 +6,10 @@ import (
 
 	"github.com/flant/werf/pkg/stages_storage"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
-
-const GitArchiveResetCommitRegex = "(\\[werf reset\\])|(\\[reset werf\\])"
 
 type NewGitArchiveStageOptions struct {
 	ArchivesDir          string
@@ -58,12 +57,12 @@ ScanImages:
 				}
 
 				if !isOurAncestor {
-					fmt.Printf("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+					logboek.LogDebugF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
 					continue ScanImages
 				}
-				fmt.Printf("%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+				logboek.LogDebugF("%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
 			} else {
-				fmt.Printf("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
+				logboek.LogDebugF("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
 				continue ScanImages
 			}
 		}
