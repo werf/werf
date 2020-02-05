@@ -10,6 +10,7 @@ type BuildOptions struct {
 type ImageInterface interface {
 	Name() string
 	SetName(name string)
+	CreatedAtUnixNano() int64
 	Inspect() *types.ImageInspect
 	Labels() map[string]string
 	ID() string
