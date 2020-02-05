@@ -242,6 +242,7 @@ github.com/flant/logboek v0.2.5/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQK
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349 h1:ANKnp53Kl4sspROTuIai9aAVRed4ZEX/dZI9Tj0gEPE=
 github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
+github.com/flant/logboek v0.2.6-0.20200204105935-c9ed7cccdb7e/go.mod h1:v4kz+aA1IzT4R4e6LSMpAs2FDIY47uviQfEjgEw9Izk=
 github.com/flant/logboek v0.2.6-0.20200204132121-61b282d85669 h1:WARDS7ZulUO2kCQ8+Jmb4T3V2YHHXP6bvr/woUhLBmE=
 github.com/flant/logboek v0.2.6-0.20200204132121-61b282d85669/go.mod h1:v4kz+aA1IzT4R4e6LSMpAs2FDIY47uviQfEjgEw9Izk=
 github.com/flant/multiwerf v1.2.3 h1:zfaO/b5OKg4z2uo4fEgpS8uqcdt2FoXAYlA+K01RTn0=
