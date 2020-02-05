@@ -30,7 +30,7 @@ type RunCommandOptions struct {
 }
 
 func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
-	if command == werfBinPath {
+	if isWerfTestBinaryPath(command) {
 		args = WerfBinArgs(args...)
 	}
 
