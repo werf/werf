@@ -3,6 +3,7 @@ package git_test
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,6 +18,10 @@ var _ = Describe("git stages", func() {
 	var specSteps []stagesSpecStep
 
 	BeforeEach(func() {
+		if runtime.GOOS == "windows" {
+			Skip("skip on windows")
+		}
+
 		fixturesPathParts = []string{"git_stages"}
 		specSteps = []stagesSpecStep{}
 	})
@@ -250,6 +255,10 @@ var _ = Describe("user stages", func() {
 	var specSteps []stagesSpecStep
 
 	BeforeEach(func() {
+		if runtime.GOOS == "windows" {
+			Skip("skip on windows")
+		}
+
 		fixturesPathParts = []string{"user_stages"}
 		specSteps = []stagesSpecStep{}
 	})

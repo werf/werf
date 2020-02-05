@@ -29,10 +29,8 @@ func GetTempDir() string {
 	return dir
 }
 
-var werfBinPath string
-
 func ProcessWerfBinPath() string {
-	werfBinPath = os.Getenv("WERF_TEST_BINARY_PATH")
+	werfBinPath := os.Getenv("WERF_TEST_BINARY_PATH")
 	if werfBinPath == "" {
 		var err error
 		werfBinPath, err = gexec.Build("github.com/flant/werf/cmd/werf")
@@ -55,6 +53,11 @@ func WerfBinArgs(userArgs ...string) []string {
 	args = append(args, userArgs...)
 
 	return args
+}
+
+func isWerfTestBinaryPath(path string) bool {
+	werfTestBinaryPath := os.Getenv("WERF_TEST_BINARY_PATH")
+	return werfTestBinaryPath != "" && werfTestBinaryPath == path
 }
 
 func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {

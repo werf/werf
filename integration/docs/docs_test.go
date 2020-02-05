@@ -18,10 +18,12 @@ type entry struct {
 }
 
 var _ = BeforeEach(func() {
-	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" {
 		Skip("skip on windows")
 	}
 
+	stubs.UnsetEnv("DOCKER_CONFIG")
+	stubs.UnsetEnv("WERF_DOCKER_CONFIG")
 	stubs.SetEnv("WERF_HELM_HOME", "~/.helm")
 	stubs.SetEnv("WERF_LOG_TERMINAL_WIDTH", "100")
 })
