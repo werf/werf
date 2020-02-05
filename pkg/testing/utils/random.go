@@ -1,14 +1,14 @@
 package utils
 
-import "math/rand"
+import (
+	"strings"
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+	"github.com/Masterminds/goutils"
+	. "github.com/onsi/gomega"
+)
 
 func GetRandomString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-
-	return string(b)
+	str, err := goutils.CryptoRandomAlphaNumeric(n)
+	Ω(err).ShouldNot(HaveOccurred())
+	return strings.ToLower(str)
 }
