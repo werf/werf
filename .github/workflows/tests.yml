@@ -500,6 +500,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
     - name: Checkout code
       uses: actions/checkout@v1
 
@@ -509,23 +515,41 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
-    # FIXME: determine problems with coverage records and remove the job
-    - name: Prepare coverage files
+    - name: Prepare environment
       run: |
-        find tests_coverage -type f -exec \
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+
+        go build github.com/wadey/gocovmerge
+        chmod +x ./gocovmerge
+
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::tests_coverage
+
+    - name: Prepare coverage file
+      run: |
+        # FIXME: determine problems with coverage records and remove seds
+        find $WERF_TEST_COVERAGE_DIR -type f -exec \
           sed -i -e "s|/home/runner/work/werf/werf|github.com/flant/werf|g" {} +
 
-        find tests_coverage -type f -exec \
+        find $WERF_TEST_COVERAGE_DIR -type f -exec \
           sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/flant/werf|g" {} +
 
-        find tests_coverage -type f -exec \
+        find $WERF_TEST_COVERAGE_DIR -type f -exec \
           sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/flant/werf/cmd/werf/main.go|g' {} +
 
-    - name: Upload
+        coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
+        ./gocovmerge ${coverage_files[@]} > coverage.out
+
+    - name: Format and upload
       run: |
-        export WERF_TEST_COVERAGE_DIR=tests_coverage
         export GIT_BRANCH=${GITHUB_REF:11}
         export GIT_COMMIT_SHA=$GITHUB_SHA
-        ./scripts/ci/codeclimate.sh
+
+        ./cc-test-reporter format-coverage \
+            -t=gocov \
+            -p=github.com/flant/werf/ \
+            coverage.out
+
+        ./cc-test-reporter upload-coverage
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
