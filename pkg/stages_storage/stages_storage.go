@@ -7,10 +7,14 @@ import (
 )
 
 type ImageInfo struct {
-	Signature string
-	ImageName string
-	Labels    map[string]string
-	CreatedAt time.Time
+	Signature         string            `json:"signature"`
+	ImageName         string            `json:"imageName"`
+	Labels            map[string]string `json:"labels"`
+	CreatedAtUnixNano int64             `json:"createdAtUnixNano"`
+}
+
+func (info *ImageInfo) CreatedAt() time.Time {
+	return time.Unix(info.CreatedAtUnixNano/1000_000_000, info.CreatedAtUnixNano%1000_000_000)
 }
 
 type StagesStorage interface {

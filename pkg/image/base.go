@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -87,4 +88,12 @@ func (i *base) Untag() error {
 	i.unsetInspect()
 
 	return nil
+}
+
+func (i *base) CreatedAtUnixNano() int64 {
+	t, err := time.Parse(time.RFC3339, i.inspect.Created)
+	if err != nil {
+		panic(fmt.Sprintf("got bad 'created' timestamp in image inspect %v: %s", i.inspect.Created, err))
+	}
+	return t.UnixNano()
 }

@@ -70,3 +70,16 @@ func (lockManager *FileLockManager) UnlockAllImages(projectName string) error {
 	lockName := fmt.Sprintf("%s.images", projectName)
 	return shluz.Unlock(lockName)
 }
+
+func (lockManager *FileLockManager) LockStageCache(projectName, signature string) error {
+	lockName := fmt.Sprintf("%s.%s.cache", projectName, signature)
+	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+	}
+	return nil
+}
+
+func (lockManager *FileLockManager) UnlockStageCache(projectName, signature string) error {
+	lockName := fmt.Sprintf("%s.%s.cache", projectName, signature)
+	return shluz.Unlock(lockName)
+}
