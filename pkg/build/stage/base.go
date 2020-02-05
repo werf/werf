@@ -153,7 +153,7 @@ func (s *BaseStage) SelectCacheImage(images []*stages_storage.ImageInfo) (*stage
 	for _, img := range images {
 		if oldestImage == nil {
 			oldestImage = img
-		} else if img.CreatedAt.Before(oldestImage.CreatedAt) {
+		} else if img.CreatedAt().Before(oldestImage.CreatedAt()) {
 			oldestImage = img
 		}
 	}

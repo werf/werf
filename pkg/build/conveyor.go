@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -55,7 +57,7 @@ type Conveyor struct {
 	tmpDir string
 
 	StagesStorage            stages_storage.StagesStorage
-	StagesStorageCache       stages_storage.Cache
+	StagesStorageCache       stages_storage.StagesStorageCache
 	StagesStorageLockManager stages_storage.LockManager
 }
 
@@ -82,7 +84,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		StagesStorage:            &stages_storage.LocalStagesStorage{},
 		StagesStorageLockManager: &stages_storage.FileLockManager{},
-		StagesStorageCache:       &stages_storage.MemoryCache{},
+		StagesStorageCache:       stages_storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
 	}
 
 	return c
