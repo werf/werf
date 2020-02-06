@@ -18,7 +18,7 @@ const (
 
 	WerfTagStrategyLabel = "werf-tag-strategy"
 
-	BuildCacheVersion = "1"
+	BuildCacheVersion = "1.1"
 
 	StageContainerNamePrefix = "werf.build."
 
