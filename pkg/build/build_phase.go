@@ -512,9 +512,9 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
 			stg.SetImage(i)
 
-			if err := logboek.LogProcess(fmt.Sprintf("Sync stage %q signature %s image %s from stages storage", stg.Name(), stg.GetSignature(), stageImage.Name()), logboek.LogProcessOptions{Debug: true}, func() error {
-				if err := phase.Conveyor.StagesStorage.SyncStageImage(stageImage); err != nil {
-					return fmt.Errorf("unable to sync image %s from stages storage %s: %s", stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
+			if err := logboek.LogProcess(fmt.Sprintf("Sync stage %q signature %s image %s from stages storage", stg.Name(), stg.GetSignature(), i.Name()), logboek.LogProcessOptions{Debug: true}, func() error {
+				if err := phase.Conveyor.StagesStorage.SyncStageImage(i); err != nil {
+					return fmt.Errorf("unable to sync image %s from stages storage %s: %s", i.Name(), phase.Conveyor.StagesStorage.String(), err)
 				}
 				return nil
 			}); err != nil {
