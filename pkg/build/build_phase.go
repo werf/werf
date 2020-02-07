@@ -260,13 +260,12 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 
 	phase.PrevStage = stg
 	phase.PrevImage = i
-	if phase.PrevImage.IsExists() {
-		phase.PrevBuiltImage = phase.PrevImage
-	}
-
 	logboek.LogDebugF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
 	logboek.LogDebugF("Set prev image = %q\n", phase.PrevImage.Name())
-	logboek.LogDebugF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
+	if phase.PrevImage.IsExists() {
+		phase.PrevBuiltImage = phase.PrevImage
+		logboek.LogDebugF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
+	}
 
 	return nil
 }
