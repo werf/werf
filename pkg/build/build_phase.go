@@ -166,10 +166,6 @@ images := c.imagesInOrder
 */
 
 func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
-	defer func() {
-		phase.PrevStage = stg
-	}()
-
 	isEmpty, err := stg.IsEmpty(phase.Conveyor, phase.PrevBuiltImage)
 	if err != nil {
 		return false, fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
@@ -210,6 +206,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 
 		checksumArgs = append(checksumArgs, phase.PrevStage.GetSignature(), prevStageDependencies)
 	}
+	logboek.LogDebugF("Signature of %q args consists of: stage dependencies, build-cache-version, prev stage signature, prev stage dependencies %v\n", stg.Name(), checksumArgs)
 	stageSig := util.Sha3_224Hash(checksumArgs...)
 	stg.SetSignature(stageSig)
 
@@ -261,10 +258,15 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		return err
 	}
 
+	phase.PrevStage = stg
 	phase.PrevImage = i
 	if phase.PrevImage.IsExists() {
 		phase.PrevBuiltImage = phase.PrevImage
 	}
+
+	logboek.LogDebugF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
+	logboek.LogDebugF("Set prev image = %q\n", phase.PrevImage.Name())
+	logboek.LogDebugF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
 
 	return nil
 }
