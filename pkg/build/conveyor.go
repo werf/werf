@@ -666,12 +666,12 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 
 	if len(gitMappings) != 0 {
 		err := logboek.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LogProcessOptions{}, func() error {
-			nonEmptyGitMappings, err := getNonEmptyGitMappings(gitMappings)
+			resGitMappings, err := filterAndLogGitMappings(gitMappings)
 			if err != nil {
 				return err
 			}
 
-			res = nonEmptyGitMappings
+			res = resGitMappings
 
 			return nil
 		})
@@ -684,8 +684,8 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	return res, nil
 }
 
-func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
-	var nonEmptyGitMappings []*stage.GitMapping
+func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
+	var res []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
 		if err := logboek.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LogProcessOptions{}, func() error {
@@ -745,14 +745,8 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			if empty, err := gitMapping.IsEmpty(); err != nil {
-				return err
-			} else if !empty {
-				logboek.LogInfoF("Commit %s will be used\n", commit)
-				nonEmptyGitMappings = append(nonEmptyGitMappings, gitMapping)
-			} else {
-				logboek.LogErrorF("WARNING: Empty git mapping will be ignored (commit %s)\n", commit)
-			}
+			logboek.LogInfoF("Commit %s will be used\n", commit)
+			res = append(res, gitMapping)
 
 			return nil
 		}); err != nil {
@@ -760,7 +754,7 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 		}
 	}
 
-	return nonEmptyGitMappings, nil
+	return res, nil
 }
 
 func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitMapping {
