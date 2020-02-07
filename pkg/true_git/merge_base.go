@@ -3,6 +3,7 @@ package true_git
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func IsAncestor(ancestorCommit, descendantCommit string, gitDir string) (bool, error) {
@@ -13,6 +14,9 @@ func IsAncestor(ancestorCommit, descendantCommit string, gitDir string) (bool, e
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() == 1 {
+				return false, nil
+			}
+			if exitError.ExitCode() == 128 && strings.HasPrefix(string(output), "fatal: Not a valid commit name ") {
 				return false, nil
 			}
 		}
