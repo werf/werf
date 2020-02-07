@@ -197,7 +197,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		return err
 	}
 
-	checksumArgs := []string{stageDependencies, image.BuildCacheVersion}
+	checksumArgs := []string{image.BuildCacheVersion, string(stg.Name()), stageDependencies}
 	if phase.PrevStage != nil {
 		prevStageDependencies, err := phase.PrevStage.GetNextStageDependencies(phase.Conveyor)
 		if err != nil {
