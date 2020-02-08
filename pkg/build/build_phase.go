@@ -63,10 +63,11 @@ type BuildPhase struct {
 
 	isBaseImagePrepared bool
 
-	PrevStage          stage.Interface
-	PrevImage          *image.StageImage
-	PrevBuiltImage     image.ImageInterface
-	PrevStageImageSize int64
+	PrevStage                  stage.Interface
+	PrevNonEmptyStage          stage.Interface
+	PrevImage                  *image.StageImage
+	PrevBuiltImage             image.ImageInterface
+	PrevNonEmptyStageImageSize int64
 
 	BuildPhaseOptions
 }
@@ -90,9 +91,10 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(img *Image) bool {
 func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	phase.isBaseImagePrepared = false
 	phase.PrevStage = nil
+	phase.PrevNonEmptyStage = nil
 	phase.PrevImage = nil
 	phase.PrevBuiltImage = nil
-	phase.PrevStageImageSize = 0
+	phase.PrevNonEmptyStageImageSize = 0
 
 	img.SetupBaseImage(phase.Conveyor)
 
@@ -166,6 +168,11 @@ images := c.imagesInOrder
 */
 
 func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
+	defer func() {
+		phase.PrevStage = stg
+		logboek.LogDebugF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
+	}()
+
 	isEmpty, err := stg.IsEmpty(phase.Conveyor, phase.PrevBuiltImage)
 	if err != nil {
 		return false, fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
@@ -198,13 +205,13 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	}
 
 	checksumArgs := []string{image.BuildCacheVersion, string(stg.Name()), stageDependencies}
-	if phase.PrevStage != nil {
-		prevStageDependencies, err := phase.PrevStage.GetNextStageDependencies(phase.Conveyor)
+	if phase.PrevNonEmptyStage != nil {
+		prevStageDependencies, err := phase.PrevNonEmptyStage.GetNextStageDependencies(phase.Conveyor)
 		if err != nil {
-			return fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", phase.PrevStage.Name(), stg.Name(), err)
+			return fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", phase.PrevNonEmptyStage.Name(), stg.Name(), err)
 		}
 
-		checksumArgs = append(checksumArgs, phase.PrevStage.GetSignature(), prevStageDependencies)
+		checksumArgs = append(checksumArgs, phase.PrevNonEmptyStage.GetSignature(), prevStageDependencies)
 	}
 	logboek.LogDebugF("Signature of %q args consists of: stage dependencies, build-cache-version, prev stage signature, prev stage dependencies %v\n", stg.Name(), checksumArgs)
 	stageSig := util.Sha3_224Hash(checksumArgs...)
@@ -258,9 +265,9 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		return err
 	}
 
-	phase.PrevStage = stg
+	phase.PrevNonEmptyStage = stg
+	logboek.LogDebugF("Set prev non empty stage = %q %s\n", phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
 	phase.PrevImage = i
-	logboek.LogDebugF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
 	logboek.LogDebugF("Set prev image = %q\n", phase.PrevImage.Name())
 	if phase.PrevImage.IsExists() {
 		phase.PrevBuiltImage = phase.PrevImage
@@ -427,11 +434,11 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 	if isUsingCache {
 		logboek.LogHighlightF("Use cache image for %s\n", stg.LogDetailedName())
 
-		logImageInfo(stg.GetImage(), phase.PrevStageImageSize, isUsingCache)
+		logImageInfo(stg.GetImage(), phase.PrevNonEmptyStageImageSize, isUsingCache)
 
 		logboek.LogOptionalLn()
 
-		phase.PrevStageImageSize = stg.GetImage().Inspect().Size
+		phase.PrevNonEmptyStageImageSize = stg.GetImage().Inspect().Size
 
 		if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
 			if err := introspectStage(stg); err != nil {
@@ -450,7 +457,7 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 			})
 			return
 		}
-		logImageInfo(stg.GetImage(), phase.PrevStageImageSize, isUsingCache)
+		logImageInfo(stg.GetImage(), phase.PrevNonEmptyStageImageSize, isUsingCache)
 	}
 
 	logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
@@ -471,7 +478,7 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 		return err
 	}
 
-	phase.PrevStageImageSize = stg.GetImage().Inspect().Size
+	phase.PrevNonEmptyStageImageSize = stg.GetImage().Inspect().Size
 
 	if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
 		if err := introspectStage(stg); err != nil {
