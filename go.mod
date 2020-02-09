@@ -39,7 +39,7 @@ require (
 	github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad
 	github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
-	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
+	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
 	github.com/gofrs/flock v0.7.1
 	github.com/google/btree v1.0.0
@@ -61,7 +61,8 @@ require (
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/moby/buildkit v0.3.3
-	github.com/moby/moby v0.7.3-0.20190411110308-fc52433fa677
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
+	github.com/oleiade/reflections v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.5.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20171029140428-b1a47cfbdd75 // indirect
@@ -102,6 +103,7 @@ require (
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.11.0
 	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0

@@ -195,7 +195,9 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 		var resultManifests []string
 		for _, manifestContent := range releaseutil.SplitManifests(fileContent) {
 			var t Template
-			err := yaml.Unmarshal([]byte(manifestContent), &t)
+
+			// TODO: Make strict render optional for werf rendering
+			err := yaml.UnmarshalStrict([]byte(manifestContent), &t)
 			if err != nil {
 				return nil, fmt.Errorf("parsing file %s failed: %s\n\n%s\n", fileName, err, util.NumerateLines(manifestContent, 1))
 			}

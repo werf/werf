@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/flant/werf/pkg/util/secretvalues"
@@ -92,7 +93,7 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 	}
 
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
-	patchLoadChartfile(werfChart.Name)
+	PatchLoadChartfile(werfChart.Name)
 
 	err := helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
@@ -113,9 +114,13 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 	return nil
 }
 
-func patchLoadChartfile(chartName string) {
+func PatchLoadChartfile(chartName string) {
 	boundedFunc := helm.LoadChartfileFunc
+	var mu sync.Mutex
 	helm.LoadChartfileFunc = func(chartPath string) (*chart.Chart, error) {
+		mu.Lock()
+		defer mu.Unlock()
+
 		var c *chart.Chart
 
 		if err := chartutil.WithSkipChartYamlFileValidation(true, func() error {
@@ -134,7 +139,6 @@ func patchLoadChartfile(chartName string) {
 			Version: "0.1.0",
 			Engine:  helm.WerfTemplateEngineName,
 		}
-
 		return c, nil
 	}
 }

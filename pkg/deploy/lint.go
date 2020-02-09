@@ -58,7 +58,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	helm.SetReleaseLogSecretValuesToMask(werfChart.SecretValuesToMask)
 
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
-	patchLoadChartfile(werfChart.Name)
+	PatchLoadChartfile(werfChart.Name)
 
 	if err := helm.Lint(
 		os.Stdout,

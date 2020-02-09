@@ -63,7 +63,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 	}
 
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
-	patchLoadChartfile(werfChart.Name)
+	PatchLoadChartfile(werfChart.Name)
 
 	return helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return helm.Render(
