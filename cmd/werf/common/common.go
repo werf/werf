@@ -31,10 +31,11 @@ type CmdData struct {
 	HomeDir *string
 	SSHKeys *[]string
 
-	TagCustom    *[]string
-	TagGitBranch *string
-	TagGitTag    *string
-	TagGitCommit *string
+	TagCustom       *[]string
+	TagGitBranch    *string
+	TagGitTag       *string
+	TagGitCommit    *string
+	TagBySignatures *bool
 
 	Environment                      *string
 	Release                          *string
@@ -141,11 +142,13 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitBranch = new(string)
 	cmdData.TagGitTag = new(string)
 	cmdData.TagGitCommit = new(string)
+	cmdData.TagBySignatures = new(bool)
 
 	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", tagCustom, "Use custom tagging strategy and tag by the specified arbitrary tags.\nOption can be used multiple times to produce multiple images with the specified tags.\nAlso can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1, $WERF_TAG_CUSTOM_TAG2=tag2)")
 	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)")
 	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
 	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
+	cmd.Flags().BoolVarP(cmdData.TagBySignatures, "tag-by-signatures", "", GetBoolEnvironment("WERF_TAG_BY_SIGNATURES"), "Use signature tagging strategy and tag each image by the corresponding signature of last image stage (option can be enabled by specifying $WERF_TAG_BY_SIGNATURES=true)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {

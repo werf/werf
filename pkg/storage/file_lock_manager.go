@@ -1,4 +1,4 @@
-package stages_storage
+package storage
 
 import (
 	"fmt"
@@ -81,5 +81,18 @@ func (lockManager *FileLockManager) LockStageCache(projectName, signature string
 
 func (lockManager *FileLockManager) UnlockStageCache(projectName, signature string) error {
 	lockName := fmt.Sprintf("%s.%s.cache", projectName, signature)
+	return shluz.Unlock(lockName)
+}
+
+func (lockManager *FileLockManager) LockImage(imageName string) error {
+	lockName := fmt.Sprintf("%s.image", imageName)
+	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+	}
+	return nil
+}
+
+func (lockManager *FileLockManager) UnlockImage(imageName string) error {
+	lockName := fmt.Sprintf("%s.image", imageName)
 	return shluz.Unlock(lockName)
 }

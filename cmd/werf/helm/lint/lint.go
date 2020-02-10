@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/images_manager"
+
+	"github.com/flant/werf/pkg/tag_strategy"
+
 	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
@@ -80,7 +84,28 @@ func runLint() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, deploy.LintOptions{
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	// TODO: optionally use tags by signatures using conveyor
+	tag := "TAG"
+	tagStrategy := tag_strategy.Custom
+	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageName := range imagesNames {
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: true, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		imagesInfoGetters = append(imagesInfoGetters, d)
+	}
+
+	return deploy.RunLint(projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *CommonCmdData.Values,
 		SecretValues:    *CommonCmdData.SecretValues,
 		Set:             *CommonCmdData.Set,

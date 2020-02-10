@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/images_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -187,6 +189,7 @@ func runDeploy() error {
 	var imagesRepoManager *common.ImagesRepoManager
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
+	var imagesInfoGetters []images_manager.ImageInfoGetter
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		if len(werfConfig.StapelImages) != 0 {
 			_, err = common.GetStagesStorage(&CommonCmdData)
@@ -236,6 +239,8 @@ func runDeploy() error {
 		if err = c.ShouldBeBuilt(); err != nil {
 			return err
 		}
+
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, tagStrategy, false)
 	}
 
 	if imagesRepoManager == nil {
@@ -262,7 +267,7 @@ func runDeploy() error {
 		return err
 	}
 
-	return deploy.Deploy(projectDir, imagesRepoManager, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *CommonCmdData.Set,
 		SetString:            *CommonCmdData.SetString,
 		Values:               *CommonCmdData.Values,
