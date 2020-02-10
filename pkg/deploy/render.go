@@ -10,16 +10,14 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 type RenderOptions struct {
 	ReleaseName          string
-	Tag                  string
-	TagStrategy          tag_strategy.TagStrategy
 	Namespace            string
 	WithoutImagesRepo    bool
-	ImagesRepoManager    ImagesRepoManager
 	Values               []string
 	SecretValues         []string
 	Set                  []string
@@ -30,7 +28,7 @@ type RenderOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
+func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts RenderOptions) error {
 	if debug() {
 		fmt.Fprintf(logboek.GetOutStream(), "Render options: %#v\n", opts)
 	}
@@ -40,9 +38,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 		return err
 	}
 
-	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, opts.ImagesRepoManager, opts.Tag, opts.WithoutImagesRepo)
-
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, opts.ImagesRepoManager, opts.Namespace, opts.Tag, opts.TagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, opts.Namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return err
 	}

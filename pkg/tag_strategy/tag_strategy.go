@@ -7,4 +7,5 @@ const (
 	GitTag    TagStrategy = "git-tag"
 	GitBranch TagStrategy = "git-branch"
 	GitCommit TagStrategy = "git-commit"
+	Signature TagStrategy = "signature"
 )

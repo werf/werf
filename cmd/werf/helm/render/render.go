@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/images_manager"
+
 	"github.com/flant/shluz"
 
 	"github.com/spf13/cobra"
@@ -148,13 +150,23 @@ func runRender(outputFilePath string) error {
 		return err
 	}
 
+	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageName := range imagesNames {
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutImagesRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		imagesInfoGetters = append(imagesInfoGetters, d)
+	}
+
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(buf, projectDir, werfConfig, deploy.RenderOptions{
+	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
-		Tag:                  tag,
-		TagStrategy:          tagStrategy,
 		Namespace:            namespace,
-		ImagesRepoManager:    imagesRepoManager,
 		WithoutImagesRepo:    withoutImagesRepo,
 		Values:               *commonCmdData.Values,
 		SecretValues:         *commonCmdData.SecretValues,

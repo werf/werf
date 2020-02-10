@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/images_manager"
+
 	"github.com/flant/shluz"
 
 	"github.com/flant/logboek"
@@ -141,9 +143,20 @@ func runGetServiceValues() error {
 		}
 	}()
 
-	images := deploy.GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, withoutRepo)
+	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageName := range imagesNames {
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		imagesInfoGetters = append(imagesInfoGetters, d)
+	}
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

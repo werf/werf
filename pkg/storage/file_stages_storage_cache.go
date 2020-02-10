@@ -1,4 +1,4 @@
-package stages_storage
+package storage
 
 import (
 	"fmt"
