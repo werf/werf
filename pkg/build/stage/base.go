@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/werf/pkg/stages_storage"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
@@ -148,8 +148,8 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	return false, nil
 }
 
-func (s *BaseStage) SelectCacheImage(images []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error) {
-	var oldestImage *stages_storage.ImageInfo
+func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	var oldestImage *storage.ImageInfo
 	for _, img := range images {
 		if oldestImage == nil {
 			oldestImage = img

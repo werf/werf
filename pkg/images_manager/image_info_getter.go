@@ -1,9 +1,18 @@
-package deploy
+package images_manager
 
 import (
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 )
+
+type ImageInfoGetter interface {
+	IsNameless() bool
+	GetName() string
+	GetImageName() string
+	GetImageId() (string, error)
+	GetImageDigest() (string, error)
+	GetImageTag() string
+}
 
 type ImageInfoGetterStub struct {
 	Name              string
@@ -17,6 +26,10 @@ func (d *ImageInfoGetterStub) IsNameless() bool {
 
 func (d *ImageInfoGetterStub) GetName() string {
 	return d.Name
+}
+
+func (d *ImageInfoGetterStub) GetImageTag() string {
+	return d.Tag
 }
 
 func (d *ImageInfoGetterStub) GetImageName() string {
@@ -76,4 +89,8 @@ func (d *ImageInfo) GetImageDigest() (string, error) {
 	}
 
 	return res, nil
+}
+
+func (d *ImageInfo) GetImageTag() string {
+	return d.Tag
 }

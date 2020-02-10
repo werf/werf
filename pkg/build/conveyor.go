@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/tag_strategy"
+
 	"github.com/flant/werf/pkg/werf"
 
 	"github.com/docker/cli/cli/command/image/build"
@@ -23,7 +26,7 @@ import (
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/util"
 
-	"github.com/flant/werf/pkg/stages_storage"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
@@ -56,9 +59,9 @@ type Conveyor struct {
 
 	tmpDir string
 
-	StagesStorage            stages_storage.StagesStorage
-	StagesStorageCache       stages_storage.StagesStorageCache
-	StagesStorageLockManager stages_storage.LockManager
+	StagesStorage      storage.StagesStorage
+	StagesStorageCache storage.StagesStorageCache
+	StorageLockManager storage.LockManager
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
@@ -82,9 +85,9 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		remoteGitRepos:                  make(map[string]*git_repo.Remote),
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
 
-		StagesStorage:            &stages_storage.LocalStagesStorage{},
-		StagesStorageLockManager: &stages_storage.FileLockManager{},
-		StagesStorageCache:       stages_storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
+		StagesStorage:      &storage.LocalStagesStorage{},
+		StorageLockManager: &storage.FileLockManager{},
+		StagesStorageCache: storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
 	}
 
 	return c
@@ -116,6 +119,7 @@ type TagOptions struct {
 	TagsByGitTag    []string
 	TagsByGitBranch []string
 	TagsByGitCommit []string
+	TagBySignatures bool
 }
 
 type ImagesRepoManager interface {
@@ -138,6 +142,39 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	return c.runPhases(phases)
 }
 
+func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager images_manager.ImagesRepoManager, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
+	var images []images_manager.ImageInfoGetter
+
+	var imagesNames []string
+	for _, imageConfig := range configImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range configImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+
+	for _, imageName := range imagesNames {
+		var tag string
+		if tagStrategy == tag_strategy.Signature {
+			var lastStage stage.Interface
+			for _, img := range c.imagesInOrder {
+				if img.GetName() == imageName {
+					lastStage = img.GetStages()[len(img.GetStages())-1]
+					break
+				}
+			}
+			tag = lastStage.GetSignature()
+		} else {
+			tag = commonTag
+		}
+
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutRegistry, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		images = append(images, d)
+	}
+
+	return images
+}
+
 func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
 	/*var phases []Phase
 	phases = append(phases, NewInitializationPhase())
@@ -145,10 +182,10 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
 
-	if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+	if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
 		return fmt.Errorf("error locking all images read only: %s", err)
 	}
-	defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+	defer c.StorageLockManager.UnlockAllImages(c.projectName())
 
 	return c.runPhases(phases)*/
 
@@ -190,10 +227,10 @@ func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts Publi
 			phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
 
 		TODO: locks
-			if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+			if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
 				return fmt.Errorf("error locking all images read only: %s", err)
 			}
-			defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+			defer c.StorageLockManager.UnlockAllImages(c.projectName())
 
 			return c.runPhases(phases)
 	*/
@@ -225,10 +262,10 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 		phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
 		phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
 
-		if err := c.StagesStorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
+		if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
 			return fmt.Errorf("error locking all images read only: %s", err)
 		}
-		defer c.StagesStorageLockManager.UnlockAllImages(c.projectName())
+		defer c.StorageLockManager.UnlockAllImages(c.projectName())
 
 		return c.runPhases(phases)
 	*/
@@ -361,7 +398,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 			err := phase.Run(c)
 
 			if err != nil {
-				c.StagesStorageLockManager.ReleaseAllStageLocks()
+				c.StorageLockManager.ReleaseAllStageLocks()
 				return err
 			}
 		}

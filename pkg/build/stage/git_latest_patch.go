@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"fmt"
+
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
@@ -42,16 +44,16 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, prevImage, prevBuiltImage image.ImageInterface) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.LatestCommit()
+		patchContent, err := gitMapping.GetPatchContent(prevBuiltImage)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error getting patch between previous built image %s and current commit for git mapping %s: %s", prevBuiltImage.Name(), gitMapping.Name, err)
 		}
 
-		args = append(args, commit)
+		args = append(args, patchContent)
 	}
 
 	return util.Sha256Hash(args...), nil

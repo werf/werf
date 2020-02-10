@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/flant/werf/pkg/stages_storage"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
@@ -38,8 +38,8 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitArchiveStage) SelectCacheImage(images []*stages_storage.ImageInfo) (*stages_storage.ImageInfo, error) {
-	suitableImages := []*stages_storage.ImageInfo{}
+func (s *GitArchiveStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	suitableImages := []*storage.ImageInfo{}
 
 ScanImages:
 	for _, img := range images {
