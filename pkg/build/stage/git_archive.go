@@ -6,7 +6,6 @@ import (
 
 	"github.com/flant/werf/pkg/storage"
 
-	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
@@ -39,38 +38,11 @@ type GitArchiveStage struct {
 }
 
 func (s *GitArchiveStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	suitableImages := []*storage.ImageInfo{}
-
-ScanImages:
-	for _, img := range images {
-		for _, gitMapping := range s.gitMappings {
-			currentCommit, err := gitMapping.LatestCommit()
-			if err != nil {
-				return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s")
-			}
-
-			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
-			if commit != "" {
-				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
-				if err != nil {
-					return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commit, currentCommit, err)
-				}
-
-				if !isOurAncestor {
-					logboek.LogDebugF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
-					continue ScanImages
-				}
-				logboek.LogDebugF("%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
-			} else {
-				logboek.LogDebugF("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
-				continue ScanImages
-			}
-		}
-
-		suitableImages = append(suitableImages, img)
+	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+	if err != nil {
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-
-	return s.BaseStage.SelectCacheImage(suitableImages)
+	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, prevImage, prevBuiltImage image.ImageInterface) (string, error) {
