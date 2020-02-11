@@ -1,6 +1,10 @@
 package stage
 
 import (
+	"fmt"
+
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/build/builder"
 	"github.com/flant/werf/pkg/image"
 )
@@ -17,6 +21,14 @@ func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchS
 type UserWithGitPatchStage struct {
 	*UserStage
 	GitPatchStage *GitPatchStage
+}
+
+func (s *UserWithGitPatchStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+	if err != nil {
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+	}
+	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *UserWithGitPatchStage) GetNextStageDependencies(c Conveyor) (string, error) {

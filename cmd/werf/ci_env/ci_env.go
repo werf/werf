@@ -46,7 +46,7 @@ Currently supported only GitLab CI`,
 	common.SetupInsecureRegistry(&CommonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
+	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "content-based", "content-based: always use '--tag-by-signature' for all published images; tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 	cmd.Flags().BoolVarP(&CmdData.Verbose, "verbose", "", false, "Generate echo command for each resulted script line")
 
 	return cmd
@@ -66,7 +66,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	switch CmdData.TaggingStrategy {
-	case "tag-or-branch":
+	case "tag-or-branch", "content-based":
 	default:
 		common.PrintHelp(cmd)
 		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
@@ -76,7 +76,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	switch ciSystem {
 	case "gitlab":
-		err := generateGitlabEnvs()
+		err := generateGitlabEnvs(CmdData.TaggingStrategy)
 		if err != nil {
 			fmt.Println()
 			printError(err.Error())
@@ -88,7 +88,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func generateGitlabEnvs() error {
+func generateGitlabEnvs(taggingStrategy string) error {
 	dockerConfigPath := *CommonCmdData.DockerConfig
 	if *CommonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
@@ -128,18 +128,6 @@ func generateGitlabEnvs() error {
 		}
 	}
 
-	var ciGitTag, ciGitBranch string
-
-	if os.Getenv("CI_BUILD_TAG") != "" {
-		ciGitTag = os.Getenv("CI_BUILD_TAG")
-	} else if os.Getenv("CI_COMMIT_TAG") != "" {
-		ciGitTag = os.Getenv("CI_COMMIT_TAG")
-	} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
-		ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
-	} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
-		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
-	}
-
 	printHeader("DOCKER CONFIG", false)
 	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
@@ -147,11 +135,32 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
 
 	printHeader("TAGGING", true)
-	if ciGitTag != "" {
-		printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
-	}
-	if ciGitBranch != "" {
-		printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
+	switch taggingStrategy {
+	case "tag-or-branch":
+		var ciGitTag, ciGitBranch string
+
+		if os.Getenv("CI_BUILD_TAG") != "" {
+			ciGitTag = os.Getenv("CI_BUILD_TAG")
+		} else if os.Getenv("CI_COMMIT_TAG") != "" {
+			ciGitTag = os.Getenv("CI_COMMIT_TAG")
+		} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
+			ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
+		} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
+			ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
+		}
+
+		if ciGitTag != "" {
+			printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
+		}
+		if ciGitBranch != "" {
+			printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
+		}
+
+		if ciGitTag == "" && ciGitBranch == "" {
+			return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+		}
+	case "content-based":
+		printExportCommand("WERF_TAG_BY_SIGNATURES", "true", false)
 	}
 
 	printHeader("DEPLOY", true)
@@ -216,10 +225,6 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_LOG_PROJECT_DIR", "1", false)
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "95", false)
-
-	if ciGitTag == "" && ciGitBranch == "" {
-		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
-	}
 
 	return nil
 }

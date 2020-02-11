@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/images_manager"
+
 	"github.com/flant/werf/pkg/util/secretvalues"
 
 	"github.com/ghodss/yaml"
@@ -34,13 +36,7 @@ type DeployOptions struct {
 	ThreeWayMergeMode    helm.ThreeWayMergeModeType
 }
 
-type ImagesRepoManager interface {
-	ImagesRepo() string
-	ImageRepo(imageName string) string
-	ImageRepoWithTag(imageName, tag string) string
-}
-
-func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	var logBlockErr error
 	var werfChart *werf_chart.WerfChart
 
@@ -53,15 +49,13 @@ func Deploy(projectDir string, imagesRepoManager ImagesRepoManager, release, nam
 		logboek.LogF("Using helm release name: %s\n", release)
 		logboek.LogF("Using Kubernetes namespace: %s\n", namespace)
 
-		images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, false)
-
 		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
 			logBlockErr = err
 			return
 		}
 
-		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
 			logBlockErr = fmt.Errorf("error creating service values: %s", err)
 			return

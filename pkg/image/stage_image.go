@@ -156,6 +156,14 @@ func (i *StageImage) introspectBefore() error {
 	return nil
 }
 
+func (i *StageImage) MustGetBuiltId() string {
+	builtId, err := i.GetBuiltId()
+	if err != nil {
+		panic(fmt.Sprintf("error getting built id for %s: %s", i.Name(), err))
+	}
+	return builtId
+}
+
 func (i *StageImage) GetBuiltId() (string, error) {
 	if i.dockerfileImageBuilder != nil {
 		return i.dockerfileImageBuilder.GetBuiltId()
