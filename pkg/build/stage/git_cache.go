@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -17,6 +18,14 @@ func NewGitCacheStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOp
 
 type GitCacheStage struct {
 	*GitPatchStage
+}
+
+func (s *GitCacheStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+	if err != nil {
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+	}
+	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {

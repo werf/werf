@@ -148,7 +148,7 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	return false, nil
 }
 
-func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
 	var oldestImage *storage.ImageInfo
 	for _, img := range images {
 		if oldestImage == nil {
@@ -158,6 +158,51 @@ func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.Imag
 		}
 	}
 	return oldestImage, nil
+}
+
+func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.ImageInfo) ([]*storage.ImageInfo, error) {
+	suitableImages := []*storage.ImageInfo{}
+	currentCommits := make(map[string]string)
+
+	for _, gitMapping := range s.gitMappings {
+		currentCommit, err := gitMapping.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s")
+		}
+		currentCommits[gitMapping.Name] = currentCommit
+	}
+
+ScanImages:
+	for _, img := range images {
+		for _, gitMapping := range s.gitMappings {
+			currentCommit := currentCommits[gitMapping.Name]
+
+			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
+			if commit != "" {
+				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
+				if err != nil {
+					return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commit, currentCommit, err)
+				}
+
+				if !isOurAncestor {
+					logboek.LogDebugF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+					continue ScanImages
+				}
+				logboek.LogDebugF("%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+			} else {
+				logboek.LogDebugF("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
+				continue ScanImages
+			}
+		}
+
+		suitableImages = append(suitableImages, img)
+	}
+
+	return suitableImages, nil
+}
+
+func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	return s.selectCacheImageByOldestCreationTimestamp(images)
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.ImageInterface) error {
