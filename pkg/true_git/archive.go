@@ -17,7 +17,6 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
 
 	"github.com/flant/logboek"
-
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -121,7 +120,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			relPath = rel(absPath, workTreeDir)
 		}
 
-		if relPath == opts.PathFilter.BasePath || relPath == "." && opts.PathFilter.BasePath == "" {
+		if relPath == opts.PathFilter.BasePath() || relPath == "." && opts.PathFilter.BasePath() == "" {
 			if info.IsDir() {
 				desc.Type = DirectoryArchive
 
@@ -141,7 +140,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			return nil
 		}
 
-		if !opts.PathFilter.IsFilePathValid(relPath) {
+		if !opts.PathFilter.MatchPath(relPath) {
 			if debugArchive() {
 				fmt.Printf("Excluded path %s by path filter %s\n", relPath, opts.PathFilter.String())
 			}
@@ -243,7 +242,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 	}
 
 	if desc.Type == "" {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathFilter.BasePath)
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathFilter.BasePath())
 	}
 
 	return desc, nil
@@ -325,4 +324,17 @@ func gitWorkTreeFilesModes(repoDir, workTreeDir string, withSubmodules bool) (ma
 	}
 
 	return modeByRelPath, nil
+}
+
+func rel(targetPath, basePath string) string {
+	if basePath == "" {
+		return targetPath
+	}
+
+	relPath, err := filepath.Rel(basePath, targetPath)
+	if err != nil {
+		panic(err)
+	}
+
+	return relPath
 }
