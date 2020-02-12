@@ -35,8 +35,8 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
-	github.com/flant/kubedog v0.3.5-0.20200204111958-3066e4f2f44f
-	github.com/flant/logboek v0.2.6-0.20200204132121-61b282d85669
+	github.com/flant/kubedog v0.3.5-0.20200213111410-09bddc160684
+	github.com/flant/logboek v0.2.6-0.20200204184239-37f691eb9129
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
@@ -54,8 +54,8 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/uuid v0.0.0-20160311170451-ebb0a03e909c // indirect
 	github.com/ishidawataru/sctp v0.0.0-20180213033435-07191f837fed // indirect
-	github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63
-	github.com/mattn/go-isatty v0.0.7
+	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+	github.com/mattn/go-isatty v0.0.9
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/mjibson/esc v0.2.0 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/pflag v1.0.3
+	github.com/spf13/pflag v1.0.5
 	github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20190130224639-b4281fa67095 // indirect
@@ -85,12 +85,11 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190809123943-df4f5c81cb3b // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
-	go.etcd.io/bbolt v1.3.1-etcd.8 // indirect
-	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
-	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
+	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
+	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
@@ -100,72 +99,72 @@ require (
 	gopkg.in/src-d/go-billy.v4 v4.3.0
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.11.0
-	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/api v0.0.0
+	gopkg.in/yaml.v2 v2.2.8
+	k8s.io/api v0.16.7
 	k8s.io/apiextensions-apiserver v0.0.0
-	k8s.io/apimachinery v0.0.0
-	k8s.io/apiserver v0.0.0
-	k8s.io/cli-runtime v0.0.0
-	k8s.io/client-go v0.0.0
-	k8s.io/cloud-provider v0.0.0
+	k8s.io/apimachinery v0.16.8-beta.0
+	k8s.io/apiserver v0.16.7
+	k8s.io/cli-runtime v0.16.7
+	k8s.io/client-go v0.16.7
+	k8s.io/cloud-provider v0.16.7
 	k8s.io/helm v2.13.1+incompatible
-	k8s.io/klog v0.4.0
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
-	k8s.io/kubernetes v1.16.0
+	k8s.io/kubernetes v1.16.7
 	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
 	mvdan.cc/xurls v1.1.0
 	sigs.k8s.io/kustomize v2.0.3+incompatible
 	sigs.k8s.io/yaml v1.1.0
 )
 
-replace k8s.io/api => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
+replace k8s.io/api => k8s.io/api v0.16.7
 
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
+replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.16.7
 
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.16.8-beta.0
 
-replace k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190918160949-bfa5e2e684ad
+replace k8s.io/apiserver => k8s.io/apiserver v0.16.7
 
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190918162238-f783a3654da8
+replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.16.7
 
-replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190918160344-1fbdaa4c8d90
+replace k8s.io/client-go => k8s.io/client-go v0.16.7
 
-replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190918163234-a9c1f33e9fb9
+replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.16.7
 
-replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190918163108-da9fdfce26bb
+replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.16.7
 
-replace k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190912054826-cd179ad6a269
+replace k8s.io/code-generator => k8s.io/code-generator v0.16.8-beta.0
 
-replace k8s.io/component-base => k8s.io/component-base v0.0.0-20190918160511-547f6c5d7090
+replace k8s.io/component-base => k8s.io/component-base v0.16.7
 
-replace k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
+replace k8s.io/cri-api => k8s.io/cri-api v0.16.8-beta.0
 
-replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190918163402-db86a8c7bb21
+replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.16.7
 
-replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190918161219-8c8f079fddc3
+replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.16.7
 
-replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190918162944-7a93a0ddadd8
+replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.16.7
 
-replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190918162534-de037b596c1e
+replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.16.7
 
-replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190918162820-3b5c1246eb18
+replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.16.7
 
-replace k8s.io/kubectl => k8s.io/kubectl v0.0.0-20190918164019-21692a0861df
+replace k8s.io/kubectl => k8s.io/kubectl v0.16.7
 
-replace k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190918162654-250a1838aa2c
+replace k8s.io/kubelet => k8s.io/kubelet v0.16.7
 
-replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190918163543-cfa506e53441
+replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.16.7
 
-replace k8s.io/metrics => k8s.io/metrics v0.0.0-20190918162108-227c654b2546
+replace k8s.io/metrics => k8s.io/metrics v0.16.7
 
-replace k8s.io/node-api => k8s.io/node-api v0.0.0-20190918163711-2299658ad911
+replace k8s.io/node-api => k8s.io/node-api v0.16.7
 
-replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918161442-d4c9c65c82af
+replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.16.7
 
-replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.0.0-20190918162410-e45c26d066f2
+replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.7
 
-replace k8s.io/sample-controller => k8s.io/sample-controller v0.0.0-20190918161628-92eb3cb7496c
+replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
 go 1.13
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20200212191804-8b060633af7d
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200212200317-4fdb38920375
