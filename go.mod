@@ -2,7 +2,6 @@ module github.com/flant/werf
 
 require (
 	cloud.google.com/go v0.38.0
-	github.com/DATA-DOG/go-sqlmock v1.4.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -119,8 +118,6 @@ require (
 	sigs.k8s.io/yaml v1.1.0
 )
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20191216114509-460380ca08d4
-
 replace k8s.io/api => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
@@ -170,3 +167,5 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.0.0-201909181624
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.0.0-20190918161628-92eb3cb7496c
 
 go 1.13
+
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200212191804-8b060633af7d
