@@ -24,7 +24,7 @@
 }
 
 .releases__title {
-  margin: 25px 0 15px; 
+  margin: 25px 0 15px;
   padding-bottom: 5px;
   border-bottom: 2px solid rgba(0,102,255,0.1);;
   font-size: 24px;
@@ -197,7 +197,7 @@
 }
 
 .releases__block-title {
-  font-size: 24px;  
+  font-size: 24px;
   font-weight: normal;
   line-height: 1;
   font-style: normal;
@@ -217,7 +217,7 @@
 }
 
 .releases__menu-item {
-  box-sizing: border-box;  
+  box-sizing: border-box;
   flex: 1 1 calc(30% - 25px);
   border-radius: 10px;
   background: #FFFFFF;
@@ -230,6 +230,10 @@
   display: flex;
   align-items: flex-end;
   margin-bottom: 15px;
+}
+
+.releases__menu-item-versions {
+  margin: 0 0 0 auto
 }
 
 .releases__menu-item-version {
@@ -245,7 +249,7 @@
 }
 
 .releases__menu-item-title {
-  font-size: 24px;  
+  font-size: 24px;
   font-weight: 600;
   line-height: 1;
   font-style: normal;

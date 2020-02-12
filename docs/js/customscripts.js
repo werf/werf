@@ -58,6 +58,7 @@ $(function() {
 // Load versions and append them to topnavbar
 $(document).ready(function () {
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
+  var releasesInfo = window.releasesInfo;
 
   var menu = $('#doc-versions-menu');
   var toggler;
@@ -65,57 +66,55 @@ $(document).ready(function () {
   var currentChannel = $('#werfChannel').text();
   if (!currentRelease) currentRelease = 'local';
   if (!currentChannel) currentChannel = 'local';
-
-  var releasesInfo = window.releasesInfo;
-
   let _current_channel;
+
   if (typeof releasesInfo === 'undefined' || releasesInfo == null) {
     console.log('releasesInfo is not defined, assume local mode');
     releasesInfo = {};
   } else {
-
     if (currentChannel === 'root') {
-      for (channel of releasesInfo.orderedChannels) {
-        _current_channel = releasesInfo.channels.channels.filter(function (el) {
-          return ((el.version === currentRelease) && (el.name === channel));
-        });
-        if (_current_channel.length) {
-          currentChannel = releasesInfo.channels.group + '-' + channel;
-          break;
+      for (group of releasesInfo.menuChannels) {
+        for (channel of releasesInfo.orderedChannels) {
+          _current_channel = group.channels.filter(function (el) {
+            return ((el.version === currentRelease) && (el.name === channel));
+          });
+          if (_current_channel.length) {
+            currentChannel = group.group + '-' + channel;
+            break;
+          }
         }
+        if (_current_channel.length) break;
       }
     }
 
+    var docSubURL = document.location.href.match(/^.*\/documentation\/(.+)$/);
+    if (docSubURL && docSubURL[1]) docSubURL = '/documentation/' + docSubURL[1]; else docSubURL = '';
+
     var submenu = $('<ul class="header__submenu">');
     $.each(releasesInfo.orderedChannels, function (i, channel) {
-      var channel_version = '';
-      if (channel !== 'review') {
-        var _channel_version = releasesInfo.channels.channels.filter(function (el) {
-          return el.name === channel;
-        })[0];
+      $.each(releasesInfo.menuChannels, function (j, group) {
 
-        if (_channel_version) {
-          channel_version = _channel_version.version;
-        }
-
-      } else {
-        channel_version = 'review';
-      }
-
-      if (channel_version) {
-        var link = $('<a href="/v' + releasesInfo.channels.group + '-' + channel + '">');
+        var channel_version = '';
         if (channel !== 'review') {
-          link.append('<span class="header__submenu-item-channel"> ' + releasesInfo.channels.group + '-' + channel + '</span>');
-          link.append('<span class="header__submenu-item-release"> — ' + channel_version + '</span>');
-        }
+          var _channel_version = group.channels.filter(function (el) {
+            return el.name === channel;
+          })[0];
+          if (_channel_version) channel_version = _channel_version.version;
+        } else channel_version = 'review';
 
-        var item = $('<li class="header__submenu-item">');
-        item.html(link);
-        if ((releasesInfo.channels.group + '-' + channel !== currentChannel)) {
-          submenu.append(item);
+        if (channel_version) {
+          var link = $('<a href="/v' + group.group + '-' + channel + docSubURL +'">');
+          if (channel !== 'review') {
+            link.append('<span class="header__submenu-item-channel"> ' + group.group + '-' + channel + '</span>');
+            link.append('<span class="header__submenu-item-release"> — ' + channel_version + '</span>');
+          }
+
+          var item = $('<li class="header__submenu-item">');
+          item.html(link);
+          if ((group.group + '-' + channel !== currentChannel)) submenu.append(item);
         }
-      }
-    });
+      });
+    })
 
   }
 
@@ -153,7 +152,7 @@ $(document).ready(function () {
   $('[data-roadmap-step]').each(function (index) {
     var $step = $(this);
     $.get('https://api.github.com/repos/flant/werf/issues/' + $step.data('roadmap-step'), function (data) {
-      if (data.state == 'closed') {
+      if (data.state === 'closed') {
         $step.addClass('roadmap__steps-list-item_closed');
       }
     });
