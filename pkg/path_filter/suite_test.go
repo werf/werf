@@ -1,4 +1,4 @@
-package true_git
+package path_filter_test
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestSuite(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "True Git Suite")
+	RunSpecs(t, "Path Filter Suite")
 }

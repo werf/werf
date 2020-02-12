@@ -1,24 +1,26 @@
 package git_repo
 
 import (
-	"crypto/md5"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
-	"github.com/bmatcuk/doublestar"
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/true_git"
+	"gopkg.in/src-d/go-billy.v4/osfs"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/cache"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+	"gopkg.in/src-d/go-git.v4/storage/filesystem"
+
+	"github.com/flant/logboek"
+	"github.com/flant/werf/pkg/git_repo/ls_tree"
+	"github.com/flant/werf/pkg/path_filter"
+	"github.com/flant/werf/pkg/true_git"
 )
 
 var (
@@ -200,11 +202,11 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 	patchOpts := true_git.PatchOptions{
 		FromCommit: opts.FromCommit,
 		ToCommit:   opts.ToCommit,
-		PathFilter: true_git.PathFilter{
-			BasePath:     opts.BasePath,
-			IncludePaths: opts.IncludePaths,
-			ExcludePaths: opts.ExcludePaths,
-		},
+		PathFilter: path_filter.NewGitMappingPathFilter(
+			opts.BasePath,
+			opts.IncludePaths,
+			opts.ExcludePaths,
+		),
 		WithEntireFileContext: opts.WithEntireFileContext,
 		WithBinary:            opts.WithBinary,
 	}
@@ -271,11 +273,11 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 
 	archiveOpts := true_git.ArchiveOptions{
 		Commit: opts.Commit,
-		PathFilter: true_git.PathFilter{
-			BasePath:     opts.BasePath,
-			IncludePaths: opts.IncludePaths,
-			ExcludePaths: opts.ExcludePaths,
-		},
+		PathFilter: path_filter.NewGitMappingPathFilter(
+			opts.BasePath,
+			opts.IncludePaths,
+			opts.ExcludePaths,
+		),
 	}
 
 	var desc *true_git.ArchiveDescriptor
@@ -294,7 +296,8 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 	return archive, nil
 }
 
-func (repo *Base) isCommitExists(repoPath, gitDir string, commit string) (bool, error) {
+func (repo *Base) isCommitExists(repoPath,
+	gitDir string, commit string) (bool, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -379,7 +382,7 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) checksum(repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
+func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -405,122 +408,50 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeCacheDir string, opts Check
 		Hash:         sha256.New(),
 	}
 
-	err = true_git.WithWorkTree(gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(workTreeDir string) error {
-		paths := make([]string, 0)
-
-		for _, pathPattern := range opts.Paths {
-			res, err := getFilesByPattern(workTreeDir, filepath.Join(opts.BasePath, pathPattern))
-			if err != nil {
-				return fmt.Errorf("error getting files by path pattern `%s`: %s", pathPattern, err)
-			}
-
-			if len(res) == 0 {
-				checksum.NoMatchPaths = append(checksum.NoMatchPaths, pathPattern)
-				if debugChecksum() {
-					logboek.LogF("Ignore checksum path pattern '%s': no matches found\n", pathPattern)
-				}
-			}
-
-			paths = append(paths, res...)
+	err = true_git.WithWorkTree(gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(worktreeDir string) error {
+		repositoryWithPreparedWorktree, err := GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
+		if err != nil {
+			return err
 		}
 
-		sort.Strings(paths)
+		pathFilter := path_filter.NewGitMappingPathFilter(
+			opts.BasePath,
+			opts.IncludePaths,
+			opts.ExcludePaths,
+		)
 
-		pathFilter := true_git.PathFilter{
-			BasePath:     opts.BasePath,
-			IncludePaths: opts.IncludePaths,
-			ExcludePaths: opts.ExcludePaths,
+		var mainLsTreeResult *ls_tree.Result
+		processMsg := fmt.Sprintf("Main LsTree (%s)", pathFilter.String())
+		if err := logboek.LogProcess(processMsg, logboek.LogProcessOptions{Debug: true}, func() error {
+			mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathFilter)
+			return err
+		}); err != nil {
+			return err
 		}
 
-		for _, path := range paths {
-			fullPath := filepath.Join(workTreeDir, path)
+		for _, path := range opts.Paths {
+			var pathLsTreeResult *ls_tree.Result
+			pathFilter := path_filter.NewGitMappingPathFilter(
+				opts.BasePath,
+				[]string{path},
+				[]string{},
+			)
 
-			if filepath.Base(path) == ".git" {
-				if debugChecksum() {
-					logboek.LogF("Filter out service git path %s from checksum calculation\n", fullPath)
-				}
-				continue
-			}
+			processMsg := fmt.Sprintf("LsTree path (%s)", pathFilter.String())
+			if err := logboek.LogProcess(processMsg, logboek.LogProcessOptions{Debug: true}, func() error {
+				pathLsTreeResult, err = mainLsTreeResult.LsTree(pathFilter)
 
-			if !pathFilter.IsFilePathValid(path) {
-				if debugChecksum() {
-					fmt.Fprintf(logboek.GetOutStream(), "Excluded file `%s` from resulting checksum by path filter %s\n", fullPath, pathFilter.String())
-				}
-				continue
-			}
-
-			_, err = checksum.Hash.Write([]byte(path))
-			if err != nil {
-				return fmt.Errorf("error calculating checksum of path `%s`: %s", path, err)
-			}
-			if debugChecksum() {
-				logboek.LogF("Added file path '%s' to resulting checksum\n", path)
-			}
-
-			stat, err := os.Lstat(fullPath)
-			// file should exist after being scanned
-			if err != nil {
-				return fmt.Errorf("error accessing file `%s`: %s", fullPath, err)
-			}
-
-			_, err = checksum.Hash.Write([]byte(fmt.Sprintf("%o", stat.Mode())))
-			if err != nil {
-				return fmt.Errorf("error calculating checksum of file `%s` mode: %s", fullPath, err)
-			}
-			if debugChecksum() {
-				logboek.LogF("Added file %s mode %o to resulting checksum\n", fullPath, stat.Mode())
-			}
-
-			if stat.Mode().IsRegular() {
-				f, err := os.Open(fullPath)
-				if err != nil {
-					return fmt.Errorf("unable to open file `%s`: %s", fullPath, err)
+				hashSum := pathLsTreeResult.HashSum()
+				logboek.LogDebugLn("Result hashSum: ", hashSum)
+				if hashSum != "" {
+					checksum.Hash.Write([]byte(hashSum))
+				} else {
+					checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
 				}
 
-				_, err = io.Copy(checksum.Hash, f)
-				if err != nil {
-					return fmt.Errorf("error calculating checksum of file `%s` content: %s", fullPath, err)
-				}
-
-				err = f.Close()
-				if err != nil {
-					return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
-				}
-
-				if debugChecksum() {
-					f, err := os.Open(fullPath)
-					if err != nil {
-						return fmt.Errorf("unable to open file `%s`: %s", fullPath, err)
-					}
-
-					hash := md5.New()
-					_, err = io.Copy(hash, f)
-					if err != nil {
-						return fmt.Errorf("error reading file `%s` content: %s", fullPath, err)
-					}
-					contentHash := fmt.Sprintf("%x", hash.Sum(nil))
-
-					err = f.Close()
-					if err != nil {
-						return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
-					}
-
-					logboek.LogF("Added file '%s' to resulting checksum with content checksum: %s\n", fullPath, contentHash)
-				}
-			} else if stat.Mode()&os.ModeSymlink != 0 {
-				linkname, err := os.Readlink(fullPath)
-				if err != nil {
-					return fmt.Errorf("cannot read symlink `%s`: %s", fullPath, err)
-				}
-
-				_, err = checksum.Hash.Write([]byte(linkname))
-				if err != nil {
-					return fmt.Errorf("error calculating checksum of symlink `%s`: %s", fullPath, err)
-				}
-
-				if debugChecksum() {
-					logboek.LogF("Added symlink '%s' -> '%s' to resulting checksum\n", fullPath, linkname)
-				}
+				return err
+			}); err != nil {
+				return err
 			}
 		}
 
@@ -538,55 +469,10 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeCacheDir string, opts Check
 	return checksum, nil
 }
 
-func getFilesByPattern(baseDir, pathPattern string) ([]string, error) {
-	fullPathPattern := filepath.Join(baseDir, pathPattern)
-
-	matches, err := doublestar.Glob(fullPathPattern)
-	if err != nil {
-		return nil, err
-	}
-
-	paths := make([]string, 0)
-
-	for _, fullPath := range matches {
-		stat, err := os.Lstat(fullPath)
-		// file should exist after glob match
-		if err != nil {
-			return nil, fmt.Errorf("error accessing file `%s`: %s", fullPath, err)
-		}
-
-		if stat.Mode().IsRegular() || (stat.Mode()&os.ModeSymlink != 0) {
-			path, err := filepath.Rel(baseDir, fullPath)
-			if err != nil {
-				return nil, fmt.Errorf("error getting relative path for `%s`: %s", fullPath, err)
-			}
-
-			paths = append(paths, path)
-		} else if stat.Mode().IsDir() {
-			err := filepath.Walk(fullPath, func(fullWalkPath string, info os.FileInfo, accessErr error) error {
-				if accessErr != nil {
-					return fmt.Errorf("error accessing file `%s`: %s", fullWalkPath, err)
-				}
-
-				if info.Mode().IsRegular() || (stat.Mode()&os.ModeSymlink != 0) {
-					path, err := filepath.Rel(baseDir, fullWalkPath)
-					if err != nil {
-						return fmt.Errorf("error getting relative path for `%s`: %s", fullWalkPath, err)
-					}
-
-					paths = append(paths, path)
-				}
-
-				return nil
-			})
-
-			if err != nil {
-				return nil, fmt.Errorf("error scanning directory `%s`: %s", fullPath, err)
-			}
-		}
-	}
-
-	return paths, nil
+func GitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repository, error) {
+	worktreeFilesystem := osfs.New(worktreeDir)
+	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
+	return git.Open(storage, worktreeFilesystem)
 }
 
 func debugChecksum() bool {
