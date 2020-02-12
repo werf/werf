@@ -287,12 +287,18 @@ func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
 }
 
-func (repo *Remote) Checksum(opts ChecksumOptions) (Checksum, error) {
+func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
 	workTreeDir, err := repo.getWorkTreeDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.checksum(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+
+	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{Debug: true}, func() error {
+		checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+		return nil
+	})
+
+	return
 }
 
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {
