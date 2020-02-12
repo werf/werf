@@ -36,8 +36,6 @@ const (
 
 	ShowEventsAnnoName = "werf.io/show-service-messages"
 
-	RecreateAnnoName = "werf.io/recreate"
-
 	HelmHookAnnoName = "helm.sh/hook"
 )
 
@@ -52,7 +50,6 @@ var (
 		ShowLogsOnlyForContainers,
 		ShowLogsUntilAnnoName,
 		ShowEventsAnnoName,
-		RecreateAnnoName,
 		helm_kube.SetReplicasOnlyOnCreationAnnotation,
 		helm_kube.SetResourcesOnlyOnCreationAnnotation,
 	}
@@ -509,35 +506,12 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 		resourcesWaiter.LogsFromTime = oldLogsFromTime
 	}()
 
-	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
-		return fmt.Errorf("remove helm hooks by werf/recreate policy failed: %s", err)
-	}
-
 	if err := deployFunc(); err != nil {
 		return err
 	}
 
 	if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
-	jobsToDelete := getHooksJobsToRecreate(templates.Jobs())
-	if len(jobsToDelete) != 0 {
-		if err := logboek.LogProcess("Applying helm hooks recreation policy (werf.io/recreate annotation)", logboek.LogProcessOptions{}, func() error {
-			for _, jobTemplate := range jobsToDelete {
-				if err := removeReleaseNamespacedResource(jobTemplate, namespace); err != nil {
-					return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
-				}
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -560,25 +534,6 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 	}
 
 	return nil
-}
-
-func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
-	var res []Template
-
-	for _, template := range jobsTemplates {
-		if _, isHelmHook := template.Metadata.Annotations[HelmHookAnnoName]; !isHelmHook {
-			continue
-		}
-
-		value, ok := template.Metadata.Annotations[RecreateAnnoName]
-		if ok && (value == "0" || value == "false") {
-			continue
-		}
-
-		res = append(res, template)
-	}
-
-	return res
 }
 
 func removeReleaseNamespacedResource(template Template, releaseNamespace string) error {
