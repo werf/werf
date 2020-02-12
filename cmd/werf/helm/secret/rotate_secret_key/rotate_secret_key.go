@@ -74,7 +74,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("WERF_OLD_SECRET_KEY environment required")
 	}
 
-	oldSecret, err := secret.NewManager([]byte(oldSecretKey), secret.NewManagerOptions{IgnoreWarning: true})
+	oldSecret, err := secret.NewManager([]byte(oldSecretKey))
 	if err != nil {
 		return err
 	}
