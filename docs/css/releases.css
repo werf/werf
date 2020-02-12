@@ -207,6 +207,18 @@
   margin-bottom: 25px;
 }
 
+.releases__block-subtitle {
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1;
+  font-style: normal;
+  font-stretch: normal;
+  letter-spacing: normal;
+  color: #00122c;
+  margin-top: 5px;
+  opacity: 0.5;
+}
+
 .releases__menu {
   display: flex;
   flex-direction: row;

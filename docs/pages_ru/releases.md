@@ -50,7 +50,15 @@ layout: default
 {%- endfor %}
 </div>
 
-<div class="releases__block-title tabs">Каналы обновлений:&nbsp;
+<div class="releases__block-title">
+    Релизы
+</div>
+
+<div class="releases__block-subtitle">
+    Канал обновлений:
+</div>
+
+<div class="tabs">
   {%- for channel in channels_sorted_reverse %}
   <a href="javascript:void(0)" class="tabs__btn tabs__channel__btn{% if channel == channels_sorted_reverse[0] %} active{% endif %}" onclick="openTab(event, 'tabs__channel__btn', 'tabs__channel__content', 'id-{{channel.name}}')">{{channel.title}}</a>
   {%- endfor %}
@@ -58,8 +66,11 @@ layout: default
 </div>
 
 {%- for channel in channels_sorted_reverse %}
-<div id="id-{{channel.name}}" class="releases tabs__channel__content{% if channel == channels_sorted_reverse[0] %} active{% endif %}">
-    <div class="tabs">Релизы:&nbsp;
+<div id="id-{{channel.name}}" class="tabs__channel__content{% if channel == channels_sorted_reverse[0] %} active{% endif %}">
+    <div class="releases__block-subtitle">
+        Версия:
+    </div>
+    <div class="tabs">
     {%- assign not_activated = true %}
     {%- for group in groups %}
       {%- assign group_activity = site.data.releases_history.history | reverse | where: "group", group | where: "name", channel.name | size %}
