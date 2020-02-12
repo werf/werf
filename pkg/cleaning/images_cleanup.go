@@ -164,7 +164,7 @@ Loop:
 		}
 
 		repoImageMetaTag, ok := labels[image.WerfImageTagLabel]
-		if !ok { // legacy
+		if !ok {
 			repoImageMetaTag = repoImage.Tag
 		}
 
