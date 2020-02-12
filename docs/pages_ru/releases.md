@@ -127,8 +127,11 @@ layout: default
 </div>
 {%- endfor %}
 
-<div id="id-all-channels" class="releases tabs__content tabs__channel__content">
-    <div class="tabs">Релизы:&nbsp;
+<div id="id-all-channels" class="tabs__content tabs__channel__content">
+    <div class="releases__block-subtitle">
+        Версия:
+    </div>
+    <div class="tabs">
     {%- for group in groups %}
     {%- assign group_activity = site.data.releases_history.history | reverse | where: "group", group | where: "name", channel.name | size %}
     <a href="javascript:void(0)" class="tabs__btn tabs__all-channel__btn{% if group == groups[0] %} active{% endif %}
