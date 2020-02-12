@@ -54,6 +54,8 @@ layout: default
     Releases
 </div>
 
+<div class="releases">
+
 <div class="releases__block-subtitle">
     Release channel:
 </div>
@@ -162,4 +164,6 @@ layout: default
       {%- endfor %}
       </div>
     {%- endfor %}
+</div>
+
 </div>

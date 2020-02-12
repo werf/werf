@@ -16,7 +16,7 @@
 }
 
 .releases .tabs {
-  margin: 0 -10px 25px -10px;
+  margin: 0 -10px 10px -10px;
 }
 
 .releases .tabs__btn {
@@ -215,7 +215,7 @@
   font-stretch: normal;
   letter-spacing: normal;
   color: #00122c;
-  margin-top: 5px;
+  margin-bottom: 5px;
   opacity: 0.5;
 }
 

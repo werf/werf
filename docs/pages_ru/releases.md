@@ -54,6 +54,8 @@ layout: default
     Релизы
 </div>
 
+<div class="releases">
+
 <div class="releases__block-subtitle">
     Канал обновлений:
 </div>
@@ -162,4 +164,5 @@ layout: default
       {%- endfor %}
       </div>
     {%- endfor %}
+</div>
 </div>
