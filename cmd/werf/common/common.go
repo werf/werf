@@ -335,12 +335,6 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SkipTlsVerifyRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironment("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
-
-	// legacy
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "insecure-repo", "", GetBoolEnvironment("WERF_INSECURE_REPO"), "Skip TLS certificate validation when accessing a registry (default $WERF_INSECURE_REPO)")
-	if err := cmd.Flags().MarkHidden("insecure-repo"); err != nil {
-		panic(err)
-	}
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
