@@ -737,7 +737,7 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 			}
 
 			withTripleIndent(func() {
-				logboek.LogInfoF("add: %s\n", gitMapping.Cwd)
+				logboek.LogInfoF("add: %s\n", gitMapping.Add)
 				logboek.LogInfoF("to: %s\n", gitMapping.To)
 
 				if len(gitMapping.IncludePaths) != 0 {
@@ -836,9 +836,7 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 
-		RepoPath: local.GitMappingAdd(),
-
-		Cwd:                local.GitMappingAdd(),
+		Add:                local.GitMappingAdd(),
 		To:                 local.GitMappingTo(),
 		ExcludePaths:       local.GitMappingExcludePath(),
 		IncludePaths:       local.GitMappingIncludePaths(),
