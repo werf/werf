@@ -55,9 +55,8 @@ type GitMapping struct {
 	Branch             string
 	Tag                string
 	Commit             string
+	Add                string
 	To                 string
-	RepoPath           string
-	Cwd                string
 	Owner              string
 	Group              string
 	IncludePaths       []string
@@ -128,7 +127,7 @@ func (gm *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo
 func (gm *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	var res git_repo.Archive
 
-	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Cwd), logboek.LogProcessOptions{}, func() error {
+	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add), logboek.LogProcessOptions{}, func() error {
 		archive, err := gm.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -160,7 +159,7 @@ func (gm *GitMapping) getOrCreatePatch(opts git_repo.PatchOptions) (git_repo.Pat
 func (gm *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, error) {
 	var res git_repo.Patch
 
-	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Cwd)
+	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Add)
 	err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		patch, err := gm.GitRepo().CreatePatch(opts)
 		if err != nil {
@@ -181,7 +180,7 @@ func (gm *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 
 func (gm *GitMapping) getRepoFilterOptions() git_repo.FilterOptions {
 	return git_repo.FilterOptions{
-		BasePath:     gm.RepoPath,
+		BasePath:     gm.Add,
 		IncludePaths: gm.IncludePaths,
 		ExcludePaths: gm.ExcludePaths,
 	}
@@ -608,9 +607,7 @@ func (gm *GitMapping) GetParamshash() string {
 
 	hash := sha256.New()
 
-	cmd := path.Join("/", gm.Cwd) // legacy absolute cmd
-
-	parts := []string{gm.GetFullName(), ":::", gm.To, ":::", cmd}
+	parts := []string{gm.GetFullName(), ":::", gm.To, ":::", gm.Add}
 	parts = append(parts, ":::")
 	parts = append(parts, gm.IncludePaths...)
 	parts = append(parts, ":::")
