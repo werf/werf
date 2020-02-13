@@ -19,15 +19,15 @@ func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opt
 		tag_strategy.GitTag:    opts.TagsByGitTag,
 		tag_strategy.GitCommit: opts.TagsByGitCommit,
 	}
-	return &PublishImagesPhase{BasePhase: BasePhase{c}, TagsByScheme: tagsByScheme, TagsBySignatures: opts.TagBySignatures, ImageRepoManager: imagesRepoManager}
+	return &PublishImagesPhase{BasePhase: BasePhase{c}, TagsByScheme: tagsByScheme, TagByStagesSignature: opts.TagByStagesSignature, ImageRepoManager: imagesRepoManager}
 }
 
 type PublishImagesPhase struct {
 	BasePhase
-	ImagesToPublish  []string
-	TagsByScheme     map[tag_strategy.TagStrategy][]string
-	TagsBySignatures bool
-	ImageRepoManager ImagesRepoManager
+	ImagesToPublish      []string
+	TagsByScheme         map[tag_strategy.TagStrategy][]string
+	TagByStagesSignature bool
+	ImageRepoManager     ImagesRepoManager
 }
 
 func (phase *PublishImagesPhase) Name() string {
@@ -206,10 +206,10 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 		}
 	}
 
-	if phase.TagsBySignatures {
-		if err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", tag_strategy.Signature), logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-			if err := phase.publishImageByTag(img, img.GetImageSignature(), tag_strategy.Signature, existingTags); err != nil {
-				return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetImageSignature(), err)
+	if phase.TagByStagesSignature {
+		if err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", tag_strategy.StagesSignature), logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
+			if err := phase.publishImageByTag(img, img.GetStagesSignature(), tag_strategy.StagesSignature, existingTags); err != nil {
+				return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetStagesSignature(), err)
 			}
 
 			return nil

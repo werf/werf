@@ -62,8 +62,8 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 
 	case tag_strategy.Custom:
 		ciInfo["is_custom_tag"] = true
-	case tag_strategy.Signature:
-		ciInfo["is_tag_by_signatures"] = true
+	case tag_strategy.StagesSignature:
+		ciInfo["is_tag_by_stages_signatures"] = true
 	}
 
 	imagesInfo := make(map[string]interface{})

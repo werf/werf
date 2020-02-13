@@ -46,7 +46,7 @@ Currently supported only GitLab CI`,
 	common.SetupInsecureRegistry(&CommonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "content-checksum", "content-checksum: always use '--tag-by-signature' for all published images; tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
+	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", "stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature; tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 	cmd.Flags().BoolVarP(&CmdData.Verbose, "verbose", "", false, "Generate echo command for each resulted script line")
 
 	return cmd
@@ -66,7 +66,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	switch CmdData.TaggingStrategy {
-	case "tag-or-branch", "content-checksum":
+	case "tag-or-branch", "stages-signature":
 	default:
 		common.PrintHelp(cmd)
 		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
@@ -159,8 +159,8 @@ func generateGitlabEnvs(taggingStrategy string) error {
 		if ciGitTag == "" && ciGitBranch == "" {
 			return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
 		}
-	case "content-checksum":
-		printExportCommand("WERF_TAG_BY_SIGNATURES", "true", false)
+	case "stages-signature":
+		printExportCommand("WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
 	}
 
 	printHeader("DEPLOY", true)
