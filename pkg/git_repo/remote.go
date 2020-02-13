@@ -293,7 +293,7 @@ func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error
 		return nil, err
 	}
 
-	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{Debug: true}, func() error {
+	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{DebugLog: true}, func() error {
 		checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
 		return nil
 	})
