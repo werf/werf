@@ -115,11 +115,11 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 }
 
 type TagOptions struct {
-	CustomTags      []string
-	TagsByGitTag    []string
-	TagsByGitBranch []string
-	TagsByGitCommit []string
-	TagBySignatures bool
+	CustomTags           []string
+	TagsByGitTag         []string
+	TagsByGitBranch      []string
+	TagsByGitCommit      []string
+	TagByStagesSignature bool
 }
 
 type ImagesRepoManager interface {
@@ -155,10 +155,10 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 
 	for _, imageName := range imagesNames {
 		var tag string
-		if tagStrategy == tag_strategy.Signature {
+		if tagStrategy == tag_strategy.StagesSignature {
 			for _, img := range c.imagesInOrder {
 				if img.GetName() == imageName {
-					tag = img.GetImageSignature()
+					tag = img.GetStagesSignature()
 					break
 				}
 			}
