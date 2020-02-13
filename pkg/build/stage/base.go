@@ -123,7 +123,7 @@ func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 		}
 	}
 
-	logboek.LogDebugF("Stage %s next stage dependencies: %v\n", s.Name(), args)
+	logboek.LogDebugF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil

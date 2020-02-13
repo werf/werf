@@ -109,11 +109,11 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	img.SetLastNonEmptyStage(phase.PrevNonEmptyStage)
 
-	imageSig, err := phase.calculateSignature("image", "", phase.PrevNonEmptyStage)
+	stagesSig, err := phase.calculateSignature("imageStages", "", phase.PrevNonEmptyStage)
 	if err != nil {
-		return fmt.Errorf("unable to calculate image %s signature: %s", img.GetName(), err)
+		return fmt.Errorf("unable to calculate image %s stages-signature: %s", img.GetName(), err)
 	}
-	img.SetImageSignature(imageSig)
+	img.SetStagesSignature(stagesSig)
 
 	return nil
 }
@@ -216,7 +216,9 @@ func (phase *BuildPhase) calculateSignature(stageName, stageDependencies string,
 
 		checksumArgs = append(checksumArgs, phase.PrevNonEmptyStage.GetSignature(), prevStageDependencies)
 	}
-	logboek.LogDebugF("Signature of %q consists of: BuildCacheVersion, stageName, stageDependencies, prevNonEmptyStage signature, prevNonEmptyStage dependencies for next stage %v\n", stageName, checksumArgs)
+
+	res := util.Sha3_224Hash(checksumArgs...)
+	logboek.LogDebugF("Signature %s of %q consists of: BuildCacheVersion, stageName, stageDependencies, prevNonEmptyStage signature, prevNonEmptyStage dependencies for next stage => %#v\n", res, stageName, checksumArgs)
 	return util.Sha3_224Hash(checksumArgs...), nil
 }
 
