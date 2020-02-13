@@ -15,7 +15,7 @@ werf stages cleanup [options]
 {{ header }} Options
 
 ```shell
-      --debug=false:
+      --debug=true:
             Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config

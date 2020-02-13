@@ -60,7 +60,7 @@ werf deploy [options]
             Format: labelName=labelValue.
             Also can be specified in $WERF_ADD_LABEL* (e.g.                                         
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
-      --debug=false:
+      --debug=true:
             Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
@@ -148,6 +148,10 @@ werf deploy [options]
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+      --tag-by-stages-signature=false:
+            Use stages-signature tagging strategy and tag each image by the corresponding signature 
+            of last image stage (option can be enabled by specifying                                
+            $WERF_TAG_BY_STAGES_SIGNATURE=true)
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags.
             Option can be used multiple times to produce multiple images with the specified tags.
