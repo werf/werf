@@ -33,7 +33,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```shell
       --bash=false:
             Use predefined docker options and command for debug
-      --debug=false:
+      --debug=true:
             Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
