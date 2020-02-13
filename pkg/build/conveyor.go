@@ -353,6 +353,8 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 
 ImagesProcessing:
 	for _, img := range c.imagesInOrder {
+		logboek.LogDebugF("Start processing image %s\n", img.GetName())
+
 		for _, phase := range phases {
 			if err := phase.BeforeImageStages(img); err != nil {
 				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
