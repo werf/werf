@@ -208,10 +208,8 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 
 	if phase.TagsBySignatures {
 		if err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", tag_strategy.Signature), logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-			lastStage := img.GetStages()[len(img.GetStages())-1]
-
-			if err := phase.publishImageByTag(img, lastStage.GetSignature(), tag_strategy.Signature, existingTags); err != nil {
-				return fmt.Errorf("error publishing image %s by tag %s: %s", img.GetName(), lastStage.GetSignature(), err)
+			if err := phase.publishImageByTag(img, img.GetImageSignature(), tag_strategy.Signature, existingTags); err != nil {
+				return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetImageSignature(), err)
 			}
 
 			return nil
@@ -246,7 +244,7 @@ func (phase *PublishImagesPhase) fetchExistingTags(imageRepository string) (res 
 
 func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag string, tagStrategy tag_strategy.TagStrategy, initialExistingTagsList []string) error {
 	imageRepository := phase.ImageRepoManager.ImageRepo(img.GetName())
-	lastStageImage := img.GetStages()[len(img.GetStages())-1].GetImage()
+	lastStageImage := img.GetLastNonEmptyStage().GetImage()
 	imageName := phase.ImageRepoManager.ImageRepoWithTag(img.GetName(), imageMetaTag)
 	imageTag := phase.ImageRepoManager.ImageRepoTag(img.GetName(), imageMetaTag)
 
