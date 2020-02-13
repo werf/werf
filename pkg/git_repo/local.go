@@ -62,7 +62,7 @@ func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
 }
 
 func (repo *Local) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{Debug: true}, func() error {
+	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{DebugLog: true}, func() error {
 		checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 		return nil
 	})
