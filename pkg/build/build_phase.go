@@ -107,6 +107,14 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 }
 
 func (phase *BuildPhase) AfterImageStages(img *Image) error {
+	img.SetLastNonEmptyStage(phase.PrevNonEmptyStage)
+
+	imageSig, err := phase.calculateSignature("image", "", phase.PrevNonEmptyStage)
+	if err != nil {
+		return fmt.Errorf("unable to calculate image %s signature: %s", img.GetName(), err)
+	}
+	img.SetImageSignature(imageSig)
+
 	return nil
 }
 
@@ -198,23 +206,30 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 	return true, nil
 }
 
+func (phase *BuildPhase) calculateSignature(stageName, stageDependencies string, prevNonEmptyStage stage.Interface) (string, error) {
+	checksumArgs := []string{image.BuildCacheVersion, stageName, stageDependencies}
+	if phase.PrevNonEmptyStage != nil {
+		prevStageDependencies, err := phase.PrevNonEmptyStage.GetNextStageDependencies(phase.Conveyor)
+		if err != nil {
+			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", phase.PrevNonEmptyStage.Name(), stageName, err)
+		}
+
+		checksumArgs = append(checksumArgs, phase.PrevNonEmptyStage.GetSignature(), prevStageDependencies)
+	}
+	logboek.LogDebugF("Signature of %q consists of: BuildCacheVersion, stageName, stageDependencies, prevNonEmptyStage signature, prevNonEmptyStage dependencies for next stage %v\n", stageName, checksumArgs)
+	return util.Sha3_224Hash(checksumArgs...), nil
+}
+
 func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface) error {
 	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.PrevImage, phase.PrevBuiltImage)
 	if err != nil {
 		return err
 	}
 
-	checksumArgs := []string{image.BuildCacheVersion, string(stg.Name()), stageDependencies}
-	if phase.PrevNonEmptyStage != nil {
-		prevStageDependencies, err := phase.PrevNonEmptyStage.GetNextStageDependencies(phase.Conveyor)
-		if err != nil {
-			return fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", phase.PrevNonEmptyStage.Name(), stg.Name(), err)
-		}
-
-		checksumArgs = append(checksumArgs, phase.PrevNonEmptyStage.GetSignature(), prevStageDependencies)
+	stageSig, err := phase.calculateSignature(string(stg.Name()), stageDependencies, phase.PrevNonEmptyStage)
+	if err != nil {
+		return err
 	}
-	logboek.LogDebugF("Signature of %q args consists of: stage dependencies, build-cache-version, prev stage signature, prev stage dependencies %v\n", stg.Name(), checksumArgs)
-	stageSig := util.Sha3_224Hash(checksumArgs...)
 	stg.SetSignature(stageSig)
 
 	logboek.LogInfoF("%s:%s %s\n", stg.Name(), strings.Repeat(" ", MaxStageNameLength-len(stg.Name())), stageSig)

@@ -156,14 +156,12 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	for _, imageName := range imagesNames {
 		var tag string
 		if tagStrategy == tag_strategy.Signature {
-			var lastStage stage.Interface
 			for _, img := range c.imagesInOrder {
 				if img.GetName() == imageName {
-					lastStage = img.GetStages()[len(img.GetStages())-1]
+					tag = img.GetImageSignature()
 					break
 				}
 			}
-			tag = lastStage.GetSignature()
 		} else {
 			tag = commonTag
 		}
