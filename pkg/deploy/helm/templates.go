@@ -287,7 +287,6 @@ func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles ma
 
 		helmIncludeFunc := funcMap["include"].(func(name string, data interface{}) (string, error))
 		werfIncludeFunc := func(name string, data interface{}) (string, error) {
-			// legacy
 			if name == "werf_secret_file" {
 				var arg interface{}
 
