@@ -37,9 +37,10 @@ werf ci-env CI_SYSTEM [options]
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tagging-strategy='':
-            tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified     
-            CI_SYSTEM environment variables
+      --tagging-strategy='stages-signature':
+            stages-signature: always use '--tag-by-stages-signature' option to tag all published    
+            images by corresponding stages-signature; tag-or-branch: generate auto                  
+            '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --verbose=false:

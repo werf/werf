@@ -14,7 +14,7 @@ werf host project purge [PROJECT_NAME ...] [options]
 {{ header }} Options
 
 ```shell
-      --debug=false:
+      --debug=true:
             Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
