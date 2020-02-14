@@ -108,12 +108,10 @@ layout: default
   
       {%- if channel_history.size > 0 %}
         {%- for channel_action in channel_history %}
-           {%- assign release = site.data.releases.releases | where: "tag_name", channel_action.version | first %}
-            <div class="releases__title">
-                <a href="{{ release.html_url }}">
-                    {{ release.tag_name }}
-                </a>
-                <div class="release__channel__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
+           {%- assign release = site.data.releases.releases | where: "tag_name", channel_action.version | first %}            
+            <div class="releases__header">
+                <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>
+                <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
             </div>
             <div class="releases__body">
                 {{ release.body | markdownify }}
@@ -142,10 +140,9 @@ layout: default
       {%- assign group_history = site.data.releases_history.history | reverse | where: "group", group | map: "version" | reverse | uniq %}
       {%- for release_data in group_history %}
           {%- assign release = site.data.releases.releases | where: "tag_name", release_data | first %}
-          <div class="releases__title">
-              <a href="{{ release.html_url }}">
-                  {{ release.tag_name }}
-              </a>
+          <div class="releases__header">
+              <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
+              <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>              
           </div>
           <div class="releases__body">
               {{ release.body | markdownify }}

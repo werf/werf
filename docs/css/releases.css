@@ -23,14 +23,26 @@
   margin: 0 10px;
 }
 
-.releases__title {
+.releases__header {
   margin: 25px 0 15px;
   padding-bottom: 5px;
-  border-bottom: 2px solid rgba(0,102,255,0.1);;
+  border-bottom: 2px solid rgba(0,102,255,0.1);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.releases__title {
   font-size: 24px;
   font-weight: normal;
   font-style: normal;
   font-stretch: normal;
+}
+
+.releases__date {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .releases__body {
@@ -225,11 +237,6 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   margin: -12.5px -12.5px 50px;
-  width: calc(100% + 25px);
-}
-
-.release__channel__date {
-  margin: 0px 0px 10px;
   width: calc(100% + 25px);
 }
 
