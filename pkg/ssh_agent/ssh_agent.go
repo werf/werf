@@ -52,6 +52,7 @@ func Init(keys []string) error {
 	var defaultKeys []string
 	for _, defaultFileName := range []string{"id_rsa", "id_dsa"} {
 		path := filepath.Join(os.Getenv("HOME"), ".ssh", defaultFileName)
+
 		if keyExists, _ := util.FileExists(path); keyExists {
 			defaultKeys = append(defaultKeys, path)
 		}
@@ -63,10 +64,12 @@ func Init(keys []string) error {
 		for _, key := range defaultKeys {
 			keyData, err := ioutil.ReadFile(key)
 			if err != nil {
+				logboek.LogErrorF("WARNING: cannot read default key %s: %s\n", key, err)
 				continue
 			}
-			_, err = ssh.ParseRawPrivateKeyWithPassphrase(keyData, []byte{})
+			_, err = ssh.ParseRawPrivateKey(keyData)
 			if err != nil {
+				logboek.LogErrorF("WARNING: default key %s validation error: %s\n", key, err)
 				continue
 			}
 
@@ -173,7 +176,7 @@ func addSSHKey(authSock string, key string) error {
 		return fmt.Errorf("error reading key file %s: %s", key, err)
 	}
 
-	privateKey, err := ssh.ParseRawPrivateKeyWithPassphrase(keyData, []byte{})
+	privateKey, err := ssh.ParseRawPrivateKey(keyData)
 	if err != nil {
 		return fmt.Errorf("error parsing private key %s: %s", key, err)
 	}
