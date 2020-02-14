@@ -228,6 +228,11 @@
   width: calc(100% + 25px);
 }
 
+.release__channel__date {
+  margin: 0px 0px 10px;
+  width: calc(100% + 25px);
+}
+
 .releases__menu-item {
   box-sizing: border-box;
   flex: 1 1 calc(30% - 25px);

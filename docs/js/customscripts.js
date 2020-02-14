@@ -68,11 +68,16 @@ $(document).ready(function () {
   if (!currentChannel) currentChannel = 'local';
   let _current_channel;
 
+  releasesInfo.menuChannels.sort((prev, next) => {
+    if ( parseFloat(prev.group) > parseFloat(next.group) ) return -1;
+    if ( parseFloat(prev.group) < parseFloat(next.group) ) return 1; });
+
   if (typeof releasesInfo === 'undefined' || releasesInfo == null) {
     console.log('releasesInfo is not defined, assume local mode');
     releasesInfo = {};
   } else {
     if (currentChannel === 'root') {
+
       for (group of releasesInfo.menuChannels) {
         for (channel of releasesInfo.orderedChannels) {
           _current_channel = group.channels.filter(function (el) {
@@ -91,8 +96,8 @@ $(document).ready(function () {
     if (docSubURL && docSubURL[1]) docSubURL = '/documentation/' + docSubURL[1]; else docSubURL = '';
 
     var submenu = $('<ul class="header__submenu">');
-    $.each(releasesInfo.orderedChannels, function (i, channel) {
-      $.each(releasesInfo.menuChannels, function (j, group) {
+    $.each(releasesInfo.menuChannels, function (j, group) {
+      $.each(releasesInfo.orderedChannels, function (i, channel) {
 
         var channel_version = '';
         if (channel !== 'review') {
