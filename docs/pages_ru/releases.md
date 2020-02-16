@@ -111,7 +111,7 @@ layout: default
            {%- assign release = site.data.releases.releases | where: "tag_name", channel_action.version | first %}
             <div class="releases__header">
                 <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>
-                <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
+                <div class="releases__date">{{ channel_action.ts | date: "%e.%m.%Y, %H:%M %z" }}</div>
             </div>
             <div class="releases__body">
                 {{ release.body | markdownify }}
@@ -142,7 +142,7 @@ layout: default
           {%- assign release = site.data.releases.releases | where: "tag_name", release_data | first %}
           <div class="releases__header">
               <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>
-              <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
+              <div class="releases__date">{{ channel_action.ts | date: "%e.%m.%Y, %H:%M %z" }}</div>
           </div>
           <div class="releases__body">
               {{ release.body | markdownify }}
