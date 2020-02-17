@@ -160,7 +160,7 @@ func (c *rawAnsibleTask) toDirective() (*AnsibleTask, error) {
 	}
 
 	var unmarshal map[string]interface{}
-	err = yaml.Unmarshal(marshal, &unmarshal)
+	err = yaml.UnmarshalStrict(marshal, &unmarshal)
 	if err != nil {
 		return nil, err
 	}
