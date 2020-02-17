@@ -5,7 +5,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.0.10"
+          "version": "v1.0.11"
         },
         {
           "name": "beta",
@@ -30,7 +30,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.1.0-alpha.18"
+          "version": "v1.1.0-alpha.19"
         }
       ]
     }
