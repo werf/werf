@@ -240,7 +240,7 @@ func prepareResultValuesData(data, encodedData, newData, newEncodedData []byte) 
 
 func unmarshalYaml(data []byte) (yaml.MapSlice, error) {
 	config := make(yaml.MapSlice, 0)
-	err := yaml.Unmarshal(data, &config)
+	err := yaml.UnmarshalStrict(data, &config)
 	if err != nil {
 		return nil, err
 	}

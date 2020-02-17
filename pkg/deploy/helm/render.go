@@ -121,7 +121,7 @@ func vals(values valueFiles, secretValues []map[string]interface{}, set []string
 			return []byte{}, err
 		}
 
-		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
+		if err := yaml.UnmarshalStrict(bytes, &currentMap); err != nil {
 			return []byte{}, fmt.Errorf("failed to parse %s: %s", filePath, err)
 		}
 		// Merge with the previous map

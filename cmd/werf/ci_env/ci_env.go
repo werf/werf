@@ -307,7 +307,7 @@ func getCleanupConfig() (CleanupConfig, error) {
 	}
 
 	config := CleanupConfig{}
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err := yaml.UnmarshalStrict(data, &config); err != nil {
 		return CleanupConfig{}, fmt.Errorf("bad config yaml %s: %s", configPath, err)
 	}
 
