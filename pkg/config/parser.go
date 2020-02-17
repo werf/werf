@@ -501,7 +501,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 	parentStack = util.NewStack()
 	for _, doc := range docs {
 		var raw map[string]interface{}
-		err := yaml.Unmarshal(doc.Content, &raw)
+		err := yaml.UnmarshalStrict(doc.Content, &raw)
 		if err != nil {
 			return nil, nil, nil, newYamlUnmarshalError(err, doc)
 		}
@@ -512,7 +512,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			}
 
 			rawMeta := &rawMeta{doc: doc}
-			err := yaml.Unmarshal(doc.Content, &rawMeta)
+			err := yaml.UnmarshalStrict(doc.Content, &rawMeta)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
@@ -520,7 +520,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			resultMeta = rawMeta.toMeta()
 		} else if isImageFromDockerfileDoc(raw) {
 			imageFromDockerfile := &rawImageFromDockerfile{doc: doc}
-			err := yaml.Unmarshal(doc.Content, &imageFromDockerfile)
+			err := yaml.UnmarshalStrict(doc.Content, &imageFromDockerfile)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
@@ -528,7 +528,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
 		} else if isImageDoc(raw) {
 			image := &rawStapelImage{doc: doc}
-			err := yaml.Unmarshal(doc.Content, &image)
+			err := yaml.UnmarshalStrict(doc.Content, &image)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}

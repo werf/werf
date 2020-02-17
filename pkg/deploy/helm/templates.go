@@ -162,7 +162,7 @@ func parseTemplates(rawTemplates string) (ChartTemplates, error) {
 
 func parseTemplate(rawTemplate string) (Template, error) {
 	var t Template
-	err := yaml.Unmarshal([]byte(rawTemplate), &t)
+	err := yaml.UnmarshalStrict([]byte(rawTemplate), &t)
 	if err != nil {
 		return Template{}, fmt.Errorf("%s\n\n%s\n", err, util.NumerateLines(rawTemplate, 1))
 	}
@@ -195,13 +195,13 @@ func (e *WerfEngine) Render(chrt *chart.Chart, values chartutil.Values) (map[str
 		var resultManifests []string
 		for _, manifestContent := range releaseutil.SplitManifests(fileContent) {
 			var t Template
-			err := yaml.Unmarshal([]byte(manifestContent), &t)
+			err := yaml.UnmarshalStrict([]byte(manifestContent), &t)
 			if err != nil {
 				return nil, fmt.Errorf("parsing file %s failed: %s\n\n%s\n", fileName, err, util.NumerateLines(manifestContent, 1))
 			}
 
 			var h map[string]interface{}
-			_ = yaml.Unmarshal([]byte(manifestContent), &h)
+			_ = yaml.UnmarshalStrict([]byte(manifestContent), &h)
 
 			manifestContentIsEmpty := len(h) == 0
 			if manifestContentIsEmpty {

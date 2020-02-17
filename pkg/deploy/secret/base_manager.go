@@ -75,7 +75,7 @@ func (s *BaseManager) DecryptYamlData(data []byte) ([]byte, error) {
 
 func doYamlData(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, error) {
 	config := make(yaml.MapSlice, 0)
-	err := yaml.Unmarshal(data, &config)
+	err := yaml.UnmarshalStrict(data, &config)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ require (
 	github.com/flant/logboek v0.2.6-0.20200204184239-37f691eb9129
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
-	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
+	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gofrs/flock v0.7.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
@@ -168,4 +168,4 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
 go 1.13
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20200212200317-4fdb38920375
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200217100637-b18c566416d9

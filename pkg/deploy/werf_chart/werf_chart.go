@@ -61,7 +61,7 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	}
 
 	var values map[string]interface{}
-	if err := yaml.Unmarshal(decodedData, &values); err != nil {
+	if err := yaml.UnmarshalStrict(decodedData, &values); err != nil {
 		return fmt.Errorf("cannot unmarshal secret values file %s: %s", path, err)
 	}
 	chart.SecretValues = append(chart.SecretValues, values)
