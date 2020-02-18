@@ -373,4 +373,90 @@ var _ = Describe("Three way merge patches creator", func() {
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().Value()).To(Equal(int64(256 * 1024 * 1024)))
 		})
 	})
+
+	Context("when user adds a new resource with an error into the release and 3-way-merge is not enabled", func() {
+		var namespace, projectName string
+
+		BeforeEach(func() {
+			projectName = utils.ProjectName()
+			namespace = fmt.Sprintf("%s-dev", projectName)
+		})
+
+		AfterEach(func() {
+			utils.RunCommand("three_way_merge_patches_creator_app3-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
+		})
+
+		It("should fail to update release with new resource and should succeed to redeploy a chart with fixed resource error, failed resource created by initial deploy should be recreated on redeploy", func() {
+			By("deploying chart initially")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-001", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
+			})).To(Succeed())
+
+			By("deploying a chart with the new resource with an runtime error")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-002", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
+			})).NotTo(Succeed())
+
+			By("checking that helm --cleanup-on-fail have deleted failed resource")
+
+			_, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+
+			By("deploying a chart with the new resource with fixed runtime error")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-003", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
+			})).To(Succeed())
+
+			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	Context("when user adds a new resource with an error into the release and 3-way-merge is enabled", func() {
+		var namespace, projectName string
+
+		BeforeEach(func() {
+			projectName = utils.ProjectName()
+			namespace = fmt.Sprintf("%s-dev", projectName)
+		})
+
+		AfterEach(func() {
+			utils.RunCommand("three_way_merge_patches_creator_app3-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
+		})
+
+		It("should fail to update release with new resource and should succeed to redeploy a chart with fixed resource error, failed resource created by initial deploy should be recreated on redeploy", func() {
+			By("deploying chart initially")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-001", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
+			})).To(Succeed())
+
+			By("deploying a chart with the new resource with an runtime error")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-002", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
+			})).NotTo(Succeed())
+
+			By("checking that new failed resource have been created and exists after failed upgrade")
+
+			mydeploy1AfterFailedUpgrade, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			By("deploying a chart with the new resource with fixed runtime error")
+
+			Expect(werfDeploy("three_way_merge_patches_creator_app3-003", liveexec.ExecCommandOptions{
+				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
+			})).To(Succeed())
+
+			By("checking that repaired resource exists and have not been recreated during last redeploy")
+
+			mydeploy1AfterSuccessfulUpgrade, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(mydeploy1AfterFailedUpgrade.UID).To(Equal(mydeploy1AfterSuccessfulUpgrade.UID))
+		})
+	})
 })
