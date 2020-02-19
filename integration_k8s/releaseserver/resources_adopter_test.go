@@ -2,8 +2,9 @@ package releaseserver_test
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/testing/utils"
@@ -21,7 +22,7 @@ var _ = Describe("Resources adopter", func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
 
-	Context("when installing and updating release with resources that already exist in cluster", func() {
+	Context("when deploying release with resources that already exist in cluster", func() {
 		var namespace, projectName, releaseName string
 
 		BeforeEach(func() {
@@ -31,21 +32,17 @@ var _ = Describe("Resources adopter", func() {
 		})
 
 		AfterEach(func() {
-			utils.RunCommand("resources_adopter_app1-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
+			utils.RunCommand("resources_adopter_app1-003", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should fail to install release; should not delete already existing resources on failed release removal when reinstalling release; should delete new resources created during failed release installation when reinstalling release; should adopt already existing resources by annotation", func() {
-			By("creating mydeploy2 and mydeploy4 using API in the cluster before installing release")
+		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {
+			By("Installing release first time without mydeploy2 and mydeploy4")
 
-			_, err := kube.Kubernetes.CoreV1().Namespaces().Create(resourcesfactory.NewNamespace(fmt.Sprintf(`
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: %s
-`, namespace)))
-			Expect(err).NotTo(HaveOccurred())
+			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
-			mydeploy2BeforeInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
+			By("creating mydeploy2 and mydeploy4 using API in the cluster")
+
+			mydeploy2Original, err := kube.Kubernetes.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -72,7 +69,7 @@ spec:
 `))
 			Expect(err).NotTo(HaveOccurred())
 
-			mydeploy4BeforeInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
+			mydeploy4Original, err := kube.Kubernetes.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -105,11 +102,11 @@ spec:
 `))
 			Expect(err).NotTo(HaveOccurred())
 
-			By("installing release first time")
+			By("redeploying release with added mydeploy2 and mydeploy4")
 
 			gotMydeploy2AlreadyExists := false
 			gotMydeploy4AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy2 already exists in the cluster") != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -121,45 +118,45 @@ spec:
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
 
-			mydeploy2AfterInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterDeploy, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy2AfterInstall.UID).To(Equal(mydeploy2BeforeInstall.UID))
+			Expect(mydeploy2AfterDeploy.UID).To(Equal(mydeploy2Original.UID))
 
-			mydeploy4AfterInstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterDeploy, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy4AfterInstall.UID).To(Equal(mydeploy4BeforeInstall.UID))
+			Expect(mydeploy4AfterDeploy.UID).To(Equal(mydeploy4Original.UID))
 
-			By("reinstalling release after first failure")
+			By("redeploying release after first failure")
 
-			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{})).NotTo(Succeed())
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{})).NotTo(Succeed())
 
-			By("reinstalling release with adoption annotations set to wrong release name")
+			By("redeploying release with adoption annotations set to wrong release name")
 
-		GetAndUpdateMydeploy2AfterReinstall:
-			mydeploy2AfterReinstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+		GetAndUpdateMydeploy2AfterRedeploy:
+			mydeploy2AfterRedeploy, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy2AfterReinstall.UID).To(Equal(mydeploy2BeforeInstall.UID))
-			mydeploy2AfterReinstall.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy2AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy2AfterReinstall)
+			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
+			mydeploy2AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
+			mydeploy2AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy2AfterRedeploy)
 			if errors.IsConflict(err) {
-				goto GetAndUpdateMydeploy2AfterReinstall
+				goto GetAndUpdateMydeploy2AfterRedeploy
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-		GetAndUpdateMydeploy4AfterReinstall:
-			mydeploy4AfterReinstall, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+		GetAndUpdateMydeploy4AfterRedeploy:
+			mydeploy4AfterRedeploy, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy4AfterReinstall.UID).To(Equal(mydeploy4BeforeInstall.UID))
-			mydeploy4AfterReinstall.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy4AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy4AfterReinstall)
+			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
+			mydeploy4AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
+			mydeploy4AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy4AfterRedeploy)
 			if errors.IsConflict(err) {
-				goto GetAndUpdateMydeploy4AfterReinstall
+				goto GetAndUpdateMydeploy4AfterRedeploy
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy2 already exists in the cluster") != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -171,33 +168,33 @@ spec:
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
 
-			By("reinstalling release with adoption annotations set to the right release name")
+			By("redeploying release with adoption annotations set to the right release name")
 
-		GetAndUpdateMydeploy2AfterReinstall2:
-			mydeploy2AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+		GetAndUpdateMydeploy2AfterRedeploy2:
+			mydeploy2AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy2AfterReinstall.UID).To(Equal(mydeploy2BeforeInstall.UID))
-			mydeploy2AfterReinstall.Annotations["werf.io/allow-adoption-by-release"] = releaseName
-			mydeploy2AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy2AfterReinstall)
+			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
+			mydeploy2AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = releaseName
+			mydeploy2AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy2AfterRedeploy)
 			if errors.IsConflict(err) {
-				goto GetAndUpdateMydeploy2AfterReinstall2
+				goto GetAndUpdateMydeploy2AfterRedeploy2
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-		GetAndUpdateMydeploy4AfterReinstall2:
-			mydeploy4AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+		GetAndUpdateMydeploy4AfterRedeploy2:
+			mydeploy4AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy4AfterReinstall.UID).To(Equal(mydeploy4BeforeInstall.UID))
-			mydeploy4AfterReinstall.Annotations["werf.io/allow-adoption-by-release"] = releaseName
-			mydeploy4AfterReinstall, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy4AfterReinstall)
+			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
+			mydeploy4AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = releaseName
+			mydeploy4AfterRedeploy, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy4AfterRedeploy)
 			if errors.IsConflict(err) {
-				goto GetAndUpdateMydeploy4AfterReinstall2
+				goto GetAndUpdateMydeploy4AfterRedeploy2
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, "Deployment/mydeploy2 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 					Expect(strings.Index(line, "Deployment/mydeploy4 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
@@ -206,11 +203,11 @@ spec:
 
 			mydeploy2AfterAdoption, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy2AfterAdoption.UID).To(Equal(mydeploy2BeforeInstall.UID))
+			Expect(mydeploy2AfterAdoption.UID).To(Equal(mydeploy2Original.UID))
 
 			mydeploy4AfterAdoption, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mydeploy4AfterAdoption.UID).To(Equal(mydeploy4BeforeInstall.UID))
+			Expect(mydeploy4AfterAdoption.UID).To(Equal(mydeploy4Original.UID))
 
 			Expect(mydeploy2AfterAdoption.Annotations["service.werf.io/owner-release"]).To(Equal(releaseName))
 			Expect(mydeploy4AfterAdoption.Annotations["service.werf.io/owner-release"]).To(Equal(releaseName))
@@ -273,7 +270,7 @@ spec:
 			By("updating release with a new resource added to the chart that already exists in the cluster")
 
 			gotMydeploy5AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-003", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "Deployment/mydeploy5 already exists in the cluster") != -1 {
 						gotMydeploy5AlreadyExists = true
@@ -293,7 +290,7 @@ spec:
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfDeploy("resources_adopter_app1-003", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, "Deployment/mydeploy5 already exists in the cluster")).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
@@ -301,7 +298,7 @@ spec:
 
 			By("deleting release from cluster with all adopted resources")
 
-			Expect(werfDismiss("resources_adopter_app1-002", liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(werfDismiss("resources_adopter_app1-003", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))

@@ -22,30 +22,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mydeploy2
-  labels:
-    service: mydeploy2
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      service: mydeploy2
-  template:
-    metadata:
-      labels:
-        service: mydeploy2
-    spec:
-      containers:
-      - name: main
-        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.04
-        env:
-          - name: KEY
-            value: VALUE
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: mydeploy3
   labels:
     service: mydeploy3
@@ -63,28 +39,4 @@ spec:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
         image: ubuntu:18.04
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mydeploy4
-  labels:
-    service: mydeploy4
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      service: mydeploy4
-  template:
-    metadata:
-      labels:
-        service: mydeploy4
-    spec:
-      containers:
-      - name: main
-        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.04
-        env:
-        - name: MYVAR
-          value: myvalue
 ---
