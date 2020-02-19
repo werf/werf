@@ -1,4 +1,4 @@
-package path_filter
+package path_matcher
 
 import (
 	"path/filepath"
@@ -16,14 +16,14 @@ type matchPathEntry struct {
 }
 
 var _ = DescribeTable("GitMapping_MatchPath", func(e matchPathEntry) {
-	pathFilter := NewGitMappingPathFilter(e.baseBase, e.includePaths, e.excludePaths)
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
 
 	for _, matchedPath := range e.matchedPaths {
-		Ω(pathFilter.MatchPath(matchedPath)).Should(BeTrue())
+		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		Ω(pathFilter.MatchPath(notMatchedPath)).Should(BeFalse())
+		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse())
 	}
 },
 	Entry("basePath is equal to the path (base)", matchPathEntry{
@@ -189,22 +189,22 @@ type processDirOrSubmodulePath struct {
 }
 
 var _ = DescribeTable("GitMapping_ProcessDirOrSubmodulePath", func(e processDirOrSubmodulePath) {
-	pathFilter := NewGitMappingPathFilter(e.baseBase, e.includePaths, e.excludePaths)
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
 
 	for _, matchedPath := range e.matchedPaths {
-		isMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(matchedPath)
+		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
 		Ω(isMatched).Should(BeTrue())
 		Ω(shouldWalkThrough).Should(BeFalse())
 	}
 
 	for _, shouldWalkThroughPath := range e.shouldWalkThroughPaths {
-		isMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
+		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
 		Ω(isMatched).Should(BeFalse())
 		Ω(shouldWalkThrough).Should(BeTrue())
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		isMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(notMatchedPath)
+		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(notMatchedPath)
 		Ω(isMatched).Should(BeFalse())
 		Ω(shouldWalkThrough).Should(BeFalse())
 	}

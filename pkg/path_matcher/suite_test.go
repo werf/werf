@@ -1,4 +1,4 @@
-package path_filter_test
+package path_matcher_test
 
 import (
 	"testing"
