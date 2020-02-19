@@ -5,15 +5,15 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.0.11"
+          "version": "v1.0.12"
         },
         {
           "name": "beta",
-          "version": "v1.0.11"
+          "version": "v1.0.12"
         },
         {
           "name": "ea",
-          "version": "v1.0.10"
+          "version": "v1.0.11"
         },
         {
           "name": "stable",
@@ -30,11 +30,11 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.1.0-beta.1"
+          "version": "v1.1.0-beta.2"
         },
         {
           "name": "beta",
-          "version": "v1.1.0-beta.1"
+          "version": "v1.1.0-beta.2"
         }
       ]
     }
