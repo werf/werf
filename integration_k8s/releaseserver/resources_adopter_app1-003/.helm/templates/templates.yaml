@@ -39,9 +39,6 @@ spec:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
         image: ubuntu:18.04
-        env:
-          - name: KEY
-            value: VALUE
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -84,7 +81,25 @@ spec:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
         image: ubuntu:18.04
-        env:
-        - name: MYVAR
-          value: myvalue
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy5
+  labels:
+    service: mydeploy5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: mydeploy5
+  template:
+    metadata:
+      labels:
+        service: mydeploy5
+    spec:
+      containers:
+        - name: main
+          command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+          image: ubuntu:18.04
 ---
