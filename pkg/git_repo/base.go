@@ -19,7 +19,7 @@ import (
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/git_repo/ls_tree"
-	"github.com/flant/werf/pkg/path_filter"
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
 )
 
@@ -202,7 +202,7 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 	patchOpts := true_git.PatchOptions{
 		FromCommit: opts.FromCommit,
 		ToCommit:   opts.ToCommit,
-		PathFilter: path_filter.NewGitMappingPathFilter(
+		PathMatcher: path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
@@ -273,7 +273,7 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 
 	archiveOpts := true_git.ArchiveOptions{
 		Commit: opts.Commit,
-		PathFilter: path_filter.NewGitMappingPathFilter(
+		PathMatcher: path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
@@ -414,19 +414,19 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			return err
 		}
 
-		pathFilter := path_filter.NewGitMappingPathFilter(
+		pathMatcher := path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
 		)
 
 		var mainLsTreeResult *ls_tree.Result
-		processMsg := fmt.Sprintf("Main LsTree (%s)", pathFilter.String())
+		processMsg := fmt.Sprintf("Main LsTree (%s)", pathMatcher.String())
 		if err := logboek.Debug.LogProcess(
 			processMsg,
 			logboek.LevelLogProcessOptions{},
 			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathFilter)
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathMatcher)
 				return err
 			},
 		); err != nil {
@@ -435,18 +435,18 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 
 		for _, path := range opts.Paths {
 			var pathLsTreeResult *ls_tree.Result
-			pathFilter := path_filter.NewGitMappingPathFilter(
+			pathMatcher := path_matcher.NewGitMappingPathMatcher(
 				opts.BasePath,
 				[]string{path},
 				[]string{},
 			)
 
-			processMsg := fmt.Sprintf("LsTree path (%s)", pathFilter.String())
+			processMsg := fmt.Sprintf("LsTree path (%s)", pathMatcher.String())
 			if err := logboek.Debug.LogProcess(
 				processMsg,
 				logboek.LevelLogProcessOptions{},
 				func() error {
-					pathLsTreeResult, err = mainLsTreeResult.LsTree(pathFilter)
+					pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
 
 					hashSum := pathLsTreeResult.HashSum()
 					logboek.Debug.LogLn("Result hashSum: ", hashSum)

@@ -12,7 +12,7 @@ import (
 
 type PatchOptions struct {
 	FromCommit, ToCommit string
-	PathFilter           PathFilter
+	PathMatcher          PathMatcher
 
 	WithEntireFileContext bool
 	WithBinary            bool
@@ -181,7 +181,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 		out = io.MultiWriter(out, os.Stdout)
 	}
 
-	p := makeDiffParser(out, opts.PathFilter)
+	p := makeDiffParser(out, opts.PathMatcher)
 
 WaitForData:
 	for {

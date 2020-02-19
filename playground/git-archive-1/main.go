@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/flant/werf/pkg/path_filter"
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
 )
 
@@ -19,8 +19,8 @@ func main() {
 	}
 
 	_, err = true_git.ArchiveWithSubmodules(p, os.Args[1], "my-work-tree", true_git.ArchiveOptions{
-		Commit:     os.Args[2],
-		PathFilter: &path_filter.GitMappingPathFilter{},
+		Commit:      os.Args[2],
+		PathMatcher: &path_matcher.GitMappingPathMatcher{},
 	})
 	if err != nil {
 		panic(err)

@@ -21,8 +21,8 @@ import (
 )
 
 type ArchiveOptions struct {
-	Commit     string
-	PathFilter PathFilter
+	Commit      string
+	PathMatcher PathMatcher
 }
 
 type ArchiveDescriptor struct {
@@ -120,7 +120,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			relPath = rel(absPath, workTreeDir)
 		}
 
-		if relPath == opts.PathFilter.BasePath() || relPath == "." && opts.PathFilter.BasePath() == "" {
+		if relPath == opts.PathMatcher.BasePath() || relPath == "." && opts.PathMatcher.BasePath() == "" {
 			if info.IsDir() {
 				desc.Type = DirectoryArchive
 
@@ -140,9 +140,9 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			return nil
 		}
 
-		if !opts.PathFilter.MatchPath(relPath) {
+		if !opts.PathMatcher.MatchPath(relPath) {
 			if debugArchive() {
-				fmt.Printf("Excluded path %s by path filter %s\n", relPath, opts.PathFilter.String())
+				fmt.Printf("Excluded path %s by path filter %s\n", relPath, opts.PathMatcher.String())
 			}
 			return nil
 		}
@@ -153,7 +153,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			return fmt.Errorf("cannot process filename %s", unixRelPath)
 		}
 
-		tarEntryName := util.ToLinuxContainerPath(opts.PathFilter.TrimFileBasePath(relPath))
+		tarEntryName := util.ToLinuxContainerPath(opts.PathMatcher.TrimFileBasePath(relPath))
 
 		desc.IsEmpty = false
 
@@ -242,7 +242,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 	}
 
 	if desc.Type == "" {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathFilter.BasePath())
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BasePath())
 	}
 
 	return desc, nil

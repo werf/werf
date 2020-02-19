@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/werf/pkg/path_filter"
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
 )
 
@@ -20,9 +20,9 @@ func main() {
 	}
 
 	p, err := true_git.PatchWithSubmodules(f, os.Args[1], "my-work-tree", true_git.PatchOptions{
-		FromCommit: os.Args[2],
-		ToCommit:   os.Args[3],
-		PathFilter: &path_filter.GitMappingPathFilter{},
+		FromCommit:  os.Args[2],
+		ToCommit:    os.Args[3],
+		PathMatcher: &path_matcher.GitMappingPathMatcher{},
 	})
 	if err != nil {
 		panic(err)

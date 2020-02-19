@@ -1,4 +1,4 @@
-package path_filter
+package path_matcher
 
 import (
 	"fmt"
@@ -9,37 +9,37 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-func NewGitMappingPathFilter(basePath string, includePaths, excludePaths []string) *GitMappingPathFilter {
-	return &GitMappingPathFilter{
+func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string) *GitMappingPathMatcher {
+	return &GitMappingPathMatcher{
 		basePath:     basePath,
 		includePaths: includePaths,
 		excludePaths: excludePaths,
 	}
 }
 
-type GitMappingPathFilter struct {
+type GitMappingPathMatcher struct {
 	basePath     string
 	includePaths []string
 	excludePaths []string
 }
 
-func (f *GitMappingPathFilter) BasePath() string {
+func (f *GitMappingPathMatcher) BasePath() string {
 	return f.basePath
 }
 
-func (f *GitMappingPathFilter) IncludePaths() []string {
+func (f *GitMappingPathMatcher) IncludePaths() []string {
 	return f.includePaths
 }
 
-func (f *GitMappingPathFilter) ExcludePaths() []string {
+func (f *GitMappingPathMatcher) ExcludePaths() []string {
 	return f.excludePaths
 }
 
-func (f *GitMappingPathFilter) String() string {
+func (f *GitMappingPathMatcher) String() string {
 	return fmt.Sprintf("basePath=`%s`, includePaths=%v, excludePaths=%v", f.basePath, f.includePaths, f.excludePaths)
 }
 
-func (f *GitMappingPathFilter) MatchPath(path string) bool {
+func (f *GitMappingPathMatcher) MatchPath(path string) bool {
 	if !isRel(path, f.basePath) {
 		return false
 	}
@@ -61,7 +61,7 @@ func (f *GitMappingPathFilter) MatchPath(path string) bool {
 	return true
 }
 
-func (f *GitMappingPathFilter) ProcessDirOrSubmodulePath(path string) (bool, bool) {
+func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 
@@ -126,7 +126,7 @@ func (f *GitMappingPathFilter) ProcessDirOrSubmodulePath(path string) (bool, boo
 	}
 }
 
-func (f *GitMappingPathFilter) TrimFileBasePath(filePath string) string {
+func (f *GitMappingPathMatcher) TrimFileBasePath(filePath string) string {
 	return trimFileBasePath(filePath, f.basePath)
 }
 

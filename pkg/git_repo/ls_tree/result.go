@@ -61,7 +61,7 @@ func (r *Result) empty() bool {
 	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0
 }
 
-func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
+func (r *Result) LsTree(pathMatcher PathMatcher) (*Result, error) {
 	res := &Result{
 		repository:        r.repository,
 		tree:              r.tree,
@@ -76,19 +76,19 @@ func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
 
 		var err error
 		if lsTreeEntry.Path == "" {
-			isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
+			isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
 			if isTreeMatched {
 				logboek.Debug.LogLn("Root tree was added")
 				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
 			} else if shouldWalkThrough {
 				logboek.Debug.LogLn("Root tree was opened")
-				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.treePath, pathFilter)
+				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.treePath, pathMatcher)
 				if err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(r.repository, r.tree, r.treePath, lsTreeEntry, pathFilter)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(r.repository, r.tree, r.treePath, lsTreeEntry, pathMatcher)
 		}
 
 		res.lsTreeEntries = append(res.lsTreeEntries, entryLsTreeEntries...)
@@ -96,7 +96,7 @@ func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
 	}
 
 	for _, submoduleResult := range r.submodulesResults {
-		sr, err := submoduleResult.LsTree(pathFilter)
+		sr, err := submoduleResult.LsTree(pathMatcher)
 		if err != nil {
 			return nil, err
 		}

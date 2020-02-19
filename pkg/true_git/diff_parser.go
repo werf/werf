@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
+func makeDiffParser(out io.Writer, pathMatcher PathMatcher) *diffParser {
 	return &diffParser{
-		PathFilter:  pathFilter,
+		PathMatcher: pathMatcher,
 		Out:         out,
 		OutLines:    0,
 		Paths:       make([]string, 0),
@@ -34,7 +34,7 @@ const (
 )
 
 type diffParser struct {
-	PathFilter PathFilter
+	PathMatcher PathMatcher
 
 	Out                 io.Writer
 	OutLines            uint
@@ -245,12 +245,12 @@ func (p *diffParser) handleDiffBegin(line string) error {
 			}
 
 			path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
-			if !p.PathFilter.MatchPath(path) {
+			if !p.PathMatcher.MatchPath(path) {
 				p.state = ignoreDiff
 				return nil
 			}
 
-			newPath := p.PathFilter.TrimFileBasePath(path)
+			newPath := p.PathMatcher.TrimFileBasePath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -258,12 +258,12 @@ func (p *diffParser) handleDiffBegin(line string) error {
 			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
 		} else {
 			path := strings.TrimPrefix(data.PathWithPrefix, data.Prefix)
-			if !p.PathFilter.MatchPath(path) {
+			if !p.PathMatcher.MatchPath(path) {
 				p.state = ignoreDiff
 				return nil
 			}
 
-			newPath := p.PathFilter.TrimFileBasePath(path)
+			newPath := p.PathMatcher.TrimFileBasePath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -295,7 +295,7 @@ func (p *diffParser) handleModifyFileDiff(line string) error {
 
 func (p *diffParser) handleModifyFilePathA(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathFilter.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBasePath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	return p.writeOutLine(newLine)
@@ -303,7 +303,7 @@ func (p *diffParser) handleModifyFilePathA(line string) error {
 
 func (p *diffParser) handleModifyFilePathB(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathFilter.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBasePath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -318,7 +318,7 @@ func (p *diffParser) handleSubmoduleLine(line string) error {
 
 func (p *diffParser) handleNewFilePath(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathFilter.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBasePath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -328,7 +328,7 @@ func (p *diffParser) handleNewFilePath(line string) error {
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathFilter.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBasePath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	p.state = diffBody

@@ -1,6 +1,6 @@
 package true_git
 
-type PathFilter interface {
+type PathMatcher interface {
 	MatchPath(path string) bool
 	TrimFileBasePath(path string) string
 	BasePath() string
