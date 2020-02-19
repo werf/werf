@@ -5,3 +5,13 @@ image: ~
 from: alpine
 shell:
   setup: date
+import:
+- artifact: test
+  add: /test
+  to: /test
+  before: setup
+---
+artifact: test
+from: alpine
+shell:
+  install: echo "123" > /test
