@@ -2,6 +2,7 @@ module github.com/flant/werf
 
 require (
 	cloud.google.com/go v0.38.0
+	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -168,4 +169,4 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
 go 1.13
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20200217100637-b18c566416d9
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200219121324-93546abae733
