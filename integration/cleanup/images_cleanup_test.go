@@ -64,7 +64,7 @@ var _ = Describe("cleaning images", func() {
 		basicWerfArgs := basicWerfArgs
 
 		Describe(commandToCheck, func() {
-			Context("when deployed images in kubernetes are not taken in account", func() {
+			Context("when deployed images in kubernetes are not taken into account", func() {
 				BeforeEach(func() {
 					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 				})
