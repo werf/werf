@@ -75,8 +75,10 @@ type CmdData struct {
 
 	StagesToIntrospect *[]string
 
-	Debug            *bool
+	LogDebug         *bool
 	LogPretty        *bool
+	LogVerbose       *bool
+	LogQuiet         *bool
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
@@ -361,15 +363,33 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
-	SetupDebug(cmdData, cmd)
+	SetupLogDebug(cmdData, cmd)
+	SetupLogVerbose(cmdData, cmd)
+	SetupLogQuiet(cmdData, cmd)
 	SetupLogColor(cmdData, cmd)
 	SetupLogPretty(cmdData, cmd)
 	SetupTerminalWidth(cmdData, cmd)
 }
 
-func SetupDebug(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Debug = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Debug, "debug", "", GetBoolEnvironmentDefaultTrue("WERF_DEBUG"), "Enable debug output.")
+func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogDebug = new(bool)
+
+	for alias, env := range map[string]string{
+		"log-debug": "WERF_LOG_DEBUG",
+		"debug":     "WERF_DEBUG",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogDebug,
+			alias,
+			"",
+			GetBoolEnvironmentDefaultTrue(env),
+			fmt.Sprintf("Enable debug (default $%s).", env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("debug"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
@@ -385,6 +405,48 @@ func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
 Supported on, off and auto (based on the stdout’s file descriptor referring to a terminal) modes.
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
+}
+
+func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogQuiet = new(bool)
+
+	for alias, env := range map[string]string{
+		"log-quiet": "WERF_LOG_QUIET",
+		"quiet":     "WERF_QUIET",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogQuiet,
+			alias,
+			"",
+			GetBoolEnvironmentDefaultFalse(env),
+			fmt.Sprintf(`Disable explanatory output (default $%s).`, env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("quiet"); err != nil {
+		panic(err)
+	}
+}
+
+func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogVerbose = new(bool)
+
+	for alias, env := range map[string]string{
+		"log-verbose": "WERF_LOG_VERBOSE",
+		"verbose":     "WERF_VERBOSE",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogVerbose,
+			alias,
+			"",
+			GetBoolEnvironmentDefaultFalse(env),
+			fmt.Sprintf(`Enable verbose output (default $%s).`, env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("verbose"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
@@ -793,8 +855,12 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.Debug {
-		logging.EnableDebug()
+	if *cmdData.LogQuiet {
+		logging.EnableLogQuiet()
+	} else if *cmdData.LogDebug {
+		logging.EnableLogDebug()
+	} else if *cmdData.LogVerbose {
+		logging.EnableLogVerbose()
 	}
 
 	if !*cmdData.LogPretty {
