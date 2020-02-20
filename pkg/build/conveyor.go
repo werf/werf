@@ -463,6 +463,10 @@ func (c *Conveyor) GetImageLastStageImageName(imageName string) string {
 	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().Name()
 }
 
+func (c *Conveyor) GetImageLastStageImageID(imageName string) string {
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().ID()
+}
+
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {
 	c.buildingGitStageNameByImageName[imageName] = stageName
 }

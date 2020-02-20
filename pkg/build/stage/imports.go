@@ -86,10 +86,10 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface
 		var labelKey, labelValue string
 		if elm.ImageName != "" {
 			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ImageName)
-			labelValue = c.GetImageStagesSignature(elm.ImageName)
+			labelValue = c.GetImageLastStageImageID(elm.ImageName)
 		} else {
 			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ArtifactName)
-			labelValue = c.GetImageStagesSignature(elm.ArtifactName)
+			labelValue = c.GetImageLastStageImageID(elm.ArtifactName)
 		}
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
