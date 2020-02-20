@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -22,7 +24,6 @@ var (
 	dnsLabelRegex   = regexp.MustCompile(`^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$`)
 	dnsLabelMaxSize = 63
 
-	helmReleaseRegexp  = regexp.MustCompile(`^(?:(?:[A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])+$`)
 	helmReleaseMaxSize = 53
 )
 
@@ -85,19 +86,27 @@ func ValidateKubernetesNamespace(namespace string) error {
 	return fmt.Errorf("Kubernetes namespace should comply with DNS Label requirements: %s and %d bytes max", dnsLabelRegex, dnsLabelMaxSize)
 }
 
-func HelmRelease(name string) string {
-	if shouldNotBeSlugged(name, helmReleaseRegexp, helmReleaseMaxSize) {
-		return name
+func validateHelmRelease(name string) error {
+	errorMsgPrefix := fmt.Sprintf("Helm release name should be a valid DNS-1123 subdomain and be maximum %d chars", helmReleaseMaxSize)
+	if len(name) == 0 {
+		return nil
+	} else if len(name) > helmReleaseMaxSize {
+		return fmt.Errorf("%s: %q is %d chars long", errorMsgPrefix, name, len(name))
+	} else if msgs := validation.IsDNS1123Subdomain(name); len(msgs) > 0 {
+		return fmt.Errorf("%s: %s", errorMsgPrefix, strings.Join(msgs, ", "))
 	}
+	return nil
+}
 
-	return slug(name, helmReleaseMaxSize)
+func HelmRelease(name string) string {
+	if err := validateHelmRelease(name); err != nil {
+		return slug(name, helmReleaseMaxSize)
+	}
+	return name
 }
 
 func ValidateHelmRelease(name string) error {
-	if shouldNotBeSlugged(name, helmReleaseRegexp, helmReleaseMaxSize) {
-		return nil
-	}
-	return fmt.Errorf("Helm release name should comply with regex '%s' and be maximum %d chars", helmReleaseRegexp, helmReleaseMaxSize)
+	return validateHelmRelease(name)
 }
 
 func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
