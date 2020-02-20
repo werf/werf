@@ -44,7 +44,10 @@ func (s *UserStage) getStageDependenciesChecksum(name StageName) (string, error)
 		}
 
 		if debugUserStageChecksum() {
-			logboek.LogHighlightF("DEBUG: %s stage git mapping %s checksum %v\n", name, gitMapping.Name, checksum)
+			logboek.Debug.LogFHighlight(
+				"DEBUG: %s stage git mapping %s checksum %v\n",
+				name, gitMapping.Name, checksum,
+			)
 		}
 
 		args = append(args, checksum)

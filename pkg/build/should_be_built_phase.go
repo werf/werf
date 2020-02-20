@@ -59,11 +59,11 @@ func (phase *ShouldBeBuiltPhase) AfterImages() error {
 		return nil
 	}
 
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Built stages cache check", logProcessOptions, func() error {
+	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+	return logboek.Default.LogProcess("Built stages cache check", logProcessOptions, func() error {
 		for _, img := range phase.BadImages {
 			for _, stg := range phase.BadStagesByImage[img.GetName()] {
-				logboek.LogErrorF("%s %s is not exist in stages storage\n", img.LogDetailedName(), stg.LogDetailedName())
+				logboek.LogWarnF("%s %s is not exist in stages storage\n", img.LogDetailedName(), stg.LogDetailedName())
 			}
 		}
 
@@ -73,36 +73,36 @@ func (phase *ShouldBeBuiltPhase) AfterImages() error {
 			return fmt.Sprintf("(%d) ", reasonNumber)
 		}
 
-		logboek.LogErrorLn()
-		logboek.LogErrorLn(`There are some possible reasons:`)
-		logboek.LogErrorLn()
+		logboek.LogWarnLn()
+		logboek.LogWarnLn("There are some possible reasons:")
+		logboek.LogWarnLn()
 
 		if phase.IsBadDockerfileImageExists {
-			logboek.LogErrorLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
+			logboek.LogWarnLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
 - .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
 - auto-generated file`)
-			logboek.LogErrorLn()
+			logboek.LogWarnLn()
 		}
 
-		logboek.LogErrorLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
+		logboek.LogWarnLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
 - environment variable (e.g. {{ env "JOB_ID" }})
 - dynamic go template function (e.g. one of sprig date functions http://masterminds.github.io/sprig/date.html)
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
-		logboek.LogErrorLn()
+		logboek.LogWarnLn()
 
-		logboek.LogErrorLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+		logboek.LogWarnLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
 
 To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
 E.g.:
 
   diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`)
-		logboek.LogErrorLn()
+		logboek.LogWarnLn()
 
-		logboek.LogErrorLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
+		logboek.LogWarnLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
 - automatically with werf cleanup command
 - manually with werf purge, werf stages purge or werf host purge commands`)
-		logboek.LogErrorLn()
+		logboek.LogWarnLn()
 
 		return fmt.Errorf("stages required")
 	})

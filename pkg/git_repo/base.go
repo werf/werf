@@ -422,10 +422,14 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 
 		var mainLsTreeResult *ls_tree.Result
 		processMsg := fmt.Sprintf("Main LsTree (%s)", pathFilter.String())
-		if err := logboek.LogProcess(processMsg, logboek.LogProcessOptions{DebugLog: true}, func() error {
-			mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathFilter)
-			return err
-		}); err != nil {
+		if err := logboek.Debug.LogProcess(
+			processMsg,
+			logboek.LevelLogProcessOptions{},
+			func() error {
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathFilter)
+				return err
+			},
+		); err != nil {
 			return err
 		}
 
@@ -438,19 +442,23 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			)
 
 			processMsg := fmt.Sprintf("LsTree path (%s)", pathFilter.String())
-			if err := logboek.LogProcess(processMsg, logboek.LogProcessOptions{DebugLog: true}, func() error {
-				pathLsTreeResult, err = mainLsTreeResult.LsTree(pathFilter)
+			if err := logboek.Debug.LogProcess(
+				processMsg,
+				logboek.LevelLogProcessOptions{},
+				func() error {
+					pathLsTreeResult, err = mainLsTreeResult.LsTree(pathFilter)
 
-				hashSum := pathLsTreeResult.HashSum()
-				logboek.LogDebugLn("Result hashSum: ", hashSum)
-				if hashSum != "" {
-					checksum.Hash.Write([]byte(hashSum))
-				} else {
-					checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
-				}
+					hashSum := pathLsTreeResult.HashSum()
+					logboek.Debug.LogLn("Result hashSum: ", hashSum)
+					if hashSum != "" {
+						checksum.Hash.Write([]byte(hashSum))
+					} else {
+						checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
+					}
 
-				return err
-			}); err != nil {
+					return err
+				},
+			); err != nil {
 				return err
 			}
 		}

@@ -1,6 +1,8 @@
 package cleaning
 
-import "github.com/flant/logboek"
+import (
+	"github.com/flant/logboek"
+)
 
 type ImagesPurgeOptions struct {
 	ImagesRepoManager ImagesRepoManager
@@ -9,10 +11,13 @@ type ImagesPurgeOptions struct {
 }
 
 func ImagesPurge(options ImagesPurgeOptions) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running images purge", logProcessOptions, func() error {
-		return imagesPurge(options)
-	})
+	return logboek.Default.LogProcess(
+		"Running images purge",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return imagesPurge(options)
+		},
+	)
 }
 
 func imagesPurge(options ImagesPurgeOptions) error {

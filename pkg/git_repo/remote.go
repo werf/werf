@@ -99,7 +99,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		logboek.LogInfoF("Clone %s\n", repo.Url)
+		logboek.Default.LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0755); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
@@ -158,7 +158,7 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		logboek.LogInfoF("Fetch remote %s of %s\n", remoteName, repo.Url)
+		logboek.Default.LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -293,10 +293,14 @@ func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error
 		return nil, err
 	}
 
-	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{DebugLog: true}, func() error {
-		checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
-		return nil
-	})
+	_ = logboek.Debug.LogProcess(
+		"Calculating checksum",
+		logboek.LevelLogProcessOptions{},
+		func() error {
+			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+			return nil
+		},
+	)
 
 	return
 }

@@ -129,12 +129,12 @@ func (b *Ansible) stageChecksum(userStageName string) string {
 	}
 
 	if debugUserStageChecksum() {
-		logboek.LogHighlightF("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
+		logboek.Debug.LogFHighlight("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
 	}
 
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
 		if debugUserStageChecksum() {
-			logboek.LogHighlightF("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
+			logboek.Debug.LogFHighlight("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
 		}
 
 		checksumArgs = append(checksumArgs, stageVersionChecksum)

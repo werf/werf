@@ -38,7 +38,7 @@ func Mute() {
 }
 
 func EnableDebug() {
-	logboek.EnableDebug()
+	//logboek.EnableDebug()
 }
 
 func EnableLogColor() {

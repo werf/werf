@@ -95,7 +95,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
 				if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
@@ -104,7 +105,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
 				if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}

@@ -78,10 +78,10 @@ func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
 		if lsTreeEntry.Path == "" {
 			isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
 			if isTreeMatched {
-				logboek.LogDebugLn("Root tree was added")
+				logboek.Debug.LogLn("Root tree was added")
 				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
 			} else if shouldWalkThrough {
-				logboek.LogDebugLn("Root tree was opened")
+				logboek.Debug.LogLn("Root tree was opened")
 				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.treePath, pathFilter)
 				if err != nil {
 					return nil, err

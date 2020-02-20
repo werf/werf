@@ -150,7 +150,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
-	logboek.LogInfoF("  tag: %s\n", image.Tag)
+	logboek.Default.LogFDetails("  tag: %s\n", image.Tag)
 	logboek.LogOptionalLn()
 
 	return nil
