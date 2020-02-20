@@ -109,7 +109,7 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	img.SetLastNonEmptyStage(phase.PrevNonEmptyStage)
 
-	stagesSig, err := phase.calculateSignature("imageStages", "", phase.PrevNonEmptyStage)
+	stagesSig, err := calculateSignature("imageStages", "", phase.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
 		return fmt.Errorf("unable to calculate image %s stages-signature: %s", img.GetName(), err)
 	}
@@ -206,15 +206,15 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 	return true, nil
 }
 
-func (phase *BuildPhase) calculateSignature(stageName, stageDependencies string, prevNonEmptyStage stage.Interface) (string, error) {
+func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
 	checksumArgs := []string{image.BuildCacheVersion, stageName, stageDependencies}
-	if phase.PrevNonEmptyStage != nil {
-		prevStageDependencies, err := phase.PrevNonEmptyStage.GetNextStageDependencies(phase.Conveyor)
+	if prevNonEmptyStage != nil {
+		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(conveyor)
 		if err != nil {
-			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", phase.PrevNonEmptyStage.Name(), stageName, err)
+			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", prevNonEmptyStage.Name(), stageName, err)
 		}
 
-		checksumArgs = append(checksumArgs, phase.PrevNonEmptyStage.GetSignature(), prevStageDependencies)
+		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetSignature(), prevStageDependencies)
 	}
 
 	res := util.Sha3_224Hash(checksumArgs...)
@@ -228,7 +228,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		return err
 	}
 
-	stageSig, err := phase.calculateSignature(string(stg.Name()), stageDependencies, phase.PrevNonEmptyStage)
+	stageSig, err := calculateSignature(string(stg.Name()), stageDependencies, phase.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
 		return err
 	}

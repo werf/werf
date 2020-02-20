@@ -140,7 +140,7 @@ func run(imageName string) error {
 		return err
 	}
 
-	fmt.Println(c.GetImageLatestStageImageName(imageName))
+	fmt.Println(c.GetImageLastStageImageName(imageName))
 
 	return nil
 }

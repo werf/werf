@@ -452,12 +452,12 @@ func (c *Conveyor) GetImage(name string) *Image {
 	panic(fmt.Sprintf("Image '%s' not found!", name))
 }
 
-func (c *Conveyor) GetImageLatestStageSignature(imageName string) string {
-	return c.GetImage(imageName).LatestStage().GetSignature()
+func (c *Conveyor) GetImageStagesSignature(imageName string) string {
+	return c.GetImage(imageName).GetStagesSignature()
 }
 
-func (c *Conveyor) GetImageLatestStageImageName(imageName string) string {
-	return c.GetImage(imageName).LatestStage().GetImage().Name()
+func (c *Conveyor) GetImageLastStageImageName(imageName string) string {
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().Name()
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {
