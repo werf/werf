@@ -2,7 +2,6 @@ package cleanup
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/flant/shluz"
@@ -129,18 +128,12 @@ func runSync() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
-	stagesCleanupDryRun := *CommonCmdData.DryRun
-	if os.Getenv("WERF_STAGES_CLEANUP_ENABLED") != "1" {
-		// FIXME: dry-run=true is forced by default because of the broken cleanup for v1.1
-		stagesCleanupDryRun = true
-	}
-
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ProjectName:       projectName,
 		ImagesRepoManager: imagesRepoManager,
 		StagesStorage:     stagesStorage,
 		ImagesNames:       imagesNames,
-		DryRun:            stagesCleanupDryRun,
+		DryRun:            *CommonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
