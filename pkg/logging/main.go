@@ -37,8 +37,16 @@ func Mute() {
 	log.SetOutput(logboek.GetOutStream())
 }
 
-func EnableDebug() {
-	//logboek.EnableDebug()
+func EnableLogQuiet() {
+	logboek.SetQuietLevel()
+}
+
+func EnableLogDebug() {
+	logboek.SetLevel(logboek.Debug)
+}
+
+func EnableLogVerbose() {
+	logboek.SetLevel(logboek.Info)
 }
 
 func EnableLogColor() {
