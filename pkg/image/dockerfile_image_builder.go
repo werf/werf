@@ -42,6 +42,8 @@ func (b *DockerfileImageBuilder) Build() error {
 }
 
 func (b *DockerfileImageBuilder) Cleanup() error {
-	// TODO: remove temporalId
+	if err := docker.CliRmi(b.temporalId); err != nil {
+		return fmt.Errorf("unable to remove temporal dockerfile image %q: %s", b.temporalId, err)
+	}
 	return nil
 }

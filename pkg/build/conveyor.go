@@ -2,6 +2,7 @@ package build
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -62,6 +63,8 @@ type Conveyor struct {
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
 	StorageLockManager storage.LockManager
+
+	onTerminateFuncs []func() error
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
@@ -93,11 +96,36 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 	return c
 }
 
+func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
+	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
+}
+
 func (c *Conveyor) Terminate() error {
+	var terminateErrors []error
+
 	for gitRepoName, gitRepoCache := range c.gitReposCaches {
 		if err := gitRepoCache.Terminate(); err != nil {
-			return fmt.Errorf("unable to terminate cache of git repo '%s': %s", gitRepoName, err)
+			terminateErrors = append(terminateErrors, fmt.Errorf("unable to terminate cache of git repo '%s': %s", gitRepoName, err))
 		}
+	}
+
+	for _, onTerminateFunc := range c.onTerminateFuncs {
+		if err := onTerminateFunc(); err != nil {
+			terminateErrors = append(terminateErrors, err)
+		}
+	}
+
+	if len(terminateErrors) > 0 {
+		errMsg := "Errors occurred during conveyor termination:\n"
+		for _, err := range terminateErrors {
+			errMsg += fmt.Sprintf(" - %s\n", err)
+		}
+
+		// NOTE: Errors printed here because conveyor termination should occur in defer,
+		// NOTE: and errors in the defer will be silenced otherwise.
+		logboek.LogErrorF("%s", errMsg)
+
+		return errors.New(errMsg)
 	}
 
 	return nil
