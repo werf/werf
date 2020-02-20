@@ -37,10 +37,9 @@ type DeployOptions struct {
 }
 
 func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
-	var logBlockErr error
 	var werfChart *werf_chart.WerfChart
 
-	logboek.LogBlock("Deploy options", logboek.LogBlockOptions{}, func() {
+	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
 		if kube.Context != "" {
 			logboek.LogF("Using kube context: %s\n", kube.Context)
 		}
@@ -51,14 +50,12 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 
 		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
-			logBlockErr = err
-			return
+			return err
 		}
 
 		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
-			logBlockErr = fmt.Errorf("error creating service values: %s", err)
-			return
+			return fmt.Errorf("error creating service values: %s", err)
 		}
 
 		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
@@ -69,8 +66,7 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 		projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
 		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 		if err != nil {
-			logBlockErr = err
-			return
+			return err
 		}
 		helm.SetReleaseLogSecretValuesToMask(werfChart.SecretValuesToMask)
 
@@ -78,12 +74,14 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 		werfChart.MergeExtraLabels(opts.UserExtraLabels)
 		werfChart.LogExtraAnnotations()
 		werfChart.LogExtraLabels()
-	})
-	logboek.LogOptionalLn()
 
-	if logBlockErr != nil {
-		return logBlockErr
+		return nil
+	}); err != nil {
+		logboek.LogOptionalLn()
+		return err
 	}
+
+	logboek.LogOptionalLn()
 
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)

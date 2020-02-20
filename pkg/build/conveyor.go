@@ -270,10 +270,13 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 }
 
 func (c *Conveyor) determineStages() error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Determining of stages", logProcessOptions, func() error {
-		return c.doDetermineStages()
-	})
+	return logboek.Default.LogProcess(
+		"Determining of stages",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return c.doDetermineStages()
+		},
+	)
 }
 
 func (c *Conveyor) doDetermineStages() error {
@@ -281,18 +284,18 @@ func (c *Conveyor) doDetermineStages() error {
 	for _, imageInterfaceConfig := range imagesInterfaces {
 		var image *Image
 		var imageLogName string
-		var colorizeMsgFunc func(...interface{}) string
+		var style *logboek.Style
 
 		switch imageConfig := imageInterfaceConfig.(type) {
 		case config.StapelImageInterface:
 			imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
-			colorizeMsgFunc = ImageLogProcessColorizeFunc(imageConfig.IsArtifact())
+			style = ImageLogProcessStyle(imageConfig.IsArtifact())
 		case *config.ImageFromDockerfile:
 			imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
-			colorizeMsgFunc = ImageLogProcessColorizeFunc(false)
+			style = ImageLogProcessStyle(false)
 		}
 
-		err := logboek.LogProcess(imageLogName, logboek.LogProcessOptions{ColorizeMsgFunc: colorizeMsgFunc}, func() error {
+		err := logboek.Default.LogProcess(imageLogName, logboek.LevelLogProcessOptions{Style: style}, func() error {
 			var err error
 
 			switch imageConfig := imageInterfaceConfig.(type) {
@@ -353,7 +356,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 
 ImagesProcessing:
 	for _, img := range c.imagesInOrder {
-		logboek.LogDebugF("Start processing image %s\n", img.GetName())
+		logboek.Debug.LogF("Start processing image %s\n", img.GetName())
 
 		for _, phase := range phases {
 			if err := phase.BeforeImageStages(img); err != nil {
@@ -564,7 +567,7 @@ func getImageConfigsToProcess(c *Conveyor) []config.ImageInterface {
 		for _, imageName := range c.imageNamesToProcess {
 			imageToProcess := c.werfConfig.GetImage(imageName)
 			if imageToProcess == nil {
-				logboek.LogErrorF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
+				logboek.LogWarnF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
 			} else {
 				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
@@ -647,7 +650,7 @@ func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, 
 	}
 
 	if len(gitMappings) != 0 {
-		logboek.LogInfoLn("Using git stages")
+		logboek.Default.LogLnDetails("Using git stages")
 
 		for _, s := range stages {
 			s.SetGitMappings(gitMappings)
@@ -737,38 +740,39 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 			}
 
 			withTripleIndent(func() {
-				logboek.LogInfoF("add: %s\n", gitMapping.Add)
-				logboek.LogInfoF("to: %s\n", gitMapping.To)
+				logboek.Default.LogFDetails("add: %s\n", gitMapping.Add)
+				logboek.Default.LogFDetails("to: %s\n", gitMapping.To)
 
 				if len(gitMapping.IncludePaths) != 0 {
-					logboek.LogInfoF("includePaths: %+v\n", gitMapping.IncludePaths)
+					logboek.Default.LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
 				}
 
 				if len(gitMapping.ExcludePaths) != 0 {
-					logboek.LogInfoF("excludePaths: %+v\n", gitMapping.ExcludePaths)
+					logboek.Default.LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
 				}
 
 				if gitMapping.Commit != "" {
-					logboek.LogInfoF("commit: %s\n", gitMapping.Commit)
+					logboek.Default.LogFDetails("commit: %s\n", gitMapping.Commit)
 				}
 
 				if gitMapping.Branch != "" {
-					logboek.LogInfoF("branch: %s\n", gitMapping.Branch)
+					logboek.Default.LogFDetails("branch: %s\n", gitMapping.Branch)
 				}
 
 				if gitMapping.Owner != "" {
-					logboek.LogInfoF("owner: %s\n", gitMapping.Owner)
+					logboek.Default.LogFDetails("owner: %s\n", gitMapping.Owner)
 				}
 
 				if gitMapping.Group != "" {
-					logboek.LogInfoF("group: %s\n", gitMapping.Group)
+					logboek.Default.LogFDetails("group: %s\n", gitMapping.Group)
 				}
 
 				if len(gitMapping.StagesDependencies) != 0 {
-					logboek.LogInfoLn("stageDependencies:")
+					logboek.Default.LogLnDetails("stageDependencies:")
+
 					for s, values := range gitMapping.StagesDependencies {
 						if len(values) != 0 {
-							logboek.LogInfoF("  %s: %v\n", s, values)
+							logboek.Default.LogFDetails("  %s: %v\n", s, values)
 						}
 					}
 
@@ -782,7 +786,8 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			logboek.LogInfoF("Commit %s will be used\n", commit)
+			logboek.Default.LogFDetails("Commit %s will be used\n", commit)
+
 			res = append(res, gitMapping)
 
 			return nil
@@ -884,7 +889,7 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logboek.LogInfoF("Using stage %s\n", stage.Name())
+		logboek.Default.LogFDetails("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 
@@ -1030,7 +1035,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 
 	image.stages = append(image.stages, dockerfileStage)
 
-	logboek.LogInfoF("Using stage %s\n", dockerfileStage.Name())
+	logboek.Default.LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return image, nil
 }

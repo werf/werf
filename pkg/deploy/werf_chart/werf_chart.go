@@ -172,7 +172,7 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 	if exist, err := util.FileExists(chartYamlFile); err != nil {
 		return nil, fmt.Errorf("check file %s existence failed: %s", chartYamlFile, err)
 	} else if exist {
-		logboek.LogErrorF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
+		logboek.LogWarnF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
 	}
 
 	defaultSecretValues := filepath.Join(chartDir, DefaultSecretValuesFileName)

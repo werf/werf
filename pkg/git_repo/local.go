@@ -62,10 +62,14 @@ func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
 }
 
 func (repo *Local) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	_ = logboek.LogProcess("Calculating checksum", logboek.LogProcessOptions{DebugLog: true}, func() error {
-		checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
-		return nil
-	})
+	_ = logboek.Debug.LogProcess(
+		"Calculating checksum",
+		logboek.LevelLogProcessOptions{},
+		func() error {
+			checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+			return nil
+		},
+	)
 
 	return
 }
@@ -99,7 +103,7 @@ func (repo *Local) IsBranchState() bool {
 	if err == errNotABranch {
 		return false
 	} else if err != nil {
-		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
 		return false
 	}
 	return true
@@ -108,7 +112,7 @@ func (repo *Local) IsBranchState() bool {
 func (repo *Local) GetCurrentBranchName() string {
 	name, err := repo.HeadBranchName()
 	if err != nil {
-		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
 		return ""
 	}
 	return name
@@ -157,13 +161,13 @@ func (repo *Local) findTagByCommitID(repoPath string, commitID plumbing.Hash) (s
 func (repo *Local) GetCurrentTagName() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logboek.LogErrorF("ERROR: Cannot get local git repo head ref: %s\n", err)
+		logboek.LogWarnF("ERROR: Cannot get local git repo head ref: %s\n", err)
 		return ""
 	}
 
 	tag, err := repo.findTagByCommitID(repo.Path, ref.Hash())
 	if err != nil {
-		logboek.LogErrorF("ERROR: Cannot get local git repo tag: %s\n", err)
+		logboek.LogWarnF("ERROR: Cannot get local git repo tag: %s\n", err)
 		return ""
 	}
 	return tag
@@ -172,7 +176,7 @@ func (repo *Local) GetCurrentTagName() string {
 func (repo *Local) GetHeadCommit() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logboek.LogErrorF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
 		return ""
 	}
 	return fmt.Sprintf("%s", ref.Hash())

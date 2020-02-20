@@ -64,12 +64,12 @@ func Init(keys []string) error {
 		for _, key := range defaultKeys {
 			keyData, err := ioutil.ReadFile(key)
 			if err != nil {
-				logboek.LogErrorF("WARNING: cannot read default key %s: %s\n", key, err)
+				logboek.Warn.LogF("WARNING: cannot read default key %s: %s\n", key, err)
 				continue
 			}
 			_, err = ssh.ParseRawPrivateKey(keyData)
 			if err != nil {
-				logboek.LogErrorF("WARNING: default key %s validation error: %s\n", key, err)
+				logboek.Warn.LogF("WARNING: default key %s validation error: %s\n", key, err)
 				continue
 			}
 
@@ -137,7 +137,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				logboek.LogErrorF("WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logboek.LogWarnF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -146,13 +146,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					logboek.LogErrorF("WARNING: ssh-agent server error: %s\n", err)
+					logboek.LogWarnF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					logboek.LogErrorF("WARNING: ssh-agent server connection close error: %s\n", err)
+					logboek.LogWarnF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()

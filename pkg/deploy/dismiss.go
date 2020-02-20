@@ -17,8 +17,8 @@ func RunDismiss(releaseName, namespace, _ string, opts DismissOptions) error {
 	}
 
 	logboek.LogLn()
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running dismiss", logProcessOptions, func() error {
+	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+	return logboek.Default.LogProcess("Running dismiss", logProcessOptions, func() error {
 		return helm.PurgeHelmRelease(releaseName, namespace, opts.WithNamespace, opts.WithHooks)
 	})
 }

@@ -11,10 +11,13 @@ type StagesPurgeOptions struct {
 }
 
 func StagesPurge(options StagesPurgeOptions) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running stages purge", logProcessOptions, func() error {
-		return stagesPurge(options)
-	})
+	return logboek.Default.LogProcess(
+		"Running stages purge",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return stagesPurge(options)
+		},
+	)
 }
 
 func stagesPurge(options StagesPurgeOptions) error {

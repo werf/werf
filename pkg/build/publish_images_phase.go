@@ -3,11 +3,11 @@ package build
 import (
 	"fmt"
 
-	image "github.com/flant/werf/pkg/image"
-
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 )
@@ -197,27 +197,36 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 	for _, strategy := range nonEmptySchemeInOrder {
 		imageMetaTags := phase.TagsByScheme[strategy]
 
-		if err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-			for _, imageMetaTag := range imageMetaTags {
-				if err := phase.publishImageByTag(img, imageMetaTag, strategy, existingTags); err != nil {
-					return fmt.Errorf("error publishing image %s by tag %s: %s", img.GetName(), imageMetaTag, err)
+		if err := logboek.Default.LogProcess(
+			fmt.Sprintf("%s tagging strategy", string(strategy)),
+			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+			func() error {
+				for _, imageMetaTag := range imageMetaTags {
+					if err := phase.publishImageByTag(img, imageMetaTag, strategy, existingTags); err != nil {
+						return fmt.Errorf("error publishing image %s by tag %s: %s", img.GetName(), imageMetaTag, err)
+					}
 				}
-			}
 
-			return nil
-		}); err != nil {
+				return nil
+			},
+		); err != nil {
 			return err
 		}
 	}
 
 	if phase.TagByStagesSignature {
-		if err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", tag_strategy.StagesSignature), logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-			if err := phase.publishImageByTag(img, img.GetStagesSignature(), tag_strategy.StagesSignature, existingTags); err != nil {
-				return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetStagesSignature(), err)
-			}
+		if err := logboek.Default.LogProcess(
+			fmt.Sprintf("%s tagging strategy", tag_strategy.StagesSignature),
+			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+			func() error {
 
-			return nil
-		}); err != nil {
+				if err := phase.publishImageByTag(img, img.GetStagesSignature(), tag_strategy.StagesSignature, existingTags); err != nil {
+					return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetStagesSignature(), err)
+				}
+
+				return nil
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -258,10 +267,11 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	if alreadyExists {
-		logboek.LogHighlightF("Tag %s is up-to-date\n", imageTag)
+		logboek.Default.LogFHighlight("Tag %s is up-to-date\n", imageTag)
+
 		_ = logboek.WithIndent(func() error {
-			logboek.LogInfoF("images-repo: %s\n", imageRepository)
-			logboek.LogInfoF("      image: %s\n", imageName)
+			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
+			logboek.Default.LogFDetails("      image: %s\n", imageName)
 
 			return nil
 		})
@@ -283,59 +293,68 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 
 	successInfoSectionFunc := func() {
 		_ = logboek.WithIndent(func() error {
-			logboek.LogInfoF("images-repo: %s\n", imageRepository)
-			logboek.LogInfoF("      image: %s\n", imageName)
-
+			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
+			logboek.Default.LogFDetails("      image: %s\n", imageName)
 			return nil
 		})
 	}
-	logProcessOptions := logboek.LogProcessOptions{SuccessInfoSectionFunc: successInfoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess(fmt.Sprintf("Publishing tag %s", imageTag), logProcessOptions, func() error {
-		if err := logboek.LogProcess("Building final image with meta information", logboek.LogProcessOptions{}, func() error {
-			if err := publishImage.Build(image.BuildOptions{}); err != nil {
-				return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, tagStrategy, err)
+
+	return logboek.Default.LogProcess(
+		fmt.Sprintf("Publishing tag %s", imageTag),
+		logboek.LevelLogProcessOptions{
+			SuccessInfoSectionFunc: successInfoSectionFunc,
+			Style:                  logboek.HighlightStyle(),
+		},
+		func() error {
+			if err := logboek.LogProcess("Building final image with meta information", logboek.LogProcessOptions{}, func() error {
+				if err := publishImage.Build(image.BuildOptions{}); err != nil {
+					return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, tagStrategy, err)
+				}
+
+				return nil
+			},
+			); err != nil {
+				return err
+			}
+
+			if err := phase.Conveyor.StorageLockManager.LockImage(imageName); err != nil {
+				return fmt.Errorf("error locking image %s: %s", imageName)
+			}
+			defer phase.Conveyor.StorageLockManager.UnlockImage(imageName)
+
+			existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
+			if err != nil {
+				return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
+			}
+
+			alreadyExists, err := phase.checkImageAlreadyExists(existingTags, imageName, imageTag, lastStageImage)
+			if err != nil {
+				return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.GetName(), err)
+			}
+
+			if alreadyExists {
+				logboek.Default.LogFHighlight(
+					"Tag %s is up-to-date, discarding newly built image %s\n",
+					imageTag, publishImage.MustGetBuiltId(),
+				)
+				_ = logboek.WithIndent(func() error {
+					logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
+					logboek.Default.LogFDetails("      image: %s\n", imageName)
+
+					return nil
+				})
+
+				logboek.LogOptionalLn()
+
+				return nil
+			}
+
+			if err := publishImage.Export(); err != nil {
+				return fmt.Errorf("error pushing %s: %s", imageName, err)
 			}
 
 			return nil
-		}); err != nil {
-			return err
-		}
-
-		if err := phase.Conveyor.StorageLockManager.LockImage(imageName); err != nil {
-			return fmt.Errorf("error locking image %s: %s", imageName)
-		}
-		defer phase.Conveyor.StorageLockManager.UnlockImage(imageName)
-
-		existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
-		if err != nil {
-			return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
-		}
-
-		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, imageName, imageTag, lastStageImage)
-		if err != nil {
-			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.GetName(), err)
-		}
-
-		if alreadyExists {
-			logboek.LogHighlightF("Tag %s is up-to-date, discarding newly built image %s\n", imageTag, publishImage.MustGetBuiltId())
-			_ = logboek.WithIndent(func() error {
-				logboek.LogInfoF("images-repo: %s\n", imageRepository)
-				logboek.LogInfoF("      image: %s\n", imageName)
-
-				return nil
-			})
-
-			logboek.LogOptionalLn()
-
-			return nil
-		}
-
-		if err := publishImage.Export(); err != nil {
-			return fmt.Errorf("error pushing %s: %s", imageName, err)
-		}
-
-		return nil
-	})
+		})
 }
 
 func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, imageName, imageTag string, lastStageImage image.ImageInterface) (bool, error) {

@@ -889,7 +889,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logboek.LogHighlightLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+	logboek.Default.LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
 
 	return err
 }
@@ -902,6 +902,6 @@ func TerminateWithError(errMsg string, exitCode int) {
 	msg := fmt.Sprintf("Error: %s", errMsg)
 	msg = strings.TrimSuffix(msg, "\n")
 
-	_, _ = fmt.Fprintln(os.Stderr, logboek.ColorizeWarning(msg))
+	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
 }

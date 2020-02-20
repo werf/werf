@@ -35,31 +35,31 @@ func (i *Image) LogDetailedName() string {
 	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 
-func (i *Image) LogProcessColorizeFunc() func(...interface{}) string {
-	return ImageLogProcessColorizeFunc(i.isArtifact)
+func (i *Image) LogProcessStyle() *logboek.Style {
+	return ImageLogProcessStyle(i.isArtifact)
 }
 
-func (i *Image) LogTagColorizeFunc() func(...interface{}) string {
-	return ImageLogTagColorizeFunc(i.isArtifact)
+func (i *Image) LogTagStyle() *logboek.Style {
+	return ImageLogTagStyle(i.isArtifact)
 }
 
-func ImageLogProcessColorizeFunc(isArtifact bool) func(...interface{}) string {
-	return imageDefaultColorizeFunc(isArtifact)
+func ImageLogProcessStyle(isArtifact bool) *logboek.Style {
+	return imageDefaultStyle(isArtifact)
 }
 
-func ImageLogTagColorizeFunc(isArtifact bool) func(...interface{}) string {
-	return imageDefaultColorizeFunc(isArtifact)
+func ImageLogTagStyle(isArtifact bool) *logboek.Style {
+	return imageDefaultStyle(isArtifact)
 }
 
-func imageDefaultColorizeFunc(isArtifact bool) func(...interface{}) string {
-	var colorFormat []color.Attribute
+func imageDefaultStyle(isArtifact bool) *logboek.Style {
+	var attributes []color.Attribute
 	if isArtifact {
-		colorFormat = []color.Attribute{color.FgCyan, color.Bold}
+		attributes = []color.Attribute{color.FgCyan, color.Bold}
 	} else {
-		colorFormat = []color.Attribute{color.FgYellow, color.Bold}
+		attributes = []color.Attribute{color.FgYellow, color.Bold}
 	}
 
-	return color.New(colorFormat...).Sprint
+	return &logboek.Style{Attributes: attributes}
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -133,8 +133,8 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		if baseImageRepoId == i.baseImage.ID() || err != nil {
 			if err != nil {
 				logboek.LogLn()
-				logboek.LogErrorF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-				logboek.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+				logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
+				logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
 			}
 
 			return nil
@@ -143,8 +143,8 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		logboek.LogOptionalLn()
 	}
 
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Pulling base image", logProcessOptions, func() error {
+	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+	return logboek.Default.LogProcess("Pulling base image", logProcessOptions, func() error {
 		if err := i.baseImage.Pull(); err != nil {
 			return err
 		}

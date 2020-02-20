@@ -26,10 +26,13 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running stages cleanup", logProcessOptions, func() error {
-		return stagesCleanup(options)
-	})
+	return logboek.Default.LogProcess(
+		"Running stages cleanup",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return stagesCleanup(options)
+		},
+	)
 }
 
 func stagesCleanup(options StagesCleanupOptions) error {
