@@ -458,6 +458,10 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 
 		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
 
+		phase.Conveyor.AppendOnTerminateFunc(func() error {
+			return stageImage.DockerfileImageBuilder().Cleanup()
+		})
+
 	default:
 		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
 		imageServiceCommitChangeOptions.AddLabel(serviceLabels)
