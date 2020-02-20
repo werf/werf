@@ -53,9 +53,9 @@ func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface)
 
 	for _, elm := range s.imports {
 		if elm.ImageName != "" {
-			args = append(args, c.GetImageLatestStageSignature(elm.ImageName))
+			args = append(args, c.GetImageStagesSignature(elm.ImageName))
 		} else {
-			args = append(args, c.GetImageLatestStageSignature(elm.ArtifactName))
+			args = append(args, c.GetImageStagesSignature(elm.ArtifactName))
 		}
 
 		args = append(args, elm.Add, elm.To)
@@ -86,10 +86,10 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface
 		var labelKey, labelValue string
 		if elm.ImageName != "" {
 			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ImageName)
-			labelValue = c.GetImageLatestStageSignature(elm.ImageName)
+			labelValue = c.GetImageStagesSignature(elm.ImageName)
 		} else {
 			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ArtifactName)
-			labelValue = c.GetImageLatestStageSignature(elm.ArtifactName)
+			labelValue = c.GetImageStagesSignature(elm.ArtifactName)
 		}
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
@@ -124,9 +124,9 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 
 	var dockerImageName string
 	if i.ImageName != "" {
-		dockerImageName = c.GetImageLatestStageImageName(i.ImageName)
+		dockerImageName = c.GetImageLastStageImageName(i.ImageName)
 	} else {
-		dockerImageName = c.GetImageLatestStageImageName(i.ArtifactName)
+		dockerImageName = c.GetImageLastStageImageName(i.ArtifactName)
 	}
 
 	if err := os.MkdirAll(importImageTmp, os.ModePerm); err != nil {

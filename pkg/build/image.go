@@ -96,10 +96,6 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 	return nil
 }
 
-func (i *Image) LatestStage() stage.Interface {
-	return i.stages[len(i.stages)-1]
-}
-
 func (i *Image) GetName() string {
 	return i.name
 }
@@ -111,7 +107,7 @@ func (i *Image) GetLogName() string {
 func (i *Image) SetupBaseImage(c *Conveyor) {
 	baseImageName := i.baseImageName
 	if i.baseImageImageName != "" {
-		baseImageName = c.GetImage(i.baseImageImageName).LatestStage().GetImage().Name()
+		baseImageName = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage().GetImage().Name()
 	}
 
 	i.baseImage = c.GetOrCreateStageImage(nil, baseImageName)
