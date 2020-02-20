@@ -128,7 +128,8 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	}
 
 	if isWorkTreeDirExist && !isWorkTreeValid {
-		logboek.LogInfoF("Removing invalidated work tree dir %s of repo %s\n", workTreeDir, repoDir)
+		logboek.Default.LogFDetails("Removing invalidated work tree dir %s of repo %s\n", workTreeDir, repoDir)
+
 		if err := os.RemoveAll(workTreeDir); err != nil {
 			return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
 		}
@@ -138,9 +139,9 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	// If worktree already exists — it will be used as a cache.
 	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
 	if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
-		logboek.LogInfoF("Work tree dir: %s\n", workTreeDir)
+		logboek.Default.LogFDetails("Work tree dir: %s\n", workTreeDir)
 		if currentCommit != "" {
-			logboek.LogInfoF("Current commit: %s\n", currentCommit)
+			logboek.Default.LogFDetails("Current commit: %s\n", currentCommit)
 		}
 		return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {

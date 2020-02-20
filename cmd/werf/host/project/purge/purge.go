@@ -81,8 +81,8 @@ func run(projectNames ...string) error {
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
-		logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-		if err := logboek.LogProcess("Project "+projectName, logProcessOptions, func() error {
+		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
 			stagesPurgeOptions := cleaning.StagesPurgeOptions{
 				ProjectName:                   projectName,
 				RmContainersThatUseWerfImages: CmdData.Force,

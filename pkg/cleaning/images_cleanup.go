@@ -43,10 +43,13 @@ type ImagesCleanupOptions struct {
 }
 
 func ImagesCleanup(options ImagesCleanupOptions) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running images cleanup", logProcessOptions, func() error {
-		return imagesCleanup(options)
-	})
+	return logboek.Default.LogProcess(
+		"Running images cleanup",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return imagesCleanup(options)
+		},
+	)
 }
 
 func imagesCleanup(options ImagesCleanupOptions) error {
@@ -69,21 +72,25 @@ func imagesCleanup(options ImagesCleanupOptions) error {
 
 			for imageName, repoImages := range repoImagesByImageName {
 				logProcessMessage := fmt.Sprintf("Processing image %s", logging.ImageLogName(imageName, false))
-				if err := logboek.LogProcess(logProcessMessage, logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-					repoImages, err = repoImagesCleanupByNonexistentGitPrimitive(repoImages, options)
-					if err != nil {
-						return err
-					}
+				if err := logboek.Default.LogProcess(
+					logProcessMessage,
+					logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+					func() error {
+						repoImages, err = repoImagesCleanupByNonexistentGitPrimitive(repoImages, options)
+						if err != nil {
+							return err
+						}
 
-					repoImages, err = repoImagesCleanupByPolicies(repoImages, options)
-					if err != nil {
-						return err
-					}
+						repoImages, err = repoImagesCleanupByPolicies(repoImages, options)
+						if err != nil {
+							return err
+						}
 
-					repoImagesByImageName[imageName] = repoImages
+						repoImagesByImageName[imageName] = repoImages
 
-					return nil
-				}); err != nil {
+						return nil
+					},
+				); err != nil {
 					return err
 				}
 			}
@@ -118,7 +125,7 @@ func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]docker_regis
 			imageName := fmt.Sprintf("%s:%s", repoImage.Repository, repoImage.Tag)
 			for _, deployedDockerImageName := range deployedDockerImagesNames {
 				if deployedDockerImageName == imageName {
-					logboek.LogInfoLn(imageName)
+					logboek.Default.LogLnDetails(imageName)
 					continue Loop
 				}
 			}
@@ -203,13 +210,14 @@ Loop:
 		}
 	}
 
-	var err error
 	if len(nonexistentGitTagRepoImages) != 0 {
-		logboek.LogBlock("Removed tags by nonexistent git-tag policy", logboek.LogBlockOptions{}, func() {
-			err = repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions)
-		})
-
-		if err != nil {
+		if err := logboek.Default.LogBlock(
+			"Removed tags by nonexistent git-tag policy",
+			logboek.LevelLogBlockOptions{},
+			func() error {
+				return repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions)
+			},
+		); err != nil {
 			return nil, err
 		}
 
@@ -217,11 +225,13 @@ Loop:
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
-		logboek.LogBlock("Removed tags by nonexistent git-branch policy", logboek.LogBlockOptions{}, func() {
-			err = repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions)
-		})
-
-		if err != nil {
+		if err := logboek.Default.LogBlock(
+			"Removed tags by nonexistent git-branch policy",
+			logboek.LevelLogBlockOptions{},
+			func() error {
+				return repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions)
+			},
+		); err != nil {
 			return nil, err
 		}
 
@@ -229,11 +239,13 @@ Loop:
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
-		logboek.LogBlock("Removed tags by nonexistent git-commit policy", logboek.LogBlockOptions{}, func() {
-			err = repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions)
-		})
-
-		if err != nil {
+		if err := logboek.Default.LogBlock(
+			"Removed tags by nonexistent git-commit policy",
+			logboek.LevelLogBlockOptions{},
+			func() error {
+				return repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions)
+			},
+		); err != nil {
 			return nil, err
 		}
 
@@ -351,14 +363,15 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		}
 	}
 
-	var err error
 	if len(expiredRepoImages) != 0 {
 		logBlockMessage := fmt.Sprintf("Removed tags by git-%s date policy (created before %s)", options.gitPrimitive, expiryTime.Format("2006-01-02T15:04:05-0700"))
-		logboek.LogBlock(logBlockMessage, logboek.LogBlockOptions{}, func() {
-			err = repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
-		})
-
-		if err != nil {
+		if err := logboek.Default.LogBlock(
+			logBlockMessage,
+			logboek.LevelLogBlockOptions{},
+			func() error {
+				return repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
+			},
+		); err != nil {
 			return nil, err
 		}
 
@@ -369,11 +382,13 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		excessImagesByLimit := notExpiredRepoImages[:int64(len(notExpiredRepoImages))-options.limit]
 
 		logBlockMessage := fmt.Sprintf("Removed tags by git-%s limit policy (> %d)", options.gitPrimitive, options.limit)
-		logboek.LogBlock(logBlockMessage, logboek.LogBlockOptions{}, func() {
-			err = repoImagesRemove(excessImagesByLimit, options.commonRepoOptions)
-		})
-
-		if err != nil {
+		if err := logboek.Default.LogBlock(
+			logBlockMessage,
+			logboek.LevelLogBlockOptions{},
+			func() error {
+				return repoImagesRemove(excessImagesByLimit, options.commonRepoOptions)
+			},
+		); err != nil {
 			return nil, err
 		}
 

@@ -91,7 +91,7 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		err := editIteration()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption failed") {
-				logboek.LogErrorF("Error: %s\n", err)
+				logboek.LogWarnF("Error: %s\n", err)
 				ok, err := askForConfirmation()
 				if err != nil {
 					return err
@@ -146,7 +146,7 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 func askForConfirmation() (bool, error) {
 	r := os.Stdin
 
-	logboek.LogHighlightLn("Do you want to continue editing the file (Y/n)?")
+	fmt.Println(logboek.HighlightStyle().Colorize("Do you want to continue editing the file (Y/n)?"))
 
 	isTerminal := terminal.IsTerminal(int(r.Fd()))
 	if isTerminal {

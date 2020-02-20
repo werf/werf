@@ -31,8 +31,6 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
       --cert-file='':
             identify HTTPS client using this SSL certificate file (if using CHART as a chart        
             reference)
-      --debug=true:
-            Enable debug output.
       --devel=false:
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored (if using CHART as a chart reference)
@@ -66,14 +64,20 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1:
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace='':
             Namespace to install release into
       --password='':

@@ -68,7 +68,7 @@ func (d *ImageInfo) GetImageId() (string, error) {
 
 	res, err := docker_registry.ImageId(imageName)
 	if err != nil {
-		logboek.LogErrorF("WARNING: Getting image %s id failed: %s\n", imageName, err)
+		logboek.LogWarnF("WARNING: Getting image %s id failed: %s\n", imageName, err)
 		return "", nil
 	}
 
@@ -84,7 +84,7 @@ func (d *ImageInfo) GetImageDigest() (string, error) {
 
 	res, err := docker_registry.ImageDigest(imageName)
 	if err != nil {
-		logboek.LogErrorF("WARNING: Getting image %s digest failed: %s\n", imageName, err)
+		logboek.LogWarnF("WARNING: Getting image %s digest failed: %s\n", imageName, err)
 		return "", nil
 	}
 

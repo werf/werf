@@ -14,8 +14,6 @@ werf stages purge [options]
 {{ header }} Options
 
 ```shell
-      --debug=true:
-            Enable debug output.
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
@@ -38,16 +36,22 @@ werf stages purge [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1:
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

@@ -306,7 +306,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logboek.LogErrorF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logboek.LogWarnF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 

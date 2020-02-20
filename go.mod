@@ -34,10 +34,10 @@ require (
 	github.com/docker/licensing v0.0.0-20190320170819-9781369abdb5 // indirect
 	github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
-	github.com/flant/kubedog v0.3.5-0.20200213111410-09bddc160684
-	github.com/flant/logboek v0.2.6-0.20200204184239-37f691eb9129
+	github.com/flant/kubedog v0.3.5-0.20200220095422-0f37f3ed1897
+	github.com/flant/logboek v0.3.1
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -57,7 +57,7 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20180213033435-07191f837fed // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
-	github.com/mattn/go-isatty v0.0.9
+	github.com/mattn/go-isatty v0.0.11
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/mjibson/esc v0.2.0 // indirect
@@ -92,7 +92,7 @@ require (
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
@@ -167,6 +167,8 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.7
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
-go 1.13
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200220095449-c44c7c22d6cc
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20200219121324-93546abae733
+replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+
+go 1.13

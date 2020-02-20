@@ -59,7 +59,7 @@ tryPull:
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
 
-					logboek.LogInfoF("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPullMaxAttempts)
+					logboek.LogWarnF("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPullMaxAttempts)
 					time.Sleep(5 * time.Second)
 					goto tryPull
 				}
@@ -118,7 +118,8 @@ tryPush:
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
 
-					logboek.LogInfoF("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+					logboek.Default.LogFDetails("Retrying in 5 seconds (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+
 					time.Sleep(5 * time.Second)
 					goto tryPush
 				}

@@ -58,7 +58,7 @@ func LsTree(repository *git.Repository, basePath string, pathFilter PathFilter) 
 
 	isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath("")
 	if isTreeMatched {
-		logboek.LogDebugLn("Root tree was added")
+		logboek.Debug.LogLn("Root tree was added")
 
 		mainTreeEntry := &LsTreeEntry{
 			Path: "",
@@ -71,7 +71,7 @@ func LsTree(repository *git.Repository, basePath string, pathFilter PathFilter) 
 
 		res.lsTreeEntries = append(res.lsTreeEntries, mainTreeEntry)
 	} else if shouldWalkThrough {
-		logboek.LogDebugLn("Root tree was opened")
+		logboek.Debug.LogLn("Root tree was opened")
 		lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(repository, tree, "", pathFilter)
 		if err != nil {
 			return nil, err
@@ -80,7 +80,7 @@ func LsTree(repository *git.Repository, basePath string, pathFilter PathFilter) 
 		res.lsTreeEntries = lsTreeEntries
 		res.submodulesResults = submodulesLsTreeEntries
 	} else {
-		logboek.LogDebugLn("Root tree was skipped")
+		logboek.Debug.LogLn("Root tree was skipped")
 	}
 
 	return res, nil
@@ -125,11 +125,11 @@ func lsTreeDirEntryMatch(repository *git.Repository, tree *object.Tree, treePath
 
 	isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
 	if isTreeMatched {
-		logboek.LogDebugLn("Dir entry was added:        ", lsTreeEntry.Path)
+		logboek.Debug.LogLn("Dir entry was added:        ", lsTreeEntry.Path)
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 		return lsTreeEntries, submodulesResults, nil
 	} else if shouldWalkThrough {
-		logboek.LogDebugLn("Dir entry was opened:       ", lsTreeEntry.Path)
+		logboek.Debug.LogLn("Dir entry was opened:       ", lsTreeEntry.Path)
 
 		entryTree, err := treeTree(tree, treePath, lsTreeEntry.Path)
 		if err != nil {
@@ -148,11 +148,11 @@ func lsTreeSubmoduleEntryMatch(repository *git.Repository, _ *object.Tree, _ str
 
 	isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
 	if isTreeMatched {
-		logboek.LogDebugLn("Submodule entry was added:  ", lsTreeEntry.Path)
+		logboek.Debug.LogLn("Submodule entry was added:  ", lsTreeEntry.Path)
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 		return lsTreeEntries, submoduleResults, nil
 	} else if shouldWalkThrough {
-		logboek.LogDebugLn("Submodule entry was opened: ", lsTreeEntry.Path)
+		logboek.Debug.LogLn("Submodule entry was opened: ", lsTreeEntry.Path)
 
 		submoduleRepository, submoduleTree, err := submoduleRepositoryAndTree(repository, lsTreeEntry.Path)
 		if err != nil {
@@ -189,7 +189,7 @@ func lsTreeFileEntryMatch(_ *git.Repository, _ *object.Tree, _ string, lsTreeEnt
 	var submodulesResults []*SubmoduleResult
 
 	if pathFilter.MatchPath(lsTreeEntry.Path) {
-		logboek.LogDebugLn("File entry was added:       ", lsTreeEntry.Path)
+		logboek.Debug.LogLn("File entry was added:       ", lsTreeEntry.Path)
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 	}
 

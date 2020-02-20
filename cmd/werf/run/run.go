@@ -202,7 +202,7 @@ func runRun() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

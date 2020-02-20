@@ -66,7 +66,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logboek.LogInfoF("Ignore dangling image %s used by another process\n", imgName)
+				logboek.Debug.LogFDetails("Ignore dangling image %s used by another process\n", imgName)
 				continue
 			}
 
@@ -106,7 +106,7 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		if containerName == "" {
-			logboek.LogErrorF("Ignore bad container %s\n", container.ID)
+			logboek.LogWarnF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
@@ -118,7 +118,7 @@ func safeContainersCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logboek.LogInfoF("Ignore container %s used by another process\n", logContainerName(container))
+				logboek.Default.LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
 			defer shluz.Unlock(containerLockName)
