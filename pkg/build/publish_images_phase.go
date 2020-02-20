@@ -51,6 +51,10 @@ func (phase *PublishImagesPhase) OnImageStage(img *Image, stg stage.Interface) (
 }
 
 func (phase *PublishImagesPhase) AfterImageStages(img *Image) error {
+	if img.isArtifact {
+		return nil
+	}
+
 	if len(phase.ImagesToPublish) == 0 {
 		return phase.publishImage(img)
 	}
