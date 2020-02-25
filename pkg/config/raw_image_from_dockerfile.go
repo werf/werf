@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
 )
 
 type rawImageFromDockerfile struct {
@@ -76,8 +77,8 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives() (images []*Im
 func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string) (image *ImageFromDockerfile, err error) {
 	image = &ImageFromDockerfile{}
 	image.Name = imageName
-	image.Dockerfile = c.Dockerfile
-	image.Context = c.Context
+	image.Dockerfile = filepath.FromSlash(c.Dockerfile)
+	image.Context = filepath.FromSlash(c.Context)
 	image.Target = c.Target
 	image.Args = c.Args
 

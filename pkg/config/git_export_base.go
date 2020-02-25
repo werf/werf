@@ -1,8 +1,7 @@
 package config
 
 import (
-	"os"
-	"runtime"
+	"path/filepath"
 	"strings"
 )
 
@@ -15,7 +14,7 @@ func (c *ExportBase) GitMappingAdd() string {
 	if c.Add == "/" {
 		return ""
 	}
-	return gitMappingPath(strings.TrimPrefix(c.Add, "/"))
+	return filepath.FromSlash(strings.TrimPrefix(c.Add, "/"))
 }
 
 func (c *ExportBase) GitMappingTo() string {
@@ -41,16 +40,8 @@ func (c *GitExportBase) GitMappingStageDependencies() *StageDependencies {
 func gitMappingPaths(paths []string) []string {
 	var newPaths []string
 	for _, path := range paths {
-		newPaths = append(newPaths, gitMappingPath(path))
+		newPaths = append(newPaths, filepath.FromSlash(path))
 	}
 
 	return newPaths
-}
-
-func gitMappingPath(path string) string {
-	if runtime.GOOS == "windows" {
-		return strings.ReplaceAll(path, "/", string(os.PathSeparator))
-	}
-
-	return path
 }

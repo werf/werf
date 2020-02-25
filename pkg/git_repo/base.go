@@ -449,20 +449,23 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			}
 			logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-			blockMsg := fmt.Sprintf("ls-tree result checksum")
-			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
-				pathChecksum := pathLsTreeResult.Checksum()
-				logboek.LogOptionalLn()
-				logboek.Debug.LogLn(pathChecksum)
+			var pathChecksum string
+			if !pathLsTreeResult.IsEmpty() {
+				blockMsg := fmt.Sprintf("ls-tree result checksum (%s)", pathMatcher.String())
+				_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+					pathChecksum = pathLsTreeResult.Checksum()
+					logboek.LogOptionalLn()
+					logboek.Debug.LogLn(pathChecksum)
 
-				if pathChecksum != "" {
-					checksum.Hash.Write([]byte(pathChecksum))
-				} else {
-					checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
-				}
+					return nil
+				})
+			}
 
-				return nil
-			})
+			if pathChecksum != "" {
+				checksum.Hash.Write([]byte(pathChecksum))
+			} else {
+				checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
+			}
 		}
 
 		return nil
