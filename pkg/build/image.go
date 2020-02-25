@@ -132,9 +132,9 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
 		if baseImageRepoId == i.baseImage.ID() || err != nil {
 			if err != nil {
-				logboek.LogLn()
 				logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 				logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+				logboek.LogOptionalLn()
 			}
 
 			return nil
