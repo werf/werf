@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'jekyll-assets'
 gem 'jekyll'
-gem "sprockets", "~> 3.7"
-
 gem 'html-proofer'
+
+gem "sprockets", "~> 3.7"
+gem "nokogiri", ">= 1.10.8"
