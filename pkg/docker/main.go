@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/flant/logboek"
+	"github.com/sirupsen/logrus"
 
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
@@ -36,6 +37,9 @@ func Init(dockerConfigDir string) error {
 	if err := setDockerApiClient(); err != nil {
 		return err
 	}
+
+	// TODO: set docker loglevel based on the werf --verbose/--debug flags
+	logrus.StandardLogger().SetLevel(logrus.FatalLevel)
 
 	return nil
 }
