@@ -421,12 +421,12 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		)
 
 		var mainLsTreeResult *ls_tree.Result
-		processMsg := fmt.Sprintf("Main LsTree (%s)", pathMatcher.String())
+		processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
 		if err := logboek.Debug.LogProcess(
 			processMsg,
 			logboek.LevelLogProcessOptions{},
 			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathMatcher)
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, pathMatcher)
 				return err
 			},
 		); err != nil {
@@ -435,32 +435,34 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 
 		for _, path := range opts.Paths {
 			var pathLsTreeResult *ls_tree.Result
-			pathMatcher := path_matcher.NewGitMappingPathMatcher(
+			pathMatcher := path_matcher.NewSimplePathMatcher(
 				opts.BasePath,
 				[]string{path},
-				[]string{},
 			)
 
-			processMsg := fmt.Sprintf("LsTree path (%s)", pathMatcher.String())
-			if err := logboek.Debug.LogProcess(
-				processMsg,
-				logboek.LevelLogProcessOptions{},
-				func() error {
-					pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
-
-					hashSum := pathLsTreeResult.HashSum()
-					logboek.Debug.LogLn("Result hashSum: ", hashSum)
-					if hashSum != "" {
-						checksum.Hash.Write([]byte(hashSum))
-					} else {
-						checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
-					}
-
-					return err
-				},
-			); err != nil {
+			processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
+			logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
+			pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
+			if err != nil {
+				logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 				return err
 			}
+			logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+			blockMsg := fmt.Sprintf("ls-tree result checksum")
+			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+				pathChecksum := pathLsTreeResult.Checksum()
+				logboek.LogOptionalLn()
+				logboek.Debug.LogLn(pathChecksum)
+
+				if pathChecksum != "" {
+					checksum.Hash.Write([]byte(pathChecksum))
+				} else {
+					checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
+				}
+
+				return nil
+			})
 		}
 
 		return nil
@@ -470,10 +472,6 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		return nil, err
 	}
 
-	if debugChecksum() {
-		logboek.LogF("Calculated checksum %s\n", checksum.String())
-	}
-
 	return checksum, nil
 }
 
@@ -481,8 +479,4 @@ func GitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repos
 	worktreeFilesystem := osfs.New(worktreeDir)
 	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
 	return git.Open(storage, worktreeFilesystem)
-}
-
-func debugChecksum() bool {
-	return os.Getenv("WERF_DEBUG_GIT_REPO_CHECKSUM") == "1"
 }
