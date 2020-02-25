@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/flant/werf/pkg/build/import_server"
 
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -65,6 +68,7 @@ type Conveyor struct {
 	StorageLockManager storage.LockManager
 
 	onTerminateFuncs []func() error
+	importServers    map[string]import_server.ImportServer
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
@@ -87,6 +91,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		buildingGitStageNameByImageName: make(map[string]stage.StageName),
 		remoteGitRepos:                  make(map[string]*git_repo.Remote),
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
+		importServers:                   make(map[string]import_server.ImportServer),
 
 		StagesStorage:      &storage.LocalStagesStorage{},
 		StorageLockManager: &storage.FileLockManager{},
@@ -94,6 +99,43 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 	}
 
 	return c
+}
+
+func (c *Conveyor) GetImportServer(imageName string) (import_server.ImportServer, error) {
+	if srv, hasKey := c.importServers[imageName]; hasKey {
+		return srv, nil
+	}
+
+	var srv *import_server.RsyncServer
+
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName), logboek.LevelLogProcessOptions{}, func() error {
+		tmpDir := path.Join(c.tmpDir, "import-server", imageName)
+		if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
+			return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
+		}
+
+		dockerImageName := c.GetImageLastStageImageName(imageName)
+		var err error
+		srv, err = import_server.RunRsyncServer(dockerImageName, tmpDir)
+		if srv != nil {
+			c.AppendOnTerminateFunc(func() error {
+				if err := srv.Shutdown(); err != nil {
+					return fmt.Errorf("unable to shutdown import server %s: %s", srv.DockerContainerName, err)
+				}
+				return nil
+			})
+		}
+		if err != nil {
+			return fmt.Errorf("unable to run rsync import server: %s", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	c.importServers[imageName] = srv
+
+	return srv, nil
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f func() error) {

@@ -81,6 +81,10 @@ func LsBinPath() string {
 	return embeddedBinPath("ls")
 }
 
+func MvBinPath() string {
+	return embeddedBinPath("mv")
+}
+
 func RmBinPath() string {
 	return embeddedBinPath("rm")
 }
