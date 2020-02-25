@@ -12,12 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flant/werf/pkg/build/import_server"
-
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/tag_strategy"
-
-	"github.com/flant/werf/pkg/werf"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
@@ -27,15 +23,18 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/util"
-
-	"github.com/flant/werf/pkg/storage"
-
+	"github.com/flant/werf/pkg/build/import_server"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/logging"
+	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/flant/werf/pkg/storage"
+	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 type Conveyor struct {
@@ -182,6 +181,18 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 		}
 	}
 	return c.gitReposCaches[gitRepoName]
+}
+
+func (c *Conveyor) GetLocalGitRepo() *git_repo.Local {
+	if c.localGitRepo == nil {
+		c.localGitRepo = &git_repo.Local{
+			Base:   git_repo.Base{Name: "own"},
+			Path:   c.projectDir,
+			GitDir: filepath.Join(c.projectDir, ".git"),
+		}
+	}
+
+	return c.localGitRepo
 }
 
 type TagOptions struct {
@@ -771,15 +782,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 
 	var localGitRepo *git_repo.Local
 	if len(imageBaseConfig.Git.Local) != 0 {
-		if c.localGitRepo == nil {
-			c.localGitRepo = &git_repo.Local{
-				Base:   git_repo.Base{Name: "own"},
-				Path:   c.projectDir,
-				GitDir: filepath.Join(c.projectDir, ".git"),
-			}
-		}
-
-		localGitRepo = c.localGitRepo
+		localGitRepo = c.GetLocalGitRepo()
 	}
 
 	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
@@ -1007,8 +1010,8 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 
 	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
 
-	rel, err := filepath.Rel(c.projectDir, contextDir)
-	if err != nil || strings.HasPrefix(rel, "../") {
+	relContextDir, err := filepath.Rel(c.projectDir, contextDir)
+	if err != nil || strings.HasPrefix(relContextDir, ".."+string(os.PathSeparator)) {
 		return nil, fmt.Errorf("unsupported context folder %s.\nOnly context folder specified inside project directory %s supported", contextDir, c.projectDir)
 	}
 
@@ -1020,8 +1023,8 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	}
 
 	dockerfilePath := filepath.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
-	rel, err = filepath.Rel(c.projectDir, dockerfilePath)
-	if err != nil || strings.HasPrefix(rel, "../") {
+	relDockerfilePath, err := filepath.Rel(c.projectDir, dockerfilePath)
+	if err != nil || strings.HasPrefix(relDockerfilePath, ".."+string(os.PathSeparator)) {
 		return nil, fmt.Errorf("unsupported dockerfile %s.\n Only dockerfile specified inside project directory %s supported", dockerfilePath, c.projectDir)
 	}
 
@@ -1037,38 +1040,34 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		return nil, err
 	}
 
-	var dockerignorePatternsWithContextPrefix []string
-	for _, dockerignorePattern := range dockerignorePatterns {
-		patterns := []string{dockerignorePattern}
-		specialPrefixes := []string{
-			"**/",
-			"/**/",
-			"!**/",
-			"!/**/",
-		}
-
-		for _, prefix := range specialPrefixes {
-			if strings.HasPrefix(dockerignorePattern, prefix) {
-				patterns = append(patterns, strings.Replace(dockerignorePattern, "**/", "", 1))
-				break
-			}
-		}
-
-		for _, pattern := range patterns {
-			var resultPattern string
-			if strings.HasPrefix(pattern, "!") {
-				resultPattern = "!" + path.Join(contextDir, pattern[1:])
-			} else {
-				resultPattern = path.Join(contextDir, pattern)
-			}
-
-			dockerignorePatternsWithContextPrefix = append(dockerignorePatternsWithContextPrefix, resultPattern)
-		}
-	}
-
-	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatternsWithContextPrefix)
+	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatterns)
 	if err != nil {
 		return nil, err
+	}
+
+	if relContextDir == "." {
+		relContextDir = ""
+	}
+	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(relContextDir, dockerignorePatternMatcher)
+
+	localGitRepo := c.GetLocalGitRepo()
+	_, err = c.localGitRepo.HeadCommit()
+	if err != nil {
+		if strings.HasSuffix(err.Error(), git.ErrRepositoryNotExists.Error()) {
+			logboek.Debug.LogLnWithCustomStyle(
+				logboek.StyleByName(logboek.FailStyleName),
+				"git repository does not exist",
+			)
+			localGitRepo = nil
+		} else if strings.HasSuffix(err.Error(), plumbing.ErrReferenceNotFound.Error()) {
+			logboek.Debug.LogLnWithCustomStyle(
+				logboek.StyleByName(logboek.FailStyleName),
+				"git repository reference not found",
+			)
+			localGitRepo = nil
+		} else {
+			return nil, fmt.Errorf("git head failed: %s", err)
+		}
 	}
 
 	data, err := ioutil.ReadFile(dockerfilePath)
@@ -1126,16 +1125,17 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	}
 
 	dockerfileStage := stage.GenerateDockerfileStage(
-		dockerfilePath,
-		imageFromDockerfileConfig.Target,
-		contextDir,
-		dockerignorePatternMatcher,
-		imageFromDockerfileConfig.Args,
-		imageFromDockerfileConfig.AddHost,
-		dockerStages,
-		dockerArgsHash,
-		dockerTargetIndex,
-		baseStageOptions)
+		stage.NewDockerRunArgs(
+			dockerfilePath,
+			imageFromDockerfileConfig.Target,
+			contextDir,
+			imageFromDockerfileConfig.Args,
+			imageFromDockerfileConfig.AddHost,
+		),
+		stage.NewDockerStages(dockerStages, dockerArgsHash, dockerTargetIndex),
+		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, localGitRepo),
+		baseStageOptions,
+	)
 
 	img.stages = append(img.stages, dockerfileStage)
 

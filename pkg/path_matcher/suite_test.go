@@ -9,5 +9,5 @@ import (
 
 func TestSuite(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Path Filter Suite")
+	RunSpecs(t, "Path Matcher Suite")
 }
