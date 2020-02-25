@@ -180,10 +180,16 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 */
 
 func (phase *PublishImagesPhase) publishImage(img *Image) error {
-	existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
-	if err != nil {
+	var existingTags []string
+	logProcessMsg := fmt.Sprintf("Fetching existing repo tags")
+	if err := logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
+		var err error
+		existingTags, err = phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
+		return err
+	}); err != nil {
 		return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
 	}
+	logboek.LogOptionalLn()
 
 	var nonEmptySchemeInOrder []tag_strategy.TagStrategy
 	for strategy, tags := range phase.TagsByScheme {

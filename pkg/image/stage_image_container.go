@@ -109,7 +109,16 @@ func (c *StageImageContainer) prepareRunCommands() []string {
 }
 
 func (c *StageImageContainer) prepareAllRunCommands() []string {
-	return append(c.serviceRunCommands, c.runCommands...)
+	var commands []string
+
+	if debugDockerRunCommand() {
+		commands = append(commands, "set -x")
+	}
+
+	commands = append(commands, c.serviceRunCommands...)
+	commands = append(commands, c.runCommands...)
+
+	return commands
 }
 
 func ShelloutPack(command string) string {
