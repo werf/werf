@@ -111,6 +111,7 @@ DEPENDENCIES
   html-proofer
   jekyll
   jekyll-assets
+  nokogiri (>= 1.10.8)
   sprockets (~> 3.7)
 
 BUNDLED WITH
