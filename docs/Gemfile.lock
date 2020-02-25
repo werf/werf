@@ -74,7 +74,7 @@ GEM
     mercenary (0.3.6)
     mini_portile2 (2.4.0)
     minitest (5.14.0)
-    nokogiri (1.10.7)
+    nokogiri (1.10.8)
       mini_portile2 (~> 2.4.0)
     nokogumbo (2.0.2)
       nokogiri (~> 1.8, >= 1.8.4)
