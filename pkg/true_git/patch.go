@@ -8,11 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/flant/werf/pkg/path_matcher"
 )
 
 type PatchOptions struct {
 	FromCommit, ToCommit string
-	PathMatcher          PathMatcher
+	PathMatcher          path_matcher.PathMatcher
 
 	WithEntireFileContext bool
 	WithBinary            bool

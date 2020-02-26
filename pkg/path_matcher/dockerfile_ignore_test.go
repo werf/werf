@@ -26,7 +26,7 @@ type dockerfileIgnorePathMatchEntry struct {
 }
 
 var _ = DescribeTable("dockerfile ignore path matcher (MatchPath)", func(e dockerfileIgnorePathMatchEntry) {
-	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher)
+	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
@@ -81,7 +81,7 @@ type dockerfileIgnoreProcessDirOrSubmodulePath struct {
 }
 
 var _ = DescribeTable("dockerfile ignore path matcher (ProcessDirOrSubmodulePath)", func(e dockerfileIgnoreProcessDirOrSubmodulePath) {
-	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher)
+	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)

@@ -262,7 +262,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithLsTree(wildcards []string) (
 	}
 
 entryNotFoundInGitRepository:
-	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BasePath(), wildcards)
+	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BasePath(), wildcards, false)
 
 	var lsTreeResultChecksum string
 	if s.mainLsTreeResult != nil {

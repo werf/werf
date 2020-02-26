@@ -7,9 +7,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/flant/werf/pkg/path_matcher"
 )
 
-func makeDiffParser(out io.Writer, pathMatcher PathMatcher) *diffParser {
+func makeDiffParser(out io.Writer, pathMatcher path_matcher.PathMatcher) *diffParser {
 	return &diffParser{
 		PathMatcher: pathMatcher,
 		Out:         out,
@@ -34,7 +36,7 @@ const (
 )
 
 type diffParser struct {
-	PathMatcher PathMatcher
+	PathMatcher path_matcher.PathMatcher
 
 	Out                 io.Writer
 	OutLines            uint

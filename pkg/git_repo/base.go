@@ -206,6 +206,7 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
+			false,
 		),
 		WithEntireFileContext: opts.WithEntireFileContext,
 		WithBinary:            opts.WithBinary,
@@ -277,6 +278,7 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
+			true,
 		),
 	}
 
@@ -418,6 +420,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
+			false,
 		)
 
 		var mainLsTreeResult *ls_tree.Result
@@ -438,6 +441,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			pathMatcher := path_matcher.NewSimplePathMatcher(
 				opts.BasePath,
 				[]string{path},
+				false,
 			)
 
 			processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())

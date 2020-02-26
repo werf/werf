@@ -16,7 +16,7 @@ type gitMappingMatchPathEntry struct {
 }
 
 var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingMatchPathEntry) {
-	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
@@ -173,7 +173,7 @@ type gitMappingProcessDirOrSubmodulePath struct {
 }
 
 var _ = DescribeTable("git mapping path matcher (ProcessDirOrSubmodulePath)", func(e gitMappingProcessDirOrSubmodulePath) {
-	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
