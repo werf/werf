@@ -12,9 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -776,11 +773,19 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	var gitMappings []*stage.GitMapping
 
 	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
-		if err != nil {
-			return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
+		localGitRepo := c.GetLocalGitRepo()
+		if localGitRepo == nil {
+			localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
+			if err != nil {
+				return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
+			}
+
+			if localGitRepo == nil {
+				return nil, errors.New("local git mapping is used but project git repository is not found")
+			}
+
+			c.SetLocalGitRepo(localGitRepo)
 		}
-		c.SetLocalGitRepo(localGitRepo)
 	}
 
 	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
@@ -1046,25 +1051,33 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	if relContextDir == "." {
 		relContextDir = ""
 	}
-	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(relContextDir, dockerignorePatternMatcher)
+	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(relContextDir, dockerignorePatternMatcher, false)
 
 	localGitRepo := c.GetLocalGitRepo()
-	_, err = c.localGitRepo.HeadCommit()
-	if err != nil {
-		if strings.HasSuffix(err.Error(), git.ErrRepositoryNotExists.Error()) {
+	if localGitRepo == nil {
+		localGitRepo, err = git_repo.OpenLocalRepo("own", c.projectDir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
+		}
+
+		if localGitRepo != nil {
+			c.SetLocalGitRepo(localGitRepo)
+		}
+	}
+
+	localGitRepo = c.GetLocalGitRepo()
+	if localGitRepo != nil {
+		exist, err = localGitRepo.IsHeadReferenceExist()
+		if err != nil {
+			return nil, fmt.Errorf("git head reference failed: %s", err)
+		}
+
+		if !exist {
 			logboek.Debug.LogLnWithCustomStyle(
 				logboek.StyleByName(logboek.FailStyleName),
-				"git repository does not exist",
+				"git repository reference is not found",
 			)
 			localGitRepo = nil
-		} else if strings.HasSuffix(err.Error(), plumbing.ErrReferenceNotFound.Error()) {
-			logboek.Debug.LogLnWithCustomStyle(
-				logboek.StyleByName(logboek.FailStyleName),
-				"git repository reference not found",
-			)
-			localGitRepo = nil
-		} else {
-			return nil, fmt.Errorf("git head failed: %s", err)
 		}
 	}
 

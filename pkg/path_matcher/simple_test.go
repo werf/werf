@@ -15,7 +15,7 @@ type simpleMatchPathEntry struct {
 }
 
 var _ = DescribeTable("simple path matcher (MatchPath)", func(e simpleMatchPathEntry) {
-	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths)
+	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
@@ -80,7 +80,7 @@ type simpleProcessDirOrSubmodulePath struct {
 }
 
 var _ = DescribeTable("simple (ProcessDirOrSubmodulePath)", func(e simpleProcessDirOrSubmodulePath) {
-	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths)
+	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths, false)
 
 	for _, matchedPath := range e.matchedPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)

@@ -20,19 +20,19 @@ var _ = Describe("path matcher (basePath)", func() {
 			pathMatcherName: "dockerfile ignore",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
 				pm, _ := fileutils.NewPatternMatcher([]string{})
-				return NewDockerfileIgnorePathMatcher(basePath, pm)
+				return NewDockerfileIgnorePathMatcher(basePath, pm, false)
 			},
 		},
 		{
 			pathMatcherName: "git mapping",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
-				return NewGitMappingPathMatcher(basePath, []string{}, []string{})
+				return NewGitMappingPathMatcher(basePath, []string{}, []string{}, false)
 			},
 		},
 		{
 			pathMatcherName: "simple",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
-				return NewSimplePathMatcher(basePath, []string{})
+				return NewSimplePathMatcher(basePath, []string{}, false)
 			},
 		},
 	} {

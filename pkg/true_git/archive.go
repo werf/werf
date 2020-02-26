@@ -2,27 +2,29 @@ package true_git
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"path"
 	"path/filepath"
-	"regexp"
-	"strings"
 
+	"gopkg.in/src-d/go-billy.v4/osfs"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/cache"
 	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
+	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/git_repo/ls_tree"
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/util"
 )
 
 type ArchiveOptions struct {
 	Commit      string
-	PathMatcher PathMatcher
+	PathMatcher path_matcher.PathMatcher
 }
 
 type ArchiveDescriptor struct {
@@ -90,86 +92,115 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
 	}
 
-	fileModesFromGit, err := gitWorkTreeFilesModes(gitDir, workTreeDir, withSubmodules)
+	repository, err := gitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("git open with custom worktree dir failed: %s", err)
 	}
 
 	desc := &ArchiveDescriptor{
 		IsEmpty: true,
 	}
 
+	absBasePath := filepath.Join(workTreeDir, opts.PathMatcher.BasePath())
+	exist, err := util.FileExists(absBasePath)
+	if err != nil {
+		return nil, fmt.Errorf("file exists %s failed: %s", absBasePath, err)
+	}
+
+	if !exist {
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BasePath())
+	}
+
+	info, err := os.Lstat(absBasePath)
+	if err != nil {
+		return nil, fmt.Errorf("lstat %s failed: %s", absBasePath, err)
+	}
+
+	if info.IsDir() {
+		desc.Type = DirectoryArchive
+
+		if debugArchive() {
+			logboek.Debug.LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
+		}
+	} else {
+		desc.Type = FileArchive
+
+		if debugArchive() {
+			logboek.Debug.LogF("Found BasePath %s file: file archive\n", absBasePath)
+		}
+	}
+
 	tw := tar.NewWriter(out)
 
-	err = filepath.Walk(workTreeDir, func(absPath string, info os.FileInfo, accessErr error) error {
-		if accessErr != nil {
-			return fmt.Errorf("error accessing %s: %s", absPath, accessErr)
-		}
+	logProcessMsg := fmt.Sprintf("ls-tree (%s)", opts.PathMatcher.String())
+	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+	result, err := ls_tree.LsTree(repository, opts.PathMatcher)
+	if err != nil {
+		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		return nil, err
+	}
+	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-		baseName := filepath.Base(absPath)
-		for _, p := range []string{".git"} {
-			if baseName == p {
-				return nil
-			}
-		}
-
-		var relPath string
-		if absPath == workTreeDir {
-			relPath = "."
-		} else {
-			relPath = rel(absPath, workTreeDir)
-		}
-
-		if relPath == opts.PathMatcher.BasePath() || relPath == "." && opts.PathMatcher.BasePath() == "" {
-			if info.IsDir() {
-				desc.Type = DirectoryArchive
-
-				if debugArchive() {
-					fmt.Printf("Found BasePath %s directory: directory archive type\n", relPath)
-				}
-			} else {
-				desc.Type = FileArchive
-
-				if debugArchive() {
-					fmt.Printf("Found BasePath %s file: file archive\n", relPath)
-				}
-			}
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		if !opts.PathMatcher.MatchPath(relPath) {
-			if debugArchive() {
-				fmt.Printf("Excluded path %s by path filter %s\n", relPath, opts.PathMatcher.String())
-			}
-			return nil
-		}
-
-		unixRelPath := util.ToLinuxContainerPath(relPath)
-		fileModeFromGit, exist := fileModesFromGit[unixRelPath]
-		if !exist {
-			return fmt.Errorf("cannot process filename %s", unixRelPath)
-		}
-
-		tarEntryName := util.ToLinuxContainerPath(opts.PathMatcher.TrimFileBasePath(relPath))
-
+	logProcessMsg = fmt.Sprintf("ls-tree result walk (%s)", opts.PathMatcher.String())
+	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
 		desc.IsEmpty = false
 
-		if fileModeFromGit == filemode.Symlink {
+		gitFileMode := lsTreeEntry.Mode
+		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.Filepath)
+		relToBasePathFilepath := opts.PathMatcher.TrimFileBasePath(lsTreeEntry.Filepath)
+		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
+		info, err := os.Lstat(absFilepath)
+		if err != nil {
+			return fmt.Errorf("lstat %s failed: %s", absFilepath, err)
+		}
+
+		switch gitFileMode {
+		case filemode.Regular, filemode.Executable, filemode.Deprecated:
+			err = tw.WriteHeader(&tar.Header{
+				Format:     tar.FormatGNU,
+				Name:       tarEntryName,
+				Mode:       int64(gitFileMode),
+				Size:       info.Size(),
+				ModTime:    info.ModTime(),
+				AccessTime: info.ModTime(),
+				ChangeTime: info.ModTime(),
+			})
+			if err != nil {
+				return fmt.Errorf("unable to write tar header for file %s: %s", tarEntryName, err)
+			}
+
+			f, err := os.Open(absFilepath)
+			if err != nil {
+				return fmt.Errorf("unable to open file %s: %s", absFilepath, err)
+			}
+
+			_, err = io.Copy(tw, f)
+			if err != nil {
+				return fmt.Errorf("unable to write data to tar archive from file %s: %s", absFilepath, err)
+			}
+
+			err = f.Close()
+			if err != nil {
+				return fmt.Errorf("error closing file %s: %s", absFilepath, err)
+			}
+
+			if debugArchive() {
+				logboek.Debug.LogF("Added archive file '%s'\n", relToBasePathFilepath)
+			}
+		case filemode.Symlink:
 			isSymlink := info.Mode()&os.ModeSymlink != 0
 
 			var linkname string
 			if isSymlink {
-				linkname, err = os.Readlink(absPath)
+				linkname, err = os.Readlink(absFilepath)
 				if err != nil {
-					return fmt.Errorf("cannot read symlink %s: %s", absPath, err)
+					return fmt.Errorf("cannot read symlink %s: %s", absFilepath, err)
 				}
 			} else {
-				data, err := ioutil.ReadFile(absPath)
+				data, err := ioutil.ReadFile(absFilepath)
 				if err != nil {
-					return fmt.Errorf("cannot read file %s: %s", absPath, err)
+					return fmt.Errorf("cannot read file %s: %s", absFilepath, err)
 				}
 
 				linkname = string(bytes.TrimSpace(data))
@@ -180,7 +211,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 				Typeflag:   tar.TypeSymlink,
 				Name:       tarEntryName,
 				Linkname:   linkname,
-				Mode:       int64(fileModeFromGit),
+				Mode:       int64(gitFileMode),
 				Size:       info.Size(),
 				ModTime:    info.ModTime(),
 				AccessTime: info.ModTime(),
@@ -191,150 +222,31 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			}
 
 			if debugArchive() {
-				fmt.Printf("Added archive symlink %s -> %s\n", relPath, linkname)
+				logboek.Debug.LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
 			}
 
 			return nil
-		}
-
-		err = tw.WriteHeader(&tar.Header{
-			Format:     tar.FormatGNU,
-			Name:       tarEntryName,
-			Mode:       int64(fileModeFromGit),
-			Size:       info.Size(),
-			ModTime:    info.ModTime(),
-			AccessTime: info.ModTime(),
-			ChangeTime: info.ModTime(),
-		})
-		if err != nil {
-			return fmt.Errorf("unable to write tar header for file %s: %s", tarEntryName, err)
-		}
-
-		file, err := os.Open(absPath)
-		if err != nil {
-			return fmt.Errorf("unable to open file %s: %s", absPath, err)
-		}
-
-		_, err = io.Copy(tw, file)
-		if err != nil {
-			return fmt.Errorf("unable to write data to tar archive from file %s: %s", relPath, err)
-		}
-
-		err = file.Close()
-		if err != nil {
-			return fmt.Errorf("error closing file %s: %s", absPath, err)
-		}
-
-		if debugArchive() {
-			logboek.LogF("Added archive file '%s'\n", relPath)
+		default:
+			panic(fmt.Sprintf("unexpected git file mode %s", gitFileMode.String()))
 		}
 
 		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("entries iteration failed in %s: %s", workTreeDir, err)
+	}); err != nil {
+		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		return nil, err
 	}
+	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 	err = tw.Close()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write tar archive: %s", err)
 	}
 
-	if desc.Type == "" {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BasePath())
-	}
-
 	return desc, nil
 }
 
-func gitWorkTreeFilesModes(repoDir, workTreeDir string, withSubmodules bool) (map[string]filemode.FileMode, error) {
-	modeByRelPath := map[string]filemode.FileMode{}
-	var gitLsFilesCommandOutputs []*bytes.Buffer
-
-	execArgs := []string{
-		"git", "-c", "core.quotePath=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
-		"ls-files", "--stage",
-	}
-
-	outBuf := bytes.NewBuffer([]byte{})
-	errBuf := bytes.NewBuffer([]byte{})
-	cmd := exec.Command(execArgs[0], execArgs[1:]...)
-	cmd.Stdout = outBuf
-	cmd.Stderr = errBuf
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("`%s` failed: %s\nOut: %s\nErr: %s", strings.Join(execArgs, " "), err,
-			outBuf.String(), errBuf.String())
-	}
-
-	gitLsFilesCommandOutputs = append(gitLsFilesCommandOutputs, outBuf)
-
-	if withSubmodules {
-		execArgs := []string{
-			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
-			"submodule", "foreach", "--recursive", "git", "-c", "core.quotePath=false", "ls-files", "--stage",
-		}
-
-		outBuf := bytes.NewBuffer([]byte{})
-		errBuf := bytes.NewBuffer([]byte{})
-		cmd := exec.Command(execArgs[0], execArgs[1:]...)
-		cmd.Stdout = outBuf
-		cmd.Stderr = errBuf
-		cmd.Dir = workTreeDir
-
-		if err := cmd.Run(); err != nil {
-			return nil, fmt.Errorf("`%s` failed: %s\nOut: %s\nErr: %s", strings.Join(execArgs, " "), err,
-				outBuf.String(), errBuf.String())
-		}
-
-		gitLsFilesCommandOutputs = append(gitLsFilesCommandOutputs, outBuf)
-	}
-
-	submoduleNameRegexp := regexp.MustCompile("Entering '(.*)'$")
-	lsFilesLineArgsSplitterRegexp := regexp.MustCompile("[[:space:]]+")
-
-	for _, b := range gitLsFilesCommandOutputs {
-		scanner := bufio.NewScanner(b)
-		var submodulePath string
-
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			if match := submoduleNameRegexp.FindStringSubmatch(line); match != nil {
-				submodulePath = match[1]
-				continue
-			}
-
-			parts := lsFilesLineArgsSplitterRegexp.Split(line, 4)
-			if len(parts) != 4 {
-				panic(fmt.Sprintf("unexpected `git ls files` line format `%s`", line))
-			}
-
-			modeStr := parts[0]
-			relFilePath := path.Join(submodulePath, parts[3])
-
-			fileMode, err := filemode.New(modeStr)
-			if err != nil {
-				panic(fmt.Sprintf("unexpected `git ls files` line format `%s`", line))
-			}
-
-			modeByRelPath[relFilePath] = fileMode
-		}
-	}
-
-	return modeByRelPath, nil
-}
-
-func rel(targetPath, basePath string) string {
-	if basePath == "" {
-		return targetPath
-	}
-
-	relPath, err := filepath.Rel(basePath, targetPath)
-	if err != nil {
-		panic(err)
-	}
-
-	return relPath
+func gitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repository, error) {
+	worktreeFilesystem := osfs.New(worktreeDir)
+	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
+	return git.Open(storage, worktreeFilesystem)
 }
