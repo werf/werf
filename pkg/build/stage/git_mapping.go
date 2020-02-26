@@ -127,7 +127,7 @@ func (gm *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo
 func (gm *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	var res git_repo.Archive
 
-	err := logboek.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add), logboek.LogProcessOptions{}, func() error {
+	err := logboek.Info.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add), logboek.LevelLogProcessOptions{}, func() error {
 		archive, err := gm.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -160,7 +160,7 @@ func (gm *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 	var res git_repo.Patch
 
 	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Add)
-	err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+	err := logboek.Info.LogProcess(logProcessMsg, logboek.LevelLogProcessOptions{}, func() error {
 		patch, err := gm.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err
