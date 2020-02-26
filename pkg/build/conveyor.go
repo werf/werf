@@ -340,6 +340,7 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 }
 
 func (c *Conveyor) determineStages() error {
+	logboek.LogOptionalLn()
 	return logboek.Default.LogProcess(
 		"Determining of stages",
 		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
@@ -352,7 +353,7 @@ func (c *Conveyor) determineStages() error {
 func (c *Conveyor) doDetermineStages() error {
 	imagesInterfaces := getImageConfigsInOrder(c)
 	for _, imageInterfaceConfig := range imagesInterfaces {
-		var image *Image
+		var img *Image
 		var imageLogName string
 		var style *logboek.Style
 
@@ -370,16 +371,16 @@ func (c *Conveyor) doDetermineStages() error {
 
 			switch imageConfig := imageInterfaceConfig.(type) {
 			case config.StapelImageInterface:
-				image, err = prepareImageBasedOnStapelImageConfig(imageConfig, c)
+				img, err = prepareImageBasedOnStapelImageConfig(imageConfig, c)
 			case *config.ImageFromDockerfile:
-				image, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
+				img, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
 			}
 
 			if err != nil {
 				return err
 			}
 
-			c.imagesInOrder = append(c.imagesInOrder, image)
+			c.imagesInOrder = append(c.imagesInOrder, img)
 
 			return nil
 		})
@@ -419,43 +420,72 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 	//}
 
 	for _, phase := range phases {
+		logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImages()", phase.Name())
+		logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
 		if err := phase.BeforeImages(); err != nil {
+			logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return fmt.Errorf("phase %s before images handler failed: %s", phase.Name(), err)
 		}
+		logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 	}
 
-ImagesProcessing:
 	for _, img := range c.imagesInOrder {
-		logboek.Debug.LogF("Start processing image %s\n", img.GetName())
-
-		for _, phase := range phases {
-			if err := phase.BeforeImageStages(img); err != nil {
-				return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
-			}
-
-			newStages := []stage.Interface{}
-			for _, stg := range img.GetStages() {
-				if keepStage, err := phase.OnImageStage(img, stg); err != nil {
-					return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
-				} else if keepStage {
-					newStages = append(newStages, stg)
+		if err := logboek.Default.LogProcess(img.LogDetailedName(), logboek.LevelLogProcessOptions{Style: img.LogProcessStyle()}, func() error {
+			for _, phase := range phases {
+				logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImageStages()", phase.Name())
+				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+				if err := phase.BeforeImageStages(img); err != nil {
+					logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+					return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
 				}
-			}
-			img.SetStages(newStages)
+				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-			if err := phase.AfterImageStages(img); err != nil {
-				return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+				logProcessMsg = fmt.Sprintf("Phase %s -- OnImageStage()", phase.Name())
+				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+				var newStages []stage.Interface
+				for _, stg := range img.GetStages() {
+					if keepStage, err := phase.OnImageStage(img, stg); err != nil {
+						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
+					} else if keepStage {
+						newStages = append(newStages, stg)
+					}
+				}
+				img.SetStages(newStages)
+				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+				logProcessMsg = fmt.Sprintf("Phase %s -- AfterImageStages()", phase.Name())
+				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+				if err := phase.AfterImageStages(img); err != nil {
+					logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+					return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+				}
+				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+				logProcessMsg = fmt.Sprintf("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name())
+				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+				if phase.ImageProcessingShouldBeStopped(img) {
+					logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+					return nil
+				}
+				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 			}
 
-			if phase.ImageProcessingShouldBeStopped(img) {
-				continue ImagesProcessing
-			}
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 
 	for _, phase := range phases {
-		if err := phase.AfterImages(); err != nil {
-			return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
+		if err := logboek.Debug.LogProcess(fmt.Sprintf("Phase %s -- AfterImages()", phase.Name()), logboek.LevelLogProcessOptions{}, func() error {
+			if err := phase.AfterImages(); err != nil {
+				return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
+			}
+
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 
@@ -971,9 +1001,9 @@ func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Inte
 }
 
 func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor) (*Image, error) {
-	image := &Image{}
-	image.name = imageFromDockerfileConfig.Name
-	image.isDockerfileImage = true
+	img := &Image{}
+	img.name = imageFromDockerfileConfig.Name
+	img.isDockerfileImage = true
 
 	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
 
@@ -1086,7 +1116,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		return nil, err
 	}
 
-	if err := handleImageFromName(resolvedBaseName, false, image, c); err != nil {
+	if err := handleImageFromName(resolvedBaseName, false, img, c); err != nil {
 		return nil, err
 	}
 
@@ -1107,11 +1137,11 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		dockerTargetIndex,
 		baseStageOptions)
 
-	image.stages = append(image.stages, dockerfileStage)
+	img.stages = append(img.stages, dockerfileStage)
 
 	logboek.Default.LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
-	return image, nil
+	return img, nil
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {

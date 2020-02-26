@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -91,6 +92,19 @@ func (i *StageImage) Build(options BuildOptions) error {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 	}
 	defer shluz.Unlock(containerLockName)
+
+	if debugDockerRunCommand() {
+		runArgs, err := i.container.prepareRunArgs()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
+
+		if len(i.container.prepareAllRunCommands()) != 0 {
+			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+		}
+	}
 
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
@@ -254,4 +268,8 @@ func (i *StageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
 		i.dockerfileImageBuilder = NewDockerfileImageBuilder()
 	}
 	return i.dockerfileImageBuilder
+}
+
+func debugDockerRunCommand() bool {
+	return os.Getenv("WERF_DEBUG_DOCKER_RUN_COMMAND") == "1"
 }

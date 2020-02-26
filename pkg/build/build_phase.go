@@ -5,19 +5,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
-
-	"github.com/flant/werf/pkg/storage"
 
 	"github.com/docker/docker/pkg/stringid"
 
-	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/werf"
-
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/image"
+	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 const (
@@ -186,7 +186,6 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 		return false, fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
 	if isEmpty {
-		logboek.Debug.LogFDetails("%s:%s <empty>\n", stg.Name(), strings.Repeat(" ", MaxStageNameLength-len(stg.Name())))
 		return false, nil
 	}
 
@@ -217,12 +216,24 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetSignature(), prevStageDependencies)
 	}
 
-	res := util.Sha3_224Hash(checksumArgs...)
-	logboek.Debug.LogF(
-		"Signature %s of %q consists of: BuildCacheVersion, stageName, stageDependencies, prevNonEmptyStage signature, prevNonEmptyStage dependencies for next stage => %#v\n",
-		res, stageName, checksumArgs,
-	)
-	return util.Sha3_224Hash(checksumArgs...), nil
+	signature := util.Sha3_224Hash(checksumArgs...)
+
+	blockMsg := fmt.Sprintf("Stage %s signature %s", stageName, signature)
+	_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+		checksumArgsNames := []string{
+			"BuildCacheVersion",
+			"stageName",
+			"stageDependencies",
+			"prevNonEmptyStage signature",
+			"prevNonEmptyStage dependencies for next stage",
+		}
+		for ind, checksumArg := range checksumArgs {
+			logboek.Debug.LogF("%s => %q\n", checksumArgsNames[ind], checksumArg)
+		}
+		return nil
+	})
+
+	return signature, nil
 }
 
 func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface) error {
@@ -236,8 +247,6 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		return err
 	}
 	stg.SetSignature(stageSig)
-
-	logboek.Default.LogFDetails("%s:%s %s\n", stg.Name(), strings.Repeat(" ", MaxStageNameLength-len(stg.Name())), stageSig)
 
 	var i *image.StageImage
 	var shouldResetCache bool
@@ -259,6 +268,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 				"Stage %q image %s by signature %s from stages storage cache is not exists: resetting stages storage cache\n",
 				stg.Name(), stageSig, i.Name(),
 			)
+			logboek.LogOptionalLn()
 			shouldResetCache = true
 		}
 	} else {
@@ -266,6 +276,7 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 			"Stage %q cache by signature %s is not exists in stages storage cache: resetting stages storage cache\n",
 			stg.Name(), stageSig,
 		)
+		logboek.LogOptionalLn()
 		shouldResetCache = true
 	}
 
@@ -324,7 +335,15 @@ func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, i
 		return false, nil, nil
 	}
 
-	logboek.Debug.LogF("SelectCacheImage => %#v\n", imgInfo)
+	imgInfoData, err := yaml.Marshal(imgInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = logboek.Debug.LogBlock("Selected cache image", logboek.LevelLogBlockOptions{Style: logboek.HighlightStyle()}, func() error {
+		logboek.Debug.LogF(string(imgInfoData))
+		return nil
+	})
 
 	i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
 	stg.SetImage(i)
@@ -526,13 +545,7 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 				return fmt.Errorf("%s preRunHook failed: %s", stg.LogDetailedName(), err)
 			}
 
-			if err := logboek.WithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
-				return phase.atomicBuildStageImage(img, stg)
-			}); err != nil {
-				return err
-			}
-
-			return nil
+			return phase.atomicBuildStageImage(img, stg)
 		},
 	); err != nil {
 		return err
@@ -552,9 +565,12 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) error {
 	stageImage := stg.GetImage()
 
-	if err := stageImage.Build(phase.ImageBuildOptions); err != nil {
+	if err := logboek.WithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
+		return stageImage.Build(phase.ImageBuildOptions)
+	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %q with signature %s: %s", stg.Name(), stg.GetSignature(), err)
 	}
+	logboek.LogOptionalLn()
 
 	if err := phase.Conveyor.StorageLockManager.LockStage(phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
 		return fmt.Errorf("unable to lock project %s signature %s: %s", phase.Conveyor.projectName(), stg.GetSignature(), err)
