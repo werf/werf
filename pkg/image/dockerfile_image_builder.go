@@ -32,7 +32,7 @@ func (b *DockerfileImageBuilder) AppendBuildArgs(buildArgs ...string) {
 func (b *DockerfileImageBuilder) Build() error {
 	buildArgs := append(b.BuildArgs, fmt.Sprintf("--tag=%s", b.temporalId))
 
-	if err := docker.CliBuild(buildArgs...); err != nil {
+	if err := docker.CliBuild_LiveOutput(buildArgs...); err != nil {
 		return err
 	}
 

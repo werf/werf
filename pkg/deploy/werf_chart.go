@@ -1,9 +1,6 @@
 package deploy
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/deploy/secret"
@@ -28,13 +25,7 @@ func PrepareWerfChart(projectName, chartDir, env string, m secret.Manager, secre
 		}
 	}
 
-	if debug() {
-		fmt.Fprintf(logboek.GetOutStream(), "werf chart: %#v\n", werfChart)
-	}
+	logboek.Debug.LogF("werf chart: %#v\n", werfChart)
 
 	return werfChart, nil
-}
-
-func debug() bool {
-	return os.Getenv("WERF_DEPLOY_DEBUG") == "1"
 }

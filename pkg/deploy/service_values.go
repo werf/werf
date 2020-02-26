@@ -1,10 +1,7 @@
 package deploy
 
 import (
-	"fmt"
-
 	"github.com/flant/werf/pkg/images_manager"
-
 	"github.com/ghodss/yaml"
 
 	"github.com/flant/logboek"
@@ -90,10 +87,7 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 				} else {
 					imageData[key] = value
 				}
-
-				if debug() {
-					_, _ = fmt.Fprintf(logboek.GetOutStream(), "ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
-				}
+				logboek.Debug.LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
 			}
 
 			imageID, err := image.GetImageId()
@@ -112,10 +106,8 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 		}
 	}
 
-	if debug() {
-		data, err := yaml.Marshal(res)
-		fmt.Fprintf(logboek.GetOutStream(), "GetServiceValues result (err=%s):\n%s\n", err, data)
-	}
+	data, err := yaml.Marshal(res)
+	logboek.Debug.LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
 
 	return res, nil
 }

@@ -139,8 +139,6 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 
 			return nil
 		}
-
-		logboek.LogOptionalLn()
 	}
 
 	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
@@ -169,7 +167,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 
 	var fetchedBaseImageRepoId string
 	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
-	if err := logboek.LogProcessInline(processMsg, logboek.LogProcessInlineOptions{}, func() error {
+	if err := logboek.Info.LogProcessInline(processMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
 		var fetchImageIdErr error
 		fetchedBaseImageRepoId, fetchImageIdErr = docker_registry.ImageId(baseImageName)
 		if fetchImageIdErr != nil {

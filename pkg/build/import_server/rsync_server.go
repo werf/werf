@@ -84,7 +84,8 @@ strict modes = false
 		"--config=/.werf/rsyncd.conf",
 	}
 	logboek.Debug.LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
-	if err := docker.CliRun(runArgs...); err != nil {
+	if output, err := docker.CliRun_RecordedOutput(runArgs...); err != nil {
+		logboek.LogErrorF("%s", output)
 		return nil, err
 	}
 
@@ -103,7 +104,8 @@ strict modes = false
 }
 
 func (srv *RsyncServer) Shutdown() error {
-	if err := docker.CliRm("--force", srv.DockerContainerName); err != nil {
+	if output, err := docker.CliRm_RecordedOutput("--force", srv.DockerContainerName); err != nil {
+		logboek.LogErrorF("%s", output)
 		return fmt.Errorf("unable to remove container %s: %s", srv.DockerContainerName, err)
 	}
 	return nil

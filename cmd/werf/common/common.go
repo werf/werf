@@ -756,7 +756,9 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 		return nil, err
 	}
 
-	return config.GetWerfConfig(werfConfigPath, true)
+	res, err := config.GetWerfConfig(werfConfigPath, true)
+	logboek.LogLn()
+	return res, err
 }
 
 func GetWerfConfigPath(projectDir string) (string, error) {
