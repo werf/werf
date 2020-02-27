@@ -32,28 +32,9 @@ var _ = Describe("git stages", func() {
 			beforeBuildHookFunc:        nil,
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("gitCache:               <empty>"),
-				ContainSubstring("gitLatestPatch:         <empty>"),
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
-			},
-		}
-
-		toResetGitArchiveStageStep := stagesSpecStep{
-			byText: "Commit with specific reset message ([werf reset]|[reset werf]): gitArchive stage should be rebuilt",
-			beforeBuildHookFunc: func() {
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"commit", "--allow-empty", "-m", "[werf reset] Reset gitArchive stage",
-				)
-			},
-			checkResultedFilesChecksum: true,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("gitCache:               <empty>"),
-				ContainSubstring("gitLatestPatch:         <empty>"),
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
+				Not(ContainSubstring("stage image/gitCache")),
+				Not(ContainSubstring("stage image/gitLatestPatch")),
+				ContainSubstring("Building stage image/gitArchive"),
 			},
 		}
 
@@ -75,10 +56,9 @@ var _ = Describe("git stages", func() {
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
-					ContainSubstring("gitLatestPatch:         <empty>"),
-					ContainSubstring("Git files will be actualized on stage gitCache"),
-					ContainSubstring("Use cache image for stage gitArchive"),
-					ContainSubstring("Building stage gitCache"),
+					Not(ContainSubstring("stage image/gitLatestPatch")),
+					ContainSubstring("Use cache image for stage image/gitArchive"),
+					ContainSubstring("Building stage image/gitCache"),
 				},
 			}
 
@@ -89,10 +69,9 @@ var _ = Describe("git stages", func() {
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
-					ContainSubstring("gitCache:               <empty>"),
-					ContainSubstring("Git files will be actualized on stage gitLatestPatch"),
-					ContainSubstring("Use cache image for stage gitArchive"),
-					ContainSubstring("Building stage gitLatestPatch"),
+					Not(ContainSubstring("stage image/gitCache")),
+					ContainSubstring("Use cache image for stage image/gitArchive"),
+					ContainSubstring("Building stage image/gitLatestPatch"),
 				},
 			}
 
@@ -118,10 +97,9 @@ var _ = Describe("git stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						ContainSubstring("gitLatestPatch:         <empty>"),
-						ContainSubstring("Git files will be actualized on stage gitCache"),
-						ContainSubstring("Use cache image for stage gitArchive"),
-						ContainSubstring("Building stage gitCache"),
+						Not(ContainSubstring("stage image/gitLatestPatch")),
+						ContainSubstring("Use cache image for stage image/gitArchive"),
+						ContainSubstring("Building stage image/gitCache"),
 					},
 				}
 
@@ -132,20 +110,14 @@ var _ = Describe("git stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						ContainSubstring("Git files will be actualized on stage gitLatestPatch"),
-						ContainSubstring("Use cache image for stage gitCache"),
-						ContainSubstring("Use cache image for stage gitArchive"),
-						ContainSubstring("Building stage gitLatestPatch"),
+						ContainSubstring("Use cache image for stage image/gitCache"),
+						ContainSubstring("Use cache image for stage image/gitArchive"),
+						ContainSubstring("Building stage image/gitLatestPatch"),
 					},
 				}
 
 				BeforeEach(func() {
 					specSteps = append(specSteps, toBuildGitCacheStageStep)
-				})
-
-				It("gitArchive stage should be built (commit with specific reset message ([werf reset]|[reset werf]))", func() {
-					specSteps = append(specSteps, toResetGitArchiveStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
 				})
 
 				It("gitCache stage should be built (diff between gitCache commit and current commit >=1MB)", func() {
@@ -162,11 +134,6 @@ var _ = Describe("git stages", func() {
 			Context("when gitLatestPatch stage is built", func() {
 				BeforeEach(func() {
 					specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-				})
-
-				It("gitArchive stage should be built (commit with specific reset message ([werf reset]|[reset werf]))", func() {
-					specSteps = append(specSteps, toResetGitArchiveStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
 				})
 
 				It("gitCache stage should be built (diff between gitArchive commit and current commit >=1MB)", func() {
@@ -188,24 +155,7 @@ var _ = Describe("git stages", func() {
 			beforeBuildHookFunc:        nil,
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
-			},
-		}
-
-		toResetGitArchiveStageStep := stagesSpecStep{
-			byText: "Commit with specific reset message ([werf reset]|[reset werf]): gitArchive stage should be rebuilt",
-			beforeBuildHookFunc: func() {
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"commit", "--allow-empty", "-m", "[werf reset] Reset gitArchive stage",
-				)
-			},
-			checkResultedFilesChecksum: true,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
+				ContainSubstring("Building stage artifact/gitArchive"),
 			},
 		}
 
@@ -216,9 +166,8 @@ var _ = Describe("git stages", func() {
 			},
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("Building stage ")),
-				Not(ContainSubstring("Git files will be actualized on stage ")),
-				ContainSubstring("Use cache image for stage gitArchive"),
+				Not(ContainSubstring("Building stage")),
+				ContainSubstring("Use cache image for stage artifact/gitArchive"),
 			},
 		}
 
@@ -235,11 +184,6 @@ var _ = Describe("git stages", func() {
 		Context("when gitArchive stage is built", func() {
 			BeforeEach(func() {
 				specSteps = append(specSteps, toBuildGitArchiveStageStep)
-			})
-
-			It("gitArchive stage should be built (commit with specific reset message ([werf reset]|[reset werf]))", func() {
-				specSteps = append(specSteps, toResetGitArchiveStageStep)
-				runStagesSpecSteps(testDirPath, specSteps)
 			})
 
 			It("nothing should be built", func() {
@@ -269,10 +213,9 @@ var _ = Describe("user stages", func() {
 			beforeBuildHookFunc:        nil,
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("gitCache:               <empty>"),
-				ContainSubstring("gitLatestPatch:         <empty>"),
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
+				Not(ContainSubstring("stage image/gitCache")),
+				Not(ContainSubstring("stage image/gitLatestPatch")),
+				ContainSubstring("Building stage image/gitArchive"),
 			},
 		}
 
@@ -283,10 +226,9 @@ var _ = Describe("user stages", func() {
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("gitLatestPatch:         <empty>"),
-				ContainSubstring("Git files will be actualized on stage gitCache"),
-				ContainSubstring("Use cache image for stage gitArchive"),
-				ContainSubstring("Building stage gitCache"),
+				Not(ContainSubstring("stage image/gitLatestPatch")),
+				ContainSubstring("Use cache image for stage image/gitArchive"),
+				ContainSubstring("Building stage image/gitCache"),
 			},
 		}
 
@@ -297,10 +239,9 @@ var _ = Describe("user stages", func() {
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("gitCache:               <empty>"),
-				ContainSubstring("Git files will be actualized on stage gitLatestPatch"),
-				ContainSubstring("Use cache image for stage gitArchive"),
-				ContainSubstring("Building stage gitLatestPatch"),
+				Not(ContainSubstring("stage image/gitCache")),
+				ContainSubstring("Use cache image for stage image/gitArchive"),
+				ContainSubstring("Building stage image/gitLatestPatch"),
 			},
 		}
 
@@ -324,10 +265,9 @@ var _ = Describe("user stages", func() {
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
-								ContainSubstring("gitCache:               <empty>"),
-								ContainSubstring("gitLatestPatch:         <empty>"),
-								ContainSubstring("Git files will be actualized on stage gitArchive"),
-								ContainSubstring("Building stage gitArchive"),
+								Not(ContainSubstring("stage image/gitCache")),
+								Not(ContainSubstring("stage image/gitLatestPatch")),
+								ContainSubstring("Building stage image/gitArchive"),
 							},
 						})
 						runStagesSpecSteps(testDirPath, specSteps)
@@ -358,10 +298,9 @@ var _ = Describe("user stages", func() {
 								},
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
-									ContainSubstring("gitCache:               <empty>"),
-									ContainSubstring("gitLatestPatch:         <empty>"),
-									ContainSubstring(fmt.Sprintf("Git files will be actualized on stage %s", boundedUserStage)),
-									ContainSubstring(fmt.Sprintf("Building stage %s", boundedUserStage)),
+									Not(ContainSubstring("stage image/gitCache")),
+									Not(ContainSubstring("stage image/gitLatestPatch")),
+									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
 								},
 							})
 							runStagesSpecSteps(testDirPath, specSteps)
@@ -414,8 +353,7 @@ var _ = Describe("user stages", func() {
 								},
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
-									ContainSubstring(fmt.Sprintf("Git files will be actualized on stage %s", boundedUserStage)),
-									ContainSubstring(fmt.Sprintf("Building stage %s", boundedUserStage)),
+									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
 								},
 							})
 							runStagesSpecSteps(testDirPath, specSteps)
@@ -454,8 +392,7 @@ var _ = Describe("user stages", func() {
 			beforeBuildHookFunc:        nil,
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("Git files will be actualized on stage gitArchive"),
-				ContainSubstring("Building stage gitArchive"),
+				ContainSubstring("Building stage artifact/gitArchive"),
 			},
 		}
 
@@ -466,9 +403,8 @@ var _ = Describe("user stages", func() {
 			},
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("Building stage ")),
-				Not(ContainSubstring("Git files will be actualized on stage ")),
-				ContainSubstring("Use cache image for stage gitArchive"),
+				Not(ContainSubstring("Building stage")),
+				ContainSubstring("Use cache image for stage artifact/gitArchive"),
 			},
 		}
 
@@ -490,8 +426,7 @@ var _ = Describe("user stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						ContainSubstring("Git files will be actualized on stage gitArchive"),
-						ContainSubstring("Building stage gitArchive"),
+						ContainSubstring("Building stage artifact/gitArchive"),
 					},
 				}
 
@@ -529,8 +464,7 @@ var _ = Describe("user stages", func() {
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
-								ContainSubstring(fmt.Sprintf("Git files will be actualized on stage %s", boundedUserStage)),
-								ContainSubstring(fmt.Sprintf("Building stage %s", boundedUserStage)),
+								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
 							},
 						})
 						runStagesSpecSteps(testDirPath, specSteps)
@@ -568,8 +502,7 @@ var _ = Describe("user stages", func() {
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
-								ContainSubstring(fmt.Sprintf("Git files will be actualized on stage %s", boundedUserStage)),
-								ContainSubstring(fmt.Sprintf("Building stage %s", boundedUserStage)),
+								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
 							},
 						})
 						runStagesSpecSteps(testDirPath, specSteps)
@@ -619,7 +552,7 @@ func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
 			werfBinPath,
 			"build",
 		)
-		Ω(out).ShouldNot(ContainSubstring("Building stage "))
+		Ω(out).ShouldNot(ContainSubstring("Building stage"))
 	}
 }
 
