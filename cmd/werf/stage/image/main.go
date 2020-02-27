@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logging.Mute()
+			logging.EnableLogQuiet()
 
 			var imageName string
 			if len(args) > 1 {
