@@ -80,6 +80,7 @@ $(document).ready(function () {
 
       for (group of releasesInfo.menuChannels) {
         for (channel of releasesInfo.orderedChannels) {
+          if (channel === 'rock-solid') continue;
           _current_channel = group.channels.filter(function (el) {
             return ((el.version === currentRelease) && (el.name === channel));
           });
@@ -88,7 +89,13 @@ $(document).ready(function () {
             break;
           }
         }
-        if (_current_channel.length) break;
+        if (_current_channel.length) break
+        else {
+          // if (currentRelease === group.channels['rock-solid'].version)
+          if (group.channels.filter(function (el) {
+            return ((el.version === currentRelease) && (el.name === 'rock-solid') )}))
+            currentChannel = group.group + '-rock-solid';
+        }
       }
     }
 
