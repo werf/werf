@@ -31,14 +31,8 @@ func Init() error {
 	return nil
 }
 
-func Mute() {
-	logboek.MuteOut()
-	logboek.MuteErr()
-	log.SetOutput(logboek.GetOutStream())
-}
-
 func EnableLogQuiet() {
-	logboek.SetQuietLevel()
+	logboek.SetLevel(logboek.Error)
 }
 
 func EnableLogDebug() {
