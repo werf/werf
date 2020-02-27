@@ -18,12 +18,20 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId 
 		baseImageRepoIdOrNone = baseImageRepoId
 	}
 
-	return newFromStage(baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
+	var fromImageOrArtifactImageName string
+	if imageBaseConfig.FromImageName != "" {
+		fromImageOrArtifactImageName = imageBaseConfig.FromImageName
+	} else if imageBaseConfig.FromImageArtifactName != "" {
+		fromImageOrArtifactImageName = imageBaseConfig.FromImageArtifactName
+	}
+
+	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
 }
 
-func newFromStage(baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
+func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
 	s := &FromStage{}
 	s.cacheVersion = cacheVersion
+	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = newBaseStage(From, baseStageOptions)
 	return s
@@ -32,11 +40,12 @@ func newFromStage(baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *
 type FromStage struct {
 	*BaseStage
 
-	baseImageRepoIdOrNone string
-	cacheVersion          string
+	fromImageOrArtifactImageName string
+	baseImageRepoIdOrNone        string
+	cacheVersion                 string
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, prevImage, _ image.ImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ image.ImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -51,12 +60,16 @@ func (s *FromStage) GetDependencies(_ Conveyor, prevImage, _ image.ImageInterfac
 		args = append(args, filepath.ToSlash(filepath.Clean(mount.From)), path.Clean(mount.To), mount.Type)
 	}
 
-	args = append(args, prevImage.Name())
+	if s.fromImageOrArtifactImageName != "" {
+		args = append(args, c.GetImageStagesSignature(s.fromImageOrArtifactImageName))
+	} else {
+		args = append(args, prevImage.Name())
+	}
 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *FromStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
 

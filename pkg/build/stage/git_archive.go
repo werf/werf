@@ -45,7 +45,7 @@ func (s *GitArchiveStage) SelectCacheImage(images []*storage.ImageInfo) (*storag
 	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, prevImage, prevBuiltImage image.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
