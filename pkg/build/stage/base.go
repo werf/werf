@@ -105,7 +105,7 @@ func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (s
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetNextStageDependencies(c Conveyor) (string, error) {
+func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 	return "", nil
 }
 
