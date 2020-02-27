@@ -63,6 +63,8 @@ var _ = BeforeEach(func() {
 	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
 
 	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
+	stubs.SetEnv("WERF_LOG_DEBUG", "false")
+        stubs.SetEnv("WERF_LOG_VERBOSE", "true")
 })
 
 var _ = AfterEach(func() {

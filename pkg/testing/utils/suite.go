@@ -61,13 +61,21 @@ func isWerfTestBinaryPath(path string) bool {
 }
 
 func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
-	packageId := strings.Split(filepath.Base(os.Args[0]), ".")[0] // .test .test.exe
+	var packageId string
+	filename := filepath.Base(os.Args[0])
+	if strings.HasPrefix(filename, "___") { // ide
+		packageId = "none"
+	} else {
+		packageId = strings.Split(filename, ".")[0] // .test .test.exe
+	}
+
 	projectName := strings.Join([]string{
 		"werf-test",
 		packageId,
 		strconv.Itoa(os.Getpid()),
 		GetRandomString(10),
 	}, "-")
+
 	stubs.SetEnv("WERF_PROJECT_NAME", projectName)
 }
 
