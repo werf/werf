@@ -19,7 +19,7 @@ import (
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/git_repo/ls_tree"
-	"github.com/flant/werf/pkg/path_filter"
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
 )
 
@@ -202,7 +202,7 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 	patchOpts := true_git.PatchOptions{
 		FromCommit: opts.FromCommit,
 		ToCommit:   opts.ToCommit,
-		PathFilter: path_filter.NewGitMappingPathFilter(
+		PathMatcher: path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
@@ -273,7 +273,7 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 
 	archiveOpts := true_git.ArchiveOptions{
 		Commit: opts.Commit,
-		PathFilter: path_filter.NewGitMappingPathFilter(
+		PathMatcher: path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
@@ -414,19 +414,19 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			return err
 		}
 
-		pathFilter := path_filter.NewGitMappingPathFilter(
+		pathMatcher := path_matcher.NewGitMappingPathMatcher(
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
 		)
 
 		var mainLsTreeResult *ls_tree.Result
-		processMsg := fmt.Sprintf("Main LsTree (%s)", pathFilter.String())
+		processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
 		if err := logboek.Debug.LogProcess(
 			processMsg,
 			logboek.LevelLogProcessOptions{},
 			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.BasePath, pathFilter)
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, pathMatcher)
 				return err
 			},
 		); err != nil {
@@ -435,31 +435,36 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 
 		for _, path := range opts.Paths {
 			var pathLsTreeResult *ls_tree.Result
-			pathFilter := path_filter.NewGitMappingPathFilter(
+			pathMatcher := path_matcher.NewSimplePathMatcher(
 				opts.BasePath,
 				[]string{path},
-				[]string{},
 			)
 
-			processMsg := fmt.Sprintf("LsTree path (%s)", pathFilter.String())
-			if err := logboek.Debug.LogProcess(
-				processMsg,
-				logboek.LevelLogProcessOptions{},
-				func() error {
-					pathLsTreeResult, err = mainLsTreeResult.LsTree(pathFilter)
-
-					hashSum := pathLsTreeResult.HashSum()
-					logboek.Debug.LogLn("Result hashSum: ", hashSum)
-					if hashSum != "" {
-						checksum.Hash.Write([]byte(hashSum))
-					} else {
-						checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
-					}
-
-					return err
-				},
-			); err != nil {
+			processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
+			logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
+			pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
+			if err != nil {
+				logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 				return err
+			}
+			logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+			var pathChecksum string
+			if !pathLsTreeResult.IsEmpty() {
+				blockMsg := fmt.Sprintf("ls-tree result checksum (%s)", pathMatcher.String())
+				_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+					pathChecksum = pathLsTreeResult.Checksum()
+					logboek.LogOptionalLn()
+					logboek.Debug.LogLn(pathChecksum)
+
+					return nil
+				})
+			}
+
+			if pathChecksum != "" {
+				checksum.Hash.Write([]byte(pathChecksum))
+			} else {
+				checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
 			}
 		}
 
@@ -470,10 +475,6 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		return nil, err
 	}
 
-	if debugChecksum() {
-		logboek.LogF("Calculated checksum %s\n", checksum.String())
-	}
-
 	return checksum, nil
 }
 
@@ -481,8 +482,4 @@ func GitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repos
 	worktreeFilesystem := osfs.New(worktreeDir)
 	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
 	return git.Open(storage, worktreeFilesystem)
-}
-
-func debugChecksum() bool {
-	return os.Getenv("WERF_DEBUG_GIT_REPO_CHECKSUM") == "1"
 }

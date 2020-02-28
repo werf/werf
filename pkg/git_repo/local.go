@@ -5,20 +5,41 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/true_git"
-
-	"github.com/flant/werf/pkg/util"
-
-	"github.com/flant/logboek"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+
+	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/git_repo/ls_tree"
+	"github.com/flant/werf/pkg/git_repo/status"
+	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/util"
 )
 
 type Local struct {
 	Base
 	Path   string
 	GitDir string
+}
+
+func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+	}
+
+	return ls_tree.LsTree(repository, pathMatcher)
+}
+
+func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+	}
+
+	return status.Status(repository, repo.Path, pathMatcher)
 }
 
 func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {

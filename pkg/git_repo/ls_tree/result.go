@@ -3,20 +3,24 @@ package ls_tree
 import (
 	"crypto/sha256"
 	"fmt"
+	"path/filepath"
 	"sort"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/path_matcher"
 )
 
 type Result struct {
-	repository        *git.Repository
-	tree              *object.Tree
-	treePath          string
-	lsTreeEntries     []*LsTreeEntry
-	submodulesResults []*SubmoduleResult
+	repository                       *git.Repository
+	tree                             *object.Tree
+	treeFilepath                     string
+	lsTreeEntries                    []*LsTreeEntry
+	submodulesResults                []*SubmoduleResult
+	notInitializedSubmoduleFilepaths []string
 }
 
 type SubmoduleResult struct {
@@ -24,50 +28,18 @@ type SubmoduleResult struct {
 }
 
 type LsTreeEntry struct {
-	Path string
+	Filepath string
 	object.TreeEntry
 }
 
-func (r *Result) HashSum() string {
-	if r.empty() {
-		return ""
-	}
-
-	h := sha256.New()
-
-	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
-		return r.lsTreeEntries[i].Path < r.lsTreeEntries[j].Path
-	})
-
-	for _, lsTreeEntry := range r.lsTreeEntries {
-		h.Write([]byte(lsTreeEntry.Hash.String()))
-	}
-
-	sort.Slice(r.submodulesResults, func(i, j int) bool {
-		return r.submodulesResults[i].treePath < r.submodulesResults[j].treePath
-	})
-
-	for _, submoduleResult := range r.submodulesResults {
-		submoduleHashSum := submoduleResult.HashSum()
-		if submoduleHashSum != "" {
-			h.Write([]byte(submoduleHashSum))
-		}
-	}
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func (r *Result) empty() bool {
-	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0
-}
-
-func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
+func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	res := &Result{
-		repository:        r.repository,
-		tree:              r.tree,
-		treePath:          r.treePath,
-		lsTreeEntries:     []*LsTreeEntry{},
-		submodulesResults: []*SubmoduleResult{},
+		repository:                       r.repository,
+		tree:                             r.tree,
+		treeFilepath:                     r.treeFilepath,
+		lsTreeEntries:                    []*LsTreeEntry{},
+		submodulesResults:                []*SubmoduleResult{},
+		notInitializedSubmoduleFilepaths: []string{},
 	}
 
 	for _, lsTreeEntry := range r.lsTreeEntries {
@@ -75,20 +47,25 @@ func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
 		var entrySubmodulesResults []*SubmoduleResult
 
 		var err error
-		if lsTreeEntry.Path == "" {
-			isTreeMatched, shouldWalkThrough := pathFilter.ProcessDirOrSubmodulePath(lsTreeEntry.Path)
+		if lsTreeEntry.Filepath == "" {
+			isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.Filepath)
 			if isTreeMatched {
-				logboek.Debug.LogLn("Root tree was added")
+				if debugProcess() {
+					logboek.Debug.LogLn("Root tree was added")
+				}
 				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
 			} else if shouldWalkThrough {
-				logboek.Debug.LogLn("Root tree was opened")
-				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.treePath, pathFilter)
+				if debugProcess() {
+					logboek.Debug.LogLn("Root tree was checking")
+				}
+
+				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.treeFilepath, pathMatcher)
 				if err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(r.repository, r.tree, r.treePath, lsTreeEntry, pathFilter)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(r.repository, r.tree, r.treeFilepath, lsTreeEntry, pathMatcher)
 		}
 
 		res.lsTreeEntries = append(res.lsTreeEntries, entryLsTreeEntries...)
@@ -96,13 +73,79 @@ func (r *Result) LsTree(pathFilter PathFilter) (*Result, error) {
 	}
 
 	for _, submoduleResult := range r.submodulesResults {
-		sr, err := submoduleResult.LsTree(pathFilter)
+		sr, err := submoduleResult.LsTree(pathMatcher)
 		if err != nil {
 			return nil, err
 		}
 
-		res.submodulesResults = append(res.submodulesResults, &SubmoduleResult{sr})
+		if !sr.IsEmpty() {
+			res.submodulesResults = append(res.submodulesResults, &SubmoduleResult{sr})
+		}
+	}
+
+	for _, submoduleFilepath := range r.notInitializedSubmoduleFilepaths {
+		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFilepath)
+		if isMatched || shouldGoThrough {
+			res.notInitializedSubmoduleFilepaths = append(res.notInitializedSubmoduleFilepaths, submoduleFilepath)
+		}
 	}
 
 	return res, nil
+}
+
+func (r *Result) Checksum() string {
+	if r.IsEmpty() {
+		return ""
+	}
+
+	h := sha256.New()
+
+	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
+		return r.lsTreeEntries[i].Filepath < r.lsTreeEntries[j].Filepath
+	})
+
+	for _, lsTreeEntry := range r.lsTreeEntries {
+		h.Write([]byte(lsTreeEntry.Hash.String()))
+
+		logFilepath := lsTreeEntry.Filepath
+		if logFilepath == "" {
+			logFilepath = "."
+		}
+
+		logboek.Debug.LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+	}
+
+	sort.Strings(r.notInitializedSubmoduleFilepaths)
+	for _, submoduleFilepath := range r.notInitializedSubmoduleFilepaths {
+		checksumArg := fmt.Sprintf("-%s", filepath.ToSlash(submoduleFilepath))
+		h.Write([]byte(checksumArg))
+		logboek.Debug.LogF("Not initialized submodule was added: %s -> %s\n", submoduleFilepath, checksumArg)
+	}
+
+	sort.Slice(r.submodulesResults, func(i, j int) bool {
+		return r.submodulesResults[i].treeFilepath < r.submodulesResults[j].treeFilepath
+	})
+
+	for _, submoduleResult := range r.submodulesResults {
+		var submoduleChecksum string
+		if !submoduleResult.IsEmpty() {
+			blockMsg := fmt.Sprintf("submodule %s", submoduleResult.treeFilepath)
+			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+				submoduleChecksum = submoduleResult.Checksum()
+				logboek.LogOptionalLn()
+				logboek.Debug.LogLn(submoduleChecksum)
+				return nil
+			})
+		}
+
+		if submoduleChecksum != "" {
+			h.Write([]byte(submoduleChecksum))
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (r *Result) IsEmpty() bool {
+	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0 && len(r.notInitializedSubmoduleFilepaths) == 0
 }
