@@ -165,7 +165,7 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.7
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
-replace k8s.io/helm => github.com/flant/helm v0.0.0-20200220095449-c44c7c22d6cc
+replace k8s.io/helm => github.com/flant/helm v0.0.0-20200302114220-d40ba0adc0f1
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.2.3
 

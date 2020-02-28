@@ -213,7 +213,7 @@ func (c *Conveyor) ShouldBeBuilt() error {
 		NewShouldBeBuiltPhase(c),
 	}
 
-	return c.runPhases(phases)
+	return c.runPhases(phases, false)
 }
 
 func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager images_manager.ImagesRepoManager, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
@@ -270,7 +270,7 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 		ImageBuildOptions: opts.ImageBuildOptions,
 	})}
 
-	return c.runPhases(phases)
+	return c.runPhases(phases, true)
 }
 
 type PublishImagesOptions struct {
@@ -289,7 +289,7 @@ func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts Publi
 		NewPublishImagesPhase(c, imagesRepoManager, opts),
 	}
 
-	return c.runPhases(phases)
+	return c.runPhases(phases, true)
 
 	/*
 			var phases []Phase
@@ -324,7 +324,7 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 		NewPublishImagesPhase(c, imagesRepoManager, opts.PublishImagesOptions),
 	}
 
-	return c.runPhases(phases)
+	return c.runPhases(phases, true)
 
 	/*
 		var phases []Phase
@@ -396,7 +396,7 @@ func (c *Conveyor) doDetermineStages() error {
 	return nil
 }
 
-func (c *Conveyor) runPhases(phases []Phase) error {
+func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 	// TODO: Parallelize builds
 	//images (по зависимостям), dependantImagesByStage
 	//dependantImagesByStage строится в InitializationPhase, спросить у stage что она ждет.
@@ -422,6 +422,13 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 	//	} Goroutine
 	//}
 
+	var imagesLogger logboek.Level
+	if logImages {
+		imagesLogger = logboek.Default
+	} else {
+		imagesLogger = logboek.Info
+	}
+
 	for _, phase := range phases {
 		logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImages()", phase.Name())
 		logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
@@ -433,7 +440,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 	}
 
 	for _, img := range c.imagesInOrder {
-		if err := logboek.Default.LogProcess(img.LogDetailedName(), logboek.LevelLogProcessOptions{Style: img.LogProcessStyle()}, func() error {
+		if err := imagesLogger.LogProcess(img.LogDetailedName(), logboek.LevelLogProcessOptions{Style: img.LogProcessStyle()}, func() error {
 			for _, phase := range phases {
 				logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImageStages()", phase.Name())
 				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})

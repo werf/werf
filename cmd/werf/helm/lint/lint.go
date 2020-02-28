@@ -83,7 +83,7 @@ func runLint() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, true)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}

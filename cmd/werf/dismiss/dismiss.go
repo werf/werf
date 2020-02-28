@@ -122,10 +122,11 @@ func runDismiss() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, true)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
+	logboek.LogOptionalLn()
 
 	err = kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig})
 	if err != nil {
@@ -146,10 +147,16 @@ func runDismiss() error {
 		return err
 	}
 
-	logboek.LogF("Using helm release storage namespace: %s\n", *commonCmdData.HelmReleaseStorageNamespace)
-	logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
-	logboek.LogF("Using helm release name: %s\n", release)
-	logboek.LogF("Using Kubernetes namespace: %s\n", namespace)
+	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
+		logboek.LogF("Kubernetes namespace: %s\n", namespace)
+		logboek.LogF("Helm release storage namespace: %s\n", *commonCmdData.HelmReleaseStorageNamespace)
+		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
+		logboek.LogF("Helm release name: %s\n", release)
+
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	return deploy.RunDismiss(release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: cmdData.WithNamespace,

@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/flant/werf/pkg/images_manager"
@@ -41,12 +42,12 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 
 	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
 		if kube.Context != "" {
-			logboek.LogF("Using kube context: %s\n", kube.Context)
+			logboek.LogF("Kube-config context: %s\n", kube.Context)
 		}
-		logboek.LogF("Using helm release storage namespace: %s\n", helmReleaseStorageNamespace)
-		logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
-		logboek.LogF("Using helm release name: %s\n", release)
-		logboek.LogF("Using Kubernetes namespace: %s\n", namespace)
+		logboek.LogF("Kubernetes namespace: %s\n", namespace)
+		logboek.LogF("Helm release storage namespace: %s\n", helmReleaseStorageNamespace)
+		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
+		logboek.LogF("Helm release name: %s\n", release)
 
 		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
@@ -59,9 +60,11 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 		}
 
 		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
-		logboek.LogLn()
-		logboek.LogLn("Using service values:")
-		logboek.LogLn(logboek.FitText(string(serviceValuesRaw), logboek.FitTextOptions{ExtraIndentWidth: 2}))
+		serviceValuesRawStr := strings.TrimRight(string(serviceValuesRaw), "\n")
+		logboek.Info.LogBlock(fmt.Sprintf("Service values"), logboek.LevelLogBlockOptions{}, func() error {
+			logboek.Info.LogLn(serviceValuesRawStr)
+			return nil
+		})
 
 		projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
 		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
