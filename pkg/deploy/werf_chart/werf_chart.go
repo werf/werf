@@ -128,10 +128,10 @@ func (chart *WerfChart) LogExtraAnnotations() {
 	res, _ := yaml.Marshal(chart.ExtraAnnotations)
 
 	annotations := strings.TrimRight(string(res), "\n")
-	logboek.LogLn("Using extra annotations:")
-	logboek.LogF(logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
-	logboek.LogLn()
-	logboek.LogOptionalLn()
+	logboek.LogBlock(fmt.Sprintf("Extra annotations"), logboek.LogBlockOptions{}, func() error {
+		logboek.LogLn(annotations)
+		return nil
+	})
 }
 
 func (chart *WerfChart) LogExtraLabels() {
@@ -142,10 +142,10 @@ func (chart *WerfChart) LogExtraLabels() {
 	res, _ := yaml.Marshal(chart.ExtraLabels)
 
 	labels := strings.TrimRight(string(res), "\n")
-	logboek.LogLn("Using extra labels:")
-	logboek.LogF(logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
-	logboek.LogLn()
-	logboek.LogOptionalLn()
+	logboek.LogBlock(fmt.Sprintf("Extra labels"), logboek.LogBlockOptions{}, func() error {
+		logboek.LogLn(labels)
+		return nil
+	})
 }
 
 type ChartConfig struct {

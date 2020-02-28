@@ -163,7 +163,8 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 func makeMultitrackSpec(objMeta *metav1.ObjectMeta, failuresCountOptions allowedFailuresCountOptions, kind string) (*multitrack.MultitrackSpec, error) {
 	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, failuresCountOptions)
 	if err != nil {
-		logboek.LogWarnF("WARNING: %s\n", err)
+		logboek.LogWarnLn()
+		logboek.LogWarnF("WARNING %s\n", err)
 		return nil, nil
 	}
 
@@ -338,7 +339,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 			})
 
 		default:
-			logboek.LogWarnF("WARNING: Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
+			logboek.Default.LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
 		}
 	}
 

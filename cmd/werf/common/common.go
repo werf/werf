@@ -783,14 +783,13 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 	return "", nil
 }
 
-func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
+func GetWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := config.GetWerfConfig(werfConfigPath, true)
-	logboek.LogLn()
+	res, err := config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
 	return res, err
 }
 

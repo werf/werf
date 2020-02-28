@@ -99,7 +99,7 @@ func run(imageName string) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, false)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
