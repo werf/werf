@@ -374,6 +374,13 @@ func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
+	defaultValueEnv := os.Getenv("WERF_LOG_DEBUG")
+	if defaultValueEnv == "" {
+		defaultValueEnv = os.Getenv("WERF_DEBUG")
+	}
+
+	defaultValue := GetBoolEnvironmentDefaultTrue(defaultValueEnv)
+
 	for alias, env := range map[string]string{
 		"log-debug": "WERF_LOG_DEBUG",
 		"debug":     "WERF_DEBUG",
@@ -382,7 +389,7 @@ func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogDebug,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultTrue(env),
+			defaultValue,
 			fmt.Sprintf("Enable debug (default $%s).", env),
 		)
 	}
@@ -410,6 +417,13 @@ Default $WERF_LOG_COLOR_MODE or auto mode.`)
 func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
+	defaultValueEnv := os.Getenv("WERF_LOG_QUIET")
+	if defaultValueEnv == "" {
+		defaultValueEnv = os.Getenv("WERF_QUIET")
+	}
+
+	defaultValue := GetBoolEnvironmentDefaultFalse(defaultValueEnv)
+
 	for alias, env := range map[string]string{
 		"log-quiet": "WERF_LOG_QUIET",
 		"quiet":     "WERF_QUIET",
@@ -418,7 +432,7 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogQuiet,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultFalse(env),
+			defaultValue,
 			fmt.Sprintf(`Disable explanatory output (default $%s).`, env),
 		)
 	}
@@ -431,6 +445,13 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
+	defaultValueEnv := os.Getenv("WERF_LOG_VERBOSE")
+	if defaultValueEnv == "" {
+		defaultValueEnv = os.Getenv("WERF_VERBOSE")
+	}
+
+	defaultValue := GetBoolEnvironmentDefaultFalse(defaultValueEnv)
+
 	for alias, env := range map[string]string{
 		"log-verbose": "WERF_LOG_VERBOSE",
 		"verbose":     "WERF_VERBOSE",
@@ -439,7 +460,7 @@ func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogVerbose,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultFalse(env),
+			defaultValue,
 			fmt.Sprintf(`Enable verbose output (default $%s).`, env),
 		)
 	}
