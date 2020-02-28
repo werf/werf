@@ -93,6 +93,24 @@ func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	return res, nil
 }
 
+func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
+	if err := r.lsTreeEntriesWalk(f); err != nil {
+		return err
+	}
+
+	sort.Slice(r.submodulesResults, func(i, j int) bool {
+		return r.submodulesResults[i].treeFilepath < r.submodulesResults[j].treeFilepath
+	})
+
+	for _, submoduleResult := range r.submodulesResults {
+		if err := submoduleResult.Walk(f); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *Result) Checksum() string {
 	if r.IsEmpty() {
 		return ""
@@ -100,11 +118,7 @@ func (r *Result) Checksum() string {
 
 	h := sha256.New()
 
-	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
-		return r.lsTreeEntries[i].Filepath < r.lsTreeEntries[j].Filepath
-	})
-
-	for _, lsTreeEntry := range r.lsTreeEntries {
+	_ = r.lsTreeEntriesWalk(func(lsTreeEntry *LsTreeEntry) error {
 		h.Write([]byte(lsTreeEntry.Hash.String()))
 
 		logFilepath := lsTreeEntry.Filepath
@@ -113,7 +127,9 @@ func (r *Result) Checksum() string {
 		}
 
 		logboek.Debug.LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
-	}
+
+		return nil
+	})
 
 	sort.Strings(r.notInitializedSubmoduleFilepaths)
 	for _, submoduleFilepath := range r.notInitializedSubmoduleFilepaths {
@@ -148,4 +164,18 @@ func (r *Result) Checksum() string {
 
 func (r *Result) IsEmpty() bool {
 	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0 && len(r.notInitializedSubmoduleFilepaths) == 0
+}
+
+func (r *Result) lsTreeEntriesWalk(f func(entry *LsTreeEntry) error) error {
+	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
+		return r.lsTreeEntries[i].Filepath < r.lsTreeEntries[j].Filepath
+	})
+
+	for _, lsTreeEntry := range r.lsTreeEntries {
+		if err := f(lsTreeEntry); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

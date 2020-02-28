@@ -9,34 +9,28 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string) *GitMappingPathMatcher {
+func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string, greedySearch bool) *GitMappingPathMatcher {
 	return &GitMappingPathMatcher{
-		basePath:     basePath,
-		includePaths: includePaths,
-		excludePaths: excludePaths,
+		basePathMatcher:  basePathMatcher{basePath: basePath},
+		includePaths:     includePaths,
+		excludePaths:     excludePaths,
+		isGreedySearchOn: greedySearch,
 	}
 }
 
 type GitMappingPathMatcher struct {
-	basePath     string
-	includePaths []string
-	excludePaths []string
+	basePathMatcher
+	includePaths     []string
+	excludePaths     []string
+	isGreedySearchOn bool
 }
 
 func (f *GitMappingPathMatcher) BasePath() string {
 	return f.basePath
 }
 
-func (f *GitMappingPathMatcher) IncludePaths() []string {
-	return f.includePaths
-}
-
-func (f *GitMappingPathMatcher) ExcludePaths() []string {
-	return f.excludePaths
-}
-
 func (f *GitMappingPathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, includePaths=%v, excludePaths=%v", f.basePath, f.includePaths, f.excludePaths)
+	return fmt.Sprintf("basePath=`%s`, includePaths=%v, excludePaths=%v, greedySearch=%v", f.basePath, f.includePaths, f.excludePaths, f.isGreedySearchOn)
 }
 
 func (f *GitMappingPathMatcher) MatchPath(path string) bool {
@@ -62,6 +56,15 @@ func (f *GitMappingPathMatcher) MatchPath(path string) bool {
 }
 
 func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
+	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(path)
+	if f.isGreedySearchOn {
+		return false, isMatched || shouldGoThrough
+	} else {
+		return isMatched, shouldGoThrough
+	}
+}
+
+func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 
@@ -126,10 +129,6 @@ func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bo
 	}
 }
 
-func (f *GitMappingPathMatcher) TrimFileBasePath(filePath string) string {
-	return trimFileBasePath(filePath, f.basePath)
-}
-
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matchedGlobs []string) {
 	for _, glob := range globs {
 		inProgressGlob, matchedGlob := matchGlob(pathPart, glob)
@@ -189,30 +188,6 @@ func isRel(targetPath, basePath string) bool {
 	}
 
 	return strings.HasPrefix(targetPath+string(os.PathSeparator), basePath+string(os.PathSeparator))
-}
-
-func rel(targetPath, basePath string) string {
-	if basePath == "" {
-		return targetPath
-	}
-
-	relPath, err := filepath.Rel(basePath, targetPath)
-	if err != nil {
-		panic(err)
-	}
-
-	return relPath
-}
-
-func trimFileBasePath(filePath, basePath string) string {
-	if filePath == basePath {
-		// filePath path is always a path to a file, not a directory.
-		// Thus if basePath is equal filePath, then basePath is a path to the file.
-		// Return file name in this case by convention.
-		return filepath.Base(filePath)
-	}
-
-	return rel(filePath, basePath)
 }
 
 func isAnyPatternMatched(path string, patterns []string) bool {

@@ -6,16 +6,18 @@ import (
 	"strings"
 )
 
-func NewSimplePathMatcher(basePath string, paths []string) *SimplePathMatcher {
+func NewSimplePathMatcher(basePath string, paths []string, greedySearch bool) *SimplePathMatcher {
 	return &SimplePathMatcher{
-		basePath: basePath,
-		paths:    paths,
+		basePathMatcher:  basePathMatcher{basePath: basePath},
+		paths:            paths,
+		isGreedySearchOn: greedySearch,
 	}
 }
 
 type SimplePathMatcher struct {
-	basePath string
-	paths    []string
+	basePathMatcher
+	paths            []string
+	isGreedySearchOn bool
 }
 
 func (f *SimplePathMatcher) BasePath() string {
@@ -27,7 +29,7 @@ func (f *SimplePathMatcher) Paths() []string {
 }
 
 func (f *SimplePathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, paths=%v", f.basePath, f.paths)
+	return fmt.Sprintf("basePath=`%s`, paths=%v, greedySearch=%v", f.basePath, f.paths, f.isGreedySearchOn)
 }
 
 func (f *SimplePathMatcher) MatchPath(path string) bool {
@@ -47,6 +49,15 @@ func (f *SimplePathMatcher) MatchPath(path string) bool {
 }
 
 func (f *SimplePathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
+	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(path)
+	if f.isGreedySearchOn {
+		return false, isMatched || shouldGoThrough
+	} else {
+		return isMatched, shouldGoThrough
+	}
+}
+
+func (f *SimplePathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 

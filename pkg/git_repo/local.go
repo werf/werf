@@ -25,6 +25,15 @@ type Local struct {
 }
 
 func OpenLocalRepo(name string, path string) (*Local, error) {
+	_, err := git.PlainOpen(path)
+	if err != nil {
+		if err == git.ErrRepositoryNotExists {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
@@ -77,6 +86,19 @@ func (repo *Local) HeadCommit() (string, error) {
 		return "", fmt.Errorf("cannot get repo `%s` head ref: %s", repo.Path, err)
 	}
 	return fmt.Sprintf("%s", ref.Hash()), nil
+}
+
+func (repo *Local) IsHeadReferenceExist() (bool, error) {
+	_, err := repo.getReferenceForRepo(repo.Path)
+	if err != nil {
+		if err == plumbing.ErrReferenceNotFound {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (repo *Local) HeadBranchName() (string, error) {
