@@ -242,19 +242,19 @@ func (i *StageImage) Import(name string) error {
 }
 
 func (i *StageImage) Export(name string) error {
-	if err := logboek.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return i.Tag(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return docker.CliPushWithRetries(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return docker.CliRmi(name)
 	}); err != nil {
 		return err

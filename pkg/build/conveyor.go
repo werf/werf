@@ -351,8 +351,7 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 }
 
 func (c *Conveyor) determineStages() error {
-	logboek.LogOptionalLn()
-	return logboek.Default.LogProcess(
+	return logboek.Info.LogProcess(
 		"Determining of stages",
 		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
 		func() error {
@@ -377,7 +376,7 @@ func (c *Conveyor) doDetermineStages() error {
 			style = ImageLogProcessStyle(false)
 		}
 
-		err := logboek.Default.LogProcess(imageLogName, logboek.LevelLogProcessOptions{Style: style}, func() error {
+		err := logboek.Info.LogProcess(imageLogName, logboek.LevelLogProcessOptions{Style: style}, func() error {
 			var err error
 
 			switch imageConfig := imageInterfaceConfig.(type) {
@@ -765,7 +764,7 @@ func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, 
 	}
 
 	if len(gitMappings) != 0 {
-		logboek.Default.LogLnDetails("Using git stages")
+		logboek.Info.LogLnDetails("Using git stages")
 
 		for _, s := range stages {
 			s.SetGitMappings(gitMappings)
@@ -797,7 +796,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 				Url:  remoteGitMappingConfig.Url,
 			}
 
-			if err := logboek.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LogProcessOptions{}, func() error {
+			if err := logboek.Info.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LevelLogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
@@ -812,7 +811,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	var res []*stage.GitMapping
 
 	if len(gitMappings) != 0 {
-		err := logboek.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LogProcessOptions{}, func() error {
+		err := logboek.Info.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LevelLogProcessOptions{}, func() error {
 			resGitMappings, err := filterAndLogGitMappings(gitMappings)
 			if err != nil {
 				return err
@@ -835,7 +834,7 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 	var res []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
-		if err := logboek.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LogProcessOptions{}, func() error {
+		if err := logboek.Info.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LevelLogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
 				logboek.IndentUp()
 				logboek.IndentUp()
@@ -847,53 +846,53 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 			}
 
 			withTripleIndent(func() {
-				logboek.Default.LogFDetails("add: %s\n", gitMapping.Add)
-				logboek.Default.LogFDetails("to: %s\n", gitMapping.To)
+				logboek.Info.LogFDetails("add: %s\n", gitMapping.Add)
+				logboek.Info.LogFDetails("to: %s\n", gitMapping.To)
 
 				if len(gitMapping.IncludePaths) != 0 {
-					logboek.Default.LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
+					logboek.Info.LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
 				}
 
 				if len(gitMapping.ExcludePaths) != 0 {
-					logboek.Default.LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
+					logboek.Info.LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
 				}
 
 				if gitMapping.Commit != "" {
-					logboek.Default.LogFDetails("commit: %s\n", gitMapping.Commit)
+					logboek.Info.LogFDetails("commit: %s\n", gitMapping.Commit)
 				}
 
 				if gitMapping.Branch != "" {
-					logboek.Default.LogFDetails("branch: %s\n", gitMapping.Branch)
+					logboek.Info.LogFDetails("branch: %s\n", gitMapping.Branch)
 				}
 
 				if gitMapping.Owner != "" {
-					logboek.Default.LogFDetails("owner: %s\n", gitMapping.Owner)
+					logboek.Info.LogFDetails("owner: %s\n", gitMapping.Owner)
 				}
 
 				if gitMapping.Group != "" {
-					logboek.Default.LogFDetails("group: %s\n", gitMapping.Group)
+					logboek.Info.LogFDetails("group: %s\n", gitMapping.Group)
 				}
 
 				if len(gitMapping.StagesDependencies) != 0 {
-					logboek.Default.LogLnDetails("stageDependencies:")
+					logboek.Info.LogLnDetails("stageDependencies:")
 
 					for s, values := range gitMapping.StagesDependencies {
 						if len(values) != 0 {
-							logboek.Default.LogFDetails("  %s: %v\n", s, values)
+							logboek.Info.LogFDetails("  %s: %v\n", s, values)
 						}
 					}
 
 				}
 			})
 
-			logboek.LogLn()
+			logboek.Info.LogLn()
 
 			commit, err := gitMapping.LatestCommit()
 			if err != nil {
 				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			logboek.Default.LogFDetails("Commit %s will be used\n", commit)
+			logboek.Info.LogFDetails("Commit %s will be used\n", commit)
 
 			res = append(res, gitMapping)
 
@@ -996,7 +995,7 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logboek.Default.LogFDetails("Using stage %s\n", stage.Name())
+		logboek.Info.LogFDetails("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 
@@ -1139,7 +1138,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 
 	img.stages = append(img.stages, dockerfileStage)
 
-	logboek.Default.LogFDetails("Using stage %s\n", dockerfileStage.Name())
+	logboek.Info.LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
 }

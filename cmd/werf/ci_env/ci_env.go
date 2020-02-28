@@ -106,7 +106,7 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	}
 
 	// Init with new docker config dir
-	if err := docker.Init(dockerConfig); err != nil {
+	if err := docker.Init(dockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
 		return err
 	}
 

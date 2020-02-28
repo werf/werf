@@ -179,7 +179,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			}
 			args = append(args, references...)
 
-			if err := docker.CliRmi(args...); err != nil {
+			if err := docker.CliRmi_LiveOutput(args...); err != nil {
 				return err
 			}
 		}

@@ -266,7 +266,7 @@ func (c *StageImageContainer) run() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
@@ -279,7 +279,7 @@ func (c *StageImageContainer) introspect() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}
@@ -294,7 +294,7 @@ func (c *StageImageContainer) introspectBefore() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}

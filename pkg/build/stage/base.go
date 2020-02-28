@@ -90,7 +90,7 @@ type BaseStage struct {
 }
 
 func (s *BaseStage) LogDetailedName() string {
-	return fmt.Sprintf("stage %s", s.Name())
+	return fmt.Sprintf("stage %s/%s", s.imageName, s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
