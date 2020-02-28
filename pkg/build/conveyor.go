@@ -183,15 +183,11 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 	return c.gitReposCaches[gitRepoName]
 }
 
-func (c *Conveyor) GetLocalGitRepo() *git_repo.Local {
-	if c.localGitRepo == nil {
-		c.localGitRepo = &git_repo.Local{
-			Base:   git_repo.Base{Name: "own"},
-			Path:   c.projectDir,
-			GitDir: filepath.Join(c.projectDir, ".git"),
-		}
-	}
+func (c *Conveyor) SetLocalGitRepo(repo *git_repo.Local) {
+	c.localGitRepo = repo
+}
 
+func (c *Conveyor) GetLocalGitRepo() *git_repo.Local {
 	return c.localGitRepo
 }
 
@@ -779,13 +775,16 @@ func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, 
 func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
 	var gitMappings []*stage.GitMapping
 
-	var localGitRepo *git_repo.Local
 	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo = c.GetLocalGitRepo()
+		localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
+		}
+		c.SetLocalGitRepo(localGitRepo)
 	}
 
 	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
-		gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, localGitRepo, imageBaseConfig.Name, c))
+		gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, c.GetLocalGitRepo(), imageBaseConfig.Name, c))
 	}
 
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {

@@ -24,6 +24,15 @@ type Local struct {
 	GitDir string
 }
 
+func OpenLocalRepo(name string, path string) (*Local, error) {
+	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
+	}
+
+	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
+}
+
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {
