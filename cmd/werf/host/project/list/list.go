@@ -5,11 +5,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gosuri/uitable"
+	"github.com/spf13/cobra"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-units"
-	"github.com/gosuri/uitable"
-	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
 
@@ -19,12 +20,12 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	ModifiedBeforeInSeconds int64
-	Quiet                   bool
+	ShowNamesOnly           bool
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,31 +33,38 @@ func NewCmd() *cobra.Command {
 		Short:                 "List project names based on local stages storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return run()
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupLogOptions(&commonCmdData, cmd)
 
-	cmd.Flags().Int64VarP(&CmdData.ModifiedBeforeInSeconds, "modified-before", "", -1, "Print project names that have been modified before the timestamp")
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
+
+	cmd.Flags().Int64VarP(&cmdData.ModifiedBeforeInSeconds, "modified-before", "", -1, "Print project names that have been modified before the timestamp")
 	if err := cmd.Flags().MarkHidden("modified-before"); err != nil {
 		panic(err)
 	}
 
-	cmd.Flags().BoolVarP(&CmdData.Quiet, "quiet", "q", false, "Only show project names")
+	cmd.Flags().BoolVarP(&cmdData.ShowNamesOnly, "names-only", "q", false, "Only show project names")
 
 	return cmd
 }
 
 func run() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -119,11 +127,11 @@ func getProjects() (map[string]*projectFields, error) {
 }
 
 func filterProjects(projects map[string]*projectFields) (map[string]*projectFields, error) {
-	if CmdData.ModifiedBeforeInSeconds == -1 {
+	if cmdData.ModifiedBeforeInSeconds == -1 {
 		return projects, nil
 	}
 
-	modifiedBefore := time.Now().UTC().Truncate(time.Duration(CmdData.ModifiedBeforeInSeconds) * time.Second)
+	modifiedBefore := time.Now().UTC().Truncate(time.Duration(cmdData.ModifiedBeforeInSeconds) * time.Second)
 	newProjects := map[string]*projectFields{}
 	for projectName, project := range projects {
 		if time.Unix(project.Modified, 0).Before(modifiedBefore) {
@@ -135,7 +143,7 @@ func filterProjects(projects map[string]*projectFields) (map[string]*projectFiel
 }
 
 func printProjects(projects map[string]*projectFields) {
-	if CmdData.Quiet {
+	if cmdData.ShowNamesOnly {
 		for projectName := range projects {
 			fmt.Println(projectName)
 		}

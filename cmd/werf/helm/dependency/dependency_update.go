@@ -53,6 +53,11 @@ func newDependencyUpdateCmd() *cobra.Command {
 		Long:                  dependencyUpDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			helm_common.InitHelmSettings(&helmCommonCmdData)
 
 			chartPath, err := getWerfChartPath(commonCmdData)
@@ -73,6 +78,8 @@ func newDependencyUpdateCmd() *cobra.Command {
 	f.BoolVar(&duc.skipRefresh, "skip-refresh", false, "do not refresh the local repository cache")
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
 	helm_common.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd

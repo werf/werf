@@ -6,8 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/flant/logboek"
 	"github.com/mattn/go-isatty"
+
+	"github.com/flant/logboek"
 )
 
 var (

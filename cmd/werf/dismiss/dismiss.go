@@ -17,12 +17,12 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	WithNamespace bool
 	WithHooks     bool
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -45,7 +45,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -57,33 +57,33 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
 
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupRelease(&CommonCmdData, cmd)
-	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
-	cmd.Flags().BoolVarP(&CmdData.WithHooks, "with-hooks", "", true, "Delete Helm Release hooks getting from existing revisions")
+	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
+	cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", true, "Delete Helm Release hooks getting from existing revisions")
 
 	return cmd
 }
 
 func runDismiss() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -91,18 +91,18 @@ func runDismiss() error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
-			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
+			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
@@ -111,23 +111,23 @@ func runDismiss() error {
 
 	common.LogKubeContext(kube.Context)
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	err = kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig})
+	err = kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
@@ -136,23 +136,23 @@ func runDismiss() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
+	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, werfConfig)
+	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	logboek.LogF("Using helm release storage namespace: %s\n", *CommonCmdData.HelmReleaseStorageNamespace)
+	logboek.LogF("Using helm release storage namespace: %s\n", *commonCmdData.HelmReleaseStorageNamespace)
 	logboek.LogF("Using helm release storage type: %s\n", helmReleaseStorageType)
 	logboek.LogF("Using helm release name: %s\n", release)
 	logboek.LogF("Using Kubernetes namespace: %s\n", namespace)
 
-	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
-		WithNamespace: CmdData.WithNamespace,
-		WithHooks:     CmdData.WithHooks,
+	return deploy.RunDismiss(release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
+		WithNamespace: cmdData.WithNamespace,
+		WithHooks:     cmdData.WithHooks,
 	})
 }

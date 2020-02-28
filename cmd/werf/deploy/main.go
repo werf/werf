@@ -26,11 +26,11 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	Timeout int
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,7 +57,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -69,52 +69,52 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupTag(&CommonCmdData, cmd)
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupRelease(&CommonCmdData, cmd)
-	common.SetupNamespace(&CommonCmdData, cmd)
-	common.SetupAddAnnotations(&CommonCmdData, cmd)
-	common.SetupAddLabels(&CommonCmdData, cmd)
+	common.SetupTag(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-	common.SetupStatusProgressPeriod(&CommonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&CommonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageLock(&CommonCmdData, cmd)
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepoMode(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSet(&CommonCmdData, cmd)
-	common.SetupSetString(&CommonCmdData, cmd)
-	common.SetupValues(&CommonCmdData, cmd)
-	common.SetupSecretValues(&CommonCmdData, cmd)
-	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
+	common.SetupSet(&commonCmdData, cmd)
+	common.SetupSetString(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
-	common.SetupThreeWayMergeMode(&CommonCmdData, cmd)
+	common.SetupThreeWayMergeMode(&commonCmdData, cmd)
 
-	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
 	return cmd
 }
 
 func runDeploy() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -126,25 +126,25 @@ func runDeploy() error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
-	threeWayMergeMode, err := common.GetThreeWayMergeMode(*CommonCmdData.ThreeWayMergeMode)
+	threeWayMergeMode, err := common.GetThreeWayMergeMode(*commonCmdData.ThreeWayMergeMode)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
-			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
-			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
-			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
+			StatusProgressPeriod:        common.GetStatusProgressPeriod(&commonCmdData),
+			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&commonCmdData),
+			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
 			InitNamespace:               true,
 		},
 	}
@@ -152,15 +152,15 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -168,12 +168,12 @@ func runDeploy() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
@@ -192,23 +192,23 @@ func runDeploy() error {
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		if len(werfConfig.StapelImages) != 0 {
-			_, err = common.GetStagesStorage(&CommonCmdData)
+			_, err = common.GetStagesStorage(&commonCmdData)
 			if err != nil {
 				return err
 			}
 
-			_, err = common.GetStagesStorageLock(&CommonCmdData)
+			_, err = common.GetStagesStorageLock(&commonCmdData)
 			if err != nil {
 				return err
 			}
 		}
 
-		imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+		imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &commonCmdData)
 		if err != nil {
 			return err
 		}
 
-		imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+		imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 		if err != nil {
 			return err
 		}
@@ -218,12 +218,12 @@ func runDeploy() error {
 			return err
 		}
 
-		tag, tagStrategy, err = common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
+		tag, tagStrategy, err = common.GetDeployTag(&commonCmdData, common.TagOptionsGetterOptions{})
 		if err != nil {
 			return err
 		}
 
-		if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 			return fmt.Errorf("cannot initialize ssh agent: %s", err)
 		}
 		defer func() {
@@ -247,36 +247,36 @@ func runDeploy() error {
 		imagesRepoManager = &common.ImagesRepoManager{}
 	}
 
-	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
+	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, werfConfig)
+	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&CommonCmdData)
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	userExtraLabels, err := common.GetUserExtraLabels(&CommonCmdData)
+	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *CommonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
-		Set:                  *CommonCmdData.Set,
-		SetString:            *CommonCmdData.SetString,
-		Values:               *CommonCmdData.Values,
-		SecretValues:         *CommonCmdData.SecretValues,
-		Timeout:              time.Duration(CmdData.Timeout) * time.Second,
-		Env:                  *CommonCmdData.Environment,
+	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+		Set:                  *commonCmdData.Set,
+		SetString:            *commonCmdData.SetString,
+		Values:               *commonCmdData.Values,
+		SecretValues:         *commonCmdData.SecretValues,
+		Timeout:              time.Duration(cmdData.Timeout) * time.Second,
+		Env:                  *commonCmdData.Environment,
 		UserExtraAnnotations: userExtraAnnotations,
 		UserExtraLabels:      userExtraLabels,
-		IgnoreSecretKey:      *CommonCmdData.IgnoreSecretKey,
+		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
 		ThreeWayMergeMode:    threeWayMergeMode,
 	})
 }

@@ -7,19 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/images_manager"
-
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -38,6 +36,11 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runRender(outputFilePath)
 		},
 	}
@@ -62,6 +65,8 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesRepo(&commonCmdData, cmd)
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupTag(&commonCmdData, cmd)
+
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
 

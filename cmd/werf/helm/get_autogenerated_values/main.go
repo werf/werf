@@ -4,27 +4,24 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/images_manager"
-
-	"github.com/flant/shluz"
+	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	helm_common "github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
+	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
-var CmdData struct{}
-
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -38,26 +35,33 @@ These values includes project name, docker images ids and other`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runGetServiceValues()
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupTag(&CommonCmdData, cmd)
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupTag(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageLock(&CommonCmdData, cmd)
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepoMode(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -65,7 +69,7 @@ These values includes project name, docker images ids and other`),
 func runGetServiceValues() error {
 	logboek.MuteOut()
 
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -81,15 +85,15 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -99,7 +103,7 @@ func runGetServiceValues() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	imagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+	imagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -111,7 +115,7 @@ func runGetServiceValues() error {
 
 	imagesRepo = helm_common.GetImagesRepoOrStub(imagesRepo)
 
-	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -121,19 +125,19 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	environment := helm_common.GetEnvironmentOrStub(*CommonCmdData.Environment)
+	environment := helm_common.GetEnvironmentOrStub(*commonCmdData.Environment)
 
-	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, environment, werfConfig)
+	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	tag, tagStrategy, err := helm_common.GetTagOrStub(&CommonCmdData)
+	tag, tagStrategy, err := helm_common.GetTagOrStub(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {

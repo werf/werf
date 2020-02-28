@@ -9,9 +9,11 @@ import (
 	"github.com/flant/werf/pkg/slug"
 )
 
-var CmdData struct {
+var cmdData struct {
 	Format string
 }
+
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -40,6 +42,11 @@ func NewCmd() *cobra.Command {
   $ werf slugify -f docker-tag 16.04
   16.04`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			if err := runSlugify(args); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -49,7 +56,9 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&CmdData.Format, "format", "f", "", `  r|helm-release:         suitable for Helm Release
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().StringVarP(&cmdData.Format, "format", "f", "", `  r|helm-release:         suitable for Helm Release
  ns|kubernetes-namespace: suitable for Kubernetes Namespace
 tag|docker-tag:           suitable for Docker Tag`)
 
@@ -63,7 +72,7 @@ func runSlugify(args []string) error {
 
 	data := args[0]
 
-	switch CmdData.Format {
+	switch cmdData.Format {
 	case "helm-release", "r":
 		fmt.Println(slug.HelmRelease(data))
 	case "kubernetes-namespace", "ns":
@@ -73,7 +82,7 @@ func runSlugify(args []string) error {
 	case "":
 		return fmt.Errorf("--format FORMAT argument required")
 	default:
-		return fmt.Errorf("unknown format '%s'", CmdData.Format)
+		return fmt.Errorf("unknown format '%s'", cmdData.Format)
 	}
 
 	return nil
