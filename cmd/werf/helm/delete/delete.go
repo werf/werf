@@ -5,19 +5,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
-var CmdData struct {
+var cmdData struct {
 	helm.DeleteOptions
 }
 
@@ -31,6 +33,11 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			if err := common.ValidateMinimumNArgs(1, args, cmd); err != nil {
 				return err
 			}
@@ -38,23 +45,25 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVar(&CmdData.DisableHooks, "no-hooks", false, "Prevent hooks from running during deletion")
-	cmd.Flags().BoolVar(&CmdData.Purge, "purge", false, "Remove the release from the store and make its name free for later use")
-	cmd.Flags().Int64Var(&CmdData.Timeout, "timeout", 300, "Time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().BoolVar(&cmdData.DisableHooks, "no-hooks", false, "Prevent hooks from running during deletion")
+	cmd.Flags().BoolVar(&cmdData.Purge, "purge", false, "Remove the release from the store and make its name free for later use")
+	cmd.Flags().Int64Var(&cmdData.Timeout, "timeout", 300, "Time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
 
 	return cmd
 }
 
 func runDelete(releaseNames []string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -66,16 +75,16 @@ func runDelete(releaseNames []string) error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
 			ReleasesMaxHistory:          0,
 		},
@@ -86,7 +95,7 @@ func runDelete(releaseNames []string) error {
 
 	errors := []string{}
 	for _, releaseName := range releaseNames {
-		if err := helm.Delete(releaseName, CmdData.DeleteOptions); err != nil {
+		if err := helm.Delete(releaseName, cmdData.DeleteOptions); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}

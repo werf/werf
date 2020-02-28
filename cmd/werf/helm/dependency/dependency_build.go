@@ -46,6 +46,11 @@ func newDependencyBuildCmd() *cobra.Command {
 		Long:                  dependencyBuildDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			helm_common.InitHelmSettings(&helmCommonCmdData)
 
 			chartPath, err := getWerfChartPath(commonCmdData)
@@ -61,6 +66,7 @@ func newDependencyBuildCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	f := cmd.Flags()
 	f.BoolVar(&dbc.verify, "verify", false, "verify the packages against signatures")

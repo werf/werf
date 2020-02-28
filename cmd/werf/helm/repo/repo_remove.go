@@ -10,7 +10,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 type repoRemoveCmd struct {
@@ -20,7 +21,9 @@ type repoRemoveCmd struct {
 }
 
 func newRepoRemoveCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	remove := &repoRemoveCmd{out: os.Stdout}
 
 	cmd := &cobra.Command{
@@ -28,13 +31,18 @@ func newRepoRemoveCmd() *cobra.Command {
 		Short:                 "Remove a chart repository",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
 
 			if len(args) == 0 {
 				return fmt.Errorf("need at least one argument, name of chart repository")
 			}
 
-			remove.home = common.HelmSettings.Home
+			remove.home = helmCommon.HelmSettings.Home
 			for i := 0; i < len(args); i++ {
 				remove.name = args[i]
 				if err := remove.run(); err != nil {
@@ -45,7 +53,9 @@ func newRepoRemoveCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }
@@ -58,8 +68,8 @@ func removeRepoLine(out io.Writer, name string, home helmpath.Home) error {
 	repoFile := home.RepositoryFile()
 	r, err := repo.LoadRepositoriesFile(repoFile)
 	if err != nil {
-		if common.IsCouldNotLoadRepositoriesFileError(err) {
-			return fmt.Errorf(common.CouldNotLoadRepositoriesFileErrorFormat, home.RepositoryFile())
+		if helmCommon.IsCouldNotLoadRepositoriesFileError(err) {
+			return fmt.Errorf(helmCommon.CouldNotLoadRepositoriesFileErrorFormat, home.RepositoryFile())
 		}
 
 		return err

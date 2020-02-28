@@ -12,12 +12,13 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 )
 
-var CmdData struct {
+var cmdData struct {
 	dest        string
 	readmePath  string
 	splitReadme bool
 }
-var CommonCmdData common.CmdData
+
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,17 +27,17 @@ func NewCmd() *cobra.Command {
 		Short:                 "Generate documentation as markdown",
 		Hidden:                true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			if CmdData.splitReadme {
+			if cmdData.splitReadme {
 				if err := SplitReadme(); err != nil {
 					return err
 				}
 			} else {
-				if err := GenMarkdownTree(cmd.Root(), CmdData.dest); err != nil {
+				if err := GenMarkdownTree(cmd.Root(), cmdData.dest); err != nil {
 					return err
 				}
 			}
@@ -45,12 +46,12 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	f := cmd.Flags()
-	f.StringVar(&CmdData.dest, "dir", "./", "directory to which documentation is written")
-	f.StringVar(&CmdData.readmePath, "readme", "README.md", "path to README.md")
-	f.BoolVar(&CmdData.splitReadme, "split-readme", false, "split README.md by top headers")
+	f.StringVar(&cmdData.dest, "dir", "./", "directory to which documentation is written")
+	f.StringVar(&cmdData.readmePath, "readme", "README.md", "path to README.md")
+	f.BoolVar(&cmdData.splitReadme, "split-readme", false, "split README.md by top headers")
 
 	return cmd
 }
@@ -69,7 +70,7 @@ const (
 )
 
 func SplitReadme() error {
-	file, err := os.Open(CmdData.readmePath)
+	file, err := os.Open(cmdData.readmePath)
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func SplitReadme() error {
 		basename = strings.Replace(basename, "-", "_", -1)
 		basename = basename + ".md"
 
-		filename := filepath.Join(CmdData.dest, basename)
+		filename := filepath.Join(cmdData.dest, basename)
 		f, err := os.Create(filename)
 		if err != nil {
 			return err

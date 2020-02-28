@@ -20,7 +20,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	PullUsername string
 	PullPassword string
 
@@ -28,7 +28,7 @@ var CmdData struct {
 	IntrospectAfterError  bool
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -61,7 +61,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -74,33 +74,33 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupTag(&CommonCmdData, cmd)
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageLock(&CommonCmdData, cmd)
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepoMode(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupTag(&commonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupIntrospectStage(&CommonCmdData, cmd)
+	common.SetupIntrospectStage(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
-	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
+	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	return cmd
 }
 
 func runBuildAndPublish(imagesToProcess []string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -112,20 +112,20 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
@@ -146,12 +146,12 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
+	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -161,17 +161,17 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	stagesStorage, err := common.GetStagesStorage(&CommonCmdData)
+	stagesStorage, err := common.GetStagesStorage(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	tagOpts, err := common.GetTagOptions(&CommonCmdData, common.TagOptionsGetterOptions{})
+	tagOpts, err := common.GetTagOptions(&commonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -181,7 +181,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		}
 	}()
 
-	introspectOptions, err := common.GetIntrospectOptions(&CommonCmdData, werfConfig)
+	introspectOptions, err := common.GetIntrospectOptions(&commonCmdData, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -189,8 +189,8 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
 			ImageBuildOptions: image.BuildOptions{
-				IntrospectAfterError:  CmdData.IntrospectAfterError,
-				IntrospectBeforeError: CmdData.IntrospectBeforeError,
+				IntrospectAfterError:  cmdData.IntrospectAfterError,
+				IntrospectBeforeError: cmdData.IntrospectBeforeError,
 			},
 			IntrospectOptions: introspectOptions,
 		},

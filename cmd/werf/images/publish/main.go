@@ -7,8 +7,8 @@ import (
 	"github.com/flant/werf/cmd/werf/images/publish/cmd_factory"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
-	return cmd_factory.NewCmdWithData(&CommonCmdData)
+	return cmd_factory.NewCmdWithData(&commonCmdData)
 }

@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -20,21 +21,28 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runGetNamespace()
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
+
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func runGetNamespace() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -42,11 +50,11 @@ func runGetNamespace() error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -56,7 +64,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	namespace, err := common.GetKubernetesNamespace("", *CommonCmdData.Environment, werfConfig)
+	namespace, err := common.GetKubernetesNamespace("", *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}

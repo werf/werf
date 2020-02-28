@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-type CmdDataType struct {
+type cmdDataType struct {
 	Shell            bool
 	Bash             bool
 	RawDockerOptions string
@@ -31,8 +31,8 @@ type CmdDataType struct {
 	ImageName     string
 }
 
-var CmdData CmdDataType
-var CommonCmdData common.CmdData
+var cmdData cmdDataType
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -55,7 +55,7 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -65,23 +65,23 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			if CmdData.RawDockerOptions != "" {
-				CmdData.DockerOptions = strings.Split(CmdData.RawDockerOptions, " ")
+			if cmdData.RawDockerOptions != "" {
+				cmdData.DockerOptions = strings.Split(cmdData.RawDockerOptions, " ")
 			}
 
-			if CmdData.Shell && CmdData.Bash {
+			if cmdData.Shell && cmdData.Bash {
 				return fmt.Errorf("cannot use --shell and --bash options at the same time!")
 			}
 
-			if CmdData.Shell || CmdData.Bash {
-				if len(CmdData.DockerOptions) == 0 && len(CmdData.DockerCommand) == 0 {
-					CmdData.DockerOptions = []string{"-ti", "--rm"}
-					if CmdData.Shell {
-						CmdData.DockerCommand = []string{"/bin/sh"}
+			if cmdData.Shell || cmdData.Bash {
+				if len(cmdData.DockerOptions) == 0 && len(cmdData.DockerCommand) == 0 {
+					cmdData.DockerOptions = []string{"-ti", "--rm"}
+					if cmdData.Shell {
+						cmdData.DockerCommand = []string{"/bin/sh"}
 					}
 
-					if CmdData.Bash {
-						CmdData.DockerCommand = []string{"/bin/bash"}
+					if cmdData.Bash {
+						cmdData.DockerCommand = []string{"/bin/bash"}
 					}
 				} else {
 					common.PrintHelp(cmd)
@@ -93,25 +93,25 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageLock(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
-	cmd.Flags().BoolVarP(&CmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
-	cmd.Flags().StringVarP(&CmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
+	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
+	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
+	cmd.Flags().StringVarP(&cmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
 
 	return cmd
 }
@@ -127,10 +127,10 @@ func processArgs(cmd *cobra.Command, args []string) error {
 
 		switch doubleDashInd {
 		case 0:
-			CmdData.DockerCommand = args[doubleDashInd:]
+			cmdData.DockerCommand = args[doubleDashInd:]
 		case 1:
-			CmdData.ImageName = args[0]
-			CmdData.DockerCommand = args[doubleDashInd:]
+			cmdData.ImageName = args[0]
+			cmdData.DockerCommand = args[doubleDashInd:]
 		default:
 			return fmt.Errorf("unsupported position args format")
 		}
@@ -138,7 +138,7 @@ func processArgs(cmd *cobra.Command, args []string) error {
 		switch len(args) {
 		case 0:
 		case 1:
-			CmdData.ImageName = args[0]
+			cmdData.ImageName = args[0]
 		default:
 			return fmt.Errorf("unsupported position args format")
 		}
@@ -148,7 +148,7 @@ func processArgs(cmd *cobra.Command, args []string) error {
 }
 
 func runRun() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -160,20 +160,20 @@ func runRun() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
@@ -186,17 +186,17 @@ func runRun() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesStorage(&CommonCmdData)
+	_, err = common.GetStagesStorage(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	_, err = common.GetStagesStorageLock(&CommonCmdData)
+	_, err = common.GetStagesStorageLock(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -206,7 +206,7 @@ func runRun() error {
 		}
 	}()
 
-	imageName := CmdData.ImageName
+	imageName := cmdData.ImageName
 	if imageName == "" && len(werfConfig.GetAllImages()) == 1 {
 		imageName = werfConfig.GetAllImages()[0].GetName()
 	}
@@ -224,11 +224,11 @@ func runRun() error {
 
 	dockerImageName := c.GetImageLastStageImageName(imageName)
 	var dockerRunArgs []string
-	dockerRunArgs = append(dockerRunArgs, CmdData.DockerOptions...)
+	dockerRunArgs = append(dockerRunArgs, cmdData.DockerOptions...)
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)
-	dockerRunArgs = append(dockerRunArgs, CmdData.DockerCommand...)
+	dockerRunArgs = append(dockerRunArgs, cmdData.DockerCommand...)
 
-	if *CommonCmdData.DryRun {
+	if *commonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
 		return logboek.WithRawStreamsOutputModeOn(func() error {

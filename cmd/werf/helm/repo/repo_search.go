@@ -14,7 +14,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 const searchDesc = `
@@ -36,7 +37,9 @@ type searchCmd struct {
 }
 
 func newRepoSearchCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	sc := &searchCmd{out: os.Stdout}
 
 	cmd := &cobra.Command{
@@ -45,9 +48,14 @@ func newRepoSearchCmd() *cobra.Command {
 		Long:                  searchDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 
-			sc.helmhome = common.HelmSettings.Home
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
+
+			sc.helmhome = helmCommon.HelmSettings.Home
 			return sc.run(args)
 		},
 	}
@@ -58,7 +66,9 @@ func newRepoSearchCmd() *cobra.Command {
 	f.StringVarP(&sc.version, "version", "v", "", "search using semantic versioning constraints")
 	f.UintVar(&sc.colWidth, "col-width", 60, "specifies the max column width of output")
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }
@@ -136,8 +146,8 @@ func (s *searchCmd) buildIndex() (*search.Index, error) {
 	// Load the repositories.yaml
 	rf, err := repo.LoadRepositoriesFile(s.helmhome.RepositoryFile())
 	if err != nil {
-		if common.IsCouldNotLoadRepositoriesFileError(err) {
-			return nil, fmt.Errorf(common.CouldNotLoadRepositoriesFileErrorFormat, s.helmhome.RepositoryFile())
+		if helmCommon.IsCouldNotLoadRepositoriesFileError(err) {
+			return nil, fmt.Errorf(helmCommon.CouldNotLoadRepositoriesFileErrorFormat, s.helmhome.RepositoryFile())
 		}
 
 		return nil, err
