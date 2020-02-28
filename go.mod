@@ -37,7 +37,7 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.7.0
 	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
-	github.com/flant/kubedog v0.3.5-0.20191212102242-35c745d845ad
+	github.com/flant/kubedog v0.3.5-0.20200228142202-ddb4615263cc
 	github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
@@ -88,7 +88,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a
 	go.etcd.io/bbolt v1.3.1-etcd.8 // indirect
-	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
+	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
@@ -97,21 +97,22 @@ require (
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
 	google.golang.org/grpc v1.23.0
+	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/src-d/go-billy.v4 v4.3.0
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.11.0
 	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/api v0.0.0
+	k8s.io/api v0.16.7
 	k8s.io/apiextensions-apiserver v0.0.0
-	k8s.io/apimachinery v0.0.0
+	k8s.io/apimachinery v0.16.8-beta.0
 	k8s.io/apiserver v0.0.0
 	k8s.io/cli-runtime v0.0.0
-	k8s.io/client-go v0.0.0
+	k8s.io/client-go v0.16.7
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/helm v2.13.1+incompatible
-	k8s.io/klog v0.4.0
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
 	k8s.io/kubernetes v1.16.0
 	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
