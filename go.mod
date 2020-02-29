@@ -13,29 +13,28 @@ require (
 	github.com/codahale/hdrhistogram v0.0.0-20160425231609-f8ad88b59a58 // indirect
 	github.com/containerd/cgroups v0.0.0-20181219155423-39b18af02c41 // indirect
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50
-	github.com/containerd/containerd v1.2.3
+	github.com/containerd/containerd v1.3.0
 	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6
 	github.com/containerd/fifo v0.0.0-20190816180239-bda0ff6ed73c
 	github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
 	github.com/containerd/typeurl v0.0.0-20190228175220-2a93cfde8c20
 	github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142 // indirect
-	github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
+	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
 	github.com/docker/compose-on-kubernetes v0.4.23 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v1.4.2-0.20190319215453-e7b5f7dbe98c
-	github.com/docker/docker-credential-helpers v0.6.1
+	github.com/docker/docker v1.4.2-0.20190924003213-a8608b5b67c7
+	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/docker/go v1.5.1-1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
 	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82
-	github.com/docker/go-units v0.3.3
+	github.com/docker/go-units v0.4.0
 	github.com/docker/libnetwork v0.0.0-20180913200009-36d3bed0e9f4
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/docker/licensing v0.0.0-20190320170819-9781369abdb5 // indirect
 	github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.9.0
-	github.com/flant/go-containerregistry v0.0.0-20190712094650-0cfc503dc51a
 	github.com/flant/kubedog v0.3.5-0.20200228135326-83b69f5024b7
 	github.com/flant/logboek v0.3.1
 	github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53
@@ -44,11 +43,10 @@ require (
 	github.com/gofrs/flock v0.7.1
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
-	github.com/google/go-containerregistry v0.0.0-20190623150931-ca8b66cb1b79
+	github.com/google/go-containerregistry v0.0.0-20200227193449-ba53fa10e72c
 	github.com/google/gofuzz v1.0.0
 	github.com/google/shlex v0.0.0-20150127133951-6f45313302b9
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/gosuri/uitable v0.0.0-20160404203958-36ee7e946282
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
@@ -92,22 +90,22 @@ require (
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
+	golang.org/x/sys v0.0.0-20200120151820-655fe14d7479
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
-	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
-	google.golang.org/grpc v1.23.0
+	google.golang.org/genproto v0.0.0-20200117163144-32f20d992d24
+	google.golang.org/grpc v1.26.0
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/src-d/go-billy.v4 v4.3.2
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.16.7
+	k8s.io/api v0.17.0
 	k8s.io/apiextensions-apiserver v0.0.0
-	k8s.io/apimachinery v0.16.8-beta.0
+	k8s.io/apimachinery v0.17.0
 	k8s.io/apiserver v0.16.7
 	k8s.io/cli-runtime v0.16.7
-	k8s.io/client-go v0.16.7
+	k8s.io/client-go v0.17.0
 	k8s.io/cloud-provider v0.16.7
 	k8s.io/helm v2.13.1+incompatible
 	k8s.io/klog v1.0.0
@@ -168,6 +166,12 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.7
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.16.7
 
 replace k8s.io/helm => github.com/flant/helm v0.0.0-20200220095449-c44c7c22d6cc
+
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.2.3
+
+replace github.com/docker/docker => github.com/docker/docker v1.4.2-0.20190319215453-e7b5f7dbe98c
+
+replace github.com/docker/cli => github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 
