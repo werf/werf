@@ -202,14 +202,14 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 						logboek.LogLn()
 
 						logboek.Default.LogLnDetails(
-							"Release will be deleted:",
-							"* the latest release revision might be in an inconsistent state, and",
+							"Release will be deleted:\n",
+							"* the latest release revision might be in an inconsistent state, and\n",
 							"* auto purge trigger file is exists.",
 						)
 					} else if releaseShouldBeRolledBack {
 						logboek.LogLn()
 						logboek.Default.LogLnDetails(
-							"Release should be rolled back to the latest successfully deployed revision:",
+							"Release should be rolled back to the latest successfully deployed revision:\n",
 							"* the latest release revision might be in an inconsistent state.",
 						)
 					}
