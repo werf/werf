@@ -172,7 +172,7 @@ func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.Im
 	for _, gitMapping := range s.gitMappings {
 		currentCommit, err := gitMapping.LatestCommit()
 		if err != nil {
-			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s")
+			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
 		currentCommits[gitMapping.Name] = currentCommit
 	}

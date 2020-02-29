@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/flant/shluz"
+
+	"github.com/flant/werf/pkg/werf"
 )
 
 func main() {

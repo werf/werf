@@ -374,13 +374,17 @@ func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
-	defaultValueEnv := os.Getenv("WERF_LOG_DEBUG")
-	if defaultValueEnv == "" {
-		defaultValueEnv = os.Getenv("WERF_DEBUG")
-	}
-
-	defaultValue := GetBoolEnvironmentDefaultTrue(defaultValueEnv)
-
+        defaultValue := true
+        for _, envName := range []string{
+          "WERF_LOG_DEBUG", 
+          "WERF_DEBUG", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultTrue(envName)
+            break
+          } 
+        } 
+	
 	for alias, env := range map[string]string{
 		"log-debug": "WERF_LOG_DEBUG",
 		"debug":     "WERF_DEBUG",
@@ -417,12 +421,16 @@ Default $WERF_LOG_COLOR_MODE or auto mode.`)
 func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
-	defaultValueEnv := os.Getenv("WERF_LOG_QUIET")
-	if defaultValueEnv == "" {
-		defaultValueEnv = os.Getenv("WERF_QUIET")
-	}
-
-	defaultValue := GetBoolEnvironmentDefaultFalse(defaultValueEnv)
+	var defaultValue bool
+        for _, envName := range []string{
+          "WERF_LOG_QUIET", 
+          "WERF_QUIET", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+            break
+          } 
+        }
 
 	for alias, env := range map[string]string{
 		"log-quiet": "WERF_LOG_QUIET",
@@ -445,12 +453,16 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
-	defaultValueEnv := os.Getenv("WERF_LOG_VERBOSE")
-	if defaultValueEnv == "" {
-		defaultValueEnv = os.Getenv("WERF_VERBOSE")
-	}
-
-	defaultValue := GetBoolEnvironmentDefaultFalse(defaultValueEnv)
+	var defaultValue bool
+        for _, envName := range []string{
+          "WERF_LOG_VERBOSE", 
+          "WERF_VERBOSE", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+            break
+          } 
+        }
 
 	for alias, env := range map[string]string{
 		"log-verbose": "WERF_LOG_VERBOSE",

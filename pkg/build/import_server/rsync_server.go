@@ -95,7 +95,7 @@ strict modes = false
 		return nil, fmt.Errorf("unable to inspect import server container %s: %s", srv.DockerContainerName, err)
 	} else {
 		if inspect.NetworkSettings == nil {
-			return nil, fmt.Errorf("unable to get import server container %s ip address: no network settings available in inspect")
+			return nil, fmt.Errorf("unable to get import server container %s ip address: no network settings available in inspect", srv.DockerContainerName)
 		}
 		srv.IPAddress = inspect.NetworkSettings.IPAddress
 	}
