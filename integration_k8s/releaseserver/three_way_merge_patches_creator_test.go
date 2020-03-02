@@ -23,90 +23,6 @@ var _ = Describe("Three way merge patches creator", func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
 
-	Context("when deploying an existing release with the onlyNewReleases 3wm mode", func() {
-		AfterEach(func() {
-			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
-		})
-
-		It("should not use 3wm patches during release update", func() {
-			By("initial release installation with disabled 3wm")
-			gotCorrect3wmModeLine := false
-			got3wmDisabledLine := false
-			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
-				OutputLineHandler: func(line string) {
-					if strings.Index(line, `Using three-way-merge mode "disabled"`) != -1 {
-						gotCorrect3wmModeLine = true
-					}
-					if strings.Index(line, `Three way merge is DISABLED for the release`) != -1 {
-						got3wmDisabledLine = true
-					}
-				},
-			})).To(Succeed())
-			Expect(gotCorrect3wmModeLine).To(BeTrue())
-			Expect(got3wmDisabledLine).To(BeTrue())
-
-			By("release update with onlyNewReleases 3wm mode")
-			gotCorrect3wmModeLine = false
-			got3wmDisabledLine = false
-			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "onlyNewReleases"},
-				OutputLineHandler: func(line string) {
-					if strings.Index(line, `Using three-way-merge mode "onlyNewReleases"`) != -1 {
-						gotCorrect3wmModeLine = true
-					}
-					if strings.Index(line, `Three way merge is DISABLED for the release`) != -1 {
-						got3wmDisabledLine = true
-					}
-				},
-			})).To(Succeed())
-			Expect(gotCorrect3wmModeLine).To(BeTrue())
-			Expect(got3wmDisabledLine).To(BeTrue())
-		})
-	})
-
-	Context("when deploying a new release with the onlyNewReleases 3wm mode", func() {
-		AfterEach(func() {
-			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
-		})
-
-		It("should use 3wm patches during release installation and subsequent update", func() {
-			By("initial release installation with onlyNewReleases 3wm mode")
-			gotCorrect3wmModeLine := false
-			got3wmEnabledLine := false
-			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "onlyNewReleases"},
-				OutputLineHandler: func(line string) {
-					if strings.Index(line, `Using three-way-merge mode "onlyNewReleases"`) != -1 {
-						gotCorrect3wmModeLine = true
-					}
-					if strings.Index(line, `Three way merge is ENABLED for the release`) != -1 {
-						got3wmEnabledLine = true
-					}
-				},
-			})).To(Succeed())
-			Expect(gotCorrect3wmModeLine).To(BeTrue())
-			Expect(got3wmEnabledLine).To(BeTrue())
-
-			By("release update with onlyNewReleases 3wm mode")
-			gotCorrect3wmModeLine = false
-			got3wmEnabledLine = false
-			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "onlyNewReleases"},
-				OutputLineHandler: func(line string) {
-					if strings.Index(line, `Using three-way-merge mode "onlyNewReleases"`) != -1 {
-						gotCorrect3wmModeLine = true
-					}
-					if strings.Index(line, `Three way merge is ENABLED for the release`) != -1 {
-						got3wmEnabledLine = true
-					}
-				},
-			})).To(Succeed())
-			Expect(gotCorrect3wmModeLine).To(BeTrue())
-			Expect(got3wmEnabledLine).To(BeTrue())
-		})
-	})
-
 	Context("when deploying an existing release with the enabled 3wm mode", func() {
 		AfterEach(func() {
 			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
@@ -115,20 +31,15 @@ var _ = Describe("Three way merge patches creator", func() {
 		It("should use 3wm patches during release update", func() {
 			By("initial release installation with disabled 3wm mode")
 			gotCorrect3wmModeLine := false
-			got3wmDisabledLine := false
 			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, `Using three-way-merge mode "disabled"`) != -1 {
+					if strings.Index(line, `Using three-way-merge mode "enabled"`) != -1 {
 						gotCorrect3wmModeLine = true
-					}
-					if strings.Index(line, `Three way merge is DISABLED for the release`) != -1 {
-						got3wmDisabledLine = true
 					}
 				},
 			})).To(Succeed())
 			Expect(gotCorrect3wmModeLine).To(BeTrue())
-			Expect(got3wmDisabledLine).To(BeTrue())
 
 			By("release update with enabled 3wm mode")
 			gotCorrect3wmModeLine = false
@@ -371,47 +282,6 @@ var _ = Describe("Three way merge patches creator", func() {
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().Value()).To(Equal(int64(128 * 1024 * 1024)))
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().MilliValue()).To(Equal(int64(30)))
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().Value()).To(Equal(int64(256 * 1024 * 1024)))
-		})
-	})
-
-	Context("when user adds a new resource with an error into the release and 3-way-merge is not enabled", func() {
-		var namespace, projectName string
-
-		BeforeEach(func() {
-			projectName = utils.ProjectName()
-			namespace = fmt.Sprintf("%s-dev", projectName)
-		})
-
-		AfterEach(func() {
-			utils.RunCommand("three_way_merge_patches_creator_app3-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
-		})
-
-		It("should fail to update release with new resource and should succeed to redeploy a chart with fixed resource error, failed resource created by initial deploy should be recreated on redeploy", func() {
-			By("deploying chart initially")
-
-			Expect(werfDeploy("three_way_merge_patches_creator_app3-001", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
-			})).To(Succeed())
-
-			By("deploying a chart with the new resource with an runtime error")
-
-			Expect(werfDeploy("three_way_merge_patches_creator_app3-002", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
-			})).NotTo(Succeed())
-
-			By("checking that helm --cleanup-on-fail have deleted failed resource")
-
-			_, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
-			Expect(errors.IsNotFound(err)).To(BeTrue())
-
-			By("deploying a chart with the new resource with fixed runtime error")
-
-			Expect(werfDeploy("three_way_merge_patches_creator_app3-003", liveexec.ExecCommandOptions{
-				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "disabled"},
-			})).To(Succeed())
-
-			_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 
