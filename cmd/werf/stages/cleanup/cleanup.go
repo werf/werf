@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -113,10 +115,11 @@ func runSync() error {
 		return err
 	}
 
-	stagesStorage, err := common.GetStagesStorage(&commonCmdData)
-	if err != nil {
+	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
 		return err
 	}
+
+	stagesStorage := &storage.LocalStagesStorage{}
 
 	_, err = common.GetStagesStorageLock(&commonCmdData)
 	if err != nil {
