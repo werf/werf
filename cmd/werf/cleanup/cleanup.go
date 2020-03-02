@@ -111,9 +111,9 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir, true)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	logboek.LogOptionalLn()
@@ -138,21 +138,16 @@ func runCleanup() error {
 	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
 		return err
 	}
+	if _, err := common.GetStagesStorageLock(&commonCmdData); err != nil {
+		return err
+	}
 	stagesStorage := &storage.LocalStagesStorage{}
 
-	_, err = common.GetStagesStorageLock(&commonCmdData)
+	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
-
-	var imagesNames []string
-	for _, image := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, image.Name)
-	}
-
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, image.Name)
-	}
+	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	var localGitRepo cleaning.GitRepo
 	gitDir := filepath.Join(projectDir, ".git")

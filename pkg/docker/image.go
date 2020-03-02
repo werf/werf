@@ -13,6 +13,12 @@ import (
 	"golang.org/x/net/context"
 )
 
+func CreateImage(ref string) error {
+	ctx := context.Background()
+	_, err := apiClient.ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, types.ImageImportOptions{})
+	return err
+}
+
 func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
 	ctx := context.Background()
 	images, err := apiClient.ImageList(ctx, options)

@@ -99,9 +99,9 @@ func run(imageName string) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir, false)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, false)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()

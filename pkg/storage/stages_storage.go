@@ -26,5 +26,9 @@ type StagesStorage interface {
 	SyncStageImage(stageImage image.ImageInterface) error
 	StoreStageImage(stageImage image.ImageInterface) error
 
+	AddManagedImage(projectName, imageName string) error
+	RmManagedImage(projectName, imageName string) error
+	GetManagedImages(projectName string) ([]string, error)
+
 	String() string
 }
