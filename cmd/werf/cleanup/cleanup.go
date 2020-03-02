@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -134,10 +135,10 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesStorage, err := common.GetStagesStorage(&commonCmdData)
-	if err != nil {
+	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
 		return err
 	}
+	stagesStorage := &storage.LocalStagesStorage{}
 
 	_, err = common.GetStagesStorageLock(&commonCmdData)
 	if err != nil {
