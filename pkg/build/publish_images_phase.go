@@ -20,7 +20,13 @@ func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opt
 		tag_strategy.GitTag:    opts.TagsByGitTag,
 		tag_strategy.GitCommit: opts.TagsByGitCommit,
 	}
-	return &PublishImagesPhase{BasePhase: BasePhase{c}, TagsByScheme: tagsByScheme, TagByStagesSignature: opts.TagByStagesSignature, ImageRepoManager: imagesRepoManager}
+	return &PublishImagesPhase{
+		BasePhase:            BasePhase{c},
+		ImagesToPublish:      opts.ImagesToPublish,
+		TagsByScheme:         tagsByScheme,
+		TagByStagesSignature: opts.TagByStagesSignature,
+		ImageRepoManager:     imagesRepoManager,
+	}
 }
 
 type PublishImagesPhase struct {
