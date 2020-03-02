@@ -98,9 +98,9 @@ func runGetServiceValues() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetWerfConfig(projectDir, false)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, false)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	imagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)

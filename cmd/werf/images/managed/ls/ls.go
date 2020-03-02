@@ -1,4 +1,4 @@
-package cleanup
+package ls
 
 import (
 	"fmt"
@@ -6,62 +6,53 @@ import (
 
 	"github.com/flant/werf/pkg/storage"
 
-	"github.com/spf13/cobra"
-
-	"github.com/flant/logboek"
 	"github.com/flant/shluz"
-
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
+	"github.com/spf13/cobra"
 )
 
 var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use:                   "ls",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup project stages from stages storage",
-		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
+		Short:                 "List managed images which will be preserved during cleanup procedure",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			common.LogVersion()
-
-			return common.LogRunningTime(func() error {
-				return runSync()
-			})
+			return run()
 		},
 	}
 
+	common.SetupProjectName(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupStagesStorage(&commonCmdData, cmd)
 	common.SetupStagesStorageLock(&commonCmdData, cmd)
 	common.SetupImagesRepo(&commonCmdData, cmd)
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage, read images from the specified images repo")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDryRun(&commonCmdData, cmd)
-
 	return cmd
 }
 
-func runSync() error {
+func run() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -83,63 +74,40 @@ func runSync() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
-
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
+	werfConfig, err := common.GetOptionalWerfConfig(projectDir, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	logboek.LogOptionalLn()
-
-	projectName := werfConfig.Meta.Project
-
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
-	if err != nil {
-		return err
+	var projectName string
+	if werfConfig != nil {
+		projectName = werfConfig.Meta.Project
+	} else if *commonCmdData.ProjectName != "" {
+		projectName = *commonCmdData.ProjectName
+	} else {
+		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
 	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
 		return err
 	}
-	if _, err := common.GetStagesStorageLock(&commonCmdData); err != nil {
+	if _, err = common.GetStagesStorageLock(&commonCmdData); err != nil {
 		return err
 	}
+
 	stagesStorage := &storage.LocalStagesStorage{}
-
-	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
-	if err != nil {
-		return err
-	}
-	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
-
-	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager,
-		StagesStorage:     stagesStorage,
-		ImagesNames:       imagesNames,
-		DryRun:            *commonCmdData.DryRun,
-	}
-
-	logboek.LogOptionalLn()
-	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
-		return err
+	if images, err := stagesStorage.GetManagedImages(projectName); err != nil {
+		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)
+	} else {
+		for _, img := range images {
+			fmt.Printf("%s\n", img)
+		}
 	}
 
 	return nil

@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("getting project dir failed: %s", err)
 			}
 
-			werfConfigPath, err := common.GetWerfConfigPath(projectDir)
+			werfConfigPath, err := common.GetWerfConfigPath(projectDir, true)
 			if err != nil {
 				return err
 			}

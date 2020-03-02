@@ -2,6 +2,9 @@ package storage
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/flant/logboek"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -11,6 +14,64 @@ import (
 )
 
 type LocalStagesStorage struct{}
+
+func makeConfigImageRecordImageName(projectName, imageName string) string {
+	return fmt.Sprintf(image.ManagedImageRecord_ImageFormat, projectName, imageName)
+}
+
+func (storage *LocalStagesStorage) AddManagedImage(projectName, imageName string) error {
+	logboek.Debug.LogF("-- LocalStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
+
+	fullImageName := makeConfigImageRecordImageName(projectName, imageName)
+
+	if exsts, err := docker.ImageExist(fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+	} else if exsts {
+		return nil
+	}
+
+	if err := docker.CreateImage(fullImageName); err != nil {
+		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+	}
+	return nil
+}
+
+func (storage *LocalStagesStorage) RmManagedImage(projectName, imageName string) error {
+	logboek.Debug.LogF("-- LocalStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
+
+	fullImageName := makeConfigImageRecordImageName(projectName, imageName)
+
+	if exsts, err := docker.ImageExist(fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+	} else if !exsts {
+		return nil
+	}
+
+	if err := docker.CliRmi("--force", fullImageName); err != nil {
+		return fmt.Errorf("unable to remove image %q: %s", fullImageName, err)
+	}
+	return nil
+}
+
+func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]string, error) {
+	logboek.Debug.LogF("-- LocalStagesStorage.GetManagedImages %s\n", projectName)
+
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", fmt.Sprintf(image.ManagedImageRecord_ImageNameFormat, projectName))
+
+	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	}
+
+	res := []string{}
+	for _, img := range images {
+		for _, repoTag := range img.RepoTags {
+			res = append(res, strings.SplitN(repoTag, ":", 2)[1])
+		}
+	}
+	return res, nil
+}
 
 func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error) {
 	filterSet := filters.NewArgs()
