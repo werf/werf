@@ -175,7 +175,7 @@ func runRun() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, false)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
@@ -233,7 +233,7 @@ func runRun() error {
 	} else {
 		return logboek.WithRawStreamsOutputModeOn(func() error {
 			return common.WithoutTerminationSignalsTrap(func() error {
-				return docker.CliRun(dockerRunArgs...)
+				return docker.CliRun_LiveOutput(dockerRunArgs...)
 			})
 		})
 	}

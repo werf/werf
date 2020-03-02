@@ -374,17 +374,17 @@ func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
-        defaultValue := true
-        for _, envName := range []string{
-          "WERF_LOG_DEBUG", 
-          "WERF_DEBUG", 
-        } {
-          if os.Getenv(envName) != "" {
-            defaultValue = GetBoolEnvironmentDefaultTrue(envName)
-            break
-          } 
-        } 
-	
+	defaultValue := false
+	for _, envName := range []string{
+		"WERF_LOG_DEBUG",
+		"WERF_DEBUG",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
+
 	for alias, env := range map[string]string{
 		"log-debug": "WERF_LOG_DEBUG",
 		"debug":     "WERF_DEBUG",
@@ -422,15 +422,15 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
 	var defaultValue bool
-        for _, envName := range []string{
-          "WERF_LOG_QUIET", 
-          "WERF_QUIET", 
-        } {
-          if os.Getenv(envName) != "" {
-            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
-            break
-          } 
-        }
+	for _, envName := range []string{
+		"WERF_LOG_QUIET",
+		"WERF_QUIET",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
 
 	for alias, env := range map[string]string{
 		"log-quiet": "WERF_LOG_QUIET",
@@ -454,15 +454,15 @@ func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
 	var defaultValue bool
-        for _, envName := range []string{
-          "WERF_LOG_VERBOSE", 
-          "WERF_VERBOSE", 
-        } {
-          if os.Getenv(envName) != "" {
-            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
-            break
-          } 
-        }
+	for _, envName := range []string{
+		"WERF_LOG_VERBOSE",
+		"WERF_VERBOSE",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
 
 	for alias, env := range map[string]string{
 		"log-verbose": "WERF_LOG_VERBOSE",
@@ -783,14 +783,13 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 	return "", nil
 }
 
-func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
+func GetWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := config.GetWerfConfig(werfConfigPath, true)
-	logboek.LogLn()
+	res, err := config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
 	return res, err
 }
 

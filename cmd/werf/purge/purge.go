@@ -100,10 +100,12 @@ func runPurge() error {
 		return err
 	}
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, true)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
+
+	logboek.LogOptionalLn()
 
 	projectName := werfConfig.Meta.Project
 

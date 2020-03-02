@@ -327,7 +327,9 @@ func ReleaseInstall(chartPath, releaseName, namespace string, values []string, s
 		return err
 	}
 
-	return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
+		return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+	})
 }
 
 type ReleaseUpdateOptions struct {
@@ -361,7 +363,9 @@ func ReleaseUpdate(chartPath, releaseName string, values []string, secretValues 
 		return err
 	}
 
-	return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
+		return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+	})
 }
 
 type ReleaseRollbackOptions struct {
@@ -544,35 +548,34 @@ func fprintReleaseStatus(out io.Writer, releaseName string) error {
 	}
 
 	fmt.Fprintf(out, "NAME: %s\n", releaseName)
-	printStatus(out, status)
+	fprintStatus(out, status)
 
 	return nil
 }
 
-func printStatus(out io.Writer, res *services.GetReleaseStatusResponse) {
+func fprintStatus(out io.Writer, res *services.GetReleaseStatusResponse) {
 	if res.Info.LastDeployed != nil {
 		fmt.Fprintf(out, "LAST DEPLOYED: %s\n", timeconv.String(res.Info.LastDeployed))
 	}
 	fmt.Fprintf(out, "NAMESPACE: %s\n", res.Namespace)
 	fmt.Fprintf(out, "STATUS: %s\n", res.Info.Status.Code)
-	fmt.Fprintf(out, "\n")
 	if len(res.Info.Status.Resources) > 0 {
 		re := regexp.MustCompile("  +")
 
 		w := tabwriter.NewWriter(out, 0, 0, 2, ' ', tabwriter.TabIndent)
-		fmt.Fprintf(w, "RESOURCES:\n%s\n", re.ReplaceAllString(res.Info.Status.Resources, "\t"))
+		fmt.Fprintf(w, "RESOURCES:\n%s", strings.TrimSpace(re.ReplaceAllString(res.Info.Status.Resources, "\t")))
 		w.Flush()
 	}
 	if res.Info.Status.LastTestSuiteRun != nil {
 		lastRun := res.Info.Status.LastTestSuiteRun
-		fmt.Fprintf(out, "TEST SUITE:\n%s\n%s\n\n%s\n",
+		fmt.Fprintf(out, "TEST SUITE:\n%s\n%s\n\n%s",
 			fmt.Sprintf("Last Started: %s", timeconv.String(lastRun.StartedAt)),
 			fmt.Sprintf("Last Completed: %s", timeconv.String(lastRun.CompletedAt)),
 			formatTestResults(lastRun.Results))
 	}
 
 	if len(res.Info.Status.Notes) > 0 {
-		fmt.Fprintf(out, "NOTES:\n%s\n", res.Info.Status.Notes)
+		fmt.Fprintf(out, "NOTES:\n%s", strings.TrimSpace(res.Info.Status.Notes))
 	}
 }
 
@@ -641,8 +644,8 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 
 	if currentDate.After(noDisableThreeWayMergeDeadline) {
 		if userSpecifiedThreeWayMergeMode != "" && userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
-			logboek.LogWarnF("  WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore!", userSpecifiedThreeWayMergeMode)
-			logboek.LogWarnF("  WARNING werf will always use \"enabled\" three-way-merge-mode.")
+			logboek.LogWarnF("WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore, starting with %s!\n", userSpecifiedThreeWayMergeMode, noDisableThreeWayMergeDeadline)
+			logboek.LogWarnF("WARNING werf will always use \"enabled\" three-way-merge-mode.")
 		}
 	} else if userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
 		logboek.Default.LogFHighlight("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)
@@ -654,71 +657,67 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 		}
 
 		logboek.Default.LogLnHighlight(
-			"ATTENTION\n",
-			"ATTENTION Note that three-way-merge-mode does not affect resources adoption,\n",
-			"ATTENTION resources adoption will always use three-way-merge patches.",
-		)
+			"ATTENTION\n" +
+				"ATTENTION Note that three-way-merge-mode does not affect resources adoption,\n" +
+				"ATTENTION resources adoption will always use three-way-merge patches.")
 
 		logboek.Default.LogLnHighlight(
-			"ATTENTION\n",
-			"ATTENTION To force werf to use specific three-way-merge mode\n",
-			"ATTENTION and prevent auto selecting of three-way-merge-mode\n",
-			"ATTENTION please set WERF_THREE_WAY_MERGE_MODE env var\n",
-			"ATTENTION (or cli option --three-way-merge-mode) to one of the following values:\n",
-			"ATTENTION  - \"enabled\"         — always use three-way-merge patches during updates\n",
-			fmt.Sprintf("ATTENTION                        for already existing and new releases; %s\n", enabledDescExtra),
-			"ATTENTION  - \"disabled\"        — do not use three-way-merge patches during updates\n",
-			fmt.Sprintf("ATTENTION                        neither for already existing nor new releases; %s\n", disabledDescExtra),
-			"ATTENTION  - \"onlyNewReleases\" — new releases created since that mode is active\n",
-			"ATTENTION                        will use three-way-merge patches during updates,\n",
-			"ATTENTION                        while already existing releases continue to use old\n",
-			fmt.Sprintf("ATTENTION                        helm two-way-merge patches and repair patches approach; %s\n", onlyNewReleasesDescExtra),
-			"ATTENTION",
-		)
+			"ATTENTION\n" +
+				"ATTENTION To force werf to use specific three-way-merge mode\n" +
+				"ATTENTION and prevent auto selecting of three-way-merge-mode\n" +
+				"ATTENTION please set WERF_THREE_WAY_MERGE_MODE env var\n" +
+				"ATTENTION (or cli option --three-way-merge-mode) to one of the following values:\n" +
+				"ATTENTION  - \"enabled\"         — always use three-way-merge patches during updates\n" +
+				fmt.Sprintf("ATTENTION                        for already existing and new releases; %s\n", enabledDescExtra) +
+				"ATTENTION  - \"disabled\"        — do not use three-way-merge patches during updates\n" +
+				fmt.Sprintf("ATTENTION                        neither for already existing nor new releases; %s\n", disabledDescExtra) +
+				"ATTENTION  - \"onlyNewReleases\" — new releases created since that mode is active\n" +
+				"ATTENTION                        will use three-way-merge patches during updates,\n" +
+				"ATTENTION                        while already existing releases continue to use old\n" +
+				fmt.Sprintf("ATTENTION                        helm two-way-merge patches and repair patches approach; %s\n", onlyNewReleasesDescExtra) +
+				"ATTENTION")
 
 		if currentDate.Before(threeWayMergeOnlyNewReleasesEnabledDeadline) {
 			logboek.Default.LogLnHighlight(
-				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeOnlyNewReleasesEnabledDeadline),
-				"ATTENTION werf will select \"onlyNewReleases\" three-way-merge-mode by default!\n",
-				"ATTENTION\n",
-				"ATTENTION It is strongly recommended to set three-way-merge-mode\n",
-				"ATTENTION to \"enabled\" manually already now, unless there is a reason not to do that,\n",
-				fmt.Sprintf("ATTENTION because starting with %s\n", threeWayMergeEnabledDeadline),
-				"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!",
-			)
+				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeOnlyNewReleasesEnabledDeadline) +
+					"ATTENTION werf will select \"onlyNewReleases\" three-way-merge-mode by default!\n" +
+					"ATTENTION\n" +
+					"ATTENTION It is strongly recommended to set three-way-merge-mode\n" +
+					"ATTENTION to \"enabled\" manually already now, unless there is a reason not to do that,\n" +
+					fmt.Sprintf("ATTENTION because starting with %s\n", threeWayMergeEnabledDeadline) +
+					"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!")
 		} else if currentDate.Before(threeWayMergeEnabledDeadline) {
 			logboek.Default.LogLnHighlight(
-				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeEnabledDeadline),
-				"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!",
-			)
+				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeEnabledDeadline) +
+					"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!")
 
 			if userSpecifiedThreeWayMergeMode == threeWayMergeDisabled {
-				logboek.LogWarnF("  WARNING Three-way-merge-mode is set to \"disabled\" and\n")
-				logboek.LogWarnF("  WARNING should be switched to \"onlyNewReleases\" or \"enabled\"\n")
-				logboek.LogWarnF("  WARNING as soon as possible, because two-way-merge will be DEPRECATED soon!\n")
+				logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"disabled\" and\n")
+				logboek.LogWarnF("WARNING should be switched to \"onlyNewReleases\" or \"enabled\"\n")
+				logboek.LogWarnF("WARNING as soon as possible, because two-way-merge will be DEPRECATED soon!\n")
 			} else if userSpecifiedThreeWayMergeMode == threeWayMergeOnlyNewReleases {
 				if !newRelease.ThreeWayMergeEnabled {
-					logboek.LogWarnF("  WARNING Three-way-merge-mode is set to \"onlyNewReleases\" and current release\n")
-					logboek.LogWarnF("  WARNING %q is old and does not use three way merge.\n", newRelease.GetName())
-					logboek.LogWarnF("  WARNING Manually add annotation \"%s\": \"true\" to the %s\n", driver.ThreeWayMergeEnabledAnnotation, releaseResourceName)
-					logboek.LogWarnF("  WARNING to enable three-way-merge for this release as soon as possible,\n")
-					logboek.LogWarnF("  WARNING because two-way-merge will be DEPRECATED soon!\n")
+					logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"onlyNewReleases\" and current release\n")
+					logboek.LogWarnF("WARNING %q is old and does not use three way merge.\n", newRelease.GetName())
+					logboek.LogWarnF("WARNING Manually add annotation \"%s\": \"true\" to the %s\n", driver.ThreeWayMergeEnabledAnnotation, releaseResourceName)
+					logboek.LogWarnF("WARNING to enable three-way-merge for this release as soon as possible,\n")
+					logboek.LogWarnF("WARNING because two-way-merge will be DEPRECATED soon!\n")
 				}
 			}
 		} else {
 			if userSpecifiedThreeWayMergeMode != "" {
-				logboek.LogWarnF("  WARNING Three-way-merge-mode is set to \"%s\" and\n", userSpecifiedThreeWayMergeMode)
-				logboek.LogWarnF("  WARNING should be switched to \"enabled\" as soon as possible,\n")
-				logboek.LogWarnF("  WARNING because two-way-merge will be DEPRECATED soon!\n")
+				logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"%s\" and\n", userSpecifiedThreeWayMergeMode)
+				logboek.LogWarnF("WARNING should be switched to \"enabled\" as soon as possible,\n")
+				logboek.LogWarnF("WARNING because two-way-merge will be DEPRECATED soon!\n")
 			}
 		}
 	}
 
 	if len(kube.LastClientWarnings) > 0 {
-		logboek.LogWarnF("  WARNING ### Following problems detected during deploy process ###\n")
+		logboek.LogWarnF("WARNING ### Following problems detected during deploy process ###\n")
 
 		for _, msg := range kube.LastClientWarnings {
-			logboek.LogWarnF("  WARNING %s\n", msg)
+			logboek.LogWarnF("WARNING %s\n", msg)
 		}
 	}
 

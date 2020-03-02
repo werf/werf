@@ -95,10 +95,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	common.ProcessLogProjectDir(commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetWerfConfig(projectDir, true)
 	if err != nil {
 		return fmt.Errorf("bad config: %s", err)
 	}
+
+	logboek.LogOptionalLn()
 
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImage(imageToProcess) {
