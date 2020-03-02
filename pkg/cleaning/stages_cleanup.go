@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/docker/docker/api/types"
 
 	"github.com/flant/logboek"
@@ -20,7 +22,7 @@ const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 type StagesCleanupOptions struct {
 	ProjectName       string
 	ImagesRepoManager ImagesRepoManager
-	StagesStorage     string
+	StagesStorage     storage.StagesStorage
 	ImagesNames       []string
 	DryRun            bool
 }
@@ -61,7 +63,7 @@ func stagesCleanup(options StagesCleanupOptions) error {
 		}
 
 		if len(repoImages) != 0 {
-			if commonRepoOptions.StagesStorage == localStagesStorage {
+			if commonRepoOptions.StagesStorage.String() == localStagesStorage { // FIXME: remove all if-s like this, hide under universal interface of stages storage
 				if err := projectImageStagesSyncByRepoImages(repoImages, commonProjectOptions); err != nil {
 					return err
 				}
