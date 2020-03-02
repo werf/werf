@@ -374,6 +374,17 @@ func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
+        defaultValue := true
+        for _, envName := range []string{
+          "WERF_LOG_DEBUG", 
+          "WERF_DEBUG", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultTrue(envName)
+            break
+          } 
+        } 
+	
 	for alias, env := range map[string]string{
 		"log-debug": "WERF_LOG_DEBUG",
 		"debug":     "WERF_DEBUG",
@@ -382,7 +393,7 @@ func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogDebug,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultTrue(env),
+			defaultValue,
 			fmt.Sprintf("Enable debug (default $%s).", env),
 		)
 	}
@@ -410,6 +421,17 @@ Default $WERF_LOG_COLOR_MODE or auto mode.`)
 func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
+	var defaultValue bool
+        for _, envName := range []string{
+          "WERF_LOG_QUIET", 
+          "WERF_QUIET", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+            break
+          } 
+        }
+
 	for alias, env := range map[string]string{
 		"log-quiet": "WERF_LOG_QUIET",
 		"quiet":     "WERF_QUIET",
@@ -418,7 +440,7 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogQuiet,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultFalse(env),
+			defaultValue,
 			fmt.Sprintf(`Disable explanatory output (default $%s).`, env),
 		)
 	}
@@ -431,6 +453,17 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
+	var defaultValue bool
+        for _, envName := range []string{
+          "WERF_LOG_VERBOSE", 
+          "WERF_VERBOSE", 
+        } {
+          if os.Getenv(envName) != "" {
+            defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+            break
+          } 
+        }
+
 	for alias, env := range map[string]string{
 		"log-verbose": "WERF_LOG_VERBOSE",
 		"verbose":     "WERF_VERBOSE",
@@ -439,7 +472,7 @@ func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 			cmdData.LogVerbose,
 			alias,
 			"",
-			GetBoolEnvironmentDefaultFalse(env),
+			defaultValue,
 			fmt.Sprintf(`Enable verbose output (default $%s).`, env),
 		)
 	}

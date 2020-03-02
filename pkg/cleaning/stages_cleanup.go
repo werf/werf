@@ -185,7 +185,7 @@ func repoImageParentId(repoImage docker_registry.RepoImage) (string, error) {
 		return "", err
 	}
 
-	return configFile.ContainerConfig.Image, nil
+	return configFile.Config.Image, nil
 }
 
 func repoImageLabels(repoImage docker_registry.RepoImage) (map[string]string, error) {

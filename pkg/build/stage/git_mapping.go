@@ -609,11 +609,16 @@ func (gm *GitMapping) GetParamshash() string {
 
 	hash := sha256.New()
 
-	parts := []string{gm.GetFullName(), ":::", gm.To, ":::", gm.Add}
+	var parts []string
+	parts = append(parts, gm.GetFullName())
 	parts = append(parts, ":::")
-	parts = append(parts, gm.IncludePaths...)
+	parts = append(parts, gm.To)
 	parts = append(parts, ":::")
-	parts = append(parts, gm.ExcludePaths...)
+	parts = append(parts, formatParamshashPaths(gm.Add)...)
+	parts = append(parts, ":::")
+	parts = append(parts, formatParamshashPaths(gm.IncludePaths...)...)
+	parts = append(parts, ":::")
+	parts = append(parts, formatParamshashPaths(gm.ExcludePaths...)...)
 	parts = append(parts, ":::")
 	parts = append(parts, gm.Owner)
 	parts = append(parts, ":::")
@@ -633,6 +638,15 @@ func (gm *GitMapping) GetParamshash() string {
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func formatParamshashPaths(paths ...string) []string {
+	var resultPaths []string
+	for _, p := range paths {
+		resultPaths = append(resultPaths, filepath.ToSlash(p))
+	}
+
+	return resultPaths
 }
 
 func (gm *GitMapping) GetPatchContent(prevBuiltImage image.ImageInterface) (string, error) {

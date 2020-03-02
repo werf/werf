@@ -4,22 +4,24 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
-var CommonCmdData common.CmdData
-
-var CmdData struct {
+var cmdData struct {
 	helm.RollbackOptions
 }
+
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -30,6 +32,11 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
 				return err
 			}
@@ -43,27 +50,29 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVar(&CmdData.DisableHooks, "no-hooks", false, "Prevent hooks from running during rollback")
-	cmd.Flags().BoolVar(&CmdData.Recreate, "recreate-pods", false, "Perform pods restart for the resource if applicable")
-	cmd.Flags().BoolVar(&CmdData.Wait, "wait", false, "If set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment are in a ready state before marking the release as successful. It will wait for as long as --timeout")
-	cmd.Flags().BoolVar(&CmdData.Force, "force", false, "Force resource update through delete/recreate if needed")
-	cmd.Flags().BoolVar(&CmdData.CleanupOnFail, "cleanup-on-fail", false, "Allow deletion of new resources created in this rollback when rollback failed")
-	cmd.Flags().Int64Var(&CmdData.Timeout, "timeout", 300, "Time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().BoolVar(&cmdData.DisableHooks, "no-hooks", false, "Prevent hooks from running during rollback")
+	cmd.Flags().BoolVar(&cmdData.Recreate, "recreate-pods", false, "Perform pods restart for the resource if applicable")
+	cmd.Flags().BoolVar(&cmdData.Wait, "wait", false, "If set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment are in a ready state before marking the release as successful. It will wait for as long as --timeout")
+	cmd.Flags().BoolVar(&cmdData.Force, "force", false, "Force resource update through delete/recreate if needed")
+	cmd.Flags().BoolVar(&cmdData.CleanupOnFail, "cleanup-on-fail", false, "Allow deletion of new resources created in this rollback when rollback failed")
+	cmd.Flags().Int64Var(&cmdData.Timeout, "timeout", 300, "Time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
 
 	return cmd
 }
 
 func runRollback(releaseName string, revision int32) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -75,25 +84,25 @@ func runRollback(releaseName string, revision int32) error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
-			ReleasesMaxHistory:          *CommonCmdData.ReleasesHistoryMax,
+			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
 		},
 	}
 	if err := deploy.Init(deployInitOptions); err != nil {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -103,7 +112,7 @@ func runRollback(releaseName string, revision int32) error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	if err := helm.Rollback(releaseName, revision, CmdData.RollbackOptions); err != nil {
+	if err := helm.Rollback(releaseName, revision, cmdData.RollbackOptions); err != nil {
 		return err
 	}
 

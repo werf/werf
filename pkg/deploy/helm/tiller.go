@@ -654,41 +654,41 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 		}
 
 		logboek.Default.LogLnHighlight(
-			"ATTENTION",
-			"ATTENTION Note that three-way-merge-mode does not affect resources adoption,",
+			"ATTENTION\n",
+			"ATTENTION Note that three-way-merge-mode does not affect resources adoption,\n",
 			"ATTENTION resources adoption will always use three-way-merge patches.",
 		)
 
 		logboek.Default.LogLnHighlight(
-			"ATTENTION",
-			"ATTENTION To force werf to use specific three-way-merge mode",
-			"ATTENTION and prevent auto selecting of three-way-merge-mode",
-			"ATTENTION please set WERF_THREE_WAY_MERGE_MODE env var",
-			"ATTENTION (or cli option --three-way-merge-mode) to one of the following values:",
-			"ATTENTION  - \"enabled\"         — always use three-way-merge patches during updates",
-			fmt.Sprintf("ATTENTION                        for already existing and new releases; %s", enabledDescExtra),
-			"ATTENTION  - \"disabled\"        — do not use three-way-merge patches during updates",
-			fmt.Sprintf("ATTENTION                        neither for already existing nor new releases; %s", disabledDescExtra),
-			"ATTENTION  - \"onlyNewReleases\" — new releases created since that mode is active",
-			"ATTENTION                        will use three-way-merge patches during updates,",
-			"ATTENTION                        while already existing releases continue to use old",
-			fmt.Sprintf("ATTENTION                        helm two-way-merge patches and repair patches approach; %s", onlyNewReleasesDescExtra),
+			"ATTENTION\n",
+			"ATTENTION To force werf to use specific three-way-merge mode\n",
+			"ATTENTION and prevent auto selecting of three-way-merge-mode\n",
+			"ATTENTION please set WERF_THREE_WAY_MERGE_MODE env var\n",
+			"ATTENTION (or cli option --three-way-merge-mode) to one of the following values:\n",
+			"ATTENTION  - \"enabled\"         — always use three-way-merge patches during updates\n",
+			fmt.Sprintf("ATTENTION                        for already existing and new releases; %s\n", enabledDescExtra),
+			"ATTENTION  - \"disabled\"        — do not use three-way-merge patches during updates\n",
+			fmt.Sprintf("ATTENTION                        neither for already existing nor new releases; %s\n", disabledDescExtra),
+			"ATTENTION  - \"onlyNewReleases\" — new releases created since that mode is active\n",
+			"ATTENTION                        will use three-way-merge patches during updates,\n",
+			"ATTENTION                        while already existing releases continue to use old\n",
+			fmt.Sprintf("ATTENTION                        helm two-way-merge patches and repair patches approach; %s\n", onlyNewReleasesDescExtra),
 			"ATTENTION",
 		)
 
 		if currentDate.Before(threeWayMergeOnlyNewReleasesEnabledDeadline) {
 			logboek.Default.LogLnHighlight(
-				fmt.Sprintf("ATTENTION Starting with %s", threeWayMergeOnlyNewReleasesEnabledDeadline),
-				"ATTENTION werf will select \"onlyNewReleases\" three-way-merge-mode by default!",
-				"ATTENTION",
-				"ATTENTION It is strongly recommended to set three-way-merge-mode",
-				"ATTENTION to \"enabled\" manually already now, unless there is a reason not to do that,",
-				fmt.Sprintf("ATTENTION because starting with %s", threeWayMergeEnabledDeadline),
+				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeOnlyNewReleasesEnabledDeadline),
+				"ATTENTION werf will select \"onlyNewReleases\" three-way-merge-mode by default!\n",
+				"ATTENTION\n",
+				"ATTENTION It is strongly recommended to set three-way-merge-mode\n",
+				"ATTENTION to \"enabled\" manually already now, unless there is a reason not to do that,\n",
+				fmt.Sprintf("ATTENTION because starting with %s\n", threeWayMergeEnabledDeadline),
 				"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!",
 			)
 		} else if currentDate.Before(threeWayMergeEnabledDeadline) {
 			logboek.Default.LogLnHighlight(
-				fmt.Sprintf("ATTENTION Starting with %s", threeWayMergeEnabledDeadline),
+				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeEnabledDeadline),
 				"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!",
 			)
 

@@ -68,23 +68,23 @@ var _ = Describe("context", func() {
 		}
 	}
 
-	var _ = DescribeTable("context", itBody,
-		Entry("checksum with files read", entry{
+	var _ = DescribeTable("checksum", itBody,
+		Entry("with files read", entry{
 			prepareFixturesFunc: func() {
 				utils.CopyIn(utils.FixturePath("context"), testDirPath)
 				Ω(os.RemoveAll(filepath.Join(testDirPath, ".git"))).Should(Succeed())
 			},
-			expectedSignature:        "c425035208193d0589aa4e4187575db3fc1d4ffa78f2101f020fadff",
-			expectedWindowsSignature: "8bdd7688bad2d9dd6d77108a5e68c1e5748bd08efcfcb5f86a92f504",
+			expectedSignature:        "02473513cc5a901dd98785602a36ff2e192d40260054634cf81fa41c",
+			expectedWindowsSignature: "d08e5f4366f31e10f23beca819a01fc51eeabcf6c6ec6dfd17646da7",
 		}),
-		Entry("checksum with ls-tree", entry{
+		Entry("with ls-tree", entry{
 			prepareFixturesFunc: func() {
 				utils.CopyIn(utils.FixturePath("context"), testDirPath)
 			},
-			expectedSignature:        "6d2596f2519f3fa66f3b24e370d86441065f5b1db80e157bfcad2458 ",
-			expectedWindowsSignature: "f267b44d1503dd6e0d1e940af53d2ce85244da93ee74ea4e5854b2f1",
+			expectedSignature:        "0ee2ba14ff8084049d694748977873c3bcab905cdbe3c1caac8204d3",
+			expectedWindowsSignature: "9ba084272d896bc3d5d20ddc98f08edeb8c92de03121fc63a9002025",
 		}),
-		Entry("checksum with ls-tree and status", entry{
+		Entry("with ls-tree and status", entry{
 			prepareFixturesFunc: func() {
 				utils.RunSucceedCommand(
 					testDirPath,
@@ -94,8 +94,8 @@ var _ = Describe("context", func() {
 
 				utils.CopyIn(utils.FixturePath("context"), testDirPath)
 			},
-			expectedSignature:        "4315b177e36f26ed9132986bdcbef6ce60f4891d733d944ebd80d598",
-			expectedWindowsSignature: "ec6330c3760c0a771a79d312dba2bb790ed74a866b5586061ee932d1",
+			expectedSignature:        "d4f36d7d05db896ac2067e2e30bea131ce9c32142d6d31f83c7d3d9e",
+			expectedWindowsSignature: "51d0ed2fbc218b4eb7860f910bdab9eedaa2528a9fa3b88bbb8eebc4",
 		}),
 	)
 })

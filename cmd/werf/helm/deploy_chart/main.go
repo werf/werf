@@ -25,14 +25,14 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	Namespace string
 	Timeout   int
 }
 
-var CommonCmdData common.CmdData
-var HelmCmdData helm_common.HelmCmdData
-var DownloadChartOptions helm_common.DownloadChartOptions
+var commonCmdData common.CmdData
+var helmCmdData helm_common.HelmCmdData
+var downloadChartOptions helm_common.DownloadChartOptions
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -50,7 +50,7 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -61,50 +61,50 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
-	common.SetupStatusProgressPeriod(&CommonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupSet(&CommonCmdData, cmd)
-	common.SetupSetString(&CommonCmdData, cmd)
-	common.SetupValues(&CommonCmdData, cmd)
+	common.SetupSet(&commonCmdData, cmd)
+	common.SetupSetString(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd)
 
-	common.SetupThreeWayMergeMode(&CommonCmdData, cmd)
+	common.SetupThreeWayMergeMode(&commonCmdData, cmd)
 
-	helm_common.SetupHelmHome(&HelmCmdData, cmd)
+	helm_common.SetupHelmHome(&helmCmdData, cmd)
 
 	f := cmd.Flags()
-	f.StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")
-	f.IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	f.StringVarP(&cmdData.Namespace, "namespace", "", "", "Namespace to install release into")
+	f.IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
 	downloadChartOptionsExtraUsage := " (if using CHART as a chart reference)"
 
-	f.BoolVar(&DownloadChartOptions.Verify, "verify", false, "verify the package against its signature"+downloadChartOptionsExtraUsage)
-	f.BoolVar(&DownloadChartOptions.VerifyLater, "prov", false, "fetch the provenance file, but don't perform verification"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.Version, "version", "", "specific version of a chart. Without this, the latest version is fetched"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.Keyring, "keyring", helm_common.DefaultKeyring(), "keyring containing public keys"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.RepoURL, "repo", "", "chart repository url where to locate the requested chart"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.CertFile, "cert-file", "", "identify HTTPS client using this SSL certificate file"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.KeyFile, "key-file", "", "identify HTTPS client using this SSL key file"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.CaFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle"+downloadChartOptionsExtraUsage)
-	f.BoolVar(&DownloadChartOptions.Devel, "devel", false, "use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set, this is ignored"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.Username, "username", "", "chart repository username"+downloadChartOptionsExtraUsage)
-	f.StringVar(&DownloadChartOptions.Password, "password", "", "chart repository password"+downloadChartOptionsExtraUsage)
+	f.BoolVar(&downloadChartOptions.Verify, "verify", false, "verify the package against its signature"+downloadChartOptionsExtraUsage)
+	f.BoolVar(&downloadChartOptions.VerifyLater, "prov", false, "fetch the provenance file, but don't perform verification"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.Version, "version", "", "specific version of a chart. Without this, the latest version is fetched"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.Keyring, "keyring", helm_common.DefaultKeyring(), "keyring containing public keys"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.RepoURL, "repo", "", "chart repository url where to locate the requested chart"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.CertFile, "cert-file", "", "identify HTTPS client using this SSL certificate file"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.KeyFile, "key-file", "", "identify HTTPS client using this SSL key file"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.CaFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle"+downloadChartOptionsExtraUsage)
+	f.BoolVar(&downloadChartOptions.Devel, "devel", false, "use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set, this is ignored"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.Username, "username", "", "chart repository username"+downloadChartOptionsExtraUsage)
+	f.StringVar(&downloadChartOptions.Password, "password", "", "chart repository password"+downloadChartOptionsExtraUsage)
 
 	return cmd
 }
 
 func runDeployChart(chartDirOrChartReference string, releaseName string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -112,24 +112,24 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
-	threeWayMergeMode, err := common.GetThreeWayMergeMode(*CommonCmdData.ThreeWayMergeMode)
+	threeWayMergeMode, err := common.GetThreeWayMergeMode(*commonCmdData.ThreeWayMergeMode)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
-			StatusProgressPeriod:        common.GetStatusProgressPeriod(&CommonCmdData),
-			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&CommonCmdData),
+			StatusProgressPeriod:        common.GetStatusProgressPeriod(&commonCmdData),
+			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&commonCmdData),
 			InitNamespace:               true,
 		},
 	}
@@ -137,7 +137,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -147,7 +147,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	namespace := CmdData.Namespace
+	namespace := cmdData.Namespace
 	if namespace == "" {
 		namespace = kube.DefaultNamespace
 	}
@@ -163,7 +163,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	} else {
 		chartReferenceParts := strings.Split(chartDirOrChartReference, "/")
 		if len(chartReferenceParts) == 2 {
-			helm_common.InitHelmSettings(&HelmCmdData)
+			helm_common.InitHelmSettings(&helmCmdData)
 
 			destDir, err := tmp_manager.CreateHelmTmpChartDestDir()
 			if err != nil {
@@ -171,11 +171,11 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 			}
 			defer os.RemoveAll(destDir)
 
-			DownloadChartOptions.ChartRef = chartDirOrChartReference
-			DownloadChartOptions.DestDir = destDir
-			DownloadChartOptions.Untar = true
+			downloadChartOptions.ChartRef = chartDirOrChartReference
+			downloadChartOptions.DestDir = destDir
+			downloadChartOptions.Untar = true
 
-			if err := helm_common.DownloadChart(&DownloadChartOptions); err != nil {
+			if err := helm_common.DownloadChart(&downloadChartOptions); err != nil {
 				return fmt.Errorf("\n- chart directory %[1]s is not found\n- unable to download chart %[1]s: %s", chartDirOrChartReference, err)
 			}
 
@@ -188,11 +188,11 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	logboek.LogOptionalLn()
 	werfChart := &werf_chart.WerfChart{ChartDir: chartDir}
 	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
-		Timeout: time.Duration(CmdData.Timeout) * time.Second,
+		Timeout: time.Duration(cmdData.Timeout) * time.Second,
 		ChartValuesOptions: helm.ChartValuesOptions{
-			Set:       *CommonCmdData.Set,
-			SetString: *CommonCmdData.SetString,
-			Values:    *CommonCmdData.Values,
+			Set:       *commonCmdData.Set,
+			SetString: *commonCmdData.SetString,
+			Values:    *commonCmdData.Values,
 		},
 		ThreeWayMergeMode: threeWayMergeMode,
 	}); err != nil {

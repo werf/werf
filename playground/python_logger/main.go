@@ -10,7 +10,7 @@ func main() {
 		logboek.LogProcessStart("Running subtask", logboek.LogProcessStartOptions{})
 		logboek.LogF("HELO!\n")
 		logboek.LogF("HELO!\n")
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessFailOptions{})
 		return nil
 	})
 	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})

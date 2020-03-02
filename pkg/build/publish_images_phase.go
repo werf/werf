@@ -181,16 +181,10 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 */
 
 func (phase *PublishImagesPhase) publishImage(img *Image) error {
-	var existingTags []string
-	logProcessMsg := fmt.Sprintf("Fetching existing repo tags")
-	if err := logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
-		var err error
-		existingTags, err = phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
-		return err
-	}); err != nil {
+	existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
+	if err != nil {
 		return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
 	}
-	logboek.LogOptionalLn()
 
 	var nonEmptySchemeInOrder []tag_strategy.TagStrategy
 	for strategy, tags := range phase.TagsByScheme {
@@ -241,19 +235,15 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 	return nil
 }
 
-func (phase *PublishImagesPhase) fetchExistingTags(imageRepository string) (res []string, err error) {
-	fetchExistingTagsFunc := func() error {
-		var err error
-		res, err = docker_registry.Tags(imageRepository)
-		return err
-	}
+func (phase *PublishImagesPhase) fetchExistingTags(imageRepository string) (existingTags []string, err error) {
+	logProcessMsg := fmt.Sprintf("Fetching existing repo tags")
+	_ = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
+		existingTags, err = docker_registry.Tags(imageRepository)
+		return nil
+	})
+	logboek.LogOptionalLn()
 
-	if err := logboek.Info.LogProcessInline("Fetching existing image tags", logboek.LevelLogProcessInlineOptions{}, fetchExistingTagsFunc); err != nil {
-		return nil, err
-	}
-	return res, nil
-
-	return res, nil
+	return existingTags, err
 }
 
 func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag string, tagStrategy tag_strategy.TagStrategy, initialExistingTagsList []string) error {
@@ -312,7 +302,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		}
 
 		if err := phase.Conveyor.StorageLockManager.LockImage(imageName); err != nil {
-			return fmt.Errorf("error locking image %s: %s", imageName)
+			return fmt.Errorf("error locking image %s: %s", imageName, err)
 		}
 		defer phase.Conveyor.StorageLockManager.UnlockImage(imageName)
 

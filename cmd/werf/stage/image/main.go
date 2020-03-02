@@ -20,7 +20,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,7 +32,11 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logging.Mute()
+			//if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+			//	common.PrintHelp(cmd)
+			//	return err
+			//}
+			logging.EnableLogQuiet()
 
 			var imageName string
 			if len(args) > 1 {
@@ -46,26 +50,27 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupStagesStorageLock(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func run(imageName string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -79,20 +84,20 @@ func run(imageName string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig, *CommonCmdData.LogVerbose, *CommonCmdData.LogDebug); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
@@ -105,17 +110,17 @@ func run(imageName string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesStorage(&CommonCmdData)
+	_, err = common.GetStagesStorage(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	_, err = common.GetStagesStorageLock(&CommonCmdData)
+	_, err = common.GetStagesStorageLock(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {

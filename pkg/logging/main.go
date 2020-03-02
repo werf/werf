@@ -6,8 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/flant/logboek"
 	"github.com/mattn/go-isatty"
+
+	"github.com/flant/logboek"
 )
 
 var (
@@ -31,14 +32,8 @@ func Init() error {
 	return nil
 }
 
-func Mute() {
-	logboek.MuteOut()
-	logboek.MuteErr()
-	log.SetOutput(logboek.GetOutStream())
-}
-
 func EnableLogQuiet() {
-	logboek.SetQuietLevel()
+	logboek.SetLevel(logboek.Error)
 }
 
 func EnableLogDebug() {

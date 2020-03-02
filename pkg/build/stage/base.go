@@ -90,7 +90,12 @@ type BaseStage struct {
 }
 
 func (s *BaseStage) LogDetailedName() string {
-	return fmt.Sprintf("stage %s/%s", s.imageName, s.Name())
+	imageName := s.imageName
+	if imageName == "" {
+		imageName = "~"
+	}
+
+	return fmt.Sprintf("stage %s/%s", imageName, s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
@@ -105,7 +110,7 @@ func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (s
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetNextStageDependencies(c Conveyor) (string, error) {
+func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 	return "", nil
 }
 
@@ -167,7 +172,7 @@ func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.Im
 	for _, gitMapping := range s.gitMappings {
 		currentCommit, err := gitMapping.LatestCommit()
 		if err != nil {
-			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s")
+			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
 		currentCommits[gitMapping.Name] = currentCommit
 	}
