@@ -57,10 +57,10 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage     *string
-	StagesStorageLock *string
-	ImagesRepo        *string
-	ImagesRepoMode    *string
+	StagesStorage   *string
+	Synchronization *string
+	ImagesRepo      *string
+	ImagesRepoMode  *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -234,15 +234,15 @@ func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
 }
 
-func SetupStagesStorageLock(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesStorageLock = new(string)
+func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Synchronization = new(string)
 
-	defaultValue := os.Getenv("WERF_STAGES_STORAGE_LOCK")
+	defaultValue := os.Getenv("WERF_SYNCHRONIZATION")
 	if defaultValue == "" {
 		defaultValue = ":local"
 	}
 
-	cmd.Flags().StringVarP(cmdData.StagesStorageLock, "stages-storage-cache", "c", defaultValue, "Lock address for multiple werf processes to work with a single stages storage (default :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for all werf processes that work with a single stages storage. :local address allows only execution of werf processes from a single host.")
+	cmd.Flags().StringVarP(cmdData.Synchronization, "synchronization", "", defaultValue, "Address of synchronizer for multiple werf processes to work with a single stages storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be specified for all werf processes that work with a single stages storage. :local address allows execution of werf processes from a single host only.")
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -749,11 +749,11 @@ func GetStagesStorage(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesStorage, nil
 }
 
-func GetStagesStorageLock(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesStorageLock != ":local" {
-		return "", fmt.Errorf("only --stages-storage-lock :local is supported for now, got '%s'", *cmdData.StagesStorageLock)
+func GetSynchronization(cmdData *CmdData) (string, error) {
+	if *cmdData.Synchronization != ":local" {
+		return "", fmt.Errorf("only --synchronization=:local is supported for now, got '%s'", *cmdData.Synchronization)
 	}
-	return *cmdData.StagesStorageLock, nil
+	return *cmdData.Synchronization, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {

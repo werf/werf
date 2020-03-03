@@ -50,7 +50,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupStagesStorage(&commonCmdData, cmd)
-	common.SetupStagesStorageLock(&commonCmdData, cmd)
+	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupImagesRepo(&commonCmdData, cmd)
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo")
@@ -87,7 +87,7 @@ func runPurge() error {
 		return err
 	}
 
-	_, err = common.GetStagesStorageLock(&commonCmdData)
+	_, err = common.GetSynchronization(&commonCmdData)
 	if err != nil {
 		return err
 	}
