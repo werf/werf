@@ -249,6 +249,10 @@ github.com/flant/logboek v0.2.6-0.20200204184239-37f691eb9129 h1:+hsmm60GqQzsvyz
 github.com/flant/logboek v0.2.6-0.20200204184239-37f691eb9129/go.mod h1:v4kz+aA1IzT4R4e6LSMpAs2FDIY47uviQfEjgEw9Izk=
 github.com/flant/logboek v0.3.1 h1:babrJuYuFK9oymzOmdkYtQ37dW6y727RteCe3hjyMAw=
 github.com/flant/logboek v0.3.1/go.mod h1:/vKAVARjAIs2OlxxDRn7SvltNVcWMb1Ifo23kCDJZco=
+github.com/flant/logboek v0.3.2 h1:zb/MrZadrvovLD/xiuIkA0t2erCrIjoun1o9cvy0dnA=
+github.com/flant/logboek v0.3.2/go.mod h1:/vKAVARjAIs2OlxxDRn7SvltNVcWMb1Ifo23kCDJZco=
+github.com/flant/logboek v0.3.3 h1:jkMDi8tcXXZubMrOQI7boZ+213Fkn3/ZWD8fykCAdLo=
+github.com/flant/logboek v0.3.3/go.mod h1:/vKAVARjAIs2OlxxDRn7SvltNVcWMb1Ifo23kCDJZco=
 github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53 h1:bylKNudqBJDddRG2WAC8gDkHsHqnIWUUnV+y6FHrVLU=
 github.com/flant/shluz v0.0.0-20191223174507-c6152b298d53/go.mod h1:A8tow8a6JcCXi29Qio1sFpnoCL1r3WZLdPbLHbZnkmg=
 github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:rZfgFAXFS/z/lEd6LJmf9HVZ1LkgYiHx5pHhV5DR16M=

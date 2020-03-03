@@ -232,7 +232,7 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 	logboek.Debug.LogF("Result checksum: %s\n", checksum)
-	logboek.LogOptionalLn()
+	logboek.Debug.LogOptionalLn()
 
 	return checksum, nil
 }
@@ -279,7 +279,7 @@ entryNotFoundInGitRepository:
 			blockMsg = fmt.Sprintf("ls-tree result checksum (%s)", wildcardsPathMatcher.String())
 			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 				lsTreeResultChecksum = lsTreeResult.Checksum()
-				logboek.LogOptionalLn()
+				logboek.Debug.LogLn()
 				logboek.Debug.LogLn(lsTreeResultChecksum)
 
 				return nil
@@ -314,7 +314,7 @@ entryNotFoundInGitRepository:
 		blockMsg = fmt.Sprintf("Status result checksum (%s)", wildcardsPathMatcher.String())
 		_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 			statusResultChecksum = statusResult.Checksum()
-			logboek.LogOptionalLn()
+			logboek.Debug.LogLn()
 			logboek.Debug.LogLn(statusResultChecksum)
 			return nil
 		})

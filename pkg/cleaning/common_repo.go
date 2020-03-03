@@ -50,8 +50,6 @@ func repoImagesByImageName(options CommonRepoOptions) (repoImagesByImageName map
 		return nil, err
 	}
 
-	logboek.LogOptionalLn()
-
 	return repoImagesByImageName, nil
 }
 

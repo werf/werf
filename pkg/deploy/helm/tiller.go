@@ -721,5 +721,5 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 		}
 	}
 
-	logboek.LogOptionalLn()
+	logboek.Warn.LogOptionalLn()
 }

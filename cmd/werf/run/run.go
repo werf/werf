@@ -215,6 +215,7 @@ func runRun() error {
 		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
+	logboek.Info.LogOptionalLn()
 	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 

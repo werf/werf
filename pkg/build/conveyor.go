@@ -847,13 +847,19 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 	for ind, gitMapping := range gitMappings {
 		if err := logboek.Info.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LevelLogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
-				logboek.IndentUp()
-				logboek.IndentUp()
-				logboek.IndentUp()
+				if logboek.Info.IsAccepted() {
+					logboek.IndentUp()
+					logboek.IndentUp()
+					logboek.IndentUp()
+				}
+
 				f()
-				logboek.IndentDown()
-				logboek.IndentDown()
-				logboek.IndentDown()
+
+				if logboek.Info.IsAccepted() {
+					logboek.IndentDown()
+					logboek.IndentDown()
+					logboek.IndentDown()
+				}
 			}
 
 			withTripleIndent(func() {

@@ -186,8 +186,6 @@ func runDeploy() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	logboek.LogOptionalLn()
-
 	var imagesRepoManager *common.ImagesRepoManager
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
@@ -235,6 +233,7 @@ func runDeploy() error {
 			}
 		}()
 
+		logboek.LogOptionalLn()
 		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 		defer c.Terminate()
 
@@ -269,6 +268,7 @@ func runDeploy() error {
 		return err
 	}
 
+	logboek.LogOptionalLn()
 	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,

@@ -38,6 +38,7 @@ func EnableLogQuiet() {
 
 func EnableLogDebug() {
 	logboek.SetLevel(logboek.Debug)
+	logboek.SetRunningTimePrefix(logboek.DetailsStyle())
 }
 
 func EnableLogVerbose() {
