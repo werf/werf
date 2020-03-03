@@ -15,8 +15,14 @@ import (
 
 type LocalStagesStorage struct{}
 
+const NamelessImageRecordTag = "__nameless__"
+
 func makeConfigImageRecordImageName(projectName, imageName string) string {
-	return fmt.Sprintf(image.ManagedImageRecord_ImageFormat, projectName, imageName)
+	tag := imageName
+	if imageName == "" {
+		tag = NamelessImageRecordTag
+	}
+	return fmt.Sprintf(image.ManagedImageRecord_ImageFormat, projectName, tag)
 }
 
 func (storage *LocalStagesStorage) AddManagedImage(projectName, imageName string) error {
@@ -67,7 +73,13 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 	res := []string{}
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
-			res = append(res, strings.SplitN(repoTag, ":", 2)[1])
+			tag := strings.SplitN(repoTag, ":", 2)[1]
+
+			if tag == NamelessImageRecordTag {
+				res = append(res, "")
+			} else {
+				res = append(res, tag)
+			}
 		}
 	}
 	return res, nil

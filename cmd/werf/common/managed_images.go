@@ -10,6 +10,14 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
+func GetManagedImageName(userSpecifiedImageName string) string {
+	switch userSpecifiedImageName {
+	case "~", storage.NamelessImageRecordTag:
+		return ""
+	}
+	return userSpecifiedImageName
+}
+
 func GetManagedImagesNames(projectName string, stagesStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
 	var imagesNames []string
 	if managedImages, err := stagesStorage.GetManagedImages(projectName); err != nil {

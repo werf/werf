@@ -105,7 +105,8 @@ func run(imageName string) error {
 	}
 
 	stagesStorage := &storage.LocalStagesStorage{}
-	if err := stagesStorage.AddManagedImage(projectName, imageName); err != nil {
+
+	if err := stagesStorage.AddManagedImage(projectName, common.GetManagedImageName(imageName)); err != nil {
 		return fmt.Errorf("unable to add managed image %q for project %q: %s", imageName, projectName, err)
 	}
 

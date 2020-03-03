@@ -105,8 +105,12 @@ func run() error {
 	if images, err := stagesStorage.GetManagedImages(projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)
 	} else {
-		for _, img := range images {
-			fmt.Printf("%s\n", img)
+		for _, imgName := range images {
+			if imgName == "" {
+				fmt.Println("~")
+			} else {
+				fmt.Printf("%s\n", imgName)
+			}
 		}
 	}
 

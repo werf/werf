@@ -108,7 +108,7 @@ func run(imageNames []string) error {
 
 	errs := []error{}
 	for _, imageName := range imageNames {
-		if err := stagesStorage.RmManagedImage(projectName, imageName); err != nil {
+		if err := stagesStorage.RmManagedImage(projectName, common.GetManagedImageName(imageName)); err != nil {
 			errs = append(errs, fmt.Errorf("unable to remove known config image name %q of project %q: %s", imageName, projectName, err))
 		}
 	}
