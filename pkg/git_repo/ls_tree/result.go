@@ -148,7 +148,7 @@ func (r *Result) Checksum() string {
 			blockMsg := fmt.Sprintf("submodule %s", submoduleResult.treeFilepath)
 			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 				submoduleChecksum = submoduleResult.Checksum()
-				logboek.LogOptionalLn()
+				logboek.Debug.LogLn()
 				logboek.Debug.LogLn(submoduleChecksum)
 				return nil
 			})

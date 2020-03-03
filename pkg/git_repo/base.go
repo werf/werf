@@ -458,7 +458,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 				blockMsg := fmt.Sprintf("ls-tree result checksum (%s)", pathMatcher.String())
 				_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 					pathChecksum = pathLsTreeResult.Checksum()
-					logboek.LogOptionalLn()
+					logboek.Debug.LogLn()
 					logboek.Debug.LogLn(pathChecksum)
 
 					return nil

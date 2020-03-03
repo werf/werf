@@ -116,8 +116,6 @@ func runCleanup() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	logboek.LogOptionalLn()
-
 	projectName := werfConfig.Meta.Project
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)

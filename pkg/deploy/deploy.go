@@ -61,7 +61,7 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 
 		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
 		serviceValuesRawStr := strings.TrimRight(string(serviceValuesRaw), "\n")
-		logboek.Info.LogBlock(fmt.Sprintf("Service values"), logboek.LevelLogBlockOptions{}, func() error {
+		_ = logboek.Info.LogBlock(fmt.Sprintf("Service values"), logboek.LevelLogBlockOptions{}, func() error {
 			logboek.Info.LogLn(serviceValuesRawStr)
 			return nil
 		})

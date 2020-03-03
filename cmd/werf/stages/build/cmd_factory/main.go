@@ -123,8 +123,6 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	logboek.LogOptionalLn()
-
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImage(imageToProcess) {
 			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
@@ -170,6 +168,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		IntrospectOptions: introspectOptions,
 	}
 
+	logboek.LogOptionalLn()
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 

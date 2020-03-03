@@ -134,7 +134,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 			if err != nil {
 				logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 				logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-				logboek.LogOptionalLn()
+				logboek.Warn.LogOptionalLn()
 			}
 
 			return nil

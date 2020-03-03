@@ -132,8 +132,6 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	logboek.LogOptionalLn()
-
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImage(imageToProcess) {
 			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
@@ -202,6 +200,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		},
 	}
 
+	logboek.LogOptionalLn()
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 

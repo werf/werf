@@ -247,7 +247,7 @@ func (phase *PublishImagesPhase) fetchExistingTags(imageRepository string) (exis
 		existingTags, err = docker_registry.Tags(imageRepository)
 		return nil
 	})
-	logboek.LogOptionalLn()
+	logboek.Info.LogOptionalLn()
 
 	return existingTags, err
 }
