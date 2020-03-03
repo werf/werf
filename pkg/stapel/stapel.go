@@ -125,6 +125,10 @@ func RsyncBinPath() string {
 	return embeddedBinPath("rsync")
 }
 
+func HeadBinPath() string {
+	return embeddedBinPath("head")
+}
+
 func SudoBinPath() string {
 	return embeddedBinPath("sudo")
 }
