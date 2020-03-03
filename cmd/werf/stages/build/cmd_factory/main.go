@@ -74,7 +74,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
-	common.SetupStagesStorageLock(commonCmdData, cmd)
+	common.SetupSynchronization(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRegistry(commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
@@ -142,7 +142,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	_, err = common.GetStagesStorageLock(commonCmdData)
+	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
 		return err
 	}
