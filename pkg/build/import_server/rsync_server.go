@@ -114,16 +114,30 @@ func (srv *RsyncServer) Shutdown() error {
 func (srv *RsyncServer) GetCopyCommand(importConfig *config.Import) string {
 	var args []string
 
-	mkdirBin := stapel.MkdirBinPath()
-	mkdirPath := path.Dir(importConfig.To)
-	mkdirCommand := fmt.Sprintf("%s -p %s", mkdirBin, mkdirPath)
+	rsyncImportPathSpec := fmt.Sprintf("rsync://%s@%s:%s/import/%s", srv.AuthUser, srv.IPAddress, srv.Port, importConfig.Add)
+	rsyncStatImportPathCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s -L %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncImportPathSpec)
 
-	rsyncBin := stapel.RsyncBinPath()
+	// save stat output to variable
+	args = append(args, fmt.Sprintf("statOutput=$(%s)", rsyncStatImportPathCommand))
+	// check command exit code from last subshell
+	args = append(args, "[ $? -eq 0 ]")
+	// unset old value of IMPORT_PATH_TRAILING_SLASH_OPTIONAL variable from other copy commands
+	args = append(args, "unset IMPORT_PATH_TRAILING_SLASH_OPTIONAL")
+	// set fileTypeField
+	args = append(args, fmt.Sprintf("fileTypeField=$(echo $statOutput | %s -c1)", stapel.HeadBinPath()))
+	// check command exit code from last subshell
+	args = append(args, "[ $? -eq 0 ]")
+	// set optional trailing slash when importing directory so that rsync will automatically
+	// merge already existing directory in the target image
+	args = append(args, "if [ $fileTypeField = d ] ; then IMPORT_PATH_TRAILING_SLASH_OPTIONAL=/ ; fi")
+	// create a parent directory where target file/directory will reside
+	args = append(args, fmt.Sprintf("%s -p %s", stapel.MkdirBinPath(), path.Dir(importConfig.To)))
+
 	var rsyncChownOption string
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace %s", srv.AuthPassword, rsyncBin, rsyncChownOption)
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 
 	if len(importConfig.IncludePaths) != 0 {
 		/**
@@ -164,15 +178,9 @@ func (srv *RsyncServer) GetCopyCommand(importConfig *config.Import) string {
 		}
 	}
 
-	rsyncCommand += fmt.Sprintf(" rsync://%s@%s:%s/import/%s %s", srv.AuthUser, srv.IPAddress, srv.Port, importConfig.Add, path.Dir(importConfig.To))
-
-	args = append(args, mkdirCommand, rsyncCommand)
-
-	addBase := path.Base(importConfig.Add)
-	toBase := path.Base(importConfig.To)
-	if addBase != toBase && toBase != "" {
-		args = append(args, fmt.Sprintf("%s %s %s", stapel.MvBinPath(), path.Join(path.Dir(importConfig.To), addBase), path.Join(path.Dir(importConfig.To), toBase)))
-	}
+	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
+	// run rsync itself
+	args = append(args, rsyncCommand)
 
 	command := strings.Join(args, " && ")
 
