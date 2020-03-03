@@ -26,10 +26,11 @@ import (
 )
 
 type CmdData struct {
-	Dir     *string
-	TmpDir  *string
-	HomeDir *string
-	SSHKeys *[]string
+	ProjectName *string
+	Dir         *string
+	TmpDir      *string
+	HomeDir     *string
+	SSHKeys     *[]string
 
 	TagCustom            *[]string
 	TagGitBranch         *string
@@ -92,6 +93,11 @@ const (
 
 func GetLongCommandDescription(text string) string {
 	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
+}
+
+func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ProjectName = new(string)
+	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use specified project name (default $WERF_PROJECT_NAME)")
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -783,17 +789,26 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 	return "", nil
 }
 
-func GetWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir)
+func GetOptionalWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, false)
 	if err != nil {
 		return nil, err
 	}
-
-	res, err := config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
-	return res, err
+	if werfConfigPath != "" {
+		return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+	}
+	return nil, nil
 }
 
-func GetWerfConfigPath(projectDir string) (string, error) {
+func GetRequiredWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, true)
+	if err != nil {
+		return nil, err
+	}
+	return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+}
+
+func GetWerfConfigPath(projectDir string, required bool) (string, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
 		werfConfigPath := filepath.Join(projectDir, werfConfigName)
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
@@ -803,7 +818,11 @@ func GetWerfConfigPath(projectDir string) (string, error) {
 		}
 	}
 
-	return "", errors.New("werf.yaml not found")
+	if required {
+		return "", errors.New("werf.yaml not found")
+	} else {
+		return "", nil
+	}
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {

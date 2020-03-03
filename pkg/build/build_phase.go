@@ -96,6 +96,10 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	phase.PrevBuiltImage = nil
 	phase.PrevNonEmptyStageImageSize = 0
 
+	if err := phase.Conveyor.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
+		return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
+	}
+
 	img.SetupBaseImage(phase.Conveyor)
 
 	phase.PrevImage = img.GetBaseImage()

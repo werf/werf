@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -44,6 +46,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageLock(&commonCmdData, cmd)
 	common.SetupImagesRepo(&commonCmdData, cmd)
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
@@ -102,9 +106,9 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir, true)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	logboek.LogOptionalLn()
@@ -126,14 +130,19 @@ func runCleanup() error {
 		return err
 	}
 
-	var imagesNames []string
-	for _, image := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, image.Name)
+	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
+		return err
 	}
+	if _, err := common.GetStagesStorageLock(&commonCmdData); err != nil {
+		return err
+	}
+	stagesStorage := &storage.LocalStagesStorage{}
 
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, image.Name)
+	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	if err != nil {
+		return err
 	}
+	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	var localRepo cleaning.GitRepo
 	gitDir := filepath.Join(projectDir, ".git")
