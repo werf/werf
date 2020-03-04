@@ -29,15 +29,18 @@ var (
 	submodulesVersionErrorMsg   = fmt.Sprintf("To use git submodules install git >= %s", MinGitVersionWithSubmodulesConstraintValue)
 
 	outStream, errStream io.Writer
+	liveGitOutput        bool
 )
 
 type Options struct {
-	Out, Err io.Writer
+	Out, Err      io.Writer
+	LiveGitOutput bool
 }
 
 func Init(opts Options) error {
 	outStream = os.Stdout
 	errStream = os.Stderr
+	liveGitOutput = opts.LiveGitOutput
 	if opts.Out != nil {
 		outStream = opts.Out
 	}
