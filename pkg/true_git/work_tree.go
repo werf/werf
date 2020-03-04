@@ -138,7 +138,7 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
 	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
-	if err := logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(logProcessMsg, logboek.LevelLogProcessOptions{}, func() error {
 		logboek.Default.LogFDetails("Work tree dir: %s\n", workTreeDir)
 		if currentCommit != "" {
 			logboek.Default.LogFDetails("Current commit: %s\n", currentCommit)
