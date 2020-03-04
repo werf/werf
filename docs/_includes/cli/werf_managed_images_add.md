@@ -3,13 +3,12 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Cleanup project stages from stages storage for the images, that do not exist in the specified       
-images repo
+Add image record to the list of managed images which will be preserved during cleanup procedure
 
 {{ header }} Syntax
 
 ```shell
-werf stages cleanup [options]
+werf managed-images add [options]
 ```
 
 {{ header }} Options
@@ -20,12 +19,10 @@ werf stages cleanup [options]
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read, pull and delete images from the specified    
-            stages storage, read images from the specified images repo
-      --dry-run=false:
-            Indicate what the command would do without actually doing that
+            Command needs granted permissions to read and write images to the specified stages      
+            storage
   -h, --help=false:
-            help for cleanup
+            help for add
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
   -i, --images-repo='':
@@ -56,9 +53,15 @@ werf stages cleanup [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -N, --project-name='':
+            Use specified project name (default $WERF_PROJECT_NAME)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
+      --ssh-key=[]:
+            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
+            https://werf.io/documentation/reference/toolbox/ssh.html).
+            Option can be specified multiple times to use multiple keys
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
