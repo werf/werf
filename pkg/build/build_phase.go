@@ -12,6 +12,7 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/image"
 	imagePkg "github.com/flant/werf/pkg/image"
@@ -523,6 +524,11 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 		}
 
 		return nil
+	}
+
+	_, err := stapel.GetOrCreateContainer()
+	if err != nil {
+		return fmt.Errorf("get or create stapel container failed: %s", err)
 	}
 
 	infoSectionFunc := func(err error) {
