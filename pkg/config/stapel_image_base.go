@@ -5,17 +5,18 @@ import (
 )
 
 type StapelImageBase struct {
-	Name                  string
-	From                  string
-	FromLatest            bool
-	FromImageName         string
-	FromImageArtifactName string
-	FromCacheVersion      string
-	Git                   *GitManager
-	Shell                 *Shell
-	Ansible               *Ansible
-	Mount                 []*Mount
-	Import                []*Import
+	Name                                                string
+	From                                                string
+	FromLatest                                          bool
+	HerebyIAdmitThatFromLatestMightBreakReproducibility bool
+	FromImageName                                       string
+	FromImageArtifactName                               string
+	FromCacheVersion                                    string
+	Git                                                 *GitManager
+	Shell                                               *Shell
+	Ansible                                             *Ansible
+	Mount                                               []*Mount
+	Import                                              []*Import
 
 	raw *rawStapelImage
 }
@@ -73,6 +74,19 @@ func (c *StapelImageBase) exports() []autoExcludeExport {
 }
 
 func (c *StapelImageBase) validate() error {
+	if c.FromLatest && !c.HerebyIAdmitThatFromLatestMightBreakReproducibility {
+		msg := `Pay attention, werf uses actual base image digest in stage signature if 'fromLatest' is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
+
+* Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
+* If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed because of stages signatures are changing alongside base image digest.
+
+If you still want to use this directive, also add 'herebyIAdmitThatFromLatestMightBreakReproducibility: true' alongside 'fromLatest'.`
+
+		msg = "\n\n" + msg
+
+		return newDetailedConfigError(msg, nil, c.raw.doc)
+	}
+
 	if c.From == "" && c.raw.FromImage == "" && c.raw.FromImageArtifact == "" && c.FromImageName == "" && c.FromImageArtifactName == "" {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromImageArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}

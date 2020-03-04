@@ -10,6 +10,7 @@ summary: |
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
   <span class="na">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
+  <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
   <span class="na">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>

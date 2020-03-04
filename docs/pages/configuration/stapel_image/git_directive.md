@@ -36,6 +36,7 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
     <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
+    <span class="na">herebyIAdmitThatBranchMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
     <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
@@ -109,6 +110,14 @@ The _git mapping_ configuration for a local repository has the following paramet
 The _git mapping_ configuration for a remote repository has some additional parameters:
 - `url` — remote repository address;
 - `branch`, `tag`, `commit` — a name of branch, tag or commit hash that will be used. If these parameters are not specified, the master branch is used.
+
+> Pay attention, werf uses git repository history to calculate stages signatures. Thus, the usage of remote git mapping with branch (by default, it is master branch) might break the reproducibility of previous builds. New commits in the branch will make previously built stages not usable.
+  <br />
+  * Previous pipeline jobs (e.g. deploy) might not be retried without the image rebuild after git remote branch is modified.
+  * If git remote branch is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following pipeline jobs will be failed because of stages signatures will be changed alongside the branch.
+  <br />
+  <br />
+  If you want to use the branch for remote git mapping instead of commit or tag, add _herebyIAdmitThatBranchMightBreakReproducibility: true_ into the remote git mapping section
 
 ## Uses of git mappings
 
