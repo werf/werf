@@ -24,7 +24,7 @@ func GetSafeSecretManager(projectDir string, secretValues []string, ignoreSecret
 
 	if isSecretsExists {
 		if ignoreSecretKey {
-			logboek.LogInfoLn("Secrets decryption disabled")
+			logboek.Default.LogLnDetails("Secrets decryption disabled")
 			return secret.NewSafeManager()
 		}
 
@@ -33,7 +33,7 @@ func GetSafeSecretManager(projectDir string, secretValues []string, ignoreSecret
 			return nil, err
 		}
 
-		return secret.NewManager(key, secret.NewManagerOptions{})
+		return secret.NewManager(key)
 	} else {
 		return secret.NewSafeManager()
 	}

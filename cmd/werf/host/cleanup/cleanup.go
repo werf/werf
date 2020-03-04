@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
@@ -17,9 +17,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct{}
-
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,7 +35,7 @@ The data include:
 It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, deploy, stages and images cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -49,21 +47,21 @@ It is safe to run this command periodically by automated cleanup job in parallel
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func runGC() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -75,16 +73,16 @@ func runGC() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
 	logboek.LogOptionalLn()
-	hostCleanupOptions := cleaning.HostCleanupOptions{DryRun: *CommonCmdData.DryRun}
+	hostCleanupOptions := cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
 	if err := cleaning.HostCleanup(hostCleanupOptions); err != nil {
 		return err
 	}

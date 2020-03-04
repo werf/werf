@@ -54,6 +54,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupTag(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
+	common.SetupSynchronization(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepoMode(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo")
@@ -83,7 +84,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -94,10 +95,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	common.ProcessLogProjectDir(commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
+
+	logboek.LogOptionalLn()
 
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImage(imageToProcess) {
@@ -113,7 +116,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesRepo(commonCmdData)
+	_, err = common.GetStagesStorage(commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -144,11 +152,14 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
-	opts := build.PublishImagesOptions{TagOptions: tagOpts}
+	opts := build.PublishImagesOptions{
+		ImagesToPublish: imagesToProcess,
+		TagOptions:      tagOpts,
+	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()

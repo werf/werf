@@ -22,6 +22,11 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "List image and artifact names defined in werf.yaml",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return run()
 		},
 	}
@@ -31,6 +36,8 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
+
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -47,7 +54,7 @@ func run() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfigPath, err := common.GetWerfConfigPath(projectDir)
+	werfConfigPath, err := common.GetWerfConfigPath(projectDir, true)
 	if err != nil {
 		return err
 	}

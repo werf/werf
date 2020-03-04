@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	if err := docker.Init(""); err != nil {
+	if err := docker.Init("", true, true); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init werf docker failed: %s\n", err)
 		os.Exit(1)
 	}

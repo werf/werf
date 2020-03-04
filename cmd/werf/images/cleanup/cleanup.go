@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
@@ -20,7 +22,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,7 +30,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -40,32 +42,34 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepoMode(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
-	common.SetupImagesCleanupPolicies(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
-	common.SetupWithoutKube(&CommonCmdData, cmd)
+	common.SetupWithoutKube(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func runCleanup() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -73,15 +77,15 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -89,12 +93,12 @@ func runCleanup() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
@@ -102,19 +106,21 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
+
+	logboek.LogOptionalLn()
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
+	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -124,14 +130,19 @@ func runCleanup() error {
 		return err
 	}
 
-	var imagesNames []string
-	for _, image := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, image.Name)
+	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
+		return err
 	}
+	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
+		return err
+	}
+	stagesStorage := &storage.LocalStagesStorage{}
 
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, image.Name)
+	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	if err != nil {
+		return err
 	}
+	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	var localRepo cleaning.GitRepo
 	gitDir := filepath.Join(projectDir, ".git")
@@ -144,12 +155,12 @@ func runCleanup() error {
 		}
 	}
 
-	policies, err := common.GetImagesCleanupPolicies(&CommonCmdData)
+	policies, err := common.GetImagesCleanupPolicies(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
+	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *commonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
 	}
@@ -158,11 +169,11 @@ func runCleanup() error {
 		CommonRepoOptions: cleaning.CommonRepoOptions{
 			ImagesRepoManager: imagesRepoManager,
 			ImagesNames:       imagesNames,
-			DryRun:            *CommonCmdData.DryRun,
+			DryRun:            *commonCmdData.DryRun,
 		},
 		LocalGit:                  localRepo,
 		KubernetesContextsClients: kubernetesContextsClients,
-		WithoutKube:               *CommonCmdData.WithoutKube,
+		WithoutKube:               *commonCmdData.WithoutKube,
 		Policies:                  policies,
 	}
 

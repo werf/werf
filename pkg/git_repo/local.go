@@ -5,18 +5,59 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/util"
-
-	"github.com/flant/logboek"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+
+	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/git_repo/ls_tree"
+	"github.com/flant/werf/pkg/git_repo/status"
+	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/util"
 )
 
 type Local struct {
 	Base
 	Path   string
 	GitDir string
+}
+
+func OpenLocalRepo(name string, path string) (*Local, error) {
+	_, err := git.PlainOpen(path)
+	if err != nil {
+		if err == git.ErrRepositoryNotExists {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
+	}
+
+	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
+}
+
+func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+	}
+
+	return ls_tree.LsTree(repository, pathMatcher)
+}
+
+func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+	}
+
+	return status.Status(repository, repo.Path, pathMatcher)
 }
 
 func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {
@@ -31,6 +72,10 @@ func (repo *Local) IsEmpty() (bool, error) {
 	return repo.isEmpty(repo.Path)
 }
 
+func (repo *Local) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GitDir)
+}
+
 func (repo *Local) RemoteOriginUrl() (string, error) {
 	return repo.remoteOriginUrl(repo.Path)
 }
@@ -41,6 +86,19 @@ func (repo *Local) HeadCommit() (string, error) {
 		return "", fmt.Errorf("cannot get repo `%s` head ref: %s", repo.Path, err)
 	}
 	return fmt.Sprintf("%s", ref.Hash()), nil
+}
+
+func (repo *Local) IsHeadReferenceExist() (bool, error) {
+	_, err := repo.getReferenceForRepo(repo.Path)
+	if err != nil {
+		if err == plumbing.ErrReferenceNotFound {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (repo *Local) HeadBranchName() (string, error) {
@@ -55,8 +113,17 @@ func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
-func (repo *Local) Checksum(opts ChecksumOptions) (Checksum, error) {
-	return repo.checksum(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+func (repo *Local) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
+	_ = logboek.Debug.LogProcess(
+		"Calculating checksum",
+		logboek.LevelLogProcessOptions{},
+		func() error {
+			checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+			return nil
+		},
+	)
+
+	return
 }
 
 func (repo *Local) IsCommitExists(commit string) (bool, error) {
@@ -88,7 +155,7 @@ func (repo *Local) IsBranchState() bool {
 	if err == errNotABranch {
 		return false
 	} else if err != nil {
-		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
 		return false
 	}
 	return true
@@ -97,7 +164,7 @@ func (repo *Local) IsBranchState() bool {
 func (repo *Local) GetCurrentBranchName() string {
 	name, err := repo.HeadBranchName()
 	if err != nil {
-		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
 		return ""
 	}
 	return name
@@ -146,13 +213,13 @@ func (repo *Local) findTagByCommitID(repoPath string, commitID plumbing.Hash) (s
 func (repo *Local) GetCurrentTagName() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logboek.LogErrorF("ERROR: Cannot get local git repo head ref: %s\n", err)
+		logboek.LogWarnF("ERROR: Cannot get local git repo head ref: %s\n", err)
 		return ""
 	}
 
 	tag, err := repo.findTagByCommitID(repo.Path, ref.Hash())
 	if err != nil {
-		logboek.LogErrorF("ERROR: Cannot get local git repo tag: %s\n", err)
+		logboek.LogWarnF("ERROR: Cannot get local git repo tag: %s\n", err)
 		return ""
 	}
 	return tag
@@ -161,7 +228,7 @@ func (repo *Local) GetCurrentTagName() string {
 func (repo *Local) GetHeadCommit() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logboek.LogErrorF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
+		logboek.LogWarnF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
 		return ""
 	}
 	return fmt.Sprintf("%s", ref.Hash())

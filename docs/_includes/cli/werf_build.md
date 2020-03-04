@@ -81,16 +81,22 @@ werf build [IMAGE_NAME...] [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1:
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
@@ -102,6 +108,11 @@ werf build [IMAGE_NAME...] [options]
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+  -c, --stages-storage-cache=':local':
+            Lock address for multiple werf processes to work with a single stages storage (default  
+            :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for   
+            all werf processes that work with a single stages storage. :local address allows only   
+            execution of werf processes from a single host.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

@@ -16,11 +16,11 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	Force bool
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,7 +28,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project stages from local stages storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -45,23 +45,24 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
+	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
-	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
+	common.SetupDryRun(&commonCmdData, cmd)
+	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
 }
 
 func run(projectNames ...string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -73,19 +74,19 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
-		logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-		if err := logboek.LogProcess("Project "+projectName, logProcessOptions, func() error {
+		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
 			stagesPurgeOptions := cleaning.StagesPurgeOptions{
 				ProjectName:                   projectName,
-				RmContainersThatUseWerfImages: CmdData.Force,
-				DryRun:                        *CommonCmdData.DryRun,
+				RmContainersThatUseWerfImages: cmdData.Force,
+				DryRun:                        *commonCmdData.DryRun,
 			}
 
 			if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {

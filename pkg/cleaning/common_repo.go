@@ -7,10 +7,11 @@ import (
 
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 )
 
 type CommonRepoOptions struct {
-	StagesStorage     string
+	StagesStorage     storage.StagesStorage
 	ImagesRepoManager ImagesRepoManager
 	ImagesNames       []string
 	DryRun            bool
@@ -48,8 +49,6 @@ func repoImagesByImageName(options CommonRepoOptions) (repoImagesByImageName map
 	}); err != nil {
 		return nil, err
 	}
-
-	logboek.LogOptionalLn()
 
 	return repoImagesByImageName, nil
 }
@@ -106,7 +105,7 @@ func multirepoRepoImages(options CommonRepoOptions) (map[string][]docker_registr
 }
 
 func repoImageStagesImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	return docker_registry.ImagesByWerfImageLabel(options.StagesStorage, "false")
+	return docker_registry.ImagesByWerfImageLabel(options.StagesStorage.String(), "false")
 }
 
 func repoImagesRemove(images []docker_registry.RepoImage, options CommonRepoOptions) error {
@@ -150,7 +149,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
-	logboek.LogInfoF("  tag: %s\n", image.Tag)
+	logboek.Default.LogFDetails("  tag: %s\n", image.Tag)
 	logboek.LogOptionalLn()
 
 	return nil

@@ -2,14 +2,13 @@ package stage
 
 import (
 	"fmt"
-	"os"
 	"sort"
+
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
-
-const GitArchiveResetCommitRegex = "(\\[werf reset\\])|(\\[reset werf\\])"
 
 type NewGitArchiveStageOptions struct {
 	ArchivesDir          string
@@ -38,24 +37,27 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
+func (s *GitArchiveStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+	if err != nil {
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+	}
+	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+}
+
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
-
-		if os.Getenv("DISABLE_GIT_ARCHIVE_RESET_COMMIT") != "1" {
-			commit, err := gitMapping.GitRepo().FindCommitIdByMessage(GitArchiveResetCommitRegex)
-			if err != nil {
-				return "", err
-			}
-
-			args = append(args, commit)
-		}
 	}
 
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *GitArchiveStage) GetNextStageDependencies(c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
 func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {

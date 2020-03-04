@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -14,9 +15,10 @@ import (
 
 type StageImage struct {
 	*base
-	fromImage  *StageImage
-	container  *StageImageContainer
-	buildImage *build
+	fromImage              *StageImage
+	container              *StageImageContainer
+	buildImage             *build
+	dockerfileImageBuilder *DockerfileImageBuilder
 }
 
 func NewStageImage(fromImage *StageImage, name string) *StageImage {
@@ -81,16 +83,34 @@ func (i *StageImage) SyncDockerState() error {
 }
 
 func (i *StageImage) Build(options BuildOptions) error {
+	if i.dockerfileImageBuilder != nil {
+		return i.dockerfileImageBuilder.Build()
+	}
+
 	containerLockName := ContainerLockName(i.container.Name())
 	if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 	}
 	defer shluz.Unlock(containerLockName)
 
+	if debugDockerRunCommand() {
+		runArgs, err := i.container.prepareRunArgs()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
+
+		if len(i.container.prepareAllRunCommands()) != 0 {
+			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+		}
+	}
+
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
 				if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
@@ -99,7 +119,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
 				if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
@@ -151,21 +172,28 @@ func (i *StageImage) introspectBefore() error {
 	return nil
 }
 
-func (i *StageImage) SaveInCache() error {
-	buildImageId, err := i.buildImage.MustGetId()
+func (i *StageImage) MustGetBuiltId() string {
+	builtId, err := i.GetBuiltId()
+	if err != nil {
+		panic(fmt.Sprintf("error getting built id for %s: %s", i.Name(), err))
+	}
+	return builtId
+}
+
+func (i *StageImage) GetBuiltId() (string, error) {
+	if i.dockerfileImageBuilder != nil {
+		return i.dockerfileImageBuilder.GetBuiltId()
+	} else {
+		return i.buildImage.MustGetId()
+	}
+}
+
+func (i *StageImage) TagBuiltImage(name string) error {
+	buildImageId, err := i.GetBuiltId()
 	if err != nil {
 		return err
 	}
-
-	if err := docker.CliTag(buildImageId, i.name); err != nil {
-		return err
-	}
-
-	if err := i.SyncDockerState(); err != nil {
-		return err
-	}
-
-	return nil
+	return docker.CliTag(buildImageId, i.name)
 }
 
 func (i *StageImage) Tag(name string) error {
@@ -173,12 +201,7 @@ func (i *StageImage) Tag(name string) error {
 	if err != nil {
 		return err
 	}
-
-	if err := docker.CliTag(imageId, name); err != nil {
-		return err
-	}
-
-	return nil
+	return docker.CliTag(imageId, name)
 }
 
 func (i *StageImage) Pull() error {
@@ -219,23 +242,34 @@ func (i *StageImage) Import(name string) error {
 }
 
 func (i *StageImage) Export(name string) error {
-	if err := logboek.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return i.Tag(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return docker.CliPushWithRetries(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return docker.CliRmi(name)
 	}); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (i *StageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
+	if i.dockerfileImageBuilder == nil {
+		i.dockerfileImageBuilder = NewDockerfileImageBuilder()
+	}
+	return i.dockerfileImageBuilder
+}
+
+func debugDockerRunCommand() bool {
+	return os.Getenv("WERF_DEBUG_DOCKER_RUN_COMMAND") == "1"
 }

@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -29,28 +30,35 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runLint()
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupEnvironment(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
-	common.SetupSet(&CommonCmdData, cmd)
-	common.SetupSetString(&CommonCmdData, cmd)
-	common.SetupValues(&CommonCmdData, cmd)
-	common.SetupSecretValues(&CommonCmdData, cmd)
-	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
+	common.SetupSet(&commonCmdData, cmd)
+	common.SetupSetString(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
+
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func runLint() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -66,26 +74,47 @@ func runLint() error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, deploy.LintOptions{
-		Values:          *CommonCmdData.Values,
-		SecretValues:    *CommonCmdData.SecretValues,
-		Set:             *CommonCmdData.Set,
-		SetString:       *CommonCmdData.SetString,
-		Env:             *CommonCmdData.Environment,
-		IgnoreSecretKey: *CommonCmdData.IgnoreSecretKey,
+	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	// TODO: optionally use tags by signatures using conveyor
+	tag := "TAG"
+	tagStrategy := tag_strategy.Custom
+	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageName := range imagesNames {
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: true, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		imagesInfoGetters = append(imagesInfoGetters, d)
+	}
+
+	return deploy.RunLint(projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+		Values:          *commonCmdData.Values,
+		SecretValues:    *commonCmdData.SecretValues,
+		Set:             *commonCmdData.Set,
+		SetString:       *commonCmdData.SetString,
+		Env:             *commonCmdData.Environment,
+		IgnoreSecretKey: *commonCmdData.IgnoreSecretKey,
 	})
 }

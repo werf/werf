@@ -109,7 +109,16 @@ func (c *StageImageContainer) prepareRunCommands() []string {
 }
 
 func (c *StageImageContainer) prepareAllRunCommands() []string {
-	return append(c.serviceRunCommands, c.runCommands...)
+	var commands []string
+
+	if debugDockerRunCommand() {
+		commands = append(commands, "set -x")
+	}
+
+	commands = append(commands, c.serviceRunCommands...)
+	commands = append(commands, c.runCommands...)
+
+	return commands
 }
 
 func ShelloutPack(command string) string {
@@ -257,7 +266,7 @@ func (c *StageImageContainer) run() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
@@ -270,7 +279,7 @@ func (c *StageImageContainer) introspect() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}
@@ -285,7 +294,7 @@ func (c *StageImageContainer) introspectBefore() error {
 		return err
 	}
 
-	if err := docker.CliRun(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}

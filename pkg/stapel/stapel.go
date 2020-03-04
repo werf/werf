@@ -81,6 +81,10 @@ func LsBinPath() string {
 	return embeddedBinPath("ls")
 }
 
+func MvBinPath() string {
+	return embeddedBinPath("mv")
+}
+
 func RmBinPath() string {
 	return embeddedBinPath("rm")
 }
@@ -119,6 +123,10 @@ func BashBinPath() string {
 
 func RsyncBinPath() string {
 	return embeddedBinPath("rsync")
+}
+
+func HeadBinPath() string {
+	return embeddedBinPath("head")
 }
 
 func SudoBinPath() string {

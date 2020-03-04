@@ -12,7 +12,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 type repoListCmd struct {
@@ -21,7 +22,9 @@ type repoListCmd struct {
 }
 
 func newRepoListCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	list := &repoListCmd{out: os.Stdout}
 
 	cmd := &cobra.Command{
@@ -29,14 +32,21 @@ func newRepoListCmd() *cobra.Command {
 		Short:                 "List chart repositories",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 
-			list.home = common.HelmSettings.Home
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
+
+			list.home = helmCommon.HelmSettings.Home
 			return list.run()
 		},
 	}
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }
@@ -44,8 +54,8 @@ func newRepoListCmd() *cobra.Command {
 func (a *repoListCmd) run() error {
 	f, err := repo.LoadRepositoriesFile(a.home.RepositoryFile())
 	if err != nil {
-		if common.IsCouldNotLoadRepositoriesFileError(err) {
-			return fmt.Errorf(common.CouldNotLoadRepositoriesFileErrorFormat, a.home.RepositoryFile())
+		if helmCommon.IsCouldNotLoadRepositoriesFileError(err) {
+			return fmt.Errorf(helmCommon.CouldNotLoadRepositoriesFileErrorFormat, a.home.RepositoryFile())
 		}
 
 		return err

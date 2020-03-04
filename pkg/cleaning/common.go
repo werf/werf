@@ -118,7 +118,7 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 		for _, img := range images {
 			if img.ID == container.ImageID {
 				if options.SkipUsedImages {
-					logboek.LogInfoF("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
+					logboek.Default.LogFDetails("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
 				} else if options.RmContainersThatUseWerfImages {
 					containersToRemove = append(containersToRemove, container)
@@ -179,7 +179,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			}
 			args = append(args, references...)
 
-			if err := docker.CliRmi(args...); err != nil {
+			if err := docker.CliRmi_LiveOutput(args...); err != nil {
 				return err
 			}
 		}

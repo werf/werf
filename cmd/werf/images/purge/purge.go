@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
@@ -16,9 +16,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct{}
-
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,7 +24,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -38,26 +36,26 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepoMode(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupImagesRepo(&commonCmdData, cmd)
+	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&CommonCmdData, cmd)
-	common.SetupLogProjectDir(&CommonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDryRun(&CommonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
 	return cmd
 }
 
 func runPurge() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -65,34 +63,36 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
+
+	logboek.LogOptionalLn()
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
+	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoMode, err := common.GetImagesRepoMode(&CommonCmdData)
+	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func runPurge() error {
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImagesRepoManager: imagesRepoManager,
 		ImagesNames:       imageNames,
-		DryRun:            *CommonCmdData.DryRun,
+		DryRun:            *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()

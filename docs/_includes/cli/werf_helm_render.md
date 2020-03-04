@@ -54,6 +54,25 @@ werf helm render [options]
       --images-repo-mode='multirepo':
             Define how to store images in Repo: multirepo or monorepo (defaults to                  
             $WERF_IMAGES_REPO_MODE or multirepo)
+      --log-color-mode='auto':
+            Set log color mode.
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
+            terminal) modes.
+            Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
+            true).
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml)
@@ -70,6 +89,10 @@ werf helm render [options]
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
+      --tag-by-stages-signature=false:
+            Use stages-signature tagging strategy and tag each image by the corresponding signature 
+            of last image stage (option can be enabled by specifying                                
+            $WERF_TAG_BY_STAGES_SIGNATURE=true)
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags.
             Option can be used multiple times to produce multiple images with the specified tags.

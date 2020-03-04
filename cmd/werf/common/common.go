@@ -26,15 +26,17 @@ import (
 )
 
 type CmdData struct {
-	Dir     *string
-	TmpDir  *string
-	HomeDir *string
-	SSHKeys *[]string
+	ProjectName *string
+	Dir         *string
+	TmpDir      *string
+	HomeDir     *string
+	SSHKeys     *[]string
 
-	TagCustom    *[]string
-	TagGitBranch *string
-	TagGitTag    *string
-	TagGitCommit *string
+	TagCustom            *[]string
+	TagGitBranch         *string
+	TagGitTag            *string
+	TagGitCommit         *string
+	TagByStagesSignature *bool
 
 	Environment                      *string
 	Release                          *string
@@ -55,9 +57,10 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage  *string
-	ImagesRepo     *string
-	ImagesRepoMode *string
+	StagesStorage   *string
+	Synchronization *string
+	ImagesRepo      *string
+	ImagesRepoMode  *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -73,7 +76,10 @@ type CmdData struct {
 
 	StagesToIntrospect *[]string
 
+	LogDebug         *bool
 	LogPretty        *bool
+	LogVerbose       *bool
+	LogQuiet         *bool
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
@@ -87,6 +93,11 @@ const (
 
 func GetLongCommandDescription(text string) string {
 	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
+}
+
+func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ProjectName = new(string)
+	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use specified project name (default $WERF_PROJECT_NAME)")
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -123,7 +134,7 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
-	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironment("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_KUBE_CONTEXT)")
+	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_KUBE_CONTEXT)")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -139,11 +150,13 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitBranch = new(string)
 	cmdData.TagGitTag = new(string)
 	cmdData.TagGitCommit = new(string)
+	cmdData.TagByStagesSignature = new(bool)
 
 	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", tagCustom, "Use custom tagging strategy and tag by the specified arbitrary tags.\nOption can be used multiple times to produce multiple images with the specified tags.\nAlso can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1, $WERF_TAG_CUSTOM_TAG2=tag2)")
 	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)")
 	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
 	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
+	cmd.Flags().BoolVarP(cmdData.TagByStagesSignature, "tag-by-stages-signature", "", GetBoolEnvironmentDefaultFalse("WERF_TAG_BY_STAGES_SIGNATURE"), "Use stages-signature tagging strategy and tag each image by the corresponding signature of last image stage (option can be enabled by specifying $WERF_TAG_BY_STAGES_SIGNATURE=true)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -219,6 +232,17 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
+}
+
+func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Synchronization = new(string)
+
+	defaultValue := os.Getenv("WERF_SYNCHRONIZATION")
+	if defaultValue == "" {
+		defaultValue = ":local"
+	}
+
+	cmd.Flags().StringVarP(cmdData.Synchronization, "synchronization", "", defaultValue, "Address of synchronizer for multiple werf processes to work with a single stages storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be specified for all werf processes that work with a single stages storage. :local address allows execution of werf processes from a single host only.")
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -313,18 +337,12 @@ func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.InsecureRegistry = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", GetBoolEnvironment("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
+	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SkipTlsVerifyRegistry = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironment("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
-
-	// legacy
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "insecure-repo", "", GetBoolEnvironment("WERF_INSECURE_REPO"), "Skip TLS certificate validation when accessing a registry (default $WERF_INSECURE_REPO)")
-	if err := cmd.Flags().MarkHidden("insecure-repo"); err != nil {
-		panic(err)
-	}
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
@@ -351,9 +369,44 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
+	SetupLogDebug(cmdData, cmd)
+	SetupLogVerbose(cmdData, cmd)
+	SetupLogQuiet(cmdData, cmd)
 	SetupLogColor(cmdData, cmd)
 	SetupLogPretty(cmdData, cmd)
 	SetupTerminalWidth(cmdData, cmd)
+}
+
+func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogDebug = new(bool)
+
+	defaultValue := false
+	for _, envName := range []string{
+		"WERF_LOG_DEBUG",
+		"WERF_DEBUG",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
+
+	for alias, env := range map[string]string{
+		"log-debug": "WERF_LOG_DEBUG",
+		"debug":     "WERF_DEBUG",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogDebug,
+			alias,
+			"",
+			defaultValue,
+			fmt.Sprintf("Enable debug (default $%s).", env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("debug"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
@@ -371,12 +424,76 @@ Supported on, off and auto (based on the stdout’s file descriptor referring to
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
+func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogQuiet = new(bool)
+
+	var defaultValue bool
+	for _, envName := range []string{
+		"WERF_LOG_QUIET",
+		"WERF_QUIET",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
+
+	for alias, env := range map[string]string{
+		"log-quiet": "WERF_LOG_QUIET",
+		"quiet":     "WERF_QUIET",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogQuiet,
+			alias,
+			"",
+			defaultValue,
+			fmt.Sprintf(`Disable explanatory output (default $%s).`, env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("quiet"); err != nil {
+		panic(err)
+	}
+}
+
+func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogVerbose = new(bool)
+
+	var defaultValue bool
+	for _, envName := range []string{
+		"WERF_LOG_VERBOSE",
+		"WERF_VERBOSE",
+	} {
+		if os.Getenv(envName) != "" {
+			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			break
+		}
+	}
+
+	for alias, env := range map[string]string{
+		"log-verbose": "WERF_LOG_VERBOSE",
+		"verbose":     "WERF_VERBOSE",
+	} {
+		cmd.Flags().BoolVarP(
+			cmdData.LogVerbose,
+			alias,
+			"",
+			defaultValue,
+			fmt.Sprintf(`Enable verbose output (default $%s).`, env),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden("verbose"); err != nil {
+		panic(err)
+	}
+}
+
 func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogPretty = new(bool)
 
 	var defaultValue bool
 	if os.Getenv("WERF_LOG_PRETTY") != "" {
-		defaultValue = GetBoolEnvironment("WERF_LOG_PRETTY")
+		defaultValue = GetBoolEnvironmentDefaultFalse("WERF_LOG_PRETTY")
 	} else {
 		defaultValue = true
 	}
@@ -414,12 +531,12 @@ func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IgnoreSecretKey = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironment("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironment("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
+	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
 func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
@@ -466,7 +583,16 @@ func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeMode
 	return "", fmt.Errorf("bad three-way-merge-mode '%s': enabled, disabled or  onlyNewReleases modes can be specified", threeWayMergeModeParam)
 }
 
-func GetBoolEnvironment(environmentName string) bool {
+func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
+	switch os.Getenv(environmentName) {
+	case "0", "false", "no":
+		return false
+	default:
+		return true
+	}
+}
+
+func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":
 		return true
@@ -614,13 +740,20 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 	return res, nil
 }
 
-func GetStagesRepo(cmdData *CmdData) (string, error) {
+func GetStagesStorage(cmdData *CmdData) (string, error) {
 	if *cmdData.StagesStorage == "" {
 		return "", fmt.Errorf("--stages-storage :local param required")
 	} else if *cmdData.StagesStorage != ":local" {
 		return "", fmt.Errorf("only --stages-storage :local is supported for now, got '%s'", *cmdData.StagesStorage)
 	}
 	return *cmdData.StagesStorage, nil
+}
+
+func GetSynchronization(cmdData *CmdData) (string, error) {
+	if *cmdData.Synchronization != ":local" {
+		return "", fmt.Errorf("only --synchronization=:local is supported for now, got '%s'", *cmdData.Synchronization)
+	}
+	return *cmdData.Synchronization, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
@@ -656,16 +789,26 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error)
 	return "", nil
 }
 
-func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir)
+func GetOptionalWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, false)
 	if err != nil {
 		return nil, err
 	}
-
-	return config.GetWerfConfig(werfConfigPath, true)
+	if werfConfigPath != "" {
+		return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+	}
+	return nil, nil
 }
 
-func GetWerfConfigPath(projectDir string) (string, error) {
+func GetRequiredWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, true)
+	if err != nil {
+		return nil, err
+	}
+	return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+}
+
+func GetWerfConfigPath(projectDir string, required bool) (string, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
 		werfConfigPath := filepath.Join(projectDir, werfConfigName)
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
@@ -675,7 +818,11 @@ func GetWerfConfigPath(projectDir string) (string, error) {
 		}
 	}
 
-	return "", errors.New("werf.yaml not found")
+	if required {
+		return "", errors.New("werf.yaml not found")
+	} else {
+		return "", nil
+	}
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
@@ -759,6 +906,14 @@ func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 func ProcessLogOptions(cmdData *CmdData) error {
 	if err := ProcessLogColorMode(cmdData); err != nil {
 		return err
+	}
+
+	if *cmdData.LogQuiet {
+		logging.EnableLogQuiet()
+	} else if *cmdData.LogDebug {
+		logging.EnableLogDebug()
+	} else if *cmdData.LogVerbose {
+		logging.EnableLogVerbose()
 	}
 
 	if !*cmdData.LogPretty {
@@ -853,7 +1008,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logboek.LogHighlightLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+	logboek.Default.LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
 
 	return err
 }
@@ -866,6 +1021,6 @@ func TerminateWithError(errMsg string, exitCode int) {
 	msg := fmt.Sprintf("Error: %s", errMsg)
 	msg = strings.TrimSuffix(msg, "\n")
 
-	_, _ = fmt.Fprintln(os.Stderr, logboek.ColorizeWarning(msg))
+	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
 }

@@ -10,7 +10,8 @@ import (
 	"k8s.io/helm/cmd/helm/installer"
 	"k8s.io/helm/pkg/helm/helmpath"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 var (
@@ -27,7 +28,9 @@ type initCmd struct {
 }
 
 func newRepoInitCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	i := &initCmd{out: os.Stdout}
 
 	cmd := &cobra.Command{
@@ -35,11 +38,16 @@ func newRepoInitCmd() *cobra.Command {
 		Short:                 "Init default chart repositories configuration",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 
-			i.home = common.HelmSettings.Home
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
 
-			if err := installer.Initialize(i.home, i.out, i.skipRefresh, *common.HelmSettings, stableRepositoryURL, localRepositoryURL); err != nil {
+			i.home = helmCommon.HelmSettings.Home
+
+			if err := installer.Initialize(i.home, i.out, i.skipRefresh, *helmCommon.HelmSettings, stableRepositoryURL, localRepositoryURL); err != nil {
 				return fmt.Errorf("error initializing: %s", err)
 			}
 			fmt.Fprintf(i.out, "%s has been configured\n", i.home)
@@ -53,7 +61,9 @@ func newRepoInitCmd() *cobra.Command {
 	f.StringVar(&stableRepositoryURL, "stable-repo-url", stableRepositoryURL, "URL for stable repository")
 	f.StringVar(&localRepositoryURL, "local-repo-url", localRepositoryURL, "URL for local repository")
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }

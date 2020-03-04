@@ -9,11 +9,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/flant/go-containerregistry/pkg/authn"
-	"github.com/flant/go-containerregistry/pkg/name"
-	v1 "github.com/flant/go-containerregistry/pkg/v1"
-	"github.com/flant/go-containerregistry/pkg/v1/remote"
-	"github.com/flant/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/logs"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+
 	"github.com/flant/logboek"
 
 	imagePkg "github.com/flant/werf/pkg/image"
@@ -39,6 +41,17 @@ type Options struct {
 func Init(opts Options) error {
 	InsecureRegistry = opts.InsecureRegistry
 	SkipTlsVerifyRegistry = opts.SkipTlsVerifyRegistry
+
+	if logboek.Debug.IsAccepted() {
+		logs.Progress.SetOutput(logboek.GetOutStream())
+		logs.Warn.SetOutput(logboek.GetErrStream())
+		logs.Debug.SetOutput(logboek.GetOutStream())
+	} else {
+		logs.Progress.SetOutput(ioutil.Discard)
+		logs.Warn.SetOutput(ioutil.Discard)
+		logs.Debug.SetOutput(ioutil.Discard)
+	}
+
 	return nil
 }
 
@@ -75,12 +88,12 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 		v1Image, _, err := image(tagReference)
 		if err != nil {
 			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
-				logboek.LogErrorF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
+				logboek.LogWarnF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
 				continue
 			}
 
 			if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
-				logboek.LogErrorF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
+				logboek.LogWarnF("WARNING: Broken tag %s was skipped: %s\n", tagReference, err)
 				continue
 			}
 			return nil, err
@@ -154,7 +167,7 @@ func ImageParentId(reference string) (string, error) {
 		return "", err
 	}
 
-	return configFile.ContainerConfig.Image, nil
+	return configFile.Config.Image, nil
 }
 
 func ImageConfigFile(reference string) (v1.ConfigFile, error) {

@@ -13,7 +13,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 type repoAddCmd struct {
@@ -32,7 +33,9 @@ type repoAddCmd struct {
 }
 
 func newRepoAddCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	add := &repoAddCmd{out: os.Stdout}
 
 	cmd := &cobra.Command{
@@ -40,15 +43,20 @@ func newRepoAddCmd() *cobra.Command {
 		Short:                 "Add a chart repository",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 
-			if err := common.CheckArgsLength(len(args), "name for the chart repository", "the url of the chart repository"); err != nil {
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
+
+			if err := helmCommon.CheckArgsLength(len(args), "name for the chart repository", "the url of the chart repository"); err != nil {
 				return err
 			}
 
 			add.name = args[0]
 			add.url = args[1]
-			add.home = common.HelmSettings.Home
+			add.home = helmCommon.HelmSettings.Home
 
 			return add.run()
 		},
@@ -62,7 +70,9 @@ func newRepoAddCmd() *cobra.Command {
 	f.StringVar(&add.keyFile, "key-file", "", "identify HTTPS client using this SSL key file")
 	f.StringVar(&add.caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }
@@ -96,8 +106,8 @@ func readPassword() (string, error) {
 func addRepository(name, url, username, password string, home helmpath.Home, certFile, keyFile, caFile string, noUpdate bool) error {
 	f, err := repo.LoadRepositoriesFile(home.RepositoryFile())
 	if err != nil {
-		if common.IsCouldNotLoadRepositoriesFileError(err) {
-			return fmt.Errorf(common.CouldNotLoadRepositoriesFileErrorFormat, home.RepositoryFile())
+		if helmCommon.IsCouldNotLoadRepositoriesFileError(err) {
+			return fmt.Errorf(helmCommon.CouldNotLoadRepositoriesFileErrorFormat, home.RepositoryFile())
 		}
 
 		return err
@@ -119,7 +129,7 @@ func addRepository(name, url, username, password string, home helmpath.Home, cer
 		CAFile:   caFile,
 	}
 
-	r, err := repo.NewChartRepository(&c, getter.All(*common.HelmSettings))
+	r, err := repo.NewChartRepository(&c, getter.All(*helmCommon.HelmSettings))
 	if err != nil {
 		return err
 	}

@@ -14,11 +14,11 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	OutputFilePath string
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -38,25 +38,32 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runSecretEncrypt()
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
 
 	return cmd
 }
 
 func runSecretEncrypt() error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -99,8 +106,8 @@ func secretEncrypt(m secret.Manager) error {
 		encodedData = append(encodedData, []byte("\n")...)
 	}
 
-	if CmdData.OutputFilePath != "" {
-		if err := secret_common.SaveGeneratedData(CmdData.OutputFilePath, encodedData); err != nil {
+	if cmdData.OutputFilePath != "" {
+		if err := secret_common.SaveGeneratedData(cmdData.OutputFilePath, encodedData); err != nil {
 			return err
 		}
 	} else {

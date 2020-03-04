@@ -7,10 +7,10 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util/secretvalues"
 )
@@ -24,28 +24,17 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions) error {
-	if debug() {
-		fmt.Fprintf(logboek.GetOutStream(), "Lint options: %#v\n", opts)
-	}
+func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
+	logboek.Debug.LogF("Lint options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	tag := "GIT_BRANCH"
-	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
-	images := GetImagesInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, true)
-
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

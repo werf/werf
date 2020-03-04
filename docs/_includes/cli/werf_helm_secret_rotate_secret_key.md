@@ -45,14 +45,20 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1:
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

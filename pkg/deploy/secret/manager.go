@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/secret"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -34,7 +33,7 @@ func GetManager(projectDir string) (Manager, error) {
 		return nil, err
 	}
 
-	m, err = NewManager(key, NewManagerOptions{})
+	m, err = NewManager(key)
 	if err != nil {
 		return nil, err
 	}
@@ -96,48 +95,13 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 	return secretKey, nil
 }
 
-type NewManagerOptions struct {
-	IgnoreWarning bool
-}
-
-func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
+func NewManager(key []byte) (Manager, error) {
 	ss, err := secret.NewSecret(key)
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "encoding/hex:") {
-			if !options.IgnoreWarning {
-				logboek.LogErrorLn(`
-############################################################################################
-###                      WARNING! Invalid encryption key, do regenerate!                 ###
-###    https://werf.io/reference/deploy/secrets.html#regeneration-of-existing-secrets    ###
-############################################################################################`)
-			}
-
-			return NewManager(ruby2GoSecretKey(key), options)
-		}
-
 		return nil, fmt.Errorf("check encryption key: %s", err)
 	}
 
 	return newBaseManager(ss)
-}
-
-func ruby2GoSecretKey(key []byte) []byte {
-	var newKey []byte
-	hexCodes := []byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
-	for _, l := range string(key) {
-		asciiCode := int(l)
-		if (asciiCode >= 'a' && asciiCode <= 'z') || (asciiCode >= 'A' && asciiCode <= 'Z') {
-			newKey = append(newKey, hexCodes[(asciiCode+9)%16])
-		} else {
-			newKey = append(newKey, hexCodes[asciiCode%16])
-		}
-	}
-
-	if len(newKey)%2 != 0 {
-		newKey = append(newKey, hexCodes[0])
-	}
-
-	return newKey
 }
 
 func NewSafeManager() (Manager, error) {

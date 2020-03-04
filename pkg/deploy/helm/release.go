@@ -36,8 +36,6 @@ const (
 
 	ShowEventsAnnoName = "werf.io/show-service-messages"
 
-	RecreateAnnoName = "werf.io/recreate"
-
 	HelmHookAnnoName = "helm.sh/hook"
 )
 
@@ -52,7 +50,6 @@ var (
 		ShowLogsOnlyForContainers,
 		ShowLogsUntilAnnoName,
 		ShowEventsAnnoName,
-		RecreateAnnoName,
 		helm_kube.SetReplicasOnlyOnCreationAnnotation,
 		helm_kube.SetResourcesOnlyOnCreationAnnotation,
 	}
@@ -69,7 +66,7 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 }
 
 func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
-	if err := logboek.LogProcess("Checking release existence", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess("Checking release existence", logboek.LevelLogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
@@ -107,7 +104,7 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 				for _, h := range rev.Hooks {
 					t, err := parseTemplate(h.Manifest)
 					if err != nil {
-						logboek.LogErrorF("WARNING: Parsing helm hook %s manifest failed: %s", h.Name, err)
+						logboek.LogWarnF("WARNING: Parsing helm hook %s manifest failed: %s", h.Name, err)
 						continue
 					}
 
@@ -121,12 +118,12 @@ func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks 
 
 				if len(revHooksToDelete) != 0 {
 					msg := fmt.Sprintf("Processing release %s revision %d", releaseName, rev.Version)
-					_ = logboek.LogProcess(msg, logboek.LogProcessOptions{}, func() error {
+					_ = logboek.Info.LogProcess(msg, logboek.LevelLogProcessOptions{}, func() error {
 						for hookId, hookTemplate := range revHooksToDelete {
 							deletedHooks[hookId] = true
 
 							if err := removeReleaseNamespacedResource(hookTemplate, rev.Namespace); err != nil {
-								logboek.LogErrorF("WARNING: Failed to delete helm hook %s: %s", hookTemplate.Metadata.Name, err)
+								logboek.LogWarnF("WARNING: Failed to delete helm hook %s: %s", hookTemplate.Metadata.Name, err)
 							}
 						}
 
@@ -195,28 +192,34 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		var releaseShouldBeRolledBack bool
 		var latestReleaseThreeWayMergeEnabled bool
 
-		logProcessOptions := logboek.LogProcessOptions{
+		logProcessOptions := logboek.LevelLogProcessOptions{
 			SuccessInfoSectionFunc: func() {
 				if isReleaseExists {
-					logboek.LogInfoF("revision: %d\n", latestReleaseRevision)
-					logboek.LogInfoF("revision-status: %s\n", latestReleaseRevisionStatus)
+					logboek.Info.LogFDetails("revision: %d\n", latestReleaseRevision)
+					logboek.Info.LogFDetails("revision-status: %s\n", latestReleaseRevisionStatus)
 
 					if releaseShouldBeDeleted {
-						logboek.LogLn()
-						logboek.LogInfoLn("Release will be deleted:")
-						logboek.LogInfoLn("* the latest release revision might be in an inconsistent state, and")
-						logboek.LogInfoLn("* auto purge trigger file is exists.")
+						logboek.Info.LogLn()
+
+						logboek.Default.LogLnDetails(
+							"Release will be deleted:\n",
+							"* the latest release revision might be in an inconsistent state, and\n",
+							"* auto purge trigger file is exists.",
+						)
 					} else if releaseShouldBeRolledBack {
 						logboek.LogLn()
-						logboek.LogInfoLn("Release should be rolled back to the latest successfully deployed revision:")
-						logboek.LogInfoLn("* the latest release revision might be in an inconsistent state.")
+						logboek.Default.LogLnDetails(
+							"Release should be rolled back to the latest successfully deployed revision:\n",
+							"* the latest release revision might be in an inconsistent state.",
+						)
 					}
 				} else {
-					logboek.LogInfoLn("Release has not been deployed yet")
+					logboek.Info.LogLnDetails("Release has not been deployed yet")
 				}
 			},
 		}
-		if err := logboek.LogProcess("Checking release", logProcessOptions, func() error {
+
+		if err := logboek.Info.LogProcess("Checking release", logProcessOptions, func() error {
 			resp, err := releaseHistory(releaseName, releaseHistoryOptions{Max: 1})
 			if err != nil && !isReleaseNotFoundError(err) {
 				return fmt.Errorf("get release history failed: %s", err)
@@ -264,9 +267,9 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 					return err
 				} else if exist {
-					logboek.LogErrorF("WARNING: Improper state:\n")
-					logboek.LogErrorF("* auto purge trigger file is exists, and\n")
-					logboek.LogErrorF("* the latest release revision (%s) should not be deleted.\n", latestReleaseRevisionStatus)
+					logboek.LogWarnF("WARNING: Improper state:\n")
+					logboek.LogWarnF("* auto purge trigger file is exists, and\n")
+					logboek.LogWarnF("* the latest release revision (%s) should not be deleted.\n", latestReleaseRevisionStatus)
 					logboek.LogLn()
 
 					if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
@@ -299,33 +302,37 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 			var latestSuccessfullyDeployedRevision int32
 
 			logProcessMsg := "Trying rollback release to the latest successfully deployed revision"
-			logProcessOptions := logboek.LogProcessOptions{
+			logProcessOptions := logboek.LevelLogProcessOptions{
 				SuccessInfoSectionFunc: func() {
 					if isRollbackAttempt {
-						logboek.LogInfoF("Release was rolled back to revision %d\n", latestSuccessfullyDeployedRevision)
+						logboek.Default.LogFDetails("Release was rolled back to revision %d\n", latestSuccessfullyDeployedRevision)
 					}
 				},
 			}
-			if err := logboek.LogProcess(logProcessMsg, logProcessOptions, func() error {
+			if err := logboek.Default.LogProcess(logProcessMsg, logProcessOptions, func() error {
 				var latestSuccessfullyDeployedReleaseRevisionErr error
 
-				logProcessOptions := logboek.LogProcessOptions{
+				logProcessOptions := logboek.LevelLogProcessOptions{
 					SuccessInfoSectionFunc: func() {
 						if latestSuccessfullyDeployedReleaseRevisionErr == nil {
-							logboek.LogInfoF("latest-successfully-deployed-revision: %d\n", latestSuccessfullyDeployedRevision)
+							logboek.Info.LogFDetails("latest-successfully-deployed-revision: %d\n", latestSuccessfullyDeployedRevision)
 						} else {
-							logboek.LogInfoLn("Successfully deployed release revision was not found")
+							logboek.Info.LogLnDetails("Successfully deployed release revision was not found")
 						}
 					},
 				}
-				if err := logboek.LogProcess("Getting the latest successfully deployed release revision", logProcessOptions, func() error {
-					latestSuccessfullyDeployedRevision, latestSuccessfullyDeployedReleaseRevisionErr = latestSuccessfullyDeployedReleaseRevision(releaseName)
-					if latestSuccessfullyDeployedReleaseRevisionErr != nil && latestSuccessfullyDeployedReleaseRevisionErr != ErrNoSuccessfullyDeployedReleaseRevisionFound {
-						return latestSuccessfullyDeployedReleaseRevisionErr
-					}
+				if err := logboek.Info.LogProcess(
+					"Getting the latest successfully deployed release revision",
+					logProcessOptions,
+					func() error {
+						latestSuccessfullyDeployedRevision, latestSuccessfullyDeployedReleaseRevisionErr = latestSuccessfullyDeployedReleaseRevision(releaseName)
+						if latestSuccessfullyDeployedReleaseRevisionErr != nil && latestSuccessfullyDeployedReleaseRevisionErr != ErrNoSuccessfullyDeployedReleaseRevisionFound {
+							return latestSuccessfullyDeployedReleaseRevisionErr
+						}
 
-					return nil
-				}); err != nil {
+						return nil
+					},
+				); err != nil {
 					return fmt.Errorf("get latest successfully deployed release revision failed: %s", err)
 				}
 
@@ -337,7 +344,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 
 				var templatesFromRevision ChartTemplates
 				logProcessMsg := fmt.Sprintf("Getting templates from release revision %d", latestSuccessfullyDeployedRevision)
-				if err := logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
+				if err := logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
 					templatesFromRevision, latestSuccessfullyDeployedReleaseRevisionErr = GetTemplatesFromReleaseRevision(releaseName, latestSuccessfullyDeployedRevision)
 					return latestSuccessfullyDeployedReleaseRevisionErr
 				}); err != nil {
@@ -385,7 +392,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		return nil
 	}
 
-	if err := logboek.LogProcess("Running pre-deploy", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Info.LogProcess("Running pre-deploy", logboek.LevelLogProcessOptions{}, func() error {
 		return preDeployFunc()
 	}); err != nil {
 		return err
@@ -394,8 +401,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 	var deployFunc func() error
 	if isReleaseExists {
 		deployFunc = func() error {
-			logboek.LogF("Running helm upgrade...\n")
-			logboek.LogOptionalLn()
+			logboek.Info.LogF("Running helm upgrade...\n")
 
 			releaseUpdateOpts := ReleaseUpdateOptions{
 				releaseUpdateOptions: releaseUpdateOptions{
@@ -418,13 +424,13 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 				releaseUpdateOpts,
 			); err != nil {
 				if strings.HasSuffix(err.Error(), "has no deployed releases") {
-					logboek.LogErrorF("WARNING: Release is in improper state: %s\n", err.Error())
+					logboek.LogWarnF("WARNING: Release is in improper state: %s\n", err.Error())
 
 					if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
 						return err
 					}
 
-					logboek.LogErrorLn("WARNING: Release will be removed with `helm delete --purge` on the next run of `werf deploy`")
+					logboek.LogWarnLn("WARNING: Release will be removed with `helm delete --purge` on the next run of `werf deploy`")
 				}
 
 				return fmt.Errorf("release upgrade failed: %s", err)
@@ -438,8 +444,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		}
 	} else {
 		deployFunc = func() error {
-			logboek.LogF("Running helm install...\n")
-			logboek.LogOptionalLn()
+			logboek.Info.LogF("Running helm install...\n")
 
 			releaseInstallOpts := ReleaseInstallOptions{
 				releaseInstallOptions: releaseInstallOptions{
@@ -472,19 +477,16 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptio
 		}
 	}
 
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running deploy", logProcessOptions, func() error {
-		var templatesFromChart ChartTemplates
+	var templatesFromChart ChartTemplates
 
-		if err := logboek.LogProcessInline("Getting chart templates", logboek.LogProcessInlineOptions{}, func() error {
-			templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
-			return err
-		}); err != nil {
-			return err
-		}
+	if err := logboek.Info.LogProcessInline("Getting chart templates", logboek.LevelLogProcessInlineOptions{}, func() error {
+		templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
+		return err
+	}); err != nil {
+		return err
+	}
 
-		return runDeployProcess(releaseName, namespace, opts, templatesFromChart, deployFunc)
-	})
+	return runDeployProcess(releaseName, namespace, opts, templatesFromChart, deployFunc)
 }
 
 func latestSuccessfullyDeployedReleaseRevision(releaseName string) (int32, error) {
@@ -509,35 +511,12 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 		resourcesWaiter.LogsFromTime = oldLogsFromTime
 	}()
 
-	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
-		return fmt.Errorf("remove helm hooks by werf/recreate policy failed: %s", err)
-	}
-
 	if err := deployFunc(); err != nil {
 		return err
 	}
 
 	if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
-	jobsToDelete := getHooksJobsToRecreate(templates.Jobs())
-	if len(jobsToDelete) != 0 {
-		if err := logboek.LogProcess("Applying helm hooks recreation policy (werf.io/recreate annotation)", logboek.LogProcessOptions{}, func() error {
-			for _, jobTemplate := range jobsToDelete {
-				if err := removeReleaseNamespacedResource(jobTemplate, namespace); err != nil {
-					return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
-				}
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -560,25 +539,6 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 	}
 
 	return nil
-}
-
-func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
-	var res []Template
-
-	for _, template := range jobsTemplates {
-		if _, isHelmHook := template.Metadata.Annotations[HelmHookAnnoName]; !isHelmHook {
-			continue
-		}
-
-		value, ok := template.Metadata.Annotations[RecreateAnnoName]
-		if ok && (value == "0" || value == "false") {
-			continue
-		}
-
-		res = append(res, template)
-	}
-
-	return res
 }
 
 func removeReleaseNamespacedResource(template Template, releaseNamespace string) error {
@@ -625,34 +585,38 @@ func removeResource(name, kind, namespace string) error {
 
 	var logProcessMsg string
 	if isNamespacedResource {
-		logProcessMsg = fmt.Sprintf("Deleting %s/%s from namespace %s", groupVersionResource.Resource, name, namespace)
+		logProcessMsg = fmt.Sprintf("Deleting %s/%s from namespace %q", groupVersionResource.Resource, name, namespace)
 	} else {
 		logProcessMsg = fmt.Sprintf("Deleting %s/%s", groupVersionResource.Resource, name)
 	}
 
-	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
-		deletePropagation := metav1.DeletePropagationForeground
-		deleteOptions := &metav1.DeleteOptions{
-			PropagationPolicy: &deletePropagation,
-		}
-		err = res.Delete(name, deleteOptions)
-		if err != nil {
-			return err
-		}
-
-		for {
-			exist, err := isExist()
+	return logboek.LogProcessInline(logProcessMsg,
+		logboek.LogProcessInlineOptions{
+			LevelLogProcessInlineOptions: logboek.LevelLogProcessInlineOptions{Style: logboek.DetailsStyle()},
+		},
+		func() error {
+			deletePropagation := metav1.DeletePropagationForeground
+			deleteOptions := &metav1.DeleteOptions{
+				PropagationPolicy: &deletePropagation,
+			}
+			err = res.Delete(name, deleteOptions)
 			if err != nil {
 				return err
-			} else if !exist {
-				break
 			}
 
-			time.Sleep(500 * time.Millisecond)
-		}
+			for {
+				exist, err := isExist()
+				if err != nil {
+					return err
+				} else if !exist {
+					break
+				}
 
-		return nil
-	})
+				time.Sleep(500 * time.Millisecond)
+			}
+
+			return nil
+		})
 }
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {
@@ -674,7 +638,7 @@ func createAutoPurgeTriggerFilePath(releaseName string) error {
 			return err
 		}
 
-		logboek.LogInfoLn("Auto purge trigger file was created")
+		logboek.Info.LogLnDetails("Auto purge trigger file was created")
 	}
 
 	return nil
@@ -689,7 +653,7 @@ func deleteAutoPurgeTriggerFilePath(releaseName string) error {
 			return err
 		}
 
-		logboek.LogInfoLn("Auto purge trigger file was deleted")
+		logboek.Info.LogLnDetails("Auto purge trigger file was deleted")
 	}
 
 	return nil

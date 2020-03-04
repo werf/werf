@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -47,44 +48,62 @@ func ContainerRemove(ref string, options types.ContainerRemoveOptions) error {
 	return nil
 }
 
+func doCliCreate(c *command.DockerCli, args ...string) error {
+	return prepareCliCmd(container.NewCreateCommand(c), args...).Execute()
+}
+
 func CliCreate(args ...string) error {
-	cmd := container.NewCreateCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
+	return callCliWithAutoOutput(func(c *command.DockerCli) error {
+		return doCliCreate(c, args...)
+	})
+}
 
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
+func CliCreate_LiveOutput(args ...string) error {
+	return doCliCreate(liveOutputCli, args...)
+}
 
-	return nil
+func CliCreate_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+		return doCliCreate(c, args...)
+	})
+}
+
+func doCliRun(c *command.DockerCli, args ...string) error {
+	return prepareCliCmd(container.NewRunCommand(c), args...).Execute()
 }
 
 func CliRun(args ...string) error {
-	cmd := container.NewRunCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
+	return callCliWithAutoOutput(func(c *command.DockerCli) error {
+		return doCliRun(c, args...)
+	})
+}
 
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
+func CliRun_LiveOutput(args ...string) error {
+	return doCliRun(liveOutputCli, args...)
+}
 
-	return nil
+func CliRun_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+		return doCliRun(c, args...)
+	})
+}
+
+func doCliRm(c *command.DockerCli, args ...string) error {
+	return prepareCliCmd(container.NewRmCommand(c), args...).Execute()
 }
 
 func CliRm(args ...string) error {
-	cmd := container.NewRmCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
+	return callCliWithAutoOutput(func(c *command.DockerCli) error {
+		return doCliRm(c, args...)
+	})
+}
 
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
+func CliRm_LiveOutput(args ...string) error {
+	return doCliRm(liveOutputCli, args...)
+}
 
-	return nil
+func CliRm_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+		return doCliRm(c, args...)
+	})
 }

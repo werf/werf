@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
@@ -74,6 +74,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesStorage(commonCmdData, cmd)
+	common.SetupSynchronization(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRegistry(commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
@@ -106,7 +107,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -117,9 +118,9 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 
 	common.ProcessLogProjectDir(commonCmdData, projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	for _, imageToProcess := range imagesToProcess {
@@ -134,7 +135,12 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesRepo, err := common.GetStagesRepo(commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -145,7 +151,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
@@ -162,10 +168,11 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		IntrospectOptions: introspectOptions,
 	}
 
+	logboek.LogOptionalLn()
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 	defer c.Terminate()
 
-	if err = c.BuildStages(stagesRepo, opts); err != nil {
+	if err = c.BuildStages(stagesStorage, opts); err != nil {
 		return err
 	}
 

@@ -61,7 +61,7 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	}
 
 	var values map[string]interface{}
-	if err := yaml.Unmarshal(decodedData, &values); err != nil {
+	if err := yaml.UnmarshalStrict(decodedData, &values); err != nil {
 		return fmt.Errorf("cannot unmarshal secret values file %s: %s", path, err)
 	}
 	chart.SecretValues = append(chart.SecretValues, values)
@@ -128,10 +128,10 @@ func (chart *WerfChart) LogExtraAnnotations() {
 	res, _ := yaml.Marshal(chart.ExtraAnnotations)
 
 	annotations := strings.TrimRight(string(res), "\n")
-	logboek.LogLn("Using extra annotations:")
-	logboek.LogF(logboek.FitText(annotations, logboek.FitTextOptions{ExtraIndentWidth: 2}))
-	logboek.LogLn()
-	logboek.LogOptionalLn()
+	logboek.LogBlock(fmt.Sprintf("Extra annotations"), logboek.LogBlockOptions{}, func() error {
+		logboek.LogLn(annotations)
+		return nil
+	})
 }
 
 func (chart *WerfChart) LogExtraLabels() {
@@ -142,10 +142,10 @@ func (chart *WerfChart) LogExtraLabels() {
 	res, _ := yaml.Marshal(chart.ExtraLabels)
 
 	labels := strings.TrimRight(string(res), "\n")
-	logboek.LogLn("Using extra labels:")
-	logboek.LogF(logboek.FitText(labels, logboek.FitTextOptions{ExtraIndentWidth: 2}))
-	logboek.LogLn()
-	logboek.LogOptionalLn()
+	logboek.LogBlock(fmt.Sprintf("Extra labels"), logboek.LogBlockOptions{}, func() error {
+		logboek.LogLn(labels)
+		return nil
+	})
 }
 
 type ChartConfig struct {
@@ -172,7 +172,7 @@ func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (
 	if exist, err := util.FileExists(chartYamlFile); err != nil {
 		return nil, fmt.Errorf("check file %s existence failed: %s", chartYamlFile, err)
 	} else if exist {
-		logboek.LogErrorF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
+		logboek.LogWarnF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
 	}
 
 	defaultSecretValues := filepath.Join(chartDir, DefaultSecretValuesFileName)

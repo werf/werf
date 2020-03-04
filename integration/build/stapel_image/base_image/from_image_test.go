@@ -21,7 +21,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 		"build",
 	)
 
-	Ω(strings.Count(output, "Building stage from")).Should(Equal(4))
+	Ω(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 
@@ -34,7 +34,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 		"build",
 	)
 
-	Ω(strings.Count(output, "Building stage from")).Should(Equal(4))
+	Ω(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 }

@@ -5,21 +5,23 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
-var CommonCmdData common.CmdData
-
-var CmdData struct {
+var cmdData struct {
 	helm.GetOptions
 }
+
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -30,6 +32,11 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 				return err
 			}
@@ -37,22 +44,24 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&CommonCmdData, cmd)
-	common.SetupKubeContext(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&CommonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&CommonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
+	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
 
-	cmd.Flags().Int32Var(&CmdData.Revision, "revision", 0, "Get the named release by revision (use latest revision by default)")
-	cmd.Flags().StringVar(&CmdData.Template, "template", "", "Go template for formatting the output, eg: {{.Release.Name}}")
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().Int32Var(&cmdData.Revision, "revision", 0, "Get the named release by revision (use latest revision by default)")
+	cmd.Flags().StringVar(&cmdData.Template, "template", "", "Go template for formatting the output, eg: {{.Release.Name}}")
 
 	return cmd
 }
 
 func runGet(releaseName string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -64,16 +73,16 @@ func runGet(releaseName string) error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*CommonCmdData.HelmReleaseStorageType)
+	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
 	if err != nil {
 		return err
 	}
 
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *CommonCmdData.KubeConfig,
-			KubeContext:                 *CommonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *CommonCmdData.HelmReleaseStorageNamespace,
+			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeContext:                 *commonCmdData.KubeContext,
+			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
 			ReleasesMaxHistory:          0,
 		},
@@ -82,7 +91,7 @@ func runGet(releaseName string) error {
 		return err
 	}
 
-	if err := helm.Get(os.Stdout, releaseName, CmdData.GetOptions); err != nil {
+	if err := helm.Get(os.Stdout, releaseName, cmdData.GetOptions); err != nil {
 		return err
 	}
 

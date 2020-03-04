@@ -6,7 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 const fetchDesc = `
@@ -25,8 +26,10 @@ result in an error, and the chart will not be saved locally.
 `
 
 func newRepoFetchCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
-	downloadChartOptions := &common.DownloadChartOptions{Out: os.Stdout}
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
+	downloadChartOptions := &helmCommon.DownloadChartOptions{Out: os.Stdout}
 
 	cmd := &cobra.Command{
 		Use:                   "fetch [chart URL | repo/chartname] [...]",
@@ -34,6 +37,11 @@ func newRepoFetchCmd() *cobra.Command {
 		Long:                  fetchDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			if downloadChartOptions.Keyring != "" {
 				downloadChartOptions.Keyring = os.ExpandEnv(downloadChartOptions.Keyring)
 			}
@@ -42,7 +50,7 @@ func newRepoFetchCmd() *cobra.Command {
 				return fmt.Errorf("need at least one argument, url or repo/name of the chart")
 			}
 
-			common.InitHelmSettings(&commonCmdData)
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
 
 			if downloadChartOptions.Version == "" && downloadChartOptions.Devel {
 				downloadChartOptions.Version = ">0.0.0-0"
@@ -50,7 +58,7 @@ func newRepoFetchCmd() *cobra.Command {
 
 			for i := 0; i < len(args); i++ {
 				downloadChartOptions.ChartRef = args[i]
-				if err := common.DownloadChart(downloadChartOptions); err != nil {
+				if err := helmCommon.DownloadChart(downloadChartOptions); err != nil {
 					return err
 				}
 			}
@@ -64,7 +72,7 @@ func newRepoFetchCmd() *cobra.Command {
 	f.BoolVar(&downloadChartOptions.Verify, "verify", false, "verify the package against its signature")
 	f.BoolVar(&downloadChartOptions.VerifyLater, "prov", false, "fetch the provenance file, but don't perform verification")
 	f.StringVar(&downloadChartOptions.Version, "version", "", "specific version of a chart. Without this, the latest version is fetched")
-	f.StringVar(&downloadChartOptions.Keyring, "keyring", common.DefaultKeyring(), "keyring containing public keys")
+	f.StringVar(&downloadChartOptions.Keyring, "keyring", helmCommon.DefaultKeyring(), "keyring containing public keys")
 	f.StringVarP(&downloadChartOptions.DestDir, "destination", "d", ".", "location to write the chart. If this and tardir are specified, tardir is appended to this")
 	f.StringVar(&downloadChartOptions.RepoURL, "repo", "", "chart repository url where to locate the requested chart")
 	f.StringVar(&downloadChartOptions.CertFile, "cert-file", "", "identify HTTPS client using this SSL certificate file")
@@ -74,7 +82,9 @@ func newRepoFetchCmd() *cobra.Command {
 	f.StringVar(&downloadChartOptions.Username, "username", "", "chart repository username")
 	f.StringVar(&downloadChartOptions.Password, "password", "", "chart repository password")
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }

@@ -7,17 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -36,6 +36,11 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
 			return runRender(outputFilePath)
 		},
 	}
@@ -61,6 +66,8 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupTag(&commonCmdData, cmd)
 
+	common.SetupLogOptions(&commonCmdData, cmd)
+
 	cmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
 
 	return cmd
@@ -85,7 +92,7 @@ func runRender(outputFilePath string) error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -94,9 +101,9 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, false)
 	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
+		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	optionalImagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
@@ -148,13 +155,23 @@ func runRender(outputFilePath string) error {
 		return err
 	}
 
+	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageName := range imagesNames {
+		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutImagesRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		imagesInfoGetters = append(imagesInfoGetters, d)
+	}
+
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(buf, projectDir, werfConfig, deploy.RenderOptions{
+	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
-		Tag:                  tag,
-		TagStrategy:          tagStrategy,
 		Namespace:            namespace,
-		ImagesRepoManager:    imagesRepoManager,
 		WithoutImagesRepo:    withoutImagesRepo,
 		Values:               *commonCmdData.Values,
 		SecretValues:         *commonCmdData.SecretValues,

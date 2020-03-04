@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/docker/docker/api/types"
 
 	"github.com/flant/logboek"
@@ -20,16 +22,19 @@ const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 type StagesCleanupOptions struct {
 	ProjectName       string
 	ImagesRepoManager ImagesRepoManager
-	StagesStorage     string
+	StagesStorage     storage.StagesStorage
 	ImagesNames       []string
 	DryRun            bool
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Running stages cleanup", logProcessOptions, func() error {
-		return stagesCleanup(options)
-	})
+	return logboek.Default.LogProcess(
+		"Running stages cleanup",
+		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+		func() error {
+			return stagesCleanup(options)
+		},
+	)
 }
 
 func stagesCleanup(options StagesCleanupOptions) error {
@@ -58,7 +63,7 @@ func stagesCleanup(options StagesCleanupOptions) error {
 		}
 
 		if len(repoImages) != 0 {
-			if commonRepoOptions.StagesStorage == localStagesStorage {
+			if commonRepoOptions.StagesStorage.String() == localStagesStorage { // FIXME: remove all if-s like this, hide under universal interface of stages storage
 				if err := projectImageStagesSyncByRepoImages(repoImages, commonProjectOptions); err != nil {
 					return err
 				}
@@ -145,9 +150,9 @@ func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.Rep
 		return nil, err
 	}
 
-	for label, signature := range labels {
+	for label, imageID := range labels {
 		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
-			repoImageStages, err = exceptRepoImageStagesBySignature(repoImageStages, signature)
+			repoImageStages, err = exceptRepoImageStagesByImageId(repoImageStages, imageID)
 			if err != nil {
 				return nil, err
 			}
@@ -176,39 +181,13 @@ func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.Rep
 	return repoImageStages, nil
 }
 
-func exceptRepoImageStagesBySignature(repoImageStages []docker_registry.RepoImage, signature string) ([]docker_registry.RepoImage, error) {
-	repoImageStage, err := findRepoImageStageBySignature(repoImageStages, signature)
-	if err != nil {
-		return nil, err
-	} else if repoImageStage == nil {
-		return repoImageStages, nil
-	}
-
-	repoImageStages, err = exceptRepoImageStagesByRepoImageStage(repoImageStages, *repoImageStage)
-	if err != nil {
-		return nil, err
-	}
-
-	return repoImageStages, nil
-}
-
-func findRepoImageStageBySignature(repoImageStages []docker_registry.RepoImage, signature string) (*docker_registry.RepoImage, error) {
-	for _, repoImageStage := range repoImageStages {
-		if repoImageStage.Tag == fmt.Sprintf(image.RepoImageStageTagFormat, signature) {
-			return &repoImageStage, nil
-		}
-	}
-
-	return nil, nil
-}
-
 func repoImageParentId(repoImage docker_registry.RepoImage) (string, error) {
 	configFile, err := repoImage.Image.ConfigFile()
 	if err != nil {
 		return "", err
 	}
 
-	return configFile.ContainerConfig.Image, nil
+	return configFile.Config.Image, nil
 }
 
 func repoImageLabels(repoImage docker_registry.RepoImage) (map[string]string, error) {
@@ -284,9 +263,9 @@ func exceptImageStagesByImageId(imageStages []types.ImageSummary, imageId string
 
 func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage types.ImageSummary, commonProjectOptions CommonProjectOptions) ([]types.ImageSummary, error) {
 	var err error
-	for label, value := range imageStage.Labels {
+	for label, imageID := range imageStage.Labels {
 		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
-			imageStages, err = exceptImageStagesBySignature(imageStages, value, commonProjectOptions)
+			imageStages, err = exceptImageStagesByImageId(imageStages, imageID, commonProjectOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -303,38 +282,6 @@ func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage 
 	}
 
 	return imageStages, nil
-}
-
-func exceptImageStagesBySignature(imageStages []types.ImageSummary, signature string, options CommonProjectOptions) ([]types.ImageSummary, error) {
-	imageStage := findImageStageBySignature(imageStages, signature, options)
-	if imageStage == nil {
-		return imageStages, nil
-	}
-
-	imageStages, err := exceptImageStagesByImageStage(imageStages, *imageStage, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return imageStages, nil
-}
-
-func findImageStageBySignature(imageStages []types.ImageSummary, signature string, options CommonProjectOptions) *types.ImageSummary {
-	targetImageStageName := stageCacheImage(signature, options)
-	for _, imageStage := range imageStages {
-		for _, imageStageName := range imageStage.RepoTags {
-			if imageStageName == targetImageStageName {
-				return &imageStage
-			}
-
-		}
-	}
-
-	return nil
-}
-
-func stageCacheImage(signature string, options CommonProjectOptions) string {
-	return fmt.Sprintf(image.LocalImageStageImageFormat, options.ProjectName, signature)
 }
 
 func findImageStageByImageId(imageStages []types.ImageSummary, imageId string) *types.ImageSummary {

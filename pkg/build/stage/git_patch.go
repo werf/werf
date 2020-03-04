@@ -72,7 +72,7 @@ func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bo
 
 func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage image.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage)
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
 		latestCommit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return false, err

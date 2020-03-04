@@ -14,7 +14,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/flant/werf/cmd/werf/common"
+	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
 )
 
 const updateDesc = `
@@ -32,7 +33,9 @@ type repoUpdateCmd struct {
 }
 
 func newRepoUpdateCmd() *cobra.Command {
-	var commonCmdData common.HelmCmdData
+	var commonCmdData common.CmdData
+	var helmCommonCmdData helmCommon.HelmCmdData
+
 	u := &repoUpdateCmd{
 		out:    os.Stdout,
 		update: updateCharts,
@@ -44,9 +47,14 @@ func newRepoUpdateCmd() *cobra.Command {
 		Long:                  updateDesc,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.InitHelmSettings(&commonCmdData)
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
 
-			u.home = common.HelmSettings.Home
+			helmCommon.InitHelmSettings(&helmCommonCmdData)
+
+			u.home = helmCommon.HelmSettings.Home
 			return u.run()
 		},
 	}
@@ -54,7 +62,9 @@ func newRepoUpdateCmd() *cobra.Command {
 	f := cmd.Flags()
 	f.BoolVar(&u.strict, "strict", false, "fail on update warnings")
 
-	common.SetupHelmHome(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	helmCommon.SetupHelmHome(&helmCommonCmdData, cmd)
 
 	return cmd
 }
@@ -62,8 +72,8 @@ func newRepoUpdateCmd() *cobra.Command {
 func (u *repoUpdateCmd) run() error {
 	f, err := repo.LoadRepositoriesFile(u.home.RepositoryFile())
 	if err != nil {
-		if common.IsCouldNotLoadRepositoriesFileError(err) {
-			return fmt.Errorf(common.CouldNotLoadRepositoriesFileErrorFormat, u.home.RepositoryFile())
+		if helmCommon.IsCouldNotLoadRepositoriesFileError(err) {
+			return fmt.Errorf(helmCommon.CouldNotLoadRepositoriesFileErrorFormat, u.home.RepositoryFile())
 		}
 
 		return err
@@ -74,7 +84,7 @@ func (u *repoUpdateCmd) run() error {
 	}
 	var repos []*repo.ChartRepository
 	for _, cfg := range f.Repositories {
-		r, err := repo.NewChartRepository(cfg, getter.All(*common.HelmSettings))
+		r, err := repo.NewChartRepository(cfg, getter.All(*helmCommon.HelmSettings))
 		if err != nil {
 			return err
 		}

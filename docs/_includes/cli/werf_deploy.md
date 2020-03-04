@@ -100,16 +100,22 @@ werf deploy [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=true:
+            Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1:
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml)
@@ -138,9 +144,18 @@ werf deploy [options]
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+  -c, --stages-storage-cache=':local':
+            Lock address for multiple werf processes to work with a single stages storage (default  
+            :local or $WERF_STAGES_STORAGE if set). The same lock address should be specified for   
+            all werf processes that work with a single stages storage. :local address allows only   
+            execution of werf processes from a single host.
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+      --tag-by-stages-signature=false:
+            Use stages-signature tagging strategy and tag each image by the corresponding signature 
+            of last image stage (option can be enabled by specifying                                
+            $WERF_TAG_BY_STAGES_SIGNATURE=true)
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags.
             Option can be used multiple times to produce multiple images with the specified tags.

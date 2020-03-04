@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/true_git"
+
 	"github.com/flant/werf/pkg/slug"
 
 	"gopkg.in/ini.v1"
@@ -42,6 +44,10 @@ func (repo *Remote) FindCommitIdByMessage(regex string) (string, error) {
 
 func (repo *Remote) IsEmpty() (bool, error) {
 	return repo.isEmpty(repo.GetClonePath())
+}
+
+func (repo *Remote) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GetClonePath())
 }
 
 func (repo *Remote) CloneAndFetch() error {
@@ -93,7 +99,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		logboek.LogInfoF("Clone %s\n", repo.Url)
+		logboek.Default.LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0755); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
@@ -152,7 +158,7 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		logboek.LogInfoF("Fetch remote %s of %s\n", remoteName, repo.Url)
+		logboek.Default.LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -281,12 +287,22 @@ func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
 }
 
-func (repo *Remote) Checksum(opts ChecksumOptions) (Checksum, error) {
+func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
 	workTreeDir, err := repo.getWorkTreeDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.checksum(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+
+	_ = logboek.Debug.LogProcess(
+		"Calculating checksum",
+		logboek.LevelLogProcessOptions{},
+		func() error {
+			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+			return nil
+		},
+	)
+
+	return
 }
 
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {

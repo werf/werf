@@ -27,9 +27,12 @@ func GetDeployTag(cmdData *CmdData, opts TagOptionsGetterOptions) (string, tag_s
 	if *cmdData.TagGitCommit != "" {
 		optionsCount++
 	}
+	if *cmdData.TagByStagesSignature {
+		optionsCount++
+	}
 
 	if optionsCount > 1 {
-		return "", "", fmt.Errorf("exactly one tag should be specified for deploy")
+		return "", "", fmt.Errorf("exactly one tag option should be specified for deploy")
 	}
 
 	tagOpts, err := GetTagOptions(cmdData, opts)
@@ -37,7 +40,9 @@ func GetDeployTag(cmdData *CmdData, opts TagOptionsGetterOptions) (string, tag_s
 		return "", "", err
 	}
 
-	if len(tagOpts.CustomTags) > 0 {
+	if tagOpts.TagByStagesSignature {
+		return "", tag_strategy.StagesSignature, nil
+	} else if len(tagOpts.CustomTags) > 0 {
 		return tagOpts.CustomTags[0], tag_strategy.Custom, nil
 	} else if len(tagOpts.TagsByGitBranch) > 0 {
 		return tagOpts.TagsByGitBranch[0], tag_strategy.GitBranch, nil
@@ -99,8 +104,13 @@ func GetTagOptions(cmdData *CmdData, opts TagOptionsGetterOptions) (build.TagOpt
 		emptyTags = false
 	}
 
+	if *cmdData.TagByStagesSignature {
+		res.TagByStagesSignature = true
+		emptyTags = false
+	}
+
 	if emptyTags && !opts.Optional {
-		return build.TagOptions{}, fmt.Errorf("at least one tag should be specified with --tag-custom|--tag-git-tag|--tag-git-branch|--tag-git-commit options")
+		return build.TagOptions{}, fmt.Errorf("tag should be specified with --tag-by-stages-signature, --tag-custom, --tag-git-tag, --tag-git-branch or --tag-git-commit options")
 	}
 
 	return res, nil

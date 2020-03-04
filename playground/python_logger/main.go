@@ -10,7 +10,7 @@ func main() {
 		logboek.LogProcessStart("Running subtask", logboek.LogProcessStartOptions{})
 		logboek.LogF("HELO!\n")
 		logboek.LogF("HELO!\n")
-		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
+		logboek.LogProcessFail(logboek.LogProcessFailOptions{})
 		return nil
 	})
 	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
@@ -21,8 +21,8 @@ func main() {
 	logboek.LogProcessStepEnd("Item Z done", logboek.LogProcessStepEndOptions{})
 	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
 
-	logboek.LogProcess("Running task", logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
-		return logboek.LogProcess("Running subtask", logboek.LogProcessOptions{WithIndent: true, ColorizeMsgFunc: logboek.ColorizeHighlight}, func() error {
+	logboek.Default.LogProcess("Running task", logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}, func() error {
+		return logboek.Default.LogProcess("Running subtask", logboek.LevelLogProcessOptions{WithIndent: true, Style: logboek.HighlightStyle()}, func() error {
 			logboek.LogF("HELO!\n")
 			logboek.LogF("HELO!\n")
 			return nil

@@ -5,8 +5,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
+	"github.com/flant/werf/pkg/storage"
+
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -86,7 +90,12 @@ type BaseStage struct {
 }
 
 func (s *BaseStage) LogDetailedName() string {
-	return fmt.Sprintf("stage %s", s.Name())
+	imageName := s.imageName
+	if imageName == "" {
+		imageName = "~"
+	}
+
+	return fmt.Sprintf("stage %s/%s", imageName, s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
@@ -101,13 +110,37 @@ func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (s
 	panic("method must be implemented!")
 }
 
+func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
+	return "", nil
+}
+
+func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
+	var args []string
+	for _, gitMapping := range s.gitMappings {
+		if s.image.IsExists() {
+			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.Labels()))
+		} else {
+			latestCommit, err := gitMapping.LatestCommit()
+			if err != nil {
+				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %s", gitMapping.Name, err)
+			}
+			args = append(args, latestCommit)
+		}
+	}
+
+	logboek.Debug.LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
+	sort.Strings(args)
+
+	return util.Sha256Hash(args...), nil
+}
+
 func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error) {
 	return false, nil
 }
 
 func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage)
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.Labels())
 		if commit == "" {
 			return false, nil
 		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
@@ -118,6 +151,67 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	}
 
 	return false, nil
+}
+
+func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	var oldestImage *storage.ImageInfo
+	for _, img := range images {
+		if oldestImage == nil {
+			oldestImage = img
+		} else if img.CreatedAt().Before(oldestImage.CreatedAt()) {
+			oldestImage = img
+		}
+	}
+	return oldestImage, nil
+}
+
+func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.ImageInfo) ([]*storage.ImageInfo, error) {
+	suitableImages := []*storage.ImageInfo{}
+	currentCommits := make(map[string]string)
+
+	for _, gitMapping := range s.gitMappings {
+		currentCommit, err := gitMapping.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
+		}
+		currentCommits[gitMapping.Name] = currentCommit
+	}
+
+ScanImages:
+	for _, img := range images {
+		for _, gitMapping := range s.gitMappings {
+			currentCommit := currentCommits[gitMapping.Name]
+
+			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
+			if commit != "" {
+				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
+				if err != nil {
+					return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commit, currentCommit, err)
+				}
+
+				if !isOurAncestor {
+					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+					continue ScanImages
+				}
+
+				logboek.Debug.LogF(
+					"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
+					commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName,
+				)
+			} else {
+				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
+				continue ScanImages
+			}
+		}
+
+		suitableImages = append(suitableImages, img)
+	}
+
+	return suitableImages, nil
+}
+
+func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+	return s.selectCacheImageByOldestCreationTimestamp(images)
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.ImageInterface) error {

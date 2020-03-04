@@ -20,12 +20,11 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+var cmdData struct {
 	TaggingStrategy string
-	Verbose         bool
 }
 
-var CommonCmdData common.CmdData
+var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -40,20 +39,26 @@ Currently supported only GitLab CI`,
 		RunE: runCIEnv,
 	}
 
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
-	common.SetupInsecureRegistry(&CommonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&CommonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
-	cmd.Flags().BoolVarP(&CmdData.Verbose, "verbose", "", false, "Generate echo command for each resulted script line")
+	common.SetupLogOptions(&commonCmdData, cmd)
+
+	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", "stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature; tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 
 	return cmd
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+	if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+		common.PrintHelp(cmd)
+		return err
+	}
+
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -65,18 +70,18 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	switch CmdData.TaggingStrategy {
-	case "tag-or-branch":
+	switch cmdData.TaggingStrategy {
+	case "tag-or-branch", "stages-signature":
 	default:
 		common.PrintHelp(cmd)
-		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
+		return fmt.Errorf("provided tagging-strategy '%s' not supported", cmdData.TaggingStrategy)
 	}
 
 	ciSystem := args[0]
 
 	switch ciSystem {
 	case "gitlab":
-		err := generateGitlabEnvs()
+		err := generateGitlabEnvs(cmdData.TaggingStrategy)
 		if err != nil {
 			fmt.Println()
 			printError(err.Error())
@@ -88,9 +93,9 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func generateGitlabEnvs() error {
-	dockerConfigPath := *CommonCmdData.DockerConfig
-	if *CommonCmdData.DockerConfig == "" {
+func generateGitlabEnvs(taggingStrategy string) error {
+	dockerConfigPath := *commonCmdData.DockerConfig
+	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
 	}
 
@@ -101,12 +106,12 @@ func generateGitlabEnvs() error {
 		return fmt.Errorf("unable to create tmp docker config: %s", err)
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *CommonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *CommonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
 	// Init with new docker config dir
-	if err := docker.Init(dockerConfig); err != nil {
+	if err := docker.Init(dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -128,18 +133,6 @@ func generateGitlabEnvs() error {
 		}
 	}
 
-	var ciGitTag, ciGitBranch string
-
-	if os.Getenv("CI_BUILD_TAG") != "" {
-		ciGitTag = os.Getenv("CI_BUILD_TAG")
-	} else if os.Getenv("CI_COMMIT_TAG") != "" {
-		ciGitTag = os.Getenv("CI_COMMIT_TAG")
-	} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
-		ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
-	} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
-		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
-	}
-
 	printHeader("DOCKER CONFIG", false)
 	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
@@ -147,11 +140,32 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
 
 	printHeader("TAGGING", true)
-	if ciGitTag != "" {
-		printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
-	}
-	if ciGitBranch != "" {
-		printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
+	switch taggingStrategy {
+	case "tag-or-branch":
+		var ciGitTag, ciGitBranch string
+
+		if os.Getenv("CI_BUILD_TAG") != "" {
+			ciGitTag = os.Getenv("CI_BUILD_TAG")
+		} else if os.Getenv("CI_COMMIT_TAG") != "" {
+			ciGitTag = os.Getenv("CI_COMMIT_TAG")
+		} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
+			ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
+		} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
+			ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
+		}
+
+		if ciGitTag != "" {
+			printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
+		}
+		if ciGitBranch != "" {
+			printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
+		}
+
+		if ciGitTag == "" && ciGitBranch == "" {
+			return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", cmdData.TaggingStrategy)
+		}
+	case "stages-signature":
+		printExportCommand("WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
 	}
 
 	printHeader("DEPLOY", true)
@@ -217,15 +231,11 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "95", false)
 
-	if ciGitTag == "" && ciGitBranch == "" {
-		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
-	}
-
 	return nil
 }
 
 func printError(errMsg string) {
-	if CmdData.Verbose {
+	if *commonCmdData.LogVerbose {
 		fmt.Println("echo")
 		fmt.Printf("echo 'Error: %s'\n", errMsg)
 	}
@@ -242,7 +252,7 @@ func printHeader(header string, withNewLine bool) {
 	}
 	fmt.Println(header)
 
-	if CmdData.Verbose {
+	if *commonCmdData.LogVerbose {
 		if withNewLine {
 			fmt.Println("echo")
 		}
@@ -256,7 +266,7 @@ func printExportCommand(key, value string, override bool) {
 		skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
 		fmt.Println(skipComment)
 
-		if CmdData.Verbose {
+		if *commonCmdData.LogVerbose {
 			echoSkip := fmt.Sprintf("echo '%s'", skipComment)
 			fmt.Println(echoSkip)
 		}
@@ -271,7 +281,7 @@ func printExportCommand(key, value string, override bool) {
 
 	fmt.Println(exportCommand)
 
-	if CmdData.Verbose {
+	if *commonCmdData.LogVerbose {
 		echoExportCommand := fmt.Sprintf("echo '%s'", exportCommand)
 		fmt.Println(echoExportCommand)
 	}
@@ -302,7 +312,7 @@ func getCleanupConfig() (CleanupConfig, error) {
 	}
 
 	config := CleanupConfig{}
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err := yaml.UnmarshalStrict(data, &config); err != nil {
 		return CleanupConfig{}, fmt.Errorf("bad config yaml %s: %s", configPath, err)
 	}
 
