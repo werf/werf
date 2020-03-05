@@ -28,9 +28,9 @@ import (
 	"github.com/flant/werf/cmd/werf/ci_env"
 	"github.com/flant/werf/cmd/werf/slugify"
 
-	images_managed_add "github.com/flant/werf/cmd/werf/images/managed/add"
-	images_managed_ls "github.com/flant/werf/cmd/werf/images/managed/ls"
-	images_managed_rm "github.com/flant/werf/cmd/werf/images/managed/rm"
+	managed_images_add "github.com/flant/werf/cmd/werf/managed_images/add"
+	managed_images_ls "github.com/flant/werf/cmd/werf/managed_images/ls"
+	managed_images_rm "github.com/flant/werf/cmd/werf/managed_images/rm"
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
 	images_publish "github.com/flant/werf/cmd/werf/images/publish"
@@ -122,6 +122,7 @@ Find more information at https://werf.io`),
 				configCmd(),
 				stagesCmd(),
 				imagesCmd(),
+				managedImagesCmd(),
 				helmCmd(),
 				hostCmd(),
 			},
@@ -158,13 +159,13 @@ func configCmd() *cobra.Command {
 
 func managedImagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "managed",
+		Use:   "managed-images",
 		Short: "Work with managed images which will be preserved during cleanup procedure",
 	}
 	cmd.AddCommand(
-		images_managed_add.NewCmd(),
-		images_managed_ls.NewCmd(),
-		images_managed_rm.NewCmd(),
+		managed_images_add.NewCmd(),
+		managed_images_ls.NewCmd(),
+		managed_images_rm.NewCmd(),
 	)
 
 	return cmd
@@ -179,7 +180,6 @@ func imagesCmd() *cobra.Command {
 		images_publish.NewCmd(),
 		images_cleanup.NewCmd(),
 		images_purge.NewCmd(),
-		managedImagesCmd(),
 	)
 
 	return cmd
