@@ -34,6 +34,7 @@ func Init() error {
 
 func EnableLogQuiet() {
 	logboek.SetLevel(logboek.Error)
+	logboek.MuteOut()
 }
 
 func EnableLogDebug() {
