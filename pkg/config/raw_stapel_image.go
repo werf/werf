@@ -6,20 +6,21 @@ import (
 )
 
 type rawStapelImage struct {
-	Images            []string     `yaml:"-"`
-	Artifact          string       `yaml:"artifact,omitempty"`
-	From              string       `yaml:"from,omitempty"`
-	FromLatest        bool         `yaml:"fromLatest,omitempty"`
-	FromCacheVersion  string       `yaml:"fromCacheVersion,omitempty"`
-	FromImage         string       `yaml:"fromImage,omitempty"`
-	FromImageArtifact string       `yaml:"fromImageArtifact,omitempty"`
-	RawGit            []*rawGit    `yaml:"git,omitempty"`
-	RawShell          *rawShell    `yaml:"shell,omitempty"`
-	RawAnsible        *rawAnsible  `yaml:"ansible,omitempty"`
-	RawMount          []*rawMount  `yaml:"mount,omitempty"`
-	RawDocker         *rawDocker   `yaml:"docker,omitempty"`
-	RawImport         []*rawImport `yaml:"import,omitempty"`
-	AsLayers          bool         `yaml:"asLayers,omitempty"`
+	Images                                              []string     `yaml:"-"`
+	Artifact                                            string       `yaml:"artifact,omitempty"`
+	From                                                string       `yaml:"from,omitempty"`
+	FromLatest                                          bool         `yaml:"fromLatest,omitempty"`
+	HerebyIAdmitThatFromLatestMightBreakReproducibility bool         `yaml:"herebyIAdmitThatFromLatestMightBreakReproducibility,omitempty"`
+	FromCacheVersion                                    string       `yaml:"fromCacheVersion,omitempty"`
+	FromImage                                           string       `yaml:"fromImage,omitempty"`
+	FromImageArtifact                                   string       `yaml:"fromImageArtifact,omitempty"`
+	RawGit                                              []*rawGit    `yaml:"git,omitempty"`
+	RawShell                                            *rawShell    `yaml:"shell,omitempty"`
+	RawAnsible                                          *rawAnsible  `yaml:"ansible,omitempty"`
+	RawMount                                            []*rawMount  `yaml:"mount,omitempty"`
+	RawDocker                                           *rawDocker   `yaml:"docker,omitempty"`
+	RawImport                                           []*rawImport `yaml:"import,omitempty"`
+	AsLayers                                            bool         `yaml:"asLayers,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -401,6 +402,7 @@ func (c *rawStapelImage) toStapelImageArtifactAsLayersDirective() (imageArtifact
 			layer.FromImageName = c.FromImage
 			layer.FromImageArtifactName = c.FromImageArtifact
 			layer.FromLatest = c.FromLatest
+			layer.HerebyIAdmitThatFromLatestMightBreakReproducibility = c.HerebyIAdmitThatFromLatestMightBreakReproducibility
 			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
 			layer.FromImageArtifactName = prevImageLayer.Name
@@ -601,6 +603,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(name string) (imageBase *Sta
 	imageBase.FromImageName = c.FromImage
 	imageBase.FromImageArtifactName = c.FromImageArtifact
 	imageBase.FromLatest = c.FromLatest
+	imageBase.HerebyIAdmitThatFromLatestMightBreakReproducibility = c.HerebyIAdmitThatFromLatestMightBreakReproducibility
 	imageBase.FromCacheVersion = c.FromCacheVersion
 
 	for _, git := range c.RawGit {

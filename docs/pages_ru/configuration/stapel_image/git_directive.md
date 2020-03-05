@@ -36,6 +36,7 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
     <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
+    <span class="na">herebyIAdmitThatBranchMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
     <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>

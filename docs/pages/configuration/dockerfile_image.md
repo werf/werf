@@ -54,7 +54,7 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 ## Naming
 
-{% include image_configuration/naming.md %}
+{% include /configuration/stapel_image/naming.md %}
 
 ## Dockerfile directives
 

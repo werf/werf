@@ -10,6 +10,7 @@ summary: |
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
   <span class="na">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
+  <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
   <span class="na">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
@@ -42,16 +43,19 @@ Thus, changing _base image_ locally or in the repository does not matter if _fro
 
 If you want always build the image with actual _base image_ you should use _fromLatest_ directive.
 _fromLatest_ directive allows connecting the assembly process with the _base image_ digest getting from the repository.
+
 ```yaml
 fromLatest: true
+herebyIAdmitThatFromLatestMightBreakReproducibility: true
 ```
 
-> Pay attention, werf uses actual _base image_ digest as extra _from_ stage dependency if _fromLatest_ is true.
-Therefore, using this directive implies not reproducible signatures:
-after changing _base image_ in repository, all previously built stages, also like related images, become not usable.
-The problem might occur:
-- between jobs of one pipeline (e.g. build and deploy) or
-- when you rerun the previous job (e.g. deploy)
+> Pay attention, werf uses actual _base image_ digest in stage signature if _fromLatest_ is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
+<br />
+* Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
+* If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed because of stages signatures are changing alongside base image digest.
+<br />
+<br />
+If you want to use this directive, add _herebyIAdmitThatFromLatestMightBreakReproducibility: true_ alongside _fromLatest_
 
 ## fromImage and fromImageArtifact
 

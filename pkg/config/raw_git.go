@@ -5,12 +5,13 @@ import (
 )
 
 type rawGit struct {
-	rawGitExport         `yaml:",inline"`
-	Url                  string                `yaml:"url,omitempty"`
-	Branch               string                `yaml:"branch,omitempty"`
-	Tag                  string                `yaml:"tag,omitempty"`
-	Commit               string                `yaml:"commit,omitempty"`
-	RawStageDependencies *rawStageDependencies `yaml:"stageDependencies,omitempty"`
+	rawGitExport                                    `yaml:",inline"`
+	Url                                             string                `yaml:"url,omitempty"`
+	Branch                                          string                `yaml:"branch,omitempty"`
+	Tag                                             string                `yaml:"tag,omitempty"`
+	Commit                                          string                `yaml:"commit,omitempty"`
+	RawStageDependencies                            *rawStageDependencies `yaml:"stageDependencies,omitempty"`
+	HerebyIAdmitThatBranchMightBreakReproducibility bool                  `yaml:"herebyIAdmitThatBranchMightBreakReproducibility,omitempty"`
 
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
@@ -158,6 +159,7 @@ func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 	}
 
 	gitRemoteExport.Branch = c.Branch
+	gitRemoteExport.HerebyIAdmitThatBranchMightBreakReproducibility = c.HerebyIAdmitThatBranchMightBreakReproducibility
 	gitRemoteExport.Tag = c.Tag
 	gitRemoteExport.Commit = c.Commit
 

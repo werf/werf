@@ -53,7 +53,7 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 ## Именование
 
-{% include image_configuration/naming_ru.md %}
+{% include /configuration/stapel_image/naming_ru.md %}
 
 ## Директивы Dockerfile
 

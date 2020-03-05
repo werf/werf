@@ -86,102 +86,6 @@ git:
 
 Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html).
 
-## All directives
-```yaml
-artifact: <artifact_name>
-from: <image>
-fromLatest: <bool>
-fromCacheVersion: <version>
-fromImage: <image_name>
-fromImageArtifact: <artifact_name>
-git:
-# local git
-- add: <absolute path in git repository>
-  to: <absolute path inside image>
-  owner: <owner>
-  group: <group>
-  includePaths:
-  - <path or glob relative to path in add>
-  excludePaths:
-  - <path or glob relative to path in add>
-  stageDependencies:
-    install:
-    - <path or glob relative to path in add>
-    beforeSetup:
-    - <path or glob relative to path in add>
-    setup:
-    - <path or glob relative to path in add>
-# remote git
-- url: <git repo url>
-  branch: <branch name>
-  commit: <commit>
-  tag: <tag>
-  add: <absolute path in git repository>
-  to: <absolute path inside image>
-  owner: <owner>
-  group: <group>
-  includePaths:
-  - <path or glob relative to path in add>
-  excludePaths:
-  - <path or glob relative to path in add>
-  stageDependencies:
-    install:
-    - <path or glob relative to path in add>
-    beforeSetup:
-    - <path or glob relative to path in add>
-    setup:
-    - <path or glob relative to path in add>
-shell:
-  beforeInstall:
-  - <cmd>
-  install:
-  - <cmd>
-  beforeSetup:
-  - <cmd>
-  setup:
-  - <cmd>
-  cacheVersion: <version>
-  beforeInstallCacheVersion: <version>
-  installCacheVersion: <version>
-  beforeSetupCacheVersion: <version>
-  setupCacheVersion: <version>
-ansible:
-  beforeInstall:
-  - <task>
-  install:
-  - <task>
-  beforeSetup:
-  - <task>
-  setup:
-  - <task>
-  cacheVersion: <version>
-  beforeInstallCacheVersion: <version>
-  installCacheVersion: <version>
-  beforeSetupCacheVersion: <version>
-  setupCacheVersion: <version>
-mount:
-- from: build_dir
-  to: <absolute_path>
-- from: tmp_dir
-  to: <absolute_path>
-- fromPath: <absolute_or_relative_path>
-  to: <absolute_path>
-import:
-- artifact: <artifact name>
-  image: <image name>
-  before: <install || setup>
-  after: <install || setup>
-  add: <absolute path>
-  to: <absolute path>
-  owner: <owner>
-  group: <group>
-  includePaths:
-  - <relative path or glob>
-  excludePaths:
-  - <relative path or glob>
-asLayers: <bool>
-```
-
 ## Using artifacts
 
 Unlike [*stapel image*]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html), *stapel artifact* does not have a git latest patch stage.
@@ -204,3 +108,7 @@ git:
 In this case every change in git files will result in artifact rebuild, all *stapel images* that import this artifact will also be rebuilt.
 
 **NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.
+
+## All directives
+
+{% include /configuration/stapel_image/artifact_directives.md %}
