@@ -53,18 +53,10 @@ werf has a special service image called `flant/werf-stapel`. It contains a chroo
 
 ### How stapel builder processes CMD and ENTRYPOINT
 
-To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) values. If the base image does not have corresponding values, werf resets service to the special empty values: 
-* `[]` for `CMD`;  
-* `[""]` for `ENTRYPOINT`. 
+To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) values. If the base image does not have corresponding values, werf resets service to the special empty values:
+* `[]` for `CMD`;
+* `[""]` for `ENTRYPOINT`.
 
 Also, werf uses the special empty value in place of a base image's `ENTRYPOINT` if a user specifies `CMD` (`docker.CMD`).
 
-Otherwise, werf behavior is similar to [docker's](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact). 
-
-## Multiple builds on the same host
-
-Multiple build commands can be executed concurrently on the same host. While building a _stage_, werf acquires a **lock** using the _stage signature_ as ID so that only one building process is active for a stage with a particular signature at a time.
-
-When another build process is holding a lock for a stage, werf waits until this process releases a lock. Then werf proceeds to the next stage.
-
-We intentionally implemented such logic since it doesn't make any sense to build the same stage multiple times. The werf building process can wait until another process completes its work and puts a _stage_ into the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
+Otherwise, werf behavior is similar to [docker's](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
