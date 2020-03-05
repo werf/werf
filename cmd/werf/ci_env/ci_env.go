@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 
 Currently supported only GitLab CI`,
 		Example: `  # Load generated werf environment variables on GitLab job runner
-  $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)`,
+  $ source <(werf ci-env gitlab)`,
 		RunE: runCIEnv,
 	}
 

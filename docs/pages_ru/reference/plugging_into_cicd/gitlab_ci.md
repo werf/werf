@@ -13,6 +13,10 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Значение для установки переменной окружения [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
 
+### WERF_TAG_BY_STAGES_SIGNATURE
+
+Значение переменной [`WERF_TAG_BY_STAGES_SIGNATURE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_by_stages_signature) устанавливается в `true` при использовании стратегии тегирования [`stages-signature`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#stages-signature) (эта стратегия тегирования используется по умолчанию).
+
 ### WERF_TAG_GIT_TAG
 
 Значение для установки переменной окружения [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag) формируется на основе переменной окружения GitLab [`CI_COMMIT_TAG`](https://docs.gitlab.com/ee/ci/variables/).
@@ -75,5 +79,5 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 Интеграция с GitLab CI включается указанием параметра `gitlab` в команде [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html):
 
 ```shell
-werf ci-env gitlab --tagging-strategy ...
+werf ci-env gitlab
 ```
