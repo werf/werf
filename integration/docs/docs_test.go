@@ -1,7 +1,6 @@
 package docs_test
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -43,12 +42,6 @@ var itBody = func(entry entry) {
 	utils.RunSucceedCommand(
 		testDirPath,
 		"git",
-		"add", ".",
-	)
-
-	utils.RunSucceedCommand(
-		testDirPath,
-		"git",
 		"add", "-A",
 	)
 
@@ -57,8 +50,6 @@ var itBody = func(entry entry) {
 		"git",
 		"commit", "-m", "+",
 	)
-
-	Ω(os.RemoveAll("output_dir")).Should(Succeed())
 
 	werfArgs := []string{"docs", "--dir", filepath.Join(testDirPath, "expectation")}
 

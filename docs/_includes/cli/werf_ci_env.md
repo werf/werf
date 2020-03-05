@@ -17,7 +17,7 @@ werf ci-env CI_SYSTEM [options]
 
 ```shell
   # Load generated werf environment variables on GitLab job runner
-  $ source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+  $ source <(werf ci-env gitlab)
 ```
 
 {{ header }} Options
@@ -39,7 +39,7 @@ werf ci-env CI_SYSTEM [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug=true:
+      --log-debug=false:
             Enable debug (default $WERF_LOG_DEBUG).
       --log-pretty=true:
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   

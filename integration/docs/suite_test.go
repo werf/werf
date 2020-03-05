@@ -36,8 +36,6 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 var _ = BeforeEach(func() {
 	tmpDir = utils.GetTempDir()
 	testDirPath = tmpDir
-
-	utils.BeforeEachOverrideWerfProjectName(stubs)
 })
 
 var _ = AfterEach(func() {
