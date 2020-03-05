@@ -13,6 +13,10 @@ werf uses the following values for werf environment variables:
 
 The value of [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
+### WERF_TAG_BY_STAGES_SIGNATURE
+
+The value of [`WERF_TAG_BY_STAGES_SIGNATURE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_by_stages_signature) is set to `true` when using [`stages-signature`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#stages-signature) tagging strategy (which is default).
+
 ### WERF_TAG_GIT_TAG
 
 The value of [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag) is taken from the [`CI_COMMIT_TAG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
@@ -75,5 +79,5 @@ Other variables are configured in the regular way described in the [overview art
 You can turn on the integration with GitLab CI by invoking the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) with the required positional argument:
 
 ```shell
-werf ci-env gitlab --tagging-strategy ...
+werf ci-env gitlab
 ```

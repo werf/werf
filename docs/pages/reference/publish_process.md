@@ -78,7 +78,7 @@ The final name of the docker image has the form [`DOCKER_REPOSITORY`](https://do
 The _images repo_ and _images repo mode_ params define where and how to store images.
 If the werf project contains only one nameless image, then the _images repo_ is used as a docker repository as it is, and the resulting name of a docker image gets the following form: `IMAGES_REPO:TAG`.
 
-Otherwise, werf constructs the resulting name of a docker image for every image depending on the _images repo mode_:  
+Otherwise, werf constructs the resulting name of a docker image for every image depending on the _images repo mode_:
 - `IMAGES_REPO:IMAGE_NAME-TAG` pattern for a `monorepo` mode;
 - `IMAGES_REPO/IMAGE_NAME:TAG` pattern for a `multirepo` mode.
 
@@ -90,25 +90,69 @@ The _images repo mode_ param should be specified by the `--images-repo-mode` opt
 
 The *docker tag* is taken from `--tag-*` params:
 
-| option                     | description                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| `--tag-git-tag TAG`        | Use git-tag tagging strategy and tag by the specified git tag                   |
-| `--tag-git-branch BRANCH`  | Use git-branch tagging strategy and tag by the specified git branch             |
-| `--tag-git-commit COMMIT`  | Use git-commit tagging strategy and tag by the specified git commit hash        |
-| `--tag-custom TAG`         | Use custom tagging strategy and tag by the specified arbitrary tag              |
+| option                       | description                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| `--tag-git-tag TAG`          | Use git-tag tagging strategy and tag by the specified git tag                   |
+| `--tag-git-branch BRANCH`    | Use git-branch tagging strategy and tag by the specified git branch             |
+| `--tag-git-commit COMMIT`    | Use git-commit tagging strategy and tag by the specified git commit hash        |
+| `--tag-custom TAG`           | Use custom tagging strategy and tag by the specified arbitrary tag              |
+| `--tag-custom TAG`           | Use custom tagging strategy and tag by the specified arbitrary tag              |
+| `--tag-by-stages-signature`  | Tag each image by image _stages signature_                                      |
 
-All the specified tag params will be validated for the conformity with the tagging rules for docker images. User may apply the slug algorithm to the specified tag, learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+All the specified tag params will be validated for the conformity with the tagging rules for docker images. User may explicitly apply the slug algorithm to the tag value using `werf slugify` command, learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
 Also, user specifies both the tag value and the tagging strategy by using `--tag-*` options.
 The tagging strategy affects [certain policies in the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
 Every `--tag-git-*` option requires a `TAG`, `BRANCH`, or `COMMIT` argument. These options are designed to be compatible with modern CI/CD systems, where a CI job is running in the detached git worktree for the specific commit, and the current git-tag, git-branch, or git-commit is passed to the job using environment variables (for example `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` and `CI_COMMIT_SHA` for the GitLab CI).
 
+`--tag-by-stages-signature=true` option enables content based tagging, which is preferred method of tagging images by the werf.
+
+### Content based tagging
+
+Werf v1.1 supports so called content based tagging. Tags of resulting docker images depend on the content of these images.
+
+When using `werf publish --tags-by-stages-signature` or `werf ci-env --tagging-strategy=stages-signature` werf will tag result images by so called image stages signature. Each image tagged by own stages signature which calculated by the same rules as regular signature of image stage.
+
+Image _stages signature_ depends on content of the image and depends on the git history which lead to this content.
+
+There may be *dummy commits* into the git repo that do not change resulting images. For example empty commits, merge commits or commits which change files that are not imported into the resulting image.
+
+When using tagging by git-commits these *dummy commits* will cause werf to create new images names even if content of these images is the same. New images names in turn will cause restarts of application Pods in Kubernetes which is totally not a desired behaviour. All in all this is the reason preventing storing multiple application services in the single git repo.
+
+_Stages signature_ on the countrary will not change on *dummy commits*, so these commits will not cause restarts of application Pods in kubernetes, yet it similarly to commit-id relates to the git history of edits and depends on the content of the files.
+
+Also tagging by stages signatures is more realiable tagging method than tagging by a git-branch for example, because resulting images content does not depend on order of pipelines execution. Stages signature leads to stable immutable images names which represent the address of the certain image content.
+
+Note that image name generation template [`werf_container_image`]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image) should be used in the deploy configs to generate an image name with a correct docker tags.
+
+Stages-signature is the default tagging strategy and the only recommended one for usage. Tagging strategies are also explained in the [plugging into CI/CD articles]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#ci-env-tagging-modes).
+
 ### Combining parameters
 
 Any combination of tagging parameters can be used simultaneously in the [werf publish command]({{ site.baseurl }}/documentation/cli/main/publish.html) or [werf build-and-publish command]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). As a result, werf will publish a separate image for each tagging parameter of every image in a project.
 
 ## Examples
+
+### Tagging images by a stages signature
+
+Let's suppose `werf.yaml` defines two images: `backend` and `frontend`.
+
+The following command:
+
+```
+werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-by-stages-signature
+```
+
+may produce the following images names, respectively:
+ * `registry.hello.com/web/core/system/backend:4ef339f84ca22247f01fb335bb19f46c4434014d8daa3d5d6f0e386d`;
+ * `registry.hello.com/web/core/system/frontend:f44206457e0a4c8a54655543f749799d10a9fe945896dab1c16996c6`.
+
+where `4ef339f84ca22247f01fb335bb19f46c4434014d8daa3d5d6f0e386d` is the stages signature of image `backend` and
+`f44206457e0a4c8a54655543f749799d10a9fe945896dab1c16996c6` is the stages signature of image `frontend`.
+
+These tags depend on image content and git history which lead to this content. Each of these signature may be changed
+when content of the image changes so user need to update kubernetes manifests accordingly.
 
 ### Linking images to a git tag
 
@@ -153,6 +197,29 @@ produces the following image names, respectively:
  * `registry.hello.com/web/core/system/frontend:features-myfeature169-3167bc8c`.
 
 Note that the [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) command generates a valid docker tag. Learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+
+### Content based tagging in a GitLab CI job
+
+Let's say we have a `werf.yaml` configuration file that defines two images, `backend` and `frontend`.
+
+Running the following command in a GitLab CI job (in some git-branch or tag — irrelevant) for a project named `web/core/system` and the Docker registry configured as `registry.hello.com/web/core/system`:
+
+```shell
+type werf && source <(werf ci-env gitlab)
+werf publish --stages-storage :local
+```
+
+produces the following image names, respectively:
+ * `registry.hello.com/web/core/system/backend:4ef339f84ca22247f01fb335bb19f46c4434014d8daa3d5d6f0e386d`;
+ * `registry.hello.com/web/core/system/frontend:f44206457e0a4c8a54655543f749799d10a9fe945896dab1c16996c6`.
+
+where `4ef339f84ca22247f01fb335bb19f46c4434014d8daa3d5d6f0e386d` is the stages signature of image `backend` and
+`f44206457e0a4c8a54655543f749799d10a9fe945896dab1c16996c6` is the stages signature of image `frontend`.
+
+We omitted `--tagging-strategy=stages-signature` option which is default.
+
+These tags depend on image content and git history which lead to this content. Each of these signatures may be changed
+when content of the image changes so user need to update kubernetes manifests accordingly.
 
 ### Linking images to a GitLab CI job
 
