@@ -10,9 +10,11 @@
 
 ## Coming Soon
 
-- ~3-way-merge [#1616](https://github.com/flant/werf/issues/1616).~
+- ~3-way-merge~ [#1616](https://github.com/flant/werf/issues/1616).
 - Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
-- Content-based tagging [#1184](https://github.com/flant/werf/issues/1184).
+- ~Content-based tagging~ [#1184](https://github.com/flant/werf/issues/1184).
+- Support for the most Docker registry services [#2199](https://github.com/flant/werf/issues/2199).
+- Parallel image builds [#2200](https://github.com/flant/werf/issues/2200).
 - Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
 - Distributed builds with the shared Docker registry [#1614](https://github.com/flant/werf/issues/1614).
 - Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
@@ -25,6 +27,7 @@
 - Effortlessly build as many images as you like in one project.
 - Build images using Dockerfiles or Stapel builder instructions.
 - Build images concurrently on a single host (using file locks).
+- Build images simultaneously (coming soon) [#2200](https://github.com/flant/werf/issues/2200).
 - Build images distributedly (coming soon) [#1614](https://github.com/flant/werf/issues/1614).
 - Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
@@ -42,7 +45,7 @@
   - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `multirepo` mode.
 - Different image tagging strategies:
   - Tagging images by binding them to git tag, branch, or commit.
-  - Content-based tagging (coming soon) [#1184](https://github.com/flant/werf/issues/1184).
+  - Content-based tagging.
 
 ### Deploying
 

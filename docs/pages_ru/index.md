@@ -215,7 +215,25 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х стороннего слияния</a><br> при обновлении Helm-релизов.
+                                <strike>Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х стороннего слияния</a><br /> при обновлении Helm-релизов.</strike>
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1184">
+                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                            <span class="roadmap__steps-list-item-text">
+                                <strike>Тегирование, основанное на контенте.</strike>
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="2199">
+                            <a href="https://github.com/flant/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Поддержка большинства сервисов,<br />предоставляющих Docker registry.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1614">
+                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Распределенная сборка с общим Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
@@ -224,10 +242,10 @@ layout: default
                                 Локальная разработка приложений с werf.
                             </span>
                         </li>
-                        <li class="roadmap__steps-list-item" data-roadmap-step="1184">
-                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="2200">
+                            <a href="https://github.com/flant/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
-                                Тегирование, основанное на контенте.
+                                Параллельная сборка образов.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
@@ -235,12 +253,6 @@ layout: default
                             <span class="roadmap__steps-list-item-text">
                             Готовые рецепты для интеграции<br/>
                             с наиболее популярными CI-системами.
-                            </span>
-                        </li>
-                        <li class="roadmap__steps-list-item" data-roadmap-step="1614">
-                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
-                            <span class="roadmap__steps-list-item-text">
-                                Распределенная сборка с общим Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1606">
@@ -252,7 +264,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1618">
                             <a href="https://github.com/flant/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
                             <span class="roadmap__steps-list-item-text">
-                                <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">Kaniko</a>-подобная сборка без привязки<br>к локальному Docker-демону.
+                                <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">Kaniko</a>-подобная сборка без привязки<br />к локальному Docker-демону.
                             </span>
                         </li>
                     </ul>

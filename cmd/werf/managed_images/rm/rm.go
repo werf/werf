@@ -22,7 +22,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "rm",
 		DisableFlagsInUseLine: true,
-		Short:                 "remove image record from the list of managed images which will be preserved during cleanup procedure",
+		Short:                 "Remove image record from the list of managed images which will be preserved during cleanup procedure",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

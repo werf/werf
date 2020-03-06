@@ -200,6 +200,21 @@ In other words: the first process which finishes the build (the fastest one) wil
 
 To select stages and save new ones into the stages storage werf uses [synchronization lock manager](#synchronization-lock-manager) to coordinate multiple werf processes.
 
+### Image stages signature
+
+_Stages signature_ of the image is a signature which represents content of the image and depends on the history of git commits which lead to this content.
+
+***Stages signature*** calculated similarly to the regular stage signature as the checksum of:
+ - _stage signature_ of last non empty image stage;
+ - git commit-id related with the last non empty image stage (if this last stage is git-related).
+
+The ***stage signature*** is calculated as the checksum of:
+ - checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies);
+ - previous _stage signature_;
+ - git commit-id related with the previous stage (if previous stage is git-related).
+
+This signature used in [content based tagging]({{ site.baseurl }}/documentation/reference/publish_process.html#content-based-tagging) and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
+
 ## Images
 
 _Image_ is a **ready-to-use** Docker image corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
@@ -222,7 +237,7 @@ Synchornization lock manager is a service component of the werf to coordinate mu
 All commands that requires stages storage (`--stages-storage`) and images repo (`--images-repo`) params also require _syncrhonization lock manager_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
 At the moment, only the local syncrhonization lock manager, `:local`, is supported.
 
-An implementation backed up by the Redis will be added to implement distributed builds soon.
+(An implementation backed up by the Redis or Kubernetes server will be added to implement distributed builds soon.)
 
 NOTE that multiple werf processes working with the same project should use the same _stages storage_ and _syncrhonization lock manager_.
 

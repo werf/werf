@@ -9,10 +9,12 @@
 
 ## Скоро
 
-- ~3-х стороннее слияние (3-way-merge) [#1616](https://github.com/flant/werf/issues/1616).~
+- ~3-х стороннее слияние (3-way-merge)~ [#1616](https://github.com/flant/werf/issues/1616).
 - Локальная разработка приложений с werf [#1940](https://github.com/flant/werf/issues/1940).
-- Тегирование, основанное на контенте [#1184](https://github.com/flant/werf/issues/1184).
+- ~Тегирование, основанное на контенте~ [#1184](https://github.com/flant/werf/issues/1184).
 - Лучшие практики и рецепты для наиболее популярных CI-систем [#1617](https://github.com/flant/werf/issues/1617).
+- Поддержка большинства сервисов, предоставляющих Docker registry [#2199](https://github.com/flant/werf/issues/2199).
+- Параллельная сборка образов [#2200](https://github.com/flant/werf/issues/2200).
 - Распределенная сборка с общим Docker registry [#1614](https://github.com/flant/werf/issues/1614).
 - Поддержка Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - Kaniko-подобная сборка без привязки к локальному Docker-демону [#1618](https://github.com/flant/werf/issues/1618).
@@ -25,6 +27,7 @@
 - Сборка образов как из Dockerfile, так и из инструкций сборщика Stapel.
 - Параллельные сборки на одном хосте (с использованием файловых блокировок).
 - Распределенная сборка (скоро) [#1614](https://github.com/flant/werf/issues/1614).
+- Параллельная сборка образов (скоро) [#2200](https://github.com/flant/werf/issues/2200).
 - Расширенная сборка со сборщиком Stapel:
   - Инкрементальная пересборка на основе истории изменений Git.
   - Сборка образов с Shell-инструкциями и Ansible-заданиями.
@@ -41,7 +44,7 @@
   - `IMAGES_REPO[/IMAGE_NAME]:TAG` в режиме `multirepo`.
 - Различные стратегии тегирования образов:
   - Тегирование образов по тегу, ветке или коммиту в Git.
-  - Тегирование, основанное на контенте (скоро) [#1184](https://github.com/flant/werf/issues/1184).
+  - Тегирование, основанное на контенте.
 
 ### Деплой
 
