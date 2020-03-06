@@ -208,11 +208,29 @@ layout: default
             <div class="roadmap__steps">
                 <div class="roadmap__steps-content">
                     <div class="roadmap__steps-title">Milestones</div>
-                    <ul class="roadmap__steps-list">
+                    <ul class="roadmap__steps-list">                                          
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
                                 <strike>Use <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during helm release upgrade.</strike>
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1184">
+                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                            <span class="roadmap__steps-list-item-text">
+                                <strike>Content addressable tagging scheme.</strike>
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="2199">
+                            <a href="https://github.com/flant/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Support for the most Docker registry services.
+                            </span>
+                        </li>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="1614">
+                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
+                            <span class="roadmap__steps-list-item-text">
+                                Distributed builds with common Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
@@ -221,10 +239,10 @@ layout: default
                                 Easy local development of applications with werf.
                             </span>
                         </li>
-                        <li class="roadmap__steps-list-item" data-roadmap-step="1184">
-                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                        <li class="roadmap__steps-list-item" data-roadmap-step="2200">
+                            <a href="https://github.com/flant/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
-                                Content addressable tagging scheme.
+                                Parallel image builds.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
@@ -232,12 +250,6 @@ layout: default
                             <span class="roadmap__steps-list-item-text">
                                 Proven approaches and recipes<br/>
                                 for most of the popular CI systems.
-                            </span>
-                        </li>
-                        <li class="roadmap__steps-list-item" data-roadmap-step="1614">
-                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
-                            <span class="roadmap__steps-list-item-text">
-                                Distributed builds with common Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1606">
