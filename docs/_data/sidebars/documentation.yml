@@ -214,6 +214,15 @@ entries:
               - title: images purge
                 url: /documentation/cli/management/images/purge.html
 
+              - title: managed-images add
+                url: /documentation/cli/management/managed-images/add.html
+
+              - title: managed-images ls
+                url: /documentation/cli/management/managed-images/ls.html
+
+              - title: managed-images rm
+                url: /documentation/cli/management/managed-images/rm.html
+
               - title: helm delete
                 url: /documentation/cli/management/helm/delete.html
 
