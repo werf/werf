@@ -245,7 +245,7 @@ werf publish --stages-storage :local
 
 Имеем файл конфигурации `werf.yaml` с описанным безымянным образом. Имеем проект `web/core/queue` в GitLab, и сконфигурированный Docker registry для проекта — `registry.hello.com/web/core/queue`.
 
-Запуск следующей команды в задании pipeline GitLab CI для тега `v2.3.`:
+Запуск следующей команды в задании pipeline GitLab CI для тега `v2.3.1`:
 
 ```shell
 type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
