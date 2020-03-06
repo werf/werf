@@ -19,8 +19,8 @@ entries:
     type: "image artifact"
     dependencies:
       - from
-      - or from image id
-      - or from artifact id
+      - or from image stages-signature
+      - or from artifact stages-signature
       - "actual digest from registry (if fromLatest: true)"
       - fromCacheVersion
       - mounts
