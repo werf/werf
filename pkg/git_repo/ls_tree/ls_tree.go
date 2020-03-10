@@ -45,7 +45,7 @@ func LsTree(repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*
 	}
 	res.notInitializedSubmoduleFilepaths = worktreeNotInitializedSubmodulePaths
 
-	baseFilepath := pathMatcher.BasePath()
+	baseFilepath := pathMatcher.BaseFilepath()
 	if baseFilepath != "" {
 		basePathLsTreeEntry, err := treeFindEntry(tree, baseFilepath)
 		if err != nil {

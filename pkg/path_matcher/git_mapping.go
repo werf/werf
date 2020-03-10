@@ -25,7 +25,7 @@ type GitMappingPathMatcher struct {
 	isGreedySearchOn bool
 }
 
-func (f *GitMappingPathMatcher) BasePath() string {
+func (f *GitMappingPathMatcher) BaseFilepath() string {
 	return f.basePath
 }
 

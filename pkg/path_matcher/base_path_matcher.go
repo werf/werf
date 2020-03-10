@@ -6,7 +6,7 @@ type basePathMatcher struct {
 	basePath string
 }
 
-func (f *basePathMatcher) TrimFileBasePath(filePath string) string {
+func (f *basePathMatcher) TrimFileBaseFilepath(filePath string) string {
 	return trimFileBasePath(filePath, f.basePath)
 }
 
