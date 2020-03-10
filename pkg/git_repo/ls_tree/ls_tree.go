@@ -47,24 +47,7 @@ func LsTree(repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*
 
 	baseFilepath := pathMatcher.BaseFilepath()
 	if baseFilepath != "" {
-		basePathLsTreeEntry, err := treeFindEntry(tree, baseFilepath)
-		if err != nil {
-			if err == object.ErrDirectoryNotFound {
-				return res, nil
-			}
-
-			return nil, err
-		}
-
-		lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(repository, tree, "", basePathLsTreeEntry, pathMatcher)
-		if err != nil {
-			return nil, err
-		}
-
-		res.lsTreeEntries = lsTreeEntries
-		res.submodulesResults = submodulesLsTreeEntries
-
-		return res, nil
+		return processSpecificEntryFilepath(repository, tree, "", pathMatcher.BaseFilepath(), res, pathMatcher)
 	}
 
 	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath("")
@@ -100,6 +83,83 @@ func LsTree(repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*
 			logboek.Debug.LogLn("Root tree was skipped")
 		}
 	}
+
+	return res, nil
+}
+
+func processSpecificEntryFilepath(repository *git.Repository, tree *object.Tree, treeFilepath, treeEntryFilepath string, res *Result, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	worktree, err := repository.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	submodules, err := worktree.Submodules()
+	for _, submodule := range submodules {
+		submoduleRelFilepath := filepath.Join(treeFilepath, filepath.FromSlash(submodule.Config().Path))
+		relBaseFilepath, err := filepath.Rel(submoduleRelFilepath, treeEntryFilepath)
+		if err != nil {
+			panic(err)
+		}
+
+		if relBaseFilepath == "." || strings.HasPrefix(relBaseFilepath, "..") {
+			continue
+		}
+
+		submoduleRepository, submoduleTree, err := submoduleRepositoryAndTree(repository, submodule.Config().Name)
+		if err != nil {
+			if err == git.ErrSubmoduleNotInitialized {
+				if debugProcess() {
+					logboek.Debug.LogFWithCustomStyle(
+						logboek.StyleByName(logboek.FailStyleName),
+						"Submodule is not initialized: path %s will be added to checksum\n",
+						submoduleRelFilepath,
+					)
+				}
+
+				return res, nil
+			}
+
+			return res, err
+		}
+
+		sResult := &Result{
+			repository:                       submoduleRepository,
+			treeFilepath:                     submoduleRelFilepath,
+			tree:                             submoduleTree,
+			lsTreeEntries:                    []*LsTreeEntry{},
+			submodulesResults:                []*SubmoduleResult{},
+			notInitializedSubmoduleFilepaths: []string{},
+		}
+
+		sResult, err = processSpecificEntryFilepath(submoduleRepository, submoduleTree, submoduleRelFilepath, relBaseFilepath, sResult, pathMatcher)
+		if err != nil {
+			return nil, err
+		}
+
+		submoduleResult := &SubmoduleResult{Result: sResult}
+		if !submoduleResult.IsEmpty() {
+			res.submodulesResults = append(res.submodulesResults, submoduleResult)
+		}
+
+		return res, nil
+	}
+
+	lsTreeEntry, err := treeFindEntry(tree, treeFilepath, treeEntryFilepath)
+	if err != nil {
+		if err == object.ErrDirectoryNotFound || err == object.ErrFileNotFound {
+			return res, nil
+		}
+
+		return nil, err
+	}
+
+	lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(repository, tree, treeFilepath, lsTreeEntry, pathMatcher)
+	if err != nil {
+		return nil, err
+	}
+
+	res.lsTreeEntries = lsTreeEntries
+	res.submodulesResults = submodulesLsTreeEntries
 
 	return res, nil
 }
@@ -221,14 +281,14 @@ func lsTreeFileEntryMatch(_ *git.Repository, _ *object.Tree, _ string, lsTreeEnt
 	return
 }
 
-func treeFindEntry(tree *object.Tree, treeEntryFilepath string) (*LsTreeEntry, error) {
+func treeFindEntry(tree *object.Tree, treeFilepath, treeEntryFilepath string) (*LsTreeEntry, error) {
 	formattedTreeEntryPath := filepath.ToSlash(treeEntryFilepath)
 	treeEntry, err := tree.FindEntry(formattedTreeEntryPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &LsTreeEntry{Filepath: treeEntryFilepath, TreeEntry: *treeEntry}, nil
+	return &LsTreeEntry{Filepath: filepath.Join(treeFilepath, treeEntryFilepath), TreeEntry: *treeEntry}, nil
 }
 
 func treeTree(tree *object.Tree, treeFilepath, treeDirEntryFilepath string) (*object.Tree, error) {
@@ -256,7 +316,7 @@ func treeTree(tree *object.Tree, treeFilepath, treeDirEntryFilepath string) (*ob
 	return entryTree, nil
 }
 
-func notInitializedSubmoduleFilepaths(repository *git.Repository, relToBaseRepositoryFilepath string, pathMatcher path_matcher.PathMatcher) ([]string, error) {
+func notInitializedSubmoduleFilepaths(repository *git.Repository, repositoryRelFilepath string, pathMatcher path_matcher.PathMatcher) ([]string, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -269,7 +329,7 @@ func notInitializedSubmoduleFilepaths(repository *git.Repository, relToBaseRepos
 
 	var resultFilepaths []string
 	for _, submodule := range submodules {
-		submoduleFilepath := filepath.Join(relToBaseRepositoryFilepath, filepath.FromSlash(submodule.Config().Path))
+		submoduleFilepath := filepath.Join(repositoryRelFilepath, filepath.FromSlash(submodule.Config().Path))
 		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFilepath)
 		if isMatched || shouldGoThrough {
 			submoduleRepository, err := submodule.Repository()
@@ -281,7 +341,7 @@ func notInitializedSubmoduleFilepaths(repository *git.Repository, relToBaseRepos
 						logboek.Debug.LogFWithCustomStyle(
 							logboek.StyleByName(logboek.FailStyleName),
 							"Submodule is not initialized: path %s will be added to checksum\n",
-							relToBaseRepositoryFilepath,
+							submoduleFilepath,
 						)
 					}
 
