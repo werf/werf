@@ -351,7 +351,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithFilesRead(wildcards []string
 			relFilePath, err := filepath.Rel(s.projectPath, filePath)
 			if err != nil {
 				panic(fmt.Sprintf("unexpected condition: %s", err))
-			} else if relFilePath == "." || strings.HasPrefix(relFilePath, "..") {
+			} else if relFilePath == "." || relFilePath == ".." || strings.HasPrefix(relFilePath, ".."+string(os.PathSeparator)) {
 				panic(fmt.Sprintf("unexpected condition: %s", relFilePath))
 			}
 
