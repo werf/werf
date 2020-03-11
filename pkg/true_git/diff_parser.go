@@ -252,7 +252,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				return nil
 			}
 
-			newPath := p.PathMatcher.TrimFileBasePath(path)
+			newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -265,7 +265,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				return nil
 			}
 
-			newPath := p.PathMatcher.TrimFileBasePath(path)
+			newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -297,7 +297,7 @@ func (p *diffParser) handleModifyFileDiff(line string) error {
 
 func (p *diffParser) handleModifyFilePathA(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathMatcher.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	return p.writeOutLine(newLine)
@@ -305,7 +305,7 @@ func (p *diffParser) handleModifyFilePathA(line string) error {
 
 func (p *diffParser) handleModifyFilePathB(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathMatcher.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -320,7 +320,7 @@ func (p *diffParser) handleSubmoduleLine(line string) error {
 
 func (p *diffParser) handleNewFilePath(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathMatcher.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -330,7 +330,7 @@ func (p *diffParser) handleNewFilePath(line string) error {
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathMatcher.TrimFileBasePath(path)
+	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	p.state = diffBody

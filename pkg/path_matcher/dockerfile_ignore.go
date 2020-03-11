@@ -23,7 +23,7 @@ type DockerfileIgnorePathMatcher struct {
 	isGreedySearchOn bool
 }
 
-func (f *DockerfileIgnorePathMatcher) BasePath() string {
+func (f *DockerfileIgnorePathMatcher) BaseFilepath() string {
 	return f.basePath
 }
 

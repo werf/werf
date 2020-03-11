@@ -101,14 +101,14 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		IsEmpty: true,
 	}
 
-	absBasePath := filepath.Join(workTreeDir, opts.PathMatcher.BasePath())
+	absBasePath := filepath.Join(workTreeDir, opts.PathMatcher.BaseFilepath())
 	exist, err := util.FileExists(absBasePath)
 	if err != nil {
 		return nil, fmt.Errorf("file exists %s failed: %s", absBasePath, err)
 	}
 
 	if !exist {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BasePath())
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BaseFilepath())
 	}
 
 	info, err := os.Lstat(absBasePath)
@@ -148,7 +148,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.Filepath)
-		relToBasePathFilepath := opts.PathMatcher.TrimFileBasePath(lsTreeEntry.Filepath)
+		relToBasePathFilepath := opts.PathMatcher.TrimFileBaseFilepath(lsTreeEntry.Filepath)
 		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
 		info, err := os.Lstat(absFilepath)
 		if err != nil {

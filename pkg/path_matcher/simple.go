@@ -20,7 +20,7 @@ type SimplePathMatcher struct {
 	isGreedySearchOn bool
 }
 
-func (f *SimplePathMatcher) BasePath() string {
+func (f *SimplePathMatcher) BaseFilepath() string {
 	return f.basePath
 }
 

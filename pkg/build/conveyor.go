@@ -1027,7 +1027,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
 
 	relContextDir, err := filepath.Rel(c.projectDir, contextDir)
-	if err != nil || strings.HasPrefix(relContextDir, ".."+string(os.PathSeparator)) {
+	if err != nil || strings.HasPrefix(relContextDir, "..") {
 		return nil, fmt.Errorf("unsupported context folder %s.\nOnly context folder specified inside project directory %s supported", contextDir, c.projectDir)
 	}
 
@@ -1040,7 +1040,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 
 	dockerfilePath := filepath.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
 	relDockerfilePath, err := filepath.Rel(c.projectDir, dockerfilePath)
-	if err != nil || strings.HasPrefix(relDockerfilePath, ".."+string(os.PathSeparator)) {
+	if err != nil || relDockerfilePath == "." || strings.HasPrefix(relDockerfilePath, "..") {
 		return nil, fmt.Errorf("unsupported dockerfile %s.\n Only dockerfile specified inside project directory %s supported", dockerfilePath, c.projectDir)
 	}
 

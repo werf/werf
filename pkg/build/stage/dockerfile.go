@@ -247,7 +247,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithLsTree(wildcards []string) (
 				logboek.Debug.LogFWithCustomStyle(
 					logboek.StyleByName(logboek.FailStyleName),
 					"Entry %s is not found\n",
-					s.dockerignorePathMatcher.BasePath(),
+					s.dockerignorePathMatcher.BaseFilepath(),
 				)
 				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 				goto entryNotFoundInGitRepository
@@ -262,7 +262,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithLsTree(wildcards []string) (
 	}
 
 entryNotFoundInGitRepository:
-	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BasePath(), wildcards, false)
+	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards, false)
 
 	var lsTreeResultChecksum string
 	if s.mainLsTreeResult != nil {
@@ -351,7 +351,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithFilesRead(wildcards []string
 			relFilePath, err := filepath.Rel(s.projectPath, filePath)
 			if err != nil {
 				panic(fmt.Sprintf("unexpected condition: %s", err))
-			} else if strings.HasPrefix(relFilePath, "."+string(os.PathSeparator)) || strings.HasPrefix(relFilePath, ".."+string(os.PathSeparator)) {
+			} else if relFilePath == "." || strings.HasPrefix(relFilePath, "..") {
 				panic(fmt.Sprintf("unexpected condition: %s", relFilePath))
 			}
 
