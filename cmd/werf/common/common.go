@@ -21,6 +21,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logging"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -329,10 +330,10 @@ func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 
 	defaultValue := os.Getenv("WERF_IMAGES_REPO_MODE")
 	if defaultValue == "" {
-		defaultValue = MultirepoImagesRepoMode
+		defaultValue = storage.MultirepoImagesRepoMode
 	}
 
-	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, MultirepoImagesRepoMode, MonorepoImagesRepoMode))
+	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode))
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -765,10 +766,10 @@ func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 
 func GetImagesRepoMode(cmdData *CmdData) (string, error) {
 	switch *cmdData.ImagesRepoMode {
-	case MultirepoImagesRepoMode, MonorepoImagesRepoMode:
+	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
 		return *cmdData.ImagesRepoMode, nil
 	default:
-		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, MultirepoImagesRepoMode, MonorepoImagesRepoMode)
+		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
 	}
 }
 

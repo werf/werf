@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -119,7 +120,7 @@ func runPurge() error {
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
 	if err != nil {
 		return err
 	}
