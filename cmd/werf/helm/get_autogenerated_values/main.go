@@ -16,6 +16,7 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -120,7 +121,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
 	if err != nil {
 		return err
 	}
