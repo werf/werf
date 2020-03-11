@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -20,7 +19,7 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+func (s *GitCacheStage) SelectCacheImage(images []*image.Info) (*image.Info, error) {
 	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)

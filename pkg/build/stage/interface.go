@@ -2,7 +2,6 @@ package stage
 
 import (
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
 )
 
 type Interface interface {
@@ -32,5 +31,5 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error)
+	SelectCacheImage(images []*image.Info) (*image.Info, error)
 }

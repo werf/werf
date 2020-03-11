@@ -16,7 +16,6 @@ import (
 	"github.com/flant/werf/pkg/image"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -323,12 +322,12 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	return nil
 }
 
-func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, imagesDescs []*storage.ImageInfo) (bool, *image.StageImage, error) {
+func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, imagesDescs []*image.Info) (bool, *image.StageImage, error) {
 	if len(imagesDescs) == 0 {
 		return false, nil, nil
 	}
 
-	var imgInfo *storage.ImageInfo
+	var imgInfo *image.Info
 	if err := logboek.Info.LogProcess(
 		fmt.Sprintf("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()),
 		logboek.LevelLogProcessOptions{},
@@ -373,9 +372,9 @@ func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, i
 	return true, i, nil
 }
 
-func (phase *BuildPhase) getImagesBySignatureFromCache(stageName, stageSig string) (bool, []*storage.ImageInfo, error) {
+func (phase *BuildPhase) getImagesBySignatureFromCache(stageName, stageSig string) (bool, []*image.Info, error) {
 	var cacheExists bool
-	var cacheImagesDescs []*storage.ImageInfo
+	var cacheImagesDescs []*image.Info
 
 	err := logboek.Info.LogProcess(
 		fmt.Sprintf("Getting stage %s images by signature %s from stages storage cache", stageName, stageSig),
@@ -393,19 +392,19 @@ func (phase *BuildPhase) getImagesBySignatureFromCache(stageName, stageSig strin
 	return cacheExists, cacheImagesDescs, err
 }
 
-func (phase *BuildPhase) atomicGetImagesBySignatureFromStagesStorageWithCacheReset(stageName, stageSig string) ([]*storage.ImageInfo, error) {
+func (phase *BuildPhase) atomicGetImagesBySignatureFromStagesStorageWithCacheReset(stageName, stageSig string) ([]*image.Info, error) {
 	if err := phase.Conveyor.StorageLockManager.LockStageCache(phase.Conveyor.projectName(), stageSig); err != nil {
 		return nil, fmt.Errorf("error locking project %s stage %s cache: %s", phase.Conveyor.projectName(), stageSig, err)
 	}
 	defer phase.Conveyor.StorageLockManager.UnlockStageCache(phase.Conveyor.projectName(), stageSig)
 
-	var originImagesDescs []*storage.ImageInfo
+	var originImagesDescs []*image.Info
 	var err error
 	if err := logboek.Info.LogProcess(
 		fmt.Sprintf("Getting stage %s images by signature %s from stages storage", stageName, stageSig),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			originImagesDescs, err = phase.Conveyor.StagesStorage.GetImagesBySignature(phase.Conveyor.projectName(), stageSig)
+			originImagesDescs, err = phase.Conveyor.StagesStorage.GetRepoImagesBySignature(phase.Conveyor.projectName(), stageSig)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from stages storage: %s", phase.Conveyor.StagesStorage.String(), stageSig, err)
 			}
@@ -432,7 +431,7 @@ func (phase *BuildPhase) atomicGetImagesBySignatureFromStagesStorageWithCacheRes
 	return originImagesDescs, nil
 }
 
-func (phase *BuildPhase) atomicStoreStageCache(stageName, stageSig string, imagesDescs []*storage.ImageInfo) error {
+func (phase *BuildPhase) atomicStoreStageCache(stageName, stageSig string, imagesDescs []*image.Info) error {
 	if err := phase.Conveyor.StorageLockManager.LockStageCache(phase.Conveyor.projectName(), stageSig); err != nil {
 		return fmt.Errorf("error locking stage %q cache by signature %s: %s", stageName, stageSig, err)
 	}
@@ -596,7 +595,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	}
 
 	if len(imagesDescs) > 0 {
-		var imgInfo *storage.ImageInfo
+		var imgInfo *image.Info
 		if err := logboek.Info.LogProcess(
 			fmt.Sprintf("Selecting suitable image for stage %q by signature %s", stg.Name(), stg.GetSignature()),
 			logboek.LevelLogProcessOptions{},
@@ -654,7 +653,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		return err
 	}
 
-	imagesDescs = append(imagesDescs, &storage.ImageInfo{
+	imagesDescs = append(imagesDescs, &image.Info{
 		Signature:         stg.GetSignature(),
 		ImageName:         stageImage.Name(),
 		Labels:            stageImage.Labels(),
@@ -663,7 +662,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	return phase.atomicStoreStageCache(string(stg.Name()), stg.GetSignature(), imagesDescs)
 }
 
-func (phase *BuildPhase) generateUniqStageImageName(signature string, imagesDescs []*storage.ImageInfo) string {
+func (phase *BuildPhase) generateUniqStageImageName(signature string, imagesDescs []*image.Info) string {
 	var imageName string
 
 	for {
