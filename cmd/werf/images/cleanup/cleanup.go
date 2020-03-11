@@ -125,7 +125,7 @@ func runCleanup() error {
 		return err
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
 	if err != nil {
 		return err
 	}
