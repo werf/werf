@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/flant/shluz"
+
+	"github.com/flant/werf/pkg/image"
 )
 
 type FileStagesStorageCache struct {
@@ -16,14 +18,14 @@ type FileStagesStorageCache struct {
 }
 
 type ImageInfosCacheData struct {
-	ImagesDescs []*ImageInfo `json:"imagesDescs"`
+	ImagesDescs []*image.Info `json:"imagesDescs"`
 }
 
 func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 	return &FileStagesStorageCache{CacheDir: cacheDir}
 }
 
-func (cache *FileStagesStorageCache) GetImagesBySignature(projectName, signature string) (bool, []*ImageInfo, error) {
+func (cache *FileStagesStorageCache) GetImagesBySignature(projectName, signature string) (bool, []*image.Info, error) {
 	sigFile := filepath.Join(cache.CacheDir, projectName, signature)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
@@ -45,7 +47,7 @@ func (cache *FileStagesStorageCache) GetImagesBySignature(projectName, signature
 	return true, res.ImagesDescs, nil
 }
 
-func (cache *FileStagesStorageCache) StoreImagesBySignature(projectName, signature string, imagesDescs []*ImageInfo) error {
+func (cache *FileStagesStorageCache) StoreImagesBySignature(projectName, signature string, imagesDescs []*image.Info) error {
 	if err := cache.lock(); err != nil {
 		return err
 	}

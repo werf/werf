@@ -13,7 +13,9 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
-type LocalStagesStorage struct{}
+type LocalStagesStorage struct {
+	StagesStorage // FIXME
+}
 
 const NamelessImageRecordTag = "__nameless__"
 
@@ -85,7 +87,7 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 	return res, nil
 }
 
-func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error) {
+func (storage *LocalStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(image.LocalImageStageImageNameFormat, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
@@ -95,10 +97,10 @@ func (storage *LocalStagesStorage) GetImagesBySignature(projectName, signature s
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	res := []*ImageInfo{}
+	res := []*image.Info{}
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
-			res = append(res, &ImageInfo{
+			res = append(res, &image.Info{
 				ImageName:         repoTag,
 				Signature:         signature,
 				Labels:            img.Labels,

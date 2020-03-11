@@ -14,6 +14,7 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -88,7 +89,7 @@ func runLint() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager("REPO", storage.MultirepoImagesRepoMode)
 	if err != nil {
 		return err
 	}
