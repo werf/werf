@@ -741,7 +741,7 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 	return res, nil
 }
 
-func GetStagesStorage(cmdData *CmdData) (string, error) {
+func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
 	if *cmdData.StagesStorage == "" {
 		return "", fmt.Errorf("--stages-storage :local param required")
 	} else if *cmdData.StagesStorage != ":local" {
@@ -757,11 +757,11 @@ func GetSynchronization(cmdData *CmdData) (string, error) {
 	return *cmdData.Synchronization, nil
 }
 
-func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
+func GetImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
-	return GetOptionalImagesRepo(projectName, cmdData)
+	return GetOptionalImagesRepoAddress(projectName, cmdData)
 }
 
 func GetImagesRepoMode(cmdData *CmdData) (string, error) {
@@ -773,13 +773,12 @@ func GetImagesRepoMode(cmdData *CmdData) (string, error) {
 	}
 }
 
-func GetOptionalImagesRepo(projectName string, cmdData *CmdData) (string, error) {
+func GetOptionalImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
 	repoOption := *cmdData.ImagesRepo
 
 	if repoOption == ":minikube" {
 		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName), nil
 	} else if repoOption != "" {
-
 		if _, err := name.NewRepository(repoOption, name.WeakValidation); err != nil {
 			return "", fmt.Errorf("%s.\nThe registry domain defaults to Docker Hub. Do not forget to specify project repository name, REGISTRY_DOMAIN/REPOSITORY_NAME, if you do not use Docker Hub", err)
 		}

@@ -148,25 +148,29 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
 	if err != nil {
 		return err
 	}
+	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
 
-	stagesStorage, err := common.GetStagesStorage(&commonCmdData)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
 		return err
 	}
+	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+
+	storageLockManager := &storage.FileLockManager{}
 
 	tagOpts, err := common.GetTagOptions(&commonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
@@ -203,10 +207,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
-	if err = c.BuildAndPublish(stagesStorage, imagesRepoManager, opts); err != nil {
+	if err = c.BuildAndPublish(opts); err != nil {
 		return err
 	}
 
