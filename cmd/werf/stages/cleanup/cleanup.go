@@ -100,28 +100,30 @@ func runSync() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
 	if err != nil {
 		return err
 	}
+	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
 
-	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
 		return err
 	}
-	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
-		return err
-	}
-	stagesStorage := &storage.LocalStagesStorage{}
+	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+	storageLockManager := &storage.FileLockManager{}
+	_ = stagesStorageCache // FIXME
+	_ = storageLockManager // FIXME
 
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
@@ -131,7 +133,7 @@ func runSync() error {
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager,
+		ImagesRepoManager: imagesRepo.GetImagesRepoManager(),
 		StagesStorage:     stagesStorage,
 		ImagesNames:       imagesNames,
 		DryRun:            *commonCmdData.DryRun,

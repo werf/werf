@@ -107,7 +107,7 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	optionalImagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
+	optionalImagesRepo, err := common.GetOptionalImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func runRender(outputFilePath string) error {
 		withoutImagesRepo = false
 	}
 
-	imagesRepo := helm_common.GetImagesRepoOrStub(optionalImagesRepo)
+	imagesRepo := helm_common.GetImagesRepoAddressOrStub(optionalImagesRepo)
 
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {

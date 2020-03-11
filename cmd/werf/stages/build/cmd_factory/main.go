@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -135,10 +137,15 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesStorage, err := common.GetStagesStorage(commonCmdData)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(commonCmdData)
 	if err != nil {
 		return err
 	}
+	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+
+	storageLockManager := &storage.FileLockManager{}
 
 	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
@@ -169,10 +176,10 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, nil, storageLockManager)
 	defer c.Terminate()
 
-	if err = c.BuildStages(stagesStorage, opts); err != nil {
+	if err = c.BuildStages(opts); err != nil {
 		return err
 	}
 

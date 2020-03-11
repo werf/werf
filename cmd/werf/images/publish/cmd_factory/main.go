@@ -117,7 +117,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesStorage(commonCmdData)
+	_, err = common.GetStagesStorageAddress(commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -127,20 +127,29 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	imagesRepo, err := common.GetImagesRepo(projectName, commonCmdData)
+	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, commonCmdData)
 	if err != nil {
 		return err
 	}
-
 	imagesRepoMode, err := common.GetImagesRepoMode(commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
 	if err != nil {
 		return err
 	}
+	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
+
+	stagesStorageAddress, err := common.GetStagesStorageAddress(commonCmdData)
+	if err != nil {
+		return err
+	}
+	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+
+	storageLockManager := &storage.FileLockManager{}
 
 	tagOpts, err := common.GetTagOptions(commonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
@@ -162,10 +171,10 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		TagOptions:      tagOpts,
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
-	if err = c.PublishImages(imagesRepoManager, opts); err != nil {
+	if err = c.PublishImages(opts); err != nil {
 		return err
 	}
 
