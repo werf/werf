@@ -94,7 +94,7 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	_, err = common.GetStagesStorage(&commonCmdData)
+	_, err = common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
 		return err
 	}

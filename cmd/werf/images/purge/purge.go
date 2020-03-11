@@ -88,20 +88,19 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
 	if err != nil {
 		return err
 	}
+	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
 
 	var imageNames []string
 	for _, image := range werfConfig.StapelImages {
@@ -113,7 +112,7 @@ func runPurge() error {
 	}
 
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
-		ImagesRepoManager: imagesRepoManager,
+		ImagesRepoManager: imagesRepo.GetImagesRepoManager(),
 		ImagesNames:       imageNames,
 		DryRun:            *commonCmdData.DryRun,
 	}

@@ -193,7 +193,7 @@ func runDeploy() error {
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		if len(werfConfig.StapelImages) != 0 {
-			_, err = common.GetStagesStorage(&commonCmdData)
+			_, err = common.GetStagesStorageAddress(&commonCmdData)
 			if err != nil {
 				return err
 			}
@@ -204,20 +204,29 @@ func runDeploy() error {
 			}
 		}
 
-		imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &commonCmdData)
+		imagesRepoAddress, err := common.GetImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
 		if err != nil {
 			return err
 		}
-
 		imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 		if err != nil {
 			return err
 		}
-
-		imagesRepoManager, err = storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+		imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
 		if err != nil {
 			return err
 		}
+		imagesRepo := storage.NewDockerImagesRepo(werfConfig.Meta.Project, imagesRepoManager)
+
+		stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+		if err != nil {
+			return err
+		}
+		_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+		stagesStorage := storage.NewLocalStagesStorage()
+		stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+
+		storageLockManager := &storage.FileLockManager{}
 
 		tag, tagStrategy, err = common.GetDeployTag(&commonCmdData, common.TagOptionsGetterOptions{})
 		if err != nil {
@@ -235,7 +244,7 @@ func runDeploy() error {
 		}()
 
 		logboek.LogOptionalLn()
-		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 		defer c.Terminate()
 
 		if err = c.ShouldBeBuilt(); err != nil {

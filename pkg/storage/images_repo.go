@@ -11,18 +11,28 @@ type ImagesRepo interface {
 
 	CreateImageRepo(imageName string) error
 	RemoveImageRepo(imageName string) error
+
+	GetImagesRepoManager() *ImagesRepoManager // FIXME remove this method
 }
 
 type DockerImagesRepo struct {
+	ImagesRepo // FIXME
+
 	docker_registry.DockerRegistry
-	ImagesRepoManager
-	projectName string
+	*ImagesRepoManager // FIXME rename images repo manager to something
+	projectName        string
 }
 
-func NewImagesRepo(imagesRepoManager ImagesRepoManager) ImagesRepo {
+func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager) *DockerImagesRepo {
 	return &DockerImagesRepo{
+		projectName:       projectName,
 		ImagesRepoManager: imagesRepoManager,
 	}
+}
+
+// FIXME remove this method
+func (repo *DockerImagesRepo) GetImagesRepoManager() *ImagesRepoManager {
+	return repo.ImagesRepoManager
 }
 
 func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*image.Info, error) {
