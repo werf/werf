@@ -104,7 +104,7 @@ func runGetServiceValues() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	imagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
+	imagesRepo, err := common.GetOptionalImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func runGetServiceValues() error {
 		withoutRepo = false
 	}
 
-	imagesRepo = helm_common.GetImagesRepoOrStub(imagesRepo)
+	imagesRepo = helm_common.GetImagesRepoAddressOrStub(imagesRepo)
 
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
