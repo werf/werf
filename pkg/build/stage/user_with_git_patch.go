@@ -3,8 +3,6 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/werf/pkg/build/builder"
 	"github.com/flant/werf/pkg/image"
 )
@@ -23,7 +21,7 @@ type UserWithGitPatchStage struct {
 	GitPatchStage *GitPatchStage
 }
 
-func (s *UserWithGitPatchStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+func (s *UserWithGitPatchStage) SelectCacheImage(images []*image.Info) (*image.Info, error) {
 	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)

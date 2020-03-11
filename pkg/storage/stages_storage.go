@@ -1,25 +1,14 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/flant/werf/pkg/image"
 )
 
-type ImageInfo struct {
-	Signature         string            `json:"signature"`
-	ImageName         string            `json:"imageName"`
-	Labels            map[string]string `json:"labels"`
-	CreatedAtUnixNano int64             `json:"createdAtUnixNano"`
-}
-
-func (info *ImageInfo) CreatedAt() time.Time {
-	return time.Unix(info.CreatedAtUnixNano/1000_000_000, info.CreatedAtUnixNano%1000_000_000)
-}
-
 type StagesStorage interface {
-	// TODO cleanup GetAllImages() ([]StageImage, error)
-	GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error)
+	GetRepoImages(projectName string) ([]*image.Info, error)
+	DeleteRepoImage(options DeleteImageOptions, imageInfo ...*image.Info) error
+
+	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
 
 	// в том числе docker pull из registry + image.SyncDockerState
 	// lock по имени image чтобы не делать 2 раза pull одновременно
@@ -31,4 +20,10 @@ type StagesStorage interface {
 	GetManagedImages(projectName string) ([]string, error)
 
 	String() string
+}
+
+type DeleteImageOptions struct {
+	SkipUsedImages bool
+	RmiForce       bool
+	RmForce        bool
 }

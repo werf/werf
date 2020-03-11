@@ -8,9 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/config"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -153,8 +152,8 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	return false, nil
 }
 
-func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	var oldestImage *storage.ImageInfo
+func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*imagePkg.Info) (*imagePkg.Info, error) {
+	var oldestImage *imagePkg.Info
 	for _, img := range images {
 		if oldestImage == nil {
 			oldestImage = img
@@ -165,8 +164,8 @@ func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.
 	return oldestImage, nil
 }
 
-func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.ImageInfo) ([]*storage.ImageInfo, error) {
-	suitableImages := []*storage.ImageInfo{}
+func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*imagePkg.Info) ([]*imagePkg.Info, error) {
+	suitableImages := []*imagePkg.Info{}
 	currentCommits := make(map[string]string)
 
 	for _, gitMapping := range s.gitMappings {
@@ -210,7 +209,7 @@ ScanImages:
 	return suitableImages, nil
 }
 
-func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
+func (s *BaseStage) SelectCacheImage(images []*imagePkg.Info) (*imagePkg.Info, error) {
 	return s.selectCacheImageByOldestCreationTimestamp(images)
 }
 
