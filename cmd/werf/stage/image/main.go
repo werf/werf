@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -110,7 +112,7 @@ func run(imageName string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesStorage(&commonCmdData)
+	_, err = common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -138,7 +140,17 @@ func run(imageName string) error {
 		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
-	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
+	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+
+	storageLockManager := &storage.FileLockManager{}
+
+	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, nil, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.ShouldBeBuilt(); err != nil {

@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
-func GetImagesRepoOrStub(imagesRepoOption string) string {
+func GetImagesRepoAddressOrStub(imagesRepoOption string) string {
 	if imagesRepoOption == "" {
 		return "IMAGES_REPO"
 	}

@@ -17,6 +17,10 @@ type LocalStagesStorage struct {
 	StagesStorage // FIXME
 }
 
+func NewLocalStagesStorage() *LocalStagesStorage {
+	return &LocalStagesStorage{}
+}
+
 const NamelessImageRecordTag = "__nameless__"
 
 func makeConfigImageRecordImageName(projectName, imageName string) string {
