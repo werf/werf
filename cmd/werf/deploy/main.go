@@ -20,6 +20,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
@@ -186,7 +187,7 @@ func runDeploy() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	var imagesRepoManager *common.ImagesRepoManager
+	var imagesRepoManager *storage.ImagesRepoManager
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
@@ -213,7 +214,7 @@ func runDeploy() error {
 			return err
 		}
 
-		imagesRepoManager, err = common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+		imagesRepoManager, err = storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
 		if err != nil {
 			return err
 		}
@@ -245,7 +246,7 @@ func runDeploy() error {
 	}
 
 	if imagesRepoManager == nil {
-		imagesRepoManager = &common.ImagesRepoManager{}
+		imagesRepoManager = &storage.ImagesRepoManager{}
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
