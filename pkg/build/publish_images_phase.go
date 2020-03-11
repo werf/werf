@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
@@ -13,7 +15,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) *PublishImagesPhase {
+func NewPublishImagesPhase(c *Conveyor, imagesRepo storage.ImagesRepo, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[tag_strategy.TagStrategy][]string{
 		tag_strategy.Custom:    opts.CustomTags,
 		tag_strategy.GitBranch: opts.TagsByGitBranch,
@@ -25,7 +27,7 @@ func NewPublishImagesPhase(c *Conveyor, imagesRepoManager ImagesRepoManager, opt
 		ImagesToPublish:      opts.ImagesToPublish,
 		TagsByScheme:         tagsByScheme,
 		TagByStagesSignature: opts.TagByStagesSignature,
-		ImageRepoManager:     imagesRepoManager,
+		ImagesRepo:           imagesRepo,
 	}
 }
 
@@ -34,7 +36,7 @@ type PublishImagesPhase struct {
 	ImagesToPublish      []string
 	TagsByScheme         map[tag_strategy.TagStrategy][]string
 	TagByStagesSignature bool
-	ImageRepoManager     ImagesRepoManager
+	ImagesRepo           storage.ImagesRepo
 }
 
 func (phase *PublishImagesPhase) Name() string {
@@ -187,9 +189,9 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 */
 
 func (phase *PublishImagesPhase) publishImage(img *Image) error {
-	existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
+	existingTags, err := phase.fetchExistingTags(phase.ImagesRepo.GetImagesRepoManager().ImageRepo(img.GetName()))
 	if err != nil {
-		return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
+		return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImagesRepo.GetImagesRepoManager().ImageRepo(img.GetName()), err)
 	}
 
 	var nonEmptySchemeInOrder []tag_strategy.TagStrategy
@@ -253,10 +255,10 @@ func (phase *PublishImagesPhase) fetchExistingTags(imageRepository string) (exis
 }
 
 func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag string, tagStrategy tag_strategy.TagStrategy, initialExistingTagsList []string) error {
-	imageRepository := phase.ImageRepoManager.ImageRepo(img.GetName())
+	imageRepository := phase.ImagesRepo.GetImagesRepoManager().ImageRepo(img.GetName())
 	lastStageImage := img.GetLastNonEmptyStage().GetImage()
-	imageName := phase.ImageRepoManager.ImageRepoWithTag(img.GetName(), imageMetaTag)
-	imageTag := phase.ImageRepoManager.ImageRepoTag(img.GetName(), imageMetaTag)
+	imageName := phase.ImagesRepo.GetImagesRepoManager().ImageRepoWithTag(img.GetName(), imageMetaTag)
+	imageTag := phase.ImagesRepo.GetImagesRepoManager().ImageRepoTag(img.GetName(), imageMetaTag)
 
 	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, imageName, imageTag, lastStageImage)
 	if err != nil {
@@ -312,9 +314,9 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		}
 		defer phase.Conveyor.StorageLockManager.UnlockImage(imageName)
 
-		existingTags, err := phase.fetchExistingTags(phase.ImageRepoManager.ImageRepo(img.GetName()))
+		existingTags, err := phase.fetchExistingTags(phase.ImagesRepo.GetImagesRepoManager().ImageRepo(img.GetName()))
 		if err != nil {
-			return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImageRepoManager.ImageRepo(img.GetName()), err)
+			return fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImagesRepo.GetImagesRepoManager().ImageRepo(img.GetName()), err)
 		}
 
 		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, imageName, imageTag, lastStageImage)

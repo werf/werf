@@ -31,7 +31,6 @@ import (
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
 )
 
 type Conveyor struct {
@@ -61,13 +60,14 @@ type Conveyor struct {
 
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
+	ImagesRepo         storage.ImagesRepo
 	StorageLockManager storage.LockManager
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, stagesStorage storage.StagesStorage, stagesStorageCache storage.StagesStorageCache, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -89,9 +89,10 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
 		importServers:                   make(map[string]import_server.ImportServer),
 
-		StagesStorage:      &storage.LocalStagesStorage{},
-		StorageLockManager: &storage.FileLockManager{},
-		StagesStorageCache: storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
+		StagesStorage:      stagesStorage,
+		StagesStorageCache: stagesStorageCache,
+		ImagesRepo:         imagesRepo,
+		StorageLockManager: storageLockManager,
 	}
 
 	return c
@@ -263,7 +264,7 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	return images
 }
 
-func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
+func (c *Conveyor) BuildStages(opts BuildStagesOptions) error {
 	/*var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
@@ -294,7 +295,7 @@ type PublishImagesOptions struct {
 	TagOptions
 }
 
-func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
+func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
@@ -302,7 +303,7 @@ func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts Publi
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
 		NewShouldBeBuiltPhase(c),
-		NewPublishImagesPhase(c, imagesRepoManager, opts),
+		NewPublishImagesPhase(c, c.ImagesRepo, opts),
 	}
 
 	return c.runPhases(phases, true)
@@ -329,7 +330,7 @@ type BuildAndPublishOptions struct {
 	PublishImagesOptions
 }
 
-func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
+func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
@@ -337,7 +338,7 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
 		NewShouldBeBuiltPhase(c),
-		NewPublishImagesPhase(c, imagesRepoManager, opts.PublishImagesOptions),
+		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
 	}
 
 	return c.runPhases(phases, true)

@@ -97,7 +97,7 @@ func run(imageName string) error {
 		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
-	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
+	if _, err := common.GetStagesStorageAddress(&commonCmdData); err != nil {
 		return err
 	}
 	if _, err = common.GetSynchronization(&commonCmdData); err != nil {

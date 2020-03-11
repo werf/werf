@@ -83,7 +83,7 @@ func runPurge() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	_, err = common.GetStagesStorage(&commonCmdData)
+	_, err = common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+	imagesRepo, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
