@@ -101,6 +101,7 @@ func runPurge() error {
 		return err
 	}
 	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
+	_ = imagesRepo // FIXME
 
 	var imageNames []string
 	for _, image := range werfConfig.StapelImages {
@@ -112,7 +113,7 @@ func runPurge() error {
 	}
 
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
-		ImagesRepoManager: imagesRepo.GetImagesRepoManager(),
+		ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
 		ImagesNames:       imageNames,
 		DryRun:            *commonCmdData.DryRun,
 	}
