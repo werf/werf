@@ -119,11 +119,15 @@ func runSync() error {
 	if err != nil {
 		return err
 	}
-	_ = stagesStorageAddress // FIXME: parse stages storage address and create correct object
-	stagesStorage := storage.NewLocalStagesStorage()
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	if err != nil {
+		return err
+	}
+
 	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
-	storageLockManager := &storage.FileLockManager{}
 	_ = stagesStorageCache // FIXME
+
+	storageLockManager := &storage.FileLockManager{}
 	_ = storageLockManager // FIXME
 
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
