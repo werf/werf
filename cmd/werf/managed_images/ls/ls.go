@@ -94,14 +94,19 @@ func run() error {
 		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
-	if _, err := common.GetStagesStorageAddress(&commonCmdData); err != nil {
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
 		return err
 	}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	if err != nil {
+		return err
+	}
+
 	if _, err = common.GetSynchronization(&commonCmdData); err != nil {
 		return err
 	}
 
-	stagesStorage := &storage.LocalStagesStorage{}
 	if images, err := stagesStorage.GetManagedImages(projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)
 	} else {
