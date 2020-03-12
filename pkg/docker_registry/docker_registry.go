@@ -1,8 +1,6 @@
 package docker_registry
 
 import (
-	"fmt"
-
 	image2 "github.com/flant/werf/pkg/image"
 )
 
@@ -17,6 +15,6 @@ type DockerRegistry interface {
 TODO: функция-фабрика
 TODO: по общим параметрам определяет хранилище, выдает ошибку или конкретную реализацию
 */
-func NewDockerRegistry() (DockerRegistry, error) {
-	return nil, fmt.Errorf("not implemented")
+func NewDockerRegistry(dockerRegistryAddress string) (DockerRegistry, error) {
+	return nil, nil
 }
