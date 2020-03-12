@@ -133,13 +133,18 @@ func runCleanup() error {
 	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
 	_ = imagesRepo // FIXME
 
-	if _, err := common.GetStagesStorageAddress(&commonCmdData); err != nil {
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
 		return err
 	}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	if err != nil {
+		return err
+	}
+
 	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
 		return err
 	}
-	stagesStorage := &storage.LocalStagesStorage{}
 
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
