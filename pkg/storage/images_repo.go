@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 )
@@ -9,10 +11,16 @@ type ImagesRepo interface {
 	GetRepoImages(imageNames []string) (map[string][]*image.Info, error)
 	DeleteRepoImage(options DeleteImageOptions, imageInfo ...*image.Info) error
 
+	FetchExistingTags(imageName string) ([]string, error)
+	PublishImage(publishImage *image.Image) error
+
 	CreateImageRepo(imageName string) error
 	RemoveImageRepo(imageName string) error
 
-	GetImagesRepoManager() *ImagesRepoManager // FIXME remove this method
+	String() string
+	ImageRepositoryName(imageName string) string
+	ImageRepositoryNameWithTag(imageName, tag string) string
+	ImageRepositoryTag(imageName, tag string) string
 }
 
 type DockerImagesRepo struct {
@@ -30,9 +38,35 @@ func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManage
 	}
 }
 
-// FIXME remove this method
-func (repo *DockerImagesRepo) GetImagesRepoManager() *ImagesRepoManager {
-	return repo.ImagesRepoManager
+func (repo *DockerImagesRepo) String() string {
+	return repo.ImagesRepoManager.ImagesRepo()
+}
+
+func (repo *DockerImagesRepo) ImageRepositoryName(imageName string) string {
+	return repo.ImagesRepoManager.ImageRepo(imageName)
+}
+
+func (repo *DockerImagesRepo) ImageRepositoryNameWithTag(imageName, tag string) string {
+	return repo.ImagesRepoManager.ImageRepoWithTag(imageName, tag)
+}
+
+func (repo *DockerImagesRepo) ImageRepositoryTag(imageName, tag string) string {
+	return repo.ImagesRepoManager.ImageRepoTag(imageName, tag)
+}
+
+// FIXME: use docker-registry object
+func (repo *DockerImagesRepo) FetchExistingTags(imageName string) ([]string, error) {
+	fullImageName := repo.ImagesRepoManager.ImageRepo(imageName)
+	if existingTags, err := docker_registry.Tags(fullImageName); err != nil {
+		return nil, fmt.Errorf("unable to get docker tags for image %q: %s", fullImageName, err)
+	} else {
+		return existingTags, nil
+	}
+}
+
+// FIXME: use docker-registry object
+func (repo *DockerImagesRepo) PublishImage(publishImage *image.Image) error {
+	return publishImage.Export()
 }
 
 func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*image.Info, error) {
