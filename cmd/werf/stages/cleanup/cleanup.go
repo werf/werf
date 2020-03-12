@@ -113,6 +113,7 @@ func runSync() error {
 		return err
 	}
 	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
+	_ = imagesRepo // FIXME
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -133,7 +134,7 @@ func runSync() error {
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepo.GetImagesRepoManager(),
+		ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
 		StagesStorage:     stagesStorage,
 		ImagesNames:       imagesNames,
 		DryRun:            *commonCmdData.DryRun,

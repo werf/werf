@@ -128,6 +128,7 @@ func runCleanup() error {
 		return err
 	}
 	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
+	_ = imagesRepo // FIXME
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -169,7 +170,7 @@ func runCleanup() error {
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: cleaning.CommonRepoOptions{
-			ImagesRepoManager: imagesRepo.GetImagesRepoManager(),
+			ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
 			ImagesNames:       imagesNames,
 			DryRun:            *commonCmdData.DryRun,
 		},
