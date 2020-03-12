@@ -147,8 +147,8 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		desc.IsEmpty = false
 
 		gitFileMode := lsTreeEntry.Mode
-		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.Filepath)
-		relToBasePathFilepath := opts.PathMatcher.TrimFileBaseFilepath(lsTreeEntry.Filepath)
+		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
+		relToBasePathFilepath := opts.PathMatcher.TrimFileBaseFilepath(lsTreeEntry.FullFilepath)
 		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
 		info, err := os.Lstat(absFilepath)
 		if err != nil {
