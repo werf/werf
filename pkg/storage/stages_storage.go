@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 )
@@ -19,8 +21,11 @@ type StagesStorage interface {
 
 	// в том числе docker pull из registry + image.SyncDockerState
 	// lock по имени image чтобы не делать 2 раза pull одновременно
-	SyncStageImage(stageImage image.ImageInterface) error
-	StoreStageImage(stageImage image.ImageInterface) error
+	//SyncStageImage(stageImage image.ImageInterface) error
+	//StoreStageImage(stageImage image.ImageInterface) error
+
+	//FetchImage TODO
+	StoreImage(image container_runtime.Image) error
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error
@@ -36,14 +41,14 @@ type DeleteRepoImageOptions struct {
 	RmContainersThatUseImage bool
 }
 
-func NewStagesStorage(stagesStorageAddress string) (StagesStorage, error) {
+func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStagesStorageAddress {
-		return NewLocalStagesStorage(), nil
+		return NewLocalStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
 		if dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress); err != nil {
 			return nil, fmt.Errorf("error creating docker registry accessor for repo %q: %s", stagesStorageAddress, err)
 		} else {
-			return NewRepoStagesStorage(dockerRegistry), nil
+			return NewRepoStagesStorage(stagesStorageAddress, dockerRegistry, containerRuntime), nil
 		}
 	}
 }
