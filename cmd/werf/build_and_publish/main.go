@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -169,7 +171,8 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	if err != nil {
 		return err
 	}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
 	if err != nil {
 		return err
 	}
@@ -213,7 +216,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.BuildAndPublish(opts); err != nil {

@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -58,6 +60,8 @@ type Conveyor struct {
 
 	tmpDir string
 
+	ContainerRuntime container_runtime.ContainerRuntime
+
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
 	ImagesRepo         storage.ImagesRepo
@@ -67,7 +71,7 @@ type Conveyor struct {
 	importServers    map[string]import_server.ImportServer
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, stagesStorage storage.StagesStorage, stagesStorageCache storage.StagesStorageCache, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesStorage storage.StagesStorage, stagesStorageCache storage.StagesStorageCache, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -89,6 +93,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
 		importServers:                   make(map[string]import_server.ImportServer),
 
+		ContainerRuntime:   containerRuntime,
 		StagesStorage:      stagesStorage,
 		StagesStorageCache: stagesStorageCache,
 		ImagesRepo:         imagesRepo,
