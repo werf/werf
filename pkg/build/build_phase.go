@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 
@@ -354,7 +356,8 @@ func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, i
 		fmt.Sprintf("Sync stage %s signature %s image %s from stages storage", stg.Name(), stg.GetSignature(), i.Name()),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := phase.Conveyor.StagesStorage.SyncStageImage(i); err != nil {
+			// TODO: use container_runtime.Image everywhere for kaniko-like builds support in the Conveyor
+			if err := phase.Conveyor.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{i}); err != nil {
 				return fmt.Errorf("unable to sync image %s from stages storage %s: %s", i.Name(), phase.Conveyor.StagesStorage.String(), err)
 			}
 			return nil
@@ -613,8 +616,9 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 				fmt.Sprintf("Sync stage %q signature %s image %s from stages storage", stg.Name(), stg.GetSignature(), i.Name()),
 				logboek.LevelLogProcessOptions{},
 				func() error {
-					if err := phase.Conveyor.StagesStorage.SyncStageImage(i); err != nil {
-						return fmt.Errorf("unable to sync image %s from stages storage %s: %s", i.Name(), phase.Conveyor.StagesStorage.String(), err)
+					// TODO: use container_runtime.Image interface everywhere before implementing kaniko-like builds
+					if err := phase.Conveyor.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{i}); err != nil {
+						return fmt.Errorf("unable to refresh image %s from %s container runtime: %s", i.Name(), phase.Conveyor.ContainerRuntime.String(), err)
 					}
 					return nil
 				},
@@ -638,7 +642,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		fmt.Sprintf("Store stage %q signature %s image %s into stages storage", stageImage.Name(), stg.GetSignature(), stageImage.Name()),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := phase.Conveyor.StagesStorage.StoreStageImage(stageImage); err != nil {
+			if err := phase.Conveyor.StagesStorage.StoreImage(container_runtime.DockerImage{stageImage}); err != nil {
 				return fmt.Errorf("unable to store stage %q signature %s image %s into stages storage %s: %s", stg.Name(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
 			}
 			return nil

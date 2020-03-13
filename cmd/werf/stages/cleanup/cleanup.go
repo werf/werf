@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
@@ -121,7 +123,8 @@ func runSync() error {
 	if err != nil {
 		return err
 	}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
 	if err != nil {
 		return err
 	}
