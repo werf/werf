@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/shluz"
@@ -148,7 +150,8 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	if err != nil {
 		return err
 	}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
 	if err != nil {
 		return err
 	}
@@ -177,7 +180,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		TagOptions:      tagOpts,
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.PublishImages(opts); err != nil {

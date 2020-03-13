@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -79,7 +81,15 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	stagesStorage := storage.NewLocalStagesStorage() // FIXME
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
+	if err != nil {
+		return err
+	}
 
 	logboek.LogOptionalLn()
 

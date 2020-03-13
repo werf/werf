@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/flant/logboek"
 
 	"github.com/docker/docker/api/types"
@@ -14,10 +16,14 @@ import (
 )
 
 type LocalStagesStorage struct {
+	StagesStorage // FIXME
+
+	// Local stages storage is compatible only with docker-server backed runtime
+	LocalDockerServerRuntime *container_runtime.LocalDockerServerRuntime
 }
 
-func NewLocalStagesStorage() StagesStorage {
-	return &LocalStagesStorage{}
+func NewLocalStagesStorage(localDockerServerRuntime *container_runtime.LocalDockerServerRuntime) *LocalStagesStorage {
+	return &LocalStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
 }
 
 func (storage *LocalStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
@@ -133,18 +139,8 @@ func (storage *LocalStagesStorage) GetRepoImagesBySignature(projectName, signatu
 	return repoImages, nil
 }
 
-func (storage *LocalStagesStorage) SyncStageImage(stageImage image.ImageInterface) error {
-	return stageImage.SyncDockerState()
-}
-
-func (storage *LocalStagesStorage) StoreStageImage(stageImage image.ImageInterface) error {
-	if err := stageImage.TagBuiltImage(stageImage.Name()); err != nil {
-		return fmt.Errorf("unable to save image %s: %s", stageImage.Name(), err)
-	}
-	if err := stageImage.SyncDockerState(); err != nil {
-		return fmt.Errorf("unable to sync docker state of image %s: %s", stageImage.Name(), err)
-	}
-	return nil
+func (storage *LocalStagesStorage) StoreImage(image container_runtime.Image) error {
+	return storage.LocalDockerServerRuntime.TagBuiltImageByName(image)
 }
 
 func (storage *LocalStagesStorage) String() string {
