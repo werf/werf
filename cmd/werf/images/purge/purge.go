@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -93,7 +95,8 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
 	if err != nil {
 		return err
 	}

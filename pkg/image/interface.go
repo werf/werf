@@ -31,6 +31,7 @@ type ImageInterface interface {
 	Build(BuildOptions) error
 	GetBuiltId() (string, error)
 	TagBuiltImage(name string) error
+	Export(name string) error
 
 	Introspect() error
 }
