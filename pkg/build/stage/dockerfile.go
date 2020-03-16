@@ -12,14 +12,14 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/git_repo/status"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/util"
-
-	"github.com/flant/logboek"
 )
 
 func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions) *DockerfileStage {

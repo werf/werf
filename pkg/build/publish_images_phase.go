@@ -210,7 +210,7 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 			func() error {
 				for _, imageMetaTag := range imageMetaTags {
 					if err := phase.publishImageByTag(img, imageMetaTag, strategy, existingTags); err != nil {
-						return fmt.Errorf("error publishing image %s by tag %s: %s", img.GetName(), imageMetaTag, err)
+						return fmt.Errorf("error publishing image %s by tag %s: %s", img.LogName(), imageMetaTag, err)
 					}
 				}
 
@@ -263,7 +263,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 
 	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageTag, lastStageImage)
 	if err != nil {
-		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.GetName(), err)
+		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
 
 	if alreadyExists {
@@ -320,9 +320,9 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, imageName, imageTag, lastStageImage)
+		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageTag, lastStageImage)
 		if err != nil {
-			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.GetName(), err)
+			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
 
 		if alreadyExists {

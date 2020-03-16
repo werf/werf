@@ -78,7 +78,12 @@ func (m *stagesPurgeManager) run() error {
 				}
 			}
 
-			logboek.Default.LogFDetails("  tag: %s\n", managedImage)
+			logTag := managedImage
+			if logTag == "" {
+				logTag = storage.NamelessImageRecordTag
+			}
+
+			logboek.Default.LogFDetails("  tag: %s\n", logTag)
 			logboek.LogOptionalLn()
 		}
 		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})

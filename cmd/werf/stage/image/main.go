@@ -88,7 +88,10 @@ func run(imageName string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
+	if err := docker_registry.Init(docker_registry.APIOptions{
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+	}); err != nil {
 		return err
 	}
 
@@ -147,7 +150,14 @@ func run(imageName string) error {
 		return err
 	}
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
+	stagesStorage, err := storage.NewStagesStorage(
+		stagesStorageAddress,
+		containerRuntime,
+		docker_registry.APIOptions{
+			InsecureRegistry:      *commonCmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		},
+	)
 	if err != nil {
 		return err
 	}
