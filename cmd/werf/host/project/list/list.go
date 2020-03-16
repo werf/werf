@@ -17,6 +17,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -102,8 +103,8 @@ func getProjects() (map[string]*projectFields, error) {
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
 			repo := strings.Split(tag, ":")[0]
-			if strings.HasPrefix(repo, imagePkg.LocalImageStageImageNamePrefix) {
-				projectName := strings.TrimPrefix(repo, imagePkg.LocalImageStageImageNamePrefix)
+			if strings.HasPrefix(repo, storage.LocalImageStageImageNamePrefix) {
+				projectName := strings.TrimPrefix(repo, storage.LocalImageStageImageNamePrefix)
 				project, exist := projects[projectName]
 				if !exist {
 					projects[projectName] = &projectFields{
