@@ -19,10 +19,15 @@ type api struct {
 	SkipTlsVerifyRegistry bool
 }
 
-func newAPI(insecureRegistry bool, skipTlsVerifyRegistry bool) *api {
+type APIOptions struct {
+	InsecureRegistry      bool
+	SkipTlsVerifyRegistry bool
+}
+
+func newAPI(options APIOptions) *api {
 	return &api{
-		InsecureRegistry:      insecureRegistry,
-		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
+		InsecureRegistry:      options.InsecureRegistry,
+		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,
 	}
 }
 
@@ -78,15 +83,16 @@ func (api *api) GetRepoImage(reference string) (*image.Info, error) {
 		return nil, err
 	}
 
-	parts := strings.SplitN(reference, ":", 2)
-	repository := parts[0]
-	tag := parts[1]
+	parsedReference, err := name.NewTag(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return nil, err
+	}
 
 	repoImage := &image.Info{
 		Name:       reference,
-		Repository: repository,
+		Repository: strings.Join([]string{parsedReference.RegistryStr(), parsedReference.RepositoryStr()}, "/"),
 		ID:         manifest.Config.Digest.String(),
-		Tag:        tag,
+		Tag:        parsedReference.TagStr(),
 		Digest:     digest.String(),
 		ParentID:   configFile.Config.Image,
 		Labels:     configFile.Config.Labels,

@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -16,9 +12,11 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -79,7 +77,10 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
+	if err := docker_registry.Init(docker_registry.APIOptions{
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+	}); err != nil {
 		return err
 	}
 
@@ -129,7 +130,14 @@ func runCleanup() error {
 	if err != nil {
 		return err
 	}
-	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	imagesRepo, err := storage.NewImagesRepo(
+		projectName,
+		imagesRepoManager,
+		docker_registry.APIOptions{
+			InsecureRegistry:      *commonCmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -139,7 +147,14 @@ func runCleanup() error {
 		return err
 	}
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
+	stagesStorage, err := storage.NewStagesStorage(
+		stagesStorageAddress,
+		containerRuntime,
+		docker_registry.APIOptions{
+			InsecureRegistry:      *commonCmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		},
+	)
 	if err != nil {
 		return err
 	}
