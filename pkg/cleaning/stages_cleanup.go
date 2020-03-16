@@ -161,7 +161,7 @@ func exceptRepoImageList(repoImageList []*image.Info, repoImageListToExcept ...*
 loop:
 	for _, repoImage := range repoImageList {
 		for _, repoImageToExcept := range repoImageListToExcept {
-			if repoImage.Name == repoImageToExcept.Name {
+			if repoImage == repoImageToExcept {
 				continue loop
 			}
 		}
@@ -172,7 +172,7 @@ loop:
 	return updatedRepoImageList
 }
 
-func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) (imageList []*image.Info, err error) {
+func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) ([]*image.Info, error) {
 	repoImages, err := imagesRepo.GetRepoImages(imageNameList)
 	if err != nil {
 		return nil, err
@@ -182,8 +182,8 @@ func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) 
 }
 
 func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*image.Info) {
-	for _, repoImageList := range repoImages {
-		repoImageList = append(repoImageList, repoImageList...)
+	for imageName, _ := range repoImages {
+		repoImageList = append(repoImageList, repoImages[imageName]...)
 	}
 
 	return

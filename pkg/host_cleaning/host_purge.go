@@ -9,7 +9,9 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/stapel"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -39,7 +41,17 @@ func HostPurge(options HostPurgeOptions) error {
 	}
 
 	if err := logboek.LogProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
-		if err := werfImagesFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
+		filterSet := filters.NewArgs()
+		filterSet.Add("label", image.WerfLabel)
+
+		if err := werfImagesFlushByFilterSet(filterSet, commonOptions); err != nil {
+			return err
+		}
+
+		filterSet = filters.NewArgs()
+		filterSet.Add("reference", fmt.Sprintf(storage.LocalManagedImageRecord_ImageNameFormat, "*"))
+
+		if err := werfImagesFlushByFilterSet(filterSet, commonOptions); err != nil {
 			return err
 		}
 

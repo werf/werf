@@ -155,7 +155,10 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
+	if err := docker_registry.Init(docker_registry.APIOptions{
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+	}); err != nil {
 		return err
 	}
 
@@ -218,7 +221,14 @@ func runDeploy() error {
 		if err != nil {
 			return err
 		}
-		imagesRepo, err := storage.NewImagesRepo(werfConfig.Meta.Project, imagesRepoManager)
+		imagesRepo, err := storage.NewImagesRepo(
+			werfConfig.Meta.Project,
+			imagesRepoManager,
+			docker_registry.APIOptions{
+				InsecureRegistry:      *commonCmdData.InsecureRegistry,
+				SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -228,7 +238,14 @@ func runDeploy() error {
 			return err
 		}
 		containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-		stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
+		stagesStorage, err := storage.NewStagesStorage(
+			stagesStorageAddress,
+			containerRuntime,
+			docker_registry.APIOptions{
+				InsecureRegistry:      *commonCmdData.InsecureRegistry,
+				SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+			},
+		)
 		if err != nil {
 			return err
 		}

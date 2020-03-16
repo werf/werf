@@ -10,7 +10,7 @@ import (
 
 var generic *api
 
-func Init(insecureRegistry bool, skipTlsVerifyRegistry bool) error {
+func Init(options APIOptions) error {
 	if logboek.Debug.IsAccepted() {
 		logs.Progress.SetOutput(logboek.GetOutStream())
 		logs.Warn.SetOutput(logboek.GetErrStream())
@@ -21,7 +21,7 @@ func Init(insecureRegistry bool, skipTlsVerifyRegistry bool) error {
 		logs.Debug.SetOutput(ioutil.Discard)
 	}
 
-	generic = newAPI(insecureRegistry, skipTlsVerifyRegistry)
+	generic = newAPI(options)
 
 	return nil
 }

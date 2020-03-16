@@ -1,10 +1,11 @@
 package deploy
 
 import (
-	"github.com/flant/werf/pkg/images_manager"
 	"github.com/ghodss/yaml"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
