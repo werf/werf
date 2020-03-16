@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/stapel"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -48,7 +49,7 @@ func HostPurge(options HostPurgeOptions) error {
 		}
 
 		filterSet = filters.NewArgs()
-		filterSet.Add("reference", fmt.Sprintf(image.ManagedImageRecord_ImageNameFormat, "*"))
+		filterSet.Add("reference", fmt.Sprintf(storage.LocalManagedImageRecord_ImageNameFormat, "*"))
 
 		if err := werfImagesFlushByFilterSet(filterSet, commonOptions); err != nil {
 			return err

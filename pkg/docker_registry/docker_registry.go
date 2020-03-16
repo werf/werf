@@ -14,6 +14,6 @@ type DockerRegistry interface {
 	DeleteRepoImage(repoImageList ...*image.Info) error
 }
 
-func NewDockerRegistry(_ string) (DockerRegistry, error) {
-	return NewDefault(), nil
+func NewDockerRegistry(_ string, options APIOptions) (DockerRegistry, error) {
+	return NewDefault(options), nil
 }

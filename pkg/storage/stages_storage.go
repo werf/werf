@@ -42,11 +42,11 @@ type DeleteRepoImageOptions struct {
 	RmContainersThatUseImage bool
 }
 
-func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime) (StagesStorage, error) {
+func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, dockerRegistryOptions docker_registry.APIOptions) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStagesStorageAddress {
 		return NewLocalStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
-		if dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress); err != nil {
+		if dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, dockerRegistryOptions); err != nil {
 			return nil, fmt.Errorf("error creating docker registry accessor for repo %q: %s", stagesStorageAddress, err)
 		} else {
 			return NewRepoStagesStorage(stagesStorageAddress, dockerRegistry, containerRuntime), nil

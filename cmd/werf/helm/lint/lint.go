@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -96,7 +97,14 @@ func runLint() error {
 		return err
 	}
 
-	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	imagesRepo, err := storage.NewImagesRepo(
+		projectName,
+		imagesRepoManager,
+		docker_registry.APIOptions{
+			InsecureRegistry:      *commonCmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		},
+	)
 	if err != nil {
 		return err
 	}

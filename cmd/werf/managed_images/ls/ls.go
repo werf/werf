@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
 	"github.com/spf13/cobra"
+
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/container_runtime"
@@ -62,7 +63,10 @@ func run() error {
 		return err
 	}
 
-	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
+	if err := docker_registry.Init(docker_registry.APIOptions{
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+	}); err != nil {
 		return err
 	}
 
@@ -100,7 +104,14 @@ func run() error {
 		return err
 	}
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
+	stagesStorage, err := storage.NewStagesStorage(
+		stagesStorageAddress,
+		containerRuntime,
+		docker_registry.APIOptions{
+			InsecureRegistry:      *commonCmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		},
+	)
 	if err != nil {
 		return err
 	}
