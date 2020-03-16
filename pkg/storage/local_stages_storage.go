@@ -15,6 +15,16 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
+const (
+	LocalImageStageImageNamePrefix = "werf-stages-storage/"
+	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
+	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s-%s"
+
+	LocalManagedImageRecord_ImageNamePrefix = "werf-managed-images/"
+	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
+	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
+)
+
 type LocalStagesStorage struct {
 	StagesStorage // FIXME
 
@@ -56,20 +66,18 @@ func (storage *LocalStagesStorage) DeleteRepoImage(options DeleteRepoImageOption
 	return nil
 }
 
-const NamelessImageRecordTag = "__nameless__"
-
-func makeConfigImageRecordImageName(projectName, imageName string) string {
+func makeLocalManagedImageRecord(projectName, imageName string) string {
 	tag := imageName
 	if imageName == "" {
 		tag = NamelessImageRecordTag
 	}
-	return fmt.Sprintf(image.ManagedImageRecord_ImageFormat, projectName, tag)
+	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
 func (storage *LocalStagesStorage) AddManagedImage(projectName, imageName string) error {
 	logboek.Debug.LogF("-- LocalStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
-	fullImageName := makeConfigImageRecordImageName(projectName, imageName)
+	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -86,7 +94,7 @@ func (storage *LocalStagesStorage) AddManagedImage(projectName, imageName string
 func (storage *LocalStagesStorage) RmManagedImage(projectName, imageName string) error {
 	logboek.Debug.LogF("-- LocalStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
 
-	fullImageName := makeConfigImageRecordImageName(projectName, imageName)
+	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -105,7 +113,7 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 	logboek.Debug.LogF("-- LocalStagesStorage.GetManagedImages %s\n", projectName)
 
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(image.ManagedImageRecord_ImageNameFormat, projectName))
+	filterSet.Add("reference", fmt.Sprintf(LocalManagedImageRecord_ImageNameFormat, projectName))
 
 	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -128,7 +136,10 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 }
 
 func (storage *LocalStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
-	filterSet := localStagesStorageFilterSetBase(projectName)
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", fmt.Sprintf(LocalImageStageImageNameFormat, projectName))
+	// NOTE signature already depends on build-cache-version
+	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
 
 	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -228,7 +239,7 @@ loop:
 
 func localStagesStorageFilterSetBase(projectName string) filters.Args {
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(image.LocalImageStageImageNameFormat, projectName))
+	filterSet.Add("reference", fmt.Sprintf(LocalImageStageImageNameFormat, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfLabel, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, image.BuildCacheVersion))
 	return filterSet

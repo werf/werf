@@ -24,7 +24,7 @@ func (runtime *LocalDockerServerRuntime) ExportBuiltImage(image Image) error {
 	return nil
 }
 
-// StoreBuiltImage is only available for LocalDockerServerRuntime
+// TagBuiltImageByName is only available for LocalDockerServerRuntime
 func (runtime *LocalDockerServerRuntime) TagBuiltImageByName(image Image) error {
 	dockerImage := image.(*DockerImage)
 
