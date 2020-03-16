@@ -2,40 +2,49 @@ package cleaning
 
 import (
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 )
 
 type ImagesPurgeOptions struct {
-	ImagesRepoManager ImagesRepoManager
-	ImagesNames       []string
-	DryRun            bool
+	ImageNameList []string
+	DryRun        bool
 }
 
-func ImagesPurge(options ImagesPurgeOptions) error {
+func ImagesPurge(imagesRepo storage.ImagesRepo, options ImagesPurgeOptions) error {
+	m := newImagesPurgeManager(imagesRepo, options)
+
 	return logboek.Default.LogProcess(
 		"Running images purge",
 		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			return imagesPurge(options)
-		},
+		m.run,
 	)
 }
 
-func imagesPurge(options ImagesPurgeOptions) error {
-	commonRepoOptions := CommonRepoOptions{
-		ImagesRepoManager: options.ImagesRepoManager,
-		ImagesNames:       options.ImagesNames,
-		DryRun:            options.DryRun,
+func newImagesPurgeManager(imagesRepo storage.ImagesRepo, options ImagesPurgeOptions) *imagesPurgeManager {
+	return &imagesPurgeManager{
+		ImagesRepo:    imagesRepo,
+		ImageNameList: options.ImageNameList,
+		DryRun:        options.DryRun,
 	}
+}
 
-	imageImages, err := repoImages(commonRepoOptions)
+type imagesPurgeManager struct {
+	ImagesRepo    storage.ImagesRepo
+	ImageNameList []string
+	DryRun        bool
+}
+
+func (m *imagesPurgeManager) run() error {
+	repoImageList, err := imagesRepoImageList(m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
 
-	err = repoImagesRemove(imageImages, commonRepoOptions)
-	if err != nil {
-		return err
-	}
+	return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageList...)
+}
 
-	return nil
+func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, repoImageList ...*image.Info) error {
+	return deleteRepoImage(imagesRepo.DeleteRepoImage, storage.DeleteRepoImageOptions{}, dryRun, repoImageList...)
 }
