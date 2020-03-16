@@ -82,7 +82,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -130,8 +130,10 @@ func runCleanup() error {
 	if err != nil {
 		return err
 	}
-	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
-	_ = imagesRepo // FIXME
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	if err != nil {
+		return err
+	}
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -173,33 +175,23 @@ func runCleanup() error {
 		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
 	}
 
-	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
-		CommonRepoOptions: cleaning.CommonRepoOptions{
-			ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
-			ImagesNames:       imagesNames,
-			DryRun:            *commonCmdData.DryRun,
-		},
-		LocalGit:                  localGitRepo,
-		KubernetesContextsClients: kubernetesContextsClients,
-		WithoutKube:               *commonCmdData.WithoutKube,
-		Policies:                  policies,
-	}
-
-	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
-		StagesStorage:     stagesStorage,
-		ImagesNames:       imagesNames,
-		DryRun:            *commonCmdData.DryRun,
-	}
-
 	cleanupOptions := cleaning.CleanupOptions{
-		StagesCleanupOptions: stagesCleanupOptions,
-		ImagesCleanupOptions: imagesCleanupOptions,
+		ImagesCleanupOptions: cleaning.ImagesCleanupOptions{
+			ImageNameList:             imagesNames,
+			LocalGit:                  localGitRepo,
+			KubernetesContextsClients: kubernetesContextsClients,
+			WithoutKube:               *commonCmdData.WithoutKube,
+			Policies:                  policies,
+			DryRun:                    *commonCmdData.DryRun,
+		},
+		StagesCleanupOptions: cleaning.StagesCleanupOptions{
+			ImageNameList: imagesNames,
+			DryRun:        *commonCmdData.DryRun,
+		},
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(projectName, imagesRepo, stagesStorage, cleanupOptions); err != nil {
 		return err
 	}
 

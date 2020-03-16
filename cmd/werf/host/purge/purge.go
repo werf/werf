@@ -10,9 +10,8 @@ import (
 	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/host_cleaning"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -54,8 +53,6 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
-	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -74,17 +71,13 @@ func runReset() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
-		return err
-	}
-
 	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
 	logboek.LogOptionalLn()
-	hostPurgeOptions := cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
-	if err := cleaning.HostPurge(hostPurgeOptions); err != nil {
+	hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
+	if err := host_cleaning.HostPurge(hostPurgeOptions); err != nil {
 		return err
 	}
 

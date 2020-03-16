@@ -241,7 +241,12 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 			tag = commonTag
 		}
 
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutRegistry, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      c.ImagesRepo,
+			Name:            imageName,
+			Tag:             tag,
+			WithoutRegistry: withoutRegistry,
+		}
 		images = append(images, d)
 	}
 

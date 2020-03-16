@@ -89,7 +89,14 @@ func runLint() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
+	projectName := werfConfig.Meta.Project
+
 	imagesRepoManager, err := storage.GetImagesRepoManager("REPO", storage.MultirepoImagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
 	if err != nil {
 		return err
 	}
@@ -106,7 +113,12 @@ func runLint() error {
 		imagesNames = append(imagesNames, imageConfig.Name)
 	}
 	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: true, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      imagesRepo,
+			Name:            imageName,
+			Tag:             tag,
+			WithoutRegistry: true,
+		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 

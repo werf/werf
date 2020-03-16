@@ -347,7 +347,7 @@ func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, i
 		return nil
 	})
 
-	i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
+	i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.Name)
 	stg.SetImage(i)
 
 	if err := logboek.Info.LogProcess(
@@ -604,9 +604,9 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		if imgInfo != nil {
 			logboek.Default.LogF(
 				"Discarding newly built image for stage %q by signature %s: detected already existing image %s in the stages storage\n",
-				stg.Name(), stg.GetSignature(), imgInfo.ImageName,
+				stg.Name(), stg.GetSignature(), imgInfo.Name,
 			)
-			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
+			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.Name)
 			stg.SetImage(i)
 
 			if err := logboek.Info.LogProcess(
@@ -647,12 +647,12 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		return err
 	}
 
-	imagesDescs = append(imagesDescs, &image.Info{
-		Signature:         stg.GetSignature(),
-		ImageName:         stageImage.Name(),
-		Labels:            stageImage.Labels(),
-		CreatedAtUnixNano: stageImage.CreatedAtUnixNano(),
-	})
+	imageDesc := image.Info{
+		Name:   stageImage.Name(),
+		Labels: stageImage.Labels(),
+	}
+	imageDesc.SetCreatedAtUnixNano(stageImage.CreatedAtUnixNano())
+	imagesDescs = append(imagesDescs, &imageDesc)
 	return phase.atomicStoreStageCache(string(stg.Name()), stg.GetSignature(), imagesDescs)
 }
 
@@ -666,7 +666,7 @@ func (phase *BuildPhase) generateUniqStageImageName(signature string, imagesDesc
 		imageName = fmt.Sprintf(image.LocalImageStageImageFormat, phase.Conveyor.projectName(), signature, uniqueID)
 
 		for _, imgInfo := range imagesDescs {
-			if imgInfo.ImageName == imageName {
+			if imgInfo.Name == imageName {
 				continue
 			}
 		}
