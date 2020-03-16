@@ -248,14 +248,17 @@ func (i *StageImage) Export(name string) error {
 		return err
 	}
 
+	defer func() {
+		if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
+			return docker.CliRmi(name)
+		}); err != nil {
+			// TODO: errored image state
+			logboek.Error.LogF("Unable to remote temporary image %q: %s", name, err)
+		}
+	}()
+
 	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LevelLogProcessOptions{}, func() error {
 		return docker.CliPushWithRetries(name)
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
-		return docker.CliRmi(name)
 	}); err != nil {
 		return err
 	}
