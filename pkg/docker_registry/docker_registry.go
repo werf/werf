@@ -1,20 +1,17 @@
 package docker_registry
 
 import (
-	image2 "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/image"
 )
 
 type DockerRegistry interface {
 	Tags(reference string) ([]string, error)
-	List(reference string) ([]*image2.Info, error)
-	Select(reference string, f func(*image2.Info) bool) ([]*image2.Info, error)
-	DeleteImage(*image2.Info) error
+	GetRepoImage(reference string) (*image.Info, error)
+	GetRepoImageList(reference string) ([]*image.Info, error)
+	SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error)
+	DeleteRepoImage(repoImageList ...*image.Info) error
 }
 
-/*
-TODO: функция-фабрика
-TODO: по общим параметрам определяет хранилище, выдает ошибку или конкретную реализацию
-*/
-func NewDockerRegistry(dockerRegistryAddress string) (DockerRegistry, error) {
-	return nil, nil
+func NewDockerRegistry(_ string) (DockerRegistry, error) {
+	return &Default{}, nil
 }

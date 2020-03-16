@@ -14,7 +14,6 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -42,8 +41,6 @@ Currently supported only GitLab CI`,
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
-	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -104,10 +101,6 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	dockerConfig, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
 	if err != nil {
 		return fmt.Errorf("unable to create tmp docker config: %s", err)
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
-		return err
 	}
 
 	// Init with new docker config dir

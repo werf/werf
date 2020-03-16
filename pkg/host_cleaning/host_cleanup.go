@@ -1,4 +1,4 @@
-package cleaning
+package host_cleaning
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
+
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/tmp_manager"
 )

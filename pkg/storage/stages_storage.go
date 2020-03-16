@@ -13,7 +13,7 @@ const (
 
 type StagesStorage interface {
 	GetRepoImages(projectName string) ([]*image.Info, error)
-	DeleteRepoImage(options DeleteImageOptions, imageInfo ...*image.Info) error
+	DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
 	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
 
@@ -29,10 +29,11 @@ type StagesStorage interface {
 	String() string
 }
 
-type DeleteImageOptions struct {
-	SkipUsedImages bool
-	RmiForce       bool
-	RmForce        bool
+type DeleteRepoImageOptions struct {
+	RmiForce                 bool
+	SkipUsedImage            bool
+	RmForce                  bool
+	RmContainersThatUseImage bool
 }
 
 func NewStagesStorage(stagesStorageAddress string) (StagesStorage, error) {
