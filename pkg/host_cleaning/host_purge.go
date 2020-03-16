@@ -1,4 +1,4 @@
-package cleaning
+package host_cleaning
 
 import (
 	"fmt"

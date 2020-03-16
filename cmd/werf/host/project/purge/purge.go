@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -70,7 +71,7 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: false, SkipTlsVerifyRegistry: false}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -78,22 +79,19 @@ func run(projectNames ...string) error {
 		return err
 	}
 
+	stagesStorage := storage.NewLocalStagesStorage() // FIXME
+
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
 		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
 		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
 			stagesPurgeOptions := cleaning.StagesPurgeOptions{
-				ProjectName:                   projectName,
 				RmContainersThatUseWerfImages: cmdData.Force,
 				DryRun:                        *commonCmdData.DryRun,
 			}
 
-			if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
-				return err
-			}
-
-			return nil
+			return cleaning.StagesPurge(projectName, stagesStorage, stagesPurgeOptions)
 		}); err != nil {
 			return err
 		}

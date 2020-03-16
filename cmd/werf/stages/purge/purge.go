@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -70,7 +71,7 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -94,7 +95,7 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	_, err = common.GetStagesStorageAddress(&commonCmdData)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -104,16 +105,16 @@ func runPurge() error {
 		return err
 	}
 
-	stagesPurgeOptions := cleaning.StagesPurgeOptions{
-		ProjectName:                   projectName,
-		DryRun:                        *commonCmdData.DryRun,
-		RmContainersThatUseWerfImages: cmdData.Force,
-	}
-
-	logboek.LogOptionalLn()
-	if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	stagesPurgeOptions := cleaning.StagesPurgeOptions{
+		RmContainersThatUseWerfImages: cmdData.Force,
+		DryRun:                        *commonCmdData.DryRun,
+	}
+
+	logboek.LogOptionalLn()
+	return cleaning.StagesPurge(projectName, stagesStorage, stagesPurgeOptions)
 }
