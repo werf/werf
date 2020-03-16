@@ -86,7 +86,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -104,24 +104,31 @@ func runGetServiceValues() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	imagesRepo, err := common.GetOptionalImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
+	projectName := werfConfig.Meta.Project
+
+	imagesRepoAddress, err := common.GetOptionalImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
 	withoutRepo := true
-	if imagesRepo != "" {
+	if imagesRepoAddress != "" {
 		withoutRepo = false
 	}
 
-	imagesRepo = helm_common.GetImagesRepoAddressOrStub(imagesRepo)
+	imagesRepoAddress = helm_common.GetImagesRepoAddressOrStub(imagesRepoAddress)
 
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
 	if err != nil {
 		return err
 	}
@@ -157,11 +164,16 @@ func runGetServiceValues() error {
 		imagesNames = append(imagesNames, imageConfig.Name)
 	}
 	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      imagesRepo,
+			Name:            imageName,
+			Tag:             tag,
+			WithoutRegistry: withoutRepo,
+		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(projectName, imagesRepoManager, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

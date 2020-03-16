@@ -107,7 +107,9 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	optionalImagesRepo, err := common.GetOptionalImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
+	projectName := werfConfig.Meta.Project
+
+	optionalImagesRepo, err := common.GetOptionalImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -117,14 +119,19 @@ func runRender(outputFilePath string) error {
 		withoutImagesRepo = false
 	}
 
-	imagesRepo := helm_common.GetImagesRepoAddressOrStub(optionalImagesRepo)
+	imagesRepoAddress := helm_common.GetImagesRepoAddressOrStub(optionalImagesRepo)
 
 	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return err
+	}
+
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
 	if err != nil {
 		return err
 	}
@@ -165,7 +172,12 @@ func runRender(outputFilePath string) error {
 		imagesNames = append(imagesNames, imageConfig.Name)
 	}
 	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutImagesRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      imagesRepo,
+			Tag:             tag,
+			Name:            imageName,
+			WithoutRegistry: withoutImagesRepo,
+		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
