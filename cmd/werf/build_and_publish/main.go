@@ -114,7 +114,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -160,7 +160,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	if err != nil {
 		return err
 	}
-	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	if err != nil {
+		return err
+	}
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {

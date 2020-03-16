@@ -41,6 +41,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupStagesStorage(&commonCmdData, cmd)
 	common.SetupImagesRepo(&commonCmdData, cmd)
 	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
@@ -64,7 +65,7 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -88,6 +89,21 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+	_ = stagesStorageCache // FIXME
+
+	storageLockManager := &storage.FileLockManager{}
+	_ = storageLockManager // FIXME
+
 	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
@@ -100,26 +116,24 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
-	_ = imagesRepo // FIXME
-
-	var imageNames []string
-	for _, image := range werfConfig.StapelImages {
-		imageNames = append(imageNames, image.Name)
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	if err != nil {
+		return err
 	}
 
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imageNames = append(imageNames, image.Name)
+	imageNameList, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	if err != nil {
+		return err
 	}
+	logboek.Debug.LogF("Managed images names: %v\n", imageNameList)
 
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
-		ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
-		ImagesNames:       imageNames,
-		DryRun:            *commonCmdData.DryRun,
+		ImageNameList: imageNameList,
+		DryRun:        *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesPurge(imagesPurgeOptions); err != nil {
+	if err := cleaning.ImagesPurge(imagesRepo, imagesPurgeOptions); err != nil {
 		return err
 	}
 

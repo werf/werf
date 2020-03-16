@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 )
@@ -263,7 +261,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
 	imageTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
 
-	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, imageName, imageTag, lastStageImage)
+	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageTag, lastStageImage)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.GetName(), err)
 	}
@@ -356,7 +354,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, imageName, imageTag string, lastStageImage image.ImageInterface) (bool, error) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageTag string, lastStageImage image.ImageInterface) (bool, error) {
 	if !util.IsStringsContainValue(existingTags, imageTag) {
 		return false, nil
 	}
@@ -364,14 +362,19 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 	var parentID string
 	var err error
 	getImageParentIDFunc := func() error {
-		parentID, err = docker_registry.ImageParentId(imageName)
-		return err
+		repoImage, err := phase.ImagesRepo.GetRepoImage(werfImageName, imageTag)
+		if err != nil {
+			return err
+		}
+
+		parentID = repoImage.ParentID
+		return nil
 	}
 
 	logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", imageTag)
 	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageParentIDFunc)
 	if err != nil {
-		return false, fmt.Errorf("unable to get image %s parent id: %s", imageName, err)
+		return false, fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
 	return lastStageImage.ID() == parentID, nil
