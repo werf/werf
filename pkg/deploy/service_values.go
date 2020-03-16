@@ -90,7 +90,7 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 				logboek.Debug.LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
 			}
 
-			imageID, err := image.GetImageId()
+			imageID, err := image.GetImageID()
 			if err != nil {
 				return nil, err
 			}
