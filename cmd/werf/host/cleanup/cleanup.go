@@ -73,7 +73,10 @@ func runGC() error {
 		return err
 	}
 
-	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
+	if err := docker_registry.Init(docker_registry.APIOptions{
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+	}); err != nil {
 		return err
 	}
 

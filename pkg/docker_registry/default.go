@@ -10,18 +10,36 @@ type Default struct {
 	*api
 }
 
-func NewDefault() *Default {
+func NewDefault(options APIOptions) *Default {
 	d := &Default{}
-	d.api = newAPI(false, false) // TODO
+	d.api = newAPI(options)
 	return d
 }
 
-func (r *Default) GetRepoImageList(_ string) ([]*image.Info, error) {
-	return nil, nil
+func (r *Default) GetRepoImageList(reference string) ([]*image.Info, error) {
+	return r.SelectRepoImageList(reference, func(_ *image.Info) bool { return true })
 }
 
-func (r *Default) SelectRepoImageList(_ string, f func(*image.Info) bool) ([]*image.Info, error) {
-	return nil, nil
+func (r *Default) SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error) {
+	tags, err := r.api.Tags(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	var repoImageList []*image.Info
+	for _, tag := range tags {
+		ref := strings.Join([]string{reference, tag}, ":")
+		repoImage, err := r.GetRepoImage(ref)
+		if err != nil {
+			return nil, err
+		}
+
+		if f(repoImage) {
+			repoImageList = append(repoImageList, repoImage)
+		}
+	}
+
+	return repoImageList, nil
 }
 
 func (r *Default) DeleteRepoImage(repoImageList ...*image.Info) error {
