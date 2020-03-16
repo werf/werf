@@ -11,7 +11,6 @@ import (
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
 )
 
 func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
@@ -33,7 +32,6 @@ func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) e
 }
 
 func werfImagesByFilterSet(filterSet filters.Args) ([]types.ImageSummary, error) {
-	filterSet.Add("label", image.WerfLabel)
 	options := types.ImageListOptions{Filters: filterSet}
 	return docker.Images(options)
 }
@@ -101,14 +99,12 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 		if len(img.RepoTags) == 0 {
 			imageReferences = append(imageReferences, img.ID)
 		} else {
-			for ind, repoTag := range img.RepoTags {
+			for _, repoTag := range img.RepoTags {
 				isDanglingImage := repoTag == "<none>:<none>"
 				isTaglessImage := !isDanglingImage && strings.HasSuffix(repoTag, "<none>")
 
-				if isDanglingImage {
+				if isDanglingImage || isTaglessImage {
 					imageReferences = append(imageReferences, img.ID)
-				} else if isTaglessImage {
-					imageReferences = append(imageReferences, img.RepoDigests[ind])
 				} else {
 					imageReferences = append(imageReferences, repoTag)
 				}
