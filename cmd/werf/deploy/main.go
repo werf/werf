@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/flant/werf/pkg/images_manager"
 
 	"github.com/spf13/cobra"
@@ -225,7 +227,8 @@ func runDeploy() error {
 		if err != nil {
 			return err
 		}
-		stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress)
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{}
+		stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime)
 		if err != nil {
 			return err
 		}
@@ -250,7 +253,7 @@ func runDeploy() error {
 		}()
 
 		logboek.LogOptionalLn()
-		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
 		defer c.Terminate()
 
 		if err = c.ShouldBeBuilt(); err != nil {
