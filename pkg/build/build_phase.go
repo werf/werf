@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
@@ -648,7 +649,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		fmt.Sprintf("Store stage %q signature %s image %s into stages storage", stageImage.Name(), stg.GetSignature(), stageImage.Name()),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := phase.Conveyor.StagesStorage.StoreImage(container_runtime.DockerImage{stageImage}); err != nil {
+			if err := phase.Conveyor.StagesStorage.StoreImage(&container_runtime.DockerImage{stageImage}); err != nil {
 				return fmt.Errorf("unable to store stage %q signature %s image %s into stages storage %s: %s", stg.Name(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
 			}
 			return nil
@@ -673,7 +674,7 @@ func (phase *BuildPhase) generateUniqStageImageName(signature string, imagesDesc
 		timeNow := time.Now().UTC()
 		timeNowMicroseconds := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 		uniqueID := fmt.Sprintf("%d", timeNowMicroseconds)
-		imageName = fmt.Sprintf(image.LocalImageStageImageFormat, phase.Conveyor.projectName(), signature, uniqueID)
+		imageName = fmt.Sprintf(storage.LocalImageStageImageFormat, phase.Conveyor.projectName(), signature, uniqueID)
 
 		for _, imgInfo := range imagesDescs {
 			if imgInfo.Name == imageName {
