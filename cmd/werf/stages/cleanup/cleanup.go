@@ -70,7 +70,7 @@ func runSync() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -112,8 +112,10 @@ func runSync() error {
 	if err != nil {
 		return err
 	}
-	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
-	_ = imagesRepo // FIXME
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	if err != nil {
+		return err
+	}
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -137,17 +139,10 @@ func runSync() error {
 	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
-		StagesStorage:     stagesStorage,
-		ImagesNames:       imagesNames,
-		DryRun:            *commonCmdData.DryRun,
+		ImageNameList: imagesNames,
+		DryRun:        *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
-		return err
-	}
-
-	return nil
+	return cleaning.StagesCleanup(projectName, imagesRepo, stagesStorage, stagesCleanupOptions)
 }

@@ -77,7 +77,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -127,8 +127,10 @@ func runCleanup() error {
 	if err != nil {
 		return err
 	}
-	imagesRepo := storage.NewDockerImagesRepo(projectName, imagesRepoManager)
-	_ = imagesRepo // FIXME
+	imagesRepo, err := storage.NewImagesRepo(projectName, imagesRepoManager)
+	if err != nil {
+		return err
+	}
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -172,19 +174,16 @@ func runCleanup() error {
 	}
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
-		CommonRepoOptions: cleaning.CommonRepoOptions{
-			ImagesRepoManager: imagesRepoManager, // FIXME: use imagesRepo only
-			ImagesNames:       imagesNames,
-			DryRun:            *commonCmdData.DryRun,
-		},
+		ImageNameList:             imagesNames,
 		LocalGit:                  localRepo,
 		KubernetesContextsClients: kubernetesContextsClients,
 		WithoutKube:               *commonCmdData.WithoutKube,
 		Policies:                  policies,
+		DryRun:                    *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesCleanup(imagesCleanupOptions); err != nil {
+	if err := cleaning.ImagesCleanup(imagesRepo, imagesCleanupOptions); err != nil {
 		return err
 	}
 

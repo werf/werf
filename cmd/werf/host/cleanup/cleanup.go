@@ -10,9 +10,9 @@ import (
 	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/host_cleaning"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -73,7 +73,7 @@ func runGC() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := docker_registry.Init(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry); err != nil {
 		return err
 	}
 
@@ -82,8 +82,8 @@ func runGC() error {
 	}
 
 	logboek.LogOptionalLn()
-	hostCleanupOptions := cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
-	if err := cleaning.HostCleanup(hostCleanupOptions); err != nil {
+	hostCleanupOptions := host_cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
+	if err := host_cleaning.HostCleanup(hostCleanupOptions); err != nil {
 		return err
 	}
 
