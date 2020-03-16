@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
@@ -165,11 +166,11 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 		return "", cachedBaseImagesRepoErr
 	}
 
-	var fetchedBaseImageRepoId string
+	var fetchedBaseRepoImage *image.Info
 	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
 	if err := logboek.Info.LogProcessInline(processMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
 		var fetchImageIdErr error
-		fetchedBaseImageRepoId, fetchImageIdErr = docker_registry.ImageId(baseImageName)
+		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(baseImageName)
 		if fetchImageIdErr != nil {
 			c.baseImagesRepoErrCache[baseImageName] = fetchImageIdErr
 			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)
@@ -180,8 +181,8 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 		return "", err
 	}
 
-	i.baseImageRepoId = fetchedBaseImageRepoId
-	c.baseImagesRepoIdsCache[baseImageName] = fetchedBaseImageRepoId
+	i.baseImageRepoId = fetchedBaseRepoImage.ID
+	c.baseImagesRepoIdsCache[baseImageName] = i.baseImageRepoId
 
 	return i.baseImageRepoId, nil
 }
