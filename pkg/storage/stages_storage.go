@@ -11,6 +11,7 @@ import (
 
 const (
 	LocalStagesStorageAddress = ":local"
+	NamelessImageRecordTag    = "__nameless__"
 )
 
 type StagesStorage interface {

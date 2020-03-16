@@ -38,6 +38,25 @@ func (api *api) Tags(reference string) ([]string, error) {
 	return tags, nil
 }
 
+func (api *api) IsRepoImageExists(reference string) (bool, error) {
+	if imgInfo, err := api.TryGetRepoImage(reference); err != nil {
+		return false, err
+	} else {
+		return imgInfo != nil, nil
+	}
+}
+
+func (api *api) TryGetRepoImage(reference string) (*image.Info, error) {
+	if imgInfo, err := api.GetRepoImage(reference); err != nil {
+		if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
+			return imgInfo, nil
+		}
+		return imgInfo, err
+	} else {
+		return imgInfo, nil
+	}
+}
+
 func (api *api) GetRepoImage(reference string) (*image.Info, error) {
 	imageInfo, _, err := api.image(reference)
 	if err != nil {
