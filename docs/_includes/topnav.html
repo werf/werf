@@ -27,7 +27,7 @@
                             {%- if folder.url.size>1 and page.url == '/publications_ru.html'
                             and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
                             {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
-                            {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
+                            {%- if folder.title == 'Документация' or folder.title == 'Documentation' or folder.title == 'Installation' or folder.title == 'Установка' %}
                             <a href="{{ site.baseurl}}{{ folder.url }}">{{ folder.title }}</a>
                             {%- else %}
                             <a href="{{ folder.url }}">{{ folder.title }}</a>

@@ -26,7 +26,7 @@ layout: default
 
 <div class="releases__menu">
 {%- for channel in channels_sorted_reverse %}
-{%- assign channel_latest_versions = site.data.releases_history.latest | where: "name",  channel.name | first| map: "versions" | first| default: nil %}
+{%- assign channel_latest_versions = site.data.releases_history.latest | where: "name",  channel.name | first| map: "versions" | first | reverse | default: nil %}
     <div class="releases__menu-item">
         <div class="releases__menu-item-header">            
             <div class="releases__menu-item-title">
