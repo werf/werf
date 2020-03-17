@@ -14,8 +14,8 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
@@ -249,7 +249,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image image.ImageInterface) error {
+func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image container_runtime.ImageInterface) error {
 	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return err
@@ -269,8 +269,8 @@ func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image image.ImageInterfa
 	return nil
 }
 
-func (gm *GitMapping) GetCommitsToPatch(prevBuiltImage image.ImageInterface) (string, string, error) {
-	fromCommit := gm.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
+func (gm *GitMapping) GetCommitsToPatch(prevBuiltImage container_runtime.ImageInterface) (string, string, error) {
+	fromCommit := gm.GetGitCommitFromImageLabels(prevBuiltImage.GetImageInfo().Labels)
 	if fromCommit == "" {
 		panic("Commit should be in prev built image labels!")
 	}
@@ -283,7 +283,7 @@ func (gm *GitMapping) GetCommitsToPatch(prevBuiltImage image.ImageInterface) (st
 	return fromCommit, toCommit, nil
 }
 
-func (gm *GitMapping) AddGitCommitToImageLabels(image image.ImageInterface, commit string) {
+func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInterface, commit string) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		gm.ImageGitCommitLabel(): commit,
 	})
@@ -302,8 +302,8 @@ func (gm *GitMapping) ImageGitCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-commit", gm.GetParamshash())
 }
 
-func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.ImageInterface) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[gm.getArchiveTypeLabelName()])
+func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
+	archiveType := git_repo.ArchiveType(prevBuiltImage.GetImageInfo().Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
@@ -469,7 +469,7 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyArchiveCommand(image image.ImageInterface) error {
+func (gm *GitMapping) ApplyArchiveCommand(image container_runtime.ImageInterface) error {
 	commit, err := gm.LatestCommit()
 	if err != nil {
 		return err
@@ -489,7 +489,7 @@ func (gm *GitMapping) ApplyArchiveCommand(image image.ImageInterface) error {
 	return nil
 }
 
-func (gm *GitMapping) applyScript(image image.ImageInterface, commands []string) error {
+func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, commands []string) error {
 	stageHostTmpScriptFilePath := filepath.Join(gm.ScriptsDir, gm.GetParamshash())
 	containerTmpScriptFilePath := path.Join(gm.ContainerScriptsDir, gm.GetParamshash())
 
@@ -502,7 +502,7 @@ func (gm *GitMapping) applyScript(image image.ImageInterface, commands []string)
 	return nil
 }
 
-func (gm *GitMapping) baseApplyArchiveCommand(commit string, image image.ImageInterface) ([]string, error) {
+func (gm *GitMapping) baseApplyArchiveCommand(commit string, image container_runtime.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
 		Commit:        commit,
@@ -649,7 +649,7 @@ func formatParamshashPaths(paths ...string) []string {
 	return resultPaths
 }
 
-func (gm *GitMapping) GetPatchContent(prevBuiltImage image.ImageInterface) (string, error) {
+func (gm *GitMapping) GetPatchContent(prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return "", err
@@ -675,7 +675,7 @@ func (gm *GitMapping) GetPatchContent(prevBuiltImage image.ImageInterface) (stri
 	return string(data), nil
 }
 
-func (gm *GitMapping) IsPatchEmpty(prevBuiltImage image.ImageInterface) (bool, error) {
+func (gm *GitMapping) IsPatchEmpty(prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return false, err

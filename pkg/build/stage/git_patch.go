@@ -3,7 +3,7 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/container_runtime"
 )
 
 type NewGitPatchStageOptions struct {
@@ -39,7 +39,7 @@ type GitPatchStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
+func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	if empty, err := s.willGitLatestCommitBeBuiltOnPrevGitStage(c); err != nil {
 		return false, err
 	} else if empty {
@@ -70,9 +70,9 @@ func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bo
 	return false, nil
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage image.ImageInterface) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetImageInfo().Labels)
 		latestCommit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return false, err
@@ -86,7 +86,7 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage ima
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Ima
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	for _, gitMapping := range s.gitMappings {
 		if err := gitMapping.ApplyPatchCommand(prevBuiltImage, image); err != nil {
 			return err

@@ -101,7 +101,7 @@ func (m *stagesCleanupManager) run() error {
 		var repoImageListToExcept []*image.Info
 		if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
 			for _, repoImage := range stagesRepoImageList {
-				if time.Now().Unix()-repoImage.CreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
+				if time.Now().Unix()-repoImage.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
 					repoImageListToExcept = append(repoImageListToExcept, repoImage)
 				}
 			}

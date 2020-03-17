@@ -44,7 +44,7 @@ func (phase *ShouldBeBuiltPhase) ImageProcessingShouldBeStopped(img *Image) bool
 }
 
 func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
-	if !stg.GetImage().IsExists() {
+	if stg.GetImage().GetImageInfo() == nil {
 		phase.BadStagesByImage[img.GetName()] = append(phase.BadStagesByImage[img.GetName()], stg)
 	}
 	return true, nil

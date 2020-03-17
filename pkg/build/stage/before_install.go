@@ -3,7 +3,7 @@ package stage
 import (
 	"github.com/flant/werf/pkg/build/builder"
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/container_runtime"
 )
 
 func GenerateBeforeInstallStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
@@ -25,11 +25,11 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	return s.builder.BeforeInstallChecksum(), nil
 }
 
-func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
