@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -29,7 +29,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -59,7 +59,7 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

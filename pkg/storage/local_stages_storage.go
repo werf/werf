@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/example/stringutil"
+
 	"github.com/flant/werf/pkg/container_runtime"
 
 	"github.com/flant/logboek"
@@ -16,9 +18,9 @@ import (
 )
 
 const (
-	LocalImageStageImageNamePrefix = "werf-stages-storage/"
-	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
-	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s-%s"
+	LocalStage_ImageRepoPrefix = "werf-stages-storage/"
+	LocalStage_ImageRepoFormat = "werf-stages-storage/%s"
+	LocalStage_ImageFormat     = "werf-stages-storage/%s:%s-%s"
 
 	LocalManagedImageRecord_ImageNamePrefix = "werf-managed-images/"
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
@@ -26,14 +28,16 @@ const (
 )
 
 type LocalStagesStorage struct {
-	StagesStorage // FIXME
-
 	// Local stages storage is compatible only with docker-server backed runtime
 	LocalDockerServerRuntime *container_runtime.LocalDockerServerRuntime
 }
 
 func NewLocalStagesStorage(localDockerServerRuntime *container_runtime.LocalDockerServerRuntime) *LocalStagesStorage {
 	return &LocalStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
+}
+
+func (storage *LocalStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
+	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
 func (storage *LocalStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
@@ -72,6 +76,16 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 		tag = NamelessImageRecordTag
 	}
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
+}
+
+func (storage *LocalStagesStorage) GetImageInfo(stageImageName string) (*image.Info, error) {
+	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(stageImageName); err != nil {
+		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
+	} else if inspect != nil {
+		return image.NewInfoFromInspect(stageImageName, inspect), nil
+	} else {
+		return nil, nil
+	}
 }
 
 func (storage *LocalStagesStorage) AddManagedImage(projectName, imageName string) error {
@@ -123,7 +137,7 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 	res := []string{}
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
-			tag := strings.SplitN(repoTag, ":", 2)[1]
+			tag := stringutil.Reverse(strings.SplitN(stringutil.Reverse(repoTag), ":", 2)[1])
 
 			if tag == NamelessImageRecordTag {
 				res = append(res, "")
@@ -137,7 +151,7 @@ func (storage *LocalStagesStorage) GetManagedImages(projectName string) ([]strin
 
 func (storage *LocalStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(LocalImageStageImageNameFormat, projectName))
+	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE signature already depends on build-cache-version
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
 
@@ -150,8 +164,16 @@ func (storage *LocalStagesStorage) GetRepoImagesBySignature(projectName, signatu
 	return repoImages, nil
 }
 
+func (storage *LocalStagesStorage) FetchImage(image container_runtime.Image) error {
+	return nil
+}
+
 func (storage *LocalStagesStorage) StoreImage(image container_runtime.Image) error {
 	return storage.LocalDockerServerRuntime.TagBuiltImageByName(image)
+}
+
+func (storage *LocalStagesStorage) CleanupLocalImage(image container_runtime.Image) error {
+	return nil
 }
 
 func (storage *LocalStagesStorage) String() string {
@@ -239,7 +261,7 @@ loop:
 
 func localStagesStorageFilterSetBase(projectName string) filters.Args {
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(LocalImageStageImageNameFormat, projectName))
+	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfLabel, projectName))
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, image.BuildCacheVersion))
 	return filterSet
@@ -270,9 +292,9 @@ func convertToRepoImageList(imageSummaryList []types.ImageSummary) (repoImageLis
 		}
 
 		for _, repoTag := range repoTags {
-			parts := strings.SplitN(repoTag, ":", 2)
-			repository := parts[0]
-			tag := parts[1]
+			parts := strings.SplitN(stringutil.Reverse(repoTag), ":", 2)
+			repository := stringutil.Reverse(parts[0])
+			tag := stringutil.Reverse(parts[1])
 
 			repoImage := &image.Info{
 				Repository: repository,
@@ -281,6 +303,7 @@ func convertToRepoImageList(imageSummaryList []types.ImageSummary) (repoImageLis
 				ParentID:   imageSummary.ParentID,
 				Name:       repoTag,
 				Labels:     imageSummary.Labels,
+				Size:       imageSummary.Size,
 			}
 
 			repoImage.SetCreatedAtUnix(imageSummary.Created)

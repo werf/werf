@@ -59,7 +59,7 @@ func (r *defaultImplementation) DeleteRepoImage(repoImageList ...*image.Info) er
 }
 
 func (r *defaultImplementation) deleteRepoImage(repoImage *image.Info) error {
-	reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
+	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
 	return r.api.deleteImageByReference(reference)
 }
 

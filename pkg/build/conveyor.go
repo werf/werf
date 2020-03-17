@@ -25,7 +25,6 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/path_matcher"
@@ -51,11 +50,10 @@ type Conveyor struct {
 
 	imagesInOrder []*Image
 
-	stageImages                     map[string]*image.StageImage
+	stageImages                     map[string]*container_runtime.StageImage
 	buildingGitStageNameByImageName map[string]stage.StageName
 	localGitRepo                    *git_repo.Local
 	remoteGitRepos                  map[string]*git_repo.Remote
-	imagesBySignature               map[string]image.ImageInterface
 
 	tmpDir string
 
@@ -81,12 +79,11 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		sshAuthSock: sshAuthSock,
 
-		stageImages:                     make(map[string]*image.StageImage),
+		stageImages:                     make(map[string]*container_runtime.StageImage),
 		gitReposCaches:                  make(map[string]*stage.GitRepoCache),
 		baseImagesRepoIdsCache:          make(map[string]string),
 		baseImagesRepoErrCache:          make(map[string]error),
 		imagesInOrder:                   []*Image{},
-		imagesBySignature:               make(map[string]image.ImageInterface),
 		buildingGitStageNameByImageName: make(map[string]stage.StageName),
 		remoteGitRepos:                  make(map[string]*git_repo.Remote),
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
@@ -526,7 +523,7 @@ func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *image.StageImage {
+func (c *Conveyor) GetStageImage(name string) *container_runtime.StageImage {
 	return c.stageImages[name]
 }
 
@@ -534,28 +531,18 @@ func (c *Conveyor) UnsetStageImage(name string) {
 	delete(c.stageImages, name)
 }
 
-func (c *Conveyor) SetStageImage(stageImage *image.StageImage) {
+func (c *Conveyor) SetStageImage(stageImage *container_runtime.StageImage) {
 	c.stageImages[stageImage.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *image.StageImage, name string) *image.StageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.StageImage, name string) *container_runtime.StageImage {
 	if img, ok := c.stageImages[name]; ok {
 		return img
 	}
 
-	img := image.NewStageImage(fromImage, name)
+	img := container_runtime.NewStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 	c.stageImages[name] = img
 	return img
-}
-
-// imagesBySignature needed only for Build phase to detect that image object has already been prepared
-// with build instructions. Image should never be prepared multiple times.
-func (c *Conveyor) GetImageBySignature(signature string) image.ImageInterface {
-	return c.imagesBySignature[signature]
-}
-
-func (c *Conveyor) SetImageBySignature(signature string, img image.ImageInterface) {
-	c.imagesBySignature[signature] = img
 }
 
 func (c *Conveyor) GetImage(name string) *Image {
@@ -577,7 +564,7 @@ func (c *Conveyor) GetImageLastStageImageName(imageName string) string {
 }
 
 func (c *Conveyor) GetImageLastStageImageID(imageName string) string {
-	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().ID()
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().GetImageInfo().ID
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {

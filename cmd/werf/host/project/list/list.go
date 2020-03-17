@@ -103,8 +103,8 @@ func getProjects() (map[string]*projectFields, error) {
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
 			repo := strings.Split(tag, ":")[0]
-			if strings.HasPrefix(repo, storage.LocalImageStageImageNamePrefix) {
-				projectName := strings.TrimPrefix(repo, storage.LocalImageStageImageNamePrefix)
+			if strings.HasPrefix(repo, storage.LocalStage_ImageRepoPrefix) {
+				projectName := strings.TrimPrefix(repo, storage.LocalStage_ImageRepoPrefix)
 				project, exist := projects[projectName]
 				if !exist {
 					projects[projectName] = &projectFields{

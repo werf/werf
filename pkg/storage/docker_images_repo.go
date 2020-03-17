@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 )
@@ -69,7 +70,7 @@ func (repo *DockerImagesRepo) FetchExistingTags(imageName string) ([]string, err
 }
 
 // FIXME: use docker-registry object
-func (repo *DockerImagesRepo) PublishImage(publishImage *image.Image) error {
+func (repo *DockerImagesRepo) PublishImage(publishImage *container_runtime.WerfImage) error {
 	return publishImage.Export()
 }
 

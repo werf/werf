@@ -41,6 +41,7 @@ require (
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gofrs/flock v0.7.1
+	github.com/golang/example v0.0.0-20170904185048-46695d81d1fa
 	github.com/google/btree v1.0.0
 	github.com/google/go-cmp v0.3.0
 	github.com/google/go-containerregistry v0.0.0-20200227193449-ba53fa10e72c
