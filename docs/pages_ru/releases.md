@@ -12,7 +12,7 @@ layout: default
 <div class="page__container page_releases">
 
 <div class="releases__block-title">
-    Каналы обновлений
+    Каналы обновлений <a href="/feed.xml"><img src="{{ site.baseurl }}/images/icons/rss.svg"/></a>
 </div>
 
 <!-- Releases description -->
@@ -101,6 +101,7 @@ layout: default
       <div class="releases__info">
         <p>{{ channel.tooltip[page.lang] }}</p>
         <p class="releases__info-text">{{ channel.description[page.lang] }}</p>
+        <a href="/feed-{{group}}-{{ channel.name }}.xml"><img src="{{ site.baseurl }}/images/icons/rss.svg"/></a>
       </div>
   
       {%- assign group_history = site.data.releases_history.history | reverse | where: "group", group %}
