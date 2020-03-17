@@ -11,18 +11,21 @@ const (
 )
 
 type StagesStorage interface {
+	ConstructStageImageName(projectName, signature, uniqueID string) string
+
 	GetRepoImages(projectName string) ([]*image.Info, error)
 	DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
 	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
 
-	// в том числе docker pull из registry + image.SyncDockerState
-	// lock по имени image чтобы не делать 2 раза pull одновременно
-	//SyncStageImage(stageImage image.ImageInterface) error
-	//StoreStageImage(stageImage image.ImageInterface) error
+	GetImageInfo(stageImageName string) (*image.Info, error)
 
-	//FetchImage TODO
+	// FetchImage will create a local image in the container-runtime
+	FetchImage(image container_runtime.Image) error
+	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(image container_runtime.Image) error
+	// CleanupLocalImage will remove a local image from container-runtime
+	CleanupLocalImage(image container_runtime.Image) error
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error

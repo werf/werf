@@ -93,7 +93,7 @@ func (api *api) GetRepoImage(reference string) (*image.Info, error) {
 		Repository: strings.Join([]string{parsedReference.RegistryStr(), parsedReference.RepositoryStr()}, "/"),
 		ID:         manifest.Config.Digest.String(),
 		Tag:        parsedReference.TagStr(),
-		Digest:     digest.String(),
+		RepoDigest: digest.String(),
 		ParentID:   configFile.Config.Image,
 		Labels:     configFile.Config.Labels,
 	}

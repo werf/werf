@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -10,7 +11,7 @@ type ImagesRepo interface {
 	DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
 	FetchExistingTags(imageName string) ([]string, error)
-	PublishImage(publishImage *image.Image) error
+	PublishImage(publishImage *container_runtime.WerfImage) error
 
 	CreateImageRepo(imageName string) error
 	RemoveImageRepo(imageName string) error

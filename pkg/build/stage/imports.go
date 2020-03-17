@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/container_runtime"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
@@ -40,7 +41,7 @@ type ImportsStage struct {
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {
@@ -59,7 +60,7 @@ func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface)
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface) error {
+func (s *ImportsStage) PrepareImage(c Conveyor, _, image container_runtime.ImageInterface) error {
 	for _, elm := range s.imports {
 		var importImage string
 		if elm.ImageName != "" {

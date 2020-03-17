@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
@@ -43,7 +44,7 @@ func (s *GitArchiveStage) SelectCacheImage(images []*image.Info) (*image.Info, e
 	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
@@ -58,7 +59,7 @@ func (s *GitArchiveStage) GetNextStageDependencies(c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
-func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
