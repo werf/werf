@@ -1464,3 +1464,7 @@ func TerminateWithError(errMsg string, exitCode int) {
 	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
 }
+
+func GetStagesStorageCache() storage.StagesStorageCache {
+	return storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v2"))
+}

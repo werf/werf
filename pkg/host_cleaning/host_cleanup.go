@@ -11,6 +11,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
 
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/tmp_manager"
 )
@@ -60,7 +61,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
-			imageLockName := image.ImageLockName(imgName)
+			imageLockName := container_runtime.ImageLockName(imgName)
 			isLocked, err := shluz.TryLock(imageLockName, shluz.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
@@ -112,7 +113,7 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		err := func() error {
-			containerLockName := image.ContainerLockName(containerName)
+			containerLockName := container_runtime.ContainerLockName(containerName)
 			isLocked, err := shluz.TryLock(containerLockName, shluz.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)

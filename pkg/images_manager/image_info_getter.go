@@ -75,7 +75,7 @@ func (d *ImageInfo) GetImageDigest() (string, error) {
 		return "", nil
 	}
 
-	return repoImage.Digest, nil
+	return repoImage.RepoDigest, nil
 }
 
 func (d *ImageInfo) GetImageTag() string {

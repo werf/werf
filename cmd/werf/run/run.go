@@ -214,7 +214,7 @@ func runRun() error {
 		return err
 	}
 
-	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+	stagesStorageCache := common.GetStagesStorageCache()
 
 	storageLockManager := &storage.FileLockManager{}
 

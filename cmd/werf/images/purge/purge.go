@@ -96,7 +96,7 @@ func runPurge() error {
 		return err
 	}
 
-	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+	stagesStorageCache := common.GetStagesStorageCache()
 	_ = stagesStorageCache // FIXME
 
 	storageLockManager := &storage.FileLockManager{}

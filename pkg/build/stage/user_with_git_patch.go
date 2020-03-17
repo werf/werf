@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/build/builder"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -33,7 +34,7 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(c Conveyor) (string, er
 	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

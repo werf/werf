@@ -13,7 +13,6 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/storage"
@@ -155,7 +154,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
+	stagesStorageCache := common.GetStagesStorageCache()
 
 	storageLockManager := &storage.FileLockManager{}
 
@@ -186,7 +185,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: image.BuildOptions{
+			ImageBuildOptions: container_runtime.BuildOptions{
 				IntrospectAfterError:  cmdData.IntrospectAfterError,
 				IntrospectBeforeError: cmdData.IntrospectBeforeError,
 			},

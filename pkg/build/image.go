@@ -3,6 +3,8 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/fatih/color"
 
 	"github.com/flant/logboek"
@@ -11,6 +13,13 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
+)
+
+type BaseImageType string
+
+const (
+	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryBaseImage"
+	StageAsBaseImage             BaseImageType = "StageBaseImage"
 )
 
 type Image struct {
@@ -23,9 +32,12 @@ type Image struct {
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
 	contentSignature  string
-	baseImage         *image.StageImage
 	isArtifact        bool
 	isDockerfileImage bool
+
+	baseImageType    BaseImageType
+	stageAsBaseImage stage.Interface
+	baseImage        *container_runtime.StageImage
 }
 
 func (i *Image) LogName() string {
@@ -106,54 +118,63 @@ func (i *Image) GetLogName() string {
 }
 
 func (i *Image) SetupBaseImage(c *Conveyor) {
-	baseImageName := i.baseImageName
 	if i.baseImageImageName != "" {
-		baseImageName = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage().GetImage().Name()
+		i.baseImageType = StageAsBaseImage
+		i.stageAsBaseImage = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
+		i.baseImage = c.GetOrCreateStageImage(nil, i.stageAsBaseImage.GetImage().Name())
+	} else {
+		i.baseImageType = ImageFromRegistryAsBaseImage
+		i.baseImage = c.GetOrCreateStageImage(nil, i.baseImageName)
 	}
-
-	i.baseImage = c.GetOrCreateStageImage(nil, baseImageName)
 }
 
-func (i *Image) GetBaseImage() *image.StageImage {
+func (i *Image) GetBaseImage() *container_runtime.StageImage {
 	return i.baseImage
 }
 
 func (i *Image) PrepareBaseImage(c *Conveyor) error {
-	fromImage := i.stages[0].GetImage()
+	switch i.baseImageType {
+	case ImageFromRegistryAsBaseImage:
+		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
+			return err
+		}
 
-	if fromImage.IsExists() {
-		return nil
-	}
+		if i.baseImage.IsExistsLocally() {
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
+			if baseImageRepoId == i.baseImage.GetImageInfo().ID || err != nil {
+				if err != nil {
+					logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
+					logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+					logboek.Warn.LogOptionalLn()
+				}
 
-	if i.baseImageImageName != "" {
-		return nil
-	}
-
-	if i.baseImage.IsExists() {
-		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
-		if baseImageRepoId == i.baseImage.ID() || err != nil {
-			if err != nil {
-				logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-				logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-				logboek.Warn.LogOptionalLn()
+				return nil
 			}
-
-			return nil
 		}
+
+		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+		return logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
+			return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
+		})
+	case StageAsBaseImage:
+		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
+			return err
+		}
+
+		if !i.baseImage.IsExistsLocally() {
+			return logboek.Default.LogProcess(
+				fmt.Sprintf(
+					"Fetching base image %q stage %q image %s from stages storage",
+					i.baseImageImageName, i.stageAsBaseImage.Name(), i.baseImage.Name(),
+				), logboek.LevelLogProcessOptions{}, func() error {
+					return c.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: i.baseImage})
+				})
+		}
+	default:
+		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
 
-	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-	return logboek.Default.LogProcess("Pulling base image", logProcessOptions, func() error {
-		if err := i.baseImage.Pull(); err != nil {
-			return err
-		}
-
-		if err := i.baseImage.SyncDockerState(); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	return nil
 }
 
 func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string) (string, error) {

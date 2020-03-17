@@ -1,6 +1,9 @@
-package image
+package container_runtime
 
-import "github.com/docker/docker/api/types"
+import (
+	"github.com/docker/docker/api/types"
+	"github.com/flant/werf/pkg/image"
+)
 
 type BuildOptions struct {
 	IntrospectBeforeError bool
@@ -10,14 +13,6 @@ type BuildOptions struct {
 type ImageInterface interface {
 	Name() string
 	SetName(name string)
-	CreatedAtUnixNano() int64
-	Inspect() *types.ImageInspect
-	Labels() map[string]string
-	ID() string
-
-	IsExists() bool
-
-	SyncDockerState() error
 
 	Pull() error
 	Untag() error
@@ -34,6 +29,11 @@ type ImageInterface interface {
 	Export(name string) error
 
 	Introspect() error
+
+	SetInspect(inspect *types.ImageInspect)
+	IsExistsLocally() bool
+	SetImageInfo(imgInfo *image.Info)
+	GetImageInfo() *image.Info
 }
 
 type Container interface {

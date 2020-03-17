@@ -48,7 +48,7 @@ func (r *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
 func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 	if err := r.defaultImplementation.DeleteRepoImage(repoImage); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
-			reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
+			reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
 			if secondDeleteErr := r.deleteRepoImageWithAllScopes(reference); secondDeleteErr != nil {
 				if strings.Contains(secondDeleteErr.Error(), "UNAUTHORIZED") {
 					return err
