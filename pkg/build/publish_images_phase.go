@@ -7,6 +7,7 @@ import (
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -280,7 +281,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		return nil
 	}
 
-	publishImage := image.NewImage(phase.Conveyor.GetStageImage(lastStageImage.Name()), imageName)
+	publishImage := container_runtime.NewWerfImage(phase.Conveyor.GetStageImage(lastStageImage.Name()), imageName, phase.Conveyor.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
 	publishImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		image.WerfDockerImageName:  imageName,
@@ -300,7 +301,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 
 	publishingFunc := func() error {
 		if err := logboek.Info.LogProcess("Building final image with meta information", logboek.LevelLogProcessOptions{}, func() error {
-			if err := publishImage.Build(image.BuildOptions{}); err != nil {
+			if err := publishImage.Build(container_runtime.BuildOptions{}); err != nil {
 				return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, tagStrategy, err)
 			}
 
@@ -354,7 +355,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageTag string, lastStageImage image.ImageInterface) (bool, error) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageTag string, lastStageImage container_runtime.ImageInterface) (bool, error) {
 	if !util.IsStringsContainValue(existingTags, imageTag) {
 		return false, nil
 	}
@@ -377,5 +378,5 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 		return false, fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
-	return lastStageImage.ID() == parentID, nil
+	return lastStageImage.GetImageInfo().ID == parentID, nil
 }

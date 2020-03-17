@@ -3,7 +3,7 @@ package stage
 import (
 	"github.com/flant/werf/pkg/build/builder"
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -26,7 +26,7 @@ type BeforeSetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *BeforeSetupStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *BeforeSetupStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(BeforeSetup)
 	if err != nil {
 		return "", err
@@ -35,7 +35,7 @@ func (s *BeforeSetupStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface
 	return util.Sha256Hash(s.builder.BeforeSetupChecksum(), stageDependenciesChecksum), nil
 }
 
-func (s *BeforeSetupStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *BeforeSetupStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

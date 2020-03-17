@@ -124,8 +124,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
-
+	stagesStorageCache := common.GetStagesStorageCache()
 	storageLockManager := &storage.FileLockManager{}
 
 	_, err = common.GetSynchronization(commonCmdData)
