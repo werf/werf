@@ -1,4 +1,4 @@
-package image
+package container_runtime
 
 import (
 	"fmt"
@@ -11,19 +11,20 @@ import (
 
 	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/image"
 )
 
 type StageImage struct {
-	*base
+	*baseImage
 	fromImage              *StageImage
 	container              *StageImageContainer
-	buildImage             *build
+	buildImage             *buildImage
 	dockerfileImageBuilder *DockerfileImageBuilder
 }
 
-func NewStageImage(fromImage *StageImage, name string) *StageImage {
+func NewStageImage(fromImage *StageImage, name string, localDockerServerRuntime *LocalDockerServerRuntime) *StageImage {
 	stage := &StageImage{}
-	stage.base = newBaseImage(name)
+	stage.baseImage = newBaseImage(name, localDockerServerRuntime)
 	stage.fromImage = fromImage
 	stage.container = newStageImageContainer(stage)
 	return stage
@@ -31,13 +32,6 @@ func NewStageImage(fromImage *StageImage, name string) *StageImage {
 
 func (i *StageImage) Inspect() *types.ImageInspect {
 	return i.inspect
-}
-
-func (i *StageImage) Labels() map[string]string {
-	if i.inspect != nil {
-		return i.inspect.Config.Labels
-	}
-	return nil
 }
 
 func (i *StageImage) BuilderContainer() BuilderContainer {
@@ -48,38 +42,12 @@ func (i *StageImage) Container() Container {
 	return i.container
 }
 
-func (i *StageImage) MustGetInspect() (*types.ImageInspect, error) {
+func (i *StageImage) GetID() string {
 	if i.buildImage != nil {
-		return i.buildImage.MustGetInspect()
+		return i.buildImage.Name()
 	} else {
-		return i.base.MustGetInspect()
+		return i.baseImage.GetImageInfo().ID
 	}
-}
-
-func (i *StageImage) MustGetId() (string, error) {
-	if i.buildImage != nil {
-		return i.buildImage.MustGetId()
-	} else {
-		return i.base.MustGetId()
-	}
-}
-
-func (i *StageImage) ID() string {
-	if i.inspect != nil {
-		return i.inspect.ID
-	}
-	return ""
-}
-
-func (i *StageImage) IsExists() bool {
-	return i.inspect != nil
-}
-
-func (i *StageImage) SyncDockerState() error {
-	if err := i.ResetInspect(); err != nil {
-		return fmt.Errorf("image %s inspect failed: %s", i.name, err)
-	}
-	return nil
 }
 
 func (i *StageImage) Build(options BuildOptions) error {
@@ -142,6 +110,15 @@ func (i *StageImage) Build(options BuildOptions) error {
 		return err
 	}
 
+	if builtId, err := i.GetBuiltId(); err != nil {
+		return fmt.Errorf("unable to get built id: %s", err)
+	} else if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(builtId); err != nil {
+		return err
+	} else {
+		i.SetInspect(inspect)
+		i.SetImageInfo(image.NewInfoFromInspect(i.Name(), inspect))
+	}
+
 	return nil
 }
 
@@ -151,7 +128,7 @@ func (i *StageImage) Commit() error {
 		return err
 	}
 
-	i.buildImage = newBuildImage(builtId)
+	i.buildImage = newBuildImage(builtId, i.LocalDockerServerRuntime)
 
 	return nil
 }
@@ -172,6 +149,23 @@ func (i *StageImage) introspectBefore() error {
 	return nil
 }
 
+func (i *StageImage) MustResetInspect() error {
+	if i.buildImage != nil {
+		return i.buildImage.MustResetInspect()
+	} else {
+		return i.baseImage.MustResetInspect()
+	}
+}
+
+func (i *StageImage) GetInspect() *types.ImageInspect {
+	if i.buildImage != nil {
+		return i.buildImage.GetInspect()
+	} else {
+		return i.baseImage.GetInspect()
+	}
+
+}
+
 func (i *StageImage) MustGetBuiltId() string {
 	builtId, err := i.GetBuiltId()
 	if err != nil {
@@ -184,7 +178,7 @@ func (i *StageImage) GetBuiltId() (string, error) {
 	if i.dockerfileImageBuilder != nil {
 		return i.dockerfileImageBuilder.GetBuiltId()
 	} else {
-		return i.buildImage.MustGetId()
+		return i.buildImage.Name(), nil
 	}
 }
 
@@ -197,11 +191,7 @@ func (i *StageImage) TagBuiltImage(name string) error {
 }
 
 func (i *StageImage) Tag(name string) error {
-	imageId, err := i.MustGetId()
-	if err != nil {
-		return err
-	}
-	return docker.CliTag(imageId, name)
+	return docker.CliTag(i.GetID(), name)
 }
 
 func (i *StageImage) Pull() error {
@@ -209,7 +199,7 @@ func (i *StageImage) Pull() error {
 		return err
 	}
 
-	i.base.unsetInspect()
+	i.baseImage.UnsetInspect()
 
 	return nil
 }
@@ -219,16 +209,13 @@ func (i *StageImage) Push() error {
 }
 
 func (i *StageImage) Import(name string) error {
-	importedImage := newBaseImage(name)
+	importedImage := newBaseImage(name, i.LocalDockerServerRuntime)
 
 	if err := docker.CliPullWithRetries(name); err != nil {
 		return err
 	}
 
-	importedImageId, err := importedImage.MustGetId()
-	if err != nil {
-		return err
-	}
+	importedImageId := importedImage.GetImageInfo().ID
 
 	if err := docker.CliTag(importedImageId, i.name); err != nil {
 		return err

@@ -1,9 +1,11 @@
-package image
+package container_runtime
 
 import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/docker/docker/api/types"
 
@@ -23,10 +25,10 @@ type StageImageContainer struct {
 	serviceCommitChangeOptions *StageImageContainerOptions
 }
 
-func newStageImageContainer(image *StageImage) *StageImageContainer {
+func newStageImageContainer(img *StageImage) *StageImageContainer {
 	c := &StageImageContainer{}
-	c.image = image
-	c.name = fmt.Sprintf("%s%v", StageContainerNamePrefix, util.GenerateConsistentRandomString(10))
+	c.image = img
+	c.name = fmt.Sprintf("%s%v", image.StageContainerNamePrefix, util.GenerateConsistentRandomString(10))
 	c.runOptions = newStageContainerOptions()
 	c.commitChangeOptions = newStageContainerOptions()
 	c.serviceCommitChangeOptions = newStageContainerOptions()
@@ -82,10 +84,7 @@ func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
 	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
-	fromImageId, err := c.image.fromImage.MustGetId()
-	if err != nil {
-		return nil, err
-	}
+	fromImageId := c.image.fromImage.GetID()
 
 	args = append(args, runArgs...)
 	args = append(args, fromImageId)
@@ -131,10 +130,7 @@ func (c *StageImageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
 		return nil, err
 	}
 
-	fromImageId, err := c.image.fromImage.MustGetId()
-	if err != nil {
-		return nil, err
-	}
+	fromImageId := c.image.fromImage.GetID()
 
 	args = append(args, fromImageId)
 	args = append(args, "-ec")
@@ -149,10 +145,7 @@ func (c *StageImageContainer) prepareIntrospectArgs() ([]string, error) {
 		return nil, err
 	}
 
-	imageId, err := c.image.MustGetId()
-	if err != nil {
-		return nil, err
-	}
+	imageId := c.image.GetID()
 
 	args = append(args, imageId)
 	args = append(args, "-ec")
@@ -238,10 +231,10 @@ func (c *StageImageContainer) prepareInheritedCommitOptions() (*StageImageContai
 		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
 	}
 
-	fromImageInspect, err := c.image.fromImage.MustGetInspect()
-	if err != nil {
-		return nil, err
+	if err := c.image.fromImage.MustResetInspect(); err != nil {
+		return nil, fmt.Errorf("unable to reset inspect for image %s: %s", c.image.fromImage.Name(), err)
 	}
+	fromImageInspect := c.image.fromImage.GetInspect()
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
 		inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))

@@ -376,14 +376,14 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicy(repoImages, repoImagesW
 	}
 
 	sort.Slice(repoImagesWithScheme, func(i, j int) bool {
-		iCreated := repoImagesWithScheme[i].CreatedAt()
-		jCreated := repoImagesWithScheme[j].CreatedAt()
+		iCreated := repoImagesWithScheme[i].GetCreatedAt()
+		jCreated := repoImagesWithScheme[j].GetCreatedAt()
 		return iCreated.Before(jCreated)
 	})
 
 	var notExpiredRepoImages, expiredRepoImages []*image.Info
 	for _, repoImage := range repoImagesWithScheme {
-		if options.hasExpiryPeriod && repoImage.CreatedAt().Before(expiryTime) {
+		if options.hasExpiryPeriod && repoImage.GetCreatedAt().Before(expiryTime) {
 			expiredRepoImages = append(expiredRepoImages, repoImage)
 		} else {
 			notExpiredRepoImages = append(notExpiredRepoImages, repoImage)
