@@ -23,11 +23,11 @@ var fileStatusMapping = map[rune]string{
 	'U': "Updated",
 }
 
-func Status(repository *git.Repository, repositoryFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	return status(repository, repositoryFilepath, "", pathMatcher)
+func Status(repository *git.Repository, repositoryAbsFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	return status(repository, repositoryAbsFilepath, "", pathMatcher)
 }
 
-func status(repository *git.Repository, repositoryFilepath string, relToBaseRepositoryFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func status(repository *git.Repository, repositoryAbsFilepath string, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -44,10 +44,11 @@ func status(repository *git.Repository, repositoryFilepath string, relToBaseRepo
 	}
 
 	result := &Result{
-		repository:         repository,
-		repositoryFilepath: repositoryFilepath,
-		fileStatusList:     git.Status{},
-		submoduleResults:   []*SubmoduleResult{},
+		repository:             repository,
+		repositoryAbsFilepath:  repositoryAbsFilepath,
+		repositoryFullFilepath: repositoryFullFilepath,
+		fileStatusList:         git.Status{},
+		submoduleResults:       []*SubmoduleResult{},
 	}
 
 	worktreeStatus, err := worktree.Status()
@@ -56,43 +57,46 @@ func status(repository *git.Repository, repositoryFilepath string, relToBaseRepo
 	}
 
 	var worktreeStatusPaths []string
-	for path, _ := range worktreeStatus {
-		worktreeStatusPaths = append(worktreeStatusPaths, path)
+	for fileStatusPath, _ := range worktreeStatus {
+		worktreeStatusPaths = append(worktreeStatusPaths, fileStatusPath)
 	}
 
 	sort.Strings(worktreeStatusPaths)
 
-	for _, path := range worktreeStatusPaths {
-		if _, ok := submoduleList[path]; ok {
+	for _, fileStatusPath := range worktreeStatusPaths {
+		if _, ok := submoduleList[fileStatusPath]; ok {
 			continue
 		}
 
-		fileStatus := worktreeStatus[path]
+		fileStatus := worktreeStatus[fileStatusPath]
+		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
+		fileStatusFullFilepath := filepath.Join(repositoryFullFilepath, fileStatusFilepath)
 
-		// r prefix == relative to base repo path
-		rFilepath := filepath.Join(relToBaseRepositoryFilepath, filepath.FromSlash(path))
-		if pathMatcher.MatchPath(rFilepath) {
-			result.fileStatusList[rFilepath] = fileStatus
+		if pathMatcher.MatchPath(fileStatusFullFilepath) {
+			result.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug.LogF("File was added:         %s (worktree: %s, staging: %s)\n", rFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)])
+				logboek.Debug.LogF(
+					"File was added:         %s (worktree: %s, staging: %s)\n",
+					fileStatusFullFilepath,
+					fileStatusMapping[rune(fileStatus.Worktree)],
+					fileStatusMapping[rune(fileStatus.Staging)],
+				)
 			}
 		}
 	}
 
-	for path, submodule := range submoduleList {
-		// r prefix == relative to base repo path
-		rSubmoduleFilepath := filepath.Join(relToBaseRepositoryFilepath, filepath.FromSlash(path))
-		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(rSubmoduleFilepath)
+	for submodulePath, submodule := range submoduleList {
+		submoduleFilepath := filepath.FromSlash(submodulePath)
+		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleFilepath)
+
+		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if matched || shouldGoTrough {
 			if debugProcess() {
-				logboek.Debug.LogF("Submodule was checking: %s\n", rSubmoduleFilepath)
+				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleFullFilepath)
 			}
 
-			sSubmoduleResult := &SubmoduleResult{
-				relToBaseRepositorySubmoduleFilepath: rSubmoduleFilepath,
-			}
-
+			submoduleResult := &SubmoduleResult{}
 			submoduleRepository, err := submodule.Repository()
 			if err != nil {
 				if err == git.ErrSubmoduleNotInitialized {
@@ -100,12 +104,12 @@ func status(repository *git.Repository, repositoryFilepath string, relToBaseRepo
 						logboek.Debug.LogFWithCustomStyle(
 							logboek.StyleByName(logboek.FailStyleName),
 							"Submodule is not initialized: path %s will be added to checksum\n",
-							rSubmoduleFilepath,
+							submoduleFullFilepath,
 						)
 					}
 
-					sSubmoduleResult.isNotInitialized = true
-					result.submoduleResults = append(result.submoduleResults, sSubmoduleResult)
+					submoduleResult.isNotInitialized = true
+					result.submoduleResults = append(result.submoduleResults, submoduleResult)
 					continue
 				}
 				return nil, err
@@ -117,8 +121,8 @@ func status(repository *git.Repository, repositoryFilepath string, relToBaseRepo
 			}
 
 			if !submoduleStatus.IsClean() {
-				sSubmoduleResult.isNotClean = true
-				sSubmoduleResult.currentCommit = submoduleStatus.Current.String()
+				submoduleResult.isNotClean = true
+				submoduleResult.currentCommit = submoduleStatus.Current.String()
 
 				if debugProcess() {
 					logboek.Debug.LogFWithCustomStyle(
@@ -129,16 +133,17 @@ func status(repository *git.Repository, repositoryFilepath string, relToBaseRepo
 				}
 			}
 
-			submoduleRepositoryFilepath := filepath.Join(repositoryFilepath, filepath.FromSlash(path))
-			sResult, err := status(submoduleRepository, submoduleRepositoryFilepath, rSubmoduleFilepath, pathMatcher)
+			submoduleRepositoryAbsFilepath := filepath.Join(repositoryAbsFilepath, submoduleFilepath)
+
+			sResult, err := status(submoduleRepository, submoduleRepositoryAbsFilepath, submoduleFullFilepath, pathMatcher)
 			if err != nil {
 				return nil, err
 			}
 
-			sSubmoduleResult.Result = sResult
+			submoduleResult.Result = sResult
 
-			if !sSubmoduleResult.isEmpty() {
-				result.submoduleResults = append(result.submoduleResults, sSubmoduleResult)
+			if !submoduleResult.isEmpty() {
+				result.submoduleResults = append(result.submoduleResults, submoduleResult)
 			}
 		}
 	}

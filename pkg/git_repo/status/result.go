@@ -3,7 +3,6 @@ package status
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/flant/werf/pkg/path_matcher"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,48 +13,57 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/util"
 )
 
 type Result struct {
-	repository         *git.Repository
-	repositoryFilepath string
-	fileStatusList     git.Status
-	submoduleResults   []*SubmoduleResult
+	repository             *git.Repository
+	repositoryAbsFilepath  string
+	repositoryFullFilepath string
+	fileStatusList         git.Status
+	submoduleResults       []*SubmoduleResult
 }
 
 type SubmoduleResult struct {
 	*Result
-	relToBaseRepositorySubmoduleFilepath string
-	isNotInitialized                     bool
-	isNotClean                           bool
-	currentCommit                        string
+	isNotInitialized bool
+	isNotClean       bool
+	currentCommit    string
 }
 
 func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	res := &Result{
-		repository:         r.repository,
-		repositoryFilepath: r.repositoryFilepath,
-		fileStatusList:     git.Status{},
-		submoduleResults:   []*SubmoduleResult{},
+		repository:             r.repository,
+		repositoryAbsFilepath:  r.repositoryAbsFilepath,
+		repositoryFullFilepath: r.repositoryFullFilepath,
+		fileStatusList:         git.Status{},
+		submoduleResults:       []*SubmoduleResult{},
 	}
 
-	for fileFilepath, fileStatus := range r.fileStatusList {
-		if pathMatcher.MatchPath(fileFilepath) {
-			res.fileStatusList[fileFilepath] = fileStatus
+	for fileStatusPath, fileStatus := range r.fileStatusList {
+		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
+		fileStatusFullFilepath := filepath.Join(r.repositoryFullFilepath, fileStatusFilepath)
+
+		if pathMatcher.MatchPath(fileStatusFullFilepath) {
+			res.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug.LogF("File was added:         %s (worktree: %s, staging: %s)\n", fileFilepath,
-					fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)])
+				logboek.Debug.LogF(
+					"File was added:         %s (worktree: %s, staging: %s)\n",
+					fileStatusFullFilepath,
+					fileStatusMapping[rune(fileStatus.Worktree)],
+					fileStatusMapping[rune(fileStatus.Staging)],
+				)
 			}
 		}
 	}
 
 	for _, submoduleResult := range r.submoduleResults {
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleResult.relToBaseRepositorySubmoduleFilepath)
+		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleResult.repositoryFullFilepath)
 		if isMatched || shouldGoThrough {
 			if debugProcess() {
-				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleResult.relToBaseRepositorySubmoduleFilepath)
+				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
 			}
 
 			if submoduleResult.isNotInitialized {
@@ -65,7 +73,7 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 					logboek.Debug.LogFWithCustomStyle(
 						logboek.StyleByName(logboek.FailStyleName),
 						"Submodule is not initialized: path %s will be added to checksum\n",
-						submoduleResult.relToBaseRepositorySubmoduleFilepath,
+						submoduleResult.repositoryFullFilepath,
 					)
 				}
 				continue
@@ -81,21 +89,20 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 				}
 			}
 
-			sResult, err := submoduleResult.Status(pathMatcher)
+			newResult, err := submoduleResult.Status(pathMatcher)
 			if err != nil {
 				return nil, err
 			}
 
-			sSubmoduleResult := &SubmoduleResult{
-				Result:                               sResult,
-				relToBaseRepositorySubmoduleFilepath: submoduleResult.relToBaseRepositorySubmoduleFilepath,
-				isNotInitialized:                     false,
-				isNotClean:                           submoduleResult.isNotClean,
-				currentCommit:                        submoduleResult.currentCommit,
+			newSubmoduleResult := &SubmoduleResult{
+				Result:           newResult,
+				isNotInitialized: false,
+				isNotClean:       submoduleResult.isNotClean,
+				currentCommit:    submoduleResult.currentCommit,
 			}
 
-			if !sSubmoduleResult.isEmpty() {
-				res.submoduleResults = append(res.submoduleResults, sSubmoduleResult)
+			if !newSubmoduleResult.isEmpty() {
+				res.submoduleResults = append(res.submoduleResults, newSubmoduleResult)
 			}
 		}
 	}
@@ -110,29 +117,31 @@ func (r *Result) Checksum() string {
 
 	h := sha256.New()
 
-	var fileFilepaths []string
-	for fileFilepath := range r.fileStatusList {
-		fileFilepaths = append(fileFilepaths, fileFilepath)
+	var fileStatusPathList []string
+	for fileStatusPath := range r.fileStatusList {
+		fileStatusPathList = append(fileStatusPathList, fileStatusPath)
 	}
 
-	fileModeAndDataFunc := func(path string) (string, string) {
-		absPath := filepath.Join(r.repositoryFilepath, path)
-
-		stat, err := os.Lstat(absPath)
+	fileModeAndDataFunc := func(fileStatusAbsFilepath string) (string, string) {
+		stat, err := os.Lstat(fileStatusAbsFilepath)
 		if err != nil {
 			panic(err)
 		}
 
 		dataH := sha256.New()
-		data, err := ioutil.ReadFile(absPath)
+		data, err := ioutil.ReadFile(fileStatusAbsFilepath)
 		dataH.Write(data)
 
 		return stat.Mode().String(), fmt.Sprintf("%x", dataH.Sum(nil))
 	}
 
-	sort.Strings(fileFilepaths)
-	for _, fileFilepath := range fileFilepaths {
-		fileStatus := r.fileStatusList[fileFilepath]
+	sort.Strings(fileStatusPathList)
+
+	for _, fileStatusPath := range fileStatusPathList {
+		fileStatus := r.fileStatusList[fileStatusPath]
+		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
+		fileStatusFullFilepath := filepath.Join(r.repositoryFullFilepath, fileStatusFilepath)
+		fileStatusAbsFilepath := filepath.Join(r.repositoryAbsFilepath, fileStatusFilepath)
 
 		var modeAndFileDataShouldBeAdded bool
 		var fileStatusToAdd git.StatusCode
@@ -144,7 +153,7 @@ func (r *Result) Checksum() string {
 				modeAndFileDataShouldBeAdded = true
 				fileStatusToAdd = git.Untracked
 			} else {
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.Unmodified:
 			switch fileStatus.Worktree {
@@ -154,7 +163,7 @@ func (r *Result) Checksum() string {
 			case git.Deleted:
 				fileStatusToAdd = git.Deleted
 			default:
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.Added:
 			switch fileStatus.Worktree {
@@ -164,7 +173,7 @@ func (r *Result) Checksum() string {
 			case git.Deleted:
 				continue
 			default:
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.Renamed:
 			switch fileStatus.Worktree {
@@ -176,7 +185,7 @@ func (r *Result) Checksum() string {
 			case git.Deleted:
 				fileStatusToAdd = git.Deleted
 			default:
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.Copied:
 			switch fileStatus.Worktree {
@@ -188,7 +197,7 @@ func (r *Result) Checksum() string {
 			case git.Deleted:
 				fileStatusToAdd = git.Deleted
 			default:
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.Deleted:
 			switch fileStatus.Worktree {
@@ -198,10 +207,10 @@ func (r *Result) Checksum() string {
 			case git.Unmodified:
 				fileStatusToAdd = git.Deleted
 			default:
-				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
 		case git.UpdatedButUnmerged:
-			exist, err := util.FileExists(fileFilepath)
+			exist, err := util.FileExists(fileStatusAbsFilepath)
 			if err != nil {
 				panic(err)
 			}
@@ -211,11 +220,13 @@ func (r *Result) Checksum() string {
 				modeAndFileDataShouldBeAdded = true
 			}
 		default:
-			panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
+			panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 		}
 
+		fileStatusFullPath := filepath.ToSlash(fileStatusFullFilepath)
+
 		var args []string
-		args = append(args, filepath.ToSlash(fileFilepath))
+		args = append(args, fileStatusFullPath)
 
 		if extraToAdd != "" {
 			args = append(args, extraToAdd)
@@ -227,7 +238,7 @@ func (r *Result) Checksum() string {
 		}
 
 		if modeAndFileDataShouldBeAdded {
-			mode, data := fileModeAndDataFunc(fileFilepath)
+			mode, data := fileModeAndDataFunc(fileStatusAbsFilepath)
 			args = append(args, mode, data)
 		}
 
@@ -237,15 +248,15 @@ func (r *Result) Checksum() string {
 	}
 
 	sort.Slice(r.submoduleResults, func(i, j int) bool {
-		return r.submoduleResults[i].relToBaseRepositorySubmoduleFilepath < r.submoduleResults[j].relToBaseRepositorySubmoduleFilepath
+		return r.submoduleResults[i].repositoryFullFilepath < r.submoduleResults[j].repositoryFullFilepath
 	})
 
 	for _, sr := range r.submoduleResults {
-		logBlockMsg := fmt.Sprintf("submodule %s", sr.relToBaseRepositorySubmoduleFilepath)
+		logBlockMsg := fmt.Sprintf("submodule %s", sr.repositoryFullFilepath)
 		_ = logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
 			var srChecksumArgs []string
 
-			srChecksumArgs = append(srChecksumArgs, sr.relToBaseRepositorySubmoduleFilepath)
+			srChecksumArgs = append(srChecksumArgs, sr.repositoryFullFilepath)
 
 			if sr.isNotInitialized {
 				srChecksumArgs = append(srChecksumArgs, "isNotInitialized")
