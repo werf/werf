@@ -34,7 +34,7 @@ werf uses Helm with some additions to deploy applications into Kubernetes. In th
 This command should be run prior running any werf command in your shell session:
 
 ```shell
-. $(multiwerf use 1.0 stable --as-file)
+. $(multiwerf use 1.1 stable --as-file)
 ```
 
 ## The application

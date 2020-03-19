@@ -19,7 +19,7 @@ In this article, we will build an example Go application. Then we will optimize 
 This command should be run prior running any werf command in your shell session:
 
 ```shell
-. $(multiwerf use 1.0 stable --as-file)
+. $(multiwerf use 1.1 stable --as-file)
 ```
 
 ## Sample application
