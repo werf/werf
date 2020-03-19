@@ -22,3 +22,7 @@ func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
 
 	return awsEcr, nil
 }
+
+func (r *awsEcr) String() string {
+	return AwsEcrImplementationName
+}

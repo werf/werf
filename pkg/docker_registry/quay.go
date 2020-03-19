@@ -22,3 +22,7 @@ func newQuay(options quayOptions) (*quay, error) {
 
 	return quay, nil
 }
+
+func (r *quay) String() string {
+	return QuayImplementationName
+}

@@ -22,3 +22,7 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 
 	return gitHub, nil
 }
+
+func (r *gitHubPackagesOptions) String() string {
+	return GitHubPackagesImplementationName
+}
