@@ -13,8 +13,6 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -51,7 +49,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
+	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 
@@ -76,15 +74,9 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(stagesStorageAddress, containerRuntime, docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	})
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}

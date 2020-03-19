@@ -13,10 +13,8 @@ import (
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -54,10 +52,8 @@ These values includes project name, docker images ids and other`),
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
-	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -86,10 +82,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -119,26 +112,7 @@ func runGetServiceValues() error {
 		withoutRepo = false
 	}
 
-	imagesRepoAddress = helm_common.GetImagesRepoAddressOrStub(imagesRepoAddress)
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	imagesRepo, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoManager,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}

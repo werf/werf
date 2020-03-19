@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -13,8 +11,8 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
@@ -83,11 +81,11 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupTag(&commonCmdData, cmd)
-	common.SetupStagesStorage(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -116,10 +114,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -153,43 +148,9 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	imagesRepoAddress, err := common.GetImagesRepoAddress(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-	imagesRepo, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoManager,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
-	if err != nil {
-		return err
-	}
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		containerRuntime,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -197,6 +158,11 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
 
 	storageLockManager := &storage.FileLockManager{}
+
+	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+	if err != nil {
+		return err
+	}
 
 	tagOpts, err := common.GetTagOptions(&commonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
