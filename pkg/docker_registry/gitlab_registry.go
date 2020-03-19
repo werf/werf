@@ -14,11 +14,28 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
-type GitLab struct {
+const GitLabRegistryImplementationName = "gitlab"
+
+type gitLabRegistry struct {
 	*defaultImplementation
 }
 
-func (g *GitLab) DeleteRepoImage(repoImageList ...*image.Info) error {
+type gitLabRegistryOptions struct {
+	defaultImplementationOptions
+}
+
+func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
+	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	gitLab := &gitLabRegistry{defaultImplementation: d}
+
+	return gitLab, nil
+}
+
+func (g *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if err := g.deleteRepoImage(repoImage); err != nil {
 			return err
@@ -28,7 +45,7 @@ func (g *GitLab) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (g *GitLab) deleteRepoImage(repoImage *image.Info) error {
+func (g *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 	if err := g.defaultImplementation.DeleteRepoImage(repoImage); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
@@ -50,7 +67,7 @@ func (g *GitLab) deleteRepoImage(repoImage *image.Info) error {
 }
 
 // TODO https://gitlab.com/gitlab-org/gitlab-ce/issues/48968
-func (g *GitLab) deleteRepoImageWithAllScopes(reference string) error {
+func (g *gitLabRegistry) deleteRepoImageWithAllScopes(reference string) error {
 	ref, err := name.ParseReference(reference, g.api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)

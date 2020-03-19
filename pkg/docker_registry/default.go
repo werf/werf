@@ -6,6 +6,8 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
+const DefaultImplementationName = "default"
+
 type defaultImplementation struct {
 	*api
 }
