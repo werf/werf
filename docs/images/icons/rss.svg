@@ -1,55 +1,18 @@
-<svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   version="1.0"
-   width="36.001472"
-   height="14.004038"
-   id="svg2">
-  <defs
-     id="defs5" />
-  <path
-     d="M 35.997699,13.999941 L 34.994894,13.020969 L 34.9751,0.99486069 L 35.99783,0.0079440893 L 35.997699,13.999941 z "
-     style="opacity:1;fill:#803300;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     id="path2764" />
-  <rect
-     width="34.007584"
-     height="12.029619"
-     x="0.98731136"
-     y="0.99499226"
-     style="opacity:1;fill:#f60;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     id="rect1873" />
-  <path
-     d="M 0.000263178,0 L 36.001474,0.0040378393 L 34.982912,0.99108607 L 0.99903014,1.0028048 L 0.000263178,0 z "
-     style="opacity:1;fill:#fca;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     id="path1875" />
-  <path
-     d="M 0.0040378391,14.000263 L 36.001342,14.004038 L 34.994499,13.01699 L 0.9871798,13.01699 L 0.0040378391,14.000263 z "
-     style="opacity:1;fill:#520;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     id="path2762" />
-  <path
-     d="M 0.99512389,13.008723 L 0.000394767,13.999941 L 0,4.6800056e-010 L 0.99108604,0.99095444 L 0.99512389,13.008723 z "
-     style="opacity:1;fill:#f95;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     id="path3651" />
-  <g
-     transform="translate(-0.15468,4.419417e-2)"
-     id="g4564">
-    <text
-       x="5.812355"
-       y="12.572425"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;opacity:1;fill:#803300;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
-       id="text4542"
-       xml:space="preserve"><tspan
-         x="5.812355"
-         y="12.572425"
-         id="tspan4544">RSS</tspan></text>
-    <text
-       x="5.4503231"
-       y="11.630474"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;opacity:1;fill:white;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
-       id="text4538"
-       xml:space="preserve"><tspan
-         x="5.4503231"
-         y="11.630474"
-         id="tspan4540">RSS</tspan></text>
-  </g>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<g fill="#0066ff">
+	<g>
+		<path d="M428.522,0H83.478C37.446,0,0,37.446,0,83.478v345.043C0,474.554,37.446,512,83.478,512h345.043
+			C474.554,512,512,474.554,512,428.522V83.478C512,37.446,474.554,0,428.522,0z M122.435,439.652
+			c-27.619,0-50.087-22.468-50.087-50.087c0-27.619,22.468-50.087,50.087-50.087c27.619,0,50.087,22.468,50.087,50.087
+			C172.522,417.184,150.054,439.652,122.435,439.652z M256,422.957c-18.413,0-33.391-14.978-33.391-33.391
+			c0-55.234-44.935-100.174-100.174-100.174c-18.413,0-33.391-14.978-33.391-33.391s14.978-33.391,33.391-33.391
+			c92.065,0,166.956,74.897,166.956,166.956C289.391,407.978,274.413,422.957,256,422.957z M389.565,422.957
+			c-18.413,0-33.391-14.978-33.391-33.391c0-128.886-104.859-233.739-233.739-233.739c-18.413,0-33.391-14.978-33.391-33.391
+			c0-18.413,14.978-33.391,33.391-33.391c165.707,0,300.522,134.815,300.522,300.522
+			C422.957,407.978,407.978,422.957,389.565,422.957z"/>
+	</g>
+</g>
 </svg>
