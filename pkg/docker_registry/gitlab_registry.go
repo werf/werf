@@ -35,9 +35,9 @@ func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
 	return gitLab, nil
 }
 
-func (g *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := g.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(repoImage); err != nil {
 			return err
 		}
 	}
@@ -45,11 +45,11 @@ func (g *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (g *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
-	if err := g.defaultImplementation.DeleteRepoImage(repoImage); err != nil {
+func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
+	if err := r.defaultImplementation.DeleteRepoImage(repoImage); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
-			if secondDeleteErr := g.deleteRepoImageWithAllScopes(reference); secondDeleteErr != nil {
+			if secondDeleteErr := r.deleteRepoImageWithAllScopes(reference); secondDeleteErr != nil {
 				if strings.Contains(secondDeleteErr.Error(), "UNAUTHORIZED") {
 					return err
 				}
@@ -67,8 +67,8 @@ func (g *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 }
 
 // TODO https://gitlab.com/gitlab-org/gitlab-ce/issues/48968
-func (g *gitLabRegistry) deleteRepoImageWithAllScopes(reference string) error {
-	ref, err := name.ParseReference(reference, g.api.parseReferenceOptions()...)
+func (r *gitLabRegistry) deleteRepoImageWithAllScopes(reference string) error {
+	ref, err := name.ParseReference(reference, r.api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
@@ -79,7 +79,7 @@ func (g *gitLabRegistry) deleteRepoImageWithAllScopes(reference string) error {
 	}
 
 	scopes := []string{ref.Scope("*")}
-	tr, err := transport.New(ref.Context().Registry, auth, g.api.getHttpTransport(), scopes)
+	tr, err := transport.New(ref.Context().Registry, auth, r.api.getHttpTransport(), scopes)
 	if err != nil {
 		return err
 	}
@@ -112,4 +112,8 @@ func (g *gitLabRegistry) deleteRepoImageWithAllScopes(reference string) error {
 		}
 		return fmt.Errorf("unrecognized status code during DELETE: %v; %v", resp.Status, string(b))
 	}
+}
+
+func (r *gitLabRegistry) String() string {
+	return GitLabRegistryImplementationName
 }
