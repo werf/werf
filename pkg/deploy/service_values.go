@@ -17,7 +17,7 @@ type ServiceValuesOptions struct {
 	Env string
 }
 
-func GetServiceValues(projectName string, imagesRepoManager images_manager.ImagesRepoManager, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(projectName string, imagesRepository, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -31,7 +31,7 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 
 	werfInfo := map[string]interface{}{
 		"name": projectName,
-		"repo": imagesRepoManager.ImagesRepo(),
+		"repo": imagesRepository,
 		"ci":   ciInfo,
 	}
 	if commonTag != "" {

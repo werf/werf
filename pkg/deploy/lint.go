@@ -24,7 +24,7 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
+func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
 	logboek.Debug.LogF("Lint options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
@@ -34,7 +34,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepoManager
 
 	namespace := "NAMESPACE"
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

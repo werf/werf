@@ -183,7 +183,7 @@ func runGetServiceValues() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	serviceValues, err := deploy.GetServiceValues(projectName, imagesRepoManager, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(projectName, imagesRepo.String(), namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
