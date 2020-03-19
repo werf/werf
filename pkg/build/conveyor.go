@@ -1171,15 +1171,18 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 func resolveDockerStagesFromValue(stages []instructions.Stage) {
 	nameToIndex := make(map[string]string)
 	for i, s := range stages {
+		name := strings.ToLower(s.Name)
 		index := strconv.Itoa(i)
-		if s.Name != index {
-			nameToIndex[s.Name] = index
+		if name != index {
+			nameToIndex[name] = index
 		}
+
 		for _, cmd := range s.Commands {
 			switch c := cmd.(type) {
 			case *instructions.CopyCommand:
 				if c.From != "" {
-					if val, ok := nameToIndex[c.From]; ok {
+					from := strings.ToLower(c.From)
+					if val, ok := nameToIndex[from]; ok {
 						c.From = val
 					}
 				}

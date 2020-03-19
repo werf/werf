@@ -168,10 +168,11 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 			case *instructions.CopyCommand:
 				if c.From != "" {
 					relatedStageIndex, err := strconv.Atoi(c.From)
-					if err == nil && relatedStageIndex < len(stagesDependencies) {
-						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+					if err != nil || relatedStageIndex >= len(stagesDependencies) {
+						logboek.LogWarnF("WARNING: COPY --from with nonexistent dockerfile stage %s detected\n", c.From)
+						continue
 					} else {
-						logboek.LogWarnF("WARNING: COPY --from with unexistent stage %s detected\n", c.From)
+						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
 					}
 				}
 			}
