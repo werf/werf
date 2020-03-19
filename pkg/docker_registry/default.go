@@ -62,3 +62,11 @@ func (r *defaultImplementation) deleteRepoImage(repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
 	return r.api.deleteImageByReference(reference)
 }
+
+func (r *defaultImplementation) Validate() error {
+	return nil
+}
+
+func (r *defaultImplementation) String() string {
+	return DefaultImplementationName
+}

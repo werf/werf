@@ -106,6 +106,10 @@ func runPurge() error {
 		return err
 	}
 
+	if err := common.ValidateStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
 	_, err = common.GetSynchronization(&commonCmdData) // TODO
 	if err != nil {
 		return err
@@ -115,6 +119,10 @@ func runPurge() error {
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
+		return err
+	}
+
+	if err := common.ValidateImagesRepo(imagesRepo); err != nil {
 		return err
 	}
 
