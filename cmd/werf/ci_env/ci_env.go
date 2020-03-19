@@ -6,14 +6,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
+	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -112,11 +113,14 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	ciJobToken := os.Getenv("CI_JOB_TOKEN")
 
 	var imagesUsername, imagesPassword string
+	var imagesRepoImplementation string
 	var doLogin bool
 	if ciRegistryImage != "" && ciJobToken != "" {
 		imagesUsername = "gitlab-ci-token"
 		imagesPassword = ciJobToken
 		doLogin = true
+
+		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
 	}
 
 	if doLogin {
@@ -131,6 +135,7 @@ func generateGitlabEnvs(taggingStrategy string) error {
 
 	printHeader("IMAGES REPO", true)
 	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
+	printExportCommand("WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
 
 	printHeader("TAGGING", true)
 	switch taggingStrategy {

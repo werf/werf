@@ -59,10 +59,16 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage   *string
+	StagesStorage                   *string
+	StagesStorageRepoImplementation *string
+
 	Synchronization *string
-	ImagesRepo      *string
-	ImagesRepoMode  *string
+
+	ImagesRepo               *string
+	ImagesRepoMode           *string
+	ImagesRepoImplementation *string
+
+	RepoImplementation *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -231,8 +237,61 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
+func setupRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoImplementation != nil {
+		return
+	}
+
+	usage := fmt.Sprintf(`Choose default repo implementation for images repo and stages storage repo.
+The following docker registry implementations are supported: %s.
+Default %s or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+		"$WERF_REPO_IMPLEMENTATION",
+	)
+
+	cmdData.RepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoImplementation,
+		"repo-implementation",
+		"",
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+		usage,
+	)
+}
+
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupStagesStorage(cmdData, cmd)
+
+	setupRepoImplementation(cmdData, cmd)
+	setupStagesStorageRepoImplementation(cmdData, cmd)
+}
+
+func setupStagesStorageRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_IMPLEMENTATION"),
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf(`Choose stages storage repo implementation.
+The following  docker registry implementations are supported: %s.
+Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+	)
+
+	cmdData.StagesStorageRepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoImplementation,
+		"stages-storage-repo-implementation",
+		"",
+		defaultValue,
+		usage,
+	)
 }
 
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
@@ -328,6 +387,9 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupImagesRepo(cmdData, cmd)
 	setupImagesRepoMode(cmdData, cmd)
+
+	setupRepoImplementation(cmdData, cmd)
+	setupImagesRepoImplementation(cmdData, cmd)
 }
 
 func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -344,6 +406,34 @@ func setupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode))
+}
+
+func setupImagesRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_IMPLEMENTATION"),
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf(`Choose images repo implementation.
+The following docker registry implementations are supported: %s.
+Default $WERF_IMAGES_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+	)
+
+	cmdData.ImagesRepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoImplementation,
+		"images-repo-implementation",
+		"",
+		defaultValue,
+		usage,
+	)
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -778,11 +868,21 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		return nil, err
 	}
 
+	imagesRepoImplementation := *cmdData.ImagesRepoImplementation
+	if imagesRepoImplementation == "" {
+		imagesRepoImplementation = *cmdData.RepoImplementation
+	}
+
+	if err := validationRepoImplementation(imagesRepoImplementation); err != nil {
+		return nil, err
+	}
+
 	return storage.NewImagesRepo(
 		projectName,
 		imagesRepoManager,
 		storage.ImagesRepoOptions{
 			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
+				Implementation: imagesRepoImplementation,
 				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
 					InsecureRegistry:      *cmdData.InsecureRegistry,
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -792,18 +892,18 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 	)
 }
 
-func getImagesRepoMode(cmdData *CmdData) (string, error) {
-	switch *cmdData.ImagesRepoMode {
-	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
-		return *cmdData.ImagesRepoMode, nil
-	default:
-		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
-	}
-}
-
 func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
 	stagesStorageAddress, err := GetStagesStorageAddress(cmdData)
 	if err != nil {
+		return nil, err
+	}
+
+	stagesStorageRepoImplementation := *cmdData.StagesStorageRepoImplementation
+	if stagesStorageRepoImplementation == "" {
+		stagesStorageRepoImplementation = *cmdData.RepoImplementation
+	}
+
+	if err := validationRepoImplementation(stagesStorageRepoImplementation); err != nil {
 		return nil, err
 	}
 
@@ -812,6 +912,7 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 		containerRuntime,
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
+				Implementation: stagesStorageRepoImplementation,
 				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
 					InsecureRegistry:      *cmdData.InsecureRegistry,
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -862,6 +963,15 @@ func GetOptionalImagesRepoAddress(projectName string, cmdData *CmdData) (string,
 	}
 
 	return "", nil
+}
+
+func getImagesRepoMode(cmdData *CmdData) (string, error) {
+	switch *cmdData.ImagesRepoMode {
+	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
+		return *cmdData.ImagesRepoMode, nil
+	default:
+		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
+	}
 }
 
 func GetOptionalWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
@@ -1042,6 +1152,19 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 
 func DockerRegistryInit(cmdData *CmdData) error {
 	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+}
+
+func validationRepoImplementation(implementation string) error {
+	supportedValues := docker_registry.ImplementationList()
+	supportedValues = append(supportedValues, "auto", "")
+
+	for _, supportedImplementation := range supportedValues {
+		if supportedImplementation == implementation {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("specified docker registry implementation '%s' is not supported", implementation)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {
