@@ -131,6 +131,10 @@ func runCleanup() error {
 		return err
 	}
 
+	if err := common.ValidateImagesRepo(imagesRepo); err != nil {
+		return err
+	}
+
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err

@@ -43,3 +43,7 @@ func (r *gcr) deleteRepoImage(repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 	return r.api.deleteImageByReference(reference)
 }
+
+func (r *gcr) String() string {
+	return GcrImplementationName
+}

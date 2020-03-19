@@ -106,6 +106,10 @@ func runSync() error {
 		return err
 	}
 
+	if err := common.ValidateStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
 	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
 	_ = stagesStorageCache // FIXME
 
