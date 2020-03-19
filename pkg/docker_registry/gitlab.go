@@ -15,7 +15,7 @@ import (
 )
 
 type GitLab struct {
-	*Default
+	*defaultImplementation
 }
 
 func (g *GitLab) DeleteRepoImage(repoImageList ...*image.Info) error {
@@ -29,7 +29,7 @@ func (g *GitLab) DeleteRepoImage(repoImageList ...*image.Info) error {
 }
 
 func (g *GitLab) deleteRepoImage(repoImage *image.Info) error {
-	if err := g.Default.DeleteRepoImage(repoImage); err != nil {
+	if err := g.defaultImplementation.DeleteRepoImage(repoImage); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
 			if secondDeleteErr := g.deleteRepoImageWithAllScopes(reference); secondDeleteErr != nil {

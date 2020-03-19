@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -23,6 +22,10 @@ type ImagesRepo interface {
 	String() string
 }
 
-func NewImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, dockerRegistryOptions docker_registry.APIOptions) (ImagesRepo, error) {
-	return NewDockerImagesRepo(projectName, imagesRepoManager, dockerRegistryOptions)
+type ImagesRepoOptions struct {
+	DockerImagesRepoOptions
+}
+
+func NewImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, options ImagesRepoOptions) (ImagesRepo, error) {
+	return NewDockerImagesRepo(projectName, imagesRepoManager, options.DockerImagesRepoOptions)
 }

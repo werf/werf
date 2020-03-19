@@ -12,14 +12,15 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 
-	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/build/stage"
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
@@ -239,7 +240,11 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
-func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
+func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+	setupStagesStorage(cmdData, cmd)
+}
+
+func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), fmt.Sprintf("Docker Repo to store stages or %[1]s for non-distributed build (only %[1]s is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html", storage.LocalStagesStorageAddress))
 }
@@ -329,12 +334,17 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	}
 }
 
-func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
+	setupImagesRepo(cmdData, cmd)
+	setupImagesRepoMode(cmdData, cmd)
+}
+
+func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
 }
 
-func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
+func setupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepoMode = new(string)
 
 	defaultValue := os.Getenv("WERF_IMAGES_REPO_MODE")
@@ -379,15 +389,15 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
-	SetupLogDebug(cmdData, cmd)
-	SetupLogVerbose(cmdData, cmd)
-	SetupLogQuiet(cmdData, cmd)
-	SetupLogColor(cmdData, cmd)
-	SetupLogPretty(cmdData, cmd)
-	SetupTerminalWidth(cmdData, cmd)
+	setupLogDebug(cmdData, cmd)
+	setupLogVerbose(cmdData, cmd)
+	setupLogQuiet(cmdData, cmd)
+	setupLogColor(cmdData, cmd)
+	setupLogPretty(cmdData, cmd)
+	setupTerminalWidth(cmdData, cmd)
 }
 
-func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
 	defaultValue := false
@@ -419,7 +429,7 @@ func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogColorMode = new(string)
 
 	logColorEnvironmentValue := os.Getenv("WERF_LOG_COLOR_MODE")
@@ -434,7 +444,7 @@ Supported on, off and auto (based on the stdout’s file descriptor referring to
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
-func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
 	var defaultValue bool
@@ -466,7 +476,7 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
 	var defaultValue bool
@@ -498,7 +508,7 @@ func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogPretty = new(bool)
 
 	var defaultValue bool
@@ -511,7 +521,7 @@ func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
 }
 
-func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
+func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogTerminalWidth = new(int64)
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
@@ -593,15 +603,6 @@ func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeMode
 	return "", fmt.Errorf("bad three-way-merge-mode '%s': enabled, disabled or  onlyNewReleases modes can be specified", threeWayMergeModeParam)
 }
 
-func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
-	switch os.Getenv(environmentName) {
-	case "0", "false", "no":
-		return false
-	default:
-		return true
-	}
-}
-
 func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":
@@ -609,10 +610,6 @@ func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	default:
 		return false
 	}
-}
-
-func ConvertInt64Value(v string) (int64, error) {
-	return ConvertIntValue(v, 64)
 }
 
 func ConvertInt32Value(v string) (int32, error) {
@@ -797,6 +794,82 @@ func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesStorage, nil
 }
 
+func GetImagesRepoWithOptionalStubRepoAddress(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(projectName, cmdData, true)
+}
+
+func GetImagesRepo(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(projectName, cmdData, false)
+}
+
+func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress bool) (storage.ImagesRepo, error) {
+	var imagesRepoAddress string
+	var err error
+	if optionalStubRepoAddress {
+		imagesRepoAddress, err = getImagesRepoAddressOrStub(projectName, cmdData)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		imagesRepoAddress, err = getImagesRepoAddress(projectName, cmdData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	imagesRepoMode, err := getImagesRepoMode(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return nil, err
+	}
+
+	return storage.NewImagesRepo(
+		projectName,
+		imagesRepoManager,
+		storage.ImagesRepoOptions{
+			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
+				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
+					InsecureRegistry:      *cmdData.InsecureRegistry,
+					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+				},
+			},
+		},
+	)
+}
+
+func getImagesRepoMode(cmdData *CmdData) (string, error) {
+	switch *cmdData.ImagesRepoMode {
+	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
+		return *cmdData.ImagesRepoMode, nil
+	default:
+		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
+	}
+}
+
+func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+	stagesStorageAddress, err := GetStagesStorageAddress(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	return storage.NewStagesStorage(
+		stagesStorageAddress,
+		containerRuntime,
+		storage.StagesStorageOptions{
+			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
+				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
+					InsecureRegistry:      *cmdData.InsecureRegistry,
+					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+				},
+			},
+		},
+	)
+}
+
 func GetSynchronization(cmdData *CmdData) (string, error) {
 	if *cmdData.Synchronization != ":local" {
 		return "", fmt.Errorf("only --synchronization=:local is supported for now, got '%s'", *cmdData.Synchronization)
@@ -804,20 +877,24 @@ func GetSynchronization(cmdData *CmdData) (string, error) {
 	return *cmdData.Synchronization, nil
 }
 
-func GetImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
+func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, error) {
+	imagesRepoAddress, err := GetOptionalImagesRepoAddress(projectName, cmdData)
+	if err != nil {
+		return "", err
+	}
+
+	if imagesRepoAddress == "" {
+		return "IMAGES_REPO", nil
+	}
+
+	return imagesRepoAddress, nil
+}
+
+func getImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepoAddress(projectName, cmdData)
-}
-
-func GetImagesRepoMode(cmdData *CmdData) (string, error) {
-	switch *cmdData.ImagesRepoMode {
-	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
-		return *cmdData.ImagesRepoMode, nil
-	default:
-		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
-	}
 }
 
 func GetOptionalImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
@@ -887,13 +964,6 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	return currentDir, nil
-}
-
-func GetNamespace(namespaceOption string) string {
-	if namespaceOption == "" {
-		return kube.DefaultNamespace
-	}
-	return namespaceOption
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
@@ -1017,6 +1087,10 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	}
 
 	return nil
+}
+
+func DockerRegistryInit(cmdData *CmdData) error {
+	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

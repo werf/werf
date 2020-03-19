@@ -6,21 +6,25 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
-type Default struct {
+type defaultImplementation struct {
 	*api
 }
 
-func NewDefault(options APIOptions) *Default {
-	d := &Default{}
-	d.api = newAPI(options)
-	return d
+type defaultImplementationOptions struct {
+	apiOptions
 }
 
-func (r *Default) GetRepoImageList(reference string) ([]*image.Info, error) {
+func newDefaultImplementation(options defaultImplementationOptions) (*defaultImplementation, error) {
+	d := &defaultImplementation{}
+	d.api = newAPI(options.apiOptions)
+	return d, nil
+}
+
+func (r *defaultImplementation) GetRepoImageList(reference string) ([]*image.Info, error) {
 	return r.SelectRepoImageList(reference, func(_ *image.Info) bool { return true })
 }
 
-func (r *Default) SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error) {
+func (r *defaultImplementation) SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error) {
 	tags, err := r.api.Tags(reference)
 	if err != nil {
 		return nil, err
@@ -42,7 +46,7 @@ func (r *Default) SelectRepoImageList(reference string, f func(*image.Info) bool
 	return repoImageList, nil
 }
 
-func (r *Default) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *defaultImplementation) DeleteRepoImage(repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if err := r.deleteRepoImage(repoImage); err != nil {
 			return err
@@ -52,7 +56,7 @@ func (r *Default) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *Default) deleteRepoImage(repoImage *image.Info) error {
+func (r *defaultImplementation) deleteRepoImage(repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Digest}, "@")
 	return r.api.deleteImageByReference(reference)
 }

@@ -11,8 +11,6 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -40,10 +38,9 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -63,10 +60,7 @@ func run() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -99,19 +93,9 @@ func run() error {
 		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		containerRuntime,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
