@@ -14,6 +14,14 @@ type DockerRegistry interface {
 	DeleteRepoImage(repoImageList ...*image.Info) error
 }
 
-func NewDockerRegistry(_ string, options APIOptions) (DockerRegistry, error) {
-	return NewDefault(options), nil
+type DockerRegistryOptions struct {
+	InsecureRegistry      bool
+	SkipTlsVerifyRegistry bool
+}
+
+func NewDockerRegistry(_ string, options DockerRegistryOptions) (DockerRegistry, error) {
+	return newDefaultImplementation(defaultImplementationOptions{apiOptions{
+		InsecureRegistry:      options.InsecureRegistry,
+		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,
+	}})
 }
