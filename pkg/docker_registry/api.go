@@ -19,12 +19,12 @@ type api struct {
 	SkipTlsVerifyRegistry bool
 }
 
-type APIOptions struct {
+type apiOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
 }
 
-func newAPI(options APIOptions) *api {
+func newAPI(options apiOptions) *api {
 	return &api{
 		InsecureRegistry:      options.InsecureRegistry,
 		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,

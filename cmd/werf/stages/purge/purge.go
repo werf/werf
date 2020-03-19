@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -13,9 +11,8 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -49,7 +46,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -73,10 +71,7 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -100,20 +95,9 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		containerRuntime,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}

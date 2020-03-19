@@ -5,10 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -16,10 +12,11 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -102,7 +99,8 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -164,10 +162,7 @@ func runRun() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -193,16 +188,6 @@ func runRun() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	_, err = common.GetSynchronization(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -222,19 +207,9 @@ func runRun() error {
 		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-	stagesStorage, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		containerRuntime,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -242,6 +217,11 @@ func runRun() error {
 	stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
 
 	storageLockManager := &storage.FileLockManager{}
+
+	_, err = common.GetSynchronization(&commonCmdData) // TODO
+	if err != nil {
+		return err
+	}
 
 	logboek.Info.LogOptionalLn()
 	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, nil, storageLockManager)
