@@ -99,8 +99,10 @@ $(document).ready(function () {
       }
     }
 
-    var docSubURL = document.location.href.match(/^.*\/documentation\/(.+)$/);
-    if (docSubURL && docSubURL[1]) docSubURL = '/documentation/' + docSubURL[1]; else docSubURL = '';
+    var docSubURL = document.location.pathname.match(/^.*\/documentation(\/.*)$/);
+    if (docSubURL && docSubURL[1]) {
+      docSubURL = '/documentation' + docSubURL[1];
+    } else docSubURL = '/documentation/';
 
     var submenu = $('<ul class="header__submenu">');
     $.each(releasesInfo.menuChannels, function (j, group) {
@@ -127,13 +129,16 @@ $(document).ready(function () {
         }
       });
     })
-
   }
 
   if (submenu && submenu[0] && submenu[0].children && submenu[0].children.length) {
     menu.append($('<div class="header__submenu-container">').append(submenu));
     menu.addClass('header__menu-item header__menu-item_parent');
-    toggler = $('<a href="#">');
+    if (document.location.pathname === '/') {
+      toggler = $('<a href="/documentation/">');
+    } else {
+      toggler = $('<a href="#">');
+    }
   } else {
     menu.addClass('header__menu-item');
     toggler = $('<span class="header__menu-item-static">');

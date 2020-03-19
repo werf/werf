@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Building & deploying a versioned documentation site with werf"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/dynamic-building-deploying-with-werf-5c65bb5c29cb"
+    img: "/images/publications/en_210220.png"
+    created: 2020-02-21
+    comment: |
+      <p>You may already know our GitOps tool called <a href="https://github.com/flant/werf" target="_blank" rel="noopener nofollow">werf</a> — we have discussed it in <a href="https://medium.com/tag/werf/archive" target="_blank" rel="noopener">several of our articles</a>. Today, we would like to share our experience in building &amp; deploying the site with our tool’s documentation, <a href="https://werf.io/" target="_blank" rel="noopener nofollow">werf.io</a>. Despite it is a regular static site, the building process is noteworthy as we use a <em class="iq">dynamic</em> number of artifacts.</p>
   - title: "Executing commands while deploying your app’s new release in Kubernetes"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/custom-commands-deploying-in-kubernetes-df4ea4487f18"
