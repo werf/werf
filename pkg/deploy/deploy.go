@@ -6,10 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/werf/pkg/images_manager"
-
-	"github.com/flant/werf/pkg/util/secretvalues"
-
 	"github.com/ghodss/yaml"
 
 	"k8s.io/helm/pkg/chartutil"
@@ -21,7 +17,9 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/flant/werf/pkg/util/secretvalues"
 )
 
 type DeployOptions struct {
@@ -37,7 +35,7 @@ type DeployOptions struct {
 	ThreeWayMergeMode    helm.ThreeWayMergeModeType
 }
 
-func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(projectDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	var werfChart *werf_chart.WerfChart
 
 	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
@@ -54,7 +52,7 @@ func Deploy(projectDir string, imagesRepoManager images_manager.ImagesRepoManage
 			return err
 		}
 
-		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
 			return fmt.Errorf("error creating service values: %s", err)
 		}
