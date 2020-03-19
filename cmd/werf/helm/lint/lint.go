@@ -130,7 +130,7 @@ func runLint() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(projectDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

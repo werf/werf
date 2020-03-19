@@ -192,7 +192,7 @@ func runDeploy() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	var imagesRepoManager *storage.ImagesRepoManager
+	var imagesRepository string
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
@@ -254,6 +254,8 @@ func runDeploy() error {
 
 		storageLockManager := &storage.FileLockManager{}
 
+		imagesRepository = imagesRepo.String()
+
 		tag, tagStrategy, err = common.GetDeployTag(&commonCmdData, common.TagOptionsGetterOptions{})
 		if err != nil {
 			return err
@@ -277,11 +279,7 @@ func runDeploy() error {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, tagStrategy, false)
-	}
-
-	if imagesRepoManager == nil {
-		imagesRepoManager = &storage.ImagesRepoManager{}
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, tag, tagStrategy, false)
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
@@ -305,7 +303,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

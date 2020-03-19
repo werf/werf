@@ -27,7 +27,7 @@ type RenderOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, imagesRepoManager images_manager.ImagesRepoManager, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts RenderOptions) error {
+func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts RenderOptions) error {
 	logboek.Debug.LogF("Render options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
@@ -35,7 +35,7 @@ func RunRender(out io.Writer, projectDir string, werfConfig *config.WerfConfig, 
 		return err
 	}
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepoManager, opts.Namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepository, opts.Namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return err
 	}
