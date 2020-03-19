@@ -28,6 +28,7 @@ type StagesStorage interface {
 	RmManagedImage(projectName, imageName string) error
 	GetManagedImages(projectName string) ([]string, error)
 
+	Validate() error
 	String() string
 }
 
