@@ -12,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -25,6 +23,7 @@ import (
 	"github.com/flant/werf/pkg/build/import_server"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/images_manager"
@@ -202,13 +201,6 @@ type TagOptions struct {
 	TagByStagesSignature bool
 }
 
-type ImagesRepoManager interface {
-	ImagesRepo() string
-	ImageRepo(imageName string) string
-	ImageRepoTag(imageName, tag string) string
-	ImageRepoWithTag(imageName, tag string) string
-}
-
 func (c *Conveyor) ShouldBeBuilt() error {
 	if err := c.determineStages(); err != nil {
 		return err
@@ -222,7 +214,7 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	return c.runPhases(phases, false)
 }
 
-func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager images_manager.ImagesRepoManager, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
+func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
 	var images []images_manager.ImageInfoGetter
 
 	var imagesNames []string
