@@ -23,7 +23,7 @@ werf может [импортировать]({{ site.baseurl }}/documentation/co
 Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале stable, релиза 1.0, выполним следующую команду:
 
 ```shell
-. $(multiwerf use 1.0 stable --as-file)
+. $(multiwerf use 1.1 stable --as-file)
 ```
 
 ## Тестовое приложение

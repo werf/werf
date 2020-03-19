@@ -18,7 +18,7 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 ##### Добавление werf alias в текущую shell-сессию
 
 ```shell
-. $(multiwerf use 1.0 stable --as-file)
+. $(multiwerf use 1.1 stable --as-file)
 ```
 
 ##### Рекомендация при использовании в CI
@@ -26,13 +26,13 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 Чтобы упростить отладку в CI-окружении, например, в случае, когда бинарный файл multiwerf не установлен или неисполняемый, рекомендуется использовать команду `type`:
 
 ```shell
-type multiwerf && . $(multiwerf use 1.0 stable --as-file)
+type multiwerf && . $(multiwerf use 1.1 stable --as-file)
 ```
 
 ##### Опционально: добавление werf alias в shell-сессию при открытии терминала
 
 ```shell
-echo '. $(multiwerf use 1.0 stable --as-file)' >> ~/.bashrc
+echo '. $(multiwerf use 1.1 stable --as-file)' >> ~/.bashrc
 ```
 
 #### Windows
@@ -58,7 +58,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 ###### Добавление werf alias в текущую shell-сессию
 
 ```shell
-Invoke-Expression -Command "multiwerf use 1.0 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
+Invoke-Expression -Command "multiwerf use 1.1 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
 . $WERF_USE_SCRIPT_PATH.Trim()
 ```
 
@@ -78,6 +78,6 @@ setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 ###### Добавление werf alias в текущую shell-сессию
 
 ```shell
-FOR /F "tokens=*" %g IN ('multiwerf use 1.0 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
+FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
 %WERF_USE_SCRIPT_PATH%
 ```

@@ -20,7 +20,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 Перед началом работы с werf необходимо выбрать версию werf, которую вы будете использовать. Для выбора актуальной версии werf в канале stable, релиза 1.0, выполним следующую команду:
 
 ```shell
-. <(multiwerf use 1.0 stable)
+. <(multiwerf use 1.1 stable)
 ```
 
 ## Шаг 1: Конфигурация werf.yaml
