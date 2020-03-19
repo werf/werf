@@ -102,6 +102,10 @@ func runPurge() error {
 		return err
 	}
 
+	if err := common.ValidateStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
 	_, err = common.GetSynchronization(&commonCmdData)
 	if err != nil {
 		return err

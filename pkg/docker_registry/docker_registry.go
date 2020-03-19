@@ -19,11 +19,16 @@ type DockerRegistry interface {
 	GetRepoImageList(reference string) ([]*image.Info, error)
 	SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error)
 	DeleteRepoImage(repoImageList ...*image.Info) error
+
+	Validate() error
+	String() string
 }
 
 type DockerRegistryOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+	DockerHubUsername     string
+	DockerHubPassword     string
 }
 
 func (o *DockerRegistryOptions) awsEcrOptions() awsEcrOptions {
@@ -53,6 +58,10 @@ func (o *DockerRegistryOptions) gitLabRegistryOptions() gitLabRegistryOptions {
 func (o *DockerRegistryOptions) dockerHubOptions() dockerHubOptions {
 	return dockerHubOptions{
 		defaultImplementationOptions: o.defaultOptions(),
+		dockerHubCredentials: dockerHubCredentials{
+			username: o.DockerHubUsername,
+			password: o.DockerHubPassword,
+		},
 	}
 }
 
