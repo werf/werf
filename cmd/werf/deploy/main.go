@@ -5,10 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
-	"github.com/flant/werf/pkg/images_manager"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -17,10 +13,11 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
@@ -92,10 +89,10 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -155,10 +152,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.APIOptions{
-		InsecureRegistry:      *commonCmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-	}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -197,55 +191,16 @@ func runDeploy() error {
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		if len(werfConfig.StapelImages) != 0 {
-			_, err = common.GetStagesStorageAddress(&commonCmdData)
-			if err != nil {
-				return err
-			}
+		projectName := werfConfig.Meta.Project
 
-			_, err = common.GetSynchronization(&commonCmdData)
-			if err != nil {
-				return err
-			}
-		}
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-		imagesRepoAddress, err := common.GetImagesRepoAddress(werfConfig.Meta.Project, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-		if err != nil {
-			return err
-		}
-		imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
-		if err != nil {
-			return err
-		}
-		imagesRepo, err := storage.NewImagesRepo(
-			werfConfig.Meta.Project,
-			imagesRepoManager,
-			docker_registry.APIOptions{
-				InsecureRegistry:      *commonCmdData.InsecureRegistry,
-				SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-			},
-		)
+		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 		if err != nil {
 			return err
 		}
 
-		stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-		if err != nil {
-			return err
-		}
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{}
-		stagesStorage, err := storage.NewStagesStorage(
-			stagesStorageAddress,
-			containerRuntime,
-			docker_registry.APIOptions{
-				InsecureRegistry:      *commonCmdData.InsecureRegistry,
-				SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-			},
-		)
+		_, err = common.GetSynchronization(&commonCmdData) // TODO
 		if err != nil {
 			return err
 		}
@@ -253,6 +208,11 @@ func runDeploy() error {
 		stagesStorageCache := storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage"))
 
 		storageLockManager := &storage.FileLockManager{}
+
+		imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+		if err != nil {
+			return err
+		}
 
 		imagesRepository = imagesRepo.String()
 
