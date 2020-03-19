@@ -558,7 +558,7 @@ func (gm *GitMapping) StageDependenciesChecksum(stageName StageName) (string, er
 
 	for _, p := range checksum.GetNoMatchPaths() {
 		logboek.LogWarnF(
-			"WARNING: stage %s dependency path %s have not been found in %s git\n",
+			"WARNING: stage %s dependency path %s has not been found in %s git\n",
 			stageName, p, gm.GitRepo().GetName(),
 		)
 	}
