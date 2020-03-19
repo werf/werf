@@ -13,9 +13,7 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -92,19 +90,7 @@ func runLint() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepoManager, err := storage.GetImagesRepoManager("REPO", storage.MultirepoImagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	imagesRepo, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoManager,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}

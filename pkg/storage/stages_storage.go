@@ -1,11 +1,7 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/flant/werf/pkg/container_runtime"
-
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -42,14 +38,14 @@ type DeleteRepoImageOptions struct {
 	RmContainersThatUseImage bool
 }
 
-func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, dockerRegistryOptions docker_registry.APIOptions) (StagesStorage, error) {
+type StagesStorageOptions struct {
+	RepoStagesStorageOptions
+}
+
+func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStagesStorageAddress {
 		return NewLocalStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
-		if dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, dockerRegistryOptions); err != nil {
-			return nil, fmt.Errorf("error creating docker registry accessor for repo %q: %s", stagesStorageAddress, err)
-		} else {
-			return NewRepoStagesStorage(stagesStorageAddress, dockerRegistry, containerRuntime), nil
-		}
+		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
 	}
 }
