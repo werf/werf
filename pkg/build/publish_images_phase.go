@@ -245,7 +245,7 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 func (phase *PublishImagesPhase) fetchExistingTags(imageName string) (existingTags []string, err error) {
 	logProcessMsg := fmt.Sprintf("Fetching existing repo tags")
 	_ = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
-		existingTags, err = phase.ImagesRepo.FetchExistingTags(imageName)
+		existingTags, err = phase.ImagesRepo.GetAllImageRepoTags(imageName)
 		return nil
 	})
 	logboek.Info.LogOptionalLn()
