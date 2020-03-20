@@ -10,7 +10,7 @@ type ImagesRepo interface {
 	GetRepoImages(imageNames []string) (map[string][]*image.Info, error)
 	DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
-	FetchExistingTags(imageName string) ([]string, error)
+	GetAllImageRepoTags(imageName string) ([]string, error)
 	PublishImage(publishImage *container_runtime.WerfImage) error
 
 	CreateImageRepo(imageName string) error
@@ -28,6 +28,6 @@ type ImagesRepoOptions struct {
 	DockerImagesRepoOptions
 }
 
-func NewImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, options ImagesRepoOptions) (ImagesRepo, error) {
-	return NewDockerImagesRepo(projectName, imagesRepoManager, options.DockerImagesRepoOptions)
+func NewImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, options ImagesRepoOptions) (ImagesRepo, error) {
+	return NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode, options.DockerImagesRepoOptions)
 }
