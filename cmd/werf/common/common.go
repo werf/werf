@@ -1054,11 +1054,6 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		return nil, err
 	}
 
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
-	if err != nil {
-		return nil, err
-	}
-
 	imagesRepoImplementation := *cmdData.ImagesRepoImplementation
 	if imagesRepoImplementation == "" {
 		imagesRepoImplementation = *cmdData.RepoImplementation
@@ -1080,7 +1075,8 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 
 	return storage.NewImagesRepo(
 		projectName,
-		imagesRepoManager,
+		imagesRepoAddress,
+		imagesRepoMode,
 		storage.ImagesRepoOptions{
 			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
 				Implementation: imagesRepoImplementation,

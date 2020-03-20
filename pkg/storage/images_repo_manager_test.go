@@ -17,7 +17,7 @@ func TestGetImagesRepoManager(t *testing.T) {
 			namelessImageRepo:        "repo",
 			namelessImageRepoWithTag: "repo:tag",
 			imageRepo:                "repo",
-			imageRepoWithTag:         fmt.Sprintf("repo:image%stag", MonorepoTagPartsSeparator),
+			imageRepoWithTag:         fmt.Sprintf("repo:image%stag", monorepoTagPartsSeparator),
 			isMonorepo:               true,
 		},
 		MultirepoImagesRepoMode: {
@@ -31,7 +31,7 @@ func TestGetImagesRepoManager(t *testing.T) {
 
 	for imagesRepoMode, expected := range expectationsByRepoMode {
 		t.Run(imagesRepoMode, func(t *testing.T) {
-			m, err := GetImagesRepoManager("repo", imagesRepoMode)
+			m, err := newImagesRepoManager("repo", imagesRepoMode)
 			if err != nil {
 				t.Error(err)
 			}
