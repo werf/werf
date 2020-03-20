@@ -12,7 +12,7 @@ layout: default
 <div class="page__container page_releases">
 
 <div class="releases__block-title">
-    Release channels
+    Release channels <a href="/feed.xml" title="RSS" target="_blank" class="page__icon page__icon_rss page__icon_block-title page__icon_link"></a>
 </div>
 
 <!-- Releases description -->
@@ -99,7 +99,10 @@ layout: default
     {% endif %}
     <div id="id-{{group}}-{{ channel.name }}" class="tabs__content tabs__{{group}}__channel__content{% if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0]  %} active{% endif %}">
       <div class="releases__info">
-        <p>{{ channel.tooltip[page.lang] }}</p>
+        <p>
+          {{ channel.tooltip[page.lang] }}
+          <a href="/feed-{{group}}-{{ channel.name }}.xml" title="RSS" target="_blank" class="page__icon page__icon_rss page__icon_text page__icon_link"></a>
+        </p>
         <p class="releases__info-text">{{ channel.description[page.lang] }}</p>
       </div>
 

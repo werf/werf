@@ -86,6 +86,7 @@ html, body, .page {
 }
 
 .page__icon {
+    display: inline-block;
     background-position: center center;
     background-repeat: no-repeat;
     background-size: contain;
@@ -109,6 +110,28 @@ html, body, .page {
 
 .page__icon_search {
     background-image: url('../images/icons/search.svg');
+}
+
+.page__icon_rss {
+    background-image: url('../images/icons/rss.svg');    
+}
+
+.page__icon_block-title {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    top: 2px;
+}
+
+.page__icon_text {
+    width: 14px;
+    height: 14px;
+    position: relative;
+    top: 2px;
+}
+
+.page__icon_link:hover {
+    filter: brightness(0);
 }
 
 .page__input {
