@@ -6,25 +6,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-
 	"github.com/flant/werf/pkg/testing/utils"
 )
-
-func RegistryRepositoryList(reference string) []string {
-	repo, err := name.NewRepository(reference, name.WeakValidation)
-	Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("parsing repo %q: %v", reference, err))
-
-	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	if err != nil && strings.Contains(err.Error(), "NAME_UNKNOWN") {
-		return []string{}
-	}
-
-	Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("reading tags for %q: %v", repo, err))
-	return tags
-}
 
 func LocalDockerRegistryRun() (string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
