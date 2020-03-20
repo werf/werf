@@ -21,6 +21,60 @@ func newDockerHubApi() dockerHubApi {
 	return dockerHubApi{}
 }
 
+func (r *dockerHubApi) deleteRepository(repository, token string) (*http.Response, error) {
+	u, err := url.Parse(repository)
+	if err != nil {
+		return nil, err
+	}
+
+	project := path.Base(u.Path)
+	account := path.Base(strings.TrimSuffix(u.Path, project))
+
+	reqUrl := fmt.Sprintf(
+		"https://hub.docker.com/v2/repositories/%s/%s/",
+		account,
+		project,
+	)
+	reqAccept := "application/json"
+	reqAuthorization := fmt.Sprintf("JWT %s", token)
+
+	logboek.Debug.LogF("--> %s %s\n", http.MethodDelete, reqUrl)
+	req, err := http.NewRequest(http.MethodDelete, reqUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", reqAccept)
+	req.Header.Set("Authorization", reqAuthorization)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return resp, err
+	}
+
+	logboek.Debug.LogF("<-- %s %s\n", resp.Status, respBody)
+
+	if resp.StatusCode == http.StatusForbidden {
+		return resp, fmt.Errorf(
+			"DELETE %s failed: %s",
+			reqUrl,
+			string(respBody),
+		)
+	}
+
+	if err := transport.CheckError(resp, http.StatusOK, http.StatusAccepted, http.StatusNoContent); err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
 func (r *dockerHubApi) deleteTag(repository, tag, token string) (*http.Response, error) {
 	u, err := url.Parse(repository)
 	if err != nil {
@@ -105,7 +159,7 @@ func (r *dockerHubApi) getToken(username, password string) (string, *http.Respon
 
 	logboek.Debug.LogF("<-- %s %s\n", resp.Status, respBody)
 
-	if err := transport.CheckError(resp, http.StatusOK, http.StatusAccepted, http.StatusUnauthorized); err != nil {
+	if err := transport.CheckError(resp, http.StatusOK, http.StatusAccepted); err != nil {
 		return "", resp, err
 	}
 
