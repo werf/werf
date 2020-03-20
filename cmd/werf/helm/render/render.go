@@ -17,9 +17,7 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -64,8 +62,8 @@ func NewCmd() *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupTag(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -120,26 +118,7 @@ func runRender(outputFilePath string) error {
 		withoutImagesRepo = false
 	}
 
-	imagesRepoAddress := helm_common.GetImagesRepoAddressOrStub(optionalImagesRepo)
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	imagesRepo, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoManager,
-		docker_registry.APIOptions{
-			InsecureRegistry:      *commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
-		},
-	)
+	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -190,7 +169,7 @@ func runRender(outputFilePath string) error {
 	}
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
+	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
 		WithoutImagesRepo:    withoutImagesRepo,

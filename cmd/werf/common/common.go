@@ -12,14 +12,15 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 
-	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/build/stage"
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
@@ -58,10 +59,22 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage   *string
+	StagesStorage                      *string
+	StagesStorageRepoImplementation    *string
+	StagesStorageRepoDockerHubUsername *string
+	StagesStorageRepoDockerHubPassword *string
+
 	Synchronization *string
-	ImagesRepo      *string
-	ImagesRepoMode  *string
+
+	ImagesRepo                  *string
+	ImagesRepoMode              *string
+	ImagesRepoImplementation    *string
+	ImagesRepoDockerHubUsername *string
+	ImagesRepoDockerHubPassword *string
+
+	RepoImplementation    *string
+	RepoDockerHubUsername *string
+	RepoDockerHubPassword *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -230,7 +243,147 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
-func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
+func setupRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoImplementation != nil {
+		return
+	}
+
+	usage := fmt.Sprintf(`Choose default repo implementation for images repo and stages storage repo.
+The following docker registry implementations are supported: %s.
+Default %s or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+		"$WERF_REPO_IMPLEMENTATION",
+	)
+
+	cmdData.RepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoImplementation,
+		"repo-implementation",
+		"",
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+		usage,
+	)
+}
+
+func setupRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoDockerHubUsername != nil {
+		return
+	}
+
+	cmdData.RepoDockerHubUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoDockerHubUsername,
+		"repo-docker-hub-username",
+		"",
+		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
+		"Default Docker Hub username for stages storage repo and images repo implementations (default $WERF_REPO_DOCKER_HUB_USERNAME).",
+	)
+}
+
+func setupRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoDockerHubPassword != nil {
+		return
+	}
+
+	cmdData.RepoDockerHubPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoDockerHubPassword,
+		"repo-docker-hub-password",
+		"",
+		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
+		"Default Docker Hub password for stages storage repo and images repo implementations (default $WERF_REPO_DOCKER_HUB_PASSWORD).",
+	)
+}
+
+func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+	setupStagesStorage(cmdData, cmd)
+
+	setupRepoImplementation(cmdData, cmd)
+	setupStagesStorageRepoImplementation(cmdData, cmd)
+
+	setupRepoDockerHubUsername(cmdData, cmd)
+	setupRepoDockerHubPassword(cmdData, cmd)
+	setupStagesStorageRepoDockerHubUsername(cmdData, cmd)
+	setupStagesStorageRepoDockerHubPassword(cmdData, cmd)
+}
+
+func setupStagesStorageRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_IMPLEMENTATION"),
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf(`Choose stages storage repo implementation.
+The following  docker registry implementations are supported: %s.
+Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+	)
+
+	cmdData.StagesStorageRepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoImplementation,
+		"stages-storage-repo-implementation",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupStagesStorageRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME"),
+		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Docker Hub username for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME or $WERF_REPO_DOCKER_HUB_USERNAME).")
+
+	cmdData.StagesStorageRepoDockerHubUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoDockerHubUsername,
+		"stages-storage-repo-docker-hub-username",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupStagesStorageRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD"),
+		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Docker Hub password for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD or $WERF_REPO_DOCKER_HUB_PASSWORD).")
+
+	cmdData.StagesStorageRepoDockerHubPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoDockerHubPassword,
+		"stages-storage-repo-docker-hub-password",
+		"",
+		os.Getenv(defaultValue),
+		usage,
+	)
+}
+
+func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), fmt.Sprintf("Docker Repo to store stages or %[1]s for non-distributed build (only %[1]s is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html", storage.LocalStagesStorageAddress))
 }
@@ -320,12 +473,25 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	}
 }
 
-func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
+	setupImagesRepo(cmdData, cmd)
+	setupImagesRepoMode(cmdData, cmd)
+
+	setupRepoImplementation(cmdData, cmd)
+	setupImagesRepoImplementation(cmdData, cmd)
+
+	setupRepoDockerHubUsername(cmdData, cmd)
+	setupRepoDockerHubPassword(cmdData, cmd)
+	setupImagesRepoDockerHubUsername(cmdData, cmd)
+	setupImagesRepoDockerHubPassword(cmdData, cmd)
+}
+
+func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
 }
 
-func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
+func setupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepoMode = new(string)
 
 	defaultValue := os.Getenv("WERF_IMAGES_REPO_MODE")
@@ -334,6 +500,82 @@ func SetupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store images in Repo: %[1]s or %[2]s (defaults to $WERF_IMAGES_REPO_MODE or %[1]s)`, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode))
+}
+
+func setupImagesRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_IMPLEMENTATION"),
+		os.Getenv("WERF_REPO_IMPLEMENTATION"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf(`Choose images repo implementation.
+The following docker registry implementations are supported: %s.
+Default $WERF_IMAGES_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
+		strings.Join(docker_registry.ImplementationList(), ", "),
+	)
+
+	cmdData.ImagesRepoImplementation = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoImplementation,
+		"images-repo-implementation",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupImagesRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_DOCKER_HUB_USERNAME"),
+		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Docker Hub username for images repo implementation (default $WERF_IMAGES_REPO_DOCKER_HUB_USERNAME or $WERF_REPO_DOCKER_HUB_USERNAME).")
+
+	cmdData.ImagesRepoDockerHubUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoDockerHubUsername,
+		"images-repo-docker-hub-username",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupImagesRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD"),
+		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Docker Hub password for images repo implementation (default $WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD or $WERF_REPO_DOCKER_HUB_PASSWORD).")
+
+	cmdData.ImagesRepoDockerHubPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoDockerHubPassword,
+		"images-repo-docker-hub-password",
+		"",
+		defaultValue,
+		usage,
+	)
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -370,15 +612,15 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
-	SetupLogDebug(cmdData, cmd)
-	SetupLogVerbose(cmdData, cmd)
-	SetupLogQuiet(cmdData, cmd)
-	SetupLogColor(cmdData, cmd)
-	SetupLogPretty(cmdData, cmd)
-	SetupTerminalWidth(cmdData, cmd)
+	setupLogDebug(cmdData, cmd)
+	setupLogVerbose(cmdData, cmd)
+	setupLogQuiet(cmdData, cmd)
+	setupLogColor(cmdData, cmd)
+	setupLogPretty(cmdData, cmd)
+	setupTerminalWidth(cmdData, cmd)
 }
 
-func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogDebug = new(bool)
 
 	defaultValue := false
@@ -410,7 +652,7 @@ func SetupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogColorMode = new(string)
 
 	logColorEnvironmentValue := os.Getenv("WERF_LOG_COLOR_MODE")
@@ -425,7 +667,7 @@ Supported on, off and auto (based on the stdout’s file descriptor referring to
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
-func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogQuiet = new(bool)
 
 	var defaultValue bool
@@ -457,7 +699,7 @@ func SetupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogVerbose = new(bool)
 
 	var defaultValue bool
@@ -489,7 +731,7 @@ func SetupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogPretty = new(bool)
 
 	var defaultValue bool
@@ -502,7 +744,7 @@ func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
 }
 
-func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
+func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogTerminalWidth = new(int64)
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
@@ -584,15 +826,6 @@ func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeMode
 	return "", fmt.Errorf("bad three-way-merge-mode '%s': enabled, disabled or  onlyNewReleases modes can be specified", threeWayMergeModeParam)
 }
 
-func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
-	switch os.Getenv(environmentName) {
-	case "0", "false", "no":
-		return false
-	default:
-		return true
-	}
-}
-
 func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":
@@ -600,10 +833,6 @@ func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	default:
 		return false
 	}
-}
-
-func ConvertInt64Value(v string) (int64, error) {
-	return ConvertIntValue(v, 64)
 }
 
 func ConvertInt32Value(v string) (int32, error) {
@@ -748,6 +977,147 @@ func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesStorage, nil
 }
 
+func GetImagesRepoWithOptionalStubRepoAddress(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(projectName, cmdData, true)
+}
+
+func GetImagesRepo(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(projectName, cmdData, false)
+}
+
+func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress bool) (storage.ImagesRepo, error) {
+	var imagesRepoAddress string
+	var err error
+	if optionalStubRepoAddress {
+		imagesRepoAddress, err = getImagesRepoAddressOrStub(projectName, cmdData)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		imagesRepoAddress, err = getImagesRepoAddress(projectName, cmdData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	imagesRepoMode, err := getImagesRepoMode(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	imagesRepoManager, err := storage.GetImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return nil, err
+	}
+
+	imagesRepoImplementation := *cmdData.ImagesRepoImplementation
+	if imagesRepoImplementation == "" {
+		imagesRepoImplementation = *cmdData.RepoImplementation
+	}
+
+	if err := validationRepoImplementation(imagesRepoImplementation); err != nil {
+		return nil, err
+	}
+
+	imagesRepoDockerHubUsername := *cmdData.ImagesRepoDockerHubUsername
+	if imagesRepoDockerHubUsername == "" {
+		imagesRepoDockerHubUsername = *cmdData.RepoDockerHubUsername
+	}
+
+	imagesRepoDockerHubPassword := *cmdData.ImagesRepoDockerHubPassword
+	if imagesRepoDockerHubPassword == "" {
+		imagesRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
+	}
+
+	return storage.NewImagesRepo(
+		projectName,
+		imagesRepoManager,
+		storage.ImagesRepoOptions{
+			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
+				Implementation: imagesRepoImplementation,
+				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
+					InsecureRegistry:      *cmdData.InsecureRegistry,
+					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+					DockerHubUsername:     imagesRepoDockerHubUsername,
+					DockerHubPassword:     imagesRepoDockerHubPassword,
+				},
+			},
+		},
+	)
+}
+
+func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+	stagesStorageAddress, err := GetStagesStorageAddress(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	stagesStorageRepoImplementation := *cmdData.StagesStorageRepoImplementation
+	if stagesStorageRepoImplementation == "" {
+		stagesStorageRepoImplementation = *cmdData.RepoImplementation
+	}
+
+	if err := validationRepoImplementation(stagesStorageRepoImplementation); err != nil {
+		return nil, err
+	}
+
+	stagesStorageRepoDockerHubUsername := *cmdData.StagesStorageRepoDockerHubUsername
+	if stagesStorageRepoDockerHubUsername == "" {
+		stagesStorageRepoDockerHubUsername = *cmdData.RepoDockerHubUsername
+	}
+
+	stagesStorageRepoDockerHubPassword := *cmdData.StagesStorageRepoDockerHubPassword
+	if stagesStorageRepoDockerHubPassword == "" {
+		stagesStorageRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
+	}
+
+	return storage.NewStagesStorage(
+		stagesStorageAddress,
+		containerRuntime,
+		storage.StagesStorageOptions{
+			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
+				Implementation: stagesStorageRepoImplementation,
+				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
+					InsecureRegistry:      *cmdData.InsecureRegistry,
+					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+					DockerHubUsername:     stagesStorageRepoDockerHubUsername,
+					DockerHubPassword:     stagesStorageRepoDockerHubPassword,
+				},
+			},
+		},
+	)
+}
+
+func ValidateImagesRepo(imagesRepo storage.ImagesRepo) error {
+	if err := imagesRepo.Validate(); err != nil {
+		if _, ok := err.(docker_registry.DockerHubUnauthorizedError); ok {
+			return fmt.Errorf(`Docker Hub authorization failed.
+You should specify Docker Hub username and password to remove tags with Docker Hub API.
+Check --repo-docker-hub-username/password --stages-repo-docker-hub-username/password options.
+Be aware that access to the resource is forbidden with personal access token.`)
+		}
+
+		return fmt.Errorf("")
+	}
+
+	return nil
+}
+
+func ValidateStagesStorage(stagesStorage storage.StagesStorage) error {
+	if err := stagesStorage.Validate(); err != nil {
+		if _, ok := err.(docker_registry.DockerHubUnauthorizedError); ok {
+			return fmt.Errorf(`Docker Hub authorization failed.
+You should specify Docker Hub username and password to remove tags with Docker Hub API.
+Check --repo-docker-hub-username/password --images-repo-docker-hub-username/password options.
+Be aware that access to the resource is forbidden with personal access token.`)
+		}
+
+		return fmt.Errorf("")
+	}
+
+	return nil
+}
+
 func GetSynchronization(cmdData *CmdData) (string, error) {
 	if *cmdData.Synchronization != ":local" {
 		return "", fmt.Errorf("only --synchronization=:local is supported for now, got '%s'", *cmdData.Synchronization)
@@ -755,20 +1125,24 @@ func GetSynchronization(cmdData *CmdData) (string, error) {
 	return *cmdData.Synchronization, nil
 }
 
-func GetImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
+func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, error) {
+	imagesRepoAddress, err := GetOptionalImagesRepoAddress(projectName, cmdData)
+	if err != nil {
+		return "", err
+	}
+
+	if imagesRepoAddress == "" {
+		return "IMAGES_REPO", nil
+	}
+
+	return imagesRepoAddress, nil
+}
+
+func getImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepoAddress(projectName, cmdData)
-}
-
-func GetImagesRepoMode(cmdData *CmdData) (string, error) {
-	switch *cmdData.ImagesRepoMode {
-	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
-		return *cmdData.ImagesRepoMode, nil
-	default:
-		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
-	}
 }
 
 func GetOptionalImagesRepoAddress(projectName string, cmdData *CmdData) (string, error) {
@@ -785,6 +1159,15 @@ func GetOptionalImagesRepoAddress(projectName string, cmdData *CmdData) (string,
 	}
 
 	return "", nil
+}
+
+func getImagesRepoMode(cmdData *CmdData) (string, error) {
+	switch *cmdData.ImagesRepoMode {
+	case storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode:
+		return *cmdData.ImagesRepoMode, nil
+	default:
+		return "", fmt.Errorf("bad --images-repo-mode '%s': only %s or %s supported", *cmdData.ImagesRepoMode, storage.MultirepoImagesRepoMode, storage.MonorepoImagesRepoMode)
+	}
 }
 
 func GetOptionalWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
@@ -838,13 +1221,6 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	return currentDir, nil
-}
-
-func GetNamespace(namespaceOption string) string {
-	if namespaceOption == "" {
-		return kube.DefaultNamespace
-	}
-	return namespaceOption
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
@@ -968,6 +1344,23 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	}
 
 	return nil
+}
+
+func DockerRegistryInit(cmdData *CmdData) error {
+	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+}
+
+func validationRepoImplementation(implementation string) error {
+	supportedValues := docker_registry.ImplementationList()
+	supportedValues = append(supportedValues, "auto", "")
+
+	for _, supportedImplementation := range supportedValues {
+		if supportedImplementation == implementation {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("specified docker registry implementation '%s' is not supported", implementation)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

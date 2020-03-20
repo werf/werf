@@ -13,8 +13,15 @@ type DockerImagesRepo struct {
 	projectName        string
 }
 
-func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, dockerRegistryOptions docker_registry.APIOptions) (ImagesRepo, error) {
-	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoManager.ImagesRepo(), dockerRegistryOptions)
+type DockerImagesRepoOptions struct {
+	docker_registry.DockerRegistryOptions
+	Implementation string
+}
+
+func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, options DockerImagesRepoOptions) (ImagesRepo, error) {
+	implementation := options.Implementation
+
+	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoManager.ImagesRepo(), implementation, options.DockerRegistryOptions)
 	if err != nil {
 		return nil, err
 	}

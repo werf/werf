@@ -26,12 +26,24 @@ type RepoStagesStorage struct {
 	ContainerRuntime container_runtime.ContainerRuntime
 }
 
-func NewRepoStagesStorage(repoAddress string, dockerRegistry docker_registry.DockerRegistry, containerRuntime container_runtime.ContainerRuntime) *RepoStagesStorage {
+type RepoStagesStorageOptions struct {
+	docker_registry.DockerRegistryOptions
+	Implementation string
+}
+
+func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime.ContainerRuntime, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
+	implementation := options.Implementation
+
+	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, implementation, options.DockerRegistryOptions)
+	if err != nil {
+		return nil, fmt.Errorf("error creating docker registry accessor for repo %q: %s", repoAddress, err)
+	}
+
 	return &RepoStagesStorage{
 		RepoAddress:      repoAddress,
 		DockerRegistry:   dockerRegistry,
 		ContainerRuntime: containerRuntime,
-	}
+	}, nil
 }
 
 // TODO: Реализация интерфейса StagesStorage через низкоуровневый объект DockerRegistry
