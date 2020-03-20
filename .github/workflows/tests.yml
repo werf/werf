@@ -195,7 +195,8 @@ jobs:
         extra-find-args:
         - "-name 'guides.test'"
         - "-name 'git.test'"
-        - "! -name 'git.test' ! -name 'guides.test'"
+        - "-name 'cleanup.test'"
+        - "! -name 'git.test' ! -name 'guides.test' ! -name 'cleanup.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -233,6 +234,11 @@ jobs:
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
       shell: bash
+
+    - name: Docker login for registry implementations
+      run: ./scripts/ci/integration_tests_registries_login.sh
+      shell: bash
+      if: matrix.extra-find-args == "-name 'cleanup.test'"
 
     - name: Test
       run: |
@@ -329,7 +335,8 @@ jobs:
         extra-find-args:
         - "-name 'guides.test*'"
         - "-name 'git.test*'"
-        - "! -name 'git.test*' ! -name 'guides.test*'"
+        - "-name 'cleanup.test*'"
+        - "! -name 'git.test*' ! -name 'guides.test*' ! -name 'cleanup.test*'"
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
@@ -375,6 +382,11 @@ jobs:
         [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
         echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
       shell: bash
+
+    - name: Docker login for registry implementations
+      run: ./scripts/ci/integration_tests_registries_login.sh
+      shell: bash
+      if: matrix.extra-find-args == "-name 'cleanup.test*'"
 
     - name: Test (macos)
       run: |
