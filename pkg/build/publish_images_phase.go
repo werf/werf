@@ -260,15 +260,15 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	imageRepository := phase.ImagesRepo.ImageRepositoryName(img.GetName())
 	lastStageImage := img.GetLastNonEmptyStage().GetImage()
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
-	imageTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
+	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
 
-	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageTag, lastStageImage)
+	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageMetaTag, lastStageImage)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
 
 	if alreadyExists {
-		logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageTag)
+		logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageActualTag)
 
 		_ = logboek.WithIndent(func() error {
 			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
@@ -321,13 +321,13 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageTag, lastStageImage)
+		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, lastStageImage)
 		if err != nil {
 			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
 
 		if alreadyExists {
-			logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageTag)
+			logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageActualTag)
 			_ = logboek.WithIndent(func() error {
 				logboek.Info.LogFDetails("discarding newly built image %s\n", publishImage.MustGetBuiltId())
 				logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
@@ -347,7 +347,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	return logboek.Default.LogProcess(
-		fmt.Sprintf("Publishing image %s by %s tag %s", img.LogName(), tagStrategy, imageTag),
+		fmt.Sprintf("Publishing image %s by %s tag %s", img.LogName(), tagStrategy, imageMetaTag),
 		logboek.LevelLogProcessOptions{
 			SuccessInfoSectionFunc: successInfoSectionFunc,
 			Style:                  logboek.HighlightStyle(),
@@ -355,15 +355,17 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageTag string, lastStageImage container_runtime.ImageInterface) (bool, error) {
-	if !util.IsStringsContainValue(existingTags, imageTag) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag string, lastStageImage container_runtime.ImageInterface) (bool, error) {
+	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(werfImageName, imageMetaTag)
+
+	if !util.IsStringsContainValue(existingTags, imageActualTag) {
 		return false, nil
 	}
 
 	var parentID string
 	var err error
 	getImageParentIDFunc := func() error {
-		repoImage, err := phase.ImagesRepo.GetRepoImage(werfImageName, imageTag)
+		repoImage, err := phase.ImagesRepo.GetRepoImage(werfImageName, imageMetaTag)
 		if err != nil {
 			return err
 		}
@@ -372,7 +374,7 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 		return nil
 	}
 
-	logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", imageTag)
+	logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", imageActualTag)
 	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageParentIDFunc)
 	if err != nil {
 		return false, fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
