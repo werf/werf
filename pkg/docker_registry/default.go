@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/flant/werf/pkg/image"
@@ -46,6 +47,10 @@ func (r *defaultImplementation) SelectRepoImageList(reference string, f func(*im
 	}
 
 	return repoImageList, nil
+}
+
+func (r *defaultImplementation) DeleteRepo(_ string) error {
+	return fmt.Errorf("method is not implemented")
 }
 
 func (r *defaultImplementation) DeleteRepoImage(repoImageList ...*image.Info) error {
