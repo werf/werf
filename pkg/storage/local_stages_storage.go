@@ -6,13 +6,12 @@ import (
 
 	"github.com/golang/example/stringutil"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
-	"github.com/flant/logboek"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
 )
