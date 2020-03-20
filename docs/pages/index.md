@@ -224,7 +224,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
                             <a href="https://github.com/flant/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
                             <span class="roadmap__steps-list-item-text">
-                                Support for the most Docker registry services.
+                                Support for the most Docker registry implementations.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
