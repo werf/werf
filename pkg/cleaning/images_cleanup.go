@@ -119,7 +119,7 @@ func (m *imagesCleanupManager) run() error {
 		var err error
 		if m.LocalGit != nil {
 			if !m.WithoutKube {
-				if err := logboek.LogProcess("Skipping repo imagesRepoImageList that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
+				if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
 					repoImages, err = exceptRepoImagesByWhitelist(repoImages, m.KubernetesContextsClients)
 					return err
 				}); err != nil {
@@ -162,7 +162,7 @@ func (m *imagesCleanupManager) run() error {
 func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, error) {
 	var deployedDockerImagesNames []string
 	for contextName, kubernetesClient := range kubernetesContextsClients {
-		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker imagesRepoImageList (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
+		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
 			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
 			if err != nil {
 				return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
