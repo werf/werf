@@ -169,8 +169,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 				if c.From != "" {
 					relatedStageIndex, err := strconv.Atoi(c.From)
 					if err != nil || relatedStageIndex >= len(stagesDependencies) {
-						logboek.LogWarnF("WARNING: COPY --from with nonexistent dockerfile stage %s detected\n", c.From)
-						continue
+						return "", fmt.Errorf("COPY --from refers to nonexistent dockerfile stage %s", c.From)
 					} else {
 						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
 					}
