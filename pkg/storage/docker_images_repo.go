@@ -41,6 +41,14 @@ func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, 
 	return imagesRepo, nil
 }
 
+func (repo *DockerImagesRepo) DeleteRepo() error {
+	return repo.DockerRegistry.DeleteRepo(repo.ImagesRepo())
+}
+
+func (repo *DockerImagesRepo) DeleteImageRepo(imageName string) error {
+	return repo.DockerRegistry.DeleteRepo(repo.ImageRepositoryName(imageName))
+}
+
 func (repo *DockerImagesRepo) GetRepoImage(imageName, tag string) (*image.Info, error) {
 	return repo.DockerRegistry.GetRepoImage(repo.ImageRepositoryNameWithTag(imageName, tag))
 }

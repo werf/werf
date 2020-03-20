@@ -23,6 +23,9 @@ import (
 // Environment implementation variables
 // WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_<implementation name>
 // WERF_TEST_<implementation name>_REGISTRY
+//
+// WERF_TEST_DOCKERHUB_USERNAME
+// WERF_TEST_DOCKERHUB_PASSWORD
 
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
@@ -234,7 +237,32 @@ func implementationImagesRepoMode(implementationName string) string {
 }
 
 func implementationImagesRepoDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {
+	implementationCode := strings.ToUpper(implementationName)
+
 	switch implementationName {
+	case docker_registry.DockerHubImplementationName:
+		usernameEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_USERNAME",
+			implementationCode,
+		)
+
+		passwordEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_PASSWORD",
+			implementationCode,
+		)
+
+		username := getRequiredEnv(usernameEnvName)
+		password := getRequiredEnv(passwordEnvName)
+
+		stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", username)
+		stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", password)
+
+		return docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      false,
+			SkipTlsVerifyRegistry: false,
+			DockerHubUsername:     username,
+			DockerHubPassword:     password,
+		}
 	default:
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -243,8 +271,16 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 	}
 }
 
-func implementationAfterEach(_ string) {
-	return
+func implementationAfterEach(implementationName string) {
+	switch implementationName {
+	case docker_registry.DockerHubImplementationName:
+		err := imagesRepo.DeleteRepo()
+		if err != nil {
+			if _, ok := err.(docker_registry.DockerHubNotFoundError); !ok {
+				Ω(err).Should(Succeed())
+			}
+		}
+	}
 }
 
 func getRequiredEnv(name string) string {
