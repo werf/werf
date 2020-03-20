@@ -51,7 +51,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - ~3-way-merge~ [#1616](https://github.com/flant/werf/issues/1616).
 - Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
 - ~Content-based tagging~ [#1184](https://github.com/flant/werf/issues/1184).
-- Support for the most Docker registry services [#2199](https://github.com/flant/werf/issues/2199).
+- Support for the most Docker registry implementations [#2199](https://github.com/flant/werf/issues/2199).
 - Parallel image builds [#2200](https://github.com/flant/werf/issues/2200).
 - Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
 - Distributed builds with the shared Docker registry [#1614](https://github.com/flant/werf/issues/1614).
