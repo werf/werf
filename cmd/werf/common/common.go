@@ -378,7 +378,7 @@ func setupStagesStorageRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Comman
 		cmdData.StagesStorageRepoDockerHubPassword,
 		"stages-storage-repo-docker-hub-password",
 		"",
-		os.Getenv(defaultValue),
+		defaultValue,
 		usage,
 	)
 }
