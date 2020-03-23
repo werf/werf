@@ -307,8 +307,8 @@ func getCleanupConfig() (CleanupConfig, error) {
 			GitTagStrategyExpiryDays:          30,
 			GitCommitStrategyLimit:            50,
 			GitCommitStrategyExpiryDays:       30,
-			StagesSignatureStrategyLimit:      15,
-			StagesSignatureStrategyExpiryDays: 30,
+			StagesSignatureStrategyLimit:      -1,
+			StagesSignatureStrategyExpiryDays: -1,
 		}, nil
 	}
 
