@@ -51,9 +51,9 @@ func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image c
 	return nil
 }
 
-func (s *UserWithGitPatchStage) AfterImageSyncDockerStateHook(c Conveyor) error {
+func (s *UserWithGitPatchStage) AfterSignatureCalculated(c Conveyor) error {
 	if !s.GitPatchStage.isEmpty() {
-		if err := s.GitPatchStage.AfterImageSyncDockerStateHook(c); err != nil {
+		if err := s.GitPatchStage.AfterSignatureCalculated(c); err != nil {
 			return err
 		}
 	}
