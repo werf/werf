@@ -182,33 +182,52 @@ func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) FetchImage(image container_runtime.Image) error {
+func (storage *RepoStagesStorage) FetchImage(img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
 		// FIXME: construct image name
 		// TODO: lock by name to prevent double pull of the same stage
-		return containerRuntime.PullImageFromRegistry(image)
+		return containerRuntime.PullImageFromRegistry(img)
 		// TODO: case *container_runtime.LocalHostRuntime:
 	default:
 		panic("not implemented")
 	}
 }
 
-func (storage *RepoStagesStorage) StoreImage(image container_runtime.Image) error {
+func (storage *RepoStagesStorage) StoreImage(img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
 		// FIXME: construct image name
-		return containerRuntime.PushBuiltImage(image)
+		return containerRuntime.PushBuiltImage(img)
 		// TODO: case *container_runtime.LocalHostRuntime:
 	default:
 		panic("not implemented")
 	}
 }
 
-func (storage *RepoStagesStorage) CleanupLocalImage(image container_runtime.Image) error {
-	// FIXME
-	logboek.Default.LogF("Cleaning local image %#v\n", image)
-	return nil
+func (storage *RepoStagesStorage) CleanupLocalImage(img container_runtime.Image) error {
+	logboek.Default.LogF("Cleaning local image %#v\n", img)
+	return fmt.Errorf("not implemented")
+}
+
+func (storage *RepoStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
+	switch storage.ContainerRuntime.(type) {
+	case *container_runtime.LocalDockerServerRuntime:
+		dockerImage := img.(*container_runtime.DockerImage)
+		return !dockerImage.Image.IsExistsLocally(), nil
+	default:
+		panic("not implemented")
+	}
+}
+
+func (storage *RepoStagesStorage) ShouldCleanupLocalImage(img container_runtime.Image) (bool, error) {
+	switch storage.ContainerRuntime.(type) {
+	case *container_runtime.LocalDockerServerRuntime:
+		dockerImage := img.(*container_runtime.DockerImage)
+		return dockerImage.Image.IsExistsLocally(), nil
+	default:
+		panic("not implemented")
+	}
 }
 
 func (storage *RepoStagesStorage) String() string {

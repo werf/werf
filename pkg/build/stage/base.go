@@ -119,8 +119,8 @@ func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.image.GetImageInfo() != nil {
-			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetImageInfo().Labels))
+		if s.image.GetStagesStorageImageInfo() != nil {
+			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetStagesStorageImageInfo().Labels))
 		} else {
 			latestCommit, err := gitMapping.LatestCommit()
 			if err != nil {
@@ -142,7 +142,7 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ container_runtime.ImageInterface) (boo
 
 func (s *BaseStage) ShouldBeReset(builtImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetImageInfo().Labels)
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetStagesStorageImageInfo().Labels)
 		if commit == "" {
 			return false, nil
 		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
@@ -237,7 +237,7 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_run
 	return nil
 }
 
-func (s *BaseStage) AfterImageSyncDockerStateHook(_ Conveyor) error {
+func (s *BaseStage) AfterSignatureCalculated(_ Conveyor) error {
 	return nil
 }
 
@@ -254,7 +254,7 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage container_runtime.
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetImageInfo().Labels
+		labels = prevBuiltImage.GetStagesStorageImageInfo().Labels
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -342,7 +342,7 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.I
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetImageInfo().Labels
+		labels = prevBuiltImage.GetStagesStorageImageInfo().Labels
 	}
 	for k, v := range labels {
 		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
