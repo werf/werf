@@ -9,6 +9,7 @@ import (
 const DockerHubImplementationName = "dockerhub"
 
 type DockerHubUnauthorizedError error
+type DockerHubNotFoundError error
 
 var dockerHubPatterns = []string{"^index\\.docker\\.io", "^registry\\.hub\\.docker\\.com"}
 
@@ -45,11 +46,38 @@ func newDockerHub(options dockerHubOptions) (*dockerHub, error) {
 	return dockerHub, nil
 }
 
+func (r *dockerHub) DeleteRepo(reference string) error {
+	return r.deleteRepo(reference, true)
+}
+
 func (r *dockerHub) DeleteRepoImage(repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if err := r.deleteRepoImage(repoImage, true); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
+	token, err := r.getToken()
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.dockerHubApi.deleteRepository(reference, token)
+	if resp != nil {
+		if resp.StatusCode == http.StatusUnauthorized && withRetry {
+			r.resetToken()
+			return r.deleteRepo(reference, false)
+		} else if resp.StatusCode == http.StatusNotFound {
+			return DockerHubNotFoundError(err)
+		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -66,6 +94,8 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 		if resp.StatusCode == http.StatusUnauthorized && withRetry {
 			r.resetToken()
 			return r.deleteRepoImage(repoImage, false)
+		} else if resp.StatusCode == http.StatusNotFound {
+			return DockerHubNotFoundError(err)
 		}
 	}
 
@@ -79,8 +109,12 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 func (r *dockerHub) getToken() (string, error) {
 	if r.token == "" {
 		token, resp, err := r.dockerHubApi.getToken(r.dockerHubCredentials.username, r.dockerHubCredentials.password)
-		if resp != nil && resp.StatusCode == http.StatusUnauthorized {
-			return "", DockerHubUnauthorizedError(err)
+		if resp != nil {
+			if resp.StatusCode == http.StatusUnauthorized {
+				return "", DockerHubUnauthorizedError(err)
+			} else if resp.StatusCode == http.StatusNotFound {
+				return "", DockerHubNotFoundError(err)
+			}
 		}
 
 		if err != nil {

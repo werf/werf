@@ -7,10 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/flant/werf/pkg/testing/utils"
-	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
-var _ = Describe("cleaning images", func() {
+var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
@@ -43,44 +42,33 @@ var _ = Describe("cleaning images", func() {
 			"git",
 			"commit", "-m", "Initial commit",
 		)
-
-		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
-		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
-	for _, basicWerfArgs := range [][]string{
+	for _, werfCommand := range [][]string{
 		{"images", "cleanup"},
 		{"cleanup"},
 	} {
-		commandToCheck := strings.Join(basicWerfArgs, " ") + " command"
-		basicWerfArgs := basicWerfArgs
+		description := strings.Join(werfCommand, " ") + " command"
+		werfCommand := werfCommand
 
-		Describe(commandToCheck, func() {
+		Describe(description, func() {
 			Context("when deployed images in kubernetes are not taken into account", func() {
 				BeforeEach(func() {
 					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 				})
 
-				It("should work properly with non-existent registry repository", func() {
+				It("should work properly with non-existent/empty images repo", func() {
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
-						basicWerfArgs...,
+						werfCommand...,
 					)
 				})
 
 				Context("git branch strategy", func() {
 					var testBranch = "branchA"
 
-					It("should remove image associated with local branch", func() {
+					It("should remove image that is associated with local branch", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							"git",
@@ -93,20 +81,20 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-branch", testBranch,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).Should(ContainElement(testBranch))
+						tags := imagesRepoAllImageRepoTags("image")
+						Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
 
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).ShouldNot(ContainElement(testBranch))
+						tags = imagesRepoAllImageRepoTags("image")
+						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
 					})
 
-					It("should remove image associated with deleted remote branch", func() {
+					It("should remove image that is associated with deleted remote branch", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							"git",
@@ -128,11 +116,11 @@ var _ = Describe("cleaning images", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).Should(ContainElement(testBranch))
+						tags := imagesRepoAllImageRepoTags("image")
+						Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -143,18 +131,18 @@ var _ = Describe("cleaning images", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).ShouldNot(ContainElement(testBranch))
+						tags = imagesRepoAllImageRepoTags("image")
+						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
 					})
 				})
 
 				Context("git tag strategy", func() {
 					var testTag = "tagA"
 
-					It("should remove image associated with deleted tag", func() {
+					It("should remove image that is associated with deleted tag", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							"git",
@@ -170,11 +158,11 @@ var _ = Describe("cleaning images", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).Should(ContainElement(testTag))
+						tags := imagesRepoAllImageRepoTags("image")
+						Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", testTag)))
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -185,11 +173,11 @@ var _ = Describe("cleaning images", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).ShouldNot(ContainElement(testTag))
+						tags = imagesRepoAllImageRepoTags("image")
+						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testTag)))
 					})
 
 					It("should remove image by expiry days policy (WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS)", func() {
@@ -205,17 +193,17 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-tag", testTag,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags := imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(1))
 
-						werfArgs := append(basicWerfArgs, "--git-tag-strategy-expiry-days", "0")
+						werfArgs := append(werfCommand, "--git-tag-strategy-expiry-days", "0")
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							werfArgs...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags = imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(0))
 					})
 
@@ -234,43 +222,43 @@ var _ = Describe("cleaning images", func() {
 							)
 						}
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags := imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(3))
 
-						werfArgs := append(basicWerfArgs, "--git-tag-strategy-limit", "1")
+						werfArgs := append(werfCommand, "--git-tag-strategy-limit", "1")
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							werfArgs...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags = imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(1))
 					})
 				})
 
 				Context("git commit strategy", func() {
-					It("should remove image that associated with non-existent commit", func() {
+					It("should remove image that is associated with non-existent commit", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							"build-and-publish", "--tag-git-commit", "8a99331ce0f918b411423223f4060e9688e03f6a",
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags := imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(1))
 
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags = imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(0))
 					})
 
-					It("should not remove image that associated with commit", func() {
+					It("should not remove image that is associated with commit", func() {
 						out := utils.SucceedCommandOutputString(
 							testDirPath,
 							"git",
@@ -287,11 +275,11 @@ var _ = Describe("cleaning images", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							basicWerfArgs...,
+							werfCommand...,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
-						Ω(tags).Should(ContainElement(commit))
+						tags := imagesRepoAllImageRepoTags("image")
+						Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", commit)))
 					})
 
 					It("should remove image by expiry days policy (WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS)", func() {
@@ -308,17 +296,17 @@ var _ = Describe("cleaning images", func() {
 							"build-and-publish", "--tag-git-commit", commit,
 						)
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags := imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(1))
 
-						werfArgs := append(basicWerfArgs, "--git-commit-strategy-expiry-days", "0")
+						werfArgs := append(werfCommand, "--git-commit-strategy-expiry-days", "0")
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							werfArgs...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags = imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(0))
 					})
 
@@ -345,17 +333,17 @@ var _ = Describe("cleaning images", func() {
 							)
 						}
 
-						tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags := imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(amount))
 
-						werfArgs := append(basicWerfArgs, "--git-commit-strategy-limit", "2")
+						werfArgs := append(werfCommand, "--git-commit-strategy-limit", "2")
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							werfArgs...,
 						)
 
-						tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+						tags = imagesRepoAllImageRepoTags("image")
 						Ω(tags).Should(HaveLen(2))
 					})
 				})

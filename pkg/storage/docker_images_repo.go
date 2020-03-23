@@ -10,7 +10,7 @@ import (
 
 type DockerImagesRepo struct {
 	docker_registry.DockerRegistry
-	*ImagesRepoManager // FIXME rename images repo manager to something
+	*imagesRepoManager // FIXME rename images repo manager to something
 	projectName        string
 }
 
@@ -19,8 +19,13 @@ type DockerImagesRepoOptions struct {
 	Implementation string
 }
 
-func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManager, options DockerImagesRepoOptions) (ImagesRepo, error) {
+func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, options DockerImagesRepoOptions) (ImagesRepo, error) {
 	implementation := options.Implementation
+
+	imagesRepoManager, err := newImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return nil, err
+	}
 
 	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoManager.ImagesRepo(), implementation, options.DockerRegistryOptions)
 	if err != nil {
@@ -29,11 +34,19 @@ func NewDockerImagesRepo(projectName string, imagesRepoManager *ImagesRepoManage
 
 	imagesRepo := &DockerImagesRepo{
 		projectName:       projectName,
-		ImagesRepoManager: imagesRepoManager,
+		imagesRepoManager: imagesRepoManager,
 		DockerRegistry:    dockerRegistry,
 	}
 
 	return imagesRepo, nil
+}
+
+func (repo *DockerImagesRepo) DeleteRepo() error {
+	return repo.DockerRegistry.DeleteRepo(repo.ImagesRepo())
+}
+
+func (repo *DockerImagesRepo) DeleteImageRepo(imageName string) error {
+	return repo.DockerRegistry.DeleteRepo(repo.ImageRepositoryName(imageName))
 }
 
 func (repo *DockerImagesRepo) GetRepoImage(imageName, tag string) (*image.Info, error) {
@@ -41,7 +54,7 @@ func (repo *DockerImagesRepo) GetRepoImage(imageName, tag string) (*image.Info, 
 }
 
 func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*image.Info, error) {
-	if repo.ImagesRepoManager.IsMonorepo() {
+	if repo.imagesRepoManager.IsMonorepo() {
 		return repo.getRepoImagesFromMonorepo(imageNames)
 	} else {
 		return repo.getRepoImagesFromMultirepo(imageNames)
@@ -60,8 +73,8 @@ func (repo *DockerImagesRepo) RemoveImageRepo(_ string) error {
 	return nil
 }
 
-func (repo *DockerImagesRepo) FetchExistingTags(imageName string) ([]string, error) {
-	imageRepoName := repo.ImagesRepoManager.ImageRepo(imageName)
+func (repo *DockerImagesRepo) GetAllImageRepoTags(imageName string) ([]string, error) {
+	imageRepoName := repo.imagesRepoManager.ImageRepo(imageName)
 	if existingTags, err := repo.DockerRegistry.Tags(imageRepoName); err != nil {
 		return nil, fmt.Errorf("unable to get docker tags for image %q: %s", imageRepoName, err)
 	} else {
@@ -75,23 +88,27 @@ func (repo *DockerImagesRepo) PublishImage(publishImage *container_runtime.WerfI
 }
 
 func (repo *DockerImagesRepo) ImageRepositoryName(imageName string) string {
-	return repo.ImagesRepoManager.ImageRepo(imageName)
+	return repo.imagesRepoManager.ImageRepo(imageName)
 }
 
 func (repo *DockerImagesRepo) ImageRepositoryNameWithTag(imageName, tag string) string {
-	return repo.ImagesRepoManager.ImageRepoWithTag(imageName, tag)
+	return repo.imagesRepoManager.ImageRepoWithTag(imageName, tag)
 }
 
 func (repo *DockerImagesRepo) ImageRepositoryTag(imageName, tag string) string {
-	return repo.ImagesRepoManager.ImageRepoTag(imageName, tag)
+	return repo.imagesRepoManager.ImageRepoTag(imageName, tag)
+}
+
+func (repo *DockerImagesRepo) Validate() error {
+	return repo.DockerRegistry.Validate()
 }
 
 func (repo *DockerImagesRepo) String() string {
-	return repo.ImagesRepoManager.ImagesRepo()
+	return repo.imagesRepoManager.ImagesRepo()
 }
 
 func (repo *DockerImagesRepo) getRepoImagesFromMonorepo(imageNames []string) (map[string][]*image.Info, error) {
-	tags, err := repo.selectImages(repo.ImagesRepoManager.imagesRepo)
+	tags, err := repo.selectImages(repo.imagesRepoManager.imagesRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +136,7 @@ loop:
 func (repo *DockerImagesRepo) getRepoImagesFromMultirepo(imageNames []string) (map[string][]*image.Info, error) {
 	imageTags := map[string][]*image.Info{}
 	for _, imageName := range imageNames {
-		tags, err := repo.selectImages(repo.ImagesRepoManager.ImageRepo(imageName))
+		tags, err := repo.selectImages(repo.imagesRepoManager.ImageRepo(imageName))
 		if err != nil {
 			return nil, err
 		}
