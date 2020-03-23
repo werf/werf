@@ -46,7 +46,7 @@ func (i *StageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	} else {
-		return i.baseImage.GetImageInfo().ID
+		return i.baseImage.GetStagesStorageImageInfo().ID
 	}
 }
 
@@ -116,7 +116,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 		return err
 	} else {
 		i.SetInspect(inspect)
-		i.SetImageInfo(image.NewInfoFromInspect(i.Name(), inspect))
+		i.SetStagesStorageImageInfo(image.NewInfoFromInspect(i.Name(), inspect))
 	}
 
 	return nil
@@ -215,7 +215,7 @@ func (i *StageImage) Import(name string) error {
 		return err
 	}
 
-	importedImageId := importedImage.GetImageInfo().ID
+	importedImageId := importedImage.GetStagesStorageImageInfo().ID
 
 	if err := docker.CliTag(importedImageId, i.name); err != nil {
 		return err
