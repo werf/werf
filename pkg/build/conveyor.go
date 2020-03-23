@@ -593,15 +593,15 @@ func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {
 }
 
 func (c *Conveyor) GetImageNameForImageStage(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetImage().GetImageInfo().Name()
+	return c.getImageStage(imageName, stageName).GetImage().Name()
 }
 
 func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
-	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().GetImageInfo().ID()
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().GetStagesStorageImageInfo().ID()
 }
 
 func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetImage().ID()
+	return c.getImageStage(imageName, stageName).GetImage().GetStagesStorageImageInfo().ID()
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {

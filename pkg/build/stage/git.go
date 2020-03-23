@@ -20,8 +20,8 @@ func (s *GitStage) isEmpty() bool {
 	return len(s.gitMappings) == 0
 }
 
-func (s *GitStage) AfterImageSyncDockerStateHook(c Conveyor) error {
-	if s.image.GetImageInfo() == nil {
+func (s *GitStage) AfterSignatureCalculated(c Conveyor) error {
+	if s.image.GetStagesStorageImageInfo() == nil {
 		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == "" {
 			c.SetBuildingGitStage(s.imageName, s.Name())

@@ -66,11 +66,11 @@ func (i *baseImage) Untag() error {
 	return nil
 }
 
-func (i *baseImage) SetImageInfo(imgInfo *image.Info) {
+func (i *baseImage) SetStagesStorageImageInfo(imgInfo *image.Info) {
 	i.imgInfo = imgInfo
 }
 
-func (i *baseImage) GetImageInfo() *image.Info {
+func (i *baseImage) GetStagesStorageImageInfo() *image.Info {
 	return i.imgInfo
 }
 
