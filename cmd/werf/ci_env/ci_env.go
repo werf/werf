@@ -209,6 +209,8 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
 	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
 	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
+	printExportCommand("WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
+	printExportCommand("WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
 
 	printHeader("OTHER", true)
 
@@ -288,10 +290,12 @@ func printExportCommand(key, value string, override bool) {
 }
 
 type CleanupConfig struct {
-	GitTagStrategyLimit         int `yaml:"gitTagStrategyLimit"`
-	GitTagStrategyExpiryDays    int `yaml:"gitTagStrategyExpiryDays"`
-	GitCommitStrategyLimit      int `yaml:"gitCommitStrategyLimit"`
-	GitCommitStrategyExpiryDays int `yaml:"gitCommitStrategyExpiryDays"`
+	GitTagStrategyLimit               int `yaml:"gitTagStrategyLimit"`
+	GitTagStrategyExpiryDays          int `yaml:"gitTagStrategyExpiryDays"`
+	GitCommitStrategyLimit            int `yaml:"gitCommitStrategyLimit"`
+	GitCommitStrategyExpiryDays       int `yaml:"gitCommitStrategyExpiryDays"`
+	StagesSignatureStrategyExpiryDays int `yaml:"stagesSignatureStrategyExpiryDays"`
+	StagesSignatureStrategyLimit      int `yaml:"stagesSignatureStrategyLimit"`
 }
 
 func getCleanupConfig() (CleanupConfig, error) {
@@ -299,10 +303,12 @@ func getCleanupConfig() (CleanupConfig, error) {
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return CleanupConfig{
-			GitTagStrategyLimit:         10,
-			GitTagStrategyExpiryDays:    30,
-			GitCommitStrategyLimit:      50,
-			GitCommitStrategyExpiryDays: 30,
+			GitTagStrategyLimit:               10,
+			GitTagStrategyExpiryDays:          30,
+			GitCommitStrategyLimit:            50,
+			GitCommitStrategyExpiryDays:       30,
+			StagesSignatureStrategyLimit:      15,
+			StagesSignatureStrategyExpiryDays: 30,
 		}, nil
 	}
 

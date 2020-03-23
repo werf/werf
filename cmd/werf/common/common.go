@@ -67,10 +67,12 @@ type CmdData struct {
 	SkipTlsVerifyRegistry *bool
 	DryRun                *bool
 
-	GitTagStrategyLimit         *int64
-	GitTagStrategyExpiryDays    *int64
-	GitCommitStrategyLimit      *int64
-	GitCommitStrategyExpiryDays *int64
+	GitTagStrategyLimit               *int64
+	GitTagStrategyExpiryDays          *int64
+	GitCommitStrategyLimit            *int64
+	GitCommitStrategyExpiryDays       *int64
+	StagesSignatureStrategyLimit      *int64
+	StagesSignatureStrategyExpiryDays *int64
 
 	WithoutKube *bool
 
@@ -125,11 +127,18 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.GitTagStrategyExpiryDays = new(int64)
 	cmdData.GitCommitStrategyLimit = new(int64)
 	cmdData.GitCommitStrategyExpiryDays = new(int64)
+	cmdData.StagesSignatureStrategyLimit = new(int64)
+	cmdData.StagesSignatureStrategyExpiryDays = new(int64)
 
 	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT")
 	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS")
 	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT")
 	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS")
+	cmd.Flags().Int64VarP(cmdData.StagesSignatureStrategyLimit, "stages-signature-strategy-limit", "", -1, "Keep max number of images published with the stages-signature tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_STAGES_SIGNATURE_STRATEGY_LIMIT")
+	cmd.Flags().Int64VarP(cmdData.StagesSignatureStrategyExpiryDays, "stages-signature-strategy-expiry-days", "", -1, "Keep images published with the stages-signature tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS")
+
+	_ = cmd.Flags().MarkHidden("stages-signature-strategy-limit")
+	_ = cmd.Flags().MarkHidden("stages-signature-strategy-expiry-days")
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
@@ -697,6 +706,28 @@ func GetGitCommitStrategyExpiryDays(cmdData *CmdData) (int64, error) {
 	return *cmdData.GitCommitStrategyExpiryDays, nil
 }
 
+func GetStagesSignatureStrategyLimit(cmdData *CmdData) (int64, error) {
+	v, err := getInt64EnvVar("WERF_STAGES_SIGNATURE_STRATEGY_LIMIT")
+	if err != nil {
+		return 0, err
+	}
+	if v != nil {
+		return *v, nil
+	}
+	return *cmdData.StagesSignatureStrategyLimit, nil
+}
+
+func GetStagesSignatureStrategyExpiryDays(cmdData *CmdData) (int64, error) {
+	v, err := getInt64EnvVar("WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS")
+	if err != nil {
+		return 0, err
+	}
+	if v != nil {
+		return *v, nil
+	}
+	return *cmdData.StagesSignatureStrategyExpiryDays, nil
+}
+
 func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, error) {
 	tagLimit, err := GetGitTagStrategyLimit(cmdData)
 	if err != nil {
@@ -718,6 +749,16 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 		return cleanup.ImagesCleanupPolicies{}, err
 	}
 
+	stagesSignatureLimit, err := GetStagesSignatureStrategyLimit(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	stagesSignatureDays, err := GetStagesSignatureStrategyExpiryDays(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
 	res := cleanup.ImagesCleanupPolicies{}
 
 	if tagLimit >= 0 {
@@ -735,6 +776,14 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 	if commitDays >= 0 {
 		res.GitCommitStrategyHasExpiryPeriod = true
 		res.GitCommitStrategyExpiryPeriod = time.Hour * 24 * time.Duration(commitDays)
+	}
+	if stagesSignatureLimit >= 0 {
+		res.StagesSignatureStrategyHasLimit = true
+		res.StagesSignatureStrategyLimit = stagesSignatureLimit
+	}
+	if stagesSignatureDays >= 0 {
+		res.StagesSignatureStrategyHasExpiryPeriod = true
+		res.StagesSignatureStrategyExpiryPeriod = time.Hour * 24 * time.Duration(stagesSignatureDays)
 	}
 
 	return res, nil

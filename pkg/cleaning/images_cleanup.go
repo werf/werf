@@ -32,6 +32,12 @@ type ImagesCleanupPolicies struct {
 
 	GitCommitStrategyHasExpiryPeriod bool // No expiration by default!
 	GitCommitStrategyExpiryPeriod    time.Duration
+
+	StagesSignatureStrategyHasLimit bool // No limit by default!
+	StagesSignatureStrategyLimit    int64
+
+	StagesSignatureStrategyHasExpiryPeriod bool // No expiration by default!
+	StagesSignatureStrategyExpiryPeriod    time.Duration
 }
 
 type ImagesCleanupOptions struct {
@@ -266,7 +272,7 @@ func repoImageMetaTagMatch(imageMetaTag string, matches ...string) bool {
 }
 
 func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options ImagesCleanupOptions) ([]docker_registry.RepoImage, error) {
-	var repoImagesWithGitTagScheme, repoImagesWithGitCommitScheme []docker_registry.RepoImage
+	var repoImagesWithGitTagScheme, repoImagesWithGitCommitScheme, repoImagesWithStagesSignatureScheme []docker_registry.RepoImage
 
 	for _, repoImage := range repoImages {
 		labels, err := repoImageLabels(repoImage)
@@ -284,6 +290,8 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
 		case string(tag_strategy.GitCommit):
 			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
+		case string(tag_strategy.StagesSignature):
+			repoImagesWithStagesSignatureScheme = append(repoImagesWithStagesSignatureScheme, repoImage)
 		}
 	}
 
@@ -292,7 +300,7 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 		limit:             options.Policies.GitTagStrategyLimit,
 		hasExpiryPeriod:   options.Policies.GitTagStrategyHasExpiryPeriod,
 		expiryPeriod:      options.Policies.GitTagStrategyExpiryPeriod,
-		gitPrimitive:      "tag",
+		schemeName:        string(tag_strategy.GitTag),
 		commonRepoOptions: options.CommonRepoOptions,
 	}
 
@@ -307,11 +315,25 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 		limit:             options.Policies.GitCommitStrategyLimit,
 		hasExpiryPeriod:   options.Policies.GitCommitStrategyHasExpiryPeriod,
 		expiryPeriod:      options.Policies.GitCommitStrategyExpiryPeriod,
-		gitPrimitive:      "commit",
+		schemeName:        string(tag_strategy.GitCommit),
 		commonRepoOptions: options.CommonRepoOptions,
 	}
 
 	repoImages, err = repoImagesCleanupByPolicy(repoImages, repoImagesWithGitCommitScheme, cleanupByPolicyOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	cleanupByPolicyOptions = repoImagesCleanupByPolicyOptions{
+		hasLimit:          options.Policies.StagesSignatureStrategyHasLimit,
+		limit:             options.Policies.StagesSignatureStrategyLimit,
+		hasExpiryPeriod:   options.Policies.StagesSignatureStrategyHasExpiryPeriod,
+		expiryPeriod:      options.Policies.StagesSignatureStrategyExpiryPeriod,
+		schemeName:        string(tag_strategy.StagesSignature),
+		commonRepoOptions: options.CommonRepoOptions,
+	}
+
+	repoImages, err = repoImagesCleanupByPolicy(repoImages, repoImagesWithStagesSignatureScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +347,7 @@ type repoImagesCleanupByPolicyOptions struct {
 	hasExpiryPeriod bool
 	expiryPeriod    time.Duration
 
-	gitPrimitive      string
+	schemeName        string
 	commonRepoOptions CommonRepoOptions
 }
 
@@ -364,7 +386,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 	}
 
 	if len(expiredRepoImages) != 0 {
-		logBlockMessage := fmt.Sprintf("Removed tags by git-%s date policy (created before %s)", options.gitPrimitive, expiryTime.Format("2006-01-02T15:04:05-0700"))
+		logBlockMessage := fmt.Sprintf("Removed tags by %s date policy (created before %s)", options.schemeName, expiryTime.Format("2006-01-02T15:04:05-0700"))
 		if err := logboek.Default.LogBlock(
 			logBlockMessage,
 			logboek.LevelLogBlockOptions{},
@@ -381,7 +403,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 	if options.hasLimit && int64(len(notExpiredRepoImages)) > options.limit {
 		excessImagesByLimit := notExpiredRepoImages[:int64(len(notExpiredRepoImages))-options.limit]
 
-		logBlockMessage := fmt.Sprintf("Removed tags by git-%s limit policy (> %d)", options.gitPrimitive, options.limit)
+		logBlockMessage := fmt.Sprintf("Removed tags by %s limit policy (> %d)", options.schemeName, options.limit)
 		if err := logboek.Default.LogBlock(
 			logBlockMessage,
 			logboek.LevelLogBlockOptions{},
