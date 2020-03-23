@@ -112,11 +112,13 @@ func getGitCliVersion() (string, error) {
 func checkVersionConstraints() error {
 	constraints := []*semver.Constraints{}
 
-	minVersionConstraints, err := semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionConstraintValue))
-	if err != nil {
-		panic(err)
+	if os.Getenv("WERF_DISABLE_GIT_MIN_VERSION_CONSTRAINT") != "1" {
+		minVersionConstraints, err := semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionConstraintValue))
+		if err != nil {
+			panic(err)
+		}
+		constraints = append(constraints, minVersionConstraints)
 	}
-	constraints = append(constraints, minVersionConstraints)
 
 	for _, cv := range ForbiddenGitVersionsConstraintValues {
 		forbiddenVersionsConstraints, err := semver.NewConstraint(fmt.Sprintf("!= %s", cv))
