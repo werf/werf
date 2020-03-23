@@ -58,9 +58,8 @@ func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageNa
 
 func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
-		BasePhase:                   BasePhase{c},
-		CachedInStagesStorageImages: make(map[string]*image.Info),
-		BuildPhaseOptions:           opts,
+		BasePhase:         BasePhase{c},
+		BuildPhaseOptions: opts,
 	}
 }
 
@@ -69,11 +68,8 @@ type BuildPhase struct {
 
 	PrevStage                  stage.Interface
 	PrevNonEmptyStage          stage.Interface
-	PrevImage                  *container_runtime.StageImage
-	PrevBuiltImage             container_runtime.ImageInterface
+	PrevBuiltStage             stage.Interface
 	PrevNonEmptyStageImageSize int64
-
-	CachedInStagesStorageImages map[string]*image.Info
 
 	BuildPhaseOptions
 }
@@ -97,8 +93,7 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(img *Image) bool {
 func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	phase.PrevStage = nil
 	phase.PrevNonEmptyStage = nil
-	phase.PrevImage = nil
-	phase.PrevBuiltImage = nil
+	phase.PrevBuiltStage = nil
 	phase.PrevNonEmptyStageImageSize = 0
 
 	if err := phase.Conveyor.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
@@ -106,7 +101,6 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	}
 
 	img.SetupBaseImage(phase.Conveyor)
-	phase.PrevImage = img.GetBaseImage()
 
 	return nil
 }
@@ -175,36 +169,90 @@ images := c.imagesInOrder
 		}
 	}
 
-
 	return nil
 }
 */
 
-func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
-	defer func() {
-		phase.PrevStage = stg
-		logboek.Debug.LogF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
-	}()
+func (phase *BuildPhase) GetPrevImage(img *Image, stg stage.Interface) container_runtime.ImageInterface {
+	if stg.Name() == "from" {
+		return img.GetBaseImage()
+	} else if phase.PrevNonEmptyStage != nil {
+		return phase.PrevNonEmptyStage.GetImage()
+	}
+	return nil
+}
 
-	isEmpty, err := stg.IsEmpty(phase.Conveyor, phase.PrevBuiltImage)
+func (phase *BuildPhase) GetPrevBuiltImage(img *Image, stg stage.Interface) container_runtime.ImageInterface {
+	if stg.Name() == "from" {
+		return img.GetBaseImage()
+	} else if phase.PrevBuiltStage != nil {
+		return phase.PrevBuiltStage.GetImage()
+	}
+	return nil
+}
+
+func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
+	isEmpty, err := stg.IsEmpty(phase.Conveyor, phase.GetPrevBuiltImage(img, stg))
 	if err != nil {
 		return false, fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
-	if isEmpty {
-		return false, nil
+
+	if stg.Name() != "from" {
+		if phase.PrevStage == nil {
+			panic(fmt.Sprintf("expected PrevStage to be set for image %q stage %q!", img.GetName(), stg.Name()))
+		}
 	}
 
-	if err := phase.calculateStageSignature(img, stg); err != nil {
-		return false, err
+	if !isEmpty {
+		if phase.SignaturesOnly {
+			if err := phase.calculateStageSignature(img, stg); err != nil {
+				return false, err
+			}
+		} else {
+			if stg.Name() != "from" {
+				if phase.PrevNonEmptyStage == nil {
+					panic(fmt.Sprintf("expected PrevNonEmptyStage to be set for image %q stage %q", img.GetName(), stg.Name()))
+				}
+				if phase.PrevBuiltStage == nil {
+					panic(fmt.Sprintf("expected PrevBuiltStage to be set for image %q stage %q", img.GetName(), stg.Name()))
+				}
+				if phase.PrevBuiltStage != phase.PrevNonEmptyStage {
+					panic(fmt.Sprintf("expected PrevBuiltStage (%q) to equal PrevNonEmptyStage (%q) for image %q stage %q", phase.PrevBuiltStage.Name(), phase.PrevNonEmptyStage.Name(), img.GetName(), stg.Name()))
+				}
+			}
+
+			if err := phase.calculateStageSignature(img, stg); err != nil {
+				return false, err
+			}
+			if err := phase.prepareStage(img, stg); err != nil {
+				return false, err
+			}
+			if err := phase.buildStage(img, stg); err != nil {
+				return false, err
+			}
+
+			if stg.GetImage().GetStagesStorageImageInfo() == nil {
+				panic(fmt.Sprintf("expected stage %q image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetImage().Name()))
+			}
+		}
 	}
-	if phase.SignaturesOnly {
-		return true, nil
-	}
-	if err := phase.prepareStage(img, stg); err != nil {
-		return false, err
-	}
-	if err := phase.buildStage(img, stg); err != nil {
-		return false, err
+
+	phase.PrevStage = stg
+	logboek.Debug.LogF("Set prev stage = %q %s\n", phase.PrevStage.Name(), phase.PrevStage.GetSignature())
+
+	if !isEmpty {
+		phase.PrevNonEmptyStage = stg
+		logboek.Debug.LogF("Set prev non empty stage = %q %s\n", phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
+
+		if phase.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo() != nil {
+			phase.PrevNonEmptyStageImageSize = phase.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo().Size
+			logboek.Debug.LogF("Set prev non empty stage image size = %d %q %s\n", phase.PrevNonEmptyStageImageSize, phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
+		}
+
+		if stg.GetImage().GetStagesStorageImageInfo() != nil {
+			phase.PrevBuiltStage = stg
+			logboek.Debug.LogF("Set prev built stage = %q (image %s)\n", phase.PrevBuiltStage.Name(), phase.PrevBuiltStage.GetImage().Name())
+		}
 	}
 
 	return true, nil
@@ -242,7 +290,7 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 }
 
 func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface) error {
-	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.PrevImage, phase.PrevBuiltImage)
+	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.GetPrevImage(img, stg), phase.GetPrevBuiltImage(img, stg))
 	if err != nil {
 		return err
 	}
@@ -277,9 +325,8 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 			} else {
 				suitableImageFound = true
 
-				phase.CachedInStagesStorageImages[freshImgInfo.Name] = freshImgInfo
-				i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, freshImgInfo.Name)
-				i.SetImageInfo(freshImgInfo)
+				i = phase.Conveyor.GetOrCreateStageImage(phase.GetPrevImage(img, stg).(*container_runtime.StageImage), freshImgInfo.Name)
+				i.SetStagesStorageImageInfo(freshImgInfo)
 				stg.SetImage(i)
 			}
 		}
@@ -302,30 +349,20 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		} else if imgInfo != nil {
 			suitableImageFound = true
 
-			phase.CachedInStagesStorageImages[imgInfo.Name] = imgInfo
-			i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.Name)
-			i.SetImageInfo(imgInfo)
+			i = phase.Conveyor.GetOrCreateStageImage(phase.GetPrevImage(img, stg).(*container_runtime.StageImage), imgInfo.Name)
+			i.SetStagesStorageImageInfo(imgInfo)
 			stg.SetImage(i)
 		}
 	}
 
 	if !suitableImageFound {
 		// Will build a new image
-		i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, uuid.New().String())
+		i = phase.Conveyor.GetOrCreateStageImage(phase.GetPrevImage(img, stg).(*container_runtime.StageImage), uuid.New().String())
 		stg.SetImage(i)
 	}
 
-	if err = stg.AfterImageSyncDockerStateHook(phase.Conveyor); err != nil {
+	if err = stg.AfterSignatureCalculated(phase.Conveyor); err != nil {
 		return err
-	}
-
-	phase.PrevNonEmptyStage = stg
-	logboek.Debug.LogF("Set prev non empty stage = %q %s\n", phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
-	phase.PrevImage = i
-	logboek.Debug.LogF("Set prev image = %q\n", phase.PrevImage.Name())
-	if phase.PrevImage.GetImageInfo() != nil {
-		phase.PrevBuiltImage = phase.PrevImage
-		logboek.Debug.LogF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
 	}
 
 	return nil
@@ -445,51 +482,72 @@ func (phase *BuildPhase) atomicStoreStageCache(stageName, stageSig string, image
 	)
 }
 
+// FIXME: parallel builds should work together with common stages
+func (phase *BuildPhase) fetchBaseImageForStage(img *Image, stg stage.Interface) error {
+	if stg.Name() == "from" {
+		if err := img.FetchBaseImage(phase.Conveyor); err != nil {
+			return fmt.Errorf("unable to fetch base image %s for stage %q: %s", img.GetBaseImage().Name(), stg.LogDetailedName(), err)
+		}
+	} else {
+		if shouldFetch, err := phase.Conveyor.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: phase.PrevBuiltStage.GetImage()}); err == nil && shouldFetch {
+			if err := logboek.Default.LogProcess(
+				fmt.Sprintf("Fetching stage %q from stages storage", phase.PrevBuiltStage.LogDetailedName()),
+				logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+				func() error {
+					logboek.Info.LogF("Image name: %s\n", phase.PrevBuiltStage.GetImage().Name())
+					if err := phase.Conveyor.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: phase.PrevBuiltStage.GetImage()}); err != nil {
+						return fmt.Errorf("unable to fetch stage %q image %s from stages storage %s: %s", phase.PrevBuiltStage.LogDetailedName(), phase.PrevBuiltStage.GetImage().Name(), phase.Conveyor.StagesStorage.String(), err)
+					}
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// FIXME: parallel builds should work together with common stages
+func (phase *BuildPhase) cleanupBaseImageForStage(img *Image, stg stage.Interface) error {
+	if stg.Name() == "from" {
+		if err := img.CleanupBaseImage(phase.Conveyor); err != nil {
+			return fmt.Errorf("unable to cleanup base image %s for stage %q: %s", img.GetBaseImage().Name(), stg.LogDetailedName(), err)
+		}
+	} else {
+		if shouldCleanup, err := phase.Conveyor.StagesStorage.ShouldCleanupLocalImage(&container_runtime.DockerImage{Image: phase.PrevBuiltStage.GetImage()}); err == nil && shouldCleanup {
+			if err := logboek.Default.LogProcess(
+				fmt.Sprintf("Cleaning up stage %q local image", phase.PrevBuiltStage.LogDetailedName()),
+				logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+				func() error {
+					logboek.Info.LogF("Image name: %s\n", phase.PrevBuiltStage.GetImage().Name())
+					if err := phase.Conveyor.StagesStorage.CleanupLocalImage(&container_runtime.DockerImage{Image: phase.PrevBuiltStage.GetImage()}); err != nil {
+						return fmt.Errorf("unable to cleanup stage %q local image %s for stages storage %s: %s", phase.PrevBuiltStage.LogDetailedName(), phase.PrevBuiltStage.GetImage().Name(), phase.Conveyor.StagesStorage.String(), err)
+					}
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 	// Nothing to do if stage already exists in the stages storage
-	if _, hasKey := phase.CachedInStagesStorageImages[stg.GetImage().Name()]; hasKey {
-		// FIXME: удалить предыдущую временную стадию если была скачана из кеша или собрана
-		// FIXME: мб это процедура-cleanup прямо у stages storage
-		// FIXME: для локального stages storage ничего не делает
-		// FIXME: для repo stages storage удаляет локальный образ
-		// FIXME: можно ли это делать прямо в store?
-		// FIXME: нельзя, потому что сразу после store стадия еще нужна для билда след. образа
-		// FIXME: мб тогда store делать позже? — тоже нет, не атомарно
-		// FIXME: => метод называется CleanupAfterStore(image)
-
-		// FIXME: а как делать cleanup для базового образа? — не надо, если образ из registry; надо если это образ-стадия
-		// FIXME: а как делать cleanup для образа, который скачали через stages-storage FetchImage
-		// FIXME: базовый образ всегда удаляем через container-runtime
-		// FIXME: для repo-stages-storage удаляем локальный образ
-		// FIXME: cleanup базового образа должен быть в pkg/build/image
-		// FIXME: cleanup для fetch-нутого через спец. метод
-		// FIXME: => метод называется CleanupLocalStage(image)
+	if stg.GetImage().GetStagesStorageImageInfo() != nil {
 		return nil
 	}
 
-	if stg.Name() == "from" {
-		if err := img.PrepareBaseImage(phase.Conveyor); err != nil {
-			return fmt.Errorf("prepare base image %s failed: %s", img.GetBaseImage().Name(), err)
-		}
-	} else {
-		if phase.PrevStage.GetImage().IsExistsLocally() {
-			// nothing to do
-			// FIXME: lock image on this host?
-		} else if _, hasKey := phase.CachedInStagesStorageImages[phase.PrevStage.GetImage().Name()]; hasKey {
-			if err := logboek.Default.LogProcess(fmt.Sprintf(
-				"Fetching image %q stage %q %s from stages storage",
-				img.GetName(), phase.PrevStage.Name(), phase.PrevStage.GetImage().Name(),
-			), logboek.LevelLogProcessOptions{}, func() error {
-				if err := phase.Conveyor.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: phase.PrevStage.GetImage()}); err != nil {
-					return fmt.Errorf("unable to fetch image %q stage %q %s from stages storage: %s", img.GetName(), phase.PrevStage.Name(), phase.PrevStage.GetImage().Name(), err)
-				}
-				return nil
-			}); err != nil {
-				return err
-			}
-		} else {
-			panic(fmt.Sprintf("cannot build stage %q for image %q %s: previous stage %q image %s should be built", stg.Name(), img.GetName(), stg.GetImage().Name(), phase.PrevStage.Name(), phase.PrevStage.GetImage().Name()))
-		}
+	if err := phase.fetchBaseImageForStage(img, stg); err != nil {
+		return err
 	}
 
 	stageImage := stg.GetImage()
@@ -528,7 +586,7 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 		}
 	}
 
-	err := stg.PrepareImage(phase.Conveyor, phase.PrevBuiltImage, stageImage)
+	err := stg.PrepareImage(phase.Conveyor, phase.GetPrevBuiltImage(img, stg), stageImage)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %q: %s", stg.Name(), err)
 	}
@@ -537,14 +595,12 @@ func (phase *BuildPhase) prepareStage(img *Image, stg stage.Interface) error {
 }
 
 func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
-	if _, isUsingCache := phase.CachedInStagesStorageImages[stg.GetImage().Name()]; isUsingCache {
+	if stg.GetImage().GetStagesStorageImageInfo() != nil {
 		logboek.Default.LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
 
 		logImageInfo(stg.GetImage(), phase.PrevNonEmptyStageImageSize, true)
 
 		logboek.LogOptionalLn()
-
-		phase.PrevNonEmptyStageImageSize = stg.GetImage().GetImageInfo().Size
 
 		if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
 			if err := introspectStage(stg); err != nil {
@@ -572,20 +628,6 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 	}
 
 	if err := logboek.Default.LogProcess(
-		fmt.Sprintf("Fetching stage %q from stages storage", stg.LogDetailedName()),
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			if err := phase.Conveyor.StagesStorage.FetchImage(&container_runtime.DockerImage{stg.GetImage()}); err != nil {
-				return fmt.Errorf("unable to store stage %q signature %s image %s into stages storage %s: %s", stg.Name(), stg.GetSignature(), stg.GetImage().Name(), phase.Conveyor.StagesStorage.String(), err)
-			}
-
-			return nil
-		},
-	); err != nil {
-		return err
-	}
-
-	if err := logboek.Default.LogProcess(
 		fmt.Sprintf("Building %s", stg.LogDetailedName()),
 		logboek.LevelLogProcessOptions{
 			InfoSectionFunc: infoSectionFunc,
@@ -602,7 +644,9 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 		return err
 	}
 
-	phase.PrevNonEmptyStageImageSize = stg.GetImage().GetImageInfo().Size
+	if err := phase.cleanupBaseImageForStage(img, stg); err != nil {
+		return err
+	}
 
 	if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
 		if err := introspectStage(stg); err != nil {
@@ -653,8 +697,8 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 				"Discarding newly built image for stage %q by signature %s: detected already existing image %s in the stages storage\n",
 				stg.Name(), stg.GetSignature(), imgInfo.Name,
 			)
-			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.Name)
-			i.SetImageInfo(imgInfo)
+			i := phase.Conveyor.GetOrCreateStageImage(phase.GetPrevImage(img, stg).(*container_runtime.StageImage), imgInfo.Name)
+			i.SetStagesStorageImageInfo(imgInfo)
 			stg.SetImage(i)
 
 			return nil
@@ -667,7 +711,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	phase.Conveyor.UnsetStageImage(stageImageObj.Name())
 
 	stageImageObj.SetName(newStageImageName)
-	stageImageObj.GetImageInfo().Name = newStageImageName
+	stageImageObj.GetStagesStorageImageInfo().Name = newStageImageName
 	phase.Conveyor.SetStageImage(stageImageObj)
 
 	if err := logboek.Info.LogProcess(
@@ -683,7 +727,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		return err
 	}
 
-	imagesDescs = append(imagesDescs, stageImage.GetImageInfo())
+	imagesDescs = append(imagesDescs, stageImage.GetStagesStorageImageInfo())
 	return phase.atomicStoreStageCache(string(stg.Name()), stg.GetSignature(), imagesDescs)
 }
 
@@ -729,14 +773,14 @@ func logImageInfo(img container_runtime.ImageInterface, prevStageImageSize int64
 	repository, tag := parts[0], parts[1]
 
 	logboek.Default.LogFDetails(logImageInfoFormat, "repository", repository)
-	logboek.Default.LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetImageInfo().ID))
-	logboek.Default.LogFDetails(logImageInfoFormat, "created", img.GetImageInfo().GetCreatedAt())
+	logboek.Default.LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStagesStorageImageInfo().ID))
+	logboek.Default.LogFDetails(logImageInfoFormat, "created", img.GetStagesStorageImageInfo().GetCreatedAt())
 	logboek.Default.LogFDetails(logImageInfoFormat, "tag", tag)
 
 	if prevStageImageSize == 0 {
-		logboek.Default.LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetImageInfo().Size))
+		logboek.Default.LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStagesStorageImageInfo().Size))
 	} else {
-		logboek.Default.LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetImageInfo().Size-prevStageImageSize))
+		logboek.Default.LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStagesStorageImageInfo().Size-prevStageImageSize))
 	}
 
 	if !isUsingCache {
