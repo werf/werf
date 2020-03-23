@@ -21,11 +21,13 @@ type StagesStorage interface {
 	GetImageInfo(stageImageName string) (*image.Info, error)
 
 	// FetchImage will create a local image in the container-runtime
-	FetchImage(image container_runtime.Image) error
+	FetchImage(img container_runtime.Image) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
-	StoreImage(image container_runtime.Image) error
+	StoreImage(img container_runtime.Image) error
 	// CleanupLocalImage will remove a local image from container-runtime
-	CleanupLocalImage(image container_runtime.Image) error
+	CleanupLocalImage(img container_runtime.Image) error
+	ShouldFetchImage(img container_runtime.Image) (bool, error)
+	ShouldCleanupLocalImage(img container_runtime.Image) (bool, error)
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error
@@ -48,7 +50,7 @@ type StagesStorageOptions struct {
 
 func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStagesStorageAddress {
-		return NewLocalStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
+		return NewLocalDockerServerStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
 		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
 	}

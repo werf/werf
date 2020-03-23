@@ -33,9 +33,12 @@ func (runtime *LocalDockerServerRuntime) RefreshImageObject(img Image) error {
 
 	if inspect, err := runtime.GetImageInspect(dockerImage.Image.Name()); err != nil {
 		return err
+	} else if inspect == nil {
+		dockerImage.Image.SetInspect(nil)
+		dockerImage.Image.SetStagesStorageImageInfo(nil)
 	} else {
 		dockerImage.Image.SetInspect(inspect)
-		dockerImage.Image.SetImageInfo(image.NewInfoFromInspect(dockerImage.Image.Name(), inspect))
+		dockerImage.Image.SetStagesStorageImageInfo(image.NewInfoFromInspect(dockerImage.Image.Name(), inspect))
 	}
 
 	return nil

@@ -35,29 +35,35 @@ func (info *Info) GetCreatedAt() time.Time {
 }
 
 func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
-	var repository, tag string
-	parts := strings.SplitN(stringutil.Reverse(ref), ":", 2)
-	if len(parts) == 2 {
-		repository = stringutil.Reverse(parts[0])
-		tag = stringutil.Reverse(parts[1])
-	}
+	repository, tag := ParseRepositoryAndTag(ref)
 
 	return &Info{
 		Name:              ref,
 		Repository:        repository,
 		Tag:               tag,
 		Labels:            inspect.Config.Labels,
-		CreatedAtUnixNano: mustParseTimestampString(inspect.Created).UnixNano(),
+		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
 		ID:                inspect.ID,
 		ParentID:          inspect.Parent,
 		Size:              inspect.Size,
 	}
 }
 
-func mustParseTimestampString(timestampString string) time.Time {
+func MustParseTimestampString(timestampString string) time.Time {
 	t, err := time.Parse(time.RFC3339, timestampString)
 	if err != nil {
 		panic(fmt.Sprintf("got bad timestamp %q: %s", timestampString, err))
 	}
 	return t
+}
+
+func ParseRepositoryAndTag(ref string) (string, string) {
+	parts := strings.SplitN(stringutil.Reverse(ref), ":", 2)
+	if len(parts) == 2 {
+		tag := stringutil.Reverse(parts[0])
+		repository := stringutil.Reverse(parts[1])
+		return repository, tag
+	} else {
+		return ref, ""
+	}
 }

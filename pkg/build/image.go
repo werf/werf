@@ -132,7 +132,37 @@ func (i *Image) GetBaseImage() *container_runtime.StageImage {
 	return i.baseImage
 }
 
-func (i *Image) PrepareBaseImage(c *Conveyor) error {
+func (i *Image) CleanupBaseImage(c *Conveyor) error {
+	switch i.baseImageType {
+	case ImageFromRegistryAsBaseImage:
+		// Do not cleanup pulled images from registry
+		return nil
+	case StageAsBaseImage:
+		if shouldCleanup, err := c.StagesStorage.ShouldCleanupLocalImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err == nil && shouldCleanup {
+			if err := logboek.Default.LogProcess(
+				fmt.Sprintf("Cleaning up stage %q local image", i.stageAsBaseImage.LogDetailedName()),
+				logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
+				func() error {
+					logboek.Info.LogF("Image name: %s\n", i.stageAsBaseImage.GetImage().Name())
+					if err := c.StagesStorage.CleanupLocalImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err != nil {
+						return fmt.Errorf("unable to cleanup stage %q local image %s for stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
+					}
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+
+		return nil
+	default:
+		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
+	}
+}
+
+func (i *Image) FetchBaseImage(c *Conveyor) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
@@ -141,7 +171,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 
 		if i.baseImage.IsExistsLocally() {
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
-			if baseImageRepoId == i.baseImage.GetImageInfo().ID || err != nil {
+			if baseImageRepoId == i.baseImage.GetStagesStorageImageInfo().ID || err != nil {
 				if err != nil {
 					logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 					logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
@@ -161,13 +191,15 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 			return err
 		}
 
-		if !i.baseImage.IsExistsLocally() {
+		if shouldFetch, err := c.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: i.baseImage}); err == nil && shouldFetch {
 			return logboek.Default.LogProcess(
-				fmt.Sprintf(
-					"Fetching base image %q stage %q image %s from stages storage",
-					i.baseImageImageName, i.stageAsBaseImage.Name(), i.baseImage.Name(),
-				), logboek.LevelLogProcessOptions{}, func() error {
-					return c.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: i.baseImage})
+				fmt.Sprintf("Fetching base stage %q image from stages storage", i.stageAsBaseImage.LogDetailedName()),
+				logboek.LevelLogProcessOptions{}, func() error {
+					logboek.Info.LogF("Image name: %s\n", i.stageAsBaseImage.GetImage().Name())
+					if err := c.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err != nil {
+						return fmt.Errorf("unable to fetch stage %q image %s from stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
+					}
+					return nil
 				})
 		}
 	default:
