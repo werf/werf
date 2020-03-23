@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"path"
-	"strings"
 
 	"github.com/flant/logboek"
 
@@ -21,15 +18,7 @@ func newDockerHubApi() dockerHubApi {
 	return dockerHubApi{}
 }
 
-func (r *dockerHubApi) deleteRepository(repository, token string) (*http.Response, error) {
-	u, err := url.Parse(repository)
-	if err != nil {
-		return nil, err
-	}
-
-	project := path.Base(u.Path)
-	account := path.Base(strings.TrimSuffix(u.Path, project))
-
+func (api *dockerHubApi) deleteRepository(account, project, token string) (*http.Response, error) {
 	reqUrl := fmt.Sprintf(
 		"https://hub.docker.com/v2/repositories/%s/%s/",
 		account,
@@ -75,15 +64,7 @@ func (r *dockerHubApi) deleteRepository(repository, token string) (*http.Respons
 	return resp, nil
 }
 
-func (r *dockerHubApi) deleteTag(repository, tag, token string) (*http.Response, error) {
-	u, err := url.Parse(repository)
-	if err != nil {
-		return nil, err
-	}
-
-	project := path.Base(u.Path)
-	account := path.Base(strings.TrimSuffix(u.Path, project))
-
+func (api *dockerHubApi) deleteTag(account, project, tag, token string) (*http.Response, error) {
 	reqUrl := fmt.Sprintf(
 		"https://hub.docker.com/v2/repositories/%s/%s/tags/%s/",
 		account,
@@ -130,7 +111,7 @@ func (r *dockerHubApi) deleteTag(repository, tag, token string) (*http.Response,
 	return resp, nil
 }
 
-func (r *dockerHubApi) getToken(username, password string) (string, *http.Response, error) {
+func (api *dockerHubApi) getToken(username, password string) (string, *http.Response, error) {
 	values := map[string]string{
 		"username": username,
 		"password": password,
