@@ -13,8 +13,9 @@ import (
 
 const DockerHubImplementationName = "dockerhub"
 
-type DockerHubUnauthorizedError error
-type DockerHubNotFoundError error
+type DockerHubUnauthorizedError apiError
+
+type DockerHubNotFoundError apiError
 
 var dockerHubPatterns = []string{"^index\\.docker\\.io", "^registry\\.hub\\.docker\\.com"}
 
@@ -82,7 +83,7 @@ func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
 			r.resetToken()
 			return r.deleteRepo(reference, false)
 		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError(err)
+			return DockerHubNotFoundError{error: err}
 		}
 	}
 
@@ -110,7 +111,7 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 			r.resetToken()
 			return r.deleteRepoImage(repoImage, false)
 		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError(err)
+			return DockerHubNotFoundError{error: err}
 		}
 	}
 
@@ -126,9 +127,9 @@ func (r *dockerHub) getToken() (string, error) {
 		token, resp, err := r.dockerHubApi.getToken(r.dockerHubCredentials.username, r.dockerHubCredentials.password)
 		if resp != nil {
 			if resp.StatusCode == http.StatusUnauthorized {
-				return "", DockerHubUnauthorizedError(err)
+				return "", DockerHubUnauthorizedError{error: err}
 			} else if resp.StatusCode == http.StatusNotFound {
-				return "", DockerHubNotFoundError(err)
+				return "", DockerHubNotFoundError{error: err}
 			}
 		}
 
