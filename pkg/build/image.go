@@ -140,12 +140,12 @@ func (i *Image) CleanupBaseImage(c *Conveyor) error {
 	case StageAsBaseImage:
 		if shouldCleanup, err := c.StagesStorage.ShouldCleanupLocalImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err == nil && shouldCleanup {
 			if err := logboek.Default.LogProcess(
-				fmt.Sprintf("Cleaning up stage %q local image", i.stageAsBaseImage.LogDetailedName()),
+				fmt.Sprintf("Cleaning up stage %s local image", i.stageAsBaseImage.LogDetailedName()),
 				logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
 				func() error {
 					logboek.Info.LogF("Image name: %s\n", i.stageAsBaseImage.GetImage().Name())
 					if err := c.StagesStorage.CleanupLocalImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err != nil {
-						return fmt.Errorf("unable to cleanup stage %q local image %s for stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
+						return fmt.Errorf("unable to cleanup stage %s local image %s for stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
 					}
 					return nil
 				},
@@ -193,11 +193,11 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 
 		if shouldFetch, err := c.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: i.baseImage}); err == nil && shouldFetch {
 			return logboek.Default.LogProcess(
-				fmt.Sprintf("Fetching base stage %q image from stages storage", i.stageAsBaseImage.LogDetailedName()),
+				fmt.Sprintf("Fetching base stage %s image from stages storage", i.stageAsBaseImage.LogDetailedName()),
 				logboek.LevelLogProcessOptions{}, func() error {
 					logboek.Info.LogF("Image name: %s\n", i.stageAsBaseImage.GetImage().Name())
 					if err := c.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: i.stageAsBaseImage.GetImage()}); err != nil {
-						return fmt.Errorf("unable to fetch stage %q image %s from stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
+						return fmt.Errorf("unable to fetch stage %s image %s from stages storage %s: %s", i.stageAsBaseImage.LogDetailedName(), i.stageAsBaseImage.GetImage().Name(), c.StagesStorage.String(), err)
 					}
 					return nil
 				})

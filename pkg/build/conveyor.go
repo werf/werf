@@ -454,6 +454,7 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
 				var newStages []stage.Interface
 				for _, stg := range img.GetStages() {
+					logboek.Debug.LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
 					if keepStage, err := phase.OnImageStage(img, stg); err != nil {
 						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
