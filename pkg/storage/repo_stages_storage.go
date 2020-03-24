@@ -22,6 +22,11 @@ const (
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 )
 
+func getSignatureAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, string) {
+	parts := strings.SplitN(repoStageImageTag, "-", 2)
+	return parts[0], parts[1]
+}
+
 type RepoStagesStorage struct {
 	RepoAddress      string
 	DockerRegistry   docker_registry.DockerRegistry
@@ -84,6 +89,11 @@ func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signatur
 				return nil, fmt.Errorf("unable to get image %q info from repo: %s", fullImageName, err)
 			} else {
 				logboek.Debug.LogF("Got imgInfo for %q: %#v\n", fullImageName, imgInfo)
+
+				_, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
+				imgInfo.Signature = signature
+				imgInfo.UniqueID = uniqueID
+
 				res = append(res, imgInfo)
 			}
 		}
@@ -94,12 +104,20 @@ func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signatur
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) GetImageInfo(stageImageName string) (*image.Info, error) {
-	if imgInfo, err := storage.DockerRegistry.GetRepoImage(stageImageName); err != nil {
-		return nil, fmt.Errorf("unable to get image %q info from repo: %s", stageImageName, err)
-	} else {
+func (storage *RepoStagesStorage) GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
+
+	logboek.Debug.LogF("-- RepoStagesStorage GetImageInfo %s %s %s\n", projectName, signature, uniqueID)
+	logboek.Debug.LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
+
+	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(stageImageName); err != nil {
+		return nil, err
+	} else if imgInfo != nil {
+		imgInfo.Signature = signature
+		imgInfo.UniqueID = uniqueID
 		return imgInfo, nil
 	}
+	return nil, nil
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string) error {
@@ -206,8 +224,13 @@ func (storage *RepoStagesStorage) StoreImage(img container_runtime.Image) error 
 }
 
 func (storage *RepoStagesStorage) CleanupLocalImage(img container_runtime.Image) error {
-	logboek.Default.LogF("Cleaning local image %#v\n", img)
-	return fmt.Errorf("not implemented")
+	switch storage.ContainerRuntime.(type) {
+	case *container_runtime.LocalDockerServerRuntime:
+		dockerImage := img.(*container_runtime.DockerImage)
+		return dockerImage.Image.Untag()
+	default:
+		panic("not implemented")
+	}
 }
 
 func (storage *RepoStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
