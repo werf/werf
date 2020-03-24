@@ -99,7 +99,7 @@ var _ = forEachDockerRegistryImplementation("purging images", func() {
 
 			It("should not remove images that are built without werf", func() {
 				Ω(utilsDocker.Pull("flant/werf-test:hello-world")).Should(Succeed(), "docker pull")
-				Ω(utilsDocker.CliTag("flant/werf-test:hello-world", imagesRepo.String())).Should(Succeed(), "docker tag")
+				Ω(utilsDocker.CliTag("flant/werf-test:hello-world", imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker tag")
 				defer func() {
 					Ω(utilsDocker.CliRmi(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker rmi")
 				}()

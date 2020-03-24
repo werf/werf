@@ -30,11 +30,23 @@ type DockerRegistryOptions struct {
 	SkipTlsVerifyRegistry bool
 	DockerHubUsername     string
 	DockerHubPassword     string
+	HarborUsername        string
+	HarborPassword        string
 }
 
 func (o *DockerRegistryOptions) awsEcrOptions() awsEcrOptions {
 	return awsEcrOptions{
 		defaultImplementationOptions: o.defaultOptions(),
+	}
+}
+
+func (o *DockerRegistryOptions) dockerHubOptions() dockerHubOptions {
+	return dockerHubOptions{
+		defaultImplementationOptions: o.defaultOptions(),
+		dockerHubCredentials: dockerHubCredentials{
+			username: o.DockerHubUsername,
+			password: o.DockerHubPassword,
+		},
 	}
 }
 
@@ -56,12 +68,12 @@ func (o *DockerRegistryOptions) gitLabRegistryOptions() gitLabRegistryOptions {
 	}
 }
 
-func (o *DockerRegistryOptions) dockerHubOptions() dockerHubOptions {
-	return dockerHubOptions{
+func (o *DockerRegistryOptions) harborOptions() harborOptions {
+	return harborOptions{
 		defaultImplementationOptions: o.defaultOptions(),
-		dockerHubCredentials: dockerHubCredentials{
-			username: o.DockerHubUsername,
-			password: o.DockerHubPassword,
+		harborCredentials: harborCredentials{
+			username: o.HarborUsername,
+			password: o.HarborPassword,
 		},
 	}
 }
@@ -83,14 +95,16 @@ func NewDockerRegistry(repository string, implementation string, options DockerR
 	switch implementation {
 	case AwsEcrImplementationName:
 		return newAwsEcr(options.awsEcrOptions())
+	case DockerHubImplementationName:
+		return newDockerHub(options.dockerHubOptions())
 	case GcrImplementationName:
 		return newGcr(options.gcrOptions())
 	case GitHubPackagesImplementationName:
 		return newGitHubPackages(options.gitHubPackagesOptions())
 	case GitLabRegistryImplementationName:
 		return newGitLabRegistry(options.gitLabRegistryOptions())
-	case DockerHubImplementationName:
-		return newDockerHub(options.dockerHubOptions())
+	case HarborImplementationName:
+		return newHarbor(options.harborOptions())
 	case QuayImplementationName:
 		return newQuay(options.quayOptions())
 	case DefaultImplementationName:
@@ -118,10 +132,6 @@ func detectImplementation(repository string) (string, error) {
 		patterns []string
 	}{
 		{
-			name:     GcrImplementationName,
-			patterns: gcrPatterns,
-		},
-		{
 			name:     AwsEcrImplementationName,
 			patterns: awsEcrPatterns,
 		},
@@ -130,12 +140,20 @@ func detectImplementation(repository string) (string, error) {
 			patterns: dockerHubPatterns,
 		},
 		{
-			name:     QuayImplementationName,
-			patterns: quayPatterns,
+			name:     GcrImplementationName,
+			patterns: gcrPatterns,
 		},
 		{
 			name:     GitHubPackagesImplementationName,
 			patterns: gitHubPackagesPatterns,
+		},
+		{
+			name:     HarborImplementationName,
+			patterns: harborPatterns,
+		},
+		{
+			name:     QuayImplementationName,
+			patterns: quayPatterns,
 		},
 	} {
 		for _, pattern := range service.patterns {
@@ -163,6 +181,7 @@ func ImplementationList() []string {
 		GcrImplementationName,
 		GitHubPackagesImplementationName,
 		GitLabRegistryImplementationName,
+		HarborImplementationName,
 		QuayImplementationName,
 	}
 }
