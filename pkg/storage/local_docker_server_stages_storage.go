@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -22,6 +23,11 @@ const (
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
 )
+
+func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, string) {
+	parts := strings.SplitN(repoStageImageTag, "-", 2)
+	return parts[0], parts[1]
+}
 
 type LocalDockerServerStagesStorage struct {
 	// Local stages storage is compatible only with docker-server backed runtime
@@ -86,11 +92,16 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetImageInfo(stageImageName string) (*image.Info, error) {
+func (storage *LocalDockerServerStagesStorage) GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
+
 	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(stageImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
 	} else if inspect != nil {
-		return image.NewInfoFromInspect(stageImageName, inspect), nil
+		imgInfo := image.NewInfoFromInspect(stageImageName, inspect)
+		imgInfo.Signature = signature
+		imgInfo.UniqueID = uniqueID
+		return imgInfo, nil
 	} else {
 		return nil, nil
 	}
@@ -300,8 +311,11 @@ func convertToRepoImageList(imageSummaryList []types.ImageSummary) (repoImageLis
 
 		for _, repoTag := range repoTags {
 			repository, tag := image.ParseRepositoryAndTag(repoTag)
+			signature, uniqueID := getSignatureAndUniqueIDFromLocalStageImageTag(tag)
 
 			repoImage := &image.Info{
+				Signature:  signature,
+				UniqueID:   uniqueID,
 				Repository: repository,
 				Tag:        tag,
 				ID:         imageSummary.ID,

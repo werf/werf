@@ -11,14 +11,13 @@ const (
 )
 
 type StagesStorage interface {
-	ConstructStageImageName(projectName, signature, uniqueID string) string
-
 	GetRepoImages(projectName string) ([]*image.Info, error)
 	DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
 	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
 
-	GetImageInfo(stageImageName string) (*image.Info, error)
+	ConstructStageImageName(projectName, signature, uniqueID string) string
+	GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error)
 
 	// FetchImage will create a local image in the container-runtime
 	FetchImage(img container_runtime.Image) error
