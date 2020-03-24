@@ -29,6 +29,10 @@ import (
 // export WERF_TEST_DOCKERHUB_USERNAME
 // export WERF_TEST_DOCKERHUB_PASSWORD
 //
+// export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB
+// export WERF_TEST_GITHUB_REGISTRY
+// export WERF_TEST_GITHUB_TOKEN
+//
 // export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR
 // export WERF_TEST_HARBOR_REGISTRY
 // export WERF_TEST_HARBOR_USERNAME
@@ -256,6 +260,11 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 		implementationCode,
 	)
 
+	tokenEnvName := fmt.Sprintf(
+		"WERF_TEST_%s_TOKEN",
+		implementationCode,
+	)
+
 	switch implementationName {
 	case docker_registry.DockerHubImplementationName:
 		username := getRequiredEnv(usernameEnvName)
@@ -269,6 +278,16 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 			SkipTlsVerifyRegistry: false,
 			DockerHubUsername:     username,
 			DockerHubPassword:     password,
+		}
+	case docker_registry.GitHubPackagesImplementationName:
+		token := getRequiredEnv(tokenEnvName)
+
+		stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", token)
+
+		return docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      false,
+			SkipTlsVerifyRegistry: false,
+			GitHubToken:           token,
 		}
 	case docker_registry.HarborImplementationName:
 		username := getRequiredEnv(usernameEnvName)
@@ -290,7 +309,7 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
-	case docker_registry.DockerHubImplementationName, docker_registry.HarborImplementationName:
+	case docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName:
 		if implementationName == docker_registry.HarborImplementationName {
 			// API cannot delete repository without any tags
 			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
