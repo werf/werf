@@ -3,7 +3,6 @@ package docker_registry
 import (
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -165,16 +164,13 @@ func (r *dockerHub) parseReference(reference string) (string, string, error) {
 		return "", "", err
 	}
 
-	repository := parsedReference.RepositoryStr()
+	repositoryParts := strings.Split(parsedReference.RepositoryStr(), "/")
 
 	var account, project string
-	switch len(strings.Split(repository, "/")) {
-	case 1:
-		account = repository
-	case 2:
-		project = path.Base(repository)
-		account = path.Base(strings.TrimSuffix(repository, project))
-	default:
+	if len(repositoryParts) == 2 {
+		account = repositoryParts[0]
+		project = repositoryParts[1]
+	} else {
 		return "", "", fmt.Errorf("unexpected reference %s", reference)
 	}
 
