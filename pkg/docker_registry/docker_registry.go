@@ -30,6 +30,7 @@ type DockerRegistryOptions struct {
 	SkipTlsVerifyRegistry bool
 	DockerHubUsername     string
 	DockerHubPassword     string
+	GitHubToken           string
 	HarborUsername        string
 	HarborPassword        string
 }
@@ -59,6 +60,9 @@ func (o *DockerRegistryOptions) gcrOptions() GcrOptions {
 func (o *DockerRegistryOptions) gitHubPackagesOptions() gitHubPackagesOptions {
 	return gitHubPackagesOptions{
 		defaultImplementationOptions: o.defaultOptions(),
+		gitHubCredentials: gitHubCredentials{
+			token: o.GitHubToken,
+		},
 	}
 }
 

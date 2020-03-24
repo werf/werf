@@ -33,6 +33,10 @@ func (r *defaultImplementation) SelectRepoImageList(reference string, f func(*im
 		return nil, err
 	}
 
+	return r.selectRepoImageListByTags(reference, tags, f)
+}
+
+func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags []string, f func(*image.Info) bool) ([]*image.Info, error) {
 	var repoImageList []*image.Info
 	for _, tag := range tags {
 		ref := strings.Join([]string{reference, tag}, ":")
