@@ -11,6 +11,8 @@ import (
 )
 
 type Info struct {
+	Signature         string            `json:"signature"`
+	UniqueID          string            `json:"uniqueID"`
 	Name              string            `json:"name"`
 	Repository        string            `json:"repository"`
 	Tag               string            `json:"tag"`

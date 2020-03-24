@@ -3,6 +3,7 @@ package container_runtime
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/docker/docker/api/types"
@@ -52,7 +53,7 @@ func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(img Image) error 
 	}
 
 	if inspect, err := runtime.GetImageInspect(dockerImage.Image.Name()); err != nil {
-		return fmt.Errorf("unabel to get inspect of image %s: %s", dockerImage.Image.Name(), err)
+		return fmt.Errorf("unable to get inspect of image %s: %s", dockerImage.Image.Name(), err)
 	} else {
 		dockerImage.Image.SetInspect(inspect)
 	}
@@ -64,14 +65,19 @@ func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(img Image) error 
 func (runtime *LocalDockerServerRuntime) PushBuiltImage(img Image) error {
 	dockerImage := img.(*DockerImage)
 
-	if err := dockerImage.Image.Export(dockerImage.Image.Name()); err != nil {
-		return fmt.Errorf("unable to export image %s: %s", dockerImage.Image.Name(), err)
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging built image by name %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+		if err := dockerImage.Image.TagBuiltImage(dockerImage.Image.Name()); err != nil {
+			return fmt.Errorf("unable to tag built image by name %s: %s", dockerImage.Image.Name(), err)
+		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
-	if inspect, err := runtime.GetImageInspect(dockerImage.Image.Name()); err != nil {
-		return fmt.Errorf("unabel to get inspect of image %s: %s", dockerImage.Image.Name(), err)
-	} else {
-		dockerImage.Image.SetInspect(inspect)
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+		return docker.CliPushWithRetries(dockerImage.Image.Name())
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -84,13 +90,6 @@ func (runtime *LocalDockerServerRuntime) TagBuiltImageByName(img Image) error {
 	if err := dockerImage.Image.TagBuiltImage(dockerImage.Image.Name()); err != nil {
 		return fmt.Errorf("unable to tag image %s: %s", dockerImage.Image.Name(), err)
 	}
-
-	if inspect, err := runtime.GetImageInspect(dockerImage.Image.Name()); err != nil {
-		return fmt.Errorf("unabel to get inspect of image %s: %s", dockerImage.Image.Name(), err)
-	} else {
-		dockerImage.Image.SetInspect(inspect)
-	}
-
 	return nil
 }
 
