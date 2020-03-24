@@ -97,7 +97,7 @@ func (s *BaseStage) LogDetailedName() string {
 		imageName = "~"
 	}
 
-	return fmt.Sprintf("stage %s/%s", imageName, s.Name())
+	return fmt.Sprintf("%s/%s", imageName, s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
