@@ -24,8 +24,15 @@ import (
 // WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_<implementation name>
 // WERF_TEST_<implementation name>_REGISTRY
 //
-// WERF_TEST_DOCKERHUB_USERNAME
-// WERF_TEST_DOCKERHUB_PASSWORD
+// export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB
+// export WERF_TEST_DOCKERHUB_REGISTRY
+// export WERF_TEST_DOCKERHUB_USERNAME
+// export WERF_TEST_DOCKERHUB_PASSWORD
+//
+// export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR
+// export WERF_TEST_HARBOR_REGISTRY
+// export WERF_TEST_HARBOR_USERNAME
+// export WERF_TEST_HARBOR_PASSWORD
 
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
@@ -239,18 +246,18 @@ func implementationImagesRepoMode(implementationName string) string {
 func implementationImagesRepoDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {
 	implementationCode := strings.ToUpper(implementationName)
 
+	usernameEnvName := fmt.Sprintf(
+		"WERF_TEST_%s_USERNAME",
+		implementationCode,
+	)
+
+	passwordEnvName := fmt.Sprintf(
+		"WERF_TEST_%s_PASSWORD",
+		implementationCode,
+	)
+
 	switch implementationName {
 	case docker_registry.DockerHubImplementationName:
-		usernameEnvName := fmt.Sprintf(
-			"WERF_TEST_%s_USERNAME",
-			implementationCode,
-		)
-
-		passwordEnvName := fmt.Sprintf(
-			"WERF_TEST_%s_PASSWORD",
-			implementationCode,
-		)
-
 		username := getRequiredEnv(usernameEnvName)
 		password := getRequiredEnv(passwordEnvName)
 
@@ -263,6 +270,16 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 			DockerHubUsername:     username,
 			DockerHubPassword:     password,
 		}
+	case docker_registry.HarborImplementationName:
+		username := getRequiredEnv(usernameEnvName)
+		password := getRequiredEnv(passwordEnvName)
+
+		return docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      false,
+			SkipTlsVerifyRegistry: false,
+			HarborUsername:        username,
+			HarborPassword:        password,
+		}
 	default:
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -273,12 +290,25 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
-	case docker_registry.DockerHubImplementationName:
-		err := imagesRepo.DeleteRepo()
-		if err != nil {
-			if _, ok := err.(docker_registry.DockerHubNotFoundError); !ok {
-				Ω(err).Should(Succeed())
-			}
+	case docker_registry.DockerHubImplementationName, docker_registry.HarborImplementationName:
+		if implementationName == docker_registry.HarborImplementationName {
+			// API cannot delete repository without any tags
+			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
+
+			Ω(utilsDocker.Pull("flant/werf-test:hello-world")).Should(Succeed(), "docker pull")
+			Ω(utilsDocker.CliTag("flant/werf-test:hello-world", imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker tag")
+			defer func() {
+				Ω(utilsDocker.CliRmi(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker rmi")
+			}()
+
+			Ω(utilsDocker.CliPush(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker push")
+		}
+
+		err := imagesRepo.DeleteImageRepo("image")
+		switch err := err.(type) {
+		case nil, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError:
+		default:
+			Ω(err).Should(Succeed())
 		}
 	}
 }

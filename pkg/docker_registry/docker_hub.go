@@ -1,15 +1,21 @@
 package docker_registry
 
 import (
+	"fmt"
 	"net/http"
+	"path"
+	"strings"
+
+	"github.com/google/go-containerregistry/pkg/name"
 
 	"github.com/flant/werf/pkg/image"
 )
 
 const DockerHubImplementationName = "dockerhub"
 
-type DockerHubUnauthorizedError error
-type DockerHubNotFoundError error
+type DockerHubUnauthorizedError apiError
+
+type DockerHubNotFoundError apiError
 
 var dockerHubPatterns = []string{"^index\\.docker\\.io", "^registry\\.hub\\.docker\\.com"}
 
@@ -66,13 +72,18 @@ func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
 		return err
 	}
 
-	resp, err := r.dockerHubApi.deleteRepository(reference, token)
+	account, project, err := r.parseReference(reference)
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.dockerHubApi.deleteRepository(account, project, token)
 	if resp != nil {
 		if resp.StatusCode == http.StatusUnauthorized && withRetry {
 			r.resetToken()
 			return r.deleteRepo(reference, false)
 		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError(err)
+			return DockerHubNotFoundError{error: err}
 		}
 	}
 
@@ -89,13 +100,18 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 		return err
 	}
 
-	resp, err := r.dockerHubApi.deleteTag(repoImage.Repository, repoImage.Tag, token)
+	account, project, err := r.parseReference(repoImage.Repository)
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.dockerHubApi.deleteTag(account, project, repoImage.Tag, token)
 	if resp != nil {
 		if resp.StatusCode == http.StatusUnauthorized && withRetry {
 			r.resetToken()
 			return r.deleteRepoImage(repoImage, false)
 		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError(err)
+			return DockerHubNotFoundError{error: err}
 		}
 	}
 
@@ -111,9 +127,9 @@ func (r *dockerHub) getToken() (string, error) {
 		token, resp, err := r.dockerHubApi.getToken(r.dockerHubCredentials.username, r.dockerHubCredentials.password)
 		if resp != nil {
 			if resp.StatusCode == http.StatusUnauthorized {
-				return "", DockerHubUnauthorizedError(err)
+				return "", DockerHubUnauthorizedError{error: err}
 			} else if resp.StatusCode == http.StatusNotFound {
-				return "", DockerHubNotFoundError(err)
+				return "", DockerHubNotFoundError{error: err}
 			}
 		}
 
@@ -141,4 +157,26 @@ func (r *dockerHub) Validate() error {
 
 func (r *dockerHub) String() string {
 	return DockerHubImplementationName
+}
+
+func (r *dockerHub) parseReference(reference string) (string, string, error) {
+	parsedReference, err := name.NewTag(reference)
+	if err != nil {
+		return "", "", err
+	}
+
+	repository := parsedReference.RepositoryStr()
+
+	var account, project string
+	switch len(strings.Split(repository, "/")) {
+	case 1:
+		account = repository
+	case 2:
+		project = path.Base(repository)
+		account = path.Base(strings.TrimSuffix(repository, project))
+	default:
+		return "", "", fmt.Errorf("unexpected reference %s", reference)
+	}
+
+	return account, project, nil
 }

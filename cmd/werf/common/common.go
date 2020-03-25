@@ -63,6 +63,8 @@ type CmdData struct {
 	StagesStorageRepoImplementation    *string
 	StagesStorageRepoDockerHubUsername *string
 	StagesStorageRepoDockerHubPassword *string
+	StagesStorageRepoHarborUsername    *string
+	StagesStorageRepoHarborPassword    *string
 
 	Synchronization *string
 
@@ -71,10 +73,14 @@ type CmdData struct {
 	ImagesRepoImplementation    *string
 	ImagesRepoDockerHubUsername *string
 	ImagesRepoDockerHubPassword *string
+	ImagesRepoHarborUsername    *string
+	ImagesRepoHarborPassword    *string
 
 	RepoImplementation    *string
 	RepoDockerHubUsername *string
 	RepoDockerHubPassword *string
+	RepoHarborUsername    *string
+	RepoHarborPassword    *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -295,6 +301,40 @@ func setupRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
 	)
 }
 
+func setupRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoHarborUsername != nil {
+		return
+	}
+
+	cmdData.RepoHarborUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoHarborUsername,
+		"repo-harbor-username",
+		"",
+		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
+		"Default harbor username for stages storage repo and images repo implementations (default $WERF_REPO_HARBOR_USERNAME).",
+	)
+
+	_ = cmd.Flags().MarkHidden("repo-harbor-username")
+}
+
+func setupRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoHarborPassword != nil {
+		return
+	}
+
+	cmdData.RepoHarborPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoHarborPassword,
+		"repo-harbor-password",
+		"",
+		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
+		"Default harbor password for stages storage repo and images repo implementations (default $WERF_REPO_HARBOR_PASSWORD).",
+	)
+
+	_ = cmd.Flags().MarkHidden("repo-harbor-password")
+}
+
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupStagesStorage(cmdData, cmd)
 
@@ -303,8 +343,12 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 	setupRepoDockerHubUsername(cmdData, cmd)
 	setupRepoDockerHubPassword(cmdData, cmd)
+	setupRepoHarborUsername(cmdData, cmd)
+	setupRepoHarborPassword(cmdData, cmd)
 	setupStagesStorageRepoDockerHubUsername(cmdData, cmd)
 	setupStagesStorageRepoDockerHubPassword(cmdData, cmd)
+	setupStagesStorageRepoHarborUsername(cmdData, cmd)
+	setupStagesStorageRepoHarborPassword(cmdData, cmd)
 }
 
 func setupStagesStorageRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
@@ -378,9 +422,61 @@ func setupStagesStorageRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Comman
 		cmdData.StagesStorageRepoDockerHubPassword,
 		"stages-storage-repo-docker-hub-password",
 		"",
-		os.Getenv(defaultValue),
+		defaultValue,
 		usage,
 	)
+}
+
+func setupStagesStorageRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME"),
+		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Harbor username for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME or $WERF_REPO_HARBOR_USERNAME).")
+
+	cmdData.StagesStorageRepoHarborUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoHarborUsername,
+		"stages-storage-repo-harbor-username",
+		"",
+		defaultValue,
+		usage,
+	)
+
+	_ = cmd.Flags().MarkHidden("stages-storage-repo-harbor-username")
+}
+
+func setupStagesStorageRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD"),
+		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Harbor password for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD or $WERF_REPO_HARBOR_PASSWORD).")
+
+	cmdData.StagesStorageRepoHarborPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoHarborPassword,
+		"stages-storage-repo-harbor-password",
+		"",
+		defaultValue,
+		usage,
+	)
+
+	_ = cmd.Flags().MarkHidden("stages-storage-repo-harbor-password")
 }
 
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
@@ -482,8 +578,12 @@ func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 	setupRepoDockerHubUsername(cmdData, cmd)
 	setupRepoDockerHubPassword(cmdData, cmd)
+	setupRepoHarborUsername(cmdData, cmd)
+	setupRepoHarborPassword(cmdData, cmd)
 	setupImagesRepoDockerHubUsername(cmdData, cmd)
 	setupImagesRepoDockerHubPassword(cmdData, cmd)
+	setupImagesRepoHarborUsername(cmdData, cmd)
+	setupImagesRepoHarborPassword(cmdData, cmd)
 }
 
 func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -576,6 +676,58 @@ func setupImagesRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
 		defaultValue,
 		usage,
 	)
+}
+
+func setupImagesRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_HARBOR_USERNAME"),
+		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Harbor username for images repo implementation (default $WERF_IMAGES_REPO_HARBOR_USERNAME or $WERF_REPO_HARBOR_USERNAME).")
+
+	cmdData.ImagesRepoHarborUsername = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoHarborUsername,
+		"images-repo-harbor-username",
+		"",
+		defaultValue,
+		usage,
+	)
+
+	_ = cmd.Flags().MarkHidden("images-repo-harbor-username")
+}
+
+func setupImagesRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_HARBOR_PASSWORD"),
+		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("Harbor password for images repo implementation (default $WERF_IMAGES_REPO_HARBOR_PASSWORD or $WERF_REPO_HARBOR_PASSWORD).")
+
+	cmdData.ImagesRepoHarborPassword = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoHarborPassword,
+		"images-repo-harbor-password",
+		"",
+		defaultValue,
+		usage,
+	)
+
+	_ = cmd.Flags().MarkHidden("images-repo-harbor-password")
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -1024,6 +1176,16 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		imagesRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
 	}
 
+	imagesRepoHarborUsername := *cmdData.ImagesRepoHarborUsername
+	if imagesRepoHarborUsername == "" {
+		imagesRepoHarborUsername = *cmdData.RepoHarborUsername
+	}
+
+	imagesRepoHarborPassword := *cmdData.ImagesRepoHarborPassword
+	if imagesRepoHarborPassword == "" {
+		imagesRepoHarborPassword = *cmdData.RepoHarborPassword
+	}
+
 	return storage.NewImagesRepo(
 		projectName,
 		imagesRepoAddress,
@@ -1036,6 +1198,8 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 					DockerHubUsername:     imagesRepoDockerHubUsername,
 					DockerHubPassword:     imagesRepoDockerHubPassword,
+					HarborUsername:        imagesRepoHarborUsername,
+					HarborPassword:        imagesRepoHarborPassword,
 				},
 			},
 		},
@@ -1067,6 +1231,16 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 		stagesStorageRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
 	}
 
+	stagesStorageRepoHarborUsername := *cmdData.StagesStorageRepoHarborUsername
+	if stagesStorageRepoHarborUsername == "" {
+		stagesStorageRepoHarborUsername = *cmdData.RepoHarborUsername
+	}
+
+	stagesStorageRepoHarborPassword := *cmdData.StagesStorageRepoHarborPassword
+	if stagesStorageRepoHarborPassword == "" {
+		stagesStorageRepoHarborPassword = *cmdData.RepoHarborPassword
+	}
+
 	return storage.NewStagesStorage(
 		stagesStorageAddress,
 		containerRuntime,
@@ -1078,6 +1252,8 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 					DockerHubUsername:     stagesStorageRepoDockerHubUsername,
 					DockerHubPassword:     stagesStorageRepoDockerHubPassword,
+					HarborUsername:        stagesStorageRepoHarborUsername,
+					HarborPassword:        stagesStorageRepoHarborPassword,
 				},
 			},
 		},
