@@ -41,8 +41,8 @@ func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, 
 	return imagesRepo, nil
 }
 
-func (repo *DockerImagesRepo) DeleteRepo() error {
-	return repo.DockerRegistry.DeleteRepo(repo.ImagesRepo())
+func (repo *DockerImagesRepo) CreateImageRepo(imageName string) error {
+	return repo.DockerRegistry.CreateRepo(repo.ImageRepositoryName(imageName))
 }
 
 func (repo *DockerImagesRepo) DeleteImageRepo(imageName string) error {
@@ -63,14 +63,6 @@ func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*
 
 func (repo *DockerImagesRepo) DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error {
 	return repo.DockerRegistry.DeleteRepoImage(repoImageList...)
-}
-
-func (repo *DockerImagesRepo) CreateImageRepo(_ string) error {
-	return nil
-}
-
-func (repo *DockerImagesRepo) RemoveImageRepo(_ string) error {
-	return nil
 }
 
 func (repo *DockerImagesRepo) GetAllImageRepoTags(imageName string) ([]string, error) {
