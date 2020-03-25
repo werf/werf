@@ -63,6 +63,7 @@ type CmdData struct {
 	StagesStorageRepoImplementation    *string
 	StagesStorageRepoDockerHubUsername *string
 	StagesStorageRepoDockerHubPassword *string
+	StagesStorageRepoGitHubToken       *string
 	StagesStorageRepoHarborUsername    *string
 	StagesStorageRepoHarborPassword    *string
 
@@ -73,12 +74,14 @@ type CmdData struct {
 	ImagesRepoImplementation    *string
 	ImagesRepoDockerHubUsername *string
 	ImagesRepoDockerHubPassword *string
+	ImagesRepoGitHubToken       *string
 	ImagesRepoHarborUsername    *string
 	ImagesRepoHarborPassword    *string
 
 	RepoImplementation    *string
 	RepoDockerHubUsername *string
 	RepoDockerHubPassword *string
+	RepoGitHubToken       *string
 	RepoHarborUsername    *string
 	RepoHarborPassword    *string
 
@@ -301,6 +304,21 @@ func setupRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
 	)
 }
 
+func setupRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.RepoGitHubToken != nil {
+		return
+	}
+
+	cmdData.RepoGitHubToken = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.RepoGitHubToken,
+		"repo-github-token",
+		"",
+		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
+		fmt.Sprintf("Default GitHub token for stages storage repo and images repo implementations (default $WERF_REPO_GITHUB_TOKEN)."),
+	)
+}
+
 func setupRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
 	if cmdData.RepoHarborUsername != nil {
 		return
@@ -343,10 +361,12 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 	setupRepoDockerHubUsername(cmdData, cmd)
 	setupRepoDockerHubPassword(cmdData, cmd)
+	setupRepoGitHubToken(cmdData, cmd)
 	setupRepoHarborUsername(cmdData, cmd)
 	setupRepoHarborPassword(cmdData, cmd)
 	setupStagesStorageRepoDockerHubUsername(cmdData, cmd)
 	setupStagesStorageRepoDockerHubPassword(cmdData, cmd)
+	setupStagesStorageRepoGitHubToken(cmdData, cmd)
 	setupStagesStorageRepoHarborUsername(cmdData, cmd)
 	setupStagesStorageRepoHarborPassword(cmdData, cmd)
 }
@@ -421,6 +441,30 @@ func setupStagesStorageRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Comman
 	cmd.Flags().StringVarP(
 		cmdData.StagesStorageRepoDockerHubPassword,
 		"stages-storage-repo-docker-hub-password",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupStagesStorageRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN"),
+		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("GitHub token for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN or $WERF_REPO_GITHUB_TOKEN).")
+
+	cmdData.StagesStorageRepoGitHubToken = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.StagesStorageRepoGitHubToken,
+		"stages-storage-repo-github-token",
 		"",
 		defaultValue,
 		usage,
@@ -578,10 +622,12 @@ func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 	setupRepoDockerHubUsername(cmdData, cmd)
 	setupRepoDockerHubPassword(cmdData, cmd)
+	setupRepoGitHubToken(cmdData, cmd)
 	setupRepoHarborUsername(cmdData, cmd)
 	setupRepoHarborPassword(cmdData, cmd)
 	setupImagesRepoDockerHubUsername(cmdData, cmd)
 	setupImagesRepoDockerHubPassword(cmdData, cmd)
+	setupImagesRepoGitHubToken(cmdData, cmd)
 	setupImagesRepoHarborUsername(cmdData, cmd)
 	setupImagesRepoHarborPassword(cmdData, cmd)
 }
@@ -672,6 +718,30 @@ func setupImagesRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(
 		cmdData.ImagesRepoDockerHubPassword,
 		"images-repo-docker-hub-password",
+		"",
+		defaultValue,
+		usage,
+	)
+}
+
+func setupImagesRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
+	var defaultValue string
+	for _, value := range []string{
+		os.Getenv("WERF_IMAGES_REPO_GITHUB_TOKEN"),
+		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
+	} {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	usage := fmt.Sprintf("GitHub token for images repo implementation (default $WERF_IMAGES_REPO_GITHUB_TOKEN or $WERF_REPO_GITHUB_TOKEN).")
+
+	cmdData.ImagesRepoGitHubToken = new(string)
+	cmd.Flags().StringVarP(
+		cmdData.ImagesRepoGitHubToken,
+		"images-repo-github-token",
 		"",
 		defaultValue,
 		usage,
@@ -1176,6 +1246,11 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		imagesRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
 	}
 
+	imagesRepoGitHubToken := *cmdData.ImagesRepoGitHubToken
+	if imagesRepoGitHubToken == "" {
+		imagesRepoGitHubToken = *cmdData.RepoGitHubToken
+	}
+
 	imagesRepoHarborUsername := *cmdData.ImagesRepoHarborUsername
 	if imagesRepoHarborUsername == "" {
 		imagesRepoHarborUsername = *cmdData.RepoHarborUsername
@@ -1198,6 +1273,7 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 					DockerHubUsername:     imagesRepoDockerHubUsername,
 					DockerHubPassword:     imagesRepoDockerHubPassword,
+					GitHubToken:           imagesRepoGitHubToken,
 					HarborUsername:        imagesRepoHarborUsername,
 					HarborPassword:        imagesRepoHarborPassword,
 				},
