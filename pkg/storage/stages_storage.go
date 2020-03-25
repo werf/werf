@@ -26,10 +26,7 @@ type StagesStorage interface {
 	FetchImage(img container_runtime.Image) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(img container_runtime.Image) error
-	// CleanupLocalImage will remove a local image from container-runtime
-	CleanupLocalImage(img container_runtime.Image) error
 	ShouldFetchImage(img container_runtime.Image) (bool, error)
-	ShouldCleanupLocalImage(img container_runtime.Image) (bool, error)
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error

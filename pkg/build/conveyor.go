@@ -220,7 +220,7 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
 		NewShouldBeBuiltPhase(c),
 	}
 
@@ -281,10 +281,12 @@ func (c *Conveyor) BuildStages(opts BuildStagesOptions) error {
 		return err
 	}
 
-	phases := []Phase{NewBuildPhase(c, BuildPhaseOptions{
-		IntrospectOptions: opts.IntrospectOptions,
-		ImageBuildOptions: opts.ImageBuildOptions,
-	})}
+	phases := []Phase{
+		NewBuildPhase(c, BuildPhaseOptions{
+			IntrospectOptions: opts.IntrospectOptions,
+			ImageBuildOptions: opts.ImageBuildOptions,
+		}),
+	}
 
 	return c.runPhases(phases, true)
 }
@@ -300,7 +302,7 @@ func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
 		NewShouldBeBuiltPhase(c),
 		NewPublishImagesPhase(c, c.ImagesRepo, opts),
 	}
@@ -468,17 +470,13 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 
 				logProcessMsg = fmt.Sprintf("Phase %s -- OnImageStage()", phase.Name())
 				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				var newStages []stage.Interface
 				for _, stg := range img.GetStages() {
 					logboek.Debug.LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
-					if keepStage, err := phase.OnImageStage(img, stg); err != nil {
+					if err := phase.OnImageStage(img, stg); err != nil {
 						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
-					} else if keepStage {
-						newStages = append(newStages, stg)
 					}
 				}
-				img.SetStages(newStages)
 				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 				logProcessMsg = fmt.Sprintf("Phase %s -- AfterImageStages()", phase.Name())
