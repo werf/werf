@@ -240,19 +240,8 @@ func (storage *RepoStagesStorage) FetchImage(img container_runtime.Image) error 
 func (storage *RepoStagesStorage) StoreImage(img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
-		// FIXME: construct image name
 		return containerRuntime.PushBuiltImage(img)
 		// TODO: case *container_runtime.LocalHostRuntime:
-	default:
-		panic("not implemented")
-	}
-}
-
-func (storage *RepoStagesStorage) CleanupLocalImage(img container_runtime.Image) error {
-	switch storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-		dockerImage := img.(*container_runtime.DockerImage)
-		return dockerImage.Image.Untag()
 	default:
 		panic("not implemented")
 	}
@@ -263,16 +252,6 @@ func (storage *RepoStagesStorage) ShouldFetchImage(img container_runtime.Image) 
 	case *container_runtime.LocalDockerServerRuntime:
 		dockerImage := img.(*container_runtime.DockerImage)
 		return !dockerImage.Image.IsExistsLocally(), nil
-	default:
-		panic("not implemented")
-	}
-}
-
-func (storage *RepoStagesStorage) ShouldCleanupLocalImage(img container_runtime.Image) (bool, error) {
-	switch storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-		dockerImage := img.(*container_runtime.DockerImage)
-		return dockerImage.Image.IsExistsLocally(), nil
 	default:
 		panic("not implemented")
 	}

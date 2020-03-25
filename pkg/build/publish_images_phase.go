@@ -54,8 +54,8 @@ func (phase *PublishImagesPhase) BeforeImageStages(img *Image) error {
 	return nil
 }
 
-func (phase *PublishImagesPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
-	return true, nil
+func (phase *PublishImagesPhase) OnImageStage(img *Image, stg stage.Interface) error {
+	return nil
 }
 
 func (phase *PublishImagesPhase) AfterImageStages(img *Image) error {
@@ -281,24 +281,6 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		return nil
 	}
 
-	if shouldFetch, err := phase.Conveyor.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: img.GetLastNonEmptyStage().GetImage()}); err == nil && shouldFetch {
-		if err := logboek.Default.LogProcess(
-			fmt.Sprintf("Fetching stage %s from stages storage", img.GetLastNonEmptyStage().LogDetailedName()),
-			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-			func() error {
-				logboek.Info.LogF("Image name: %s\n", img.GetLastNonEmptyStage().GetImage().Name())
-				if err := phase.Conveyor.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: img.GetLastNonEmptyStage().GetImage()}); err != nil {
-					return fmt.Errorf("unable to fetch stage %s image %s from stages storage %s: %s", img.GetLastNonEmptyStage().LogDetailedName(), img.GetLastNonEmptyStage().GetImage().Name(), phase.Conveyor.StagesStorage.String(), err)
-				}
-				return nil
-			},
-		); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
 	publishImage := container_runtime.NewWerfImage(phase.Conveyor.GetStageImage(lastStageImage.Name()), imageName, phase.Conveyor.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
 	publishImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
@@ -318,32 +300,16 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	publishingFunc := func() error {
+		if err := fetchStage(phase.Conveyor.StagesStorage, img.GetLastNonEmptyStage()); err != nil {
+			return err
+		}
+
 		if err := logboek.Info.LogProcess("Building final image with meta information", logboek.LevelLogProcessOptions{}, func() error {
 			if err := publishImage.Build(container_runtime.BuildOptions{}); err != nil {
 				return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, tagStrategy, err)
 			}
-
-			if shouldCleanup, err := phase.Conveyor.StagesStorage.ShouldCleanupLocalImage(&container_runtime.DockerImage{Image: img.GetLastNonEmptyStage().GetImage()}); err == nil && shouldCleanup {
-				if err := logboek.Default.LogProcess(
-					fmt.Sprintf("Cleaning up stage %s local image", img.GetLastNonEmptyStage().LogDetailedName()),
-					logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-					func() error {
-						logboek.Info.LogF("Image name: %s\n", img.GetLastNonEmptyStage().GetImage().Name())
-						if err := phase.Conveyor.StagesStorage.CleanupLocalImage(&container_runtime.DockerImage{Image: img.GetLastNonEmptyStage().GetImage()}); err != nil {
-							return fmt.Errorf("unable to cleanup stage %s local image %s for stages storage %s: %s", img.GetLastNonEmptyStage().LogDetailedName(), img.GetLastNonEmptyStage().GetImage().Name(), phase.Conveyor.StagesStorage.String(), err)
-						}
-						return nil
-					},
-				); err != nil {
-					return err
-				}
-			} else if err != nil {
-				return err
-			}
-
 			return nil
-		},
-		); err != nil {
+		}); err != nil {
 			return err
 		}
 

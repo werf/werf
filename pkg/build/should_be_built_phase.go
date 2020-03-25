@@ -43,11 +43,18 @@ func (phase *ShouldBeBuiltPhase) ImageProcessingShouldBeStopped(img *Image) bool
 	return len(phase.BadStagesByImage[img.GetName()]) > 0
 }
 
-func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
+func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) error {
+	// stage is empty
+	if stg.GetImage() == nil {
+		return nil
+	}
+
+	// stage is not empty and stages-storage does not contain suitable cached image
 	if stg.GetImage().GetStagesStorageImageInfo() == nil {
 		phase.BadStagesByImage[img.GetName()] = append(phase.BadStagesByImage[img.GetName()], stg)
 	}
-	return true, nil
+
+	return nil
 }
 
 func (phase *ShouldBeBuiltPhase) BeforeImages() error {
