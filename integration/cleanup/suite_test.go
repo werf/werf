@@ -24,6 +24,9 @@ import (
 // WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_<implementation name>
 // WERF_TEST_<implementation name>_REGISTRY
 //
+// export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR
+// export WERF_TEST_ECR_REGISTRY
+//
 // export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB
 // export WERF_TEST_DOCKERHUB_REGISTRY
 // export WERF_TEST_DOCKERHUB_USERNAME
@@ -126,6 +129,10 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageAddress)
 				stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
 				stubs.SetEnv("WERF_IMAGES_REPO_MODE", imagesRepoMode) // TODO
+			})
+
+			BeforeEach(func() {
+				implementationBeforeEach(implementationName)
 			})
 
 			AfterEach(func() {
@@ -307,9 +314,18 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 	}
 }
 
+func implementationBeforeEach(implementationName string) {
+	switch implementationName {
+	case docker_registry.AwsEcrImplementationName:
+		err := imagesRepo.CreateImageRepo("image")
+		Ω(err).Should(Succeed())
+	default:
+	}
+}
+
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
-	case docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName:
+	case docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName:
 		if implementationName == docker_registry.HarborImplementationName {
 			// API cannot delete repository without any tags
 			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
