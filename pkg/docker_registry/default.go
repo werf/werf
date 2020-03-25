@@ -53,6 +53,10 @@ func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags
 	return repoImageList, nil
 }
 
+func (r *defaultImplementation) CreateRepo(_ string) error {
+	return fmt.Errorf("method is not implemented")
+}
+
 func (r *defaultImplementation) DeleteRepo(_ string) error {
 	return fmt.Errorf("method is not implemented")
 }
