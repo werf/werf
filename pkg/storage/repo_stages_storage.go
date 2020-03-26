@@ -62,11 +62,36 @@ func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature
 }
 
 func (storage *RepoStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
-	return nil, fmt.Errorf("storage.RepoStagesStorage->GetRepoImages not implemented")
+	return storage.DockerRegistry.SelectRepoImageList(storage.RepoAddress, func(info *image.Info) bool {
+		werfLabel, ok := info.Labels[image.WerfLabel]
+		if !(ok && werfLabel == projectName) {
+			return false
+		}
+
+		werfImageLabel, ok := info.Labels[image.WerfImageLabel]
+		if !(ok && werfImageLabel == "false") {
+			return false
+		}
+
+		werfCacheVersionLabel, ok := info.Labels[image.WerfCacheVersionLabel]
+		if !(ok && werfCacheVersionLabel == image.BuildCacheVersion) {
+			return false
+		}
+
+		return true
+	})
 }
 
-func (storage *RepoStagesStorage) DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error {
-	return fmt.Errorf("storage.RepoStagesStorage->DeleteRepoImage not implemented")
+func (storage *RepoStagesStorage) DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error {
+	return storage.DockerRegistry.DeleteRepoImage(repoImageList...)
+}
+
+func (storage *RepoStagesStorage) CreateRepo() error {
+	return storage.DockerRegistry.CreateRepo(storage.RepoAddress)
+}
+
+func (storage *RepoStagesStorage) DeleteRepo() error {
+	return storage.DockerRegistry.DeleteRepo(storage.RepoAddress)
 }
 
 func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
