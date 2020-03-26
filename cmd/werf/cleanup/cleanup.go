@@ -124,20 +124,12 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := common.ValidateStagesStorage(stagesStorage); err != nil {
-		return err
-	}
-
 	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
 		return err
 	}
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
-		return err
-	}
-
-	if err := common.ValidateImagesRepo(imagesRepo); err != nil {
 		return err
 	}
 
