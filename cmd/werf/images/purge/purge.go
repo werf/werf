@@ -107,10 +107,6 @@ func runPurge() error {
 		return err
 	}
 
-	if err := common.ValidateImagesRepo(imagesRepo); err != nil {
-		return err
-	}
-
 	imageNameList, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err

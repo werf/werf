@@ -103,10 +103,6 @@ func (repo *DockerImagesRepo) ImageRepositoryTag(imageName, tag string) string {
 	return repo.imagesRepoManager.ImageRepoTag(imageName, tag)
 }
 
-func (repo *DockerImagesRepo) Validate() error {
-	return repo.DockerRegistry.Validate()
-}
-
 func (repo *DockerImagesRepo) String() string {
 	return repo.imagesRepoManager.ImagesRepo()
 }
