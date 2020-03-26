@@ -6,9 +6,12 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/flant/logboek"
-
 	"github.com/flant/werf/pkg/image"
+)
+
+const (
+	MultirepoRepoMode = "multirepo"
+	MonorepoRepoMode  = "monorepo"
 )
 
 type DockerRegistry interface {
@@ -114,16 +117,28 @@ func NewDockerRegistry(repository string, implementation string, options DockerR
 		return newQuay(options.quayOptions())
 	case DefaultImplementationName:
 		return newDefaultImplementation(options.defaultOptions())
-	case "auto", "":
-		detectedServiceName, err := detectImplementation(repository)
+	default:
+		resolvedImplementation, err := ResolveImplementation(repository, implementation)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewDockerRegistry(repository, detectedServiceName, options)
-	default:
-		return nil, fmt.Errorf("docker registry implementation %s is not supported", implementation)
+		return NewDockerRegistry(repository, resolvedImplementation, options)
 	}
+}
+
+func ResolveImplementation(repository, implementation string) (string, error) {
+	for _, supportedImplementation := range ImplementationList() {
+		if supportedImplementation == implementation {
+			return implementation, nil
+		}
+	}
+
+	if implementation == "auto" || implementation == "" {
+		return detectImplementation(repository)
+	}
+
+	return "", fmt.Errorf("docker registry implementation %s is not supported", implementation)
 }
 
 func detectImplementation(repository string) (string, error) {
@@ -168,14 +183,33 @@ func detectImplementation(repository string) (string, error) {
 			}
 
 			if matched {
-				logboek.Debug.LogLn("Using docker registry implementation:", service.name)
 				return service.name, nil
 			}
 		}
 	}
 
-	logboek.Debug.LogLn("Using docker registry implementation: default")
 	return "default", nil
+}
+
+func ResolveRepoMode(resolvedImplementation, repoMode string) (string, error) {
+	switch resolvedImplementation {
+	case AwsEcrImplementationName, DockerHubImplementationName, GitHubPackagesImplementationName, QuayImplementationName:
+		switch repoMode {
+		case MonorepoRepoMode, "auto", "":
+			return MonorepoRepoMode, nil
+		default:
+			return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s (%s only)", resolvedImplementation, repoMode, MonorepoRepoMode)
+		}
+	default:
+		switch repoMode {
+		case MonorepoRepoMode, MultirepoRepoMode:
+			return repoMode, nil
+		case "auto", "":
+			return MultirepoRepoMode, nil
+		default:
+			return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s", resolvedImplementation, repoMode)
+		}
+	}
 }
 
 func ImplementationList() []string {
