@@ -201,7 +201,7 @@ func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) 
 }
 
 func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s %s\n", projectName)
+	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
 	res := []string{}
 
