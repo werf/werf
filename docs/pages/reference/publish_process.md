@@ -84,7 +84,7 @@ Otherwise, werf constructs the resulting name of a docker image for every image 
 
 The _images repo_ param should be specified by the `--images-repo` option or `$WERF_IMAGES_REPO`.
 
-The _images repo mode_ param should be specified by the `--images-repo-mode` option or `$WERF_IMAGES_REPO_MODE`.
+The _images repo mode_ param should be specified by the `--images-repo-mode` option or `$WERF_IMAGES_REPO_MODE`.  The user can use different Docker registry implementation and some of them have restrictions and various default _image repo mode_ which can be based on implementation and _images_repo_ value (more about [supported Docker registry implementations and their features]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html)).
 
 > The image naming behavior should be the same for publishing, deploying, and cleaning processes. Otherwise, the pipeline may fail, and you may end up losing images and stages during the cleanup.
 

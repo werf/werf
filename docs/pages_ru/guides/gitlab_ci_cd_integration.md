@@ -117,10 +117,10 @@ Build:
 Так как при очистке не требуется выполнять сборку образов, то указываем `except: schedules`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
 
 Для авторизации в Docker registry (при выполнении push/pull образов) werf использует переменную окружения GitLab `CI_JOB_TOKEN` (подробнее про модель разграничения доступа при выполнении заданий в GitLab можно прочитать [здесь](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)).
-Это не единственный, но самый рекомендуемый вариант в случае работы с GitLab (подробно про авторизацию werf в Docker registry можно прочесть [здесь]({{ site.baseurl }}/documentation/reference/registry_authorization.html)).
+Это не единственный, но самый рекомендуемый вариант в случае работы с GitLab (подробно про авторизацию werf в Docker registry можно прочесть [здесь]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker)).
 В простейшем случае, если вы используете встроенный в GitLab Docker registry, вам не нужно делать никаких дополнительных действий для авторизации.
 
-Если вам нужно чтобы werf не использовал переменную `CI_JOB_TOKEN` либо вы используете невстроенный в GitLab Docker registry (например, `Google Container Registry`), то можно ознакомиться с вариантами авторизации [здесь]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+Если вам нужно чтобы werf не использовал переменную `CI_JOB_TOKEN` либо вы используете невстроенный в GitLab Docker registry (например, `Google Container Registry`), то можно ознакомиться с вариантами авторизации [здесь]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker).
 
 ### Выкат приложения
 
