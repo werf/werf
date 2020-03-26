@@ -117,9 +117,9 @@ Build:
 
 Cleanup will use schedule, and it is not necessary to rebuild images on running cleanup job. Therefore we need to specify `except: schedules` in the build stage above.
 
-For Docker registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
+For Docker registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#docker-authorization)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
 
-If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container Docker registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+If you want that werf won't use `CI_JOB_TOKEN` or you don't use GitLab's Container Docker registry (e.g. `Google Container Registry`) please read more [here]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#docker-authorization).
 
 ### Deploy stage
 
