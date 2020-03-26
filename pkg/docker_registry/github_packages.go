@@ -13,6 +13,8 @@ import (
 const GitHubPackagesImplementationName = "github"
 const gitHubPackagesMetaTag = "docker-base-layer"
 
+type GitHubPackagesUnauthorizedError apiError
+
 var gitHubPackagesPatterns = []string{"^docker\\.pkg\\.github\\.com"}
 
 type gitHubPackages struct {
@@ -104,7 +106,7 @@ func (r *gitHubPackages) deleteRepoImage(repoImage *image.Info) error {
 func (r *gitHubPackages) deletePackageVersion(owner, project, packageName, packageVersion string) error {
 	processError := func(resp *http.Response, err error) error {
 		if resp != nil && resp.StatusCode == http.StatusUnauthorized {
-			return fmt.Errorf("authorization failed: you should use a token with the read:packages, write:packages, delete:packages and repo scopes. For more information see https://help.github.com/en/packages/publishing-and-managing-packages/about-github-packages#about-tokens")
+			return GitHubPackagesUnauthorizedError{error: err}
 		}
 
 		return err
