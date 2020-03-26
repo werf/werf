@@ -22,8 +22,6 @@ type dockerHub struct {
 	*defaultImplementation
 	dockerHubApi
 	dockerHubCredentials
-
-	token string
 }
 
 type dockerHubOptions struct {
@@ -34,6 +32,7 @@ type dockerHubOptions struct {
 type dockerHubCredentials struct {
 	username string
 	password string
+	token    string
 }
 
 func newDockerHub(options dockerHubOptions) (*dockerHub, error) {
@@ -52,12 +51,12 @@ func newDockerHub(options dockerHubOptions) (*dockerHub, error) {
 }
 
 func (r *dockerHub) DeleteRepo(reference string) error {
-	return r.deleteRepo(reference, true)
+	return r.deleteRepo(reference)
 }
 
 func (r *dockerHub) DeleteRepoImage(repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage, true); err != nil {
+		if err := r.deleteRepoImage(repoImage); err != nil {
 			return err
 		}
 	}
@@ -65,7 +64,7 @@ func (r *dockerHub) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
+func (r *dockerHub) deleteRepo(reference string) error {
 	token, err := r.getToken()
 	if err != nil {
 		return err
@@ -78,9 +77,8 @@ func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
 
 	resp, err := r.dockerHubApi.deleteRepository(account, project, token)
 	if resp != nil {
-		if resp.StatusCode == http.StatusUnauthorized && withRetry {
-			r.resetToken()
-			return r.deleteRepo(reference, false)
+		if resp.StatusCode == http.StatusUnauthorized {
+			return DockerHubUnauthorizedError{error: err}
 		} else if resp.StatusCode == http.StatusNotFound {
 			return DockerHubNotFoundError{error: err}
 		}
@@ -93,7 +91,7 @@ func (r *dockerHub) deleteRepo(reference string, withRetry bool) error {
 	return nil
 }
 
-func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error {
+func (r *dockerHub) deleteRepoImage(repoImage *image.Info) error {
 	token, err := r.getToken()
 	if err != nil {
 		return err
@@ -106,9 +104,8 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 
 	resp, err := r.dockerHubApi.deleteTag(account, project, repoImage.Tag, token)
 	if resp != nil {
-		if resp.StatusCode == http.StatusUnauthorized && withRetry {
-			r.resetToken()
-			return r.deleteRepoImage(repoImage, false)
+		if resp.StatusCode == http.StatusUnauthorized {
+			return DockerHubUnauthorizedError{error: err}
 		} else if resp.StatusCode == http.StatusNotFound {
 			return DockerHubNotFoundError{error: err}
 		}
@@ -122,7 +119,7 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info, withRetry bool) error
 }
 
 func (r *dockerHub) getToken() (string, error) {
-	if r.token == "" {
+	if r.dockerHubCredentials.token == "" {
 		token, resp, err := r.dockerHubApi.getToken(r.dockerHubCredentials.username, r.dockerHubCredentials.password)
 		if resp != nil {
 			if resp.StatusCode == http.StatusUnauthorized {
@@ -136,22 +133,10 @@ func (r *dockerHub) getToken() (string, error) {
 			return "", err
 		}
 
-		r.token = token
+		r.dockerHubCredentials.token = token
 	}
 
-	return r.token, nil
-}
-
-func (r *dockerHub) resetToken() {
-	r.token = ""
-}
-
-func (r *dockerHub) Validate() error {
-	if _, err := r.getToken(); err != nil {
-		return err
-	}
-
-	return nil
+	return r.dockerHubCredentials.token, nil
 }
 
 func (r *dockerHub) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error) {
