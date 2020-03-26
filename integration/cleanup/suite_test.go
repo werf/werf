@@ -110,7 +110,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 					stagesStorageAddress = ":local"
 					stagesStorageImplementationName = ""
 					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
-					imagesRepoMode = storage.MultirepoImagesRepoMode
+					imagesRepoMode = docker_registry.MultirepoRepoMode
 					imagesRepoImplementationName = ""
 				} else {
 					stagesStorageAddress = implementationStagesStorageAddress(implementationName)
@@ -118,7 +118,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 					stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
 
 					imagesRepoAddress = implementationImagesRepoAddress(implementationName)
-					imagesRepoMode = implementationImagesRepoMode(implementationName)
+					imagesRepoMode = "auto"
 					imagesRepoImplementationName = implementationName
 					imagesRepoDockerRegistryOptions = implementationImagesRepoDockerRegistryOptions(implementationName)
 				}
@@ -128,7 +128,6 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 				stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageAddress)
 				stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
-				stubs.SetEnv("WERF_IMAGES_REPO_MODE", imagesRepoMode) // TODO
 			})
 
 			BeforeEach(func() {
@@ -243,15 +242,6 @@ func implementationImagesRepoAddress(implementationName string) string {
 	registry := getRequiredEnv(registryEnvName)
 
 	return strings.Join([]string{registry, projectName}, "/")
-}
-
-func implementationImagesRepoMode(implementationName string) string {
-	switch implementationName {
-	case docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.QuayImplementationName:
-		return storage.MonorepoImagesRepoMode
-	default:
-		return storage.MultirepoImagesRepoMode
-	}
 }
 
 func implementationImagesRepoDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {

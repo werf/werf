@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
@@ -20,14 +22,24 @@ type DockerImagesRepoOptions struct {
 }
 
 func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, options DockerImagesRepoOptions) (ImagesRepo, error) {
-	implementation := options.Implementation
+	resolvedImplementation, err := docker_registry.ResolveImplementation(imagesRepoAddress, options.Implementation)
+	if err != nil {
+		return nil, err
+	}
+	logboek.Info.LogLn("Using images repo docker registry implementation:", resolvedImplementation)
 
-	imagesRepoManager, err := newImagesRepoManager(imagesRepoAddress, imagesRepoMode)
+	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoAddress, resolvedImplementation, options.DockerRegistryOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoManager.ImagesRepo(), implementation, options.DockerRegistryOptions)
+	resolvedImagesRepoMode, err := dockerRegistry.ResolveRepoMode(imagesRepoAddress, imagesRepoMode)
+	if err != nil {
+		return nil, err
+	}
+	logboek.Info.LogLn("Using images repo mode:", resolvedImagesRepoMode)
+
+	imagesRepoManager, err := newImagesRepoManager(imagesRepoAddress, resolvedImagesRepoMode)
 	if err != nil {
 		return nil, err
 	}
