@@ -76,10 +76,6 @@ func (r *defaultImplementation) deleteRepoImage(repoImage *image.Info) error {
 	return r.api.deleteImageByReference(reference)
 }
 
-func (r *defaultImplementation) Validate() error {
-	return nil
-}
-
 func (r *defaultImplementation) ResolveRepoMode(_, repoMode string) (string, error) {
 	switch repoMode {
 	case MonorepoRepoMode, MultirepoRepoMode:

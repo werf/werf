@@ -20,7 +20,6 @@ type ImagesRepo interface {
 	ImageRepositoryNameWithTag(imageName, tag string) string
 	ImageRepositoryTag(imageName, tag string) string
 
-	Validate() error
 	String() string
 }
 
