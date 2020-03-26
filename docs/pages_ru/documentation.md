@@ -43,7 +43,7 @@ sidebar: documentation
 Также в этот раздел включены статьи с описанием базовых примитивов и общих инструментов:
 
 * [Стадии и образы]({{ site.baseurl }}/documentation/reference/stages_and_images.html)
-* [Авторизация в Docker registry]({{ site.baseurl }}/documentation/reference/registry_authorization.html)
+* [Работа с Docker registries]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html)
 * [Разработка и отладка]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html)
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)
 

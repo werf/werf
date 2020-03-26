@@ -45,7 +45,7 @@ Each article describes specific process: its composition, available options and 
 Also, this section includes articles with base primitives and general tools:
 
 * [Stages and images]({{ site.baseurl }}/documentation/reference/stages_and_images.html).
-* [Registry authorization]({{ site.baseurl }}/documentation/reference/registry_authorization.html).
+* [Working with Docker registries]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html).
 * [Development and debug]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html).
 * [Toolbox]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
 
