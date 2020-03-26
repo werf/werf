@@ -3,11 +3,11 @@ package storage
 import (
 	"fmt"
 	"strings"
+
+	"github.com/flant/werf/pkg/docker_registry"
 )
 
 const (
-	MultirepoImagesRepoMode   = "multirepo"
-	MonorepoImagesRepoMode    = "monorepo"
 	monorepoTagPartsSeparator = "-"
 )
 
@@ -51,7 +51,7 @@ func newImagesRepoManager(imagesRepo, imagesRepoMode string) (*imagesRepoManager
 	var imageRepoTagFunc func(imageName, tag string) string
 
 	switch imagesRepoMode {
-	case MultirepoImagesRepoMode:
+	case docker_registry.MultirepoRepoMode:
 		namelessImageRepoFunc = func(imagesRepo string) string {
 			return imagesRepo
 		}
@@ -63,7 +63,7 @@ func newImagesRepoManager(imagesRepo, imagesRepoMode string) (*imagesRepoManager
 		imageRepoTagFunc = func(_, tag string) string {
 			return tag
 		}
-	case MonorepoImagesRepoMode:
+	case docker_registry.MonorepoRepoMode:
 		namelessImageRepoFunc = func(imagesRepo string) string {
 			return imagesRepo
 		}
@@ -80,7 +80,7 @@ func newImagesRepoManager(imagesRepo, imagesRepoMode string) (*imagesRepoManager
 			return tag
 		}
 	default:
-		return nil, fmt.Errorf("bad images repo mode '%s': only %s and %s supported", imagesRepoMode, MultirepoImagesRepoMode, MonorepoImagesRepoMode)
+		return nil, fmt.Errorf("bad images repo mode '%s': only %s and %s supported", imagesRepoMode, docker_registry.MultirepoRepoMode, docker_registry.MonorepoRepoMode)
 	}
 
 	formattedImagesRepo := strings.TrimRight(imagesRepo, "/")
