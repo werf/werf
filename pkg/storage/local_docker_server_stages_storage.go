@@ -84,6 +84,14 @@ func (storage *LocalDockerServerStagesStorage) DeleteRepoImage(options DeleteRep
 	return nil
 }
 
+func (storage *LocalDockerServerStagesStorage) CreateRepo() error {
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) DeleteRepo() error {
+	return nil
+}
+
 func makeLocalManagedImageRecord(projectName, imageName string) string {
 	tag := imageName
 	if imageName == "" {
