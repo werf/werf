@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 	"testing"
+
+	"github.com/flant/werf/pkg/docker_registry"
 )
 
 func TestGetImagesRepoManager(t *testing.T) {
@@ -13,14 +15,14 @@ func TestGetImagesRepoManager(t *testing.T) {
 		imageRepoWithTag         string
 		isMonorepo               bool
 	}{
-		MonorepoImagesRepoMode: {
+		docker_registry.MonorepoRepoMode: {
 			namelessImageRepo:        "repo",
 			namelessImageRepoWithTag: "repo:tag",
 			imageRepo:                "repo",
 			imageRepoWithTag:         fmt.Sprintf("repo:image%stag", monorepoTagPartsSeparator),
 			isMonorepo:               true,
 		},
-		MultirepoImagesRepoMode: {
+		docker_registry.MultirepoRepoMode: {
 			namelessImageRepo:        "repo",
 			namelessImageRepoWithTag: "repo:tag",
 			imageRepo:                "repo/image",
