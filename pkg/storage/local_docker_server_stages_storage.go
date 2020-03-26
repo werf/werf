@@ -38,10 +38,6 @@ func NewLocalDockerServerStagesStorage(localDockerServerRuntime *container_runti
 	return &LocalDockerServerStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
 }
 
-func (storage *LocalDockerServerStagesStorage) Validate() error {
-	return nil
-}
-
 func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
