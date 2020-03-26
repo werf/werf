@@ -1232,7 +1232,7 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		imagesRepoImplementation = *cmdData.RepoImplementation
 	}
 
-	if err := validationRepoImplementation(imagesRepoImplementation); err != nil {
+	if err := validateRepoImplementation(imagesRepoImplementation); err != nil {
 		return nil, err
 	}
 
@@ -1293,7 +1293,7 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 		stagesStorageRepoImplementation = *cmdData.RepoImplementation
 	}
 
-	if err := validationRepoImplementation(stagesStorageRepoImplementation); err != nil {
+	if err := validateRepoImplementation(stagesStorageRepoImplementation); err != nil {
 		return nil, err
 	}
 
@@ -1592,7 +1592,7 @@ func DockerRegistryInit(cmdData *CmdData) error {
 	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
-func validationRepoImplementation(implementation string) error {
+func validateRepoImplementation(implementation string) error {
 	supportedValues := docker_registry.ImplementationList()
 	supportedValues = append(supportedValues, "auto", "")
 
