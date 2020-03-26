@@ -14,6 +14,9 @@ type StagesStorage interface {
 	GetRepoImages(projectName string) ([]*image.Info, error)
 	DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error
 
+	CreateRepo() error
+	DeleteRepo() error
+
 	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
 
 	ConstructStageImageName(projectName, signature, uniqueID string) string
