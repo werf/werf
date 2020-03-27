@@ -377,6 +377,10 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupStagesStorageRepoGitHubToken(cmdData, cmd)
 	setupStagesStorageRepoHarborUsername(cmdData, cmd)
 	setupStagesStorageRepoHarborPassword(cmdData, cmd)
+
+	// TODO: add the following options for stages storage
+	SetupInsecureRegistry(cmdData, cmd)
+	SetupSkipTlsVerifyRegistry(cmdData, cmd)
 }
 
 func setupStagesStorageRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
@@ -638,6 +642,10 @@ func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupImagesRepoGitHubToken(cmdData, cmd)
 	setupImagesRepoHarborUsername(cmdData, cmd)
 	setupImagesRepoHarborPassword(cmdData, cmd)
+
+	// TODO: add the following options for images repo
+	SetupInsecureRegistry(cmdData, cmd)
+	SetupSkipTlsVerifyRegistry(cmdData, cmd)
 }
 
 func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -810,11 +818,19 @@ func setupImagesRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.InsecureRegistry != nil {
+		return
+	}
+
 	cmdData.InsecureRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.SkipTlsVerifyRegistry != nil {
+		return
+	}
+
 	cmdData.SkipTlsVerifyRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
@@ -1429,7 +1445,7 @@ func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, e
 	}
 
 	if imagesRepoAddress == "" {
-		return "IMAGES_REPO", nil
+		return "stub/repository", nil
 	}
 
 	return imagesRepoAddress, nil
