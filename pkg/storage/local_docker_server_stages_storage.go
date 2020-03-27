@@ -42,14 +42,6 @@ func (storage *LocalDockerServerStagesStorage) Validate() error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
-	return false, nil
-}
-
-func (storage *LocalDockerServerStagesStorage) ShouldCleanupLocalImage(img container_runtime.Image) (bool, error) {
-	return false, nil
-}
-
 func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
@@ -190,16 +182,16 @@ func (storage *LocalDockerServerStagesStorage) GetRepoImagesBySignature(projectN
 	return repoImages, nil
 }
 
+func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
+	return false, nil
+}
+
 func (storage *LocalDockerServerStagesStorage) FetchImage(img container_runtime.Image) error {
 	return nil
 }
 
 func (storage *LocalDockerServerStagesStorage) StoreImage(img container_runtime.Image) error {
 	return storage.LocalDockerServerRuntime.TagBuiltImageByName(img)
-}
-
-func (storage *LocalDockerServerStagesStorage) CleanupLocalImage(img container_runtime.Image) error {
-	return nil
 }
 
 func (storage *LocalDockerServerStagesStorage) String() string {
