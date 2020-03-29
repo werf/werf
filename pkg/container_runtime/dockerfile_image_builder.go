@@ -18,11 +18,11 @@ func NewDockerfileImageBuilder() *DockerfileImageBuilder {
 	return &DockerfileImageBuilder{temporalId: uuid.New().String()}
 }
 
-func (b *DockerfileImageBuilder) GetBuiltId() (string, error) {
+func (b *DockerfileImageBuilder) GetBuiltId() string {
 	if !b.isBuilt {
-		return "", fmt.Errorf("dockerfile image %s not built yet", b.temporalId)
+		return ""
 	}
-	return b.temporalId, nil
+	return b.temporalId
 }
 
 func (b *DockerfileImageBuilder) AppendBuildArgs(buildArgs ...string) {

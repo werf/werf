@@ -133,6 +133,9 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	printHeader("DOCKER CONFIG", false)
 	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
+	printHeader("STAGES_STORAGE", true)
+	printExportCommand("WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
+
 	printHeader("IMAGES REPO", true)
 	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
 	printExportCommand("WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
