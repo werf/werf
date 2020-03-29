@@ -38,6 +38,7 @@ import (
 
 	stages_build "github.com/flant/werf/cmd/werf/stages/build"
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
+	stages_mv "github.com/flant/werf/cmd/werf/stages/mv"
 	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
 
 	stage_image "github.com/flant/werf/cmd/werf/stage/image"
@@ -194,6 +195,7 @@ func stagesCmd() *cobra.Command {
 		stages_build.NewCmd(),
 		stages_cleanup.NewCmd(),
 		stages_purge.NewCmd(),
+		stages_mv.NewCmd(),
 	)
 
 	return cmd

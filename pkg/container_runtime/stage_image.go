@@ -110,9 +110,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 		return err
 	}
 
-	if builtId, err := i.GetBuiltId(); err != nil {
-		return fmt.Errorf("unable to get built id: %s", err)
-	} else if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(builtId); err != nil {
+	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(i.MustGetBuiltId()); err != nil {
 		return err
 	} else {
 		i.SetInspect(inspect)
@@ -167,27 +165,25 @@ func (i *StageImage) GetInspect() *types.ImageInspect {
 }
 
 func (i *StageImage) MustGetBuiltId() string {
-	builtId, err := i.GetBuiltId()
-	if err != nil {
-		panic(fmt.Sprintf("error getting built id for %s: %s", i.Name(), err))
+	builtId := i.GetBuiltId()
+	if builtId == "" {
+		panic(fmt.Sprintf("image %s built id is not available", i.Name()))
 	}
 	return builtId
 }
 
-func (i *StageImage) GetBuiltId() (string, error) {
+func (i *StageImage) GetBuiltId() string {
 	if i.dockerfileImageBuilder != nil {
 		return i.dockerfileImageBuilder.GetBuiltId()
+	} else if i.buildImage != nil {
+		return i.buildImage.Name()
 	} else {
-		return i.buildImage.Name(), nil
+		return ""
 	}
 }
 
 func (i *StageImage) TagBuiltImage(name string) error {
-	buildImageId, err := i.GetBuiltId()
-	if err != nil {
-		return err
-	}
-	return docker.CliTag(buildImageId, i.name)
+	return docker.CliTag(i.MustGetBuiltId(), i.name)
 }
 
 func (i *StageImage) Tag(name string) error {
