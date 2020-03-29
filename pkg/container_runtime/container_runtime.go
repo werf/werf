@@ -14,6 +14,7 @@ import (
 type ContainerRuntime interface {
 	RefreshImageObject(img Image) error
 	PullImageFromRegistry(img Image) error
+	RenameImage(img Image, newImageName string) error
 	String() string
 }
 
@@ -39,6 +40,32 @@ func (runtime *LocalDockerServerRuntime) RefreshImageObject(img Image) error {
 	return nil
 }
 
+func (runtime *LocalDockerServerRuntime) RenameImage(img Image, newImageName string) error {
+	dockerImage := img.(*DockerImage)
+
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging image %s by name %s", dockerImage.Image.Name(), newImageName), logboek.LevelLogProcessOptions{}, func() error {
+		if err := docker.CliTag(dockerImage.Image.Name(), newImageName); err != nil {
+			return fmt.Errorf("unable to tag image %s by name %s: %s", dockerImage.Image.Name(), newImageName, err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Removing old image tag %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+		if err := docker.CliRmi(dockerImage.Image.Name()); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	dockerImage.Image.SetName(newImageName)
+
+	return nil
+}
+
 func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(img Image) error {
 	dockerImage := img.(*DockerImage)
 
@@ -50,6 +77,18 @@ func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(img Image) error 
 		return fmt.Errorf("unable to get inspect of image %s: %s", dockerImage.Image.Name(), err)
 	} else {
 		dockerImage.Image.SetInspect(inspect)
+	}
+
+	return nil
+}
+
+func (runtime *LocalDockerServerRuntime) PushImage(img Image) error {
+	dockerImage := img.(*DockerImage)
+
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+		return docker.CliPushWithRetries(dockerImage.Image.Name())
+	}); err != nil {
+		return err
 	}
 
 	return nil

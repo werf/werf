@@ -58,7 +58,7 @@ func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature
 }
 
 func (storage *RepoStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
-	return storage.DockerRegistry.SelectRepoImageList(storage.RepoAddress, func(info *image.Info) bool {
+	if imgInfos, err := storage.DockerRegistry.SelectRepoImageList(storage.RepoAddress, func(info *image.Info) bool {
 		werfLabel, ok := info.Labels[image.WerfLabel]
 		if !(ok && werfLabel == projectName) {
 			return false
@@ -75,7 +75,18 @@ func (storage *RepoStagesStorage) GetRepoImages(projectName string) ([]*image.In
 		}
 
 		return true
-	})
+	}); err != nil {
+		return nil, err
+	} else {
+		for _, imgInfo := range imgInfos {
+			_, tag := image.ParseRepositoryAndTag(imgInfo.Name)
+			signature, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
+			imgInfo.Signature = signature
+			imgInfo.UniqueID = uniqueID
+		}
+
+		return imgInfos, nil
+	}
 }
 
 func (storage *RepoStagesStorage) DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error {
@@ -224,11 +235,9 @@ func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string
 func (storage *RepoStagesStorage) FetchImage(img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
-		// FIXME: construct image name
-		// TODO: lock by name to prevent double pull of the same stage
 		return containerRuntime.PullImageFromRegistry(img)
-		// TODO: case *container_runtime.LocalHostRuntime:
 	default:
+		// TODO: case *container_runtime.LocalHostRuntime:
 		panic("not implemented")
 	}
 }
@@ -236,9 +245,16 @@ func (storage *RepoStagesStorage) FetchImage(img container_runtime.Image) error 
 func (storage *RepoStagesStorage) StoreImage(img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
-		return containerRuntime.PushBuiltImage(img)
-		// TODO: case *container_runtime.LocalHostRuntime:
+		dockerImage := img.(*container_runtime.DockerImage)
+
+		if dockerImage.Image.GetBuiltId() != "" {
+			return containerRuntime.PushBuiltImage(img)
+		} else {
+			return containerRuntime.PushImage(img)
+		}
+
 	default:
+		// TODO: case *container_runtime.LocalHostRuntime:
 		panic("not implemented")
 	}
 }
