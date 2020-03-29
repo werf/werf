@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "werf 1.1: Release notes and future plans"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/werf-1-1-release-notes-and-future-plans-df49f6b229c1"
+    img: "/images/publications/en_270320.png"
+    created: 2020-03-27
+    comment: |
+      <p>werf is our <a href="https://github.com/flant/werf">Open Source</a> GitOps tool to build your applications and deploy them to Kubernetes. As promised, the <a href="https://medium.com/flant-com/announcing-werf-1-0-stable-813b664a06ae">release of werf 1.0</a> marked the beginning of the era of new features and revising established approaches. Now, we are excited to announce the latest version (v1.1) of our tool which is a massive step in the development of <em>its builder</em> and laying the groundwork for the future. Currently, version 1.1 is available in the <a href="https://github.com/flant/werf#backward-compatibility-promise">1.1 <em>ea</em> channel</a>.</p>
   - title: "Building & deploying a versioned documentation site with werf"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/dynamic-building-deploying-with-werf-5c65bb5c29cb"
