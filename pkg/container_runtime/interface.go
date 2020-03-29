@@ -24,7 +24,7 @@ type ImageInterface interface {
 	DockerfileImageBuilder() *DockerfileImageBuilder
 
 	Build(BuildOptions) error
-	GetBuiltId() (string, error)
+	GetBuiltId() string
 	TagBuiltImage(name string) error
 	Export(name string) error
 

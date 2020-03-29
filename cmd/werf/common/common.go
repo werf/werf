@@ -58,34 +58,16 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	StagesStorage                      *string
-	StagesStorageRepoImplementation    *string
-	StagesStorageRepoDockerHubToken    *string
-	StagesStorageRepoDockerHubUsername *string
-	StagesStorageRepoDockerHubPassword *string
-	StagesStorageRepoGitHubToken       *string
-	StagesStorageRepoHarborUsername    *string
-	StagesStorageRepoHarborPassword    *string
+	CommonRepoData *RepoData
+
+	StagesStorage         *string
+	StagesStorageRepoData *RepoData
+
+	ImagesRepo     *string
+	ImagesRepoMode *string
+	ImagesRepoData *RepoData
 
 	Synchronization *string
-
-	ImagesRepo                  *string
-	ImagesRepoMode              *string
-	ImagesRepoImplementation    *string
-	ImagesRepoDockerHubToken    *string
-	ImagesRepoDockerHubUsername *string
-	ImagesRepoDockerHubPassword *string
-	ImagesRepoGitHubToken       *string
-	ImagesRepoHarborUsername    *string
-	ImagesRepoHarborPassword    *string
-
-	RepoImplementation    *string
-	RepoDockerHubToken    *string
-	RepoDockerHubUsername *string
-	RepoDockerHubPassword *string
-	RepoGitHubToken       *string
-	RepoHarborUsername    *string
-	RepoHarborPassword    *string
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -115,9 +97,8 @@ type CmdData struct {
 }
 
 const (
-	CleaningCommandsForceOptionDescription = "Remove containers that are based on deleting werf docker images"
-
-	StubImagesRepoAddress = "stub/repository"
+	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
+	StubImagesRepoAddress                  = "stub/repository"
 )
 
 func GetLongCommandDescription(text string) string {
@@ -265,320 +246,38 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
-func setupRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoImplementation != nil {
-		return
-	}
+func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CommonRepoData = &RepoData{IsCommon: true}
 
-	usage := fmt.Sprintf(`Choose default repo implementation for images repo and stages storage repo.
-The following docker registry implementations are supported: %s.
-Default %s or auto mode (detect implementation by a registry).`,
-		strings.Join(docker_registry.ImplementationList(), ", "),
-		"$WERF_REPO_IMPLEMENTATION",
-	)
-
-	cmdData.RepoImplementation = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoImplementation,
-		"repo-implementation",
-		"",
-		os.Getenv("WERF_REPO_IMPLEMENTATION"),
-		usage,
-	)
-}
-
-func setupRepoDockerHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoDockerHubToken != nil {
-		return
-	}
-
-	cmdData.RepoDockerHubToken = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoDockerHubToken,
-		"repo-docker-hub-token",
-		"",
-		os.Getenv("WERF_REPO_DOCKER_HUB_TOKEN"),
-		"Default Docker Hub token for stages storage repo and images repo implementations (default $WERF_REPO_DOCKER_HUB_TOKEN).",
-	)
-}
-
-func setupRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoDockerHubUsername != nil {
-		return
-	}
-
-	cmdData.RepoDockerHubUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoDockerHubUsername,
-		"repo-docker-hub-username",
-		"",
-		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
-		"Default Docker Hub username for stages storage repo and images repo implementations (default $WERF_REPO_DOCKER_HUB_USERNAME).",
-	)
-}
-
-func setupRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoDockerHubPassword != nil {
-		return
-	}
-
-	cmdData.RepoDockerHubPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoDockerHubPassword,
-		"repo-docker-hub-password",
-		"",
-		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
-		"Default Docker Hub password for stages storage repo and images repo implementations (default $WERF_REPO_DOCKER_HUB_PASSWORD).",
-	)
-}
-
-func setupRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoGitHubToken != nil {
-		return
-	}
-
-	cmdData.RepoGitHubToken = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoGitHubToken,
-		"repo-github-token",
-		"",
-		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
-		fmt.Sprintf("Default GitHub token for stages storage repo and images repo implementations (default $WERF_REPO_GITHUB_TOKEN)."),
-	)
-}
-
-func setupRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoHarborUsername != nil {
-		return
-	}
-
-	cmdData.RepoHarborUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoHarborUsername,
-		"repo-harbor-username",
-		"",
-		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
-		"Default harbor username for stages storage repo and images repo implementations (default $WERF_REPO_HARBOR_USERNAME).",
-	)
-
-	_ = cmd.Flags().MarkHidden("repo-harbor-username")
-}
-
-func setupRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.RepoHarborPassword != nil {
-		return
-	}
-
-	cmdData.RepoHarborPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.RepoHarborPassword,
-		"repo-harbor-password",
-		"",
-		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
-		"Default harbor password for stages storage repo and images repo implementations (default $WERF_REPO_HARBOR_PASSWORD).",
-	)
-
-	_ = cmd.Flags().MarkHidden("repo-harbor-password")
+	SetupImplementationForRepoData(cmdData.CommonRepoData, cmd, "repo-implementation", []string{"WERF_REPO_IMPLEMENTATION"})
+	SetupDockerHubUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-username", []string{"WERF_REPO_DOCKER_HUB_USERNAME"})
+	SetupDockerHubPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-password", []string{"WERF_REPO_DOCKER_HUB_PASSWORD"})
+	SetupDockerHubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-token", []string{"WERF_REPO_DOCKER_HUB_TOKEN"})
+	SetupGithubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-github-token", []string{"WERF_REPO_GITHUB_TOKEN"})
+	SetupHarborUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-username", []string{"WERF_REPO_HARBOR_USERNAME"})
+	SetupHarborPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-password", []string{"WERF_REPO_HARBOR_PASSWORD"})
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	setupStagesStorage(cmdData, cmd)
-
-	setupRepoImplementation(cmdData, cmd)
-	setupStagesStorageRepoImplementation(cmdData, cmd)
-
-	setupRepoDockerHubToken(cmdData, cmd)
-	setupRepoDockerHubUsername(cmdData, cmd)
-	setupRepoDockerHubPassword(cmdData, cmd)
-	setupRepoGitHubToken(cmdData, cmd)
-	setupRepoHarborUsername(cmdData, cmd)
-	setupRepoHarborPassword(cmdData, cmd)
-	setupStagesStorageRepoDockerHubToken(cmdData, cmd)
-	setupStagesStorageRepoDockerHubUsername(cmdData, cmd)
-	setupStagesStorageRepoDockerHubPassword(cmdData, cmd)
-	setupStagesStorageRepoGitHubToken(cmdData, cmd)
-	setupStagesStorageRepoHarborUsername(cmdData, cmd)
-	setupStagesStorageRepoHarborPassword(cmdData, cmd)
-
-	// TODO: add the following options for stages storage
+	// TODO: add the following options for images repo
 	SetupInsecureRegistry(cmdData, cmd)
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
-}
 
-func setupStagesStorageRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_IMPLEMENTATION"),
-		os.Getenv("WERF_REPO_IMPLEMENTATION"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
+	if cmdData.CommonRepoData == nil {
+		SetupCommonRepoData(cmdData, cmd)
 	}
 
-	usage := fmt.Sprintf(`Choose stages storage repo implementation.
-The following  docker registry implementations are supported: %s.
-Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
-		strings.Join(docker_registry.ImplementationList(), ", "),
-	)
+	setupStagesStorage(cmdData, cmd)
 
-	cmdData.StagesStorageRepoImplementation = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoImplementation,
-		"stages-storage-repo-implementation",
-		"",
-		defaultValue,
-		usage,
-	)
-}
+	cmdData.StagesStorageRepoData = &RepoData{DesignationStorageName: "stages storage"}
 
-func setupStagesStorageRepoDockerHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_DOCKER_HUB_TOKEN"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_TOKEN"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub token for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_TOKEN or $WERF_REPO_DOCKER_HUB_TOKEN).")
-
-	cmdData.StagesStorageRepoDockerHubUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoDockerHubUsername,
-		"stages-storage-repo-docker-hub-token",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupStagesStorageRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub username for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME or $WERF_REPO_DOCKER_HUB_USERNAME).")
-
-	cmdData.StagesStorageRepoDockerHubUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoDockerHubUsername,
-		"stages-storage-repo-docker-hub-username",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupStagesStorageRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub password for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD or $WERF_REPO_DOCKER_HUB_PASSWORD).")
-
-	cmdData.StagesStorageRepoDockerHubPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoDockerHubPassword,
-		"stages-storage-repo-docker-hub-password",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupStagesStorageRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN"),
-		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("GitHub token for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN or $WERF_REPO_GITHUB_TOKEN).")
-
-	cmdData.StagesStorageRepoGitHubToken = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoGitHubToken,
-		"stages-storage-repo-github-token",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupStagesStorageRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME"),
-		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Harbor username for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME or $WERF_REPO_HARBOR_USERNAME).")
-
-	cmdData.StagesStorageRepoHarborUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoHarborUsername,
-		"stages-storage-repo-harbor-username",
-		"",
-		defaultValue,
-		usage,
-	)
-
-	_ = cmd.Flags().MarkHidden("stages-storage-repo-harbor-username")
-}
-
-func setupStagesStorageRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD"),
-		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Harbor password for stages storage repo implementation (default $WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD or $WERF_REPO_HARBOR_PASSWORD).")
-
-	cmdData.StagesStorageRepoHarborPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.StagesStorageRepoHarborPassword,
-		"stages-storage-repo-harbor-password",
-		"",
-		defaultValue,
-		usage,
-	)
-
-	_ = cmd.Flags().MarkHidden("stages-storage-repo-harbor-password")
+	SetupImplementationForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-implementation", []string{"WERF_STAGES_STORAGE_REPO_IMPLEMENTATION", "WERF_REPO_IMPLEMENTATION"})
+	SetupDockerHubUsernameForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-docker-hub-username", []string{"WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME", "WERF_REPO_DOCKER_HUB_USERNAME"})
+	SetupDockerHubPasswordForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-docker-hub-password", []string{"WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD", "WERF_REPO_DOCKER_HUB_PASSWORD"})
+	SetupDockerHubTokenForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-docker-hub-token", []string{"WERF_STAGES_STORAGE_REPO_DOCKER_HUB_TOKEN", "WERF_REPO_DOCKER_HUB_TOKEN"})
+	SetupGithubTokenForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-github-token", []string{"WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN", "WERF_REPO_GITHUB_TOKEN"})
+	SetupHarborUsernameForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-harbor-username", []string{"WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME", "WERF_REPO_HARBOR_USERNAME"})
+	SetupHarborPasswordForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-harbor-password", []string{"WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD", "WERF_REPO_HARBOR_PASSWORD"})
 }
 
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
@@ -672,28 +371,26 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 }
 
 func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
-	setupImagesRepo(cmdData, cmd)
-	setupImagesRepoMode(cmdData, cmd)
-
-	setupRepoImplementation(cmdData, cmd)
-	setupImagesRepoImplementation(cmdData, cmd)
-
-	setupRepoDockerHubToken(cmdData, cmd)
-	setupRepoDockerHubUsername(cmdData, cmd)
-	setupRepoDockerHubPassword(cmdData, cmd)
-	setupRepoGitHubToken(cmdData, cmd)
-	setupRepoHarborUsername(cmdData, cmd)
-	setupRepoHarborPassword(cmdData, cmd)
-	setupImagesRepoDockerHubToken(cmdData, cmd)
-	setupImagesRepoDockerHubUsername(cmdData, cmd)
-	setupImagesRepoDockerHubPassword(cmdData, cmd)
-	setupImagesRepoGitHubToken(cmdData, cmd)
-	setupImagesRepoHarborUsername(cmdData, cmd)
-	setupImagesRepoHarborPassword(cmdData, cmd)
-
 	// TODO: add the following options for images repo
 	SetupInsecureRegistry(cmdData, cmd)
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
+
+	if cmdData.CommonRepoData == nil {
+		SetupCommonRepoData(cmdData, cmd)
+	}
+
+	setupImagesRepo(cmdData, cmd)
+	setupImagesRepoMode(cmdData, cmd)
+
+	cmdData.ImagesRepoData = &RepoData{DesignationStorageName: "images repo"}
+
+	SetupImplementationForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-implementation", []string{"WERF_IMAGES_REPO_IMPLEMENTATION", "WERF_REPO_IMPLEMENTATION"})
+	SetupDockerHubUsernameForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-docker-hub-username", []string{"WERF_IMAGES_REPO_DOCKER_HUB_USERNAME", "WERF_REPO_DOCKER_HUB_USERNAME"})
+	SetupDockerHubPasswordForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-docker-hub-password", []string{"WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD", "WERF_REPO_DOCKER_HUB_PASSWORD"})
+	SetupDockerHubTokenForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-docker-hub-token", []string{"WERF_IMAGES_REPO_DOCKER_HUB_TOKEN", "WERF_REPO_DOCKER_HUB_TOKEN"})
+	SetupGithubTokenForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-github-token", []string{"WERF_IMAGES_REPO_GITHUB_TOKEN", "WERF_REPO_GITHUB_TOKEN"})
+	SetupHarborUsernameForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-harbor-username", []string{"WERF_IMAGES_REPO_HARBOR_USERNAME", "WERF_REPO_HARBOR_USERNAME"})
+	SetupHarborPasswordForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-harbor-password", []string{"WERF_IMAGES_REPO_HARBOR_PASSWORD", "WERF_REPO_HARBOR_PASSWORD"})
 }
 
 func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -711,182 +408,6 @@ func setupImagesRepoMode(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmd.Flags().StringVarP(cmdData.ImagesRepoMode, "images-repo-mode", "", defaultValue, fmt.Sprintf(`Define how to store in images repo: %s or %s.
 Default $WERF_IMAGES_REPO_MODE or auto mode`, docker_registry.MultirepoRepoMode, docker_registry.MonorepoRepoMode))
-}
-
-func setupImagesRepoImplementation(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_IMPLEMENTATION"),
-		os.Getenv("WERF_REPO_IMPLEMENTATION"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf(`Choose images repo implementation.
-The following docker registry implementations are supported: %s.
-Default $WERF_IMAGES_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).`,
-		strings.Join(docker_registry.ImplementationList(), ", "),
-	)
-
-	cmdData.ImagesRepoImplementation = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoImplementation,
-		"images-repo-implementation",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupImagesRepoDockerHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_DOCKER_HUB_TOKEN"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_TOKEN"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub token for images repo implementation (default $WERF_IMAGES_REPO_DOCKER_HUB_TOKEN or $WERF_REPO_DOCKER_HUB_TOKEN).")
-
-	cmdData.ImagesRepoDockerHubToken = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoDockerHubToken,
-		"images-repo-docker-hub-token",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupImagesRepoDockerHubUsername(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_DOCKER_HUB_USERNAME"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_USERNAME"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub username for images repo implementation (default $WERF_IMAGES_REPO_DOCKER_HUB_USERNAME or $WERF_REPO_DOCKER_HUB_USERNAME).")
-
-	cmdData.ImagesRepoDockerHubUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoDockerHubUsername,
-		"images-repo-docker-hub-username",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupImagesRepoDockerHubPassword(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD"),
-		os.Getenv("WERF_REPO_DOCKER_HUB_PASSWORD"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Docker Hub password for images repo implementation (default $WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD or $WERF_REPO_DOCKER_HUB_PASSWORD).")
-
-	cmdData.ImagesRepoDockerHubPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoDockerHubPassword,
-		"images-repo-docker-hub-password",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupImagesRepoGitHubToken(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_GITHUB_TOKEN"),
-		os.Getenv("WERF_REPO_GITHUB_TOKEN"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("GitHub token for images repo implementation (default $WERF_IMAGES_REPO_GITHUB_TOKEN or $WERF_REPO_GITHUB_TOKEN).")
-
-	cmdData.ImagesRepoGitHubToken = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoGitHubToken,
-		"images-repo-github-token",
-		"",
-		defaultValue,
-		usage,
-	)
-}
-
-func setupImagesRepoHarborUsername(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_HARBOR_USERNAME"),
-		os.Getenv("WERF_REPO_HARBOR_USERNAME"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Harbor username for images repo implementation (default $WERF_IMAGES_REPO_HARBOR_USERNAME or $WERF_REPO_HARBOR_USERNAME).")
-
-	cmdData.ImagesRepoHarborUsername = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoHarborUsername,
-		"images-repo-harbor-username",
-		"",
-		defaultValue,
-		usage,
-	)
-
-	_ = cmd.Flags().MarkHidden("images-repo-harbor-username")
-}
-
-func setupImagesRepoHarborPassword(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultValue string
-	for _, value := range []string{
-		os.Getenv("WERF_IMAGES_REPO_HARBOR_PASSWORD"),
-		os.Getenv("WERF_REPO_HARBOR_PASSWORD"),
-	} {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	usage := fmt.Sprintf("Harbor password for images repo implementation (default $WERF_IMAGES_REPO_HARBOR_PASSWORD or $WERF_REPO_HARBOR_PASSWORD).")
-
-	cmdData.ImagesRepoHarborPassword = new(string)
-	cmd.Flags().StringVarP(
-		cmdData.ImagesRepoHarborPassword,
-		"images-repo-harbor-password",
-		"",
-		defaultValue,
-		usage,
-	)
-
-	_ = cmd.Flags().MarkHidden("images-repo-harbor-password")
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -1364,43 +885,10 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		return nil, err
 	}
 
-	imagesRepoImplementation := *cmdData.ImagesRepoImplementation
-	if imagesRepoImplementation == "" {
-		imagesRepoImplementation = *cmdData.RepoImplementation
-	}
+	repoData := MergeRepoData(cmdData.ImagesRepoData, cmdData.CommonRepoData)
 
-	if err := validateRepoImplementation(imagesRepoImplementation); err != nil {
+	if err := ValidateRepoImplementation(*repoData.Implementation); err != nil {
 		return nil, err
-	}
-
-	imagesRepoDockerHubToken := *cmdData.ImagesRepoDockerHubToken
-	if imagesRepoDockerHubToken == "" {
-		imagesRepoDockerHubToken = *cmdData.RepoDockerHubToken
-	}
-
-	imagesRepoDockerHubUsername := *cmdData.ImagesRepoDockerHubUsername
-	if imagesRepoDockerHubUsername == "" {
-		imagesRepoDockerHubUsername = *cmdData.RepoDockerHubUsername
-	}
-
-	imagesRepoDockerHubPassword := *cmdData.ImagesRepoDockerHubPassword
-	if imagesRepoDockerHubPassword == "" {
-		imagesRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
-	}
-
-	imagesRepoGitHubToken := *cmdData.ImagesRepoGitHubToken
-	if imagesRepoGitHubToken == "" {
-		imagesRepoGitHubToken = *cmdData.RepoGitHubToken
-	}
-
-	imagesRepoHarborUsername := *cmdData.ImagesRepoHarborUsername
-	if imagesRepoHarborUsername == "" {
-		imagesRepoHarborUsername = *cmdData.RepoHarborUsername
-	}
-
-	imagesRepoHarborPassword := *cmdData.ImagesRepoHarborPassword
-	if imagesRepoHarborPassword == "" {
-		imagesRepoHarborPassword = *cmdData.RepoHarborPassword
 	}
 
 	return storage.NewImagesRepo(
@@ -1409,16 +897,15 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 		imagesRepoMode,
 		storage.ImagesRepoOptions{
 			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
-				Implementation: imagesRepoImplementation,
+				Implementation: *repoData.Implementation,
 				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
 					InsecureRegistry:      *cmdData.InsecureRegistry,
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-					DockerHubToken:        imagesRepoDockerHubToken,
-					DockerHubUsername:     imagesRepoDockerHubUsername,
-					DockerHubPassword:     imagesRepoDockerHubPassword,
-					GitHubToken:           imagesRepoGitHubToken,
-					HarborUsername:        imagesRepoHarborUsername,
-					HarborPassword:        imagesRepoHarborPassword,
+					DockerHubUsername:     *repoData.DockerHubUsername,
+					DockerHubPassword:     *repoData.DockerHubPassword,
+					GitHubToken:           *repoData.GitHubToken,
+					HarborUsername:        *repoData.HarborUsername,
+					HarborPassword:        *repoData.HarborPassword,
 				},
 			},
 		},
@@ -1431,38 +918,10 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 		return nil, err
 	}
 
-	stagesStorageRepoImplementation := *cmdData.StagesStorageRepoImplementation
-	if stagesStorageRepoImplementation == "" {
-		stagesStorageRepoImplementation = *cmdData.RepoImplementation
-	}
+	repoData := MergeRepoData(cmdData.StagesStorageRepoData, cmdData.CommonRepoData)
 
-	if err := validateRepoImplementation(stagesStorageRepoImplementation); err != nil {
+	if err := ValidateRepoImplementation(*repoData.Implementation); err != nil {
 		return nil, err
-	}
-
-	stagesStorageRepoGitHubToken := *cmdData.StagesStorageRepoGitHubToken
-	if stagesStorageRepoGitHubToken == "" {
-		stagesStorageRepoGitHubToken = *cmdData.RepoGitHubToken
-	}
-
-	stagesStorageRepoDockerHubUsername := *cmdData.StagesStorageRepoDockerHubUsername
-	if stagesStorageRepoDockerHubUsername == "" {
-		stagesStorageRepoDockerHubUsername = *cmdData.RepoDockerHubUsername
-	}
-
-	stagesStorageRepoDockerHubPassword := *cmdData.StagesStorageRepoDockerHubPassword
-	if stagesStorageRepoDockerHubPassword == "" {
-		stagesStorageRepoDockerHubPassword = *cmdData.RepoDockerHubPassword
-	}
-
-	stagesStorageRepoHarborUsername := *cmdData.StagesStorageRepoHarborUsername
-	if stagesStorageRepoHarborUsername == "" {
-		stagesStorageRepoHarborUsername = *cmdData.RepoHarborUsername
-	}
-
-	stagesStorageRepoHarborPassword := *cmdData.StagesStorageRepoHarborPassword
-	if stagesStorageRepoHarborPassword == "" {
-		stagesStorageRepoHarborPassword = *cmdData.RepoHarborPassword
 	}
 
 	return storage.NewStagesStorage(
@@ -1470,15 +929,16 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 		containerRuntime,
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				Implementation: stagesStorageRepoImplementation,
+				Implementation: *repoData.Implementation,
 				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
 					InsecureRegistry:      *cmdData.InsecureRegistry,
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-					DockerHubToken:        stagesStorageRepoGitHubToken,
-					DockerHubUsername:     stagesStorageRepoDockerHubUsername,
-					DockerHubPassword:     stagesStorageRepoDockerHubPassword,
-					HarborUsername:        stagesStorageRepoHarborUsername,
-					HarborPassword:        stagesStorageRepoHarborPassword,
+					DockerHubUsername:     *repoData.DockerHubUsername,
+					DockerHubPassword:     *repoData.DockerHubPassword,
+					DockerHubToken:        *repoData.DockerHubToken,
+					GitHubToken:           *repoData.GitHubToken,
+					HarborUsername:        *repoData.HarborUsername,
+					HarborPassword:        *repoData.HarborPassword,
 				},
 			},
 		},
@@ -1711,7 +1171,7 @@ func DockerRegistryInit(cmdData *CmdData) error {
 	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
-func validateRepoImplementation(implementation string) error {
+func ValidateRepoImplementation(implementation string) error {
 	supportedValues := docker_registry.ImplementationList()
 	supportedValues = append(supportedValues, "auto", "")
 
