@@ -156,9 +156,20 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 		}
 
 		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-		return logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
+		if err := logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
 			return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
-		})
+		}); err != nil {
+			return err
+		}
+
+		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
+			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
+		} else if inspect == nil {
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name(), err)
+		} else {
+			// TODO: do not use container_runtime.StageImage for base image
+			i.baseImage.SetStagesStorageImageInfo(image.NewInfoFromInspect(i.baseImage.Name(), inspect))
+		}
 	case StageAsBaseImage:
 		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
 			return err
