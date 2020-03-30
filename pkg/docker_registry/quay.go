@@ -66,7 +66,7 @@ func (r *quay) String() string {
 }
 
 func (r *quay) parseReference(reference string) (string, string, string, error) {
-	parsedReference, err := name.NewTag(reference)
+	parsedReference, err := name.NewRepository(reference)
 	if err != nil {
 		return "", "", "", err
 	}

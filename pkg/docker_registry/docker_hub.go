@@ -179,7 +179,7 @@ func (r *dockerHub) String() string {
 }
 
 func (r *dockerHub) parseReference(reference string) (string, string, error) {
-	parsedReference, err := name.NewTag(reference)
+	parsedReference, err := name.NewRepository(reference)
 	if err != nil {
 		return "", "", err
 	}

@@ -181,7 +181,7 @@ func (r *gitHubPackages) String() string {
 func (r *gitHubPackages) parseReference(reference string) (string, string, string, error) {
 	var owner, project, packageName string
 
-	parsedReference, err := name.NewTag(reference)
+	parsedReference, err := name.NewRepository(reference)
 	if err != nil {
 		return "", "", "", err
 	}
