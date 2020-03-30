@@ -9,6 +9,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
 
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
@@ -90,7 +91,13 @@ func runLint() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
+	stubImagesRepo, err := storage.NewImagesRepo(
+		projectName,
+		common.StubImagesRepoAddress,
+		"auto",
+		storage.ImagesRepoOptions{},
+	)
+
 	if err != nil {
 		return err
 	}
@@ -108,7 +115,7 @@ func runLint() error {
 	}
 	for _, imageName := range imagesNames {
 		d := &images_manager.ImageInfo{
-			ImagesRepo:      imagesRepo,
+			ImagesRepo:      stubImagesRepo,
 			Name:            imageName,
 			Tag:             tag,
 			WithoutRegistry: true,
@@ -116,7 +123,7 @@ func runLint() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(projectDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,
