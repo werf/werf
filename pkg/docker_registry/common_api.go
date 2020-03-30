@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
@@ -54,7 +55,7 @@ func doRequest(method, url string, body io.Reader, options doRequestOptions) (*h
 	logboek.Debug.LogF("<-- %s %s\n", resp.Status, string(respBody))
 
 	if err := transport.CheckError(resp, options.AcceptedCodes...); err != nil {
-		return resp, respBody, fmt.Errorf("%s (body: %s)", err, string(respBody))
+		return resp, respBody, fmt.Errorf("%s (body: %s)", err, strings.TrimSpace(string(respBody)))
 	}
 
 	return resp, respBody, nil

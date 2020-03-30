@@ -106,10 +106,6 @@ func runSync() error {
 		return err
 	}
 
-	if err := common.ValidateStagesStorage(stagesStorage); err != nil {
-		return err
-	}
-
 	stagesStorageCache := common.GetStagesStorageCache()
 	_ = stagesStorageCache // FIXME
 

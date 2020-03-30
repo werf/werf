@@ -53,10 +53,6 @@ func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime
 	}, nil
 }
 
-func (storage *RepoStagesStorage) Validate() error {
-	return nil
-}
-
 func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
 }
@@ -201,7 +197,7 @@ func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) 
 }
 
 func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s %s\n", projectName)
+	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
 	res := []string{}
 

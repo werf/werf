@@ -9,6 +9,7 @@ import (
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
 
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/storage"
 )
@@ -190,7 +191,25 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 }
 
 func deleteRepoImageInStagesStorage(stagesStorage storage.StagesStorage, options storage.DeleteRepoImageOptions, dryRun bool, repoImageList ...*image.Info) error {
-	return deleteRepoImage(stagesStorage.DeleteRepoImage, options, dryRun, repoImageList...)
+	if err := deleteRepoImage(stagesStorage.DeleteRepoImage, options, dryRun, repoImageList...); err != nil {
+		switch err.(type) {
+		case docker_registry.DockerHubUnauthorizedError:
+			return fmt.Errorf(`%s
+You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
+Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
+Be aware that access to the resource is forbidden with personal access token.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
+		case docker_registry.GitHubPackagesUnauthorizedError:
+			return fmt.Errorf(`%s
+You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
+Check --repo-github-token and --stages-storage-repo-github-token options.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
+		default:
+			return err
+		}
+	}
+
+	return nil
 }
 
 func deleteRepoImage(f func(options storage.DeleteRepoImageOptions, repoImageList ...*image.Info) error, options storage.DeleteRepoImageOptions, dryRun bool, repoImageList ...*image.Info) error {
