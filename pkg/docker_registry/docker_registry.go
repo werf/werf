@@ -6,9 +6,12 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/flant/logboek"
-
 	"github.com/flant/werf/pkg/image"
+)
+
+const (
+	MultirepoRepoMode = "multirepo"
+	MonorepoRepoMode  = "monorepo"
 )
 
 type DockerRegistry interface {
@@ -23,6 +26,7 @@ type DockerRegistry interface {
 	DeleteRepoImage(repoImageList ...*image.Info) error
 
 	Validate() error
+	ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error)
 	String() string
 }
 
@@ -96,7 +100,7 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 	}}
 }
 
-func NewDockerRegistry(repository string, implementation string, options DockerRegistryOptions) (DockerRegistry, error) {
+func NewDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (DockerRegistry, error) {
 	switch implementation {
 	case AwsEcrImplementationName:
 		return newAwsEcr(options.awsEcrOptions())
@@ -114,20 +118,32 @@ func NewDockerRegistry(repository string, implementation string, options DockerR
 		return newQuay(options.quayOptions())
 	case DefaultImplementationName:
 		return newDefaultImplementation(options.defaultOptions())
-	case "auto", "":
-		detectedServiceName, err := detectImplementation(repository)
+	default:
+		resolvedImplementation, err := ResolveImplementation(repositoryAddress, implementation)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewDockerRegistry(repository, detectedServiceName, options)
-	default:
-		return nil, fmt.Errorf("docker registry implementation %s is not supported", implementation)
+		return NewDockerRegistry(repositoryAddress, resolvedImplementation, options)
 	}
 }
 
-func detectImplementation(repository string) (string, error) {
-	parsedReference, err := name.NewTag(repository)
+func ResolveImplementation(repository, implementation string) (string, error) {
+	for _, supportedImplementation := range ImplementationList() {
+		if supportedImplementation == implementation {
+			return implementation, nil
+		}
+	}
+
+	if implementation == "auto" || implementation == "" {
+		return detectImplementation(repository)
+	}
+
+	return "", fmt.Errorf("docker registry implementation %s is not supported", implementation)
+}
+
+func detectImplementation(repositoryAddress string) (string, error) {
+	parsedReference, err := name.NewTag(repositoryAddress)
 	if err != nil {
 		return "", err
 	}
@@ -168,13 +184,11 @@ func detectImplementation(repository string) (string, error) {
 			}
 
 			if matched {
-				logboek.Debug.LogLn("Using docker registry implementation:", service.name)
 				return service.name, nil
 			}
 		}
 	}
 
-	logboek.Debug.LogLn("Using docker registry implementation: default")
 	return "default", nil
 }
 
