@@ -135,7 +135,7 @@ func (r *awsEcr) String() string {
 func (r *awsEcr) parseReference(reference string) (string, string, string, error) {
 	var registryId, region, repository string
 
-	parsedReference, err := name.NewTag(reference)
+	parsedReference, err := name.NewRepository(reference)
 	if err != nil {
 		return "", "", "", err
 	}
