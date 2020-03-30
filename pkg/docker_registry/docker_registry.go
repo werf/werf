@@ -144,7 +144,7 @@ func ResolveImplementation(repository, implementation string) (string, error) {
 }
 
 func detectImplementation(repositoryAddress string) (string, error) {
-	parsedReference, err := name.NewTag(repositoryAddress)
+	parsedReference, err := name.NewRegistry(repositoryAddress)
 	if err != nil {
 		return "", err
 	}
