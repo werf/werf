@@ -112,6 +112,8 @@ type CmdData struct {
 
 const (
 	CleaningCommandsForceOptionDescription = "Remove containers that are based on deleting werf docker images"
+
+	StubImagesRepoAddress = "stub/repository"
 )
 
 func GetLongCommandDescription(text string) string {
@@ -1396,7 +1398,7 @@ func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, e
 	}
 
 	if imagesRepoAddress == "" {
-		return "stub/repository", nil
+		return StubImagesRepoAddress, nil
 	}
 
 	return imagesRepoAddress, nil
