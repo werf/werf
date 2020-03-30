@@ -3,7 +3,9 @@ package docker_registry
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 
 	"github.com/flant/werf/pkg/image"
@@ -143,10 +145,21 @@ func ResolveImplementation(repository, implementation string) (string, error) {
 	return "", fmt.Errorf("docker registry implementation %s is not supported", implementation)
 }
 
-func detectImplementation(repositoryAddress string) (string, error) {
-	parsedReference, err := name.NewRegistry(repositoryAddress)
-	if err != nil {
-		return "", err
+func detectImplementation(accountOrRepositoryAddress string) (string, error) {
+	var parsedResource authn.Resource
+	var err error
+
+	parts := strings.SplitN(accountOrRepositoryAddress, "/", 2)
+	if len(parts) == 1 && (strings.ContainsRune(parts[0], '.') || strings.ContainsRune(parts[0], ':')) {
+		parsedResource, err = name.NewRegistry(accountOrRepositoryAddress)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		parsedResource, err = name.NewRepository(accountOrRepositoryAddress)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	for _, service := range []struct {
@@ -179,7 +192,7 @@ func detectImplementation(repositoryAddress string) (string, error) {
 		},
 	} {
 		for _, pattern := range service.patterns {
-			matched, err := regexp.MatchString(pattern, parsedReference.RegistryStr())
+			matched, err := regexp.MatchString(pattern, parsedResource.RegistryStr())
 			if err != nil {
 				return "", err
 			}
