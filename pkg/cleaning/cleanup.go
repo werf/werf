@@ -2,6 +2,7 @@ package cleaning
 
 import (
 	"github.com/flant/logboek"
+	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/flant/werf/pkg/storage"
 )
@@ -11,8 +12,8 @@ type CleanupOptions struct {
 	StagesCleanupOptions
 }
 
-func Cleanup(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options CleanupOptions) error {
-	m := newCleanupManager(projectName, imagesRepo, stagesStorage, options)
+func Cleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
+	m := newCleanupManager(projectName, imagesRepo, stagesManager, options)
 
 	if err := logboek.Default.LogProcess(
 		"Running images cleanup",
@@ -36,10 +37,10 @@ func Cleanup(projectName string, imagesRepo storage.ImagesRepo, stagesStorage st
 	return nil
 }
 
-func newCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options CleanupOptions) *cleanupManager {
+func newCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
 		imagesCleanupManager: newImagesCleanupManager(imagesRepo, options.ImagesCleanupOptions),
-		stagesCleanupManager: newStagesCleanupManager(projectName, imagesRepo, stagesStorage, options.StagesCleanupOptions),
+		stagesCleanupManager: newStagesCleanupManager(projectName, imagesRepo, stagesManager, options.StagesCleanupOptions),
 	}
 }
 

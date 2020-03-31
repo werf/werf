@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -209,6 +211,8 @@ func runDeploy() error {
 
 		storageLockManager := &storage.FileLockManager{}
 
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
 		imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 		if err != nil {
 			return err
@@ -232,7 +236,7 @@ func runDeploy() error {
 		}()
 
 		logboek.LogOptionalLn()
-		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
 		defer c.Terminate()
 
 		if err = c.ShouldBeBuilt(); err != nil {

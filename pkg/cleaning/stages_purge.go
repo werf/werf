@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
 
@@ -15,8 +17,8 @@ type StagesPurgeOptions struct {
 	DryRun                        bool
 }
 
-func StagesPurge(projectName string, stagesStorage storage.StagesStorage, options StagesPurgeOptions) error {
-	m := newStagesPurgeManager(projectName, stagesStorage, options)
+func StagesPurge(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
+	m := newStagesPurgeManager(projectName, stagesManager, options)
 
 	return logboek.Default.LogProcess(
 		"Running stages purge",
@@ -25,9 +27,9 @@ func StagesPurge(projectName string, stagesStorage storage.StagesStorage, option
 	)
 }
 
-func newStagesPurgeManager(projectName string, stagesStorage storage.StagesStorage, options StagesPurgeOptions) *stagesPurgeManager {
+func newStagesPurgeManager(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) *stagesPurgeManager {
 	return &stagesPurgeManager{
-		StagesStorage:                 stagesStorage,
+		StagesManager:                 stagesManager,
 		ProjectName:                   projectName,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
@@ -35,37 +37,37 @@ func newStagesPurgeManager(projectName string, stagesStorage storage.StagesStora
 }
 
 type stagesPurgeManager struct {
-	StagesStorage                 storage.StagesStorage
+	StagesManager                 *stages_manager.StagesManager
 	ProjectName                   string
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
 }
 
 func (m *stagesPurgeManager) run() error {
-	deleteImageOptions := storage.DeleteRepoImageOptions{
+	deleteImageOptions := storage.DeleteImageOptions{
 		RmiForce:                 true,
 		SkipUsedImage:            false,
 		RmForce:                  m.RmContainersThatUseWerfImages,
 		RmContainersThatUseImage: m.RmContainersThatUseWerfImages,
 	}
 
-	lockName := fmt.Sprintf("stages-purge.%s-%s", m.StagesStorage.String(), m.ProjectName)
+	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
 	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
 		logboek.Default.LogProcessStart("Deleting stages", logboek.LevelLogProcessStartOptions{})
-		stagesRepoImageList, err := m.StagesStorage.GetRepoImages(m.ProjectName)
+		stagesImageList, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return err
 		}
 
-		if err := deleteRepoImageInStagesStorage(m.StagesStorage, deleteImageOptions, m.DryRun, stagesRepoImageList...); err != nil {
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesImageList...); err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return err
 		}
 		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 		logboek.Default.LogProcessStart("Deleting managed images", logboek.LevelLogProcessStartOptions{})
-		managedImages, err := m.StagesStorage.GetManagedImages(m.ProjectName)
+		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(m.ProjectName)
 		if err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return err
@@ -73,7 +75,7 @@ func (m *stagesPurgeManager) run() error {
 
 		for _, managedImage := range managedImages {
 			if !m.DryRun {
-				if err := m.StagesStorage.RmManagedImage(m.ProjectName, managedImage); err != nil {
+				if err := m.StagesManager.StagesStorage.RmManagedImage(m.ProjectName, managedImage); err != nil {
 					return err
 				}
 			}

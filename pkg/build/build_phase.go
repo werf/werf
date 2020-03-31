@@ -100,7 +100,7 @@ func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	img.SetContentSignature(stagesSig)
 
 	if phase.ShouldAddManagedImageRecord {
-		if err := phase.Conveyor.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
+		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
 		}
 	}
@@ -193,15 +193,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(img *Image, stg stage.Interface)
 			return fmt.Errorf("unable to fetch base image %s for stage %s: %s", img.GetBaseImage().Name(), stg.LogDetailedName(), err)
 		}
 	} else {
-		if freshImgInfo, err := phase.Conveyor.StagesStorage.GetImageInfo(phase.Conveyor.projectName(), phase.StagesIterator.PrevBuiltStage.GetImage().GetStagesStorageImageInfo().Signature, phase.StagesIterator.PrevBuiltStage.GetImage().GetStagesStorageImageInfo().UniqueID); err != nil {
-			return err
-		} else if freshImgInfo == nil {
-			// Reset stages storage cache for this stage
-			logboek.Info.LogF("Stages storage cache for %s signature %s is not valid: resetting stages storage cache\n", phase.StagesIterator.PrevBuiltStage.LogDetailedName(), phase.StagesIterator.PrevBuiltStage.GetSignature())
-			panic("no")
-		}
-
-		return fetchStage(phase.Conveyor.StagesStorage, phase.StagesIterator.PrevBuiltStage)
+		return phase.Conveyor.StagesManager.FetchStage(phase.StagesIterator.PrevBuiltStage)
 	}
 
 	return nil
@@ -222,13 +214,13 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 	var i *container_runtime.StageImage
 	var suitableImageFound bool
 
-	cacheExists, cacheImagesDescs, err := getImagesBySignatureFromCache(phase.Conveyor, string(stg.Name()), stageSig)
+	cacheExists, cacheImagesDescs, err := phase.Conveyor.StagesManager.GetImagesBySignatureFromCache(string(stg.Name()), stageSig)
 	if err != nil {
 		return err
 	}
 
 	if cacheExists {
-		if imgInfo, err := selectSuitableStagesStorageImage(stg, cacheImagesDescs); err != nil {
+		if imgInfo, err := phase.Conveyor.StagesManager.SelectSuitableStagesStorageImage(stg, cacheImagesDescs); err != nil {
 			return err
 		} else if imgInfo != nil {
 			suitableImageFound = true
@@ -242,12 +234,12 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 			stg.Name(), stageSig,
 		)
 
-		imagesDescs, err := atomicGetImagesBySignatureFromStagesStorageWithCacheReset(phase.Conveyor, stg.LogDetailedName(), stageSig)
+		imagesDescs, err := phase.Conveyor.StagesManager.AtomicGetImagesBySignatureFromStagesStorageWithCacheReset(stg.LogDetailedName(), stageSig)
 		if err != nil {
 			return err
 		}
 
-		if imgInfo, err := selectSuitableStagesStorageImage(stg, imagesDescs); err != nil {
+		if imgInfo, err := phase.Conveyor.StagesManager.SelectSuitableStagesStorageImage(stg, imagesDescs); err != nil {
 			return err
 		} else if imgInfo != nil {
 			suitableImageFound = true
@@ -384,7 +376,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	}
 	defer phase.Conveyor.StorageLockManager.UnlockStage(phase.Conveyor.projectName(), stg.GetSignature())
 
-	imagesDescs, err := atomicGetImagesBySignatureFromStagesStorageWithCacheReset(phase.Conveyor, string(stg.Name()), stg.GetSignature())
+	imagesDescs, err := phase.Conveyor.StagesManager.AtomicGetImagesBySignatureFromStagesStorageWithCacheReset(string(stg.Name()), stg.GetSignature())
 	if err != nil {
 		return err
 	}
@@ -434,8 +426,9 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		fmt.Sprintf("Store into stages storage"),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := phase.Conveyor.StagesStorage.StoreImage(&container_runtime.DockerImage{Image: stageImage}); err != nil {
-				return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesStorage.String(), err)
+			// FIXME: StagesManager?
+			if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(&container_runtime.DockerImage{Image: stageImage}); err != nil {
+				return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
 			}
 			return nil
 		},
@@ -444,9 +437,10 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	}
 
 	imagesDescs = append(imagesDescs, stageImage.GetStagesStorageImageInfo())
-	return atomicStoreStageCache(phase.Conveyor, string(stg.Name()), stg.GetSignature(), imagesDescs)
+	return phase.Conveyor.StagesManager.AtomicStoreStageCache(string(stg.Name()), stg.GetSignature(), imagesDescs)
 }
 
+// FIXME: move this image to StagesManager?
 func (phase *BuildPhase) generateUniqueImageName(signature string, imagesDescs []*image.Info) (string, string) {
 	var imageName string
 
@@ -454,7 +448,7 @@ func (phase *BuildPhase) generateUniqueImageName(signature string, imagesDescs [
 		timeNow := time.Now().UTC()
 		timeNowMicroseconds := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 		uniqueID := fmt.Sprintf("%d", timeNowMicroseconds)
-		imageName = phase.Conveyor.StagesStorage.ConstructStageImageName(phase.Conveyor.projectName(), signature, uniqueID)
+		imageName = phase.Conveyor.StagesManager.StagesStorage.ConstructStageImageName(phase.Conveyor.projectName(), signature, uniqueID)
 
 		for _, imgInfo := range imagesDescs {
 			if imgInfo.Name == imageName {
