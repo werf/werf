@@ -8,7 +8,7 @@ import (
 type ImagesRepo interface {
 	GetRepoImage(imageName, tag string) (*image.Info, error)
 	GetRepoImages(imageNames []string) (map[string][]*image.Info, error)
-	DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error
+	DeleteRepoImage(_ DeleteImageOptions, repoImageList ...*image.Info) error
 
 	GetAllImageRepoTags(imageName string) ([]string, error)
 	PublishImage(publishImage *container_runtime.WerfImage) error

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -124,6 +126,8 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
+	projectName := werfConfig.Meta.Project
+
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImage(imageToProcess) {
 			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
@@ -146,6 +150,8 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	stagesStorageCache := common.GetStagesStorageCache()
 
 	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
 
 	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
@@ -176,7 +182,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, nil, storageLockManager)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.BuildStages(opts); err != nil {

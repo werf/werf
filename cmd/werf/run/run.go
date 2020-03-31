@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -182,6 +184,8 @@ func runRun() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
+	projectName := werfConfig.Meta.Project
+
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
@@ -215,8 +219,8 @@ func runRun() error {
 	}
 
 	stagesStorageCache := common.GetStagesStorageCache()
-
 	storageLockManager := &storage.FileLockManager{}
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
 
 	_, err = common.GetSynchronization(&commonCmdData) // TODO
 	if err != nil {
@@ -224,7 +228,7 @@ func runRun() error {
 	}
 
 	logboek.Info.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, nil, storageLockManager)
+	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.ShouldBeBuilt(); err != nil {

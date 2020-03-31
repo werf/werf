@@ -49,7 +49,7 @@ func (m *imagesPurgeManager) run() error {
 }
 
 func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, repoImageList ...*image.Info) error {
-	if err := deleteRepoImage(imagesRepo.DeleteRepoImage, storage.DeleteRepoImageOptions{}, dryRun, repoImageList...); err != nil {
+	if err := deleteRepoImage(imagesRepo.DeleteRepoImage, storage.DeleteImageOptions{}, dryRun, repoImageList...); err != nil {
 		switch err.(type) {
 		case docker_registry.DockerHubUnauthorizedError:
 			return fmt.Errorf(`%s
