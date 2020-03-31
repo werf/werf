@@ -25,7 +25,33 @@ func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 	return &FileStagesStorageCache{CacheDir: cacheDir}
 }
 
-func (cache *FileStagesStorageCache) GetImagesBySignature(projectName, signature string) (bool, []*image.Info, error) {
+func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []*image.Info, error) {
+	sigDir := filepath.Join(cache.CacheDir, projectName)
+
+	if _, err := os.Stat(sigDir); os.IsNotExist(err) {
+		return false, nil, nil
+	} else if err != nil {
+		return false, nil, fmt.Errorf("error accessing %s: %s", sigDir, err)
+	}
+
+	var res []*image.Info
+
+	if entries, err := ioutil.ReadDir(sigDir); err != nil {
+		return false, nil, fmt.Errorf("error reading directory %s files: %s", sigDir, err)
+	} else {
+		for _, finfo := range entries {
+			if _, images, err := cache.GetStagesBySignature(projectName, finfo.Name()); err != nil {
+				return false, nil, err
+			} else {
+				res = append(res, images...)
+			}
+		}
+	}
+
+	return true, res, nil
+}
+
+func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []*image.Info, error) {
 	sigFile := filepath.Join(cache.CacheDir, projectName, signature)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
@@ -47,7 +73,7 @@ func (cache *FileStagesStorageCache) GetImagesBySignature(projectName, signature
 	return true, res.ImagesDescs, nil
 }
 
-func (cache *FileStagesStorageCache) StoreImagesBySignature(projectName, signature string, imagesDescs []*image.Info) error {
+func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signature string, imagesDescs []*image.Info) error {
 	if err := cache.lock(); err != nil {
 		return err
 	}
@@ -71,8 +97,23 @@ func (cache *FileStagesStorageCache) StoreImagesBySignature(projectName, signatu
 	return nil
 }
 
+func (cache *FileStagesStorageCache) DeleteStagesBySignature(projectName, signature string) error {
+	if err := cache.lock(); err != nil {
+		return err
+	}
+	defer cache.unlock()
+
+	sigDir := filepath.Join(cache.CacheDir, projectName)
+	sigFile := filepath.Join(sigDir, signature)
+
+	if err := os.RemoveAll(sigFile); err != nil {
+		return fmt.Errorf("error removing %s: %s", sigFile, err)
+	}
+	return nil
+}
+
 func (cache *FileStagesStorageCache) lock() error {
-	// TODO: maybe shluz is an overkill for this kind of locks
+	// NOTE maybe shluz is an overkill for this kind of locks
 	if err := shluz.Lock(cache.CacheDir, shluz.LockOptions{}); err != nil {
 		return fmt.Errorf("shluz lock %s failed: %s", cache.CacheDir, err)
 	}
