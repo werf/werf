@@ -32,11 +32,23 @@ func NewStagesManager(projectName string, storageLockManager storage.LockManager
 }
 
 func (m *StagesManager) GetAllStages() ([]*image.Info, error) {
+	// TODO: optimize
+	//if cacheExists, images, err := m.StagesStorageCache.GetAllStages(m.ProjectName); err != nil {
+	//	return nil, err
+	//} else if cacheExists {
+	//	return images, nil
+	//} else {
 	return m.StagesStorage.GetAllStages(m.ProjectName)
+	//}
 }
 
 func (m *StagesManager) DeleteStages(options storage.DeleteImageOptions, imageList ...*image.Info) error {
-	panic("adios amigos")
+	for _, imgInfo := range imageList {
+		if err := m.StagesStorageCache.DeleteStagesBySignature(m.ProjectName, imgInfo.Signature); err != nil {
+			return fmt.Errorf("unable to delete %s %s stages storage cache record: %s", err)
+		}
+	}
+	return m.StagesStorage.DeleteStages(options, imageList...)
 }
 
 func (m *StagesManager) FetchStage(stg stage.Interface) error {
@@ -44,7 +56,7 @@ func (m *StagesManager) FetchStage(stg stage.Interface) error {
 		return err
 	} else if freshImgInfo == nil {
 		// TODO: stages manager should report to conveyor that conveoyor should be reset
-		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v3", m.ProjectName, stg.GetSignature()))
+		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v4", m.ProjectName, stg.GetSignature()))
 	}
 
 	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
@@ -131,7 +143,7 @@ func (m *StagesManager) AtomicGetImagesBySignatureFromStagesStorageWithCacheRese
 		fmt.Sprintf("Storing stage %s images by signature %s into stages storage cache", stageName, stageSig),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := m.StagesStorageCache.StoreImagesBySignature(m.ProjectName, stageSig, originImagesDescs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesBySignature(m.ProjectName, stageSig, originImagesDescs); err != nil {
 				return fmt.Errorf("error storing stage %s images by signature %s into stages storage cache: %s", stageName, stageSig, err)
 			}
 			return nil
@@ -153,7 +165,7 @@ func (m *StagesManager) AtomicStoreStageCache(stageName, stageSig string, images
 		fmt.Sprintf("Storing stage %s images by signature %s into stages storage cache", stageName, stageSig),
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			if err := m.StagesStorageCache.StoreImagesBySignature(m.ProjectName, stageSig, imagesDescs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesBySignature(m.ProjectName, stageSig, imagesDescs); err != nil {
 				return fmt.Errorf("error storing stage %s images by signature %s into stages storage cache: %s", stageName, stageSig, err)
 			}
 			return nil
@@ -170,7 +182,7 @@ func (m *StagesManager) GetImagesBySignatureFromCache(stageName, stageSig string
 		logboek.LevelLogProcessOptions{},
 		func() error {
 			var err error
-			cacheExists, cacheImagesDescs, err = m.StagesStorageCache.GetImagesBySignature(m.ProjectName, stageSig)
+			cacheExists, cacheImagesDescs, err = m.StagesStorageCache.GetStagesBySignature(m.ProjectName, stageSig)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from stages storage cache: %s", m.ProjectName, stageSig, err)
 			}
