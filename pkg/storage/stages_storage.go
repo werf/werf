@@ -11,8 +11,8 @@ const (
 )
 
 type StagesStorage interface {
-	GetRepoImages(projectName string) ([]*image.Info, error)
-	DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error
+	GetAllStages(projectName string) ([]*image.Info, error)
+	DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error
 
 	CreateRepo() error
 	DeleteRepo() error
@@ -33,13 +33,6 @@ type StagesStorage interface {
 	GetManagedImages(projectName string) ([]string, error)
 
 	String() string
-}
-
-type DeleteRepoImageOptions struct {
-	RmiForce                 bool
-	SkipUsedImage            bool
-	RmForce                  bool
-	RmContainersThatUseImage bool
 }
 
 type StagesStorageOptions struct {

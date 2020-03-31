@@ -57,7 +57,7 @@ func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
 }
 
-func (storage *RepoStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
+func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]*image.Info, error) {
 	if imgInfos, err := storage.DockerRegistry.SelectRepoImageList(storage.RepoAddress, func(info *image.Info) bool {
 		werfLabel, ok := info.Labels[image.WerfLabel]
 		if !(ok && werfLabel == projectName) {
@@ -89,8 +89,8 @@ func (storage *RepoStagesStorage) GetRepoImages(projectName string) ([]*image.In
 	}
 }
 
-func (storage *RepoStagesStorage) DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error {
-	return storage.DockerRegistry.DeleteRepoImage(repoImageList...)
+func (storage *RepoStagesStorage) DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error {
+	return storage.DockerRegistry.DeleteRepoImage(imageList...)
 }
 
 func (storage *RepoStagesStorage) CreateRepo() error {

@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -59,16 +61,15 @@ type Conveyor struct {
 
 	ContainerRuntime container_runtime.ContainerRuntime
 
-	StagesStorage      storage.StagesStorage
-	StagesStorageCache storage.StagesStorageCache
 	ImagesRepo         storage.ImagesRepo
 	StorageLockManager storage.LockManager
+	StagesManager      *stages_manager.StagesManager
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesStorage storage.StagesStorage, stagesStorageCache storage.StagesStorageCache, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -90,10 +91,9 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		importServers:                   make(map[string]import_server.ImportServer),
 
 		ContainerRuntime:   containerRuntime,
-		StagesStorage:      stagesStorage,
-		StagesStorageCache: stagesStorageCache,
 		ImagesRepo:         imagesRepo,
 		StorageLockManager: storageLockManager,
+		StagesManager:      stagesManager,
 	}
 
 	return c
