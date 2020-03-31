@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -81,9 +84,14 @@ func run(projectNames ...string) error {
 		return err
 	}
 
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
 		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
 		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
 			stagesPurgeOptions := cleaning.StagesPurgeOptions{
@@ -91,7 +99,7 @@ func run(projectNames ...string) error {
 				DryRun:                        *commonCmdData.DryRun,
 			}
 
-			return cleaning.StagesPurge(projectName, stagesStorage, stagesPurgeOptions)
+			return cleaning.StagesPurge(projectName, stagesManager, stagesPurgeOptions)
 		}); err != nil {
 			return err
 		}

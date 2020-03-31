@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
@@ -124,6 +127,10 @@ func runCleanup() error {
 		return err
 	}
 
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
 	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
 		return err
 	}
@@ -176,7 +183,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(projectName, imagesRepo, stagesStorage, cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(projectName, imagesRepo, stagesManager, cleanupOptions); err != nil {
 		return err
 	}
 

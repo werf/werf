@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
 
@@ -21,8 +23,8 @@ type StagesCleanupOptions struct {
 	DryRun        bool
 }
 
-func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options StagesCleanupOptions) error {
-	m := newStagesCleanupManager(projectName, imagesRepo, stagesStorage, options)
+func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) error {
+	m := newStagesCleanupManager(projectName, imagesRepo, stagesManager, options)
 
 	return logboek.Default.LogProcess(
 		"Running stages cleanup",
@@ -31,11 +33,11 @@ func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesStor
 	)
 }
 
-func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options StagesCleanupOptions) *stagesCleanupManager {
+func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) *stagesCleanupManager {
 	return &stagesCleanupManager{
 		ImagesRepo:    imagesRepo,
 		ImageNameList: options.ImageNameList,
-		StagesStorage: stagesStorage,
+		StagesManager: stagesManager,
 		ProjectName:   projectName,
 		DryRun:        options.DryRun,
 	}
@@ -46,7 +48,7 @@ type stagesCleanupManager struct {
 
 	ImagesRepo    storage.ImagesRepo
 	ImageNameList []string
-	StagesStorage storage.StagesStorage
+	StagesManager *stages_manager.StagesManager
 	ProjectName   string
 	DryRun        bool
 }
@@ -77,15 +79,15 @@ func (m *stagesCleanupManager) getOrInitImagesRepoImageList() ([]*image.Info, er
 }
 
 func (m *stagesCleanupManager) run() error {
-	deleteRepoImageOptions := storage.DeleteRepoImageOptions{
+	deleteImageOptions := storage.DeleteImageOptions{
 		RmiForce:      false,
 		SkipUsedImage: true,
 		RmForce:       false,
 	}
 
-	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesStorage.String(), m.ProjectName)
+	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
 	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
-		stagesRepoImageList, err := m.StagesStorage.GetRepoImages(m.ProjectName)
+		stagesImageList, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			return err
 		}
@@ -96,21 +98,21 @@ func (m *stagesCleanupManager) run() error {
 		}
 
 		for _, repoImage := range repoImageList {
-			stagesRepoImageList = exceptRepoImageAndRelativesByImageID(stagesRepoImageList, repoImage.ParentID)
+			stagesImageList = exceptRepoImageAndRelativesByImageID(stagesImageList, repoImage.ParentID)
 		}
 
 		var repoImageListToExcept []*image.Info
 		if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
-			for _, repoImage := range stagesRepoImageList {
+			for _, repoImage := range stagesImageList {
 				if time.Now().Unix()-repoImage.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
 					repoImageListToExcept = append(repoImageListToExcept, repoImage)
 				}
 			}
 		}
 
-		stagesRepoImageList = exceptRepoImageList(stagesRepoImageList, repoImageListToExcept...)
+		stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)
 
-		if err := deleteRepoImageInStagesStorage(m.StagesStorage, deleteRepoImageOptions, m.DryRun, stagesRepoImageList...); err != nil {
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesImageList...); err != nil {
 			return err
 		}
 
@@ -190,8 +192,8 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 	return
 }
 
-func deleteRepoImageInStagesStorage(stagesStorage storage.StagesStorage, options storage.DeleteRepoImageOptions, dryRun bool, repoImageList ...*image.Info) error {
-	if err := deleteRepoImage(stagesStorage.DeleteRepoImage, options, dryRun, repoImageList...); err != nil {
+func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, repoImageList ...*image.Info) error {
+	if err := deleteRepoImage(stagesManager.DeleteStages, options, dryRun, repoImageList...); err != nil {
 		switch err.(type) {
 		case docker_registry.DockerHubUnauthorizedError:
 			return fmt.Errorf(`%s
@@ -212,7 +214,7 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 	return nil
 }
 
-func deleteRepoImage(f func(options storage.DeleteRepoImageOptions, repoImageList ...*image.Info) error, options storage.DeleteRepoImageOptions, dryRun bool, repoImageList ...*image.Info) error {
+func deleteRepoImage(f func(options storage.DeleteImageOptions, repoImageList ...*image.Info) error, options storage.DeleteImageOptions, dryRun bool, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if !dryRun {
 			if err := f(options, repoImage); err != nil {

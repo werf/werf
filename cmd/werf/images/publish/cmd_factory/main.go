@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -126,6 +128,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	stagesStorageCache := common.GetStagesStorageCache()
 	storageLockManager := &storage.FileLockManager{}
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
 
 	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {
@@ -157,7 +160,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		TagOptions:      tagOpts,
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.PublishImages(opts); err != nil {

@@ -206,6 +206,8 @@ func runMv() error {
 	return SyncStages(projectName, fromStagesStorage, toStagesStorage, containerRuntime)
 }
 
+// TODO: move sync stages between multiple stages storages in StagesManager
+
 // SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
 // Repeatedly calling SyncStages will copy stages from source stages storage to destination, that already exists in the destination.
 // SyncStages will not delete excess stages from destination storage, that does not exists in the source.
@@ -228,7 +230,7 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 
 	getAllRepoImagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]*image.Info, error) {
 		logboek.Default.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-		if repoImages, err := stagesStorage.GetRepoImages(projectName); err != nil {
+		if repoImages, err := stagesStorage.GetAllStages(projectName); err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return nil, fmt.Errorf("unable to get repo images from %s: %s", fromStagesStorage.String(), err)
 		} else {
