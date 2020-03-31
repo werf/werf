@@ -53,9 +53,9 @@ func (templates ChartTemplates) ByKind(kind string) []Template {
 }
 
 type Template struct {
-	ApiVersion string `yaml:"apiVersion,omitempty"`
-	Kind       string `yaml:"kind,omitempty"`
-	Metadata   struct {
+	Version  string `yaml:"apiVersion,omitempty"`
+	Kind     string `yaml:"kind,omitempty"`
+	Metadata struct {
 		Name        string                 `yaml:"name,omitempty"`
 		Namespace   string                 `yaml:"namespace,omitempty"`
 		Annotations map[string]string      `yaml:"annotations,omitempty"`
@@ -76,7 +76,7 @@ func (t Template) Namespace(namespace string) string {
 }
 
 func (t Template) IsEmpty() bool {
-	if t.ApiVersion == "" || t.Kind == "" {
+	if t.Version == "" || t.Kind == "" {
 		return true
 	}
 
