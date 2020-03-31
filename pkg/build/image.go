@@ -174,7 +174,7 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
 			return err
 		}
-		if err := fetchStage(c.StagesStorage, i.stageAsBaseImage); err != nil {
+		if err := c.StagesManager.FetchStage(i.stageAsBaseImage); err != nil {
 			return err
 		}
 	default:

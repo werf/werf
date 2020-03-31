@@ -300,7 +300,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	publishingFunc := func() error {
-		if err := fetchStage(phase.Conveyor.StagesStorage, img.GetLastNonEmptyStage()); err != nil {
+		if err := phase.Conveyor.StagesManager.FetchStage(img.GetLastNonEmptyStage()); err != nil {
 			return err
 		}
 

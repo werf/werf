@@ -73,7 +73,7 @@ func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*
 	}
 }
 
-func (repo *DockerImagesRepo) DeleteRepoImage(_ DeleteRepoImageOptions, repoImageList ...*image.Info) error {
+func (repo *DockerImagesRepo) DeleteRepoImage(_ DeleteImageOptions, repoImageList ...*image.Info) error {
 	return repo.DockerRegistry.DeleteRepoImage(repoImageList...)
 }
 

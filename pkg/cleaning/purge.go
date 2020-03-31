@@ -3,6 +3,7 @@ package cleaning
 import (
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/stages_manager"
 	"github.com/flant/werf/pkg/storage"
 )
 
@@ -11,8 +12,8 @@ type PurgeOptions struct {
 	StagesPurgeOptions
 }
 
-func Purge(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options PurgeOptions) error {
-	m := newPurgeManager(projectName, imagesRepo, stagesStorage, options)
+func Purge(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options PurgeOptions) error {
+	m := newPurgeManager(projectName, imagesRepo, stagesManager, options)
 
 	if err := logboek.Default.LogProcess(
 		"Running images purge",
@@ -33,10 +34,10 @@ func Purge(projectName string, imagesRepo storage.ImagesRepo, stagesStorage stor
 	return nil
 }
 
-func newPurgeManager(projectName string, imagesRepo storage.ImagesRepo, stagesStorage storage.StagesStorage, options PurgeOptions) *purgeManager {
+func newPurgeManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options PurgeOptions) *purgeManager {
 	return &purgeManager{
 		imagesPurgeManager: newImagesPurgeManager(imagesRepo, options.ImagesPurgeOptions),
-		stagesPurgeManager: newStagesPurgeManager(projectName, stagesStorage, options.StagesPurgeOptions),
+		stagesPurgeManager: newStagesPurgeManager(projectName, stagesManager, options.StagesPurgeOptions),
 	}
 }
 

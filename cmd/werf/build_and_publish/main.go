@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -158,6 +160,8 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	storageLockManager := &storage.FileLockManager{}
 
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
@@ -198,7 +202,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesStorage, stagesStorageCache, imagesRepo, storageLockManager)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
 	if err = c.BuildAndPublish(opts); err != nil {

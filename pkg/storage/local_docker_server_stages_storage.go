@@ -42,7 +42,7 @@ func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectNa
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetRepoImages(projectName string) ([]*image.Info, error) {
+func (storage *LocalDockerServerStagesStorage) GetAllStages(projectName string) ([]*image.Info, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -54,9 +54,9 @@ func (storage *LocalDockerServerStagesStorage) GetRepoImages(projectName string)
 	return repoImageList, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) DeleteRepoImage(options DeleteRepoImageOptions, repoImageList ...*image.Info) error {
+func (storage *LocalDockerServerStagesStorage) DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error {
 	var err error
-	repoImageList, err = processRelatedContainers(repoImageList, processRelatedContainersOptions{
+	imageList, err = processRelatedContainers(imageList, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,
 		rmContainersThatUseImage: options.RmContainersThatUseImage,
 		rmForce:                  options.RmForce,
@@ -65,7 +65,7 @@ func (storage *LocalDockerServerStagesStorage) DeleteRepoImage(options DeleteRep
 		return err
 	}
 
-	if err := deleteRepoImageListInLocalDockerServerStagesStorage(repoImageList, options.RmiForce); err != nil {
+	if err := deleteRepoImageListInLocalDockerServerStagesStorage(imageList, options.RmiForce); err != nil {
 		return err
 	}
 

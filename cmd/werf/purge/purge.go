@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
@@ -106,12 +109,14 @@ func runPurge() error {
 		return err
 	}
 
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
 	_, err = common.GetSynchronization(&commonCmdData) // TODO
 	if err != nil {
 		return err
 	}
-
-	// FIX add stages storage lock
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
@@ -136,7 +141,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(projectName, imagesRepo, stagesStorage, purgeOptions); err != nil {
+	if err := cleaning.Purge(projectName, imagesRepo, stagesManager, purgeOptions); err != nil {
 		return err
 	}
 
