@@ -11,22 +11,21 @@ const (
 )
 
 type StagesStorage interface {
-	GetAllStages(projectName string) ([]*image.Info, error)
-	DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error
-
-	CreateRepo() error
-	DeleteRepo() error
-
-	GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error)
+	GetAllStages(projectName string) ([]image.StageID, error)
+	GetStagesBySignature(projectName, signature string) ([]image.StageID, error)
+	GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error)
+	DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error
 
 	ConstructStageImageName(projectName, signature, uniqueID string) string
-	GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error)
 
 	// FetchImage will create a local image in the container-runtime
 	FetchImage(img container_runtime.Image) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(img container_runtime.Image) error
 	ShouldFetchImage(img container_runtime.Image) (bool, error)
+
+	CreateRepo() error
+	DeleteRepo() error
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error

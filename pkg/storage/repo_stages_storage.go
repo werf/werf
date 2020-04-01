@@ -57,40 +57,35 @@ func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
 }
 
-func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]*image.Info, error) {
-	if imgInfos, err := storage.DockerRegistry.SelectRepoImageList(storage.RepoAddress, func(info *image.Info) bool {
-		werfLabel, ok := info.Labels[image.WerfLabel]
-		if !(ok && werfLabel == projectName) {
-			return false
-		}
+func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.StageID, error) {
+	var res []image.StageID
 
-		werfImageLabel, ok := info.Labels[image.WerfImageLabel]
-		if !(ok && werfImageLabel == "false") {
-			return false
-		}
-
-		werfCacheVersionLabel, ok := info.Labels[image.WerfCacheVersionLabel]
-		if !(ok && werfCacheVersionLabel == image.BuildCacheVersion) {
-			return false
-		}
-
-		return true
-	}); err != nil {
-		return nil, err
+	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
+		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		for _, imgInfo := range imgInfos {
-			_, tag := image.ParseRepositoryAndTag(imgInfo.Name)
+		logboek.Debug.LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+
+		for _, tag := range tags {
+			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) {
+				continue
+			}
+
 			signature, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
-			imgInfo.Signature = signature
-			imgInfo.UniqueID = uniqueID
+			res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+
+			logboek.Debug.LogF("Selected stage by signature %q uniqueID %q\n", signature, uniqueID)
 		}
 
-		return imgInfos, nil
+		return res, nil
 	}
 }
 
-func (storage *RepoStagesStorage) DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error {
-	return storage.DockerRegistry.DeleteRepoImage(imageList...)
+func (storage *RepoStagesStorage) DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error {
+	var imageInfoList []*image.Info
+	for _, stageDesc := range stages {
+		imageInfoList = append(imageInfoList, stageDesc.Info)
+	}
+	return storage.DockerRegistry.DeleteRepoImage(imageInfoList...)
 }
 
 func (storage *RepoStagesStorage) CreateRepo() error {
@@ -101,8 +96,8 @@ func (storage *RepoStagesStorage) DeleteRepo() error {
 	return storage.DockerRegistry.DeleteRepo(storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
-	var res []*image.Info
+func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature string) ([]image.StageID, error) {
+	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
@@ -113,21 +108,11 @@ func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signatur
 				logboek.Debug.LogF("Discard tag %q: should have prefix %q\n", tag, signature)
 				continue
 			}
+			_, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
 
 			logboek.Debug.LogF("Tag %q is suitable for signature %q\n", tag, signature)
 
-			fullImageName := fmt.Sprintf("%s:%s", storage.RepoAddress, tag)
-			if imgInfo, err := storage.DockerRegistry.GetRepoImage(fullImageName); err != nil {
-				return nil, fmt.Errorf("unable to get image %q info from repo: %s", fullImageName, err)
-			} else {
-				logboek.Debug.LogF("Got imgInfo for %q: %#v\n", fullImageName, imgInfo)
-
-				_, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
-				imgInfo.Signature = signature
-				imgInfo.UniqueID = uniqueID
-
-				res = append(res, imgInfo)
-			}
+			res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
 		}
 	}
 
@@ -136,18 +121,19 @@ func (storage *RepoStagesStorage) GetRepoImagesBySignature(projectName, signatur
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error) {
+func (storage *RepoStagesStorage) GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
 
-	logboek.Debug.LogF("-- RepoStagesStorage GetImageInfo %s %s %s\n", projectName, signature, uniqueID)
+	logboek.Debug.LogF("-- RepoStagesStorage GetStageDescription %s %s %s\n", projectName, signature, uniqueID)
 	logboek.Debug.LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(stageImageName); err != nil {
 		return nil, err
 	} else if imgInfo != nil {
-		imgInfo.Signature = signature
-		imgInfo.UniqueID = uniqueID
-		return imgInfo, nil
+		return &image.StageDescription{
+			StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
+			Info:    imgInfo,
+		}, nil
 	}
 	return nil, nil
 }

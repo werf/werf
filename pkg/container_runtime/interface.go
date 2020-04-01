@@ -32,8 +32,9 @@ type ImageInterface interface {
 
 	SetInspect(inspect *types.ImageInspect)
 	IsExistsLocally() bool
-	SetStagesStorageImageInfo(imgInfo *image.Info)
-	GetStagesStorageImageInfo() *image.Info
+
+	SetStageDescription(stage *image.StageDescription)
+	GetStageDescription() *image.StageDescription
 }
 
 type Container interface {
