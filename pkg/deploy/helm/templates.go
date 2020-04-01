@@ -7,8 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Masterminds/sprig"
-	"github.com/ghodss/yaml"
 
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
