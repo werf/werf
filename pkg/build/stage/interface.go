@@ -32,5 +32,5 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	SelectCacheImage(images []*image.Info) (*image.Info, error)
+	SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error)
 }

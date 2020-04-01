@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/flant/shluz"
-
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -17,15 +16,15 @@ type FileStagesStorageCache struct {
 	CacheDir string
 }
 
-type ImageInfosCacheData struct {
-	ImagesDescs []*image.Info `json:"imagesDescs"`
+type StagesStorageCacheRecord struct {
+	Stages []image.StageID `json:"stages"`
 }
 
 func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 	return &FileStagesStorageCache{CacheDir: cacheDir}
 }
 
-func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []*image.Info, error) {
+func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []image.StageID, error) {
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 
 	if _, err := os.Stat(sigDir); os.IsNotExist(err) {
@@ -34,16 +33,16 @@ func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []*
 		return false, nil, fmt.Errorf("error accessing %s: %s", sigDir, err)
 	}
 
-	var res []*image.Info
+	var res []image.StageID
 
 	if entries, err := ioutil.ReadDir(sigDir); err != nil {
 		return false, nil, fmt.Errorf("error reading directory %s files: %s", sigDir, err)
 	} else {
 		for _, finfo := range entries {
-			if _, images, err := cache.GetStagesBySignature(projectName, finfo.Name()); err != nil {
+			if _, stages, err := cache.GetStagesBySignature(projectName, finfo.Name()); err != nil {
 				return false, nil, err
 			} else {
-				res = append(res, images...)
+				res = append(res, stages...)
 			}
 		}
 	}
@@ -51,7 +50,7 @@ func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []*
 	return true, res, nil
 }
 
-func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []*image.Info, error) {
+func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
 	sigFile := filepath.Join(cache.CacheDir, projectName, signature)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
@@ -65,15 +64,15 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature
 		return false, nil, fmt.Errorf("error reading file %s: %s", sigFile, err)
 	}
 
-	res := &ImageInfosCacheData{}
+	res := &StagesStorageCacheRecord{}
 	if err := json.Unmarshal(dataBytes, res); err != nil {
 		return false, nil, fmt.Errorf("error unmarshalling json from %s: %s", sigFile, err)
 	}
 
-	return true, res.ImagesDescs, nil
+	return true, res.Stages, nil
 }
 
-func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signature string, imagesDescs []*image.Info) error {
+func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signature string, stages []image.StageID) error {
 	if err := cache.lock(); err != nil {
 		return err
 	}
@@ -85,7 +84,7 @@ func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signatu
 		return fmt.Errorf("unable to create dir %s: %s", sigDir, err)
 	}
 
-	dataBytes, err := json.Marshal(ImageInfosCacheData{ImagesDescs: imagesDescs})
+	dataBytes, err := json.Marshal(StagesStorageCacheRecord{Stages: stages})
 	if err != nil {
 		return err
 	}

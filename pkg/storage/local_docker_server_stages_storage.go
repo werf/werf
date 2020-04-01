@@ -42,21 +42,24 @@ func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectNa
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetAllStages(projectName string) ([]*image.Info, error) {
+func (storage *LocalDockerServerStagesStorage) GetAllStages(projectName string) ([]image.StageID, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	repoImageList := convertToRepoImageList(images)
-
-	return repoImageList, nil
+	return convertToStagesList(images), nil
 }
 
-func (storage *LocalDockerServerStagesStorage) DeleteStages(options DeleteImageOptions, imageList ...*image.Info) error {
+func (storage *LocalDockerServerStagesStorage) DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error {
+	var imageInfoList []*image.Info
+	for _, stageDesc := range stages {
+		imageInfoList = append(imageInfoList, stageDesc.Info)
+	}
+
 	var err error
-	imageList, err = processRelatedContainers(imageList, processRelatedContainersOptions{
+	imageInfoList, err = processRelatedContainers(imageInfoList, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,
 		rmContainersThatUseImage: options.RmContainersThatUseImage,
 		rmForce:                  options.RmForce,
@@ -65,7 +68,7 @@ func (storage *LocalDockerServerStagesStorage) DeleteStages(options DeleteImageO
 		return err
 	}
 
-	if err := deleteRepoImageListInLocalDockerServerStagesStorage(imageList, options.RmiForce); err != nil {
+	if err := deleteRepoImageListInLocalDockerServerStagesStorage(imageInfoList, options.RmiForce); err != nil {
 		return err
 	}
 
@@ -88,16 +91,16 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetImageInfo(projectName, signature, uniqueID string) (*image.Info, error) {
+func (storage *LocalDockerServerStagesStorage) GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
 
 	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(stageImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
 	} else if inspect != nil {
-		imgInfo := image.NewInfoFromInspect(stageImageName, inspect)
-		imgInfo.Signature = signature
-		imgInfo.UniqueID = uniqueID
-		return imgInfo, nil
+		return &image.StageDescription{
+			StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
+			Info:    image.NewInfoFromInspect(stageImageName, inspect),
+		}, nil
 	} else {
 		return nil, nil
 	}
@@ -163,7 +166,7 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName stri
 	return res, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetRepoImagesBySignature(projectName, signature string) ([]*image.Info, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesBySignature(projectName, signature string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE signature already depends on build-cache-version
@@ -174,8 +177,7 @@ func (storage *LocalDockerServerStagesStorage) GetRepoImagesBySignature(projectN
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	repoImages := convertToRepoImageList(images)
-	return repoImages, nil
+	return convertToStagesList(images), nil
 }
 
 func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
@@ -200,10 +202,10 @@ type processRelatedContainersOptions struct {
 	rmForce                  bool
 }
 
-func processRelatedContainers(repoImages []*image.Info, options processRelatedContainersOptions) ([]*image.Info, error) {
+func processRelatedContainers(imageInfoList []*image.Info, options processRelatedContainersOptions) ([]*image.Info, error) {
 	filterSet := filters.NewArgs()
-	for _, repoImage := range repoImages {
-		filterSet.Add("ancestor", repoImage.ID)
+	for _, imgInfo := range imageInfoList {
+		filterSet.Add("ancestor", imgInfo.ID)
 	}
 
 	containerList, err := containerListByFilterSet(filterSet)
@@ -211,18 +213,18 @@ func processRelatedContainers(repoImages []*image.Info, options processRelatedCo
 		return nil, err
 	}
 
-	var repoImageListToExcept []*image.Info
+	var imageInfoListToExcept []*image.Info
 	var containerListToRemove []types.Container
 	for _, container := range containerList {
-		for _, repoImage := range repoImages {
-			if repoImage.ID == container.ImageID {
+		for _, imgInfo := range imageInfoList {
+			if imgInfo.ID == container.ImageID {
 				if options.skipUsedImages {
-					logboek.Default.LogFDetails("Skip image %s (used by container %s)\n", logImageName(repoImage), logContainerName(container))
-					repoImageListToExcept = append(repoImageListToExcept, repoImage)
+					logboek.Default.LogFDetails("Skip image %s (used by container %s)\n", logImageName(imgInfo), logContainerName(container))
+					imageInfoListToExcept = append(imageInfoListToExcept, imgInfo)
 				} else if options.rmContainersThatUseImage {
 					containerListToRemove = append(containerListToRemove, container)
 				} else {
-					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(repoImage), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
+					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imgInfo), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
 				}
 			}
 		}
@@ -232,9 +234,7 @@ func processRelatedContainers(repoImages []*image.Info, options processRelatedCo
 		return nil, err
 	}
 
-	repoImages = exceptRepoImageList(repoImages, repoImageListToExcept...)
-
-	return repoImages, nil
+	return exceptRepoImageList(imageInfoList, imageInfoListToExcept...), nil
 }
 
 func containerListByFilterSet(filterSet filters.Args) ([]types.Container, error) {
@@ -256,21 +256,21 @@ func deleteContainers(containers []types.Container, rmForce bool) error {
 	return nil
 }
 
-func exceptRepoImageList(repoImageList []*image.Info, repoImageListToExcept ...*image.Info) []*image.Info {
-	var newRepoImageList []*image.Info
+func exceptRepoImageList(imageInfoList []*image.Info, imageInfoListToExcept ...*image.Info) []*image.Info {
+	var newImageInfoList []*image.Info
 
 loop:
-	for _, repoImage := range repoImageList {
-		for _, repoImageToExcept := range repoImageListToExcept {
-			if repoImageToExcept == repoImage {
+	for _, imgInfo := range imageInfoList {
+		for _, repoImageToExcept := range imageInfoListToExcept {
+			if repoImageToExcept == imgInfo {
 				continue loop
 			}
 		}
 
-		newRepoImageList = append(newRepoImageList, repoImage)
+		newImageInfoList = append(newImageInfoList, imgInfo)
 	}
 
-	return newRepoImageList
+	return newImageInfoList
 }
 
 func localStagesStorageFilterSetBase(projectName string) filters.Args {
@@ -298,7 +298,7 @@ func logContainerName(container types.Container) string {
 	return name
 }
 
-func convertToRepoImageList(imageSummaryList []types.ImageSummary) (repoImageList []*image.Info) {
+func convertToStagesList(imageSummaryList []types.ImageSummary) (stagesList []image.StageID) {
 	for _, imageSummary := range imageSummaryList {
 		repoTags := imageSummary.RepoTags
 		if len(repoTags) == 0 {
@@ -306,43 +306,28 @@ func convertToRepoImageList(imageSummaryList []types.ImageSummary) (repoImageLis
 		}
 
 		for _, repoTag := range repoTags {
-			repository, tag := image.ParseRepositoryAndTag(repoTag)
+			_, tag := image.ParseRepositoryAndTag(repoTag)
 			signature, uniqueID := getSignatureAndUniqueIDFromLocalStageImageTag(tag)
-
-			repoImage := &image.Info{
-				Signature:  signature,
-				UniqueID:   uniqueID,
-				Repository: repository,
-				Tag:        tag,
-				ID:         imageSummary.ID,
-				ParentID:   imageSummary.ParentID,
-				Name:       repoTag,
-				Labels:     imageSummary.Labels,
-				Size:       imageSummary.Size,
-			}
-
-			repoImage.SetCreatedAtUnix(imageSummary.Created)
-
-			repoImageList = append(repoImageList, repoImage)
+			stagesList = append(stagesList, image.StageID{Signature: signature, UniqueID: uniqueID})
 		}
 	}
 
-	return repoImageList
+	return stagesList
 }
 
-func deleteRepoImageListInLocalDockerServerStagesStorage(repoImageList []*image.Info, rmiForce bool) error {
+func deleteRepoImageListInLocalDockerServerStagesStorage(imageInfoList []*image.Info, rmiForce bool) error {
 	var imageReferences []string
-	for _, repoImage := range repoImageList {
-		if repoImage.Name == "" {
-			imageReferences = append(imageReferences, repoImage.ID)
+	for _, imgInfo := range imageInfoList {
+		if imgInfo.Name == "" {
+			imageReferences = append(imageReferences, imgInfo.ID)
 		} else {
-			isDanglingImage := repoImage.Name == "<none>:<none>"
-			isTaglessImage := !isDanglingImage && repoImage.Tag == "<none>"
+			isDanglingImage := imgInfo.Name == "<none>:<none>"
+			isTaglessImage := !isDanglingImage && imgInfo.Tag == "<none>"
 
 			if isDanglingImage || isTaglessImage {
-				imageReferences = append(imageReferences, repoImage.ID)
+				imageReferences = append(imageReferences, imgInfo.ID)
 			} else {
-				imageReferences = append(imageReferences, repoImage.Name)
+				imageReferences = append(imageReferences, imgInfo.Name)
 			}
 		}
 	}

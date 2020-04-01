@@ -54,13 +54,14 @@ func (m *stagesPurgeManager) run() error {
 	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
 	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
 		logboek.Default.LogProcessStart("Deleting stages", logboek.LevelLogProcessStartOptions{})
-		stagesImageList, err := m.StagesManager.GetAllStages()
+
+		stages, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return err
 		}
 
-		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesImageList...); err != nil {
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return err
 		}
