@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/prashantv/gostub"
 
@@ -40,6 +41,10 @@ import (
 // export WERF_TEST_HARBOR_REGISTRY
 // export WERF_TEST_HARBOR_USERNAME
 // export WERF_TEST_HARBOR_PASSWORD
+//
+// export WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY
+// export WERF_TEST_QUAY_REGISTRY
+// export WERF_TEST_QUAY_TOKEN
 
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
@@ -55,6 +60,7 @@ var requiredSuiteTools = []string{"git", "docker"}
 var requiredSuiteEnvs []string
 
 var tmpDir string
+var testImplementation string
 var testDirPath string
 var werfBinPath string
 var stubs = gostub.New()
@@ -97,6 +103,8 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 		Describe(fmt.Sprintf("%s (%s)", description, implementationName), func() {
 			BeforeEach(func() {
+				testImplementation = implementationName
+
 				var stagesStorageAddress string
 				var stagesStorageImplementationName string
 				var stagesStorageDockerRegistryOptions docker_registry.DockerRegistryOptions
@@ -108,18 +116,15 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 				if implementationName == ":local" {
 					stagesStorageAddress = ":local"
-					stagesStorageImplementationName = ""
+
 					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
 					imagesRepoMode = docker_registry.MultirepoRepoMode
-					imagesRepoImplementationName = ""
 				} else {
 					stagesStorageAddress = implementationStagesStorageAddress(implementationName)
-					stagesStorageImplementationName = "" // TODO
 					stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
 
 					imagesRepoAddress = implementationImagesRepoAddress(implementationName)
 					imagesRepoMode = "auto"
-					imagesRepoImplementationName = implementationName
 					imagesRepoDockerRegistryOptions = implementationImagesRepoDockerRegistryOptions(implementationName)
 				}
 
@@ -135,11 +140,23 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 			})
 
 			AfterEach(func() {
-				utils.RunSucceedCommand(
+			afterEach:
+				combinedOutput, err := utils.RunCommand(
 					testDirPath,
 					werfBinPath,
 					"purge", "--force",
 				)
+
+				if err != nil {
+					if implementationName == docker_registry.QuayImplementationName {
+						if strings.Contains(string(combinedOutput), "TAG_EXPIRED") {
+							time.Sleep(5)
+							goto afterEach
+						}
+					}
+
+					Ω(err).ShouldNot(HaveOccurred())
+				}
 
 				implementationAfterEach(implementationName)
 			})
@@ -193,7 +210,7 @@ func imagesRepoAllImageRepoTags(imageName string) []string {
 }
 
 func stagesStorageRepoImagesCount() int {
-	repoImages, err := stagesStorage.GetRepoImages(utils.ProjectName())
+	repoImages, err := stagesStorage.GetAllStages(utils.ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }
@@ -296,6 +313,17 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 			HarborUsername:        username,
 			HarborPassword:        password,
 		}
+	case docker_registry.QuayImplementationName:
+		tokenEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_TOKEN",
+			implementationCode,
+		)
+
+		return docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      false,
+			SkipTlsVerifyRegistry: false,
+			QuayToken:             getRequiredEnv(tokenEnvName),
+		}
 	default:
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -315,7 +343,7 @@ func implementationBeforeEach(implementationName string) {
 
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
-	case docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName:
+	case docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
 		if implementationName == docker_registry.HarborImplementationName {
 			// API cannot delete repository without any tags
 			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
@@ -331,7 +359,7 @@ func implementationAfterEach(implementationName string) {
 
 		err := imagesRepo.DeleteImageRepo("image")
 		switch err := err.(type) {
-		case nil, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError:
+		case nil, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
 		default:
 			Ω(err).Should(Succeed())
 		}

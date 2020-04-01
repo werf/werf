@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -10,14 +11,23 @@ import (
 
 const QuayImplementationName = "quay"
 
-var quayPatterns = []string{"^quay\\.io"}
+type QuayNotFoundError apiError
+
+var quayPatterns = []string{"^quay\\.io", "^quay\\..*\\.com"}
 
 type quay struct {
 	*defaultImplementation
+	quayApi
+	quayCredentials
 }
 
 type quayOptions struct {
 	defaultImplementationOptions
+	quayCredentials
+}
+
+type quayCredentials struct {
+	token string
 }
 
 func newQuay(options quayOptions) (*quay, error) {
@@ -26,7 +36,11 @@ func newQuay(options quayOptions) (*quay, error) {
 		return nil, err
 	}
 
-	quay := &quay{defaultImplementation: d}
+	quay := &quay{
+		defaultImplementation: d,
+		quayApi:               newQuayApi(),
+		quayCredentials:       options.quayCredentials,
+	}
 
 	return quay, nil
 }
@@ -59,6 +73,28 @@ func (r *quay) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (st
 	default:
 		return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s", r.String(), repoMode)
 	}
+}
+
+func (r *quay) DeleteRepo(reference string) error {
+	return r.deleteRepo(reference)
+}
+
+func (r *quay) deleteRepo(reference string) error {
+	hostname, namespace, repository, err := r.parseReference(reference)
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.quayApi.DeleteRepository(hostname, namespace, repository, r.quayCredentials.token)
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		return QuayNotFoundError{error: err}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *quay) String() string {

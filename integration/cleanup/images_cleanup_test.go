@@ -6,6 +6,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/flant/werf/pkg/docker_registry"
+
 	"github.com/flant/werf/pkg/testing/utils"
 )
 
@@ -90,8 +92,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfCommand...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
+						}
 					})
 
 					It("should remove image that is associated with deleted remote branch", func() {
@@ -134,8 +138,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfCommand...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testBranch)))
+						}
 					})
 				})
 
@@ -176,8 +182,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfCommand...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testTag)))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).ShouldNot(ContainElement(imagesRepo.ImageRepositoryTag("image", testTag)))
+						}
 					})
 
 					It("should remove image by expiry days policy (WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS)", func() {
@@ -203,8 +211,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).Should(HaveLen(0))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).Should(HaveLen(0))
+						}
 					})
 
 					It("should remove image by limit policy (WERF_GIT_TAG_STRATEGY_LIMIT)", func() {
@@ -232,8 +242,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).Should(HaveLen(1))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).Should(HaveLen(1))
+						}
 					})
 				})
 
@@ -254,8 +266,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfCommand...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).Should(HaveLen(0))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).Should(HaveLen(0))
+						}
 					})
 
 					It("should not remove image that is associated with commit", func() {
@@ -306,8 +320,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).Should(HaveLen(0))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).Should(HaveLen(0))
+						}
 					})
 
 					It("should remove image by limit policy (WERF_GIT_COMMIT_STRATEGY_LIMIT)", func() {
@@ -343,8 +359,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							werfArgs...,
 						)
 
-						tags = imagesRepoAllImageRepoTags("image")
-						Ω(tags).Should(HaveLen(2))
+						if testImplementation != docker_registry.QuayImplementationName {
+							tags = imagesRepoAllImageRepoTags("image")
+							Ω(tags).Should(HaveLen(2))
+						}
 					})
 				})
 			})
