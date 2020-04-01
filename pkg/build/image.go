@@ -141,7 +141,10 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if inspect != nil {
 			// TODO: do not use container_runtime.StageImage for base image
-			i.baseImage.SetStagesStorageImageInfo(image.NewInfoFromInspect(i.baseImage.Name(), inspect))
+			i.baseImage.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+			})
 
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
 			if baseImageRepoId == inspect.ID || err != nil {
@@ -167,8 +170,10 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 		} else if inspect == nil {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name(), err)
 		} else {
-			// TODO: do not use container_runtime.StageImage for base image
-			i.baseImage.SetStagesStorageImageInfo(image.NewInfoFromInspect(i.baseImage.Name(), inspect))
+			i.baseImage.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+			})
 		}
 	case StageAsBaseImage:
 		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {

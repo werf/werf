@@ -270,7 +270,7 @@ func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image container_runtime.
 }
 
 func (gm *GitMapping) GetCommitsToPatch(prevBuiltImage container_runtime.ImageInterface) (string, string, error) {
-	fromCommit := gm.GetGitCommitFromImageLabels(prevBuiltImage.GetStagesStorageImageInfo().Labels)
+	fromCommit := gm.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
 	if fromCommit == "" {
 		panic("Commit should be in prev built image labels!")
 	}
@@ -303,7 +303,7 @@ func (gm *GitMapping) ImageGitCommitLabel() string {
 }
 
 func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStagesStorageImageInfo().Labels[gm.getArchiveTypeLabelName()])
+	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: gm.getRepoFilterOptions(),

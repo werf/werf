@@ -3,7 +3,6 @@ package build
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -110,8 +109,8 @@ func (phase *BuildPhase) AfterImageStages(img *Image) error {
 
 func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
 	if phase.StagesIterator.PrevNonEmptyStage != nil {
-		if phase.StagesIterator.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo() != nil {
-			return phase.StagesIterator.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo().Size
+		if phase.StagesIterator.PrevNonEmptyStage.GetImage().GetStageDescription() != nil {
+			return phase.StagesIterator.PrevNonEmptyStage.GetImage().GetStageDescription().Info.Size
 		}
 	}
 	return 0
@@ -148,7 +147,7 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 		}
 
 		// Stage is cached in the stages storage
-		if stg.GetImage().GetStagesStorageImageInfo() != nil {
+		if stg.GetImage().GetStageDescription() != nil {
 			logboek.Default.LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
 
 			logImageInfo(stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
@@ -176,7 +175,7 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 			return err
 		}
 
-		if stg.GetImage().GetStagesStorageImageInfo() == nil {
+		if stg.GetImage().GetStageDescription() == nil {
 			panic(fmt.Sprintf("expected stage %s image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetImage().Name()))
 		}
 
@@ -211,49 +210,20 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 	}
 	stg.SetSignature(stageSig)
 
-	var i *container_runtime.StageImage
-	var suitableImageFound bool
-
-	cacheExists, cacheImagesDescs, err := phase.Conveyor.StagesManager.GetImagesBySignatureFromCache(string(stg.Name()), stageSig)
-	if err != nil {
+	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stageSig); err != nil {
 		return err
-	}
-
-	if cacheExists {
-		if imgInfo, err := phase.Conveyor.StagesManager.SelectSuitableStagesStorageImage(stg, cacheImagesDescs); err != nil {
-			return err
-		} else if imgInfo != nil {
-			suitableImageFound = true
-			i = phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), imgInfo.Name)
-			i.SetStagesStorageImageInfo(imgInfo)
-			stg.SetImage(i)
-		}
 	} else {
-		logboek.Info.LogF(
-			"Stage %q cache by signature %s is not exists in stages storage cache: resetting stages storage cache\n",
-			stg.Name(), stageSig,
-		)
-
-		imagesDescs, err := phase.Conveyor.StagesManager.AtomicGetImagesBySignatureFromStagesStorageWithCacheReset(stg.LogDetailedName(), stageSig)
-		if err != nil {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(stg, stages); err != nil {
 			return err
-		}
-
-		if imgInfo, err := phase.Conveyor.StagesManager.SelectSuitableStagesStorageImage(stg, imagesDescs); err != nil {
-			return err
-		} else if imgInfo != nil {
-			suitableImageFound = true
-
-			i = phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), imgInfo.Name)
-			i.SetStagesStorageImageInfo(imgInfo)
+		} else if stageDesc != nil {
+			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), stageDesc.Info.Name)
+			i.SetStageDescription(stageDesc)
+			stg.SetImage(i)
+		} else {
+			// Will build a new image
+			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), uuid.New().String())
 			stg.SetImage(i)
 		}
-	}
-
-	if !suitableImageFound {
-		// Will build a new image
-		i = phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), uuid.New().String())
-		stg.SetImage(i)
 	}
 
 	if err = stg.AfterSignatureCalculated(phase.Conveyor); err != nil {
@@ -376,86 +346,56 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	}
 	defer phase.Conveyor.StorageLockManager.UnlockStage(phase.Conveyor.projectName(), stg.GetSignature())
 
-	imagesDescs, err := phase.Conveyor.StagesManager.AtomicGetImagesBySignatureFromStagesStorageWithCacheReset(string(stg.Name()), stg.GetSignature())
-	if err != nil {
+	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stg.GetSignature()); err != nil {
 		return err
-	}
-
-	if len(imagesDescs) > 0 {
-		var imgInfo *image.Info
-		if err := logboek.Info.LogProcess(
-			fmt.Sprintf("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()),
-			logboek.LevelLogProcessOptions{},
-			func() error {
-				imgInfo, err = stg.SelectCacheImage(imagesDescs)
-				return err
-			},
-		); err != nil {
+	} else {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(stg, stages); err != nil {
 			return err
-		}
-
-		if imgInfo != nil {
+		} else if stageDesc != nil {
 			logboek.Default.LogF(
 				"Discarding newly built image for stage %s by signature %s: detected already existing image %s in the stages storage\n",
-				stg.Name(), stg.GetSignature(), imgInfo.Name,
+				stg.LogDetailedName(), stg.GetSignature(), stageDesc.Info.Name,
 			)
-			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), imgInfo.Name)
-			i.SetStagesStorageImageInfo(imgInfo)
+			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), stageDesc.Info.Name)
+			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
-
 			return nil
-		}
-	}
+		} else {
+			newStageImageName, uniqueID := phase.Conveyor.StagesManager.GenerateStageUniqueID(stg.GetSignature(), stages)
+			repository, tag := image.ParseRepositoryAndTag(newStageImageName)
 
-	newStageImageName, uniqueID := phase.generateUniqueImageName(stg.GetSignature(), imagesDescs)
-	repository, tag := image.ParseRepositoryAndTag(newStageImageName)
+			stageImageObj := phase.Conveyor.GetStageImage(stageImage.Name())
+			phase.Conveyor.UnsetStageImage(stageImageObj.Name())
 
-	stageImageObj := phase.Conveyor.GetStageImage(stageImage.Name())
-	phase.Conveyor.UnsetStageImage(stageImageObj.Name())
+			stageImageObj.SetName(newStageImageName)
+			stageImageObj.GetStageDescription().Info.Name = newStageImageName
+			stageImageObj.GetStageDescription().Info.Repository = repository
+			stageImageObj.GetStageDescription().Info.Tag = tag
+			stageImageObj.GetStageDescription().StageID = &image.StageID{Signature: stg.GetSignature(), UniqueID: uniqueID}
 
-	stageImageObj.SetName(newStageImageName)
-	stageImageObj.GetStagesStorageImageInfo().Name = newStageImageName
-	stageImageObj.GetStagesStorageImageInfo().Repository = repository
-	stageImageObj.GetStagesStorageImageInfo().Tag = tag
-	stageImageObj.GetStagesStorageImageInfo().Signature = stg.GetSignature()
-	stageImageObj.GetStagesStorageImageInfo().UniqueID = uniqueID
+			phase.Conveyor.SetStageImage(stageImageObj)
 
-	phase.Conveyor.SetStageImage(stageImageObj)
-
-	if err := logboek.Default.LogProcess(
-		fmt.Sprintf("Store into stages storage"),
-		logboek.LevelLogProcessOptions{},
-		func() error {
-			// FIXME: StagesManager?
-			if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(&container_runtime.DockerImage{Image: stageImage}); err != nil {
-				return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
+			if err := logboek.Default.LogProcess(
+				fmt.Sprintf("Store into stages storage"),
+				logboek.LevelLogProcessOptions{},
+				func() error {
+					if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(&container_runtime.DockerImage{Image: stageImage}); err != nil {
+						return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
+					}
+					return nil
+				},
+			); err != nil {
+				return err
 			}
-			return nil
-		},
-	); err != nil {
-		return err
-	}
 
-	imagesDescs = append(imagesDescs, stageImage.GetStagesStorageImageInfo())
-	return phase.Conveyor.StagesManager.AtomicStoreStageCache(string(stg.Name()), stg.GetSignature(), imagesDescs)
-}
-
-// FIXME: move this image to StagesManager?
-func (phase *BuildPhase) generateUniqueImageName(signature string, imagesDescs []*image.Info) (string, string) {
-	var imageName string
-
-	for {
-		timeNow := time.Now().UTC()
-		timeNowMicroseconds := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
-		uniqueID := fmt.Sprintf("%d", timeNowMicroseconds)
-		imageName = phase.Conveyor.StagesManager.StagesStorage.ConstructStageImageName(phase.Conveyor.projectName(), signature, uniqueID)
-
-		for _, imgInfo := range imagesDescs {
-			if imgInfo.Name == imageName {
-				continue
+			var stageIDs []image.StageID
+			for _, stageDesc := range stages {
+				stageIDs = append(stageIDs, *stageDesc.StageID)
 			}
+			stageIDs = append(stageIDs, *stageImage.GetStageDescription().StageID)
+
+			return phase.Conveyor.StagesManager.AtomicStoreStagesBySignatureToCache(string(stg.Name()), stg.GetSignature(), stageIDs)
 		}
-		return imageName, uniqueID
 	}
 }
 
@@ -481,14 +421,14 @@ var (
 func logImageInfo(img container_runtime.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
 	repository, tag := image.ParseRepositoryAndTag(img.Name())
 	logboek.Default.LogFDetails(logImageInfoFormat, "repository", repository)
-	logboek.Default.LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStagesStorageImageInfo().ID))
-	logboek.Default.LogFDetails(logImageInfoFormat, "created", img.GetStagesStorageImageInfo().GetCreatedAt())
+	logboek.Default.LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
+	logboek.Default.LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
 	logboek.Default.LogFDetails(logImageInfoFormat, "tag", tag)
 
 	if prevStageImageSize == 0 {
-		logboek.Default.LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStagesStorageImageInfo().Size))
+		logboek.Default.LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
 	} else {
-		logboek.Default.LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStagesStorageImageInfo().Size-prevStageImageSize))
+		logboek.Default.LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize))
 	}
 
 	if !isUsingCache {

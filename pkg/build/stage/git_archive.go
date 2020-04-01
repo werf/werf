@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -36,12 +37,12 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitArchiveStage) SelectCacheImage(images []*image.Info) (*image.Info, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *GitArchiveStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
 
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {

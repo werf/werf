@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/logboek"
 
@@ -119,8 +120,8 @@ func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.image.GetStagesStorageImageInfo() != nil {
-			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetStagesStorageImageInfo().Labels))
+		if s.image.GetStageDescription() != nil {
+			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetStageDescription().Info.Labels))
 		} else {
 			latestCommit, err := gitMapping.LatestCommit()
 			if err != nil {
@@ -142,7 +143,7 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ container_runtime.ImageInterface) (boo
 
 func (s *BaseStage) ShouldBeReset(builtImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetStagesStorageImageInfo().Labels)
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetStageDescription().Info.Labels)
 		if commit == "" {
 			return false, nil
 		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
@@ -155,20 +156,20 @@ func (s *BaseStage) ShouldBeReset(builtImage container_runtime.ImageInterface) (
 	return false, nil
 }
 
-func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*imagePkg.Info) (*imagePkg.Info, error) {
-	var oldestImage *imagePkg.Info
-	for _, img := range images {
-		if oldestImage == nil {
-			oldestImage = img
-		} else if img.GetCreatedAt().Before(oldestImage.GetCreatedAt()) {
-			oldestImage = img
+func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDescription) (*image.StageDescription, error) {
+	var oldestStage *image.StageDescription
+	for _, stageDesc := range stages {
+		if oldestStage == nil {
+			oldestStage = stageDesc
+		} else if stageDesc.Info.GetCreatedAt().Before(oldestStage.Info.GetCreatedAt()) {
+			oldestStage = stageDesc
 		}
 	}
-	return oldestImage, nil
+	return oldestStage, nil
 }
 
-func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*imagePkg.Info) ([]*imagePkg.Info, error) {
-	suitableImages := []*imagePkg.Info{}
+func (s *BaseStage) selectStagesAncestorsByGitMappings(stages []*image.StageDescription) ([]*image.StageDescription, error) {
+	suitableStages := []*image.StageDescription{}
 	currentCommits := make(map[string]string)
 
 	for _, gitMapping := range s.gitMappings {
@@ -180,11 +181,11 @@ func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*imagePkg.I
 	}
 
 ScanImages:
-	for _, img := range images {
+	for _, stageDesc := range stages {
 		for _, gitMapping := range s.gitMappings {
 			currentCommit := currentCommits[gitMapping.Name]
 
-			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
+			commit := gitMapping.GetGitCommitFromImageLabels(stageDesc.Info.Labels)
 			if commit != "" {
 				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
 				if err != nil {
@@ -192,28 +193,28 @@ ScanImages:
 				}
 
 				if !isOurAncestor {
-					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.Name)
+					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
 					continue ScanImages
 				}
 
 				logboek.Debug.LogF(
 					"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
-					commit, currentCommit, gitMapping.GitRepo().String(), img.Name,
+					commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
 				)
 			} else {
-				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", img.Name)
+				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", stageDesc.Info.Name)
 				continue ScanImages
 			}
 		}
 
-		suitableImages = append(suitableImages, img)
+		suitableStages = append(suitableStages, stageDesc)
 	}
 
-	return suitableImages, nil
+	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectCacheImage(images []*imagePkg.Info) (*imagePkg.Info, error) {
-	return s.selectCacheImageByOldestCreationTimestamp(images)
+func (s *BaseStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
@@ -254,7 +255,7 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage container_runtime.
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetStagesStorageImageInfo().Labels
+		labels = prevBuiltImage.GetStageDescription().Info.Labels
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -342,7 +343,7 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.I
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetStagesStorageImageInfo().Labels
+		labels = prevBuiltImage.GetStageDescription().Info.Labels
 	}
 	for k, v := range labels {
 		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
