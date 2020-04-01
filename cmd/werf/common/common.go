@@ -256,6 +256,7 @@ func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
 	SetupGithubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-github-token", []string{"WERF_REPO_GITHUB_TOKEN"})
 	SetupHarborUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-username", []string{"WERF_REPO_HARBOR_USERNAME"})
 	SetupHarborPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-password", []string{"WERF_REPO_HARBOR_PASSWORD"})
+	SetupQuayTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-quay-token", []string{"WERF_REPO_QUAY_TOKEN"})
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -278,6 +279,7 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	SetupGithubTokenForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-github-token", []string{"WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN", "WERF_REPO_GITHUB_TOKEN"})
 	SetupHarborUsernameForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-harbor-username", []string{"WERF_STAGES_STORAGE_REPO_HARBOR_USERNAME", "WERF_REPO_HARBOR_USERNAME"})
 	SetupHarborPasswordForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-harbor-password", []string{"WERF_STAGES_STORAGE_REPO_HARBOR_PASSWORD", "WERF_REPO_HARBOR_PASSWORD"})
+	SetupQuayTokenForRepoData(cmdData.StagesStorageRepoData, cmd, "stages-storage-repo-quay-token", []string{"WERF_STAGES_STORAGE_REPO_QUAY_TOKEN", "WERF_REPO_QUAY_TOKEN"})
 }
 
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
@@ -391,6 +393,7 @@ func SetupImagesRepoOptions(cmdData *CmdData, cmd *cobra.Command) {
 	SetupGithubTokenForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-github-token", []string{"WERF_IMAGES_REPO_GITHUB_TOKEN", "WERF_REPO_GITHUB_TOKEN"})
 	SetupHarborUsernameForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-harbor-username", []string{"WERF_IMAGES_REPO_HARBOR_USERNAME", "WERF_REPO_HARBOR_USERNAME"})
 	SetupHarborPasswordForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-harbor-password", []string{"WERF_IMAGES_REPO_HARBOR_PASSWORD", "WERF_REPO_HARBOR_PASSWORD"})
+	SetupQuayTokenForRepoData(cmdData.ImagesRepoData, cmd, "images-repo-quay-token", []string{"WERF_IMAGES_REPO_QUAY_TOKEN", "WERF_REPO_QUAY_TOKEN"})
 }
 
 func setupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -906,6 +909,7 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 					GitHubToken:           *repoData.GitHubToken,
 					HarborUsername:        *repoData.HarborUsername,
 					HarborPassword:        *repoData.HarborPassword,
+					QuayToken:             *repoData.QuayToken,
 				},
 			},
 		},
@@ -939,6 +943,7 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 					GitHubToken:           *repoData.GitHubToken,
 					HarborUsername:        *repoData.HarborUsername,
 					HarborPassword:        *repoData.HarborPassword,
+					QuayToken:             *repoData.QuayToken,
 				},
 			},
 		},

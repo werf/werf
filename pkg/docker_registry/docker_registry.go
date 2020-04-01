@@ -40,6 +40,7 @@ type DockerRegistryOptions struct {
 	GitHubToken           string
 	HarborUsername        string
 	HarborPassword        string
+	QuayToken             string
 }
 
 func (o *DockerRegistryOptions) awsEcrOptions() awsEcrOptions {
@@ -93,6 +94,9 @@ func (o *DockerRegistryOptions) harborOptions() harborOptions {
 func (o *DockerRegistryOptions) quayOptions() quayOptions {
 	return quayOptions{
 		defaultImplementationOptions: o.defaultOptions(),
+		quayCredentials: quayCredentials{
+			token: o.QuayToken,
+		},
 	}
 }
 
