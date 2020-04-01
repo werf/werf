@@ -7,8 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Masterminds/sprig"
-	"github.com/ghodss/yaml"
 
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
@@ -53,18 +54,18 @@ func (templates ChartTemplates) ByKind(kind string) []Template {
 }
 
 type Template struct {
-	ApiVersion string `json:"apiVersion,omitempty"`
-	Kind       string `json:"kind,omitempty"`
-	Metadata   struct {
-		Name        string                 `json:"name,omitempty"`
-		Namespace   string                 `json:"namespace,omitempty"`
-		Annotations map[string]string      `json:"annotations,omitempty"`
-		Labels      map[string]string      `json:"labels,omitempty"`
-		UID         string                 `json:"uid,omitempty"`
-		OtherFields map[string]interface{} `json:",inline"`
-	} `json:"metadata,omitempty"`
-	Status      string                 `json:"status,omitempty"`
-	OtherFields map[string]interface{} `json:",inline"`
+	Version  string `yaml:"apiVersion,omitempty"`
+	Kind     string `yaml:"kind,omitempty"`
+	Metadata struct {
+		Name        string                 `yaml:"name,omitempty"`
+		Namespace   string                 `yaml:"namespace,omitempty"`
+		Annotations map[string]string      `yaml:"annotations,omitempty"`
+		Labels      map[string]string      `yaml:"labels,omitempty"`
+		UID         string                 `yaml:"uid,omitempty"`
+		OtherFields map[string]interface{} `yaml:",inline"`
+	} `yaml:"metadata,omitempty"`
+	Status      string                 `yaml:"status,omitempty"`
+	OtherFields map[string]interface{} `yaml:",inline"`
 }
 
 func (t Template) Namespace(namespace string) string {
@@ -76,7 +77,7 @@ func (t Template) Namespace(namespace string) string {
 }
 
 func (t Template) IsEmpty() bool {
-	if t.ApiVersion == "" || t.Kind == "" {
+	if t.Version == "" || t.Kind == "" {
 		return true
 	}
 
