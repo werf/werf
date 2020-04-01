@@ -21,7 +21,7 @@ func (s *GitStage) isEmpty() bool {
 }
 
 func (s *GitStage) AfterSignatureCalculated(c Conveyor) error {
-	if s.image.GetStagesStorageImageInfo() == nil {
+	if s.image.GetStageDescription() == nil {
 		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == "" {
 			c.SetBuildingGitStage(s.imageName, s.Name())

@@ -11,12 +11,11 @@ import (
 )
 
 type Info struct {
-	Signature         string            `json:"signature"`
-	UniqueID          string            `json:"uniqueID"`
-	Name              string            `json:"name"`
-	Repository        string            `json:"repository"`
-	Tag               string            `json:"tag"`
-	RepoDigest        string            `json:"repoDigest"`
+	Name       string `json:"name"`
+	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
+	RepoDigest string `json:"repoDigest"`
+
 	ID                string            `json:"ID"`
 	ParentID          string            `json:"parentID"`
 	Labels            map[string]string `json:"labels"`

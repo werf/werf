@@ -50,7 +50,7 @@ func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) e
 	}
 
 	// stage is not empty and stages-storage does not contain suitable cached image
-	if stg.GetImage().GetStagesStorageImageInfo() == nil {
+	if stg.GetImage().GetStageDescription() == nil {
 		phase.BadStagesByImage[img.GetName()] = append(phase.BadStagesByImage[img.GetName()], stg)
 	}
 

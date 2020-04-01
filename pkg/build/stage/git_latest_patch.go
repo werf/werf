@@ -26,7 +26,7 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runti
 
 	isEmpty := true
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStagesStorageImageInfo().Labels)
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
 		if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
 			return false, err
 		} else if !exist {

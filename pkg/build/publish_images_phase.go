@@ -382,5 +382,5 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 		return false, fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
-	return lastStageImage.GetStagesStorageImageInfo().ID == parentID, nil
+	return lastStageImage.GetStageDescription().Info.ID == parentID, nil
 }
