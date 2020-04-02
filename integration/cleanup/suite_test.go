@@ -128,6 +128,20 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 					imagesRepoDockerRegistryOptions = implementationImagesRepoDockerRegistryOptions(implementationName)
 				}
 
+				isNotSupported := true
+				for _, name := range docker_registry.ImplementationList() {
+					if name == implementationName {
+						isNotSupported = false
+					}
+				}
+
+				if isNotSupported {
+					imagesRepoImplementationName = "default"
+					// TODO: stagesStorageImplementationName = "default"
+					// TODO: stubs.SetEnv("WERF_STAGES_STORAGE_IMPLEMENTATION", imagesRepoImplementationName)
+					stubs.SetEnv("WERF_IMAGES_REPO_IMPLEMENTATION", "default")
+				}
+
 				initStagesStorage(stagesStorageAddress, stagesStorageImplementationName, stagesStorageDockerRegistryOptions)
 				initImagesRepo(imagesRepoAddress, imagesRepoMode, imagesRepoImplementationName, imagesRepoDockerRegistryOptions)
 
@@ -222,7 +236,7 @@ func stagesStorageManagedImagesCount() int {
 }
 
 func implementationListToCheck() []string {
-	list := []string{":local"}
+	var list []string
 
 	for _, implementationName := range docker_registry.ImplementationList() {
 		implementationCode := strings.ToUpper(implementationName)
@@ -236,7 +250,30 @@ func implementationListToCheck() []string {
 		}
 	}
 
-	return list
+environLoop:
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		envName := parts[0]
+		envValue := parts[1]
+
+		if strings.HasPrefix(envName, "WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_") && envValue == "1" {
+			implementationName := strings.ToLower(strings.TrimPrefix(envName, "WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_"))
+
+			for _, name := range list {
+				if name == implementationName {
+					continue environLoop
+				}
+			}
+
+			list = append(list, implementationName)
+		}
+	}
+
+	if len(list) != 0 {
+		return list
+	} else {
+		return []string{":local"}
+	}
 }
 
 func implementationStagesStorageAddress(_ string) string {
