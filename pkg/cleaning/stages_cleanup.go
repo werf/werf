@@ -93,7 +93,7 @@ func (m *stagesCleanupManager) run() error {
 		}
 
 		var stagesImageList []*image.Info
-		var stagesByImageName map[string]*image.StageDescription
+		stagesByImageName := map[string]*image.StageDescription{}
 		for _, stageDesc := range stages {
 			stagesImageList = append(stagesImageList, stageDesc.Info)
 			stagesByImageName[stageDesc.Info.Name] = stageDesc
