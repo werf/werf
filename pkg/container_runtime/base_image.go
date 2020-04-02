@@ -3,15 +3,16 @@ package container_runtime
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/image"
+
 	"github.com/docker/docker/api/types"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
 )
 
 type baseImage struct {
-	name    string
-	inspect *types.ImageInspect
-	imgInfo *image.Info
+	name             string
+	inspect          *types.ImageInspect
+	stageDesc *image.StageDescription
 
 	LocalDockerServerRuntime *LocalDockerServerRuntime
 }
@@ -66,12 +67,12 @@ func (i *baseImage) Untag() error {
 	return nil
 }
 
-func (i *baseImage) SetStagesStorageImageInfo(imgInfo *image.Info) {
-	i.imgInfo = imgInfo
+func (i *baseImage) SetStageDescription(stageDesc *image.StageDescription) {
+	i.stageDesc = stageDesc
 }
 
-func (i *baseImage) GetStagesStorageImageInfo() *image.Info {
-	return i.imgInfo
+func (i *baseImage) GetStageDescription() *image.StageDescription {
+	return i.stageDesc
 }
 
 func (i *baseImage) IsExistsLocally() bool {

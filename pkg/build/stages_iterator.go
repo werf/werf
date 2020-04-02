@@ -62,12 +62,12 @@ func (iterator *StagesIterator) OnImageStage(img *Image, stg stage.Interface, on
 		iterator.PrevNonEmptyStage = stg
 		logboek.Debug.LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
 
-		if iterator.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo() != nil {
-			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetImage().GetStagesStorageImageInfo().Size
+		if iterator.PrevNonEmptyStage.GetImage().GetStageDescription() != nil {
+			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetImage().GetStageDescription().Info.Size
 			logboek.Debug.LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
 		}
 
-		if stg.GetImage().GetStagesStorageImageInfo() != nil {
+		if stg.GetImage().GetStageDescription() != nil {
 			iterator.PrevBuiltStage = stg
 			logboek.Debug.LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetImage().Name())
 		}

@@ -20,12 +20,12 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) SelectCacheImage(images []*image.Info) (*image.Info, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *GitCacheStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
@@ -57,7 +57,7 @@ func (s *GitCacheStage) GetDependencies(_ Conveyor, _, prevBuiltImage container_
 func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage container_runtime.ImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStagesStorageImageInfo().Labels)
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
 		if commit == "" {
 			return 0, fmt.Errorf("invalid stage image: can not find git commit in stage image labels: delete stage image %s manually and retry the build", prevBuiltImage.Name())
 		}

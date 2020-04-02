@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/flant/werf/pkg/image"
+
 	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
@@ -118,6 +120,10 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 func runDeploy() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := image.Init(); err != nil {
+		return err
 	}
 
 	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {

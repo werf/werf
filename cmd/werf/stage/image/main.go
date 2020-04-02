@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/image"
+
 	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
@@ -79,6 +81,10 @@ func run(imageName string) error {
 	}
 
 	tmp_manager.AutoGCEnabled = false
+
+	if err := image.Init(); err != nil {
+		return err
+	}
 
 	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err

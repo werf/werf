@@ -158,6 +158,10 @@ func runMv() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	if err := image.Init(); err != nil {
+		return err
+	}
+
 	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
@@ -228,80 +232,80 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 
 	var errors []error
 
-	getAllRepoImagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]*image.Info, error) {
+	getAllStagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]image.StageID, error) {
 		logboek.Default.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-		if repoImages, err := stagesStorage.GetAllStages(projectName); err != nil {
+		if stages, err := stagesStorage.GetAllStages(projectName); err != nil {
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 			return nil, fmt.Errorf("unable to get repo images from %s: %s", fromStagesStorage.String(), err)
 		} else {
-			logboek.Default.LogFDetails("Stages count: %d\n", len(repoImages))
+			logboek.Default.LogFDetails("Stages count: %d\n", len(stages))
 			logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
-			return repoImages, nil
+			return stages, nil
 		}
 	}
 
-	var existingSourceRepoImages []*image.Info
-	var existingDestinationRepoImages []*image.Info
+	var existingSourceStages []image.StageID
+	var existingDestinationStages []image.StageID
 
-	if repoImages, err := getAllRepoImagesFunc("Getting all repo images list from source stages storage", fromStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from source stages storage", fromStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from source %s: %s", fromStagesStorage.String(), err)
 	} else {
-		existingSourceRepoImages = repoImages
+		existingSourceStages = stages
 	}
 
-	if repoImages, err := getAllRepoImagesFunc("Getting all repo images list from destination stages storage", toStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from destination stages storage", toStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from destination %s: %s", toStagesStorage.String(), err)
 	} else {
-		existingDestinationRepoImages = repoImages
+		existingDestinationStages = stages
 	}
 
-	var repoImagesToCopy []*image.Info
-FindingImagesToCopy:
-	for _, sourceImgInfo := range existingSourceRepoImages {
-		for _, destImgInfo := range existingDestinationRepoImages {
-			if sourceImgInfo.Signature == destImgInfo.Signature && sourceImgInfo.UniqueID == destImgInfo.UniqueID {
-				continue FindingImagesToCopy
+	var stagesToCopy []image.StageID
+FindingStagesToCopy:
+	for _, sourceStageDesc := range existingSourceStages {
+		for _, destStageDesc := range existingDestinationStages {
+			if sourceStageDesc.Signature == destStageDesc.Signature && sourceStageDesc.UniqueID == destStageDesc.UniqueID {
+				continue FindingStagesToCopy
 			}
 		}
-		repoImagesToCopy = append(repoImagesToCopy, sourceImgInfo)
+		stagesToCopy = append(stagesToCopy, sourceStageDesc)
 	}
 
-	logboek.Default.LogFDetails("Stages to copy: %d\n", len(repoImagesToCopy))
+	logboek.Default.LogFDetails("Stages to copy: %d\n", len(stagesToCopy))
 
 	maxWorkers := 10
 	resultsChan := make(chan struct {
 		error
-		*image.Info
+		image.StageID
 	}, 1000)
-	jobsChan := make(chan *image.Info, 1000)
+	jobsChan := make(chan image.StageID, 1000)
 
 	for w := 0; w < maxWorkers; w++ {
 		go runRopyWorker(projectName, fromStagesStorage, toStagesStorage, containerRuntime, w, jobsChan, resultsChan)
 	}
 
-	for _, imgInfo := range repoImagesToCopy {
-		jobsChan <- imgInfo
+	for _, stageDesc := range stagesToCopy {
+		jobsChan <- stageDesc
 	}
 	close(jobsChan)
 
 	failedCounter := 0
 	succeededCounter := 0
-	for i := 0; i < len(repoImagesToCopy); i++ {
+	for i := 0; i < len(stagesToCopy); i++ {
 		desc := <-resultsChan
 
 		if desc.error != nil {
 			failedCounter++
-			logboek.LogErrorF("%5d/%d failed\n", failedCounter, len(repoImagesToCopy))
+			logboek.LogErrorF("%5d/%d failed\n", failedCounter, len(stagesToCopy))
 			errors = append(errors, desc.error)
 		} else {
 			succeededCounter++
-			logboek.Default.LogF("%5d/%d synced\n", succeededCounter, len(repoImagesToCopy))
+			logboek.Default.LogF("%5d/%d synced\n", succeededCounter, len(stagesToCopy))
 		}
 	}
 
 	if len(errors) > 0 {
 		logboek.Default.LogLn()
-		logboek.Default.LogFHighlight("synced %d/%d, failed %d/%d\n", succeededCounter, len(repoImagesToCopy), failedCounter, len(repoImagesToCopy))
+		logboek.Default.LogFHighlight("synced %d/%d, failed %d/%d\n", succeededCounter, len(stagesToCopy), failedCounter, len(stagesToCopy))
 
 		errorMsg := fmt.Sprintf("following errors occured:\n")
 		for _, err := range errors {
@@ -314,30 +318,38 @@ FindingImagesToCopy:
 	return nil
 }
 
-func runRopyWorker(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, workerId int, jobs chan *image.Info, results chan struct {
+func runRopyWorker(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, workerId int, jobs chan image.StageID, results chan struct {
 	error
-	*image.Info
+	image.StageID
 }) {
-	for imgInfo := range jobs {
+	for stageID := range jobs {
 		results <- struct {
 			error
-			*image.Info
+			image.StageID
 		}{
-			copyStage(projectName, imgInfo, fromStagesStorage, toStagesStorage, containerRuntime),
-			imgInfo,
+			copyStage(projectName, stageID, fromStagesStorage, toStagesStorage, containerRuntime),
+			stageID,
 		}
 	}
 }
 
-func copyStage(projectName string, repoImage *image.Info, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) error {
-	img := container_runtime.NewStageImage(nil, repoImage.Name, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
+func copyStage(projectName string, stageID image.StageID, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) error {
+	stageDesc, err := fromStagesStorage.GetStageDescription(projectName, stageID.Signature, stageID.UniqueID)
+	if err != nil {
+		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), fromStagesStorage.String(), err)
+	} else if stageDesc == nil {
+		// Bad stage id given
+		return nil
+	}
+
+	img := container_runtime.NewStageImage(nil, stageDesc.Info.Name, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
 	logboek.Info.LogF("Fetching %s\n", img.Name())
 	if err := fromStagesStorage.FetchImage(&container_runtime.DockerImage{Image: img}); err != nil {
-		return fmt.Errorf("unable to fetch %s from %s: %s", repoImage.Name, fromStagesStorage.String(), err)
+		return fmt.Errorf("unable to fetch %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
 	}
 
-	newImageName := toStagesStorage.ConstructStageImageName(projectName, repoImage.Signature, repoImage.UniqueID)
+	newImageName := toStagesStorage.ConstructStageImageName(projectName, stageDesc.StageID.Signature, stageDesc.StageID.UniqueID)
 	logboek.Info.LogF("Renaming image %s to %s\n", img.Name(), newImageName)
 	if err := containerRuntime.RenameImage(&container_runtime.DockerImage{Image: img}, newImageName); err != nil {
 		return err
@@ -345,13 +357,13 @@ func copyStage(projectName string, repoImage *image.Info, fromStagesStorage stor
 
 	logboek.Info.LogF("Storing %s\n", newImageName)
 	if err := toStagesStorage.StoreImage(&container_runtime.DockerImage{Image: img}); err != nil {
-		return fmt.Errorf("unable to store %s to %s: %s", repoImage.Name, toStagesStorage.String(), err)
+		return fmt.Errorf("unable to store %s to %s: %s", stageDesc.Info.Name, toStagesStorage.String(), err)
 	}
 
 	//deleteOpts := storage.DeleteRepoImageOptions{RmiForce: true, RmForce: true, RmContainersThatUseImage: true}
-	//logboek.Default.LogF("Removing %s\n", repoImage.Name)
-	//if err := fromStagesStorage.DeleteRepoImage(deleteOpts, repoImage); err != nil {
-	//	return fmt.Errorf("unable to remove %s from %s: %s", repoImage.Name, fromStagesStorage.String(), err)
+	//logboek.Default.LogF("Removing %s\n", stageDesc.Name)
+	//if err := fromStagesStorage.DeleteRepoImage(deleteOpts, stageDesc); err != nil {
+	//	return fmt.Errorf("unable to remove %s from %s: %s", stageDesc.Name, fromStagesStorage.String(), err)
 	//}
 
 	return nil

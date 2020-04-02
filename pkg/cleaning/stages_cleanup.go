@@ -87,9 +87,16 @@ func (m *stagesCleanupManager) run() error {
 
 	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
 	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
-		stagesImageList, err := m.StagesManager.GetAllStages()
+		stages, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			return err
+		}
+
+		var stagesImageList []*image.Info
+		var stagesByImageName map[string]*image.StageDescription
+		for _, stageDesc := range stages {
+			stagesImageList = append(stagesImageList, stageDesc.Info)
+			stagesByImageName[stageDesc.Info.Name] = stageDesc
 		}
 
 		repoImageList, err := m.getOrInitImagesRepoImageList()
@@ -112,7 +119,15 @@ func (m *stagesCleanupManager) run() error {
 
 		stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)
 
-		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesImageList...); err != nil {
+		var stagesToDeleteList []*image.StageDescription
+		for _, imgInfo := range stagesImageList {
+			if stagesByImageName[imgInfo.Name] == nil || stagesByImageName[imgInfo.Name].Info != imgInfo {
+				panic(fmt.Sprintf("inconsistent state detected: %#v != %#v", stagesByImageName[imgInfo.Name].Info, imgInfo))
+			}
+			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
+		}
+
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...); err != nil {
 			return err
 		}
 
@@ -192,8 +207,8 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 	return
 }
 
-func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, repoImageList ...*image.Info) error {
-	if err := deleteRepoImage(stagesManager.DeleteStages, options, dryRun, repoImageList...); err != nil {
+func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+	if err := deleteStage(stagesManager.DeleteStages, options, dryRun, stages...); err != nil {
 		switch err.(type) {
 		case docker_registry.DockerHubUnauthorizedError:
 			return fmt.Errorf(`%s
@@ -209,6 +224,21 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 		default:
 			return err
 		}
+	}
+
+	return nil
+}
+
+func deleteStage(f func(options storage.DeleteImageOptions, stages ...*image.StageDescription) error, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+	for _, stageDesc := range stages {
+		if !dryRun {
+			if err := f(options, stageDesc); err != nil {
+				return err
+			}
+		}
+
+		logboek.Default.LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.LogOptionalLn()
 	}
 
 	return nil

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/image"
+
 	"github.com/flant/werf/pkg/stages_manager"
 	"github.com/flant/werf/pkg/storage"
 
@@ -67,6 +69,10 @@ func NewCmd() *cobra.Command {
 func run(projectNames ...string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := image.Init(); err != nil {
+		return err
 	}
 
 	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
