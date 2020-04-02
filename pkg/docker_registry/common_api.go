@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -55,7 +56,12 @@ func doRequest(method, url string, body io.Reader, options doRequestOptions) (*h
 	logboek.Debug.LogF("<-- %s %s\n", resp.Status, string(respBody))
 
 	if err := transport.CheckError(resp, options.AcceptedCodes...); err != nil {
-		return resp, respBody, fmt.Errorf("%s (body: %s)", err, strings.TrimSpace(string(respBody)))
+		errMsg := err.Error()
+		if len(respBody) != 0 {
+			errMsg += fmt.Sprintf(" (body: %s)", strings.TrimSpace(string(respBody)))
+		}
+
+		return resp, respBody, errors.New(errMsg)
 	}
 
 	return resp, respBody, nil

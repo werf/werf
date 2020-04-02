@@ -20,13 +20,14 @@ type RepoData struct {
 	GitHubToken       *string
 	HarborUsername    *string
 	HarborPassword    *string
+	QuayToken         *string
 }
 
 func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
 	res := &RepoData{}
 
 	for _, repoData := range repoDataArr {
-		if res.Implementation ==    nil || *res.Implementation == "" {
+		if res.Implementation == nil || *res.Implementation == "" {
 			res.Implementation = repoData.Implementation
 		}
 		if res.DockerHubUsername == nil || *res.DockerHubUsername == "" {
@@ -38,14 +39,17 @@ func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
 		if res.DockerHubToken == nil || *res.DockerHubToken == "" {
 			res.DockerHubToken = repoData.DockerHubToken
 		}
-		if res.GitHubToken == nil ||  *res.GitHubToken == "" {
+		if res.GitHubToken == nil || *res.GitHubToken == "" {
 			res.GitHubToken = repoData.GitHubToken
 		}
-		if res.HarborUsername == nil ||  *res.HarborUsername == "" {
+		if res.HarborUsername == nil || *res.HarborUsername == "" {
 			res.HarborUsername = repoData.HarborUsername
 		}
 		if res.HarborPassword == nil || *res.HarborPassword == "" {
 			res.HarborPassword = repoData.HarborPassword
+		}
+		if res.QuayToken == nil || *res.QuayToken == "" {
+			res.QuayToken = repoData.QuayToken
 		}
 	}
 
@@ -164,6 +168,8 @@ func SetupHarborUsernameForRepoData(repoData *RepoData, cmd *cobra.Command, para
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
+
+	_ = cmd.Flags().MarkHidden(paramName)
 }
 
 func SetupHarborPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
@@ -182,6 +188,28 @@ func SetupHarborPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, para
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
+
+	_ = cmd.Flags().MarkHidden(paramName)
+}
+
+func SetupQuayTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	var usage string
+	if repoData.IsCommon {
+		usage = fmt.Sprintf("Common quay.io token for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+	} else {
+		usage = fmt.Sprintf("Common quay.io token for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+	}
+
+	repoData.QuayToken = new(string)
+	cmd.Flags().StringVarP(
+		repoData.QuayToken,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+
+	_ = cmd.Flags().MarkHidden(paramName)
 }
 
 func getDefaultValueByParamEnvNames(paramEnvNames []string) string {
