@@ -55,7 +55,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
 #    - name: Install upx (ubuntu-latest)
 #      run: sudo apt-get install upx
@@ -148,7 +148,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -206,7 +206,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -254,7 +254,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         implementation:
-        # - acr
+        - acr
         - default
         - dockerhub
         - ecr
@@ -272,9 +272,6 @@ jobs:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB }}
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR }}
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
       WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
       WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
@@ -310,7 +307,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -323,6 +320,20 @@ jobs:
       with:
         name: "${{ matrix.os }}_werf_with_coverage"
         path: .
+
+    - name: Login (acr)
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      if: matrix.implementation == 'acr'
+
+    - name: Login (ecr)
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      if: matrix.implementation == 'ecr'
 
     - name: Prepare environment
       run: |
@@ -340,7 +351,7 @@ jobs:
       shell: bash
 
     - name: Test
-      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing --focus="(${{ matrix.implementation }})" integration/cleanup
+      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing --focus="(${{ matrix.implementation }})" integration/cleanup/cleanup.test
       shell: bash
 
     - name: Upload coverage artifact
@@ -368,7 +379,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -443,7 +454,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -517,7 +528,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -611,7 +622,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download coverage artifact
       uses: actions/download-artifact@master
