@@ -380,7 +380,7 @@ func implementationBeforeEach(implementationName string) {
 
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
-	case docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
+	case docker_registry.AzureCrImplementationName, docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
 		if implementationName == docker_registry.HarborImplementationName {
 			// API cannot delete repository without any tags
 			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
@@ -396,7 +396,7 @@ func implementationAfterEach(implementationName string) {
 
 		err := imagesRepo.DeleteImageRepo("image")
 		switch err := err.(type) {
-		case nil, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
+		case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
 		default:
 			Ω(err).Should(Succeed())
 		}
