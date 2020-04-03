@@ -49,6 +49,12 @@ func (o *DockerRegistryOptions) awsEcrOptions() awsEcrOptions {
 	}
 }
 
+func (o *DockerRegistryOptions) azureAcrOptions() azureCrOptions {
+	return azureCrOptions{
+		defaultImplementationOptions: o.defaultOptions(),
+	}
+}
+
 func (o *DockerRegistryOptions) dockerHubOptions() dockerHubOptions {
 	return dockerHubOptions{
 		defaultImplementationOptions: o.defaultOptions(),
@@ -111,6 +117,8 @@ func NewDockerRegistry(repositoryAddress string, implementation string, options 
 	switch implementation {
 	case AwsEcrImplementationName:
 		return newAwsEcr(options.awsEcrOptions())
+	case AzureCrImplementationName:
+		return newAzureCr(options.azureAcrOptions())
 	case DockerHubImplementationName:
 		return newDockerHub(options.dockerHubOptions())
 	case GcrImplementationName:
@@ -175,6 +183,10 @@ func detectImplementation(accountOrRepositoryAddress string) (string, error) {
 			patterns: awsEcrPatterns,
 		},
 		{
+			name:     AzureCrImplementationName,
+			patterns: azureCrPatterns,
+		},
+		{
 			name:     DockerHubImplementationName,
 			patterns: dockerHubPatterns,
 		},
@@ -213,6 +225,7 @@ func detectImplementation(accountOrRepositoryAddress string) (string, error) {
 func ImplementationList() []string {
 	return []string{
 		AwsEcrImplementationName,
+		AzureCrImplementationName,
 		DefaultImplementationName,
 		DockerHubImplementationName,
 		GcrImplementationName,
