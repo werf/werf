@@ -106,7 +106,6 @@ func runPurge() error {
 	_ = stagesStorageCache // FIXME
 
 	storageLockManager := &storage.FileLockManager{}
-	_ = storageLockManager // FIXME
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
@@ -125,7 +124,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesPurge(imagesRepo, imagesPurgeOptions); err != nil {
+	if err := cleaning.ImagesPurge(projectName, imagesRepo, storageLockManager, imagesPurgeOptions); err != nil {
 		return err
 	}
 

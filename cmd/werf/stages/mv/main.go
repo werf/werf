@@ -202,12 +202,14 @@ func runMv() error {
 		return err
 	}
 
+	storageLockManager := &storage.FileLockManager{}
+
 	_, err = common.GetSynchronization(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	return SyncStages(projectName, fromStagesStorage, toStagesStorage, containerRuntime)
+	return SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime)
 }
 
 // TODO: move sync stages between multiple stages storages in StagesManager
@@ -215,7 +217,12 @@ func runMv() error {
 // SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
 // Repeatedly calling SyncStages will copy stages from source stages storage to destination, that already exists in the destination.
 // SyncStages will not delete excess stages from destination storage, that does not exists in the source.
-func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) error {
+func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, storageLockManager storage.LockManager, containerRuntime container_runtime.ContainerRuntime) error {
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{}); err != nil {
+		return err
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
+
 	isOk := false
 	logboek.Default.LogProcessStart(fmt.Sprintf("Sync %q project stages", projectName), logboek.LevelLogProcessStartOptions{})
 	defer func() {

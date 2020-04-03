@@ -105,7 +105,7 @@ func run(projectNames ...string) error {
 				DryRun:                        *commonCmdData.DryRun,
 			}
 
-			return cleaning.StagesPurge(projectName, stagesManager, stagesPurgeOptions)
+			return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
 		}); err != nil {
 			return err
 		}
