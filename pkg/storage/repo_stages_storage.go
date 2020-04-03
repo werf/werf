@@ -259,6 +259,10 @@ func (storage *RepoStagesStorage) String() string {
 	return fmt.Sprintf("repo stages storage (%q)", storage.RepoAddress)
 }
 
+func (storage *RepoStagesStorage) Address() string {
+	return storage.RepoAddress
+}
+
 func makeRepoManagedImageRecord(repoAddress, imageName string) string {
 	tagSuffix := imageName
 	if imageName == "" {

@@ -117,7 +117,11 @@ func runPurge() error {
 
 	stagesStorageCache := common.GetStagesStorageCache()
 	storageLockManager := &storage.FileLockManager{}
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
 
 	_, err = common.GetSynchronization(&commonCmdData) // TODO
 	if err != nil {
