@@ -166,7 +166,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	storageLockManager := &storage.FileLockManager{}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
