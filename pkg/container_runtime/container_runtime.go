@@ -14,7 +14,8 @@ import (
 type ContainerRuntime interface {
 	RefreshImageObject(img Image) error
 	PullImageFromRegistry(img Image) error
-	RenameImage(img Image, newImageName string) error
+	RenameImage(img Image, newImageName string, removeOldName bool) error
+	RemoveImage(img Image) error
 	String() string
 }
 
@@ -40,7 +41,7 @@ func (runtime *LocalDockerServerRuntime) RefreshImageObject(img Image) error {
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) RenameImage(img Image, newImageName string) error {
+func (runtime *LocalDockerServerRuntime) RenameImage(img Image, newImageName string, removeOldName bool) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging image %s by name %s", dockerImage.Image.Name(), newImageName), logboek.LevelLogProcessOptions{}, func() error {
@@ -52,7 +53,26 @@ func (runtime *LocalDockerServerRuntime) RenameImage(img Image, newImageName str
 		return err
 	}
 
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Removing old image tag %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+	if removeOldName {
+		if err := logboek.Info.LogProcess(fmt.Sprintf("Removing old image tag %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
+			if err := docker.CliRmi(dockerImage.Image.Name()); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	dockerImage.Image.SetName(newImageName)
+
+	return nil
+}
+
+func (runtime *LocalDockerServerRuntime) RemoveImage(img Image) error {
+	dockerImage := img.(*DockerImage)
+
+	if err := logboek.Info.LogProcess(fmt.Sprintf("Removing image tag %s", dockerImage.Image.Name()), logboek.LevelLogProcessOptions{}, func() error {
 		if err := docker.CliRmi(dockerImage.Image.Name()); err != nil {
 			return err
 		}
@@ -60,8 +80,6 @@ func (runtime *LocalDockerServerRuntime) RenameImage(img Image, newImageName str
 	}); err != nil {
 		return err
 	}
-
-	dockerImage.Image.SetName(newImageName)
 
 	return nil
 }

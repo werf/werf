@@ -134,7 +134,11 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	stagesStorageCache := common.GetStagesStorageCache()
 	storageLockManager := &storage.FileLockManager{}
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
 
 	_, err = common.GetSynchronization(commonCmdData)
 	if err != nil {

@@ -193,7 +193,11 @@ func (storage *LocalDockerServerStagesStorage) StoreImage(img container_runtime.
 }
 
 func (storage *LocalDockerServerStagesStorage) String() string {
-	return ":local"
+	return LocalStagesStorageAddress
+}
+
+func (storage *LocalDockerServerStagesStorage) Address() string {
+	return LocalStagesStorageAddress
 }
 
 type processRelatedContainersOptions struct {

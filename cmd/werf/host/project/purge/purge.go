@@ -96,7 +96,10 @@ func run(projectNames ...string) error {
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
-		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorage, stagesStorageCache)
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+			return err
+		}
 
 		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
 		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
