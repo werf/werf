@@ -17,8 +17,13 @@ type StagesPurgeOptions struct {
 	DryRun                        bool
 }
 
-func StagesPurge(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
+func StagesPurge(projectName string, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
 	m := newStagesPurgeManager(projectName, stagesManager, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
 
 	return logboek.Default.LogProcess(
 		"Running stages purge",

@@ -440,6 +440,13 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 	//	} Goroutine
 	//}
 
+	if err := c.StorageLockManager.LockStagesAndImages(c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
+		return fmt.Errorf("unable to lock stages and images (to get or create stages and images only): %s", err)
+	}
+	c.AppendOnTerminateFunc(func() error {
+		return c.StorageLockManager.UnlockStagesAndImages(c.projectName())
+	})
+
 	var imagesLogger logboek.Level
 	if logImages {
 		imagesLogger = logboek.Default

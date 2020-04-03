@@ -15,8 +15,13 @@ type ImagesPurgeOptions struct {
 	DryRun        bool
 }
 
-func ImagesPurge(imagesRepo storage.ImagesRepo, options ImagesPurgeOptions) error {
+func ImagesPurge(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, options ImagesPurgeOptions) error {
 	m := newImagesPurgeManager(imagesRepo, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
 
 	return logboek.Default.LogProcess(
 		"Running images purge",

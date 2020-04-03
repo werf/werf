@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/shluz"
 )
 
@@ -95,4 +97,22 @@ func (lockManager *FileLockManager) LockImage(imageName string) error {
 func (lockManager *FileLockManager) UnlockImage(imageName string) error {
 	lockName := fmt.Sprintf("%s.image", imageName)
 	return shluz.Unlock(lockName)
+}
+
+func (lockManager *FileLockManager) LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) error {
+	lockName := fmt.Sprintf("%s.stages_and_images", projectName)
+	logboek.Debug.LogF("-- FileLockManager.LockStagesAndImages(%s, %#v) lockName=%q\n", projectName, opts, lockName)
+	if err := shluz.Lock(lockName, shluz.LockOptions{ReadOnly: opts.GetOrCreateImagesOnly}); err != nil {
+		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+	}
+	return nil
+}
+
+func (lockManager *FileLockManager) UnlockStagesAndImages(projectName string) error {
+	lockName := fmt.Sprintf("%s.stages_and_images", projectName)
+	logboek.Debug.LogF("-- FileLockManager.UnlockStagesAndImages(%s) lockName=%q\n", projectName, lockName)
+	if err := shluz.Unlock(lockName); err != nil {
+		return fmt.Errorf("shluz unlock %s error: %s", lockName)
+	}
+	return nil
 }

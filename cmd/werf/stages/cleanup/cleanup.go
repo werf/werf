@@ -135,5 +135,5 @@ func runSync() error {
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.StagesCleanup(projectName, imagesRepo, stagesManager, stagesCleanupOptions)
+	return cleaning.StagesCleanup(projectName, imagesRepo, storageLockManager, stagesManager, stagesCleanupOptions)
 }
