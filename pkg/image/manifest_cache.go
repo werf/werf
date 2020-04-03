@@ -31,10 +31,10 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 }
 
 func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
-	if err := cache.lock(); err != nil {
+	if err := cache.lock(imageName); err != nil {
 		return nil, err
 	}
-	defer cache.unlock()
+	defer cache.unlock(imageName)
 
 	now := time.Now()
 
@@ -52,10 +52,10 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 }
 
 func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
-	if err := cache.lock(); err != nil {
+	if err := cache.lock(imgInfo.Name); err != nil {
 		return err
 	}
-	defer cache.unlock()
+	defer cache.unlock(imgInfo.Name)
 
 	record := &ManifestCacheRecord{
 		AccessTimestamp: time.Now().Unix(),
@@ -106,13 +106,18 @@ func (cache *ManifestCache) constructFilePathForImage(imageName string) string {
 	return filepath.Join(cache.CacheDir, util.Sha256Hash(imageName))
 }
 
-func (cache *ManifestCache) lock() error {
-	if err := shluz.Lock(cache.CacheDir, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("shluz lock %s failed: %s", cache.CacheDir, err)
+func (cache *ManifestCache) lock(imageName string) error {
+	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
+	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+		return fmt.Errorf("shluz lock %s failed: %s", lockName, err)
 	}
 	return nil
 }
 
-func (cache *ManifestCache) unlock() error {
-	return shluz.Unlock(cache.CacheDir)
+func (cache *ManifestCache) unlock(imageName string) error {
+	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
+	if err := shluz.Unlock(lockName); err != nil {
+		return fmt.Errorf("shluz unlock %s failed: %s", lockName, err)
+	}
+	return nil
 }
