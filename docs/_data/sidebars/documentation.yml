@@ -54,9 +54,6 @@ entries:
         - title: Stages and Images
           url: /documentation/reference/stages_and_images.html
 
-        - title: Registry Authorization
-          url: /documentation/reference/registry_authorization.html
-
         - title: Build Process
           url: /documentation/reference/build_process.html
 
@@ -83,6 +80,9 @@ entries:
 
         - title: Cleaning Process
           url: /documentation/reference/cleaning_process.html
+
+        - title: Working with Docker registries
+          url: /documentation/reference/working_with_docker_registries.html
 
         - title: Plugging into CI/CD
           sfi:
@@ -395,9 +395,6 @@ entries:
         - title: Стадии и образы
           url: /documentation/reference/stages_and_images.html
 
-        - title: Авторизация в Docker registry
-          url: /documentation/reference/registry_authorization.html
-
         - title: Сборка
           url: /documentation/reference/build_process.html
 
@@ -424,6 +421,9 @@ entries:
 
         - title: Очистка
           url: /documentation/reference/cleaning_process.html
+
+        - title: Работа с Docker registries
+          url: /documentation/reference/working_with_docker_registries.html
 
         - title: Работа с CI/CD
           sfi:
