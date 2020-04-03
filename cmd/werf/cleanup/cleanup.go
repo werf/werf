@@ -189,7 +189,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(projectName, imagesRepo, stagesManager, cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(projectName, imagesRepo, storageLockManager, stagesManager, cleanupOptions); err != nil {
 		return err
 	}
 
