@@ -9,6 +9,6 @@ import (
 var CommonManifestCache *ManifestCache
 
 func Init() error {
-	CommonManifestCache = NewManifestCache(filepath.Join(werf.GetLocalCacheDir(), "manifest_cache", ManifestCacheVersion))
+	CommonManifestCache = NewManifestCache(filepath.Join(werf.GetLocalCacheDir(), "manifests", ManifestCacheVersion))
 	return nil
 }

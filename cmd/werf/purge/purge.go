@@ -147,7 +147,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(projectName, imagesRepo, stagesManager, purgeOptions); err != nil {
+	if err := cleaning.Purge(projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
 		return err
 	}
 

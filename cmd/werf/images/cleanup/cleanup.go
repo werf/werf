@@ -131,7 +131,6 @@ func runCleanup() error {
 
 	storageLockManager := &storage.FileLockManager{}
 	_ = stagesStorageCache // FIXME
-	_ = storageLockManager // FIXME
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
@@ -175,7 +174,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesCleanup(imagesRepo, imagesCleanupOptions); err != nil {
+	if err := cleaning.ImagesCleanup(projectName, imagesRepo, storageLockManager, imagesCleanupOptions); err != nil {
 		return err
 	}
 
