@@ -126,5 +126,5 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.StagesPurge(projectName, stagesManager, stagesPurgeOptions)
+	return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
 }

@@ -28,8 +28,13 @@ type ImagesCleanupOptions struct {
 	DryRun                    bool
 }
 
-func ImagesCleanup(imagesRepo storage.ImagesRepo, options ImagesCleanupOptions) error {
+func ImagesCleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
 	m := newImagesCleanupManager(imagesRepo, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
 
 	return logboek.Default.LogProcess(
 		"Running images cleanup",

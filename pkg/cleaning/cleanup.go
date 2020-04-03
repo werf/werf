@@ -1,6 +1,8 @@
 package cleaning
 
 import (
+	"fmt"
+
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/stages_manager"
 
@@ -12,8 +14,13 @@ type CleanupOptions struct {
 	StagesCleanupOptions
 }
 
-func Cleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
+func Cleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
 	m := newCleanupManager(projectName, imagesRepo, stagesManager, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
 
 	if err := logboek.Default.LogProcess(
 		"Running images cleanup",
