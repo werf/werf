@@ -60,12 +60,12 @@ func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage cont
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitLatestPatchStage) SelectCacheImage(images []*image.Info) (*image.Info, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *GitLatestPatchStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(c Conveyor) (string, error) {
