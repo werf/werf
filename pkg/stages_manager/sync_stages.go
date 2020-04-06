@@ -17,7 +17,7 @@ type SyncStagesOptions struct {
 // SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
 // Repeatedly calling SyncStages will copy stages from source stages storage to destination, that already exists in the destination.
 // SyncStages will not delete excess stages from destination storage, that does not exists in the source.
-func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
+func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, storageManager storage.LockManager, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
 	isOk := false
 	logboek.Default.LogProcessStart(fmt.Sprintf("Sync %q project stages", projectName), logboek.LevelLogProcessStartOptions{})
 	defer func() {
@@ -27,6 +27,11 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 		}
 	}()
+
+	if err := storageManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
+		return fmt.Errorf("unable to lock stages and images of project %q: %s", projectName, err)
+	}
+	defer storageManager.UnlockStagesAndImages(projectName)
 
 	logboek.Default.LogFDetails("Source      — %s\n", fromStagesStorage.String())
 	logboek.Default.LogFDetails("Destination — %s\n", toStagesStorage.String())
@@ -102,7 +107,7 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 
 		if desc.error != nil {
 			failedCounter++
-			logboek.LogErrorF("%5d/%d failed\n", failedCounter, len(stagesToSync))
+			logboek.LogErrorF("%5d/%d failed: %s\n", failedCounter, len(stagesToSync), desc.error)
 			errors = append(errors, desc.error)
 		} else {
 			succeededCounter++
