@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/flant/werf/pkg/image"
@@ -110,10 +112,12 @@ func runSync() error {
 		return err
 	}
 
+	storageLockManager := &storage.FileLockManager{}
+
 	_, err = common.GetSynchronization(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
+	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
 }
