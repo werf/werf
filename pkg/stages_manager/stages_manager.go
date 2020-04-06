@@ -2,8 +2,13 @@ package stages_manager
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/image"
 
@@ -17,19 +22,20 @@ import (
 )
 
 type StagesManager struct {
-	ProjectName string
+	StagesStorageByProjectDir string
+	ProjectName               string
 
 	StorageLockManager storage.LockManager
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
 }
 
-func NewStagesManager(projectName string, storageLockManager storage.LockManager, stagesStorage storage.StagesStorage, stagesStorageCache storage.StagesStorageCache) *StagesManager {
+func NewStagesManager(projectName string, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StagesManager {
 	return &StagesManager{
-		ProjectName:        projectName,
-		StorageLockManager: storageLockManager,
-		StagesStorage:      stagesStorage,
-		StagesStorageCache: stagesStorageCache,
+		StagesStorageByProjectDir: filepath.Join(werf.GetServiceDir(), "stages_storage_by_project"),
+		ProjectName:               projectName,
+		StorageLockManager:        storageLockManager,
+		StagesStorageCache:        stagesStorageCache,
 	}
 }
 
@@ -42,6 +48,112 @@ func NewStagesManager(projectName string, storageLockManager storage.LockManager
 //return m.StagesStorage.GetAllStages(m.ProjectName)
 //}
 //}
+
+func (m *StagesManager) readCurrentProjectStagesStorageAddress() (string, error) {
+	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		return "", nil
+	} else if err != nil {
+		return "", fmt.Errorf("error accessing %s: %s", f, err)
+	}
+
+	if dataBytes, err := ioutil.ReadFile(f); err != nil {
+		return "", fmt.Errorf("error reading %s: %s", f, err)
+	} else {
+		return strings.TrimSpace(string(dataBytes)), nil
+	}
+}
+
+func (m *StagesManager) checkProjectStagesStorageNotChanged(stagesStorageAddress string) error {
+	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
+		return err
+	} else if currentStagesStorageAddress != stagesStorageAddress {
+		return fmt.Errorf(
+			`Project %q already uses another stages storage %q!
+Run the following command to move existing project stages to the new stages storage:
+'werf stages mv --from-stages-storage=%s --to-stages-storage=%s'
+
+Or simply switch project to the new stages storage by the following command:
+'werf stages switch -s %s'`,
+			m.ProjectName, currentStagesStorageAddress, currentStagesStorageAddress, stagesStorageAddress, stagesStorageAddress)
+	}
+
+	return nil
+}
+
+func (m *StagesManager) writeProjectStagesStorage(stagesStorageAddress string) error {
+	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
+	d := filepath.Dir(f)
+	if err := os.MkdirAll(d, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating dir %s: %s", d, err)
+	}
+	if err := ioutil.WriteFile(f, []byte(fmt.Sprintf("%s\n", stagesStorageAddress)), 0644); err != nil {
+		return fmt.Errorf("error writing %s: %s", f, err)
+	}
+	return nil
+}
+
+func (m *StagesManager) SwitchStagesStorage(newStagesStorage storage.StagesStorage) error {
+	lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
+	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+		return err
+	}
+	defer shluz.Unlock(lockName)
+
+	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
+		return err
+	} else if currentStagesStorageAddress != "" {
+		if currentStagesStorageAddress == newStagesStorage.Address() {
+			logboek.Default.LogFDetails("Stages storage not changed — %s\n", currentStagesStorageAddress)
+			m.StagesStorage = newStagesStorage
+			return nil
+		} else {
+			logboek.Default.LogFDetails("Old stages storage — %s\n", currentStagesStorageAddress)
+		}
+	}
+	logboek.Default.LogFDetails("New stages storage — %s\n", newStagesStorage.Address())
+
+	if err := m.writeProjectStagesStorage(newStagesStorage.Address()); err != nil {
+		return err
+	}
+	m.StagesStorage = newStagesStorage
+	return nil
+}
+
+func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) error {
+	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
+		if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+			return err
+		}
+		defer shluz.Unlock(lockName)
+
+		if _, err := os.Stat(f); os.IsNotExist(err) {
+			if err := m.writeProjectStagesStorage(stagesStorage.Address()); err != nil {
+				return err
+			}
+			m.StagesStorage = stagesStorage
+			return nil
+		} else if err != nil {
+			return fmt.Errorf("error accessing %s: %s", f, err)
+		} else {
+			if err := m.checkProjectStagesStorageNotChanged(stagesStorage.Address()); err != nil {
+				return err
+			}
+			m.StagesStorage = stagesStorage
+			return nil
+		}
+	} else if err != nil {
+		return fmt.Errorf("error accessing %s: %s", f, err)
+	} else {
+		if err := m.checkProjectStagesStorageNotChanged(stagesStorage.Address()); err != nil {
+			return err
+		}
+		m.StagesStorage = stagesStorage
+		return nil
+	}
+}
 
 func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {
 	// TODO: optimize, get list from coherent stages storage cache
@@ -77,7 +189,7 @@ func (m *StagesManager) FetchStage(stg stage.Interface) error {
 	if freshStageDescription, err := m.StagesStorage.GetStageDescription(m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 		return err
 	} else if freshStageDescription == nil {
-		// TODO: stages manager should report to conveyor that conveoyor should be reset
+		// TODO: stages manager should report to the conveyor that conveoyor should be reset
 		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v4", m.ProjectName, stg.GetSignature()))
 	}
 
@@ -135,6 +247,7 @@ func (m *StagesManager) SelectSuitableStage(stg stage.Interface, stages []*image
 
 	return stageDesc, nil
 }
+
 func (m *StagesManager) AtomicStoreStagesBySignatureToCache(stageName, stageSig string, stageIDs []image.StageID) error {
 	if err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
 		return fmt.Errorf("error locking stage %s cache by signature %s: %s", stageName, stageSig, err)

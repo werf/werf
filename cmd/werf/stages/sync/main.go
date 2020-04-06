@@ -1,38 +1,32 @@
-package purge
+package sync
 
 import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/image"
-
 	"github.com/flant/werf/pkg/stages_manager"
-	"github.com/flant/werf/pkg/storage"
 
-	"github.com/spf13/cobra"
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/logboek"
 	"github.com/flant/shluz"
-
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
+	stages_common "github.com/flant/werf/cmd/werf/stages/common"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/werf"
+	"github.com/spf13/cobra"
 )
 
-var cmdData struct {
-	Force bool
-}
-
+var cmdData stages_common.SyncCmdData
 var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "purge",
+		Use:                   "sync",
 		DisableFlagsInUseLine: true,
-		Short:                 "Purge project stages from stages storage",
-		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
+		Short:                 "Sync project stages from one stages storage to another",
+		Long:                  common.GetLongCommandDescription("Sync project stages from one stages storage to another"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -42,7 +36,7 @@ func NewCmd() *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runPurge()
+				return runSync()
 			})
 		},
 	}
@@ -51,23 +45,23 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storages")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDryRun(&commonCmdData, cmd)
-	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
+	stages_common.SetupFromStagesStorage(&commonCmdData, &cmdData, cmd)
+	stages_common.SetupToStagesStorage(&commonCmdData, &cmdData, cmd)
+	stages_common.SetupRemoveSource(&cmdData, cmd)
+	stages_common.SetupCleanupLocalCache(&cmdData, cmd)
 
 	return cmd
 }
 
-func runPurge() error {
+func runSync() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -106,16 +100,13 @@ func runPurge() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime)
 	if err != nil {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	storageLockManager := &storage.FileLockManager{}
-
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	toStagesStorage, err := stages_common.NewToStagesStorage(&commonCmdData, &cmdData, containerRuntime)
+	if err != nil {
 		return err
 	}
 
@@ -124,11 +115,5 @@ func runPurge() error {
 		return err
 	}
 
-	stagesPurgeOptions := cleaning.StagesPurgeOptions{
-		RmContainersThatUseWerfImages: cmdData.Force,
-		DryRun:                        *commonCmdData.DryRun,
-	}
-
-	logboek.LogOptionalLn()
-	return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
+	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
 }

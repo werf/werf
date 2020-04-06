@@ -32,6 +32,7 @@ type StagesStorage interface {
 	GetManagedImages(projectName string) ([]string, error)
 
 	String() string
+	Address() string
 }
 
 type StagesStorageOptions struct {
