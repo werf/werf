@@ -74,7 +74,7 @@ _Зависимости стадии_ — это данные, которые н
 Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
 
 <div class="tabs">
-  <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn">Dockerfile-образ</a>
+  <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn active">Dockerfile-образ</a>
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn">Stapel-образ</a>
   <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Stapel-артефакт</a>
 </div>

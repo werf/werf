@@ -78,7 +78,7 @@ Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
 <div class="tabs">
-  <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn">Dockerfile Image</a>
+  <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn active">Dockerfile Image</a>
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn">Stapel Image</a>
   <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Stapel Artifact</a>
 </div>
