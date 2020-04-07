@@ -124,7 +124,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	}
 
 	for _, imageToProcess := range imagesToProcess {
-		if !werfConfig.HasImage(imageToProcess) {
+		if !werfConfig.HasImageOrArtifact(imageToProcess) {
 			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
 		}
 	}

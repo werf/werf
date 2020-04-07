@@ -660,6 +660,8 @@ func getImageConfigsInOrder(c *Conveyor) []config.ImageInterface {
 			imagesInBuildOrder = c.werfConfig.ImageTree(image)
 		case *config.ImageFromDockerfile:
 			imagesInBuildOrder = append(imagesInBuildOrder, image)
+		case *config.StapelImageArtifact:
+			imagesInBuildOrder = append(imagesInBuildOrder, image)
 		}
 
 		for i := 0; i < len(imagesInBuildOrder); i++ {
@@ -679,7 +681,12 @@ func getImageConfigsToProcess(c *Conveyor) []config.ImageInterface {
 		imageConfigsToProcess = c.werfConfig.GetAllImages()
 	} else {
 		for _, imageName := range c.imageNamesToProcess {
-			imageToProcess := c.werfConfig.GetImage(imageName)
+			var imageToProcess config.ImageInterface
+			imageToProcess = c.werfConfig.GetImage(imageName)
+			if imageToProcess == nil {
+				imageToProcess = c.werfConfig.GetArtifact(imageName)
+			}
+
 			if imageToProcess == nil {
 				logboek.LogWarnF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
 			} else {
