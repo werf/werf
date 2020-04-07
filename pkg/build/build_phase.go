@@ -12,10 +12,10 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/image"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -118,7 +118,7 @@ func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	if err != nil {
 		return fmt.Errorf("unable to calculate image %s stages-signature: %s", img.GetName(), err)
 	}
-	img.SetStagesSignature(stagesSig)
+	img.SetContentSignature(stagesSig)
 
 	return nil
 }
@@ -313,6 +313,12 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		phase.PrevBuiltImage = phase.PrevImage
 		logboek.Debug.LogF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
 	}
+
+	stageContentSig, err := calculateSignature(fmt.Sprintf("%s-content", stg.Name()), "", phase.PrevNonEmptyStage, phase.Conveyor)
+	if err != nil {
+		return fmt.Errorf("unable to calculate stage %s content-signature: %s", stg.Name(), err)
+	}
+	stg.SetContentSignature(stageContentSig)
 
 	return nil
 }

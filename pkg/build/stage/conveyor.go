@@ -3,10 +3,16 @@ package stage
 import "github.com/flant/werf/pkg/build/import_server"
 
 type Conveyor interface {
-	GetImageStagesSignature(imageName string) string
-	GetImageLastStageImageName(imageName string) string
-	GetImageLastStageImageID(imageName string) string
+	GetImageStageContentSignature(imageName, stageName string) string
+	GetImageContentSignature(imageName string) string
+
+	GetImageNameForLastImageStage(imageName string) string
+	GetImageIDForLastImageStage(imageName string) string
+
+	GetImageNameForImageStage(imageName, stageName string) string
+	GetImageIDForImageStage(imageName, stageName string) string
+
 	SetBuildingGitStage(imageName string, stageName StageName)
 	GetBuildingGitStage(imageName string) StageName
-	GetImportServer(imageName string) (import_server.ImportServer, error)
+	GetImportServer(imageName, stageName string) (import_server.ImportServer, error)
 }

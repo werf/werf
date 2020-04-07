@@ -23,6 +23,9 @@ type Interface interface {
 	SetSignature(signature string)
 	GetSignature() string
 
+	SetContentSignature(contentSignature string)
+	GetContentSignature() string
+
 	SetImage(image.ImageInterface)
 	GetImage() image.ImageInterface
 

@@ -227,8 +227,8 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
 			func() error {
 
-				if err := phase.publishImageByTag(img, img.GetStagesSignature(), tag_strategy.StagesSignature, existingTags); err != nil {
-					return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetStagesSignature(), err)
+				if err := phase.publishImageByTag(img, img.GetContentSignature(), tag_strategy.StagesSignature, existingTags); err != nil {
+					return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetContentSignature(), err)
 				}
 
 				return nil

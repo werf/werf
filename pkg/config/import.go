@@ -10,6 +10,7 @@ type Import struct {
 	ArtifactName string
 	Before       string
 	After        string
+	Stage        string
 
 	raw *rawImport
 }
@@ -35,10 +36,16 @@ func (c *Import) validate() error {
 		return newDetailedConfigError(fmt.Sprintf("invalid artifact stage `before: %s` for import: expected install or setup!", c.Before), c.raw, c.raw.rawStapelImage.doc)
 	} else if c.After != "" && checkInvalidRelation(c.After) {
 		return newDetailedConfigError(fmt.Sprintf("invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.raw, c.raw.rawStapelImage.doc)
+	} else if c.Stage != "" && checkInvalidStage(c.Stage) {
+		return newDetailedConfigError(fmt.Sprintf("invalid stage `stage: %s` for import: expected beforeInstall, install, beforeSetup or setup", c.Stage), c.raw, c.raw.rawStapelImage.doc)
 	}
 	return nil
 }
 
 func checkInvalidRelation(rel string) bool {
 	return !(rel == "install" || rel == "setup")
+}
+
+func checkInvalidStage(stage string) bool {
+	return !(stage == "beforeInstall" || stage == "install" || stage == "beforeSetup" || stage == "setup")
 }
