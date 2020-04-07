@@ -97,8 +97,12 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 	return c
 }
 
-func (c *Conveyor) GetImportServer(imageName string) (import_server.ImportServer, error) {
-	if srv, hasKey := c.importServers[imageName]; hasKey {
+func (c *Conveyor) GetImportServer(imageName, stageName string) (import_server.ImportServer, error) {
+	importServerName := imageName
+	if stageName != "" {
+		importServerName += "/" + stageName
+	}
+	if srv, hasKey := c.importServers[importServerName]; hasKey {
 		return srv, nil
 	}
 
@@ -110,7 +114,13 @@ func (c *Conveyor) GetImportServer(imageName string) (import_server.ImportServer
 			return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
 		}
 
-		dockerImageName := c.GetImageLastStageImageName(imageName)
+		var dockerImageName string
+		if stageName == "" {
+			dockerImageName = c.GetImageNameForLastImageStage(imageName)
+		} else {
+			dockerImageName = c.GetImageNameForImageStage(imageName, stageName)
+		}
+
 		var err error
 		srv, err = import_server.RunRsyncServer(dockerImageName, tmpDir)
 		if srv != nil {
@@ -129,7 +139,7 @@ func (c *Conveyor) GetImportServer(imageName string) (import_server.ImportServer
 		return nil, err
 	}
 
-	c.importServers[imageName] = srv
+	c.importServers[importServerName] = srv
 
 	return srv, nil
 }
@@ -232,7 +242,7 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 		if tagStrategy == tag_strategy.StagesSignature {
 			for _, img := range c.imagesInOrder {
 				if img.GetName() == imageName {
-					tag = img.GetStagesSignature()
+					tag = img.GetContentSignature()
 					break
 				}
 			}
@@ -565,16 +575,37 @@ func (c *Conveyor) GetImage(name string) *Image {
 	panic(fmt.Sprintf("Image '%s' not found!", name))
 }
 
-func (c *Conveyor) GetImageStagesSignature(imageName string) string {
-	return c.GetImage(imageName).GetStagesSignature()
+func (c *Conveyor) GetImageStageContentSignature(imageName, stageName string) string {
+	return c.getImageStage(imageName, stageName).GetContentSignature()
 }
 
-func (c *Conveyor) GetImageLastStageImageName(imageName string) string {
+func (c *Conveyor) GetImageContentSignature(imageName string) string {
+	return c.GetImage(imageName).GetContentSignature()
+}
+
+func (c *Conveyor) getImageStage(imageName, stageName string) stage.Interface {
+	if stg := c.GetImage(imageName).GetStage(stage.StageName(stageName)); stg != nil {
+		return stg
+	} else {
+		// FIXME: find first existing stage after specified unexisting
+		return c.GetImage(imageName).GetLastNonEmptyStage()
+	}
+}
+
+func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {
 	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().Name()
 }
 
-func (c *Conveyor) GetImageLastStageImageID(imageName string) string {
+func (c *Conveyor) GetImageNameForImageStage(imageName, stageName string) string {
+	return c.getImageStage(imageName, stageName).GetImage().Name()
+}
+
+func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
 	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().ID()
+}
+
+func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
+	return c.getImageStage(imageName, stageName).GetImage().ID()
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {

@@ -223,7 +223,7 @@ func runRun() error {
 		return err
 	}
 
-	dockerImageName := c.GetImageLastStageImageName(imageName)
+	dockerImageName := c.GetImageNameForLastImageStage(imageName)
 	var dockerRunArgs []string
 	dockerRunArgs = append(dockerRunArgs, cmdData.DockerOptions...)
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)

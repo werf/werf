@@ -44,16 +44,27 @@ func (s *ImportsStage) GetDependencies(c Conveyor, _, _ imagePkg.ImageInterface)
 	var args []string
 
 	for _, elm := range s.imports {
+		var imgName string
 		if elm.ImageName != "" {
-			args = append(args, c.GetImageStagesSignature(elm.ImageName))
+			imgName = elm.ImageName
 		} else {
-			args = append(args, c.GetImageStagesSignature(elm.ArtifactName))
+			imgName = elm.ArtifactName
+		}
+
+		if elm.Stage == "" {
+			args = append(args, c.GetImageContentSignature(imgName))
+		} else {
+			args = append(args, c.GetImageStageContentSignature(imgName, elm.Stage))
 		}
 
 		args = append(args, elm.Add, elm.To)
 		args = append(args, elm.Group, elm.Owner)
 		args = append(args, elm.IncludePaths...)
 		args = append(args, elm.ExcludePaths...)
+
+		if elm.Stage != "" {
+			args = append(args, elm.Stage)
+		}
 	}
 
 	return util.Sha256Hash(args...), nil
@@ -68,7 +79,7 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface
 			importImage = elm.ArtifactName
 		}
 
-		srv, err := c.GetImportServer(importImage)
+		srv, err := c.GetImportServer(importImage, elm.Stage)
 		if err != nil {
 			return fmt.Errorf("unable to get import server for image %q: %s", importImage, err)
 		}
@@ -78,13 +89,13 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
 
-		var labelKey, labelValue string
-		if elm.ImageName != "" {
-			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ImageName)
-			labelValue = c.GetImageLastStageImageID(elm.ImageName)
+		labelKey := imagePkg.WerfImportLabelPrefix + slug.Slug(importImage)
+
+		var labelValue string
+		if elm.Stage == "" {
+			labelValue = c.GetImageIDForLastImageStage(importImage)
 		} else {
-			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ArtifactName)
-			labelValue = c.GetImageLastStageImageID(elm.ArtifactName)
+			labelValue = c.GetImageIDForImageStage(importImage, elm.Stage)
 		}
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})

@@ -5,6 +5,7 @@ type rawImport struct {
 	ArtifactName string `yaml:"artifact,omitempty"`
 	Before       string `yaml:"before,omitempty"`
 	After        string `yaml:"after,omitempty"`
+	Stage        string `yaml:"stage,omitempty"`
 
 	rawArtifactExport `yaml:",inline"`
 	rawStapelImage    *rawStapelImage `yaml:"-"` // parent
@@ -59,6 +60,7 @@ func (c *rawImport) toDirective() (imp *Import, err error) {
 	imp.ArtifactName = c.ArtifactName
 	imp.Before = c.Before
 	imp.After = c.After
+	imp.Stage = c.Stage
 
 	imp.raw = c
 
