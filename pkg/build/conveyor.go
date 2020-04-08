@@ -109,7 +109,13 @@ func (c *Conveyor) GetImportServer(imageName, stageName string) (import_server.I
 	var srv *import_server.RsyncServer
 
 	if err := logboek.Info.LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName), logboek.LevelLogProcessOptions{}, func() error {
-		tmpDir := path.Join(c.tmpDir, "import-server", imageName)
+		var tmpDir string
+		if stageName == "" {
+			tmpDir = filepath.Join(c.tmpDir, "import-server", imageName)
+		} else {
+			tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName))
+		}
+
 		if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
 		}
