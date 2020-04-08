@@ -139,7 +139,7 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleModifyFileDiff(line)
 		}
 		if strings.HasPrefix(line, "index ") {
-			return p.handleModifyFileDiff(line)
+			return p.handleIndexDiffLine(line)
 		}
 		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
 
@@ -293,6 +293,46 @@ func (p *diffParser) handleNewFileDiff(line string) error {
 func (p *diffParser) handleModifyFileDiff(line string) error {
 	p.state = modifyFileDiff
 	return p.writeOutLine(line)
+}
+
+// TODO: remove index line from resulting patch completely in v1.2
+func (p *diffParser) handleIndexDiffLine(line string) error {
+	p.state = modifyFileDiff
+
+	parts := strings.SplitN(line, " ", 3)
+	if len(parts) != 3 {
+		// unexpected format
+		return p.writeOutLine(line)
+	}
+
+	prefix, hashes, suffix := parts[0], parts[1], parts[2]
+
+	hashesParts := strings.SplitN(hashes, "..", 2)
+	if len(hashesParts) != 2 {
+		// unexpected format
+		return p.writeOutLine(line)
+	}
+
+	stripHashFunc := func(h string) string {
+		if len(h) < 8 {
+			return h
+		}
+		return h[:8]
+	}
+
+	var leftHashes []string
+	for _, h := range strings.Split(hashesParts[0], ",") {
+		leftHashes = append(leftHashes, stripHashFunc(h))
+	}
+
+	var rightHashes []string
+	for _, h := range strings.Split(hashesParts[1], ",") {
+		rightHashes = append(rightHashes, stripHashFunc(h))
+	}
+
+	newLine := fmt.Sprintf("%s %s..%s %s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","), suffix)
+
+	return p.writeOutLine(newLine)
 }
 
 func (p *diffParser) handleModifyFilePathA(line string) error {
