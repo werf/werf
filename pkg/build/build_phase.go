@@ -130,7 +130,7 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 	if phase.CalculateStagesOnly {
 		return phase.calculateStage(img, stg)
 	} else {
-		if stg.Name() != "from" {
+		if stg.Name() != "from" && stg.Name() != "dockerfile" {
 			if phase.StagesIterator.PrevNonEmptyStage == nil {
 				panic(fmt.Sprintf("expected PrevNonEmptyStage to be set for image %q stage %s", img.GetName(), stg.Name()))
 			}
@@ -191,11 +191,20 @@ func (phase *BuildPhase) fetchBaseImageForStage(img *Image, stg stage.Interface)
 		if err := img.FetchBaseImage(phase.Conveyor); err != nil {
 			return fmt.Errorf("unable to fetch base image %s for stage %s: %s", img.GetBaseImage().Name(), stg.LogDetailedName(), err)
 		}
+	} else if stg.Name() == "dockerfile" {
+		return nil
 	} else {
 		return phase.Conveyor.StagesManager.FetchStage(phase.StagesIterator.PrevBuiltStage)
 	}
 
 	return nil
+}
+
+func castToStageImage(img container_runtime.ImageInterface) *container_runtime.StageImage {
+	if img == nil {
+		return nil
+	}
+	return img.(*container_runtime.StageImage)
 }
 
 func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
@@ -216,12 +225,12 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
-			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), stageDesc.Info.Name)
+			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
 			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
 		} else {
 			// Will build a new image
-			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), uuid.New().String())
+			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), uuid.New().String())
 			stg.SetImage(i)
 		}
 	}

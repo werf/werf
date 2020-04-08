@@ -52,62 +52,64 @@ func (i *StageImage) GetID() string {
 
 func (i *StageImage) Build(options BuildOptions) error {
 	if i.dockerfileImageBuilder != nil {
-		return i.dockerfileImageBuilder.Build()
-	}
+		if err := i.dockerfileImageBuilder.Build(); err != nil {
+			return err
+		}
+	} else {
+		containerLockName := ContainerLockName(i.container.Name())
+		if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
+			return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
+		}
+		defer shluz.Unlock(containerLockName)
 
-	containerLockName := ContainerLockName(i.container.Name())
-	if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
-	}
-	defer shluz.Unlock(containerLockName)
+		if debugDockerRunCommand() {
+			runArgs, err := i.container.prepareRunArgs()
+			if err != nil {
+				return err
+			}
 
-	if debugDockerRunCommand() {
-		runArgs, err := i.container.prepareRunArgs()
-		if err != nil {
+			fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
+
+			if len(i.container.prepareAllRunCommands()) != 0 {
+				fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+			}
+		}
+
+		if containerRunErr := i.container.run(); containerRunErr != nil {
+			if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
+				if options.IntrospectBeforeError {
+					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
+					if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
+						return fmt.Errorf("introspect error failed: %s", err)
+					}
+				} else if options.IntrospectAfterError {
+					if err := i.Commit(); err != nil {
+						return fmt.Errorf("introspect error failed: %s", err)
+					}
+
+					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
+					if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
+						return fmt.Errorf("introspect error failed: %s", err)
+					}
+				}
+
+				if err := i.container.rm(); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
+				}
+			}
+
+			return containerRunErr
+		}
+
+		if err := i.Commit(); err != nil {
 			return err
 		}
 
-		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
-
-		if len(i.container.prepareAllRunCommands()) != 0 {
-			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+		if err := i.container.rm(); err != nil {
+			return err
 		}
-	}
-
-	if containerRunErr := i.container.run(); containerRunErr != nil {
-		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
-			if options.IntrospectBeforeError {
-				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-
-				if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
-				}
-			} else if options.IntrospectAfterError {
-				if err := i.Commit(); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
-				}
-
-				logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-
-				if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
-				}
-			}
-
-			if err := i.container.rm(); err != nil {
-				return fmt.Errorf("introspect error failed: %s", err)
-			}
-		}
-
-		return containerRunErr
-	}
-
-	if err := i.Commit(); err != nil {
-		return err
-	}
-
-	if err := i.container.rm(); err != nil {
-		return err
 	}
 
 	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(i.MustGetBuiltId()); err != nil {
