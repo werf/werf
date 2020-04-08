@@ -45,7 +45,7 @@ func (iterator *StagesIterator) OnImageStage(img *Image, stg stage.Interface, on
 		return fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
 
-	if stg.Name() != "from" {
+	if stg.Name() != "from" && stg.Name() != "dockerfile" {
 		if iterator.PrevStage == nil {
 			panic(fmt.Sprintf("expected PrevStage to be set for image %q stage %s!", img.GetName(), stg.Name()))
 		}
