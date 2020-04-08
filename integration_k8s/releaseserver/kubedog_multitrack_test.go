@@ -12,7 +12,7 @@ import (
 )
 
 func releaseResourcesStatusProgressLine(outputLine string) string {
-	prefix := "│ │ │ "
+	prefix := "│ │ "
 	if strings.HasPrefix(outputLine, prefix) {
 		return strings.Trim(outputLine, prefix)
 	}

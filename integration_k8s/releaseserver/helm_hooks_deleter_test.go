@@ -28,7 +28,7 @@ var _ = Describe("Helm hooks deleter", func() {
 				OutputLineHandler: func(line string) {
 					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/migrate: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.HasPrefix(line, "│ Deleting resource Job/migrate from release") {
+					if strings.HasPrefix(line, "Deleting Job/migrate of release") {
 						gotDeletingHookLine = true
 					}
 				},
@@ -78,7 +78,7 @@ var _ = Describe("Helm hooks deleter", func() {
 				OutputLineHandler: func(line string) {
 					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/myhook: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.HasPrefix(line, "│ Deleting resource Job/myhook from release") {
+					if strings.HasPrefix(line, "Deleting Job/myhook of release") {
 						gotDeletingHookLine = true
 					}
 				},
