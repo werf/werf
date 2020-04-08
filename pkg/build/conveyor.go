@@ -693,11 +693,9 @@ func getImageConfigsInOrder(c *Conveyor) []config.ImageInterface {
 		var imagesInBuildOrder []config.ImageInterface
 
 		switch image := imageInterf.(type) {
-		case *config.StapelImage:
+		case *config.StapelImage, *config.StapelImageArtifact:
 			imagesInBuildOrder = c.werfConfig.ImageTree(image)
 		case *config.ImageFromDockerfile:
-			imagesInBuildOrder = append(imagesInBuildOrder, image)
-		case *config.StapelImageArtifact:
 			imagesInBuildOrder = append(imagesInBuildOrder, image)
 		}
 
