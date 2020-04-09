@@ -8,8 +8,8 @@ import (
 
 func NewSimplePathMatcher(basePath string, paths []string, greedySearch bool) *SimplePathMatcher {
 	return &SimplePathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: basePath},
-		paths:            paths,
+		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
+		paths:            formatPaths(paths),
 		isGreedySearchOn: greedySearch,
 	}
 }
@@ -33,6 +33,8 @@ func (f *SimplePathMatcher) String() string {
 }
 
 func (f *SimplePathMatcher) MatchPath(path string) bool {
+	path = formatPath(path)
+
 	if !isRel(path, f.basePath) {
 		return false
 	}
@@ -49,7 +51,7 @@ func (f *SimplePathMatcher) MatchPath(path string) bool {
 }
 
 func (f *SimplePathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(path)
+	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
 	if f.isGreedySearchOn {
 		return false, isMatched || shouldGoThrough
 	} else {

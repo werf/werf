@@ -1,6 +1,7 @@
 package path_matcher
 
 import (
+	"fmt"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -177,20 +178,20 @@ var _ = DescribeTable("git mapping path matcher (ProcessDirOrSubmodulePath)", fu
 
 	for _, matchedPath := range e.matchedPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
-		Ω(isMatched).Should(BeTrue())
-		Ω(shouldWalkThrough).Should(BeFalse())
+		Ω(isMatched).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", matchedPath))
+		Ω(shouldWalkThrough).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", matchedPath))
 	}
 
 	for _, shouldWalkThroughPath := range e.shouldWalkThroughPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
-		Ω(isMatched).Should(BeFalse())
-		Ω(shouldWalkThrough).Should(BeTrue())
+		Ω(isMatched).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", shouldWalkThroughPath))
+		Ω(shouldWalkThrough).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", shouldWalkThroughPath))
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
 		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(notMatchedPath)
-		Ω(isMatched).Should(BeFalse())
-		Ω(shouldWalkThrough).Should(BeFalse())
+		Ω(isMatched).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
+		Ω(shouldWalkThrough).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
 	}
 },
 	Entry("basePath is equal to the path (base)", gitMappingProcessDirOrSubmodulePath{
