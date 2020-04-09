@@ -5,11 +5,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
@@ -28,7 +30,7 @@ func HostCleanup(options HostCleanupOptions) error {
 		DryRun:         options.DryRun,
 	}
 
-	return shluz.WithLock("host-cleanup", shluz.LockOptions{Timeout: time.Second * 600}, func() error {
+	return werf.WithHostLock("host-cleanup", lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		if err := logboek.LogProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeContainersCleanup(commonOptions)
 		}); err != nil {
@@ -41,7 +43,7 @@ func HostCleanup(options HostCleanupOptions) error {
 			return nil
 		}
 
-		return shluz.WithLock("gc", shluz.LockOptions{}, func() error {
+		return werf.WithHostLock("gc", lockgate.AcquireOptions{}, func() error {
 			if err := tmp_manager.GC(commonOptions.DryRun); err != nil {
 				return fmt.Errorf("tmp files gc failed: %s", err)
 			}
@@ -62,7 +64,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
 			imageLockName := container_runtime.ImageLockName(imgName)
-			isLocked, err := shluz.TryLock(imageLockName, shluz.TryLockOptions{})
+			isLocked, err := werf.AcquireHostLock(imageLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
 			}
@@ -72,7 +74,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 				continue
 			}
 
-			shluz.Unlock(imageLockName) // no need to hold a lock
+			werf.ReleaseHostLock(imageLockName) // no need to hold a lock
 
 			imagesToRemove = append(imagesToRemove, img)
 		} else {
@@ -114,7 +116,7 @@ func safeContainersCleanup(options CommonOptions) error {
 
 		err := func() error {
 			containerLockName := container_runtime.ContainerLockName(containerName)
-			isLocked, err := shluz.TryLock(containerLockName, shluz.TryLockOptions{})
+			isLocked, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
 			}
@@ -123,7 +125,7 @@ func safeContainersCleanup(options CommonOptions) error {
 				logboek.Default.LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
-			defer shluz.Unlock(containerLockName)
+			defer werf.ReleaseHostLock(containerLockName)
 
 			if err := containersRemove([]types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)

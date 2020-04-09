@@ -8,9 +8,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/flant/lockgate"
 
-	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/werf"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 const (
@@ -108,16 +110,16 @@ func (cache *ManifestCache) constructFilePathForImage(imageName string) string {
 
 func (cache *ManifestCache) lock(imageName string) error {
 	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
-	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("shluz lock %s failed: %s", lockName, err)
+	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
 	}
 	return nil
 }
 
 func (cache *ManifestCache) unlock(imageName string) error {
 	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
-	if err := shluz.Unlock(lockName); err != nil {
-		return fmt.Errorf("shluz unlock %s failed: %s", lockName, err)
+	if err := werf.ReleaseHostLock(lockName); err != nil {
+		return fmt.Errorf("cannot release %s host lock: %s", lockName, err)
 	}
 	return nil
 }

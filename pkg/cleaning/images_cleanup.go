@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
@@ -114,7 +116,7 @@ func (m *imagesCleanupManager) setImagesRepoImages(repoImages map[string][]*imag
 
 func (m *imagesCleanupManager) run() error {
 	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", m.ImagesRepo.String())
-	return shluz.WithLock(imagesCleanupLockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
+	return werf.WithHostLock(imagesCleanupLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		if err := m.initRepoImages(); err != nil {
 			return err
 		}

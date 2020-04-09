@@ -5,6 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/flant/logboek"
+
+	"github.com/flant/lockgate"
 )
 
 var (
@@ -16,6 +20,8 @@ var (
 	sharedContextDir string
 	localCacheDir    string
 	serviceDir       string
+
+	hostLocker lockgate.Locker
 )
 
 func GetSharedContextDir() string {
@@ -58,6 +64,38 @@ func GetTmpDir() string {
 	return tmpDir
 }
 
+func GetHostLocker() lockgate.Locker {
+	return hostLocker
+}
+
+func SetupHostLockerDefaultOptions(opts lockgate.AcquireOptions) lockgate.AcquireOptions {
+	if opts.OnWaitFunc == nil {
+		opts.OnWaitFunc = onHostLockerWaitFunc
+	}
+	return opts
+}
+
+func WithHostLock(lockName string, opts lockgate.AcquireOptions, f func() error) error {
+	return lockgate.WithAcquire(GetHostLocker(), lockName, SetupHostLockerDefaultOptions(opts), func(_ bool) error {
+		return f()
+	})
+}
+
+func AcquireHostLock(lockName string, opts lockgate.AcquireOptions) (bool, error) {
+	return GetHostLocker().Acquire(lockName, SetupHostLockerDefaultOptions(opts))
+}
+
+func ReleaseHostLock(lockName string) error {
+	return GetHostLocker().Release(lockName)
+}
+
+func onHostLockerWaitFunc(lockName string, doWait func() error) error {
+	logProcessMsg := fmt.Sprintf("Waiting for locked resource %q", lockName)
+	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
+		return doWait()
+	})
+}
+
 func Init(tmpDirOption, homeDirOption string) error {
 	if val, ok := os.LookupEnv("WERF_TMP_DIR"); ok {
 		tmpDir = val
@@ -94,6 +132,12 @@ func Init(tmpDirOption, homeDirOption string) error {
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
 	serviceDir = filepath.Join(homeDir, "service")
+
+	if locker, err := lockgate.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
+		return fmt.Errorf("error creating werf host file locker: %s", err)
+	} else {
+		hostLocker = locker
+	}
 
 	return nil
 }

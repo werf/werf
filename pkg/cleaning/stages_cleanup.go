@@ -6,10 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
@@ -91,7 +93,7 @@ func (m *stagesCleanupManager) run() error {
 	}
 
 	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
-	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
+	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		stages, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			return err

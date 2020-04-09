@@ -5,11 +5,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/docker/docker/api/types"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
 )
@@ -57,10 +59,10 @@ func (i *StageImage) Build(options BuildOptions) error {
 		}
 	} else {
 		containerLockName := ContainerLockName(i.container.Name())
-		if err := shluz.Lock(containerLockName, shluz.LockOptions{}); err != nil {
+		if _, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 		}
-		defer shluz.Unlock(containerLockName)
+		defer werf.ReleaseHostLock(containerLockName)
 
 		if debugDockerRunCommand() {
 			runArgs, err := i.container.prepareRunArgs()

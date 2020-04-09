@@ -2,7 +2,6 @@ package sync
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/flant/werf/pkg/storage"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/cmd/werf/common"
 	stages_common "github.com/flant/werf/cmd/werf/stages/common"
 	"github.com/flant/werf/pkg/container_runtime"
@@ -69,10 +67,6 @@ func runSync() error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

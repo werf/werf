@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
-
 	"github.com/flant/werf/pkg/storage"
 )
 
@@ -57,7 +58,7 @@ func (m *stagesPurgeManager) run() error {
 	}
 
 	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
-	return shluz.WithLock(lockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
+	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		logboek.Default.LogProcessStart("Deleting stages", logboek.LevelLogProcessStartOptions{})
 
 		stages, err := m.StagesManager.GetAllStages()
