@@ -1,13 +1,15 @@
 package path_matcher
 
-import "path/filepath"
+import (
+	"path/filepath"
+)
 
 type basePathMatcher struct {
 	basePath string
 }
 
-func (f *basePathMatcher) TrimFileBaseFilepath(filePath string) string {
-	return trimFileBasePath(filePath, f.basePath)
+func (f *basePathMatcher) TrimFileBaseFilepath(path string) string {
+	return trimFileBasePath(formatPath(path), f.basePath)
 }
 
 func trimFileBasePath(filePath, basePath string) string {
@@ -32,4 +34,21 @@ func rel(targetPath, basePath string) string {
 	}
 
 	return relPath
+}
+
+func formatPaths(paths []string) []string {
+	var result []string
+	for _, path := range paths {
+		result = append(result, formatPath(path))
+	}
+
+	return result
+}
+
+func formatPath(path string) string {
+	if path == "" || path == "." {
+		return ""
+	}
+
+	return filepath.Clean(path)
 }

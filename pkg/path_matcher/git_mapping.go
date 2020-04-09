@@ -11,9 +11,9 @@ import (
 
 func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string, greedySearch bool) *GitMappingPathMatcher {
 	return &GitMappingPathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: basePath},
-		includePaths:     includePaths,
-		excludePaths:     excludePaths,
+		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
+		includePaths:     formatPaths(includePaths),
+		excludePaths:     formatPaths(excludePaths),
 		isGreedySearchOn: greedySearch,
 	}
 }
@@ -34,6 +34,8 @@ func (f *GitMappingPathMatcher) String() string {
 }
 
 func (f *GitMappingPathMatcher) MatchPath(path string) bool {
+	path = formatPath(path)
+
 	if !isRel(path, f.basePath) {
 		return false
 	}
@@ -56,7 +58,7 @@ func (f *GitMappingPathMatcher) MatchPath(path string) bool {
 }
 
 func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(path)
+	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
 	if f.isGreedySearchOn {
 		return false, isMatched || shouldGoThrough
 	} else {
