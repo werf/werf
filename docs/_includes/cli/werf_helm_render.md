@@ -51,9 +51,29 @@ werf helm render [options]
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
-      --images-repo-mode='multirepo':
-            Define how to store images in Repo: multirepo or monorepo (defaults to                  
-            $WERF_IMAGES_REPO_MODE or multirepo)
+      --images-repo-docker-hub-password='':
+            Docker Hub password for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD,     
+            $WERF_REPO_DOCKER_HUB_PASSWORD)
+      --images-repo-docker-hub-token='':
+            Docker Hub token for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_TOKEN,           
+            $WERF_REPO_DOCKER_HUB_TOKEN)
+      --images-repo-docker-hub-username='':
+            Docker Hub username for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_USERNAME,     
+            $WERF_REPO_DOCKER_HUB_USERNAME)
+      --images-repo-github-token='':
+            GitHub token for images repo (default $WERF_IMAGES_REPO_GITHUB_TOKEN,                   
+            $WERF_REPO_GITHUB_TOKEN)
+      --images-repo-implementation='':
+            Choose repo implementation for images repo.
+            The following docker registry implementations are supported: ecr, acr, default,         
+            dockerhub, gcr, github, gitlab, harbor, quay.
+            Default $WERF_IMAGES_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode        
+            (detect implementation by a registry).
+      --images-repo-mode='auto':
+            Define how to store in images repo: multirepo or monorepo.
+            Default $WERF_IMAGES_REPO_MODE or auto mode
+      --insecure-registry=false:
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -81,6 +101,24 @@ werf helm render [options]
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml)
+      --repo-docker-hub-password='':
+            Common Docker Hub password for any stages storage or images repo specified for the      
+            command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
+      --repo-docker-hub-token='':
+            Common Docker Hub token for any stages storage or images repo specified for the command 
+            (default $WERF_REPO_DOCKER_HUB_TOKEN)
+      --repo-docker-hub-username='':
+            Common Docker Hub username for any stages storage or images repo specified for the      
+            command (default $WERF_REPO_DOCKER_HUB_USERNAME)
+      --repo-github-token='':
+            Common GitHub token for any stages storage or images repo specified for the command     
+            (default $WERF_REPO_GITHUB_TOKEN)
+      --repo-implementation='':
+            Choose common repo implementation for any stages storage or images repo specified for   
+            the command.
+            The following docker registry implementations are supported: ecr, acr, default,         
+            dockerhub, gcr, github, gitlab, harbor, quay.
+            Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
@@ -89,6 +127,9 @@ werf helm render [options]
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2)
+      --skip-tls-verify-registry=false:
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tag-by-stages-signature=false:
             Use stages-signature tagging strategy and tag each image by the corresponding signature 
             of last image stage (option can be enabled by specifying                                
