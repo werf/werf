@@ -151,11 +151,11 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 //
 //		err := func() error {
 //			imageLockName := image.ImageLockName(stageImageName)
-//			if err := shluz.Lock(imageLockName, shluz.LockOptions{}); err != nil {
+//			if err := lockgate.Lock(imageLockName, lockgate.LockOptions{}); err != nil {
 //				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 //			}
 //
-//			defer shluz.Unlock(imageLockName)
+//			defer lockgate.Unlock(imageLockName)
 //
 //			stageImage := c.GetStageImage(stage.GetImage().Name())
 //

@@ -2,7 +2,6 @@ package build_and_publish
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/flant/werf/pkg/image"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
@@ -110,10 +108,6 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

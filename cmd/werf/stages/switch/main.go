@@ -2,13 +2,11 @@ package stages_switch
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/flant/werf/pkg/stages_manager"
 	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
@@ -61,10 +59,6 @@ func runSwitch() error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

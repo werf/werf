@@ -10,7 +10,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
@@ -75,10 +74,6 @@ func runCleanup() error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 

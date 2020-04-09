@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/shluz"
+	"github.com/flant/lockgate"
 
 	"github.com/flant/werf/pkg/image"
 
@@ -95,10 +95,10 @@ func (m *StagesManager) writeProjectStagesStorage(stagesStorageAddress string) e
 
 func (m *StagesManager) SwitchStagesStorage(newStagesStorage storage.StagesStorage) error {
 	lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
-	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
 		return err
 	}
-	defer shluz.Unlock(lockName)
+	defer werf.ReleaseHostLock(lockName)
 
 	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
 		return err
@@ -124,10 +124,10 @@ func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) er
 	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
-		if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
+		if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
 			return err
 		}
-		defer shluz.Unlock(lockName)
+		defer werf.ReleaseHostLock(lockName)
 
 		if _, err := os.Stat(f); os.IsNotExist(err) {
 			if err := m.writeProjectStagesStorage(stagesStorage.Address()); err != nil {

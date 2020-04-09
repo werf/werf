@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/lockgate"
+
+	"github.com/flant/werf/pkg/werf"
+
 	"k8s.io/apimachinery/pkg/util/json"
 
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -112,13 +115,12 @@ func (cache *FileStagesStorageCache) DeleteStagesBySignature(projectName, signat
 }
 
 func (cache *FileStagesStorageCache) lock() error {
-	// NOTE maybe shluz is an overkill for this kind of locks
-	if err := shluz.Lock(cache.CacheDir, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("shluz lock %s failed: %s", cache.CacheDir, err)
+	if _, err := werf.AcquireHostLock(cache.CacheDir, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("lock %s failed: %s", cache.CacheDir, err)
 	}
 	return nil
 }
 
 func (cache *FileStagesStorageCache) unlock() error {
-	return shluz.Unlock(cache.CacheDir)
+	return werf.ReleaseHostLock(cache.CacheDir)
 }

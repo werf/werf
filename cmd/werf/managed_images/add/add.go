@@ -2,13 +2,10 @@ package add
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
-
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/container_runtime"
@@ -62,10 +59,6 @@ func run(imageName string) error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
 		return err
 	}
 
