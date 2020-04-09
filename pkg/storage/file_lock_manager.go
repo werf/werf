@@ -115,7 +115,7 @@ func (lockManager *FileLockManager) UnlockStagesAndImages(projectName string) er
 	lockName := fmt.Sprintf("%s.stages_and_images", projectName)
 	logboek.Debug.LogF("-- FileLockManager.UnlockStagesAndImages(%s) lockName=%q\n", projectName, lockName)
 	if err := werf.ReleaseHostLock(lockName); err != nil {
-		return fmt.Errorf("unlock %s error: %s", lockName)
+		return fmt.Errorf("unlock %s error: %s", lockName, err)
 	}
 	return nil
 }
