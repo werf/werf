@@ -32,8 +32,6 @@ werf ci-env CI_SYSTEM [options]
             help for ci-env
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-registry=false:
-            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -53,9 +51,6 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --skip-tls-verify-registry=false:
-            Skip TLS certificate validation when accessing a registry (default                      
-            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tagging-strategy='stages-signature':
             stages-signature: always use '--tag-by-stages-signature' option to tag all published    
             images by corresponding stages-signature; tag-or-branch: generate auto                  

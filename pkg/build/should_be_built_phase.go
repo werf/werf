@@ -70,11 +70,7 @@ func (phase *ShouldBeBuiltPhase) AfterImages() error {
 	return logboek.Default.LogProcess("Built stages cache check", logProcessOptions, func() error {
 		for _, img := range phase.BadImages {
 			for _, stg := range phase.BadStagesByImage[img.GetName()] {
-				if logboek.Info.IsAccepted() {
-					logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
-				} else {
-					logboek.LogWarnF("%s is not exist in stages storage\n", stg.LogDetailedName())
-				}
+				logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
 			}
 		}
 

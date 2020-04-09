@@ -3,25 +3,50 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List managed images which will be preserved during cleanup procedure
+Sync project stages from one stages storage to another
 
 {{ header }} Syntax
 
 ```shell
-werf managed-images ls [options]
+werf stages sync [options]
 ```
 
 {{ header }} Options
 
 ```shell
+      --cleanup-local-cache=false:
+            Remove intermediate docker images which were created on localhost during sync procedure 
+            of two remote stages storages (default $WERF_CLEANUP_LOCAL_CACHE)
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read images from the specified stages storage
+            Command needs granted permissions to read, pull and delete images from the specified    
+            stages storages
+      --from='':
+            Source stages storage from which stages will be moved (docker repo address or :local    
+            should be specified, default $WERF_FROM environment).
+      --from-repo-docker-hub-password='':
+            Docker Hub password for source stages storage (default                                  
+            $WERF_FROM_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)
+      --from-repo-docker-hub-token='':
+            Docker Hub token for source stages storage (default $WERF_FROM_REPO_DOCKER_HUB_TOKEN,   
+            $WERF_REPO_DOCKER_HUB_TOKEN)
+      --from-repo-docker-hub-username='':
+            Docker Hub username for source stages storage (default                                  
+            $WERF_FROM_REPO_DOCKER_HUB_USERNAME, $WERF_REPO_DOCKER_HUB_USERNAME)
+      --from-repo-github-token='':
+            GitHub token for source stages storage (default $WERF_FROM_REPO_GITHUB_TOKEN,           
+            $WERF_REPO_GITHUB_TOKEN)
+      --from-repo-implementation='':
+            Choose repo implementation for source stages storage.
+            The following docker registry implementations are supported: ecr, acr, default,         
+            dockerhub, gcr, github, gitlab, harbor, quay.
+            Default $WERF_FROM_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect  
+            implementation by a registry).
   -h, --help=false:
-            help for ls
+            help for sync
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false:
@@ -47,8 +72,9 @@ werf managed-images ls [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -N, --project-name='':
-            Use specified project name (default $WERF_PROJECT_NAME)
+      --remove-source=false:
+            Remove existing project stages from source stages storage during sync procedure         
+            (default $WERF_REMOVE_SOURCE)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
@@ -70,32 +96,6 @@ werf managed-images ls [options]
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --ssh-key=[]:
-            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/documentation/reference/toolbox/ssh.html).
-            Option can be specified multiple times to use multiple keys
-  -s, --stages-storage='':
-            Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
-      --stages-storage-repo-docker-hub-password='':
-            Docker Hub password for stages storage (default                                         
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --stages-storage-repo-docker-hub-token='':
-            Docker Hub token for stages storage (default                                            
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_TOKEN, $WERF_REPO_DOCKER_HUB_TOKEN)
-      --stages-storage-repo-docker-hub-username='':
-            Docker Hub username for stages storage (default                                         
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME, $WERF_REPO_DOCKER_HUB_USERNAME)
-      --stages-storage-repo-github-token='':
-            GitHub token for stages storage (default $WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN,        
-            $WERF_REPO_GITHUB_TOKEN)
-      --stages-storage-repo-implementation='':
-            Choose repo implementation for stages storage.
-            The following docker registry implementations are supported: ecr, acr, default,         
-            dockerhub, gcr, github, gitlab, harbor, quay.
-            Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto     
-            mode (detect implementation by a registry).
       --synchronization=':local':
             Address of synchronizer for multiple werf processes to work with a single stages        
             storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be    
@@ -103,5 +103,26 @@ werf managed-images ls [options]
             allows execution of werf processes from a single host only.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --to='':
+            Destination stages storage to which stages will be moved (docker repo address or :local 
+            should be specified, default $WERF_TO environment).
+      --to-repo-docker-hub-password='':
+            Docker Hub password for destination stages storage (default                             
+            $WERF_TO_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)
+      --to-repo-docker-hub-token='':
+            Docker Hub token for destination stages storage (default                                
+            $WERF_TO_REPO_DOCKER_HUB_TOKEN, $WERF_REPO_DOCKER_HUB_TOKEN)
+      --to-repo-docker-hub-username='':
+            Docker Hub username for destination stages storage (default                             
+            $WERF_TO_REPO_DOCKER_HUB_USERNAME, $WERF_REPO_DOCKER_HUB_USERNAME)
+      --to-repo-github-token='':
+            GitHub token for destination stages storage (default $WERF_TO_REPO_GITHUB_TOKEN,        
+            $WERF_REPO_GITHUB_TOKEN)
+      --to-repo-implementation='':
+            Choose repo implementation for destination stages storage.
+            The following docker registry implementations are supported: ecr, acr, default,         
+            dockerhub, gcr, github, gitlab, harbor, quay.
+            Default $WERF_TO_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect    
+            implementation by a registry).
 ```
 
