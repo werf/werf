@@ -1,17 +1,17 @@
 project: none
 configVersion: 1
 ---
-image: ~
+image: image
 from: alpine
 shell:
   setup: date
 import:
-- artifact: test
-  add: /test
-  to: /test
+- artifact: artifact
+  add: /artifact
+  to: /artifact
   before: setup
 ---
-artifact: test
+artifact: artifact
 from: alpine
 shell:
-  install: echo "123" > /test
+  install: echo "123" > /artifact

@@ -2,19 +2,22 @@ package build_and_publish
 
 import (
 	"fmt"
-	"path/filepath"
+
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -79,11 +82,11 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupTag(&commonCmdData, cmd)
-	common.SetupStagesStorage(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -104,7 +107,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
@@ -112,7 +115,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -146,22 +149,23 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+
+	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	stagesStorage, err := common.GetStagesStorage(&commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -188,7 +192,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: image.BuildOptions{
+			ImageBuildOptions: container_runtime.BuildOptions{
 				IntrospectAfterError:  cmdData.IntrospectAfterError,
 				IntrospectBeforeError: cmdData.IntrospectBeforeError,
 			},
@@ -201,10 +205,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
 	defer c.Terminate()
 
-	if err = c.BuildAndPublish(stagesStorage, imagesRepoManager, opts); err != nil {
+	if err = c.BuildAndPublish(opts); err != nil {
 		return err
 	}
 

@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/lockgate"
+
 	"github.com/flant/logboek"
 
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -21,7 +22,7 @@ var (
 )
 
 func runGC() error {
-	return shluz.WithLock("gc", shluz.LockOptions{}, func() error {
+	return werf.WithHostLock("gc", lockgate.AcquireOptions{}, func() error {
 		return GC(false)
 	})
 }

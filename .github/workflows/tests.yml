@@ -22,7 +22,7 @@ jobs:
   unlabel:
     name: Optional unlabeling
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.label.id == 1745044226 # execute tests label
+    if: github.event_name == 'pull_request' && github.event.label.id == 1745044226 # run tests label
     steps:
 
     - uses: actions/github-script@0.3.0
@@ -55,7 +55,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
 #    - name: Install upx (ubuntu-latest)
 #      run: sudo apt-get install upx
@@ -148,7 +148,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -206,7 +206,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -246,6 +246,120 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
+  integration_tests_cleanup_implementations:
+    name: "Integration tests: cleanup implementations"
+    needs: precompiled_tests_binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        implementation:
+        - acr
+        - default
+        - dockerhub
+        - ecr
+        - gcr
+        - github
+        - harbor
+        - quay
+    runs-on: ${{ matrix.os }}
+    env:
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GCR: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GCR }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR }}
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY: ${{ secrets.WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY }}
+      WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
+      WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
+      WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
+      WERF_TEST_DEFAULT_PASSWORD: ${{ secrets.WERF_TEST_DEFAULT_PASSWORD }}
+      WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
+      WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
+      WERF_TEST_DOCKERHUB_PASSWORD: ${{ secrets.WERF_TEST_DOCKERHUB_PASSWORD }}
+      WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
+      WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
+      WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
+      WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
+      WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
+      WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
+      WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
+      WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
+      WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
+      WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
+      WERF_TEST_GITHUB_USERNAME: ${{ secrets.WERF_TEST_GITHUB_USERNAME }}
+      WERF_TEST_HARBOR_PASSWORD: ${{ secrets.WERF_TEST_HARBOR_PASSWORD }}
+      WERF_TEST_HARBOR_REGISTRY: ${{ secrets.WERF_TEST_HARBOR_REGISTRY }}
+      WERF_TEST_HARBOR_USERNAME: ${{ secrets.WERF_TEST_HARBOR_USERNAME }}
+      WERF_TEST_QUAY_PASSWORD: ${{ secrets.WERF_TEST_QUAY_PASSWORD }}
+      WERF_TEST_QUAY_REGISTRY: ${{ secrets.WERF_TEST_QUAY_REGISTRY }}
+      WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
+      WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
+
+    steps:
+
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Download integration tests binaries
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}_integration_tests_binaries"
+        path: .
+
+    - name: Download werf with coverage binary
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}_werf_with_coverage"
+        path: .
+
+    - name: Login (acr)
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      if: matrix.implementation == 'acr'
+
+    - name: Login (ecr)
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      if: matrix.implementation == 'ecr'
+
+    - name: Prepare environment
+      run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests_cleanup_implementations/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+
+        ./scripts/ci/git.sh
+        ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
+
+        go build github.com/onsi/ginkgo/ginkgo
+
+        chmod +x werf_with_coverage
+        find integration -type f -name '*.test' -exec chmod +x {} \;
+      shell: bash
+
+    - name: Test
+      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing --focus="(${{ matrix.implementation }})" integration/cleanup/cleanup.test
+      shell: bash
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
   integration_k8s_tests:
     name: Integration k8s tests
     needs: precompiled_tests_binaries
@@ -265,7 +379,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -340,7 +454,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -414,7 +528,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -494,6 +608,7 @@ jobs:
     needs:
     - unit_tests
     - integration_tests
+    - integration_tests_cleanup_implementations
     - integration_k8s_tests
     - integration_tests_on_self_hosted_runners
     - integration_k8s_tests_on_self_hosted_runners
@@ -507,7 +622,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download coverage artifact
       uses: actions/download-artifact@master

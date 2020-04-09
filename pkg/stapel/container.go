@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/lockgate"
+
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/docker"
 )
 
@@ -37,7 +40,7 @@ func (c *container) CreateIfNotExist() error {
 	}
 
 	if !exist {
-		err := shluz.WithLock(fmt.Sprintf("stapel.container.%s", c.Name), shluz.LockOptions{Timeout: time.Second * 600}, func() error {
+		err := werf.WithHostLock(fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 			return logboek.LogProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logboek.LogProcessOptions{}, func() error {
 				exist, err := docker.ContainerExist(c.Name)
 				if err != nil {

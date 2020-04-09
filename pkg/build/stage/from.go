@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
@@ -45,7 +45,7 @@ type FromStage struct {
 	cacheVersion                 string
 }
 
-func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ image.ImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -69,7 +69,7 @@ func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ image.ImageInterfac
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *FromStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
 

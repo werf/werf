@@ -2,77 +2,101 @@ package cleaning
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
 
-	"github.com/docker/docker/api/types/filters"
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 )
 
 type StagesPurgeOptions struct {
-	ProjectName                   string
-	DryRun                        bool
 	RmContainersThatUseWerfImages bool
+	DryRun                        bool
 }
 
-func StagesPurge(options StagesPurgeOptions) error {
+func StagesPurge(projectName string, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
+	m := newStagesPurgeManager(projectName, stagesManager, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
+
 	return logboek.Default.LogProcess(
 		"Running stages purge",
 		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			return stagesPurge(options)
-		},
+		m.run,
 	)
 }
 
-func stagesPurge(options StagesPurgeOptions) error {
-	var commonProjectOptions CommonProjectOptions
-	commonProjectOptions.ProjectName = options.ProjectName
-	commonProjectOptions.CommonOptions = CommonOptions{
-		RmiForce:                      true,
-		RmForce:                       options.RmContainersThatUseWerfImages,
+func newStagesPurgeManager(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) *stagesPurgeManager {
+	return &stagesPurgeManager{
+		StagesManager:                 stagesManager,
+		ProjectName:                   projectName,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
 	}
-
-	if err := projectStagesPurge(commonProjectOptions); err != nil {
-		return err
-	}
-
-	return nil
 }
 
-func projectStagesPurge(options CommonProjectOptions) error {
-	if err := werfImagesFlushByFilterSet(projectImageStageFilterSet(options), options.CommonOptions); err != nil {
-		return err
-	}
-
-	if err := purgeManagedImages(options); err != nil {
-		return fmt.Errorf("unable to purge managed images: %s", err)
-	}
-
-	return nil
+type stagesPurgeManager struct {
+	StagesManager                 *stages_manager.StagesManager
+	ProjectName                   string
+	RmContainersThatUseWerfImages bool
+	DryRun                        bool
 }
 
-func purgeManagedImages(options CommonProjectOptions) error {
-	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(image.ManagedImageRecord_ImageNameFormat, options.ProjectName))
-
-	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
-	if err != nil {
-		return err
+func (m *stagesPurgeManager) run() error {
+	deleteImageOptions := storage.DeleteImageOptions{
+		RmiForce:                 true,
+		SkipUsedImage:            false,
+		RmForce:                  m.RmContainersThatUseWerfImages,
+		RmContainersThatUseImage: m.RmContainersThatUseWerfImages,
 	}
 
-	images, err = processUsedImages(images, options.CommonOptions)
-	if err != nil {
-		return err
-	}
+	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
+	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		logboek.Default.LogProcessStart("Deleting stages", logboek.LevelLogProcessStartOptions{})
 
-	if err := imagesRemove(images, options.CommonOptions); err != nil {
-		return err
-	}
+		stages, err := m.StagesManager.GetAllStages()
+		if err != nil {
+			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			return err
+		}
 
-	return nil
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
+			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			return err
+		}
+		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+		logboek.Default.LogProcessStart("Deleting managed images", logboek.LevelLogProcessStartOptions{})
+		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(m.ProjectName)
+		if err != nil {
+			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			return err
+		}
+
+		for _, managedImage := range managedImages {
+			if !m.DryRun {
+				if err := m.StagesManager.StagesStorage.RmManagedImage(m.ProjectName, managedImage); err != nil {
+					return err
+				}
+			}
+
+			logTag := managedImage
+			if logTag == "" {
+				logTag = storage.NamelessImageRecordTag
+			}
+
+			logboek.Default.LogFDetails("  tag: %s\n", logTag)
+			logboek.LogOptionalLn()
+		}
+		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+		return nil
+	})
 }

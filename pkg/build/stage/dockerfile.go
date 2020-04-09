@@ -12,14 +12,14 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
+	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/git_repo/status"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/util"
-
-	"github.com/flant/logboek"
 )
 
 func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
@@ -97,7 +97,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var dockerMetaArgsString []string
 	for key, value := range s.dockerArgsHash {
 		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", key, value))
@@ -181,7 +181,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
 }
 
-func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img image.ImageInterface) error {
+func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img container_runtime.ImageInterface) error {
 	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
 	return nil
 }

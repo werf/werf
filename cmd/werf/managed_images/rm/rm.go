@@ -2,18 +2,17 @@ package rm
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/flant/werf/pkg/image"
 
-	"github.com/flant/shluz"
+	"github.com/spf13/cobra"
+
 	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var commonCmdData common.CmdData
@@ -42,10 +41,9 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -61,11 +59,11 @@ func run(imageNames []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -98,13 +96,16 @@ func run(imageNames []string) error {
 		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
-	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
 		return err
 	}
+
 	if _, err = common.GetSynchronization(&commonCmdData); err != nil {
 		return err
 	}
-	stagesStorage := &storage.LocalStagesStorage{}
 
 	errs := []error{}
 	for _, imageName := range imageNames {

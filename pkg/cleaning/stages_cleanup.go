@@ -6,299 +6,262 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/flant/lockgate"
+	"github.com/flant/werf/pkg/werf"
 
-	"github.com/docker/docker/api/types"
+	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 
 type StagesCleanupOptions struct {
-	ProjectName       string
-	ImagesRepoManager ImagesRepoManager
-	StagesStorage     storage.StagesStorage
-	ImagesNames       []string
-	DryRun            bool
+	ImageNameList []string
+	DryRun        bool
 }
 
-func StagesCleanup(options StagesCleanupOptions) error {
+func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) error {
+	m := newStagesCleanupManager(projectName, imagesRepo, stagesManager, options)
+
+	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+		return fmt.Errorf("unable to lock stages and images: %s", err)
+	}
+	defer storageLockManager.UnlockStagesAndImages(projectName)
+
 	return logboek.Default.LogProcess(
 		"Running stages cleanup",
 		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			return stagesCleanup(options)
-		},
+		m.run,
 	)
 }
 
-func stagesCleanup(options StagesCleanupOptions) error {
-	commonProjectOptions := CommonProjectOptions{
-		ProjectName: options.ProjectName,
-		CommonOptions: CommonOptions{
-			SkipUsedImages: true,
-			RmiForce:       false,
-			RmForce:        false,
-			DryRun:         options.DryRun,
-		},
+func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) *stagesCleanupManager {
+	return &stagesCleanupManager{
+		ImagesRepo:    imagesRepo,
+		ImageNameList: options.ImageNameList,
+		StagesManager: stagesManager,
+		ProjectName:   projectName,
+		DryRun:        options.DryRun,
+	}
+}
+
+type stagesCleanupManager struct {
+	imagesRepoImageList *[]*image.Info
+
+	ImagesRepo    storage.ImagesRepo
+	ImageNameList []string
+	StagesManager *stages_manager.StagesManager
+	ProjectName   string
+	DryRun        bool
+}
+
+func (m *stagesCleanupManager) initImagesRepoImageList() error {
+	repoImages, err := m.ImagesRepo.GetRepoImages(m.ImageNameList)
+	if err != nil {
+		return err
 	}
 
-	commonRepoOptions := CommonRepoOptions{
-		ImagesRepoManager: options.ImagesRepoManager,
-		StagesStorage:     options.StagesStorage,
-		ImagesNames:       options.ImagesNames,
-		DryRun:            options.DryRun,
+	m.setImagesRepoImageList(flattenRepoImages(repoImages))
+
+	return nil
+}
+
+func (m *stagesCleanupManager) setImagesRepoImageList(repoImageList []*image.Info) {
+	m.imagesRepoImageList = &repoImageList
+}
+
+func (m *stagesCleanupManager) getOrInitImagesRepoImageList() ([]*image.Info, error) {
+	if m.imagesRepoImageList == nil {
+		if err := m.initImagesRepoImageList(); err != nil {
+			return nil, err
+		}
 	}
 
-	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", commonProjectOptions.ProjectName)
-	return shluz.WithLock(projectStagesCleanupLockName, shluz.LockOptions{Timeout: time.Second * 600}, func() error {
-		repoImages, err := repoImages(commonRepoOptions)
+	return *m.imagesRepoImageList, nil
+}
+
+func (m *stagesCleanupManager) run() error {
+	deleteImageOptions := storage.DeleteImageOptions{
+		RmiForce:      false,
+		SkipUsedImage: true,
+		RmForce:       false,
+	}
+
+	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
+	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		stages, err := m.StagesManager.GetAllStages()
 		if err != nil {
 			return err
 		}
 
-		if len(repoImages) != 0 {
-			if commonRepoOptions.StagesStorage.String() == localStagesStorage { // FIXME: remove all if-s like this, hide under universal interface of stages storage
-				if err := projectImageStagesSyncByRepoImages(repoImages, commonProjectOptions); err != nil {
-					return err
-				}
-			} else {
-				if err := repoImageStagesSyncByRepoImages(repoImages, commonRepoOptions); err != nil {
-					return err
+		var stagesImageList []*image.Info
+		stagesByImageName := map[string]*image.StageDescription{}
+		for _, stageDesc := range stages {
+			stagesImageList = append(stagesImageList, stageDesc.Info)
+			stagesByImageName[stageDesc.Info.Name] = stageDesc
+		}
+
+		repoImageList, err := m.getOrInitImagesRepoImageList()
+		if err != nil {
+			return err
+		}
+
+		for _, repoImage := range repoImageList {
+			stagesImageList = exceptRepoImageAndRelativesByImageID(stagesImageList, repoImage.ParentID)
+		}
+
+		var repoImageListToExcept []*image.Info
+		if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
+			for _, repoImage := range stagesImageList {
+				if time.Now().Unix()-repoImage.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
+					repoImageListToExcept = append(repoImageListToExcept, repoImage)
 				}
 			}
-		} else {
-			if err := projectStagesPurge(commonProjectOptions); err != nil {
-				return err
+		}
+
+		stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)
+
+		var stagesToDeleteList []*image.StageDescription
+		for _, imgInfo := range stagesImageList {
+			if stagesByImageName[imgInfo.Name] == nil || stagesByImageName[imgInfo.Name].Info != imgInfo {
+				panic(fmt.Sprintf("inconsistent state detected: %#v != %#v", stagesByImageName[imgInfo.Name].Info, imgInfo))
 			}
+			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
+		}
+
+		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...); err != nil {
+			return err
 		}
 
 		return nil
 	})
 }
 
-func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonRepoOptions) error {
-	repoImageStages, err := repoImageStagesImages(options)
-	if err != nil {
-		return err
+func exceptRepoImageAndRelativesByImageID(repoImageList []*image.Info, imageID string) []*image.Info {
+	repoImage := findRepoImageByImageID(repoImageList, imageID)
+	if repoImage == nil {
+		return repoImageList
 	}
 
-	if len(repoImageStages) == 0 {
-		return nil
-	}
+	return exceptRepoImageAndRelativesByRepoImage(repoImageList, repoImage)
+}
 
-	for _, repoImage := range repoImages {
-		parentId, err := repoImageParentId(repoImage)
-		if err != nil {
-			return err
+func findRepoImageByImageID(repoImageList []*image.Info, imageID string) *image.Info {
+	for _, repoImage := range repoImageList {
+		if repoImage.ID == imageID {
+			return repoImage
 		}
-
-		repoImageStages, err = exceptRepoImageStagesByImageId(repoImageStages, parentId)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = repoImagesRemove(repoImageStages, options)
-	if err != nil {
-		return err
 	}
 
 	return nil
 }
 
-func exceptRepoImageStagesByImageId(repoImageStages []docker_registry.RepoImage, imageId string) ([]docker_registry.RepoImage, error) {
-	repoImageStage, err := findRepoImageStageByImageId(repoImageStages, imageId)
-	if err != nil {
-		return nil, err
-	} else if repoImageStage == nil {
-		return repoImageStages, nil
-	}
-
-	repoImageStages, err = exceptRepoImageStagesByRepoImageStage(repoImageStages, *repoImageStage)
-	if err != nil {
-		return nil, err
-	}
-
-	return repoImageStages, nil
-}
-
-func findRepoImageStageByImageId(repoImageStages []docker_registry.RepoImage, imageId string) (*docker_registry.RepoImage, error) {
-	for _, repoImageStage := range repoImageStages {
-		manifest, err := repoImageStage.Manifest()
-		if err != nil {
-			return nil, err
-		}
-
-		repoImageStageImageId := manifest.Config.Digest.String()
-		if repoImageStageImageId == imageId {
-			return &repoImageStage, nil
-		}
-	}
-
-	return nil, nil
-}
-
-func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.RepoImage, repoImageStage docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
-	labels, err := repoImageLabels(repoImageStage)
-	if err != nil {
-		return nil, err
-	}
-
-	for label, imageID := range labels {
+func exceptRepoImageAndRelativesByRepoImage(repoImageList []*image.Info, repoImage *image.Info) []*image.Info {
+	for label, imageID := range repoImage.Labels {
 		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
-			repoImageStages, err = exceptRepoImageStagesByImageId(repoImageStages, imageID)
-			if err != nil {
-				return nil, err
-			}
+			repoImageList = exceptRepoImageAndRelativesByImageID(repoImageList, imageID)
 		}
 	}
 
-	currentRepoImageStage := &repoImageStage
+	currentRepoImage := repoImage
 	for {
-		repoImageStages = exceptRepoImages(repoImageStages, *currentRepoImageStage)
-
-		parentId, err := repoImageParentId(*currentRepoImageStage)
-		if err != nil {
-			return nil, err
-		}
-
-		currentRepoImageStage, err = findRepoImageStageByImageId(repoImageStages, parentId)
-		if err != nil {
-			return nil, err
-		}
-
-		if currentRepoImageStage == nil {
+		repoImageList = exceptRepoImageList(repoImageList, currentRepoImage)
+		currentRepoImage = findRepoImageByImageID(repoImageList, currentRepoImage.ParentID)
+		if currentRepoImage == nil {
 			break
 		}
 	}
 
-	return repoImageStages, nil
+	return repoImageList
 }
 
-func repoImageParentId(repoImage docker_registry.RepoImage) (string, error) {
-	configFile, err := repoImage.Image.ConfigFile()
-	if err != nil {
-		return "", err
+func exceptRepoImageList(repoImageList []*image.Info, repoImageListToExcept ...*image.Info) []*image.Info {
+	var updatedRepoImageList []*image.Info
+
+loop:
+	for _, repoImage := range repoImageList {
+		for _, repoImageToExcept := range repoImageListToExcept {
+			if repoImage == repoImageToExcept {
+				continue loop
+			}
+		}
+
+		updatedRepoImageList = append(updatedRepoImageList, repoImage)
 	}
 
-	return configFile.Config.Image, nil
+	return updatedRepoImageList
 }
 
-func repoImageLabels(repoImage docker_registry.RepoImage) (map[string]string, error) {
-	configFile, err := repoImage.Image.ConfigFile()
+func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) ([]*image.Info, error) {
+	repoImages, err := imagesRepo.GetRepoImages(imageNameList)
 	if err != nil {
 		return nil, err
 	}
 
-	return configFile.Config.Labels, nil
+	return flattenRepoImages(repoImages), nil
 }
 
-func repoImageCreated(repoImage docker_registry.RepoImage) (time.Time, error) {
-	configFile, err := repoImage.Image.ConfigFile()
-	if err != nil {
-		return time.Time{}, err
+func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*image.Info) {
+	for imageName, _ := range repoImages {
+		repoImageList = append(repoImageList, repoImages[imageName]...)
 	}
 
-	return configFile.Created.Time, nil
+	return
 }
 
-func projectImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonProjectOptions) error {
-	imageStages, err := projectImageStages(options)
-	if err != nil {
-		return err
-	}
-
-	for _, repoImage := range repoImages {
-		parentId, err := repoImageParentId(repoImage)
-		if err != nil {
+func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+	if err := deleteStage(stagesManager.DeleteStages, options, dryRun, stages...); err != nil {
+		switch err.(type) {
+		case docker_registry.DockerHubUnauthorizedError:
+			return fmt.Errorf(`%s
+You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
+Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
+Be aware that access to the resource is forbidden with personal access token.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
+		case docker_registry.GitHubPackagesUnauthorizedError:
+			return fmt.Errorf(`%s
+You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
+Check --repo-github-token and --stages-storage-repo-github-token options.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
+		default:
 			return err
-		}
-
-		imageStages, err = exceptImageStagesByImageId(imageStages, parentId, options)
-		if err != nil {
-			return err
-		}
-	}
-
-	if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
-		for _, imageStage := range imageStages {
-			if time.Now().Unix()-imageStage.Created < stagesCleanupDefaultIgnorePeriodPolicy {
-				imageStages = exceptImage(imageStages, imageStage)
-			}
-		}
-	}
-
-	imageStages, err = processUsedImages(imageStages, options.CommonOptions)
-	if err != nil {
-		return err
-	}
-
-	err = imagesRemove(imageStages, options.CommonOptions)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func exceptImageStagesByImageId(imageStages []types.ImageSummary, imageId string, options CommonProjectOptions) ([]types.ImageSummary, error) {
-	imageStage := findImageStageByImageId(imageStages, imageId)
-	if imageStage == nil {
-		return imageStages, nil
-	}
-
-	imageStages, err := exceptImageStagesByImageStage(imageStages, *imageStage, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return imageStages, nil
-}
-
-func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage types.ImageSummary, commonProjectOptions CommonProjectOptions) ([]types.ImageSummary, error) {
-	var err error
-	for label, imageID := range imageStage.Labels {
-		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
-			imageStages, err = exceptImageStagesByImageId(imageStages, imageID, commonProjectOptions)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	currentImageStage := &imageStage
-	for {
-		imageStages = exceptImage(imageStages, *currentImageStage)
-		currentImageStage = findImageStageByImageId(imageStages, currentImageStage.ParentID)
-		if currentImageStage == nil {
-			break
-		}
-	}
-
-	return imageStages, nil
-}
-
-func findImageStageByImageId(imageStages []types.ImageSummary, imageId string) *types.ImageSummary {
-	for _, imageStage := range imageStages {
-		if imageStage.ID == imageId {
-			return &imageStage
 		}
 	}
 
 	return nil
 }
 
-func projectImageStages(options CommonProjectOptions) ([]types.ImageSummary, error) {
-	images, err := werfImagesByFilterSet(projectImageStageFilterSet(options))
-	if err != nil {
-		return nil, err
+func deleteStage(f func(options storage.DeleteImageOptions, stages ...*image.StageDescription) error, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+	for _, stageDesc := range stages {
+		if !dryRun {
+			if err := f(options, stageDesc); err != nil {
+				return err
+			}
+		}
+
+		logboek.Default.LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.LogOptionalLn()
 	}
 
-	return images, nil
+	return nil
+}
+
+func deleteRepoImage(f func(options storage.DeleteImageOptions, repoImageList ...*image.Info) error, options storage.DeleteImageOptions, dryRun bool, repoImageList ...*image.Info) error {
+	for _, repoImage := range repoImageList {
+		if !dryRun {
+			if err := f(options, repoImage); err != nil {
+				return err
+			}
+		}
+
+		logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
+		logboek.LogOptionalLn()
+	}
+
+	return nil
 }

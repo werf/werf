@@ -2,19 +2,20 @@ package cleanup
 
 import (
 	"fmt"
-	"path/filepath"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -45,10 +46,10 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage, read images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -66,11 +67,11 @@ func runSync() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -100,28 +101,25 @@ func runSync() error {
 
 	projectName := werfConfig.Meta.Project
 
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
-		return err
-	}
-	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
-		return err
-	}
-	stagesStorage := &storage.LocalStagesStorage{}
 
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
@@ -130,17 +128,10 @@ func runSync() error {
 	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager,
-		StagesStorage:     stagesStorage,
-		ImagesNames:       imagesNames,
-		DryRun:            *commonCmdData.DryRun,
+		ImageNameList: imagesNames,
+		DryRun:        *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
-		return err
-	}
-
-	return nil
+	return cleaning.StagesCleanup(projectName, imagesRepo, storageLockManager, stagesManager, stagesCleanupOptions)
 }

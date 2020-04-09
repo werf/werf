@@ -9,7 +9,7 @@ import (
 	"github.com/flant/werf/pkg/testing/utils"
 )
 
-var _ = Describe("purging stages", func() {
+var _ = forEachDockerRegistryImplementation("purging stages", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
@@ -30,27 +30,16 @@ var _ = Describe("purging stages", func() {
 			"git",
 			"commit", "-m", "Initial commit",
 		)
-
-		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
-		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
-	for _, werfArgs := range [][]string{
+	for _, werfCommand := range [][]string{
 		{"stages", "purge"},
 		{"purge"},
 	} {
-		commandToCheck := strings.Join(werfArgs, " ") + " command"
-		commandWerfArgs := werfArgs
+		description := strings.Join(werfCommand, " ") + " command"
+		werfCommand := werfCommand
 
-		Describe(commandToCheck, func() {
+		Describe(description, func() {
 			It("should remove project images", func() {
 				utils.RunSucceedCommand(
 					testDirPath,
@@ -58,15 +47,17 @@ var _ = Describe("purging stages", func() {
 					"build",
 				)
 
-				Ω(LocalProjectStagesCount()).Should(BeNumerically(">", 0))
+				Ω(stagesStorageRepoImagesCount()).Should(BeNumerically(">", 0))
+				Ω(stagesStorageManagedImagesCount()).Should(BeNumerically(">", 0))
 
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
-					commandWerfArgs...,
+					werfCommand...,
 				)
 
-				Ω(LocalProjectStagesCount()).Should(Equal(0))
+				Ω(stagesStorageRepoImagesCount()).Should(Equal(0))
+				Ω(stagesStorageManagedImagesCount()).Should(Equal(0))
 			})
 
 			Context("when there is running container based on werf image", func() {
@@ -90,7 +81,7 @@ var _ = Describe("purging stages", func() {
 					out, err := utils.RunCommand(
 						testDirPath,
 						werfBinPath,
-						commandWerfArgs...,
+						werfCommand...,
 					)
 					Ω(err).ShouldNot(Succeed())
 					Ω(string(out)).Should(ContainSubstring("used by container"))
@@ -98,12 +89,14 @@ var _ = Describe("purging stages", func() {
 				})
 
 				It("should remove project images and container", func() {
-					werfArgs := append(commandWerfArgs, "--force")
+					werfArgs := append(werfCommand, "--force")
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
 						werfArgs...,
 					)
+
+					Ω(stagesStorageRepoImagesCount()).Should(Equal(0))
 				})
 			})
 		})

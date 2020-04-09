@@ -2,17 +2,16 @@ package cleanup
 
 import (
 	"fmt"
-	"path/filepath"
+
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/host_cleaning"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -50,8 +49,6 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
-	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -65,15 +62,11 @@ func runGC() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
-		return err
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
 		return err
 	}
 
@@ -82,8 +75,8 @@ func runGC() error {
 	}
 
 	logboek.LogOptionalLn()
-	hostCleanupOptions := cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
-	if err := cleaning.HostCleanup(hostCleanupOptions); err != nil {
+	hostCleanupOptions := host_cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
+	if err := host_cleaning.HostCleanup(hostCleanupOptions); err != nil {
 		return err
 	}
 

@@ -2,17 +2,20 @@ package purge
 
 import (
 	"fmt"
-	"path/filepath"
+
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -46,7 +49,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -66,11 +70,11 @@ func runPurge() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -94,8 +98,18 @@ func runPurge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	_, err = common.GetStagesStorage(&commonCmdData)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
 		return err
 	}
 
@@ -105,15 +119,10 @@ func runPurge() error {
 	}
 
 	stagesPurgeOptions := cleaning.StagesPurgeOptions{
-		ProjectName:                   projectName,
-		DryRun:                        *commonCmdData.DryRun,
 		RmContainersThatUseWerfImages: cmdData.Force,
+		DryRun:                        *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
-		return err
-	}
-
-	return nil
+	return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
 }

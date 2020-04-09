@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flant/werf/pkg/stages_manager"
+
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -23,15 +25,14 @@ import (
 	"github.com/flant/werf/pkg/build/import_server"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
 )
 
 type Conveyor struct {
@@ -51,23 +52,24 @@ type Conveyor struct {
 
 	imagesInOrder []*Image
 
-	stageImages                     map[string]*image.StageImage
+	stageImages                     map[string]*container_runtime.StageImage
 	buildingGitStageNameByImageName map[string]stage.StageName
 	localGitRepo                    *git_repo.Local
 	remoteGitRepos                  map[string]*git_repo.Remote
-	imagesBySignature               map[string]image.ImageInterface
 
 	tmpDir string
 
-	StagesStorage      storage.StagesStorage
-	StagesStorageCache storage.StagesStorageCache
+	ContainerRuntime container_runtime.ContainerRuntime
+
+	ImagesRepo         storage.ImagesRepo
 	StorageLockManager storage.LockManager
+	StagesManager      *stages_manager.StagesManager
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -78,20 +80,20 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		sshAuthSock: sshAuthSock,
 
-		stageImages:                     make(map[string]*image.StageImage),
+		stageImages:                     make(map[string]*container_runtime.StageImage),
 		gitReposCaches:                  make(map[string]*stage.GitRepoCache),
 		baseImagesRepoIdsCache:          make(map[string]string),
 		baseImagesRepoErrCache:          make(map[string]error),
 		imagesInOrder:                   []*Image{},
-		imagesBySignature:               make(map[string]image.ImageInterface),
 		buildingGitStageNameByImageName: make(map[string]stage.StageName),
 		remoteGitRepos:                  make(map[string]*git_repo.Remote),
 		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
 		importServers:                   make(map[string]import_server.ImportServer),
 
-		StagesStorage:      &storage.LocalStagesStorage{},
-		StorageLockManager: &storage.FileLockManager{},
-		StagesStorageCache: storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
+		ContainerRuntime:   containerRuntime,
+		ImagesRepo:         imagesRepo,
+		StorageLockManager: storageLockManager,
+		StagesManager:      stagesManager,
 	}
 
 	return c
@@ -212,27 +214,20 @@ type TagOptions struct {
 	TagByStagesSignature bool
 }
 
-type ImagesRepoManager interface {
-	ImagesRepo() string
-	ImageRepo(imageName string) string
-	ImageRepoTag(imageName, tag string) string
-	ImageRepoWithTag(imageName, tag string) string
-}
-
 func (c *Conveyor) ShouldBeBuilt() error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
 		NewShouldBeBuiltPhase(c),
 	}
 
 	return c.runPhases(phases, false)
 }
 
-func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, imagesRepoManager images_manager.ImagesRepoManager, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
+func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
 	var images []images_manager.ImageInfoGetter
 
 	var imagesNames []string
@@ -256,14 +251,19 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 			tag = commonTag
 		}
 
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutRegistry, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      c.ImagesRepo,
+			Name:            imageName,
+			Tag:             tag,
+			WithoutRegistry: withoutRegistry,
+		}
 		images = append(images, d)
 	}
 
 	return images
 }
 
-func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
+func (c *Conveyor) BuildStages(opts BuildStagesOptions) error {
 	/*var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
@@ -281,10 +281,12 @@ func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error 
 		return err
 	}
 
-	phases := []Phase{NewBuildPhase(c, BuildPhaseOptions{
-		IntrospectOptions: opts.IntrospectOptions,
-		ImageBuildOptions: opts.ImageBuildOptions,
-	})}
+	phases := []Phase{
+		NewBuildPhase(c, BuildPhaseOptions{
+			IntrospectOptions: opts.IntrospectOptions,
+			ImageBuildOptions: opts.ImageBuildOptions,
+		}),
+	}
 
 	return c.runPhases(phases, true)
 }
@@ -294,15 +296,15 @@ type PublishImagesOptions struct {
 	TagOptions
 }
 
-func (c *Conveyor) PublishImages(imagesRepoManager ImagesRepoManager, opts PublishImagesOptions) error {
+func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{SignaturesOnly: true}),
+		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
 		NewShouldBeBuiltPhase(c),
-		NewPublishImagesPhase(c, imagesRepoManager, opts),
+		NewPublishImagesPhase(c, c.ImagesRepo, opts),
 	}
 
 	return c.runPhases(phases, true)
@@ -329,7 +331,7 @@ type BuildAndPublishOptions struct {
 	PublishImagesOptions
 }
 
-func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRepoManager, opts BuildAndPublishOptions) error {
+func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
@@ -337,7 +339,7 @@ func (c *Conveyor) BuildAndPublish(stagesRepo string, imagesRepoManager ImagesRe
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
 		NewShouldBeBuiltPhase(c),
-		NewPublishImagesPhase(c, imagesRepoManager, opts.PublishImagesOptions),
+		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
 	}
 
 	return c.runPhases(phases, true)
@@ -438,6 +440,13 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 	//	} Goroutine
 	//}
 
+	if err := c.StorageLockManager.LockStagesAndImages(c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
+		return fmt.Errorf("unable to lock stages and images (to get or create stages and images only): %s", err)
+	}
+	c.AppendOnTerminateFunc(func() error {
+		return c.StorageLockManager.UnlockStagesAndImages(c.projectName())
+	})
+
 	var imagesLogger logboek.Level
 	if logImages {
 		imagesLogger = logboek.Default
@@ -468,16 +477,13 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 
 				logProcessMsg = fmt.Sprintf("Phase %s -- OnImageStage()", phase.Name())
 				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				var newStages []stage.Interface
 				for _, stg := range img.GetStages() {
-					if keepStage, err := phase.OnImageStage(img, stg); err != nil {
+					logboek.Debug.LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
+					if err := phase.OnImageStage(img, stg); err != nil {
 						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
-					} else if keepStage {
-						newStages = append(newStages, stg)
 					}
 				}
-				img.SetStages(newStages)
 				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 				logProcessMsg = fmt.Sprintf("Phase %s -- AfterImageStages()", phase.Name())
@@ -539,7 +545,7 @@ func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *image.StageImage {
+func (c *Conveyor) GetStageImage(name string) *container_runtime.StageImage {
 	return c.stageImages[name]
 }
 
@@ -547,28 +553,18 @@ func (c *Conveyor) UnsetStageImage(name string) {
 	delete(c.stageImages, name)
 }
 
-func (c *Conveyor) SetStageImage(stageImage *image.StageImage) {
+func (c *Conveyor) SetStageImage(stageImage *container_runtime.StageImage) {
 	c.stageImages[stageImage.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *image.StageImage, name string) *image.StageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.StageImage, name string) *container_runtime.StageImage {
 	if img, ok := c.stageImages[name]; ok {
 		return img
 	}
 
-	img := image.NewStageImage(fromImage, name)
+	img := container_runtime.NewStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 	c.stageImages[name] = img
 	return img
-}
-
-// imagesBySignature needed only for Build phase to detect that image object has already been prepared
-// with build instructions. Image should never be prepared multiple times.
-func (c *Conveyor) GetImageBySignature(signature string) image.ImageInterface {
-	return c.imagesBySignature[signature]
-}
-
-func (c *Conveyor) SetImageBySignature(signature string, img image.ImageInterface) {
-	c.imagesBySignature[signature] = img
 }
 
 func (c *Conveyor) GetImage(name string) *Image {
@@ -607,11 +603,11 @@ func (c *Conveyor) GetImageNameForImageStage(imageName, stageName string) string
 }
 
 func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
-	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().ID()
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().GetStageDescription().Info.ID
 }
 
 func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetImage().ID()
+	return c.getImageStage(imageName, stageName).GetImage().GetStageDescription().Info.ID
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {

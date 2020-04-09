@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/testing/utils"
 )
 
-var _ = Describe("cleaning stages", func() {
+var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 	var commit string
 
 	BeforeEach(func() {
@@ -41,31 +41,20 @@ var _ = Describe("cleaning stages", func() {
 		)
 		commit = strings.TrimSpace(out)
 
-		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
-		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
-
 		stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 
 		stubs.SetEnv("FROM_CACHE_VERSION", "x")
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
-	for _, werfArgs := range [][]string{
+	for _, werfCommand := range [][]string{
 		{"stages", "cleanup"},
 		{"cleanup"},
 	} {
-		commandToCheck := strings.Join(werfArgs, " ") + " command"
-		commandWerfArgs := werfArgs
+		description := strings.Join(werfCommand, " ") + " command"
+		werfCommand := werfCommand
 
-		Describe(commandToCheck, func() {
-			It("should work properly with non-existent registry repository", func() {
+		Describe(description, func() {
+			It("should work properly with non-existent/empty stages storage", func() {
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
@@ -74,27 +63,32 @@ var _ = Describe("cleaning stages", func() {
 			})
 
 			for _, disableStageCleanupDatePeriodPolicy := range []string{"0", "1"} {
+				BeforeEach(func() {
+					value := disableStageCleanupDatePeriodPolicy
+					stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", value)
+				})
+
 				if disableStageCleanupDatePeriodPolicy == "1" {
-					It("should not remove stages images related with built images in repository (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
+					It("should not remove stages that are related with images in images repo (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
 							"build-and-publish", "--tag-git-commit", commit,
 						)
 
-						count := LocalProjectStagesCount()
+						count := stagesStorageRepoImagesCount()
 						Ω(count).Should(Equal(count))
 
 						utils.RunSucceedCommand(
 							testDirPath,
 							werfBinPath,
-							commandWerfArgs...,
+							werfCommand...,
 						)
 
-						Ω(LocalProjectStagesCount()).Should(Equal(count))
+						Ω(stagesStorageRepoImagesCount()).Should(Equal(count))
 					})
 
-					Context("when there is running container based on werf image", func() {
+					Context("when there is running container that is based on werf image", func() {
 						BeforeEach(func() {
 							utils.RunSucceedCommand(
 								testDirPath,
@@ -111,11 +105,11 @@ var _ = Describe("cleaning stages", func() {
 							stubs.SetEnv("WERF_LOG_PRETTY", "0")
 						})
 
-						It("should skip stage image with related running container", func() {
+						It("should skip stage with related running container", func() {
 							out, err := utils.RunCommand(
 								testDirPath,
 								werfBinPath,
-								commandWerfArgs...,
+								werfCommand...,
 							)
 							Ω(err).Should(Succeed())
 							Ω(string(out)).Should(ContainSubstring("Skip image "))
@@ -124,28 +118,24 @@ var _ = Describe("cleaning stages", func() {
 					})
 				}
 
-				boundedPolicyValue := disableStageCleanupDatePeriodPolicy
-
 				var itMsg string
 				if disableStageCleanupDatePeriodPolicy == "0" {
-					itMsg = fmt.Sprintf("should not remove unused stages images (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=0)")
+					itMsg = fmt.Sprintf("should not remove unused stages (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=0)")
 				} else {
-					itMsg = fmt.Sprintf("should remove unused stages images (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)")
+					itMsg = fmt.Sprintf("should remove unused stages (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)")
 				}
 
 				It(itMsg, func() {
-					stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", boundedPolicyValue)
-
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
 						"build-and-publish", "--tag-git-commit", commit,
 					)
 
-					countAfterFirstBuild := LocalProjectStagesCount()
+					countAfterFirstBuild := stagesStorageRepoImagesCount()
 					Ω(countAfterFirstBuild).Should(Equal(countAfterFirstBuild))
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "fully rebuild")
+					stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -153,15 +143,15 @@ var _ = Describe("cleaning stages", func() {
 						"build-and-publish", "--tag-git-commit", commit,
 					)
 
-					countAfterSecondBuild := LocalProjectStagesCount()
+					countAfterSecondBuild := stagesStorageRepoImagesCount()
 
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
-						commandWerfArgs...,
+						werfCommand...,
 					)
 
-					Ω(LocalProjectStagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+					Ω(stagesStorageRepoImagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
 				})
 			}
 		})

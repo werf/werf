@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/lockgate"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -173,7 +174,7 @@ type ChartOptions struct {
 
 func withLockedHelmRelease(releaseName string, f func() error) error {
 	lockName := fmt.Sprintf("helm_release.%s-kube_context.%s", releaseName, helmSettings.KubeContext)
-	return shluz.WithLock(lockName, shluz.LockOptions{}, f)
+	return werf.WithHostLock(lockName, lockgate.AcquireOptions{}, f)
 }
 
 func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) error {

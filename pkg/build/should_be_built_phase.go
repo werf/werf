@@ -43,11 +43,18 @@ func (phase *ShouldBeBuiltPhase) ImageProcessingShouldBeStopped(img *Image) bool
 	return len(phase.BadStagesByImage[img.GetName()]) > 0
 }
 
-func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) (bool, error) {
-	if !stg.GetImage().IsExists() {
+func (phase *ShouldBeBuiltPhase) OnImageStage(img *Image, stg stage.Interface) error {
+	// stage is empty
+	if stg.GetImage() == nil {
+		return nil
+	}
+
+	// stage is not empty and stages-storage does not contain suitable cached image
+	if stg.GetImage().GetStageDescription() == nil {
 		phase.BadStagesByImage[img.GetName()] = append(phase.BadStagesByImage[img.GetName()], stg)
 	}
-	return true, nil
+
+	return nil
 }
 
 func (phase *ShouldBeBuiltPhase) BeforeImages() error {
@@ -63,11 +70,7 @@ func (phase *ShouldBeBuiltPhase) AfterImages() error {
 	return logboek.Default.LogProcess("Built stages cache check", logProcessOptions, func() error {
 		for _, img := range phase.BadImages {
 			for _, stg := range phase.BadStagesByImage[img.GetName()] {
-				if logboek.Info.IsAccepted() {
-					logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
-				} else {
-					logboek.LogWarnF("%s is not exist in stages storage\n", stg.LogDetailedName())
-				}
+				logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
 			}
 		}
 

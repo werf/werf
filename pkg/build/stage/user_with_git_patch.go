@@ -3,9 +3,8 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/werf/pkg/build/builder"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -23,19 +22,19 @@ type UserWithGitPatchStage struct {
 	GitPatchStage *GitPatchStage
 }
 
-func (s *UserWithGitPatchStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *UserWithGitPatchStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *UserWithGitPatchStage) GetNextStageDependencies(c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
@@ -52,9 +51,9 @@ func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image i
 	return nil
 }
 
-func (s *UserWithGitPatchStage) AfterImageSyncDockerStateHook(c Conveyor) error {
+func (s *UserWithGitPatchStage) AfterSignatureCalculated(c Conveyor) error {
 	if !s.GitPatchStage.isEmpty() {
-		if err := s.GitPatchStage.AfterImageSyncDockerStateHook(c); err != nil {
+		if err := s.GitPatchStage.AfterSignatureCalculated(c); err != nil {
 			return err
 		}
 	}

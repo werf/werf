@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
@@ -108,7 +108,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 

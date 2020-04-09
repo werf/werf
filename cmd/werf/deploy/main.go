@@ -2,24 +2,26 @@ package deploy
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
@@ -89,10 +91,10 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -118,7 +120,7 @@ func runDeploy() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
@@ -152,7 +154,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -186,37 +188,40 @@ func runDeploy() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	var imagesRepoManager *common.ImagesRepoManager
+	var imagesRepository string
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		if len(werfConfig.StapelImages) != 0 {
-			_, err = common.GetStagesStorage(&commonCmdData)
-			if err != nil {
-				return err
-			}
+		projectName := werfConfig.Meta.Project
 
-			_, err = common.GetSynchronization(&commonCmdData)
-			if err != nil {
-				return err
-			}
-		}
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-		imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &commonCmdData)
+		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 		if err != nil {
 			return err
 		}
 
-		imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
+		_, err = common.GetSynchronization(&commonCmdData) // TODO
 		if err != nil {
 			return err
 		}
 
-		imagesRepoManager, err = common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+		stagesStorageCache := common.GetStagesStorageCache()
+
+		storageLockManager := &storage.FileLockManager{}
+
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+			return err
+		}
+
+		imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 		if err != nil {
 			return err
 		}
+
+		imagesRepository = imagesRepo.String()
 
 		tag, tagStrategy, err = common.GetDeployTag(&commonCmdData, common.TagOptionsGetterOptions{})
 		if err != nil {
@@ -234,18 +239,14 @@ func runDeploy() error {
 		}()
 
 		logboek.LogOptionalLn()
-		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
 		defer c.Terminate()
 
 		if err = c.ShouldBeBuilt(); err != nil {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, imagesRepoManager, tag, tagStrategy, false)
-	}
-
-	if imagesRepoManager == nil {
-		imagesRepoManager = &common.ImagesRepoManager{}
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, tag, tagStrategy, false)
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
@@ -269,7 +270,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectDir, imagesRepoManager, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

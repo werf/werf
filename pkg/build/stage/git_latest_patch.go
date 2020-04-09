@@ -3,8 +3,7 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/storage"
-
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
@@ -19,7 +18,7 @@ type GitLatestPatchStage struct {
 	*GitPatchStage
 }
 
-func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
+func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	if empty, err := s.GitPatchStage.IsEmpty(c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
@@ -28,7 +27,7 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 
 	isEmpty := true
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
 		if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
 			return false, err
 		} else if !exist {
@@ -46,7 +45,7 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage image.ImageInterface) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {
@@ -61,12 +60,12 @@ func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage imag
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitLatestPatchStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *GitLatestPatchStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(c Conveyor) (string, error) {

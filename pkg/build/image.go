@@ -3,13 +3,23 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/fatih/color"
+
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logging"
+)
+
+type BaseImageType string
+
+const (
+	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryBaseImage"
+	StageAsBaseImage             BaseImageType = "StageBaseImage"
 )
 
 type Image struct {
@@ -22,9 +32,12 @@ type Image struct {
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
 	contentSignature  string
-	baseImage         *image.StageImage
 	isArtifact        bool
 	isDockerfileImage bool
+
+	baseImageType    BaseImageType
+	stageAsBaseImage stage.Interface
+	baseImage        *container_runtime.StageImage
 }
 
 func (i *Image) LogName() string {
@@ -105,54 +118,75 @@ func (i *Image) GetLogName() string {
 }
 
 func (i *Image) SetupBaseImage(c *Conveyor) {
-	baseImageName := i.baseImageName
 	if i.baseImageImageName != "" {
-		baseImageName = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage().GetImage().Name()
+		i.baseImageType = StageAsBaseImage
+		i.stageAsBaseImage = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
+		i.baseImage = c.GetOrCreateStageImage(nil, i.stageAsBaseImage.GetImage().Name())
+	} else {
+		i.baseImageType = ImageFromRegistryAsBaseImage
+		i.baseImage = c.GetOrCreateStageImage(nil, i.baseImageName)
 	}
-
-	i.baseImage = c.GetOrCreateStageImage(nil, baseImageName)
 }
 
-func (i *Image) GetBaseImage() *image.StageImage {
+func (i *Image) GetBaseImage() *container_runtime.StageImage {
 	return i.baseImage
 }
 
-func (i *Image) PrepareBaseImage(c *Conveyor) error {
-	fromImage := i.stages[0].GetImage()
+func (i *Image) FetchBaseImage(c *Conveyor) error {
+	switch i.baseImageType {
+	case ImageFromRegistryAsBaseImage:
+		containerRuntime := c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime)
 
-	if fromImage.IsExists() {
-		return nil
-	}
+		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
+			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
+		} else if inspect != nil {
+			// TODO: do not use container_runtime.StageImage for base image
+			i.baseImage.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+			})
 
-	if i.baseImageImageName != "" {
-		return nil
-	}
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
+			if baseImageRepoId == inspect.ID || err != nil {
+				if err != nil {
+					logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
+					logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+					logboek.Warn.LogOptionalLn()
+				}
 
-	if i.baseImage.IsExists() {
-		baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
-		if baseImageRepoId == i.baseImage.ID() || err != nil {
-			if err != nil {
-				logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-				logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-				logboek.Warn.LogOptionalLn()
+				return nil
 			}
-
-			return nil
 		}
+
+		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+		if err := logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
+			return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
+		}); err != nil {
+			return err
+		}
+
+		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
+			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
+		} else if inspect == nil {
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name(), err)
+		} else {
+			i.baseImage.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+			})
+		}
+	case StageAsBaseImage:
+		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
+			return err
+		}
+		if err := c.StagesManager.FetchStage(i.stageAsBaseImage); err != nil {
+			return err
+		}
+	default:
+		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
 
-	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-	return logboek.Default.LogProcess("Pulling base image", logProcessOptions, func() error {
-		if err := i.baseImage.Pull(); err != nil {
-			return err
-		}
-
-		if err := i.baseImage.SyncDockerState(); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	return nil
 }
 
 func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string) (string, error) {
@@ -165,11 +199,11 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 		return "", cachedBaseImagesRepoErr
 	}
 
-	var fetchedBaseImageRepoId string
+	var fetchedBaseRepoImage *image.Info
 	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
 	if err := logboek.Info.LogProcessInline(processMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
 		var fetchImageIdErr error
-		fetchedBaseImageRepoId, fetchImageIdErr = docker_registry.ImageId(baseImageName)
+		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(baseImageName)
 		if fetchImageIdErr != nil {
 			c.baseImagesRepoErrCache[baseImageName] = fetchImageIdErr
 			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)
@@ -180,8 +214,8 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 		return "", err
 	}
 
-	i.baseImageRepoId = fetchedBaseImageRepoId
-	c.baseImagesRepoIdsCache[baseImageName] = fetchedBaseImageRepoId
+	i.baseImageRepoId = fetchedBaseRepoImage.ID
+	c.baseImagesRepoIdsCache[baseImageName] = i.baseImageRepoId
 
 	return i.baseImageRepoId, nil
 }

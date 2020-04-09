@@ -1,34 +1,48 @@
 package storage
 
 import (
-	"time"
-
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/image"
 )
 
-type ImageInfo struct {
-	Signature         string            `json:"signature"`
-	ImageName         string            `json:"imageName"`
-	Labels            map[string]string `json:"labels"`
-	CreatedAtUnixNano int64             `json:"createdAtUnixNano"`
-}
-
-func (info *ImageInfo) CreatedAt() time.Time {
-	return time.Unix(info.CreatedAtUnixNano/1000_000_000, info.CreatedAtUnixNano%1000_000_000)
-}
+const (
+	LocalStagesStorageAddress = ":local"
+	NamelessImageRecordTag    = "__nameless__"
+)
 
 type StagesStorage interface {
-	// TODO cleanup GetAllImages() ([]StageImage, error)
-	GetImagesBySignature(projectName, signature string) ([]*ImageInfo, error)
+	GetAllStages(projectName string) ([]image.StageID, error)
+	GetStagesBySignature(projectName, signature string) ([]image.StageID, error)
+	GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error)
+	DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error
 
-	// в том числе docker pull из registry + image.SyncDockerState
-	// lock по имени image чтобы не делать 2 раза pull одновременно
-	SyncStageImage(stageImage image.ImageInterface) error
-	StoreStageImage(stageImage image.ImageInterface) error
+	ConstructStageImageName(projectName, signature, uniqueID string) string
+
+	// FetchImage will create a local image in the container-runtime
+	FetchImage(img container_runtime.Image) error
+	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
+	StoreImage(img container_runtime.Image) error
+	ShouldFetchImage(img container_runtime.Image) (bool, error)
+
+	CreateRepo() error
+	DeleteRepo() error
 
 	AddManagedImage(projectName, imageName string) error
 	RmManagedImage(projectName, imageName string) error
 	GetManagedImages(projectName string) ([]string, error)
 
 	String() string
+	Address() string
+}
+
+type StagesStorageOptions struct {
+	RepoStagesStorageOptions
+}
+
+func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
+	if stagesStorageAddress == LocalStagesStorageAddress {
+		return NewLocalDockerServerStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
+	} else { // Docker registry based stages storage
+		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
+	}
 }

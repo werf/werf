@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/shluz"
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -51,10 +54,10 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -78,11 +81,11 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -118,28 +121,29 @@ func runCleanup() error {
 
 	projectName := werfConfig.Meta.Project
 
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
+	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
+		return err
+	}
+
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	if _, err := common.GetStagesStorage(&commonCmdData); err != nil {
-		return err
-	}
-	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
-		return err
-	}
-	stagesStorage := &storage.LocalStagesStorage{}
 
 	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
@@ -168,33 +172,23 @@ func runCleanup() error {
 		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
 	}
 
-	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
-		CommonRepoOptions: cleaning.CommonRepoOptions{
-			ImagesRepoManager: imagesRepoManager,
-			ImagesNames:       imagesNames,
-			DryRun:            *commonCmdData.DryRun,
-		},
-		LocalGit:                  localGitRepo,
-		KubernetesContextsClients: kubernetesContextsClients,
-		WithoutKube:               *commonCmdData.WithoutKube,
-		Policies:                  policies,
-	}
-
-	stagesCleanupOptions := cleaning.StagesCleanupOptions{
-		ProjectName:       projectName,
-		ImagesRepoManager: imagesRepoManager,
-		StagesStorage:     stagesStorage,
-		ImagesNames:       imagesNames,
-		DryRun:            *commonCmdData.DryRun,
-	}
-
 	cleanupOptions := cleaning.CleanupOptions{
-		StagesCleanupOptions: stagesCleanupOptions,
-		ImagesCleanupOptions: imagesCleanupOptions,
+		ImagesCleanupOptions: cleaning.ImagesCleanupOptions{
+			ImageNameList:             imagesNames,
+			LocalGit:                  localGitRepo,
+			KubernetesContextsClients: kubernetesContextsClients,
+			WithoutKube:               *commonCmdData.WithoutKube,
+			Policies:                  policies,
+			DryRun:                    *commonCmdData.DryRun,
+		},
+		StagesCleanupOptions: cleaning.StagesCleanupOptions{
+			ImageNameList: imagesNames,
+			DryRun:        *commonCmdData.DryRun,
+		},
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(projectName, imagesRepo, storageLockManager, stagesManager, cleanupOptions); err != nil {
 		return err
 	}
 

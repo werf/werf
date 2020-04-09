@@ -8,9 +8,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/pkg/config"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -82,7 +84,7 @@ type BaseStage struct {
 	imageName        string
 	signature        string
 	contentSignature string
-	image            imagePkg.ImageInterface
+	image            container_runtime.ImageInterface
 	gitMappings      []*GitMapping
 	imageTmpDir      string
 	containerWerfDir string
@@ -96,7 +98,7 @@ func (s *BaseStage) LogDetailedName() string {
 		imageName = "~"
 	}
 
-	return fmt.Sprintf("stage %s/%s", imageName, s.Name())
+	return fmt.Sprintf("%s/%s", imageName, s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
@@ -107,7 +109,7 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _, _ imagePkg.ImageInterface) (string, error) {
+func (s *BaseStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
 
@@ -118,8 +120,8 @@ func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.image.IsExists() {
-			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.Labels()))
+		if s.image.GetStageDescription() != nil {
+			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetStageDescription().Info.Labels))
 		} else {
 			latestCommit, err := gitMapping.LatestCommit()
 			if err != nil {
@@ -135,13 +137,13 @@ func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error) {
+func (s *BaseStage) IsEmpty(_ Conveyor, _ container_runtime.ImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, error) {
+func (s *BaseStage) ShouldBeReset(builtImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.Labels())
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetStageDescription().Info.Labels)
 		if commit == "" {
 			return false, nil
 		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
@@ -154,20 +156,20 @@ func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, err
 	return false, nil
 }
 
-func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	var oldestImage *storage.ImageInfo
-	for _, img := range images {
-		if oldestImage == nil {
-			oldestImage = img
-		} else if img.CreatedAt().Before(oldestImage.CreatedAt()) {
-			oldestImage = img
+func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDescription) (*image.StageDescription, error) {
+	var oldestStage *image.StageDescription
+	for _, stageDesc := range stages {
+		if oldestStage == nil {
+			oldestStage = stageDesc
+		} else if stageDesc.Info.GetCreatedAt().Before(oldestStage.Info.GetCreatedAt()) {
+			oldestStage = stageDesc
 		}
 	}
-	return oldestImage, nil
+	return oldestStage, nil
 }
 
-func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.ImageInfo) ([]*storage.ImageInfo, error) {
-	suitableImages := []*storage.ImageInfo{}
+func (s *BaseStage) selectStagesAncestorsByGitMappings(stages []*image.StageDescription) ([]*image.StageDescription, error) {
+	suitableStages := []*image.StageDescription{}
 	currentCommits := make(map[string]string)
 
 	for _, gitMapping := range s.gitMappings {
@@ -179,11 +181,11 @@ func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.Im
 	}
 
 ScanImages:
-	for _, img := range images {
+	for _, stageDesc := range stages {
 		for _, gitMapping := range s.gitMappings {
 			currentCommit := currentCommits[gitMapping.Name]
 
-			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
+			commit := gitMapping.GetGitCommitFromImageLabels(stageDesc.Info.Labels)
 			if commit != "" {
 				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
 				if err != nil {
@@ -191,31 +193,31 @@ ScanImages:
 				}
 
 				if !isOurAncestor {
-					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName)
+					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
 					continue ScanImages
 				}
 
 				logboek.Debug.LogF(
 					"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
-					commit, currentCommit, gitMapping.GitRepo().String(), img.ImageName,
+					commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
 				)
 			} else {
-				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", img.ImageName)
+				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", stageDesc.Info.Name)
 				continue ScanImages
 			}
 		}
 
-		suitableImages = append(suitableImages, img)
+		suitableStages = append(suitableStages, stageDesc)
 	}
 
-	return suitableImages, nil
+	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	return s.selectCacheImageByOldestCreationTimestamp(images)
+func (s *BaseStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.ImageInterface) error {
+func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
@@ -236,7 +238,7 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.Imag
 	return nil
 }
 
-func (s *BaseStage) AfterImageSyncDockerStateHook(_ Conveyor) error {
+func (s *BaseStage) AfterSignatureCalculated(_ Conveyor) error {
 	return nil
 }
 
@@ -244,16 +246,16 @@ func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }
 
-func (s *BaseStage) getServiceMounts(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMounts(prevBuiltImage container_runtime.ImageInterface) map[string][]string {
 	return mergeMounts(s.getServiceMountsFromLabels(prevBuiltImage), s.getServiceMountsFromConfig())
 }
 
-func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage container_runtime.ImageInterface) map[string][]string {
 	mountpointsByType := map[string][]string{}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.Labels()
+		labels = prevBuiltImage.GetStageDescription().Info.Labels
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -287,7 +289,7 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	return mountpointsByType
 }
 
-func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image imagePkg.ImageInterface) error {
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image container_runtime.ImageInterface) error {
 	for mountType, mountpoints := range mountpointsByType {
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := path.Join("/", mountpoint)
@@ -314,7 +316,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image imagePkg.ImageInterface) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image container_runtime.ImageInterface) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
@@ -332,16 +334,16 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 	}
 }
 
-func (s *BaseStage) getCustomMounts(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMounts(prevBuiltImage container_runtime.ImageInterface) map[string][]string {
 	return mergeMounts(s.getCustomMountsFromLabels(prevBuiltImage), s.getCustomMountsFromConfig())
 }
 
-func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.ImageInterface) map[string][]string {
 	mountpointsByFrom := map[string][]string{}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.Labels()
+		labels = prevBuiltImage.GetStageDescription().Info.Labels
 	}
 	for k, v := range labels {
 		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
@@ -374,7 +376,7 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 	return mountpointsByFrom
 }
 
-func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image imagePkg.ImageInterface) error {
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image container_runtime.ImageInterface) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -399,7 +401,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image imagePkg.ImageInterface) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image container_runtime.ImageInterface) {
 	for from, mountpoints := range mountpointsByFrom {
 		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
@@ -423,11 +425,11 @@ func (s *BaseStage) GetContentSignature() string {
 	return s.contentSignature
 }
 
-func (s *BaseStage) SetImage(image imagePkg.ImageInterface) {
+func (s *BaseStage) SetImage(image container_runtime.ImageInterface) {
 	s.image = image
 }
 
-func (s *BaseStage) GetImage() imagePkg.ImageInterface {
+func (s *BaseStage) GetImage() container_runtime.ImageInterface {
 	return s.image
 }
 

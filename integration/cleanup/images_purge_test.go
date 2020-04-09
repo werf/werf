@@ -6,11 +6,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/flant/werf/pkg/docker_registry"
+
 	"github.com/flant/werf/pkg/testing/utils"
 	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
-var _ = Describe("purging images", func() {
+var _ = forEachDockerRegistryImplementation("purging images", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("default"), testDirPath)
 
@@ -43,36 +45,25 @@ var _ = Describe("purging images", func() {
 			"git",
 			"commit", "-m", "Initial commit",
 		)
-
-		stubs.SetEnv("WERF_IMAGES_REPO", registryProjectRepository)
-		stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	})
 
-	AfterEach(func() {
-		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
-		)
-	})
-
-	for _, werfArgs := range [][]string{
+	for _, werfCommand := range [][]string{
 		{"images", "purge"},
 		{"purge"},
 	} {
-		commandToCheck := strings.Join(werfArgs, " ") + " command"
-		commandWerfArgs := werfArgs
+		description := strings.Join(werfCommand, " ") + " command"
+		werfCommand := werfCommand
 
-		Describe(commandToCheck, func() {
-			It("should work properly with non-existent registry repository (registry exists)", func() {
+		Describe(description, func() {
+			It("should work properly with non-existent/empty images repo", func() {
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
-					commandWerfArgs...,
+					werfCommand...,
 				)
 			})
 
-			It("should remove images built with werf", func() {
+			It("should remove images that are built with werf", func() {
 				amount := 4
 				for i := 0; i < amount; i++ {
 					utils.RunSucceedCommand(
@@ -95,36 +86,42 @@ var _ = Describe("purging images", func() {
 					)
 				}
 
-				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
-				Ω(tags).Should(HaveLen(amount))
+				if testImplementation != docker_registry.QuayImplementationName {
+					tags := imagesRepoAllImageRepoTags("image")
+					Ω(tags).Should(HaveLen(amount))
+				}
 
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
-					commandWerfArgs...,
+					werfCommand...,
 				)
 
-				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
-				Ω(tags).Should(HaveLen(0))
+				if testImplementation != docker_registry.QuayImplementationName {
+					tags := imagesRepoAllImageRepoTags("image")
+					Ω(tags).Should(HaveLen(0))
+				}
 			})
 
-			It("should not remove images built without werf", func() {
+			It("should not remove images that are built without werf", func() {
 				Ω(utilsDocker.Pull("flant/werf-test:hello-world")).Should(Succeed(), "docker pull")
-				Ω(utilsDocker.CliTag("flant/werf-test:hello-world", registryProjectRepository)).Should(Succeed(), "docker tag")
-				defer func() { Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi") }()
+				Ω(utilsDocker.CliTag("flant/werf-test:hello-world", imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker tag")
+				defer func() {
+					Ω(utilsDocker.CliRmi(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker rmi")
+				}()
 
-				Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
+				Ω(utilsDocker.CliPush(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker push")
 
-				tags := utilsDocker.RegistryRepositoryList(registryProjectRepository)
+				tags := imagesRepoAllImageRepoTags("image")
 				Ω(tags).Should(HaveLen(1))
 
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
-					commandWerfArgs...,
+					werfCommand...,
 				)
 
-				tags = utilsDocker.RegistryRepositoryList(registryProjectRepository)
+				tags = imagesRepoAllImageRepoTags("image")
 				Ω(tags).Should(HaveLen(1))
 			})
 		})

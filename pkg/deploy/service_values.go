@@ -1,10 +1,11 @@
 package deploy
 
 import (
-	"github.com/flant/werf/pkg/images_manager"
 	"github.com/ghodss/yaml"
 
 	"github.com/flant/logboek"
+
+	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
@@ -16,7 +17,7 @@ type ServiceValuesOptions struct {
 	Env string
 }
 
-func GetServiceValues(projectName string, imagesRepoManager images_manager.ImagesRepoManager, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(projectName string, imagesRepository, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -30,7 +31,7 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 
 	werfInfo := map[string]interface{}{
 		"name": projectName,
-		"repo": imagesRepoManager.ImagesRepo(),
+		"repo": imagesRepository,
 		"ci":   ciInfo,
 	}
 	if commonTag != "" {
@@ -90,7 +91,7 @@ func GetServiceValues(projectName string, imagesRepoManager images_manager.Image
 				logboek.Debug.LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
 			}
 
-			imageID, err := image.GetImageId()
+			imageID, err := image.GetImageID()
 			if err != nil {
 				return nil, err
 			}

@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
@@ -62,8 +61,8 @@ func NewCmd() *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupTag(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -78,10 +77,6 @@ func runRender(outputFilePath string) error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
-		return err
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
@@ -106,7 +101,9 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	optionalImagesRepo, err := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &commonCmdData)
+	projectName := werfConfig.Meta.Project
+
+	optionalImagesRepo, err := common.GetOptionalImagesRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -116,14 +113,7 @@ func runRender(outputFilePath string) error {
 		withoutImagesRepo = false
 	}
 
-	imagesRepo := helm_common.GetImagesRepoOrStub(optionalImagesRepo)
-
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
+	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -164,12 +154,17 @@ func runRender(outputFilePath string) error {
 		imagesNames = append(imagesNames, imageConfig.Name)
 	}
 	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: withoutImagesRepo, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      imagesRepo,
+			Tag:             tag,
+			Name:            imageName,
+			WithoutRegistry: withoutImagesRepo,
+		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
+	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
 		WithoutImagesRepo:    withoutImagesRepo,

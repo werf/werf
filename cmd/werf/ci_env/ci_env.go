@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/shluz"
-
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -42,8 +40,6 @@ Currently supported only GitLab CI`,
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
-	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -60,10 +56,6 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
-	}
-
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
-		return err
 	}
 
 	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
@@ -106,10 +98,6 @@ func generateGitlabEnvs(taggingStrategy string) error {
 		return fmt.Errorf("unable to create tmp docker config: %s", err)
 	}
 
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
-		return err
-	}
-
 	// Init with new docker config dir
 	if err := docker.Init(dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
@@ -119,11 +107,14 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	ciJobToken := os.Getenv("CI_JOB_TOKEN")
 
 	var imagesUsername, imagesPassword string
+	var imagesRepoImplementation string
 	var doLogin bool
 	if ciRegistryImage != "" && ciJobToken != "" {
 		imagesUsername = "gitlab-ci-token"
 		imagesPassword = ciJobToken
 		doLogin = true
+
+		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
 	}
 
 	if doLogin {
@@ -136,8 +127,12 @@ func generateGitlabEnvs(taggingStrategy string) error {
 	printHeader("DOCKER CONFIG", false)
 	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
 
+	printHeader("STAGES_STORAGE", true)
+	printExportCommand("WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
+
 	printHeader("IMAGES REPO", true)
 	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
+	printExportCommand("WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
 
 	printHeader("TAGGING", true)
 	switch taggingStrategy {

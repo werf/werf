@@ -2,18 +2,17 @@ package lint
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/images_manager"
+	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -62,10 +61,6 @@ func runLint() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
-		return err
-	}
-
 	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
@@ -88,7 +83,15 @@ func runLint() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	imagesRepoManager, err := common.GetImagesRepoManager("REPO", common.MultirepoImagesRepoMode)
+	projectName := werfConfig.Meta.Project
+
+	stubImagesRepo, err := storage.NewImagesRepo(
+		projectName,
+		common.StubImagesRepoAddress,
+		"auto",
+		storage.ImagesRepoOptions{},
+	)
+
 	if err != nil {
 		return err
 	}
@@ -105,11 +108,16 @@ func runLint() error {
 		imagesNames = append(imagesNames, imageConfig.Name)
 	}
 	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{Name: imageName, WithoutRegistry: true, ImagesRepoManager: imagesRepoManager, Tag: tag}
+		d := &images_manager.ImageInfo{
+			ImagesRepo:      stubImagesRepo,
+			Name:            imageName,
+			Tag:             tag,
+			WithoutRegistry: true,
+		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, imagesRepoManager, imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(projectDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

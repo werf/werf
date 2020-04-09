@@ -2,17 +2,20 @@ package list
 
 import (
 	"fmt"
-	"path/filepath"
+
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -49,7 +52,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 
@@ -66,11 +69,7 @@ func run(projectNames ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
-		return err
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: false, SkipTlsVerifyRegistry: false}); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
@@ -78,22 +77,32 @@ func run(projectNames ...string) error {
 		return err
 	}
 
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+			return err
+		}
+
 		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
 		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
 			stagesPurgeOptions := cleaning.StagesPurgeOptions{
-				ProjectName:                   projectName,
 				RmContainersThatUseWerfImages: cmdData.Force,
 				DryRun:                        *commonCmdData.DryRun,
 			}
 
-			if err := cleaning.StagesPurge(stagesPurgeOptions); err != nil {
-				return err
-			}
-
-			return nil
+			return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
 		}); err != nil {
 			return err
 		}

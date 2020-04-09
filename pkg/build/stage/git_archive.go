@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -37,15 +37,15 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitArchiveStage) SelectCacheImage(images []*storage.ImageInfo) (*storage.ImageInfo, error) {
-	ancestorsImages, err := s.selectCacheImagesAncestorsByGitMappings(images)
+func (s *GitArchiveStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
-	return s.selectCacheImageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
@@ -60,7 +60,7 @@ func (s *GitArchiveStage) GetNextStageDependencies(c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
-func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

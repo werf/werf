@@ -2,17 +2,20 @@ package purge
 
 import (
 	"fmt"
-	"path/filepath"
+
+	"github.com/flant/werf/pkg/image"
+
+	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
-	"github.com/flant/shluz"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
+	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -49,10 +52,10 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupStagesStorage(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupImagesRepo(&commonCmdData, cmd)
-	common.SetupImagesRepoMode(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -71,7 +74,7 @@ func runPurge() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := shluz.Init(filepath.Join(werf.GetServiceDir(), "locks")); err != nil {
+	if err := image.Init(); err != nil {
 		return err
 	}
 
@@ -82,17 +85,7 @@ func runPurge() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	_, err = common.GetStagesStorage(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	_, err = common.GetSynchronization(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{InsecureRegistry: *commonCmdData.InsecureRegistry, SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry}); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -105,53 +98,54 @@ func runPurge() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
+	projectName := werfConfig.Meta.Project
+
 	logboek.LogOptionalLn()
 
-	projectName := werfConfig.Meta.Project
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	stagesStorageCache := common.GetStagesStorageCache()
+	storageLockManager := &storage.FileLockManager{}
+
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		return err
+	}
+
+	_, err = common.GetSynchronization(&commonCmdData) // TODO
+	if err != nil {
+		return err
+	}
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	imagesRepoMode, err := common.GetImagesRepoMode(&commonCmdData)
+	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
-
-	imagesRepoManager, err := common.GetImagesRepoManager(imagesRepo, imagesRepoMode)
-	if err != nil {
-		return err
-	}
-
-	var imageNames []string
-	for _, image := range werfConfig.StapelImages {
-		imageNames = append(imageNames, image.Name)
-	}
-
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imageNames = append(imageNames, image.Name)
-	}
-
-	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
-		ImagesRepoManager: imagesRepoManager,
-		ImagesNames:       imageNames,
-		DryRun:            *commonCmdData.DryRun,
-	}
-
-	stagesPurgeOptions := cleaning.StagesPurgeOptions{
-		ProjectName:                   projectName,
-		RmContainersThatUseWerfImages: cmdData.Force,
-		DryRun:                        *commonCmdData.DryRun,
-	}
+	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
 	purgeOptions := cleaning.PurgeOptions{
-		ImagesPurgeOptions: imagesPurgeOptions,
-		StagesPurgeOptions: stagesPurgeOptions,
+		ImagesPurgeOptions: cleaning.ImagesPurgeOptions{
+			ImageNameList: imagesNames,
+			DryRun:        *commonCmdData.DryRun,
+		},
+		StagesPurgeOptions: cleaning.StagesPurgeOptions{
+			RmContainersThatUseWerfImages: cmdData.Force,
+			DryRun:                        *commonCmdData.DryRun,
+		},
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(purgeOptions); err != nil {
+	if err := cleaning.Purge(projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
 		return err
 	}
 

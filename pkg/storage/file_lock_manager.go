@@ -3,11 +3,16 @@ package storage
 import (
 	"fmt"
 
-	"github.com/flant/shluz"
+	"github.com/flant/lockgate"
+
+	"github.com/flant/werf/pkg/werf"
+
+	"github.com/flant/logboek"
 )
 
 type FileLockManager struct {
 	stageLocks []string
+	// FIXME: create separate locker using lockgate
 }
 
 func (lockManager *FileLockManager) LockStage(projectName, signature string) error {
@@ -17,7 +22,7 @@ func (lockManager *FileLockManager) LockStage(projectName, signature string) err
 		}
 	}
 
-	if err := shluz.Lock(fmt.Sprintf("%s.%s", projectName, signature), shluz.LockOptions{}); err != nil {
+	if _, err := werf.AcquireHostLock(fmt.Sprintf("%s.%s", projectName, signature), lockgate.AcquireOptions{}); err != nil {
 		return err
 	}
 
@@ -36,7 +41,7 @@ func (lockManager *FileLockManager) UnlockStage(projectName, signature string) e
 	}
 
 	if ind >= 0 {
-		if err := shluz.Unlock(fmt.Sprintf("%s.%s", projectName, signature)); err != nil {
+		if err := werf.ReleaseHostLock(fmt.Sprintf("%s.%s", projectName, signature)); err != nil {
 			return err
 		}
 		lockManager.stageLocks = append(lockManager.stageLocks[:ind], lockManager.stageLocks[ind+1:]...)
@@ -49,7 +54,7 @@ func (lockManager *FileLockManager) ReleaseAllStageLocks() error {
 	for len(lockManager.stageLocks) > 0 {
 		var lockName string
 		lockName, lockManager.stageLocks = lockManager.stageLocks[0], lockManager.stageLocks[1:]
-		if err := shluz.Unlock(lockName); err != nil {
+		if err := werf.ReleaseHostLock(lockName); err != nil {
 			return err
 		}
 	}
@@ -59,40 +64,58 @@ func (lockManager *FileLockManager) ReleaseAllStageLocks() error {
 
 func (lockManager *FileLockManager) LockAllImagesReadOnly(projectName string) error {
 	lockName := fmt.Sprintf("%s.images", projectName)
-	err := shluz.Lock(lockName, shluz.LockOptions{ReadOnly: true})
+	_, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{Shared: true})
 	if err != nil {
-		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+		return fmt.Errorf("lock %s error: %s", lockName, err)
 	}
 	return nil
 }
 
 func (lockManager *FileLockManager) UnlockAllImages(projectName string) error {
 	lockName := fmt.Sprintf("%s.images", projectName)
-	return shluz.Unlock(lockName)
+	return werf.ReleaseHostLock(lockName)
 }
 
 func (lockManager *FileLockManager) LockStageCache(projectName, signature string) error {
 	lockName := fmt.Sprintf("%s.%s.cache", projectName, signature)
-	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("lock %s error: %s", lockName, err)
 	}
 	return nil
 }
 
 func (lockManager *FileLockManager) UnlockStageCache(projectName, signature string) error {
 	lockName := fmt.Sprintf("%s.%s.cache", projectName, signature)
-	return shluz.Unlock(lockName)
+	return werf.ReleaseHostLock(lockName)
 }
 
 func (lockManager *FileLockManager) LockImage(imageName string) error {
 	lockName := fmt.Sprintf("%s.image", imageName)
-	if err := shluz.Lock(lockName, shluz.LockOptions{}); err != nil {
-		return fmt.Errorf("shluz lock %s error: %s", lockName, err)
+	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("lock %s error: %s", lockName, err)
 	}
 	return nil
 }
 
 func (lockManager *FileLockManager) UnlockImage(imageName string) error {
 	lockName := fmt.Sprintf("%s.image", imageName)
-	return shluz.Unlock(lockName)
+	return werf.ReleaseHostLock(lockName)
+}
+
+func (lockManager *FileLockManager) LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) error {
+	lockName := fmt.Sprintf("%s.stages_and_images", projectName)
+	logboek.Debug.LogF("-- FileLockManager.LockStagesAndImages(%s, %#v) lockName=%q\n", projectName, opts, lockName)
+	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}); err != nil {
+		return fmt.Errorf("lock %s error: %s", lockName, err)
+	}
+	return nil
+}
+
+func (lockManager *FileLockManager) UnlockStagesAndImages(projectName string) error {
+	lockName := fmt.Sprintf("%s.stages_and_images", projectName)
+	logboek.Debug.LogF("-- FileLockManager.UnlockStagesAndImages(%s) lockName=%q\n", projectName, lockName)
+	if err := werf.ReleaseHostLock(lockName); err != nil {
+		return fmt.Errorf("unlock %s error: %s", lockName, err)
+	}
+	return nil
 }
