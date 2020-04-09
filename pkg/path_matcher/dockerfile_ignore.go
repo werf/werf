@@ -11,7 +11,7 @@ import (
 
 func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher, greedySearch bool) *DockerfileIgnorePathMatcher {
 	return &DockerfileIgnorePathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: basePath},
+		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
 		patternMatcher:   patternMatcher,
 		isGreedySearchOn: greedySearch,
 	}
@@ -32,6 +32,8 @@ func (f *DockerfileIgnorePathMatcher) String() string {
 }
 
 func (f *DockerfileIgnorePathMatcher) MatchPath(path string) bool {
+	path = formatPath(path)
+
 	if !isRel(path, f.basePath) {
 		return false
 	} else if f.patternMatcher == nil || path == f.basePath {
@@ -59,7 +61,7 @@ type pattern struct {
 }
 
 func (f *DockerfileIgnorePathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(path)
+	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
 	if f.isGreedySearchOn {
 		return false, isMatched || shouldGoThrough
 	} else {

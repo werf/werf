@@ -1,6 +1,7 @@
 package path_matcher
 
 import (
+	"fmt"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -18,11 +19,11 @@ var _ = DescribeTable("simple path matcher (MatchPath)", func(e simpleMatchPathE
 	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths, false)
 
 	for _, matchedPath := range e.matchedPaths {
-		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
+		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", matchedPath))
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse())
+		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
 	}
 },
 	Entry("basePath is equal to the path (paths)", simpleMatchPathEntry{
