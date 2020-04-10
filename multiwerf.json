@@ -34,11 +34,11 @@
         },
         {
           "name": "beta",
-          "version": "v1.1.8.9"
+          "version": "v1.1.8+fix10"
         },
         {
           "name": "ea",
-          "version": "v1.1.8.5"
+          "version": "v1.1.8+fix10"
         }
       ]
     }
