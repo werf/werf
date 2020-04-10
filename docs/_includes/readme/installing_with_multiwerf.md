@@ -18,7 +18,7 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 ##### Add werf alias to the current shell session
 
 ```shell
-. $(multiwerf use 1.0 stable --as-file)
+. $(multiwerf use 1.1 stable --as-file)
 ```
 
 ##### CI usage tip
@@ -26,7 +26,7 @@ curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
 To ensure that multiwerf exists and is executable, use the `type` command:
 
 ```shell
-type multiwerf && . $(multiwerf use 1.0 stable --as-file)
+type multiwerf && . $(multiwerf use 1.1 stable --as-file)
 ```
 
 The command prints a message to stderr if multiwerf is not found. Thus, diagnostics in a CI environment becomes simpler. 
@@ -34,7 +34,7 @@ The command prints a message to stderr if multiwerf is not found. Thus, diagnost
 ##### Optional: run command on terminal startup
 
 ```shell
-echo '. $(multiwerf use 1.0 stable --as-file)' >> ~/.bashrc
+echo '. $(multiwerf use 1.1 stable --as-file)' >> ~/.bashrc
 ```
 
 #### Windows
@@ -60,7 +60,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 ###### Add werf alias to the current shell session
 
 ```shell
-Invoke-Expression -Command "multiwerf use 1.0 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
+Invoke-Expression -Command "multiwerf use 1.1 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
 . $WERF_USE_SCRIPT_PATH.Trim()
 ```
 
@@ -80,6 +80,6 @@ setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 ###### Add werf alias to the current shell session
 
 ```shell
-FOR /F "tokens=*" %g IN ('multiwerf use 1.0 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
+FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
 %WERF_USE_SCRIPT_PATH%
 ```
