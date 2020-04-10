@@ -34,15 +34,15 @@
         },
         {
           "name": "beta",
-          "version": "v1.1.8+fix10"
+          "version": "v1.1.8+fix11"
         },
         {
           "name": "ea",
-          "version": "v1.1.8+fix10"
+          "version": "v1.1.8+fix11"
         },
         {
           "name": "stable",
-          "version": "v1.1.8+fix10"
+          "version": "v1.1.8+fix11"
         }
       ]
     }
