@@ -326,9 +326,45 @@ entryNotFoundInGitRepository:
 		})
 	}
 
-	resultChecksum := util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum)
+	blockMsg = fmt.Sprintf("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
+	logboek.Debug.LogProcessStart(blockMsg, logboek.LevelLogProcessStartOptions{})
+	gitIgnoredFilesChecksum, err := s.calculateGitIgnoredFilesChecksum(wildcards)
+	if err != nil {
+		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		return "", err
+	}
+	if gitIgnoredFilesChecksum != "" {
+		logboek.Debug.LogOptionalLn()
+		logboek.Debug.LogLn(gitIgnoredFilesChecksum)
+	}
+	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+	var resultChecksum string
+	if gitIgnoredFilesChecksum == "" { // TODO: legacy till v1.2
+		resultChecksum = util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum)
+	} else {
+		resultChecksum = util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum, gitIgnoredFilesChecksum)
+	}
 
 	return resultChecksum, nil
+}
+
+func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(wildcards []string) (string, error) {
+	projectFilesPaths, err := s.getProjectFilesByWildcards(wildcards)
+	if err != nil {
+		return "", err
+	}
+
+	if len(projectFilesPaths) == 0 {
+		return "", nil
+	}
+
+	result, err := s.localGitRepo.CheckIgnore(projectFilesPaths)
+	if err != nil {
+		return "", err
+	}
+
+	return s.calculateProjectFilesChecksum(result.IgnoredFilesPaths())
 }
 
 func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]string, error) {
