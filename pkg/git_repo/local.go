@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/logboek"
 
+	"github.com/flant/werf/pkg/git_repo/check_ignore"
 	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/git_repo/status"
 	"github.com/flant/werf/pkg/path_matcher"
@@ -58,6 +59,15 @@ func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result,
 	}
 
 	return status.Status(repository, repo.Path, pathMatcher)
+}
+
+func (repo *Local) CheckIgnore(paths []string) (*check_ignore.Result, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+	}
+
+	return check_ignore.CheckIgnore(repository, repo.Path, paths)
 }
 
 func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {
