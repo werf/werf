@@ -91,7 +91,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		StagesStorage:      &storage.LocalStagesStorage{},
 		StorageLockManager: &storage.FileLockManager{},
-		StagesStorageCache: storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage")),
+		StagesStorageCache: storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage_01")),
 	}
 
 	return c
