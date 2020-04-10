@@ -1243,5 +1243,5 @@ func TerminateWithError(errMsg string, exitCode int) {
 }
 
 func GetStagesStorageCache() storage.StagesStorageCache {
-	return storage.NewFileStagesStorageCache(filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v4"))
+	return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir())
 }

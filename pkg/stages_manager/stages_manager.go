@@ -190,7 +190,7 @@ func (m *StagesManager) FetchStage(stg stage.Interface) error {
 		return err
 	} else if freshStageDescription == nil {
 		// TODO: stages manager should report to the conveyor that conveoyor should be reset
-		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v4", m.ProjectName, stg.GetSignature()))
+		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetStagesStorageCacheDir(), m.ProjectName, stg.GetSignature()))
 	}
 
 	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
@@ -387,7 +387,7 @@ func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.Stage
 			return stageDesc, nil
 		} else {
 			logboek.Default.LogF("Not found signature %q uniqueID %q stage info in %s\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
-			return nil, fmt.Errorf("Invalid stage by signature %q uniqueID %q found in the stages storage cache! Stage is no longer available in the %s. Remove cache directory %s and retry!", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), filepath.Join(werf.GetLocalCacheDir(), "stages_storage_v4", m.ProjectName))
+			return nil, fmt.Errorf("Invalid stage by signature %q uniqueID %q found in the stages storage cache! Stage is no longer available in the %s. Remove cache directory %s and retry!", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), filepath.Join(werf.GetStagesStorageCacheDir(), m.ProjectName))
 		}
 	}
 }
