@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -219,9 +220,14 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 	logProcessMsg := fmt.Sprintf("Calculating files checksum (%v)", wildcards)
 	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
 	if s.localGitRepo != nil {
-		checksum, err = s.calculateFilesChecksumWithLsTree(wildcards)
+		checksum, err = s.calculateFilesChecksumWithGit(wildcards)
 	} else {
-		checksum, err = s.calculateFilesChecksumWithFilesRead(wildcards)
+		projectFilesPaths, err := s.getProjectFilesByWildcards(wildcards)
+		if err != nil {
+			return "", err
+		}
+
+		checksum, err = s.calculateProjectFilesChecksum(projectFilesPaths)
 	}
 
 	if err != nil {
@@ -237,7 +243,7 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 	return checksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithLsTree(wildcards []string) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksumWithGit(wildcards []string) (string, error) {
 	if s.mainLsTreeResult == nil {
 		processMsg := fmt.Sprintf("ls-tree (%s)", s.dockerignorePathMatcher.String())
 		logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
@@ -325,105 +331,108 @@ entryNotFoundInGitRepository:
 	return resultChecksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithFilesRead(wildcards []string) (string, error) {
-	var dependencies []string
+func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]string, error) {
+	var paths []string
 
 	for _, wildcard := range wildcards {
 		contextWildcard := filepath.Join(s.context, wildcard)
 
 		matches, err := filepath.Glob(contextWildcard)
 		if err != nil {
-			return "", fmt.Errorf("glob %s failed: %s", contextWildcard, err)
+			return nil, fmt.Errorf("glob %s failed: %s", contextWildcard, err)
 		}
 
-		var fileList []string
 		for _, match := range matches {
-			matchFileList, err := getAllFiles(match)
-			if err != nil {
-				return "", fmt.Errorf("walk %s failed: %s", match, err)
-			}
-
-			fileList = append(fileList, matchFileList...)
-		}
-
-		var finalFileList []string
-		for _, filePath := range fileList {
-			relFilePath, err := filepath.Rel(s.projectPath, filePath)
-			if err != nil {
-				panic(fmt.Sprintf("unexpected condition: %s", err))
-			} else if relFilePath == "." || relFilePath == ".." || strings.HasPrefix(relFilePath, ".."+string(os.PathSeparator)) {
-				panic(fmt.Sprintf("unexpected condition: %s", relFilePath))
-			}
-
-			if s.dockerignorePathMatcher.MatchPath(relFilePath) {
-				finalFileList = append(finalFileList, filePath)
-			}
-		}
-
-		for _, filePath := range finalFileList {
-			data, err := ioutil.ReadFile(filePath)
-			if err != nil {
-				return "", fmt.Errorf("read file %s failed: %s", filePath, err)
-			}
-
-			dependencies = append(dependencies, string(data))
-			logboek.Debug.LogF("File was added: %s\n", strings.TrimPrefix(filePath, s.projectPath+string(os.PathSeparator)))
-		}
-	}
-
-	checksum := util.Sha256Hash(dependencies...)
-
-	return checksum, nil
-}
-
-func getAllFiles(target string) ([]string, error) {
-	var fileList []string
-	err := filepath.Walk(target, func(path string, f os.FileInfo, err error) error {
-		if f.IsDir() {
-			return nil
-		}
-
-		if f.Mode()&os.ModeSymlink != 0 {
-			linkTo, err := os.Readlink(path)
-			if err != nil {
-				return err
-			}
-
-			linkFilePath := filepath.Join(filepath.Dir(path), linkTo)
-			exist, err := util.FileExists(linkFilePath)
-			if err != nil {
-				return err
-			} else if !exist {
-				return nil
-			} else {
-				lfinfo, err := os.Stat(linkFilePath)
+			err := filepath.Walk(match, func(path string, f os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
 
-				if lfinfo.IsDir() {
-					// infinite loop detector
-					if target == linkFilePath {
-						return nil
-					}
+				if f.IsDir() {
+					return nil
+				}
 
-					lfileList, err := getAllFiles(linkFilePath)
-					if err != nil {
-						return err
-					}
+				relPath, err := filepath.Rel(s.projectPath, path)
+				if err != nil || relPath == "." || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+					panic(fmt.Sprintf("unexpected condition: project (%s) file (%s)", s.projectPath, path))
+				}
 
-					fileList = append(fileList, lfileList...)
-				} else {
-					fileList = append(fileList, linkFilePath)
+				if s.dockerignorePathMatcher.MatchPath(relPath) {
+					paths = append(paths, path)
 				}
 
 				return nil
+			})
+
+			if err != nil {
+				return nil, fmt.Errorf("filepath walk failed: %s", err)
 			}
 		}
+	}
 
-		fileList = append(fileList, path)
-		return err
-	})
+	return paths, nil
+}
 
-	return fileList, err
+func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksum string, err error) {
+	var dependencies []string
+
+	sort.Strings(paths)
+	paths = uniquePaths(paths)
+
+	for _, path := range paths {
+		relPath, err := filepath.Rel(s.projectPath, path)
+		if err != nil || relPath == "." || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+			panic(fmt.Sprintf("unexpected condition: project (%s) file (%s)", s.projectPath, path))
+		}
+
+		dependencies = append(dependencies, relPath)
+		logboek.Debug.LogF("File %s was added:\n", relPath)
+
+		stat, err := os.Lstat(path)
+		if err != nil {
+			return "", fmt.Errorf("os stat %s failed: %s", path, err)
+		}
+
+		dependencies = append(dependencies, stat.Mode().String())
+		logboek.Debug.LogF("  mode: %s\n", stat.Mode().String())
+
+		if stat.Mode()&os.ModeSymlink != 0 {
+			linkTo, err := os.Readlink(path)
+			if err != nil {
+				return "", fmt.Errorf("read link %s failed: %s", path, err)
+			}
+
+			dependencies = append(dependencies, linkTo)
+			logboek.Debug.LogF("  linkTo: %s\n", linkTo)
+		} else {
+			data, err := ioutil.ReadFile(path)
+			if err != nil {
+				return "", fmt.Errorf("read file %s failed: %s", path, err)
+			}
+
+			dataHash := util.Sha256Hash(string(data))
+			dependencies = append(dependencies, dataHash)
+			logboek.Debug.LogF("  content hash: %s\n", dataHash)
+		}
+	}
+
+	if len(dependencies) != 0 {
+		checksum = util.Sha256Hash(dependencies...)
+	}
+
+	return checksum, nil
+}
+
+func uniquePaths(paths []string) []string {
+	var result []string
+	keys := make(map[string]bool)
+
+	for _, path := range paths {
+		if _, exist := keys[path]; !exist {
+			keys[path] = true
+			result = append(result, path)
+		}
+	}
+
+	return result
 }
