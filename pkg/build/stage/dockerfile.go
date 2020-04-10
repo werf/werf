@@ -279,7 +279,7 @@ entryNotFoundInGitRepository:
 			blockMsg = fmt.Sprintf("ls-tree result checksum (%s)", wildcardsPathMatcher.String())
 			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 				lsTreeResultChecksum = lsTreeResult.Checksum()
-				logboek.Debug.LogLn()
+				logboek.Debug.LogOptionalLn()
 				logboek.Debug.LogLn(lsTreeResultChecksum)
 
 				return nil
@@ -314,7 +314,7 @@ entryNotFoundInGitRepository:
 		blockMsg = fmt.Sprintf("Status result checksum (%s)", wildcardsPathMatcher.String())
 		_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 			statusResultChecksum = statusResult.Checksum()
-			logboek.Debug.LogLn()
+			logboek.Debug.LogOptionalLn()
 			logboek.Debug.LogLn(statusResultChecksum)
 			return nil
 		})

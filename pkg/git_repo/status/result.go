@@ -252,6 +252,7 @@ func (r *Result) Checksum() string {
 	})
 
 	for _, sr := range r.submoduleResults {
+		logboek.Debug.LogOptionalLn()
 		logBlockMsg := fmt.Sprintf("submodule %s", sr.repositoryFullFilepath)
 		_ = logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
 			var srChecksumArgs []string
