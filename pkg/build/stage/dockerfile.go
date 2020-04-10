@@ -373,6 +373,12 @@ func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]stri
 	for _, wildcard := range wildcards {
 		contextWildcard := filepath.Join(s.context, wildcard)
 
+		relContextWildcard, err := filepath.Rel(s.projectPath, contextWildcard)
+		if err != nil || relContextWildcard == ".." || strings.HasPrefix(relContextWildcard, ".."+string(os.PathSeparator)) {
+			logboek.Warn.LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
+			continue
+		}
+
 		matches, err := filepath.Glob(contextWildcard)
 		if err != nil {
 			return nil, fmt.Errorf("glob %s failed: %s", contextWildcard, err)
