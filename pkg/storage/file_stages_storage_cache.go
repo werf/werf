@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/lockgate"
 
 	"github.com/flant/werf/pkg/werf"
@@ -27,7 +29,46 @@ func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 	return &FileStagesStorageCache{CacheDir: cacheDir}
 }
 
+func (cache *FileStagesStorageCache) invalidateIfOldCacheExists(projectName string) error {
+	if err := cache.lock(); err != nil {
+		return err
+	}
+	defer cache.unlock()
+
+	oldCacheDir := filepath.Join(werf.GetLocalCacheDir(), "stages_storage_01")
+	if _, err := werf.AcquireHostLock(oldCacheDir, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("lock %s failed: %s", oldCacheDir, err)
+	}
+	defer werf.ReleaseHostLock(oldCacheDir)
+
+	currentProjectCacheDir := filepath.Join(cache.CacheDir, projectName)
+	oldProjectCacheDir := filepath.Join(oldCacheDir, projectName)
+
+	if _, err := os.Stat(oldProjectCacheDir); os.IsNotExist(err) {
+		// ok
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error accessing %s: %s", oldProjectCacheDir, err)
+	} else {
+		// remove old cache and new cache as well
+		logboek.Default.LogF("Removing current stages storage project cache dir: %s\n", currentProjectCacheDir)
+		if err := os.RemoveAll(currentProjectCacheDir); err != nil {
+			return fmt.Errorf("error removing %s: %s", currentProjectCacheDir, err)
+		}
+		logboek.Default.LogF("Removing old stages storage project cache dir: %s\n", oldProjectCacheDir)
+		if err := os.RemoveAll(oldProjectCacheDir); err != nil {
+			return fmt.Errorf("error removing %s: %s", oldProjectCacheDir, err)
+		}
+
+		return nil
+	}
+}
+
 func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []image.StageID, error) {
+	if err := cache.invalidateIfOldCacheExists(projectName); err != nil {
+		return false, nil, err
+	}
+
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 
 	if _, err := os.Stat(sigDir); os.IsNotExist(err) {
@@ -54,6 +95,10 @@ func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []i
 }
 
 func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
+	if err := cache.invalidateIfOldCacheExists(projectName); err != nil {
+		return false, nil, err
+	}
+
 	sigFile := filepath.Join(cache.CacheDir, projectName, signature)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
@@ -76,6 +121,10 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature
 }
 
 func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signature string, stages []image.StageID) error {
+	if err := cache.invalidateIfOldCacheExists(projectName); err != nil {
+		return err
+	}
+
 	if err := cache.lock(); err != nil {
 		return err
 	}
@@ -100,6 +149,10 @@ func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signatu
 }
 
 func (cache *FileStagesStorageCache) DeleteStagesBySignature(projectName, signature string) error {
+	if err := cache.invalidateIfOldCacheExists(projectName); err != nil {
+		return err
+	}
+
 	if err := cache.lock(); err != nil {
 		return err
 	}
