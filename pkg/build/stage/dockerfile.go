@@ -318,12 +318,18 @@ entryNotFoundInGitRepository:
 	var statusResultChecksum string
 	if !statusResult.IsEmpty() {
 		blockMsg = fmt.Sprintf("Status result checksum (%s)", wildcardsPathMatcher.String())
-		_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
-			statusResultChecksum = statusResult.Checksum()
+		if err := logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+			statusResultChecksum, err = statusResult.Checksum()
+			if err != nil {
+				return err
+			}
+
 			logboek.Debug.LogOptionalLn()
 			logboek.Debug.LogLn(statusResultChecksum)
 			return nil
-		})
+		}); err != nil {
+			return "", fmt.Errorf("status result checksum failed: %s", err)
+		}
 	}
 
 	blockMsg = fmt.Sprintf("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
