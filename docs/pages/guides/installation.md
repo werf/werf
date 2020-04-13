@@ -36,8 +36,8 @@ Otherwise, the update runs in the background, and werf alias or a function binds
 <div id="unix" class="tabs__content active" markdown="1">
 
 ```shell
-if multiwerf werf-path MAJOR.MINOR CHANNEL >~\.multiwerf\multiwerf_use_first_werf_path.log 2>&1; then
-    (multiwerf update --with-cache MAJOR.MINOR CHANNEL >~\.multiwerf\background_update.log 2>&1 </dev/null &)
+if multiwerf werf-path MAJOR.MINOR CHANNEL >~/.multiwerf/multiwerf_use_first_werf_path.log 2>&1; then
+    multiwerf update MAJOR.MINOR CHANNEL --in-background --output-file=~/.multiwerf/multiwerf_use_background_update.log --with-cache
 else
     multiwerf update MAJOR.MINOR CHANNEL
 fi
@@ -59,8 +59,8 @@ eval "$WERF_FUNC"
 <div id="powershell" class="tabs__content" markdown="1">
 
 ```shell
-if (Invoke-Expression -Command "multiwerf werf-path MAJOR.MINOR CHANNEL >~\.multiwerf\multiwerf_use_first_werf_path.log 2>&1" | Out-String -OutVariable WERF_PATH) {
-    Start-Job { multiwerf update --with-cache MAJOR.MINOR CHANNEL >~\.multiwerf\background_update.log 2>&1 }
+if ((Invoke-Expression -Command "multiwerf werf-path MAJOR.MINOR CHANNEL" | Out-String -OutVariable WERF_PATH) -and ($LastExitCode -eq 0)) {
+    multiwerf update MAJOR.MINOR CHANNEL --in-background --output-file=~\.multiwerf\multiwerf_use_background_update.log --with-cache
 } else {
     multiwerf update MAJOR.MINOR CHANNEL
     Invoke-Expression -Command "multiwerf werf-path MAJOR.MINOR CHANNEL" | Out-String -OutVariable WERF_PATH
@@ -77,10 +77,10 @@ function werf { & $WERF_PATH.Trim() $args }
 FOR /F "tokens=*" %%g IN ('multiwerf werf-path MAJOR.MINOR CHANNEL') do (SET WERF_PATH=%%g)
 
 IF %ERRORLEVEL% NEQ 0 (
-    multiwerf update MAJOR.MINOR CHANNEL 
+    multiwerf update MAJOR.MINOR CHANNEL
     FOR /F "tokens=*" %%g IN ('multiwerf werf-path MAJOR.MINOR CHANNEL') do (SET WERF_PATH=%%g)
 ) ELSE (
-    START /B multiwerf update MAJOR.MINOR CHANNEL >~/.multiwerf/background_update.log 2>&1
+    multiwerf update MAJOR.MINOR CHANNEL --in-background --output-file=~\.multiwerf\multiwerf_use_background_update.log --with-cache
 )
 
 DOSKEY werf=%WERF_PATH% $*
