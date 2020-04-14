@@ -63,6 +63,7 @@ require (
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20171029140428-b1a47cfbdd75 // indirect
+	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/satori/go.uuid v1.2.0
@@ -172,5 +173,7 @@ replace github.com/docker/docker => github.com/docker/docker v1.4.2-0.2019031921
 replace github.com/docker/cli => github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+
+replace github.com/flant/lockgate => ../lockgate
 
 go 1.13

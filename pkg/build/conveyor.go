@@ -264,19 +264,6 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 }
 
 func (c *Conveyor) BuildStages(opts BuildStagesOptions) error {
-	/*var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewPrepareStagesPhase())
-	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
-
-	if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-		return fmt.Errorf("error locking all images read only: %s", err)
-	}
-	defer c.StorageLockManager.UnlockAllImages(c.projectName())
-
-	return c.runPhases(phases)*/
-
 	if err := c.determineStages(); err != nil {
 		return err
 	}
@@ -308,22 +295,6 @@ func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 	}
 
 	return c.runPhases(phases, true)
-
-	/*
-			var phases []Phase
-			phases = append(phases, NewInitializationPhase())
-			phases = append(phases, NewSignaturesPhase())
-			phases = append(phases, NewShouldBeBuiltPhase())
-			phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts))
-
-		TODO: locks
-			if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-				return fmt.Errorf("error locking all images read only: %s", err)
-			}
-			defer c.StorageLockManager.UnlockAllImages(c.projectName())
-
-			return c.runPhases(phases)
-	*/
 }
 
 type BuildAndPublishOptions struct {
@@ -343,22 +314,6 @@ func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 	}
 
 	return c.runPhases(phases, true)
-
-	/*
-		var phases []Phase
-		phases = append(phases, NewInitializationPhase())
-		phases = append(phases, NewSignaturesPhase())
-		phases = append(phases, NewPrepareStagesPhase())
-		phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
-		phases = append(phases, NewPublishImagesPhase(imagesRepoManager, opts.PublishImagesOptions))
-
-		if err := c.StorageLockManager.LockAllImagesReadOnly(c.projectName()); err != nil {
-			return fmt.Errorf("error locking all images read only: %s", err)
-		}
-		defer c.StorageLockManager.UnlockAllImages(c.projectName())
-
-		return c.runPhases(phases)
-	*/
 }
 
 func (c *Conveyor) determineStages() error {
@@ -440,12 +395,13 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 	//	} Goroutine
 	//}
 
-	if err := c.StorageLockManager.LockStagesAndImages(c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
+	if lock, err := c.StorageLockManager.LockStagesAndImages(c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
 		return fmt.Errorf("unable to lock stages and images (to get or create stages and images only): %s", err)
+	} else {
+		c.AppendOnTerminateFunc(func() error {
+			return c.StorageLockManager.Unlock(lock)
+		})
 	}
-	c.AppendOnTerminateFunc(func() error {
-		return c.StorageLockManager.UnlockStagesAndImages(c.projectName())
-	})
 
 	var imagesLogger logboek.Level
 	if logImages {

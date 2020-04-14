@@ -3,10 +3,12 @@ package list
 import (
 	"fmt"
 
+	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/stages_manager"
-	"github.com/flant/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
 
@@ -53,10 +55,13 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
@@ -84,8 +89,23 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	storageLockManager := &storage.FileLockManager{}
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
+		return err
+	}
 
 	logboek.LogOptionalLn()
 

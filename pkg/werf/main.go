@@ -76,32 +76,39 @@ func GetHostLocker() lockgate.Locker {
 	return hostLocker
 }
 
-func SetupHostLockerDefaultOptions(opts lockgate.AcquireOptions) lockgate.AcquireOptions {
+func SetupLockerDefaultOptions(opts lockgate.AcquireOptions) lockgate.AcquireOptions {
 	if opts.OnWaitFunc == nil {
-		opts.OnWaitFunc = onHostLockerWaitFunc
+		opts.OnWaitFunc = DefaultLockerOnWait
+	}
+	if opts.OnLostLeaseFunc == nil {
+		opts.OnLostLeaseFunc = DefaultLockerOnLostLease
 	}
 	return opts
 }
 
 func WithHostLock(lockName string, opts lockgate.AcquireOptions, f func() error) error {
-	return lockgate.WithAcquire(GetHostLocker(), lockName, SetupHostLockerDefaultOptions(opts), func(_ bool) error {
+	return lockgate.WithAcquire(GetHostLocker(), lockName, SetupLockerDefaultOptions(opts), func(_ bool) error {
 		return f()
 	})
 }
 
-func AcquireHostLock(lockName string, opts lockgate.AcquireOptions) (bool, error) {
-	return GetHostLocker().Acquire(lockName, SetupHostLockerDefaultOptions(opts))
+func AcquireHostLock(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
+	return GetHostLocker().Acquire(lockName, SetupLockerDefaultOptions(opts))
 }
 
-func ReleaseHostLock(lockName string) error {
-	return GetHostLocker().Release(lockName)
+func ReleaseHostLock(lock lockgate.LockHandle) error {
+	return GetHostLocker().Release(lock)
 }
 
-func onHostLockerWaitFunc(lockName string, doWait func() error) error {
-	logProcessMsg := fmt.Sprintf("Waiting for locked resource %q", lockName)
+func DefaultLockerOnWait(lock lockgate.LockHandle, doWait func() error) error {
+	logProcessMsg := fmt.Sprintf("Waiting for locked %q", lock.LockName)
 	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
 		return doWait()
 	})
+}
+
+func DefaultLockerOnLostLease(lock lockgate.LockHandle) error {
+	panic(fmt.Sprintf("Locker has lost lease for locked %q id %s. Will crash current process immediately!", lock.LockName, lock.ID))
 }
 
 func Init(tmpDirOption, homeDirOption string) error {

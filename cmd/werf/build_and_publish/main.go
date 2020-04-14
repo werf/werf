@@ -3,6 +3,9 @@ package build_and_publish
 import (
 	"fmt"
 
+	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/stages_manager"
@@ -17,7 +20,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -86,7 +88,6 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupTag(&commonCmdData, cmd)
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -95,6 +96,10 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupIntrospectStage(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -156,9 +161,23 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-
-	storageLockManager := &storage.FileLockManager{}
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
+		return err
+	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {

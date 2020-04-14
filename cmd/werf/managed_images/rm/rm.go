@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -43,13 +46,16 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -103,9 +109,25 @@ func run(imageNames []string) error {
 		return err
 	}
 
-	if _, err = common.GetSynchronization(&commonCmdData); err != nil {
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
 		return err
 	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
+		return err
+	}
+	_ = stagesStorageCache
+	_ = storageLockManager
 
 	errs := []error{}
 	for _, imageName := range imageNames {

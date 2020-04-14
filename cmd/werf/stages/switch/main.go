@@ -3,7 +3,7 @@ package stages_switch
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/logboek"
@@ -11,6 +11,7 @@ import (
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/stages_manager"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +42,6 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -49,6 +49,10 @@ func NewCmd() *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -87,13 +91,25 @@ func runSwitch() error {
 	projectName := werfConfig.Meta.Project
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-	_, err = common.GetSynchronization(&commonCmdData)
+
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
 	if err != nil {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	storageLockManager := &storage.FileLockManager{}
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 
 	newStagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)

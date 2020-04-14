@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -951,10 +950,13 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 }
 
 func GetSynchronization(cmdData *CmdData) (string, error) {
-	if *cmdData.Synchronization != ":local" {
-		return "", fmt.Errorf("only --synchronization=:local is supported for now, got '%s'", *cmdData.Synchronization)
+	switch *cmdData.Synchronization {
+	case storage.LocalStagesStorageAddress, storage.KubernetesStagesStorageAddress:
+		return *cmdData.Synchronization, nil
+	default:
+		return "", fmt.Errorf("only --synchronization=%s or --synchronization=%s is supported for now, got '%s'", storage.LocalStagesStorageAddress, storage.KubernetesStagesStorageAddress, *cmdData.Synchronization)
 	}
-	return *cmdData.Synchronization, nil
+
 }
 
 func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, error) {
@@ -1026,7 +1028,7 @@ func GetWerfConfigPath(projectDir string, required bool) (string, error) {
 	}
 
 	if required {
-		return "", errors.New("werf.yaml not found")
+		return "", fmt.Errorf("werf.yaml not found")
 	} else {
 		return "", nil
 	}
@@ -1240,8 +1242,4 @@ func TerminateWithError(errMsg string, exitCode int) {
 
 	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
-}
-
-func GetStagesStorageCache() storage.StagesStorageCache {
-	return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir())
 }

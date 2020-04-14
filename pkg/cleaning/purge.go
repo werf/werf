@@ -17,10 +17,11 @@ type PurgeOptions struct {
 func Purge(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options PurgeOptions) error {
 	m := newPurgeManager(projectName, imagesRepo, stagesManager, options)
 
-	if err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
+	} else {
+		defer storageLockManager.Unlock(lock)
 	}
-	defer storageLockManager.UnlockStagesAndImages(projectName)
 
 	if err := logboek.Default.LogProcess(
 		"Running images purge",

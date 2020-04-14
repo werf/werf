@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/werf/pkg/stages_manager"
 
@@ -18,7 +20,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -103,13 +104,16 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
@@ -218,16 +222,26 @@ func runRun() error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	storageLockManager := &storage.FileLockManager{}
-
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
 		return err
 	}
 
-	_, err = common.GetSynchronization(&commonCmdData) // TODO
-	if err != nil {
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
 		return err
 	}
 

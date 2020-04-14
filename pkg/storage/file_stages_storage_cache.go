@@ -30,16 +30,18 @@ func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 }
 
 func (cache *FileStagesStorageCache) invalidateIfOldCacheExists(projectName string) error {
-	if err := cache.lock(); err != nil {
+	if lock, err := cache.lock(); err != nil {
 		return err
+	} else {
+		defer cache.unlock(lock)
 	}
-	defer cache.unlock()
 
 	oldCacheDir := filepath.Join(werf.GetLocalCacheDir(), "stages_storage_01")
-	if _, err := werf.AcquireHostLock(oldCacheDir, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("lock %s failed: %s", oldCacheDir, err)
+	if _, lock, err := werf.AcquireHostLock(oldCacheDir, lockgate.AcquireOptions{}); err != nil {
+		return err
+	} else {
+		defer werf.ReleaseHostLock(lock)
 	}
-	defer werf.ReleaseHostLock(oldCacheDir)
 
 	currentProjectCacheDir := filepath.Join(cache.CacheDir, projectName)
 	oldProjectCacheDir := filepath.Join(oldCacheDir, projectName)
@@ -125,10 +127,11 @@ func (cache *FileStagesStorageCache) StoreStagesBySignature(projectName, signatu
 		return err
 	}
 
-	if err := cache.lock(); err != nil {
+	if lock, err := cache.lock(); err != nil {
 		return err
+	} else {
+		defer cache.unlock(lock)
 	}
-	defer cache.unlock()
 
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 	sigFile := filepath.Join(sigDir, signature)
@@ -153,10 +156,11 @@ func (cache *FileStagesStorageCache) DeleteStagesBySignature(projectName, signat
 		return err
 	}
 
-	if err := cache.lock(); err != nil {
+	if lock, err := cache.lock(); err != nil {
 		return err
+	} else {
+		defer cache.unlock(lock)
 	}
-	defer cache.unlock()
 
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 	sigFile := filepath.Join(sigDir, signature)
@@ -167,13 +171,11 @@ func (cache *FileStagesStorageCache) DeleteStagesBySignature(projectName, signat
 	return nil
 }
 
-func (cache *FileStagesStorageCache) lock() error {
-	if _, err := werf.AcquireHostLock(cache.CacheDir, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("lock %s failed: %s", cache.CacheDir, err)
-	}
-	return nil
+func (cache *FileStagesStorageCache) lock() (lockgate.LockHandle, error) {
+	_, lock, err := werf.AcquireHostLock(cache.CacheDir, lockgate.AcquireOptions{})
+	return lock, err
 }
 
-func (cache *FileStagesStorageCache) unlock() error {
-	return werf.ReleaseHostLock(cache.CacheDir)
+func (cache *FileStagesStorageCache) unlock(lock lockgate.LockHandle) error {
+	return werf.ReleaseHostLock(lock)
 }

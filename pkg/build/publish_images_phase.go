@@ -313,10 +313,11 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		if err := phase.Conveyor.StorageLockManager.LockImage(imageName); err != nil {
+		if lock, err := phase.Conveyor.StorageLockManager.LockImage(phase.Conveyor.projectName(), imageName); err != nil {
 			return fmt.Errorf("error locking image %s: %s", imageName, err)
+		} else {
+			defer phase.Conveyor.StorageLockManager.Unlock(lock)
 		}
-		defer phase.Conveyor.StorageLockManager.UnlockImage(imageName)
 
 		existingTags, err := phase.fetchExistingTags(img.GetName())
 		if err != nil {
