@@ -89,6 +89,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 	for submodulePath, submodule := range submoduleList {
 		submoduleFilepath := filepath.FromSlash(submodulePath)
 		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleFilepath)
+		submoduleRepositoryAbsFilepath := filepath.Join(repositoryAbsFilepath, submoduleFilepath)
 
 		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if matched || shouldGoTrough {
@@ -109,6 +110,11 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 					}
 
 					submoduleResult.isNotInitialized = true
+					submoduleResult.Result = &Result{
+						repositoryAbsFilepath:  submoduleRepositoryAbsFilepath,
+						repositoryFullFilepath: submoduleFullFilepath,
+					}
+
 					result.submoduleResults = append(result.submoduleResults, submoduleResult)
 					continue
 				}
@@ -132,8 +138,6 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 					)
 				}
 			}
-
-			submoduleRepositoryAbsFilepath := filepath.Join(repositoryAbsFilepath, submoduleFilepath)
 
 			sResult, err := status(submoduleRepository, submoduleRepositoryAbsFilepath, submoduleFullFilepath, pathMatcher)
 			if err != nil {

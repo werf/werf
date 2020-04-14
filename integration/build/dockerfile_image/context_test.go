@@ -57,7 +57,7 @@ var _ = Describe("context", func() {
 		output, err := utils.RunCommand(
 			testDirPath,
 			werfBinPath,
-			"build", "-s", ":local",
+			"build", "-s", ":local", "--debug",
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 
@@ -69,17 +69,17 @@ var _ = Describe("context", func() {
 	}
 
 	var _ = DescribeTable("checksum", itBody,
-		Entry("with files read", entry{
+		Entry("without git", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "default"), testDirPath)
 				Ω(os.RemoveAll(filepath.Join(testDirPath, ".git"))).Should(Succeed())
 			},
-			expectedSignature:        "02473513cc5a901dd98785602a36ff2e192d40260054634cf81fa41c",
-			expectedWindowsSignature: "d08e5f4366f31e10f23beca819a01fc51eeabcf6c6ec6dfd17646da7",
+			expectedSignature:        "10577fbfd229120fa34bc07fd40630af70a8051017b31ec4a86c1f76",
+			expectedWindowsSignature: "36407a81113c9555fe5483ab04f42b8004cdbf0120b00bc129118f9b",
 		}),
 		Entry("with ls-tree", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "default"), testDirPath)
 			},
 			expectedSignature:        "0ee2ba14ff8084049d694748977873c3bcab905cdbe3c1caac8204d3",
 			expectedWindowsSignature: "9ba084272d896bc3d5d20ddc98f08edeb8c92de03121fc63a9002025",
@@ -92,10 +92,24 @@ var _ = Describe("context", func() {
 					"reset", "HEAD~50",
 				)
 
-				utils.CopyIn(utils.FixturePath("context"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "default"), testDirPath)
 			},
 			expectedSignature:        "d4f36d7d05db896ac2067e2e30bea131ce9c32142d6d31f83c7d3d9e",
 			expectedWindowsSignature: "51d0ed2fbc218b4eb7860f910bdab9eedaa2528a9fa3b88bbb8eebc4",
+		}),
+		Entry("with ls-tree, status and ignored files by .gitignore files", entry{
+			prepareFixturesFunc: func() {
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"reset", "HEAD~50",
+				)
+
+				utils.CopyIn(utils.FixturePath("context", "default"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "gitignores"), testDirPath)
+			},
+			expectedSignature:        "4dac4b7874769660e42856e038261ad80d418a7b6672bd3658d5bd19",
+			expectedWindowsSignature: "e3ee8c62496da6a52181cd09e296b63d8fef7e96e04c28fba1cda278",
 		}),
 	)
 })
