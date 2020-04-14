@@ -35,7 +35,7 @@ require (
 	github.com/docker/swarmkit v0.0.0-20180705210007-199cf49cd996
 	github.com/fatih/color v1.9.0
 	github.com/flant/kubedog v0.3.5-0.20200228135326-83b69f5024b7
-	github.com/flant/lockgate v0.0.0-20200409203617-8b0e1ecca1c2
+	github.com/flant/lockgate v0.0.0-20200414151337-a491a50f21f7
 	github.com/flant/logboek v0.3.4
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -174,6 +174,5 @@ replace github.com/docker/cli => github.com/docker/cli v0.0.0-20190321234815-f40
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 
-replace github.com/flant/lockgate => ../lockgate
 
 go 1.13
