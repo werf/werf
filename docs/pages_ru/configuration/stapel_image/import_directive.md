@@ -11,6 +11,7 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">import</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">artifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
     <span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
+    <span class="na">stage</span><span class="pi">:</span> <span class="s">&lt;stage name&gt;</span>
     <span class="na">before</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
     <span class="na">after</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
@@ -80,6 +81,7 @@ werf предлагает такой-же подход, но с использо
 Импорт _ресурсов_ из _образов_ и _артефактов_ должен быть описан в директиве `import` в конфигурации [_образа_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-образа) или [_артефакта_]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-артефакта)) куда импортируются файлы. `import` — массив записей, каждая из которых должна содержать следующие параметры:
 
 - `image: <image name>` или `artifact: <artifact name>`: _исходный образ_, имя образа из которого вы хотите копировать файлы или папки.
+- `stage: <stage name>`: _стадия исходного образа_, определённая стадия _исходного образа_ из которого вы хотите копировать файлы или папки.
 - `add: <absolute path>`: _исходный путь_, абсолютный путь к файлу или папке в _исходном образе_ для копирования.
 - `to: <absolute path>`: _путь назначения_, абсолютный путь в _образе назначения_ (куда импортируются файлы или папки). В случае отсутствия считается равным значению указанному в параметре `add`.
 - `before: <install || setup>` or `after: <install || setup>`: _стадия_ сборки _образа назначения_ для импорта. В настоящий момент возможен импорт только на стадиях _install_ или _setup_.

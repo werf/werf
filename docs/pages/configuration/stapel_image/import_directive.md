@@ -11,6 +11,7 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">import</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">artifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
     <span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
+    <span class="na">stage</span><span class="pi">:</span> <span class="s">&lt;stage name&gt;</span>
     <span class="na">before</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
     <span class="na">after</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
@@ -80,6 +81,7 @@ We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/confi
 Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/configuration/introduction.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/configuration/introduction.html#artifact-config-section)). `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
+- `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.
 - `add: <absolute path>`: _source path_, absolute file or folder path in _source image_ for copying.
 - `to: <absolute path>`: _destination path_, absolute path in _destination image_. In case of absence, _destination path_ equals _source path_ (from `add` directive).
 - `before: <install || setup>` or `after: <install || setup>`: _destination image stage_, stage for importing files. At present, only _install_ and _setup_ stages are supported.

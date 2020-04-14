@@ -33,6 +33,7 @@ jobs:
     name: Check broken links
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lang: [ru, en]
     steps:

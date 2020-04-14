@@ -81,6 +81,8 @@ mount:
   to: <absolute path>
 import:
 - artifact: <artifact name>
+  image: <image name>
+  stage: <stage name>
   before: <install || setup>
   after: <install || setup>
   add: <absolute path>
