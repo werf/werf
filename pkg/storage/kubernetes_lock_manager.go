@@ -7,10 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/flant/kubedog/pkg/kube"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/flant/lockgate"
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/werf"
@@ -38,11 +34,8 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 		return locker, nil
 	}
 
-	if err := createNamespaceIfNotExists(manager.Namespace); err != nil {
-		return nil, err
-	}
-	configMapName := fmt.Sprintf("werf-%s", projectName)
-	if err := createConfigMapIfNotExists(manager.Namespace, configMapName); err != nil {
+	name := configMapName(projectName)
+	if _, err := getOrCreateConfigMapWithNamespaceIfNotExists(manager.Namespace, name); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +44,7 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 			Group:    "",
 			Version:  "v1",
 			Resource: "configmaps",
-		}, configMapName, manager.Namespace,
+		}, name, manager.Namespace,
 	)
 	manager.LockerPerProject[projectName] = locker
 
@@ -120,38 +113,4 @@ func kuberntesImageLockName(_, imageName string) string {
 
 func kuberntesStagesAndImagesLockName(_ string) string {
 	return fmt.Sprintf("stages_and_images")
-}
-
-func createNamespaceIfNotExists(namespace string) error {
-	if _, err := kube.Kubernetes.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); errors.IsNotFound(err) {
-		ns := &v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: namespace},
-		}
-
-		if _, err := kube.Kubernetes.CoreV1().Namespaces().Create(ns); errors.IsAlreadyExists(err) {
-			return nil
-		} else if err != nil {
-			return fmt.Errorf("unable to create Namespace %s: %s", ns.Name, err)
-		}
-	} else if err != nil {
-		return err
-	}
-	return nil
-}
-
-func createConfigMapIfNotExists(namespace, configMapName string) error {
-	if _, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
-		cm := &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: configMapName},
-		}
-
-		if _, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Create(cm); errors.IsAlreadyExists(err) {
-			return nil
-		} else if err != nil {
-			return fmt.Errorf("unable to create ConfigMap %s: %s", cm.Name, err)
-		}
-	} else if err != nil {
-		return err
-	}
-	return nil
 }
