@@ -100,7 +100,7 @@ func runSync() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime)
+	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime, "")
 	if err != nil {
 		return err
 	}
