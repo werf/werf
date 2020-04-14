@@ -16,9 +16,7 @@ func GetStagesStorageCache(synchronization string) (storage.StagesStorageCache, 
 	case storage.LocalStagesStorageAddress:
 		return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir()), nil
 	case storage.KubernetesStagesStorageAddress:
-		return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir()), nil
-		// TODO
-		//return storage.NewKubernetesStagesStorageCache(WerfSynchronizationKubernetesNamespace), nil
+		return storage.NewKubernetesStagesStorageCache(WerfSynchronizationKubernetesNamespace), nil
 	default:
 		panic(fmt.Sprintf("unknown synchronization param %q", synchronization))
 	}
