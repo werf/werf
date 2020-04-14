@@ -93,12 +93,16 @@ func (m *StagesManager) writeProjectStagesStorage(stagesStorageAddress string) e
 	return nil
 }
 
+func stagesStorageByProjectLockName(projectName string) string {
+	return fmt.Sprintf("stages_storage_by_project.%s", projectName)
+}
+
 func (m *StagesManager) SwitchStagesStorage(newStagesStorage storage.StagesStorage) error {
-	lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
-	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.AcquireHostLock(stagesStorageByProjectLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
 		return err
+	} else {
+		defer werf.ReleaseHostLock(lock)
 	}
-	defer werf.ReleaseHostLock(lockName)
 
 	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
 		return err
@@ -123,11 +127,11 @@ func (m *StagesManager) SwitchStagesStorage(newStagesStorage storage.StagesStora
 func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) error {
 	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
 	if _, err := os.Stat(f); os.IsNotExist(err) {
-		lockName := fmt.Sprintf("stages_storage_by_project.%s", m.ProjectName)
-		if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+		if _, lock, err := werf.AcquireHostLock(stagesStorageByProjectLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
 			return err
+		} else {
+			defer werf.ReleaseHostLock(lock)
 		}
-		defer werf.ReleaseHostLock(lockName)
 
 		if _, err := os.Stat(f); os.IsNotExist(err) {
 			if err := m.writeProjectStagesStorage(stagesStorage.Address()); err != nil {
@@ -249,10 +253,11 @@ func (m *StagesManager) SelectSuitableStage(stg stage.Interface, stages []*image
 }
 
 func (m *StagesManager) AtomicStoreStagesBySignatureToCache(stageName, stageSig string, stageIDs []image.StageID) error {
-	if err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
+	if lock, err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
 		return fmt.Errorf("error locking stage %s cache by signature %s: %s", stageName, stageSig, err)
+	} else {
+		defer m.StorageLockManager.Unlock(lock)
 	}
-	defer m.StorageLockManager.UnlockStageCache(m.ProjectName, stageSig)
 
 	return logboek.Info.LogProcess(
 		fmt.Sprintf("Storing stage %s images by signature %s into stages storage cache", stageName, stageSig),
@@ -313,10 +318,11 @@ func (m *StagesManager) getStagesBySignatureFromCache(stageName, stageSig string
 }
 
 func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(stageName, stageSig string) ([]*image.StageDescription, error) {
-	if err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
+	if lock, err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
 		return nil, fmt.Errorf("error locking project %s stage %s cache: %s", m.ProjectName, stageSig, err)
+	} else {
+		defer m.StorageLockManager.Unlock(lock)
 	}
-	defer m.StorageLockManager.UnlockStageCache(m.ProjectName, stageSig)
 
 	var stageIDs []image.StageID
 	if err := logboek.Default.LogProcess(

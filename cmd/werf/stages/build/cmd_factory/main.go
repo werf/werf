@@ -3,6 +3,9 @@ package cmd_factory
 import (
 	"fmt"
 
+	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/stages_manager"
@@ -17,7 +20,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -77,7 +79,6 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupStagesStorageOptions(commonCmdData, cmd)
 
-	common.SetupSynchronization(commonCmdData, cmd)
 	common.SetupDockerConfig(commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
 	common.SetupInsecureRegistry(commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
@@ -86,6 +87,10 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupLogOptions(commonCmdData, cmd)
 	common.SetupLogProjectDir(commonCmdData, cmd)
+
+	common.SetupSynchronization(commonCmdData, cmd)
+	common.SetupKubeConfig(commonCmdData, cmd)
+	common.SetupKubeContext(commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -147,17 +152,26 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-
-	storageLockManager := &storage.FileLockManager{}
-
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	synchronization, err := common.GetSynchronization(commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
 		return err
 	}
 
-	_, err = common.GetSynchronization(commonCmdData)
-	if err != nil {
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
 		return err
 	}
 

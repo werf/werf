@@ -33,10 +33,11 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 }
 
 func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
-	if err := cache.lock(imageName); err != nil {
+	if lock, err := cache.lock(imageName); err != nil {
 		return nil, err
+	} else {
+		defer cache.unlock(lock)
 	}
-	defer cache.unlock(imageName)
 
 	now := time.Now()
 
@@ -54,10 +55,11 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 }
 
 func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
-	if err := cache.lock(imgInfo.Name); err != nil {
+	if lock, err := cache.lock(imgInfo.Name); err != nil {
 		return err
+	} else {
+		defer cache.unlock(lock)
 	}
-	defer cache.unlock(imgInfo.Name)
 
 	record := &ManifestCacheRecord{
 		AccessTimestamp: time.Now().Unix(),
@@ -108,18 +110,18 @@ func (cache *ManifestCache) constructFilePathForImage(imageName string) string {
 	return filepath.Join(cache.CacheDir, util.Sha256Hash(imageName))
 }
 
-func (cache *ManifestCache) lock(imageName string) error {
+func (cache *ManifestCache) lock(imageName string) (lockgate.LockHandle, error) {
 	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
-	if _, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
+	if _, lock, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
+	} else {
+		return lock, nil
 	}
-	return nil
 }
 
-func (cache *ManifestCache) unlock(imageName string) error {
-	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
-	if err := werf.ReleaseHostLock(lockName); err != nil {
-		return fmt.Errorf("cannot release %s host lock: %s", lockName, err)
+func (cache *ManifestCache) unlock(lock lockgate.LockHandle) error {
+	if err := werf.ReleaseHostLock(lock); err != nil {
+		return fmt.Errorf("cannot release %s host lock: %s", lock.LockName, err)
 	}
 	return nil
 }

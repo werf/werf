@@ -7,7 +7,6 @@ import (
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/stages_manager"
-	"github.com/flant/werf/pkg/storage"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
@@ -57,20 +56,19 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
-
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 
 	return cmd
@@ -128,15 +126,21 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	storageLockManager := &storage.FileLockManager{}
-
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
 		return err
 	}
 
-	if _, err := common.GetSynchronization(&commonCmdData); err != nil {
+	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
 		return err
 	}
 

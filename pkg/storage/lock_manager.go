@@ -1,19 +1,16 @@
 package storage
 
+import "github.com/flant/lockgate"
+
 type LockManager interface {
-	LockStage(projectName, signature string) error
-	UnlockStage(projectName, signature string) error
-
-	LockStageCache(projectName, signature string) error
-	UnlockStageCache(projectName, signature string) error
-
-	LockImage(imageName string) error
-	UnlockImage(imageName string) error
-
-	LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) error
-	UnlockStagesAndImages(projectName string) error
+	LockStage(projectName, signature string) (LockHandle, error)
+	LockStageCache(projectName, signature string) (LockHandle, error)
+	LockImage(projectName, imageName string) (LockHandle, error)
+	LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) (LockHandle, error)
+	Unlock(lock LockHandle) error
 }
 
-type LockStagesAndImagesOptions struct {
-	GetOrCreateImagesOnly bool
+type LockHandle struct {
+	ProjectName    string
+	LockgateHandle lockgate.LockHandle
 }

@@ -350,10 +350,11 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		return fmt.Errorf("failed to build image for stage %s with signature %s: %s", stg.Name(), stg.GetSignature(), err)
 	}
 
-	if err := phase.Conveyor.StorageLockManager.LockStage(phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
+	if lock, err := phase.Conveyor.StorageLockManager.LockStage(phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
 		return fmt.Errorf("unable to lock project %s signature %s: %s", phase.Conveyor.projectName(), stg.GetSignature(), err)
+	} else {
+		defer phase.Conveyor.StorageLockManager.Unlock(lock)
 	}
-	defer phase.Conveyor.StorageLockManager.UnlockStage(phase.Conveyor.projectName(), stg.GetSignature())
 
 	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stg.GetSignature()); err != nil {
 		return err

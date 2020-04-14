@@ -16,7 +16,6 @@ import (
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -49,20 +48,19 @@ func NewCmd() *cobra.Command {
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
-
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 
 	return cmd
@@ -122,9 +120,18 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-
-	storageLockManager := &storage.FileLockManager{}
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
+		return err
+	}
 	_ = stagesStorageCache // FIXME
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)

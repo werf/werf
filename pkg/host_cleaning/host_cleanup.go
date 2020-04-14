@@ -64,17 +64,17 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
 			imageLockName := container_runtime.ImageLockName(imgName)
-			isLocked, err := werf.AcquireHostLock(imageLockName, lockgate.AcquireOptions{NonBlocking: true})
+			isLocked, lock, err := werf.AcquireHostLock(imageLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
 			}
 
 			if !isLocked {
-				logboek.Debug.LogFDetails("Ignore dangling image %s used by another process\n", imgName)
+				logboek.Debug.LogFDetails("Ignore dangling image %s processed by another werf process\n", imgName)
 				continue
 			}
 
-			werf.ReleaseHostLock(imageLockName) // no need to hold a lock
+			werf.ReleaseHostLock(lock) // no need to hold a lock
 
 			imagesToRemove = append(imagesToRemove, img)
 		} else {
@@ -116,7 +116,7 @@ func safeContainersCleanup(options CommonOptions) error {
 
 		err := func() error {
 			containerLockName := container_runtime.ContainerLockName(containerName)
-			isLocked, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{NonBlocking: true})
+			isLocked, lock, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
 			}
@@ -125,7 +125,7 @@ func safeContainersCleanup(options CommonOptions) error {
 				logboek.Default.LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
-			defer werf.ReleaseHostLock(containerLockName)
+			defer werf.ReleaseHostLock(lock)
 
 			if err := containersRemove([]types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)

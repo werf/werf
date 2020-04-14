@@ -59,10 +59,11 @@ func (i *StageImage) Build(options BuildOptions) error {
 		}
 	} else {
 		containerLockName := ContainerLockName(i.container.Name())
-		if _, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{}); err != nil {
+		if _, lock, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
+		} else {
+			defer werf.ReleaseHostLock(lock)
 		}
-		defer werf.ReleaseHostLock(containerLockName)
 
 		if debugDockerRunCommand() {
 			runArgs, err := i.container.prepareRunArgs()

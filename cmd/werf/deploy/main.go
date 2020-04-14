@@ -21,7 +21,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/ssh_agent"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
@@ -202,14 +201,18 @@ func runDeploy() error {
 			return err
 		}
 
-		_, err = common.GetSynchronization(&commonCmdData) // TODO
+		synchronization, err := common.GetSynchronization(&commonCmdData)
 		if err != nil {
 			return err
 		}
-
-		stagesStorageCache := common.GetStagesStorageCache()
-
-		storageLockManager := &storage.FileLockManager{}
+		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(synchronization)
+		if err != nil {
+			return err
+		}
 
 		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {

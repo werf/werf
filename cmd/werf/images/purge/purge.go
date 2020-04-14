@@ -3,6 +3,9 @@ package purge
 import (
 	"fmt"
 
+	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -13,7 +16,6 @@ import (
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -96,10 +98,24 @@ func runPurge() error {
 		return err
 	}
 
-	stagesStorageCache := common.GetStagesStorageCache()
-	_ = stagesStorageCache // FIXME
-
-	storageLockManager := &storage.FileLockManager{}
+	synchronization, err := common.GetSynchronization(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	if synchronization == storage.KubernetesStagesStorageAddress {
+		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+			return fmt.Errorf("cannot initialize kube: %s", err)
+		}
+	}
+	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
+		return err
+	}
+	_ = stagesStorageCache
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
 	if err != nil {
