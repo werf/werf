@@ -52,10 +52,9 @@ type Conveyor struct {
 
 	imagesInOrder []*Image
 
-	stageImages                     map[string]*container_runtime.StageImage
-	buildingGitStageNameByImageName map[string]stage.StageName
-	localGitRepo                    *git_repo.Local
-	remoteGitRepos                  map[string]*git_repo.Remote
+	stageImages    map[string]*container_runtime.StageImage
+	localGitRepo   *git_repo.Local
+	remoteGitRepos map[string]*git_repo.Remote
 
 	tmpDir string
 
@@ -80,15 +79,14 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		sshAuthSock: sshAuthSock,
 
-		stageImages:                     make(map[string]*container_runtime.StageImage),
-		gitReposCaches:                  make(map[string]*stage.GitRepoCache),
-		baseImagesRepoIdsCache:          make(map[string]string),
-		baseImagesRepoErrCache:          make(map[string]error),
-		imagesInOrder:                   []*Image{},
-		buildingGitStageNameByImageName: make(map[string]stage.StageName),
-		remoteGitRepos:                  make(map[string]*git_repo.Remote),
-		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
-		importServers:                   make(map[string]import_server.ImportServer),
+		stageImages:            make(map[string]*container_runtime.StageImage),
+		gitReposCaches:         make(map[string]*stage.GitRepoCache),
+		baseImagesRepoIdsCache: make(map[string]string),
+		baseImagesRepoErrCache: make(map[string]error),
+		imagesInOrder:          []*Image{},
+		remoteGitRepos:         make(map[string]*git_repo.Remote),
+		tmpDir:                 filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
+		importServers:          make(map[string]import_server.ImportServer),
 
 		ContainerRuntime:   containerRuntime,
 		ImagesRepo:         imagesRepo,
@@ -564,19 +562,6 @@ func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
 
 func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
 	return c.getImageStage(imageName, stageName).GetImage().GetStageDescription().Info.ID
-}
-
-func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {
-	c.buildingGitStageNameByImageName[imageName] = stageName
-}
-
-func (c *Conveyor) GetBuildingGitStage(imageName string) stage.StageName {
-	stageName, ok := c.buildingGitStageNameByImageName[imageName]
-	if !ok {
-		return ""
-	}
-
-	return stageName
 }
 
 func (c *Conveyor) GetImageTmpDir(imageName string) string {
