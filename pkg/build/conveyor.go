@@ -51,11 +51,10 @@ type Conveyor struct {
 
 	imagesInOrder []*Image
 
-	stageImages                     map[string]*image.StageImage
-	buildingGitStageNameByImageName map[string]stage.StageName
-	localGitRepo                    *git_repo.Local
-	remoteGitRepos                  map[string]*git_repo.Remote
-	imagesBySignature               map[string]image.ImageInterface
+	stageImages       map[string]*image.StageImage
+	localGitRepo      *git_repo.Local
+	remoteGitRepos    map[string]*git_repo.Remote
+	imagesBySignature map[string]image.ImageInterface
 
 	tmpDir string
 
@@ -78,16 +77,15 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		sshAuthSock: sshAuthSock,
 
-		stageImages:                     make(map[string]*image.StageImage),
-		gitReposCaches:                  make(map[string]*stage.GitRepoCache),
-		baseImagesRepoIdsCache:          make(map[string]string),
-		baseImagesRepoErrCache:          make(map[string]error),
-		imagesInOrder:                   []*Image{},
-		imagesBySignature:               make(map[string]image.ImageInterface),
-		buildingGitStageNameByImageName: make(map[string]stage.StageName),
-		remoteGitRepos:                  make(map[string]*git_repo.Remote),
-		tmpDir:                          filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
-		importServers:                   make(map[string]import_server.ImportServer),
+		stageImages:            make(map[string]*image.StageImage),
+		gitReposCaches:         make(map[string]*stage.GitRepoCache),
+		baseImagesRepoIdsCache: make(map[string]string),
+		baseImagesRepoErrCache: make(map[string]error),
+		imagesInOrder:          []*Image{},
+		imagesBySignature:      make(map[string]image.ImageInterface),
+		remoteGitRepos:         make(map[string]*git_repo.Remote),
+		tmpDir:                 filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
+		importServers:          make(map[string]import_server.ImportServer),
 
 		StagesStorage:      &storage.LocalStagesStorage{},
 		StorageLockManager: &storage.FileLockManager{},
@@ -612,19 +610,6 @@ func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
 
 func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
 	return c.getImageStage(imageName, stageName).GetImage().ID()
-}
-
-func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {
-	c.buildingGitStageNameByImageName[imageName] = stageName
-}
-
-func (c *Conveyor) GetBuildingGitStage(imageName string) stage.StageName {
-	stageName, ok := c.buildingGitStageNameByImageName[imageName]
-	if !ok {
-		return ""
-	}
-
-	return stageName
 }
 
 func (c *Conveyor) GetImageTmpDir(imageName string) string {

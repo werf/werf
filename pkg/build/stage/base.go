@@ -236,10 +236,6 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.Imag
 	return nil
 }
 
-func (s *BaseStage) AfterImageSyncDockerStateHook(_ Conveyor) error {
-	return nil
-}
-
 func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }
