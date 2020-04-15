@@ -110,9 +110,9 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	return res, nil
 }
 
-func (r *Result) Checksum() string {
+func (r *Result) Checksum() (string, error) {
 	if r.IsEmpty() {
-		return ""
+		return "", nil
 	}
 
 	h := sha256.New()
@@ -122,17 +122,30 @@ func (r *Result) Checksum() string {
 		fileStatusPathList = append(fileStatusPathList, fileStatusPath)
 	}
 
-	fileModeAndDataFunc := func(fileStatusAbsFilepath string) (string, string) {
+	fileModeAndDataFunc := func(fileStatusAbsFilepath string) (string, string, error) {
 		stat, err := os.Lstat(fileStatusAbsFilepath)
 		if err != nil {
-			panic(err)
+			return "", "", fmt.Errorf("os stat %s failed: %s", fileStatusAbsFilepath, err)
 		}
 
 		dataH := sha256.New()
-		data, err := ioutil.ReadFile(fileStatusAbsFilepath)
-		dataH.Write(data)
+		if stat.Mode()&os.ModeSymlink != 0 {
+			linkTo, err := os.Readlink(fileStatusAbsFilepath)
+			if err != nil {
+				return "", "", fmt.Errorf("os read link %s failed: %s", fileStatusAbsFilepath, err)
+			}
 
-		return stat.Mode().String(), fmt.Sprintf("%x", dataH.Sum(nil))
+			dataH.Write([]byte(linkTo))
+		} else {
+			data, err := ioutil.ReadFile(fileStatusAbsFilepath)
+			if err != nil {
+				return "", "", fmt.Errorf("os read file %s failed: %s", fileStatusAbsFilepath, err)
+			}
+
+			dataH.Write(data)
+		}
+
+		return stat.Mode().String(), fmt.Sprintf("%x", dataH.Sum(nil)), nil
 	}
 
 	sort.Strings(fileStatusPathList)
@@ -238,7 +251,11 @@ func (r *Result) Checksum() string {
 		}
 
 		if modeAndFileDataShouldBeAdded {
-			mode, data := fileModeAndDataFunc(fileStatusAbsFilepath)
+			mode, data, err := fileModeAndDataFunc(fileStatusAbsFilepath)
+			if err != nil {
+				return "", err
+			}
+
 			args = append(args, mode, data)
 		}
 
@@ -252,8 +269,9 @@ func (r *Result) Checksum() string {
 	})
 
 	for _, sr := range r.submoduleResults {
+		logboek.Debug.LogOptionalLn()
 		logBlockMsg := fmt.Sprintf("submodule %s", sr.repositoryFullFilepath)
-		_ = logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
+		if err := logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
 			var srChecksumArgs []string
 
 			srChecksumArgs = append(srChecksumArgs, sr.repositoryFullFilepath)
@@ -267,7 +285,11 @@ func (r *Result) Checksum() string {
 					srChecksumArgs = append(srChecksumArgs, sr.currentCommit)
 				}
 
-				srChecksum := sr.Checksum()
+				srChecksum, err := sr.Checksum()
+				if err != nil {
+					return err
+				}
+
 				if srChecksum != "" {
 					srChecksumArgs = append(srChecksumArgs, srChecksum)
 				}
@@ -277,10 +299,12 @@ func (r *Result) Checksum() string {
 			h.Write([]byte(strings.Join(srChecksumArgs, "🐜")))
 
 			return nil
-		})
+		}); err != nil {
+			return "", fmt.Errorf("submodule %s checksum failed: %s", sr.repositoryFullFilepath, err)
+		}
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func (r *Result) IsEmpty() bool {

@@ -145,6 +145,7 @@ func (r *Result) Checksum() string {
 	for _, submoduleResult := range r.submodulesResults {
 		var submoduleChecksum string
 		if !submoduleResult.IsEmpty() {
+			logboek.Debug.LogOptionalLn()
 			blockMsg := fmt.Sprintf("submodule %s", submoduleResult.repositoryFullFilepath)
 			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
 				submoduleChecksum = submoduleResult.Checksum()
