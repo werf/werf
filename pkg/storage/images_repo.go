@@ -8,6 +8,7 @@ import (
 type ImagesRepo interface {
 	GetRepoImage(imageName, tag string) (*image.Info, error)
 	GetRepoImages(imageNames []string) (map[string][]*image.Info, error)
+	SelectRepoImages(imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error)
 	DeleteRepoImage(_ DeleteImageOptions, repoImageList ...*image.Info) error
 
 	GetAllImageRepoTags(imageName string) ([]string, error)

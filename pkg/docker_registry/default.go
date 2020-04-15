@@ -24,10 +24,10 @@ func newDefaultImplementation(options defaultImplementationOptions) (*defaultImp
 }
 
 func (r *defaultImplementation) GetRepoImageList(reference string) ([]*image.Info, error) {
-	return r.SelectRepoImageList(reference, func(_ *image.Info) bool { return true })
+	return r.SelectRepoImageList(reference, nil)
 }
 
-func (r *defaultImplementation) SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error) {
+func (r *defaultImplementation) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	tags, err := r.api.Tags(reference)
 	if err != nil {
 		return nil, err
@@ -36,18 +36,26 @@ func (r *defaultImplementation) SelectRepoImageList(reference string, f func(*im
 	return r.selectRepoImageListByTags(reference, tags, f)
 }
 
-func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags []string, f func(*image.Info) bool) ([]*image.Info, error) {
+func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags []string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	var repoImageList []*image.Info
 	for _, tag := range tags {
 		ref := strings.Join([]string{reference, tag}, ":")
 		repoImage, err := r.GetRepoImage(ref)
-		if err != nil {
+
+		if f != nil {
+			ok, err := f(ref, repoImage, err)
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+		} else if err != nil {
 			return nil, err
 		}
 
-		if f(repoImage) {
-			repoImageList = append(repoImageList, repoImage)
-		}
+		repoImageList = append(repoImageList, repoImage)
 	}
 
 	return repoImageList, nil
@@ -89,4 +97,8 @@ func (r *defaultImplementation) ResolveRepoMode(_, repoMode string) (string, err
 
 func (r *defaultImplementation) String() string {
 	return DefaultImplementationName
+}
+
+func IsManifestUnknownError(err error) bool {
+	return strings.Contains(err.Error(), "MANIFEST_UNKNOWN")
 }
