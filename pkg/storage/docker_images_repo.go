@@ -66,10 +66,14 @@ func (repo *DockerImagesRepo) GetRepoImage(imageName, tag string) (*image.Info, 
 }
 
 func (repo *DockerImagesRepo) GetRepoImages(imageNames []string) (map[string][]*image.Info, error) {
+	return repo.SelectRepoImages(imageNames, nil)
+}
+
+func (repo *DockerImagesRepo) SelectRepoImages(imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
 	if repo.imagesRepoManager.IsMonorepo() {
-		return repo.getRepoImagesFromMonorepo(imageNames)
+		return repo.getRepoImagesFromMonorepo(imageNames, f)
 	} else {
-		return repo.getRepoImagesFromMultirepo(imageNames)
+		return repo.getRepoImagesFromMultirepo(imageNames, f)
 	}
 }
 
@@ -107,8 +111,8 @@ func (repo *DockerImagesRepo) String() string {
 	return repo.imagesRepoManager.ImagesRepo()
 }
 
-func (repo *DockerImagesRepo) getRepoImagesFromMonorepo(imageNames []string) (map[string][]*image.Info, error) {
-	tags, err := repo.selectImages(repo.imagesRepoManager.imagesRepo)
+func (repo *DockerImagesRepo) getRepoImagesFromMonorepo(imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
+	tags, err := repo.selectImages(repo.imagesRepoManager.imagesRepo, f)
 	if err != nil {
 		return nil, err
 	}
@@ -133,10 +137,10 @@ loop:
 	return imageTags, nil
 }
 
-func (repo *DockerImagesRepo) getRepoImagesFromMultirepo(imageNames []string) (map[string][]*image.Info, error) {
+func (repo *DockerImagesRepo) getRepoImagesFromMultirepo(imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
 	imageTags := map[string][]*image.Info{}
 	for _, imageName := range imageNames {
-		tags, err := repo.selectImages(repo.imagesRepoManager.ImageRepo(imageName))
+		tags, err := repo.selectImages(repo.imagesRepoManager.ImageRepo(imageName), f)
 		if err != nil {
 			return nil, err
 		}
@@ -147,9 +151,32 @@ func (repo *DockerImagesRepo) getRepoImagesFromMultirepo(imageNames []string) (m
 	return imageTags, nil
 }
 
-func (repo *DockerImagesRepo) selectImages(reference string) ([]*image.Info, error) {
-	return repo.DockerRegistry.SelectRepoImageList(reference, func(info *image.Info) bool {
+func (repo *DockerImagesRepo) selectImages(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+	return repo.DockerRegistry.SelectRepoImageList(reference, func(ref string, info *image.Info, err error) (bool, error) {
+		if err != nil {
+			if f != nil {
+				return f(ref, info, err)
+			}
+
+			return false, err
+		}
+
 		werfImageLabel, ok := info.Labels[image.WerfImageLabel]
-		return ok && werfImageLabel == "true"
+		if !ok || werfImageLabel != "true" {
+			return false, nil
+		}
+
+		if f != nil {
+			ok, err := f(ref, info, err)
+			if err != nil {
+				return false, err
+			}
+
+			if !ok {
+				return false, nil
+			}
+		}
+
+		return true, nil
 	})
 }

@@ -70,7 +70,7 @@ func (r *gitHubPackages) exceptMetaTag(tags []string) []string {
 	return result
 }
 
-func (r *gitHubPackages) SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error) {
+func (r *gitHubPackages) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	tags, err := r.Tags(reference)
 	if err != nil {
 		return nil, err

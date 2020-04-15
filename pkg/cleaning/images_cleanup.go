@@ -96,7 +96,7 @@ type ImagesCleanupPolicies struct {
 }
 
 func (m *imagesCleanupManager) initRepoImages() error {
-	repoImages, err := m.ImagesRepo.GetRepoImages(m.ImageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
