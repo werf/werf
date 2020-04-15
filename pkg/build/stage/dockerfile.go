@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -107,8 +108,11 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
 
 	var stagesDependencies [][]string
+	var stagesOnBuildDependencies [][]string
+
 	for _, stage := range s.dockerStages {
 		var dependencies []string
+		var onBuildDependencies []string
 
 		dependencies = append(dependencies, s.addHost...)
 
@@ -120,37 +124,17 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 		dependencies = append(dependencies, resolvedBaseName)
 
 		for _, cmd := range stage.Commands {
-			switch c := cmd.(type) {
-			case *instructions.ArgCommand:
-				dependencies = append(dependencies, c.String())
-				if argValue, exist := s.dockerArgsHash[c.Key]; exist {
-					dependencies = append(dependencies, argValue)
-				}
-			case *instructions.AddCommand:
-				dependencies = append(dependencies, c.String())
-
-				checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
-				if err != nil {
-					return "", err
-				}
-				dependencies = append(dependencies, checksum)
-			case *instructions.CopyCommand:
-				dependencies = append(dependencies, c.String())
-				if c.From == "" {
-					checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
-					if err != nil {
-						return "", err
-					}
-					dependencies = append(dependencies, checksum)
-				}
-			case dockerfileInstructionInterface:
-				dependencies = append(dependencies, c.String())
-			default:
-				panic("runtime error")
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(cmd)
+			if err != nil {
+				return "", err
 			}
+
+			dependencies = append(dependencies, cmdDependencies...)
+			onBuildDependencies = append(onBuildDependencies, cmdOnBuildDependencies...)
 		}
 
 		stagesDependencies = append(stagesDependencies, dependencies)
+		stagesOnBuildDependencies = append(stagesOnBuildDependencies, onBuildDependencies)
 	}
 
 	for ind, stage := range s.dockerStages {
@@ -161,6 +145,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 
 			if stage.BaseName == relatedStage.Name {
 				stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+				stagesDependencies[ind] = append(stagesDependencies[ind], stagesOnBuildDependencies[relatedStageIndex]...)
 			}
 		}
 
@@ -180,6 +165,65 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ image.ImageInterface)
 	}
 
 	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
+}
+
+func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]string, []string, error) {
+	var dependencies []string
+	var onBuildDependencies []string
+
+	switch c := cmd.(type) {
+	case *instructions.ArgCommand:
+		dependencies = append(dependencies, c.String())
+		if argValue, exist := s.dockerArgsHash[c.Key]; exist {
+			dependencies = append(dependencies, argValue)
+		}
+	case *instructions.AddCommand:
+		dependencies = append(dependencies, c.String())
+
+		checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
+		if err != nil {
+			return nil, nil, err
+		}
+		dependencies = append(dependencies, checksum)
+	case *instructions.CopyCommand:
+		dependencies = append(dependencies, c.String())
+		if c.From == "" {
+			checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
+			if err != nil {
+				return nil, nil, err
+			}
+			dependencies = append(dependencies, checksum)
+		}
+	case *instructions.OnbuildCommand:
+		p, err := parser.Parse(bytes.NewReader([]byte(c.Expression)))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if len(p.AST.Children) != 1 {
+			panic(fmt.Sprintf("unexpected condition: %s (%d children)", c.String(), len(p.AST.Children)))
+		}
+
+		instruction := p.AST.Children[0]
+		cmd, err := instructions.ParseInstruction(instruction)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cDependencies, _, err := s.dockerfileInstructionDependencies(cmd)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		dependencies = append(dependencies, c.String())
+		onBuildDependencies = append(onBuildDependencies, cDependencies...)
+	case dockerfileInstructionInterface:
+		dependencies = append(dependencies, c.String())
+	default:
+		panic("runtime error")
+	}
+
+	return dependencies, onBuildDependencies, nil
 }
 
 func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img image.ImageInterface) error {
