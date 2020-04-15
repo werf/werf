@@ -301,10 +301,6 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 		stg.SetImage(i)
 	}
 
-	if err = stg.AfterImageSyncDockerStateHook(phase.Conveyor); err != nil {
-		return err
-	}
-
 	phase.PrevNonEmptyStage = stg
 	logboek.Debug.LogF("Set prev non empty stage = %q %s\n", phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
 	phase.PrevImage = i
