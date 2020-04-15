@@ -44,6 +44,7 @@ func (iterator *StagesIterator) OnImageStage(img *Image, stg stage.Interface, on
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
+	logboek.Debug.LogF("%s stage is empty: %v\n", stg.LogDetailedName(), isEmpty)
 
 	if stg.Name() != "from" && stg.Name() != "dockerfile" {
 		if iterator.PrevStage == nil {
