@@ -62,7 +62,7 @@ type stagesCleanupManager struct {
 }
 
 func (m *stagesCleanupManager) initImagesRepoImageList() error {
-	repoImages, err := m.ImagesRepo.GetRepoImages(m.ImageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ loop:
 }
 
 func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) ([]*image.Info, error) {
-	repoImages, err := imagesRepo.GetRepoImages(imageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(imagesRepo, imageNameList)
 	if err != nil {
 		return nil, err
 	}

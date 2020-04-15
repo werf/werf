@@ -54,6 +54,17 @@ func (m *imagesPurgeManager) run() error {
 	return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageList...)
 }
 
+func selectRepoImagesFromImagesRepo(imagesRepo storage.ImagesRepo, imageNameList []string) (map[string][]*image.Info, error) {
+	return imagesRepo.SelectRepoImages(imageNameList, func(reference string, info *image.Info, err error) (bool, error) {
+		if err != nil && docker_registry.IsManifestUnknownError(err) {
+			logboek.Warn.LogF("Skip image %s: %s\n", reference, err)
+			return false, nil
+		}
+
+		return true, err
+	})
+}
+
 func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, repoImageList ...*image.Info) error {
 	if err := deleteRepoImage(imagesRepo.DeleteRepoImage, storage.DeleteImageOptions{}, dryRun, repoImageList...); err != nil {
 		switch err.(type) {

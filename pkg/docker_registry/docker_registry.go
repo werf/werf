@@ -24,7 +24,7 @@ type DockerRegistry interface {
 	TryGetRepoImage(reference string) (*image.Info, error)
 	IsRepoImageExists(reference string) (bool, error)
 	GetRepoImageList(reference string) ([]*image.Info, error)
-	SelectRepoImageList(reference string, f func(*image.Info) bool) ([]*image.Info, error)
+	SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
 	DeleteRepoImage(repoImageList ...*image.Info) error
 
 	ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error)
