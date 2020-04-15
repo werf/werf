@@ -73,9 +73,15 @@ func SetupToStagesStorage(commonCmdData *common.CmdData, cmdData *SyncCmdData, c
 	common.SetupQuayTokenForRepoData(cmdData.ToStagesStorageRepoData, cmd, "to-repo-quay-token", []string{"WERF_TO_REPO_QUAY_TOKEN", "WERF_REPO_QUAY_TOKEN"})
 }
 
-func NewFromStagesStorage(commonCmdData *common.CmdData, cmdData *SyncCmdData, containerRuntime container_runtime.ContainerRuntime) (storage.StagesStorage, error) {
+func NewFromStagesStorage(commonCmdData *common.CmdData, cmdData *SyncCmdData, containerRuntime container_runtime.ContainerRuntime, defaultAddress string) (storage.StagesStorage, error) {
+	var address string
 	if *cmdData.FromStagesStorage == "" {
-		return nil, fmt.Errorf("--from=ADDRESS param required")
+		if defaultAddress == "" {
+			return nil, fmt.Errorf("--from=ADDRESS param required")
+		}
+		address = defaultAddress
+	} else {
+		address = *cmdData.FromStagesStorage
 	}
 
 	repoData := common.MergeRepoData(cmdData.FromStagesStorageRepoData, commonCmdData.CommonRepoData)
@@ -84,7 +90,7 @@ func NewFromStagesStorage(commonCmdData *common.CmdData, cmdData *SyncCmdData, c
 		return nil, err
 	}
 
-	return NewStagesStorage(commonCmdData, *cmdData.FromStagesStorage, repoData, containerRuntime)
+	return NewStagesStorage(commonCmdData, address, repoData, containerRuntime)
 }
 
 func NewToStagesStorage(commonCmdData *common.CmdData, cmdData *SyncCmdData, containerRuntime container_runtime.ContainerRuntime) (storage.StagesStorage, error) {

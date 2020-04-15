@@ -39,7 +39,7 @@ import (
 	stages_build "github.com/flant/werf/cmd/werf/stages/build"
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
 	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
-	stages_switch "github.com/flant/werf/cmd/werf/stages/switch"
+	stages_switch "github.com/flant/werf/cmd/werf/stages/switch_from_local"
 	stages_sync "github.com/flant/werf/cmd/werf/stages/sync"
 
 	stage_image "github.com/flant/werf/cmd/werf/stage/image"

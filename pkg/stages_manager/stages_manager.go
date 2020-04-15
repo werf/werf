@@ -22,8 +22,8 @@ import (
 )
 
 type StagesManager struct {
-	StagesStorageByProjectDir string
-	ProjectName               string
+	StagesSwitchFromLocalBlockDir string
+	ProjectName                   string
 
 	StorageLockManager storage.LockManager
 	StagesStorage      storage.StagesStorage
@@ -32,10 +32,10 @@ type StagesManager struct {
 
 func NewStagesManager(projectName string, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StagesManager {
 	return &StagesManager{
-		StagesStorageByProjectDir: filepath.Join(werf.GetServiceDir(), "stages_storage_by_project"),
-		ProjectName:               projectName,
-		StorageLockManager:        storageLockManager,
-		StagesStorageCache:        stagesStorageCache,
+		StagesSwitchFromLocalBlockDir: filepath.Join(werf.GetServiceDir(), "stages_switch_from_local_block"),
+		ProjectName:                   projectName,
+		StorageLockManager:            storageLockManager,
+		StagesStorageCache:            stagesStorageCache,
 	}
 }
 
@@ -49,8 +49,8 @@ func NewStagesManager(projectName string, storageLockManager storage.LockManager
 //}
 //}
 
-func (m *StagesManager) readCurrentProjectStagesStorageAddress() (string, error) {
-	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
+func (m *StagesManager) getStagesSwitchFromLocalBlock() (string, error) {
+	f := filepath.Join(m.StagesSwitchFromLocalBlockDir, m.ProjectName)
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		return "", nil
 	} else if err != nil {
@@ -64,25 +64,31 @@ func (m *StagesManager) readCurrentProjectStagesStorageAddress() (string, error)
 	}
 }
 
-func (m *StagesManager) checkProjectStagesStorageNotChanged(stagesStorageAddress string) error {
-	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
+func (m *StagesManager) checkStagesSwitchFromLocalBlock(stagesStorageAddress string) error {
+	if switchFromLocalBlock, err := m.getStagesSwitchFromLocalBlock(); err != nil {
 		return err
-	} else if currentStagesStorageAddress != stagesStorageAddress {
+	} else if switchFromLocalBlock != "" && stagesStorageAddress == storage.LocalStagesStorageAddress {
 		return fmt.Errorf(
-			`Project %q already uses another stages storage %q!
-Run the following command to move existing project stages to the new stages storage:
-'werf stages mv --from-stages-storage=%s --to-stages-storage=%s'
+			`Project %q stages storage has been switched from %s to %s!
 
-Or simply switch project to the new stages storage by the following command:
-'werf stages switch -s %s'`,
-			m.ProjectName, currentStagesStorageAddress, currentStagesStorageAddress, stagesStorageAddress, stagesStorageAddress)
+ 1. Remove --stages-storage=%s param if it is specified explicitly.
+ 2. If 'werf ci-env' command is used, then WERF_STAGES_STORAGE already should be exported — make sure that WERF_STAGES_STORAGE equals %s in this case.
+ 3. Otherwise explicitly specify --stages-storage=%s (or export WERF_STAGES_STORAGE=%s).`,
+			m.ProjectName,
+			storage.LocalStagesStorageAddress,
+			switchFromLocalBlock,
+			storage.LocalStagesStorageAddress,
+			switchFromLocalBlock,
+			switchFromLocalBlock,
+			switchFromLocalBlock,
+		)
 	}
 
 	return nil
 }
 
-func (m *StagesManager) writeProjectStagesStorage(stagesStorageAddress string) error {
-	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
+func (m *StagesManager) writeStagesSwitchFromLocalBlock(stagesStorageAddress string) error {
+	f := filepath.Join(m.StagesSwitchFromLocalBlockDir, m.ProjectName)
 	d := filepath.Dir(f)
 	if err := os.MkdirAll(d, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating dir %s: %s", d, err)
@@ -93,70 +99,35 @@ func (m *StagesManager) writeProjectStagesStorage(stagesStorageAddress string) e
 	return nil
 }
 
-func stagesStorageByProjectLockName(projectName string) string {
-	return fmt.Sprintf("stages_storage_by_project.%s", projectName)
+func stagesSwitchFromLocalBlockLockName(projectName string) string {
+	return fmt.Sprintf("stages_switch_from_local_block.%s", projectName)
 }
 
-func (m *StagesManager) SwitchStagesStorage(newStagesStorage storage.StagesStorage) error {
-	if _, lock, err := werf.AcquireHostLock(stagesStorageByProjectLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
+func (m *StagesManager) SetStagesSwitchFromLocalBlock(newStagesStorage storage.StagesStorage) error {
+	if _, lock, err := werf.AcquireHostLock(stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
 		return err
 	} else {
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	if currentStagesStorageAddress, err := m.readCurrentProjectStagesStorageAddress(); err != nil {
-		return err
-	} else if currentStagesStorageAddress != "" {
-		if currentStagesStorageAddress == newStagesStorage.Address() {
-			logboek.Default.LogFDetails("Stages storage not changed — %s\n", currentStagesStorageAddress)
-			m.StagesStorage = newStagesStorage
-			return nil
-		} else {
-			logboek.Default.LogFDetails("Old stages storage — %s\n", currentStagesStorageAddress)
-		}
-	}
-	logboek.Default.LogFDetails("New stages storage — %s\n", newStagesStorage.Address())
-
-	if err := m.writeProjectStagesStorage(newStagesStorage.Address()); err != nil {
+	if err := m.writeStagesSwitchFromLocalBlock(newStagesStorage.Address()); err != nil {
 		return err
 	}
-	m.StagesStorage = newStagesStorage
 	return nil
 }
 
 func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) error {
-	f := filepath.Join(m.StagesStorageByProjectDir, m.ProjectName)
-	if _, err := os.Stat(f); os.IsNotExist(err) {
-		if _, lock, err := werf.AcquireHostLock(stagesStorageByProjectLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
-			return err
-		} else {
-			defer werf.ReleaseHostLock(lock)
-		}
-
-		if _, err := os.Stat(f); os.IsNotExist(err) {
-			if err := m.writeProjectStagesStorage(stagesStorage.Address()); err != nil {
-				return err
-			}
-			m.StagesStorage = stagesStorage
-			return nil
-		} else if err != nil {
-			return fmt.Errorf("error accessing %s: %s", f, err)
-		} else {
-			if err := m.checkProjectStagesStorageNotChanged(stagesStorage.Address()); err != nil {
-				return err
-			}
-			m.StagesStorage = stagesStorage
-			return nil
-		}
-	} else if err != nil {
-		return fmt.Errorf("error accessing %s: %s", f, err)
+	if _, lock, err := werf.AcquireHostLock(stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
+		return err
 	} else {
-		if err := m.checkProjectStagesStorageNotChanged(stagesStorage.Address()); err != nil {
-			return err
-		}
-		m.StagesStorage = stagesStorage
-		return nil
+		defer werf.ReleaseHostLock(lock)
 	}
+
+	if err := m.checkStagesSwitchFromLocalBlock(stagesStorage.Address()); err != nil {
+		return err
+	}
+	m.StagesStorage = stagesStorage
+	return nil
 }
 
 func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {

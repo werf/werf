@@ -1,7 +1,9 @@
-package stages_switch
+package switch_from_local
 
 import (
 	"fmt"
+
+	stages_common "github.com/flant/werf/cmd/werf/stages/common"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/storage"
@@ -16,13 +18,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var cmdData stages_common.SyncCmdData
 var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "switch",
+		Use:                   "switch-from-local",
 		DisableFlagsInUseLine: true,
-		Short:                 "Switch current project stages storage to another",
+		Short:                 "Switch current project stages storage from :local to repo",
 		Long:                  common.GetLongCommandDescription("Switch current project stages storage to another"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -48,7 +51,9 @@ func NewCmd() *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+
+	stages_common.SetupFromStagesStorage(&commonCmdData, &cmdData, cmd)
+	stages_common.SetupToStagesStorage(&commonCmdData, &cmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
@@ -112,10 +117,38 @@ func runSwitch() error {
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 
-	newStagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime, storage.LocalStagesStorageAddress)
 	if err != nil {
 		return err
 	}
+	if fromStagesStorage.Address() != storage.LocalStagesStorageAddress {
+		return fmt.Errorf("cannot switch from non-local stages storage, omit --from param or specify --from=%s", storage.LocalStagesStorageAddress)
+	}
+	if err := stagesManager.UseStagesStorage(fromStagesStorage); err != nil {
+		return err
+	}
 
-	return stagesManager.SwitchStagesStorage(newStagesStorage)
+	toStagesStorage, err := stages_common.NewToStagesStorage(&commonCmdData, &cmdData, containerRuntime)
+	if err != nil {
+		return err
+	}
+	if toStagesStorage.Address() == storage.LocalStagesStorageAddress {
+		return fmt.Errorf("cannot switch to local stages storage, specify repo address --to=REPO")
+	}
+
+	if err := stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{}); err != nil {
+		return err
+	}
+
+	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{}); err != nil {
+		return err
+	} else {
+		defer storageLockManager.Unlock(lock)
+	}
+
+	if err := stagesManager.SetStagesSwitchFromLocalBlock(toStagesStorage); err != nil {
+		return err
+	}
+
+	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
 }
