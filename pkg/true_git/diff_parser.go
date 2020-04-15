@@ -355,6 +355,9 @@ func (p *diffParser) handleModifyFilePathB(line string) error {
 
 func (p *diffParser) handleSubmoduleLine(line string) error {
 	p.state = unrecognized
+	if strings.HasSuffix(line, " (commits not present)") {
+		return fmt.Errorf("cannot handle \"commits not present\" in git diff line %q, check specified submodule commits are correct", line)
+	}
 	return nil
 }
 
