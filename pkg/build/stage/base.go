@@ -238,10 +238,6 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_run
 	return nil
 }
 
-func (s *BaseStage) AfterSignatureCalculated(_ Conveyor) error {
-	return nil
-}
-
 func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }

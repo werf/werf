@@ -34,28 +34,23 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(c Conveyor) (string, er
 	return s.BaseStage.getNextStageGitDependencies(c)
 }
 
+func (s *UserWithGitPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+	if empty, err := s.UserStage.IsEmpty(c, prevBuiltImage); err != nil {
+		return false, err
+	} else if empty {
+		return true, nil
+	}
+
+	return s.GitPatchStage.IsEmpty(c, prevBuiltImage)
+}
+
 func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	if !s.GitPatchStage.isEmpty() {
-		stageName := c.GetBuildingGitStage(s.imageName)
-		if stageName == s.Name() {
-			if err := s.GitPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (s *UserWithGitPatchStage) AfterSignatureCalculated(c Conveyor) error {
-	if !s.GitPatchStage.isEmpty() {
-		if err := s.GitPatchStage.AfterSignatureCalculated(c); err != nil {
-			return err
-		}
+	if err := s.GitPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
+		return err
 	}
 
 	return nil

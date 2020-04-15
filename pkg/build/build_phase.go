@@ -235,10 +235,6 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 		}
 	}
 
-	if err = stg.AfterSignatureCalculated(phase.Conveyor); err != nil {
-		return err
-	}
-
 	stageContentSig, err := calculateSignature(fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
 		return fmt.Errorf("unable to calculate stage %s content-signature: %s", stg.Name(), err)
