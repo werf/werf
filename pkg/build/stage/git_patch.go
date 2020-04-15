@@ -40,34 +40,13 @@ type GitPatchStage struct {
 }
 
 func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	if empty, err := s.willGitLatestCommitBeBuiltOnPrevGitStage(c); err != nil {
-		return false, err
-	} else if empty {
-		return true, nil
-	}
-
 	if empty, err := s.GitStage.IsEmpty(c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
 		return true, nil
 	}
 
-	if empty, err := s.hasPrevBuiltStageHadActualGitMappings(prevBuiltImage); err != nil {
-		return false, err
-	} else if empty {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bool, error) {
-	stageName := c.GetBuildingGitStage(s.imageName)
-	if stageName != "" && stageName != s.Name() {
-		return true, nil
-	}
-
-	return false, nil
+	return s.hasPrevBuiltStageHadActualGitMappings(prevBuiltImage)
 }
 
 func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage container_runtime.ImageInterface) (bool, error) {

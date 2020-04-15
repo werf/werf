@@ -12,7 +12,5 @@ type Conveyor interface {
 	GetImageNameForImageStage(imageName, stageName string) string
 	GetImageIDForImageStage(imageName, stageName string) string
 
-	SetBuildingGitStage(imageName string, stageName StageName)
-	GetBuildingGitStage(imageName string) StageName
 	GetImportServer(imageName, stageName string) (import_server.ImportServer, error)
 }
