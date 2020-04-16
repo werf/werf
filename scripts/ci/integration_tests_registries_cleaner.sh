@@ -43,27 +43,27 @@ DOCKERHUB)
   done
   ;;
 
-#GCR)
-#  delete_untagged() {
-#    while read digest; do
-#       gcloud container images delete $1@$digest --quiet 2>&1 | sed 's/^/        /'
-#    done < <(gcloud container images list-tags $1 --filter='-tags:*' --format='get(digest)' --limit=unlimited)
-#  }
-#
-#  delete_for_each_repo() {
-#    while read repo; do
-#        delete_untagged $repo
-#    done < <(gcloud container images list --repository $1 --format="value(name)")
-#  }
-#
-#  project_id=$GOOGLE_PROJECT_ID
-#  if [[ -z "$project_id" ]]; then
-#    echo "script requires specified \$GOOGLE_PROJECT_ID" >&2
-#    exit 1
-#  fi
-#
-#  delete_for_each_repo gcr.io/"$project_id"
-#  ;;
+GCR)
+  delete_untagged() {
+    while read digest; do
+       gcloud container images delete $1@$digest --quiet 2>&1 | sed 's/^/        /'
+    done < <(gcloud container images list-tags $1 --filter='-tags:*' --format='get(digest)' --limit=unlimited)
+  }
+
+  delete_for_each_repo() {
+    while read repo; do
+        delete_untagged $repo
+    done < <(gcloud container images list --repository $1 --format="value(name)")
+  }
+
+  project_id=$GOOGLE_PROJECT_ID
+  if [[ -z "$project_id" ]]; then
+    echo "script requires specified \$GOOGLE_PROJECT_ID" >&2
+    exit 1
+  fi
+
+  delete_for_each_repo gcr.io/"$project_id"
+  ;;
 
 QUAY)
   username=$WERF_TEST_QUAY_USERNAME

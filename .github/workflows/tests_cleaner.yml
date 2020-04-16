@@ -15,7 +15,7 @@ jobs:
         - acr
         - dockerhub
         - ecr
-        # - gcr
+        - gcr
         # - github
         # - harbor
         - quay
@@ -48,14 +48,14 @@ jobs:
         aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
       if: matrix.implementation == 'ecr'
 
-#    - name: Setup (gcr)
-#      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-#      with:
-#        project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-#        service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
-#        service_account_key: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-#        export_default_credentials: true
-#      if: matrix.implementation == 'gcr'
+    - name: Setup (gcr)
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+        service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+        service_account_key: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        export_default_credentials: true
+      if: matrix.implementation == 'gcr'
 
     - name: Cleanup
       run: ./scripts/ci/integration_tests_registries_cleaner.sh ${{ matrix.implementation }}
