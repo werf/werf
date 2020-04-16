@@ -93,7 +93,7 @@ func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
 	} else {
 		err := locker.Release(lock.LockgateHandle)
 		if err != nil {
-			logboek.ErrF("ERROR: unable to release lock for %q: %s", lock.LockgateHandle.LockName)
+			logboek.ErrF("ERROR: unable to release lock for %q: %s", lock.LockgateHandle.LockName, err)
 		}
 		return err
 	}
