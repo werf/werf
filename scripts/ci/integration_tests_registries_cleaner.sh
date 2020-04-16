@@ -30,9 +30,9 @@ DOCKERHUB)
 
   while :
   do
-    repo_list=$(curl -s -H "Authorization: JWT ${token}" https://hub.docker.com/v2/repositories/${username}/?page_size=100 | jq -r '.results|.[]|.name')
+    repo_list=($(curl -s -H "Authorization: JWT ${token}" https://hub.docker.com/v2/repositories/${username}/?page_size=100 | jq -r '.results|.[]|.name'))
 
-    if [ ${#repo_list[@]} -eq 1 ]; then
+    if [ ${#repo_list[@]} -eq 0 ]; then
       break
     fi
 
