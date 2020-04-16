@@ -173,7 +173,7 @@ func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {
 func (m *StagesManager) DeleteStages(options storage.DeleteImageOptions, stages ...*image.StageDescription) error {
 	for _, stageDesc := range stages {
 		if err := m.StagesStorageCache.DeleteStagesBySignature(m.ProjectName, stageDesc.StageID.Signature); err != nil {
-			return fmt.Errorf("unable to delete %s %s stages storage cache record: %s", err)
+			return fmt.Errorf("unable to delete stages storage cache record (%s): %s", stageDesc.StageID.Signature, err)
 		}
 	}
 	return m.StagesStorage.DeleteStages(options, stages...)
