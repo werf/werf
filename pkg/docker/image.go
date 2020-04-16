@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"math/rand"
 	"strings"
 	"time"
 
@@ -81,14 +82,17 @@ tryPull:
 				"Client.Timeout exceeded while awaiting headers",
 				"TLS handshake timeout",
 				"i/o timeout",
+				"504 Gateway Time-out",
+				"504 Gateway Timeout",
 			}
 
 			for _, specificError := range specificErrors {
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
+					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
-					logboek.LogWarnF("Retrying docker pull in 5 seconds (%d/%d) ...\n", attempt, cliPullMaxAttempts)
-					time.Sleep(5 * time.Second)
+					logboek.LogWarnF("Retrying docker pull in %d seconds (%d/%d) ...\n", seconds, attempt, cliPullMaxAttempts)
+					time.Sleep(time.Duration(seconds) * time.Second)
 					goto tryPull
 				}
 			}
@@ -136,7 +140,7 @@ func CliPush_RecordedOutput(args ...string) (string, error) {
 	})
 }
 
-const cliPushMaxAttempts = 5
+const cliPushMaxAttempts = 10
 
 func doCliPushWithRetries(c *command.DockerCli, args ...string) error {
 	var attempt int
@@ -148,15 +152,19 @@ tryPush:
 				"Client.Timeout exceeded while awaiting headers",
 				"TLS handshake timeout",
 				"i/o timeout",
+				"Only schema version 2 is supported",
+				"504 Gateway Time-out",
+				"504 Gateway Timeout",
 			}
 
 			for _, specificError := range specificErrors {
 				if strings.Index(err.Error(), specificError) != -1 {
 					attempt += 1
+					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
-					logboek.Warn.LogFDetails("Retrying docker push in 5 seconds (%d/%d) ...\n", attempt, cliPushMaxAttempts)
+					logboek.Warn.LogFDetails("Retrying docker push in %d seconds (%d/%d) ...\n", seconds, attempt, cliPushMaxAttempts)
 
-					time.Sleep(5 * time.Second)
+					time.Sleep(time.Duration(seconds) * time.Second)
 					goto tryPush
 				}
 			}
