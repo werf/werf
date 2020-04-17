@@ -36,8 +36,6 @@ var _ = Describe("persistent stage signatures", func() {
 		)
 
 		utils.CopyIn(utils.FixturePath("signature"), testDirPath)
-
-		stubs.SetEnv("WERF_LOG_VERBOSE", "1")
 	})
 
 	type entry struct {
@@ -51,10 +49,10 @@ var _ = Describe("persistent stage signatures", func() {
 		output, err := utils.RunCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", e.imageName,
+			"build", "-s", ":local", e.imageName,
 		)
 
-		Ω(err).Should(HaveOccurred())
+		Ω(err).NotTo(HaveOccurred())
 
 		var expectedSignatures []string
 		if runtime.GOOS == "windows" && len(e.expectedWindowsSignatures) != 0 {
@@ -70,86 +68,94 @@ var _ = Describe("persistent stage signatures", func() {
 		Entry("dockerfile_image", entry{
 			imageName: "dockerfile_image",
 			expectedSignatures: []string{
-				"dockerfile_image/dockerfile with signature 66be3adaf40fba215530be3abaa0bdfbc6005abdbd6d5f8957e031db",
+				"dockerfile_image/dockerfile", "tag: 66be3adaf40fba215530be3abaa0bdfbc6005abdbd6d5f8957e031db-",
 			},
 			expectedWindowsSignatures: []string{
-				"dockerfile_image/dockerfile with signature 9642c67560c27be99d21076fcb37dd60959c4269c53870d553e2282b",
+				"dockerfile_image/dockerfile", "tag: 9642c67560c27be99d21076fcb37dd60959c4269c53870d553e2282b-",
 			},
 			skipOnWindows: true,
 		}),
 		Entry("dockerfile_image_based_on_stage", entry{
 			imageName: "dockerfile_image_based_on_stage",
 			expectedSignatures: []string{
-				"dockerfile_image_based_on_stage/dockerfile with signature de15809392f59fef94bceffe1e25d87f6762281b5fa2f7435bf014f3",
+				"dockerfile_image_based_on_stage/dockerfile", "tag: c52464f2235835ba66266d7b7f844fa399aa362706644583b7f32293-",
 			},
 			expectedWindowsSignatures: []string{
-				"dockerfile_image_based_on_stage/dockerfile with signature de15809392f59fef94bceffe1e25d87f6762281b5fa2f7435bf014f3",
+				"dockerfile_image_based_on_stage/dockerfile", "tag: c52464f2235835ba66266d7b7f844fa399aa362706644583b7f32293-",
 			},
 			skipOnWindows: true,
 		}),
 		Entry("stapel_image_shell", entry{
 			imageName: "stapel_image_shell",
 			expectedSignatures: []string{
-				"import_artifact/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"import_image/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"stapel_image_shell/from with signature 397ac70071d48fdf1b586124cb4ded4743af5f5607b51181ac3a050b",
-				"stapel_image_shell/beforeInstall with signature 4291ffe66dfc08a229e4b3490eafc5bef1f216e98fa4045c9f91adab",
-				"stapel_image_shell/importsBeforeInstall with signature eabe68ed5026dbabe78ff8c99e5f3f6666f366b167c796c4f691fe60",
-				"stapel_image_shell/gitArchive with signature e92aa641a479c867cc08c64b02289055d0ebb05bf02189bb4b357427",
-				"stapel_image_shell/install with signature c95e58cb28fc319b83c4641791478f8170897eaa13b82e3b7ff035aa",
-				"stapel_image_shell/beforeSetup with signature f2b08e786597679441e3074146498f47826ee56ab370a62d8e907793",
-				"stapel_image_shell/setup with signature a699d04d07a2704b9daa80882a2342bf39a093534387e0cabfe28065",
-				"stapel_image_shell/importsAfterSetup with signature d8078a794fc9e445a21646d54e40a874f49cbe3d3cafef1dab35ab55",
-				"stapel_image_shell/dockerInstructions with signature 8e63dbfd3f18f150804c9623452b9dd430cff79f56ed543dee55ae8e",
+				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_image/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"stapel_image_shell/from", "tag: 4c102ca0d0645f3ba5def446ddebeeec76adffe91264b678507037bd-",
+				"stapel_image_shell/beforeInstall", "tag: 4dbbb84d19fcda50b578576c221d14e1b296a2e0437dd44356b4f86f-",
+				"stapel_image_shell/importsBeforeInstall", "tag: a83bed392f696e0c6e2f15014706f93aa1a60bacfa52935bd6a22887-",
+				"stapel_image_shell/gitArchive", "tag: 417f06df5f1434365e23943f8bc75b6fc8117f48fc124631ceed3c26-",
+				"stapel_image_shell/install", "tag: c91779d2713c9cb4f7559d0b6356968ee0de1e026849269db10ff16b-",
+				"stapel_image_shell/beforeSetup", "tag: b60efd01e74f1567e427dadadd8f7ab8afa593e6979417864ede004e-",
+				"stapel_image_shell/setup", "tag: 2bd3f896c6c0081261961ee72631e4042b983ec8ddde05bcdb6c3b29-",
+				"stapel_image_shell/importsAfterSetup", "tag: f94feaa781d594c2e33c450f85527704e8f0395bb3ad8b02ad892bdf-",
+				"stapel_image_shell/dockerInstructions", "tag: 5b472b016aa6d05fea9e8b7e8410a43cadfd7832db522fb14460a688-",
 			},
 		}),
 		Entry("stapel_image_ansible", entry{
 			imageName: "stapel_image_ansible",
 			expectedSignatures: []string{
-				"import_artifact/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"import_image/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"stapel_image_ansible/from with signature 397ac70071d48fdf1b586124cb4ded4743af5f5607b51181ac3a050b",
-				"stapel_image_ansible/beforeInstall with signature 4dc6392b23a9faa06ec3035056732e98bd476e2e54b38ca6632606eb",
-				"stapel_image_ansible/importsBeforeInstall with signature a94062e7af8ee11778b6af3ac3360108dd3553d977aadde7a912da69",
-				"stapel_image_ansible/gitArchive with signature 3735d7d22cdb3d8a3b0689fb7b187541df5c2af883dc1987d90e60c4",
-				"stapel_image_ansible/install with signature 552d0582c955c0c4a1390f8b215bafc18a136b0f8344b097dbab5d34",
-				"stapel_image_ansible/beforeSetup with signature c8ee225afdcb74a95df003326f3e723031cb42fa8c894890afedde6c",
-				"stapel_image_ansible/setup with signature 99844134b6ebd84d88fcf06d62044570dedc8714ad788b0655c60bcd",
-				"stapel_image_ansible/importsAfterSetup with signature f32efc0bbcb684e6ee12094ee125fcbf2d584684efef5f976090cd2a",
-				"stapel_image_ansible/dockerInstructions with signature 85c2b1cc9216db8df8a05df567ae96fa271681a449bc2e7566c48089",
+				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_image/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"stapel_image_ansible/from", "tag: 4c102ca0d0645f3ba5def446ddebeeec76adffe91264b678507037bd-",
+				"stapel_image_ansible/beforeInstall", "tag: 9898ed1d8b3867bb8ef3de46e39caebbef110beefaac2ad992642204-",
+				"stapel_image_ansible/importsBeforeInstall", "tag: 8e98cbaebefa3aac5bc733d9457d7ec8ab6e6bb8312d10fdcc4b300a-",
+				"stapel_image_ansible/gitArchive", "tag: 2e63f9d4025aa4ac2d323c59ca62311e55357fb7b3013bb9dd08d6b1-",
+				"stapel_image_ansible/install", "tag: 5b075521a9f662f405fda91349aacba5c62b7d58fef96ecbac2abe16-",
+				"stapel_image_ansible/beforeSetup", "tag: ac07a896a0d254e131ed88085b28fe7ea5ed668214dec66fe7e3c1c9-",
+				"stapel_image_ansible/setup", "tag: 498804176d5cbd1b5581fa54062a172adf83a89d53a888eac6d8c6be-",
+				"stapel_image_ansible/importsAfterSetup", "tag: ab649da9cd18d665da6f80d7a941360d1312bcd10c3d382c12bdac6c-",
+				"stapel_image_ansible/dockerInstructions", "tag: 9a07671791b6d1455239e305465da38bc6e65cec55fc5eba0854dacb-",
 			},
 		}),
 		Entry("stapel_image_from_image", entry{
 			imageName: "stapel_image_from_image",
 			expectedSignatures: []string{
-				"import_artifact/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"import_image/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"stapel_image_shell/from with signature 397ac70071d48fdf1b586124cb4ded4743af5f5607b51181ac3a050b",
-				"stapel_image_shell/beforeInstall with signature 4291ffe66dfc08a229e4b3490eafc5bef1f216e98fa4045c9f91adab",
-				"stapel_image_shell/importsBeforeInstall with signature eabe68ed5026dbabe78ff8c99e5f3f6666f366b167c796c4f691fe60",
-				"stapel_image_shell/gitArchive with signature e92aa641a479c867cc08c64b02289055d0ebb05bf02189bb4b357427",
-				"stapel_image_shell/install with signature c95e58cb28fc319b83c4641791478f8170897eaa13b82e3b7ff035aa",
-				"stapel_image_shell/beforeSetup with signature f2b08e786597679441e3074146498f47826ee56ab370a62d8e907793",
-				"stapel_image_shell/setup with signature a699d04d07a2704b9daa80882a2342bf39a093534387e0cabfe28065",
-				"stapel_image_shell/importsAfterSetup with signature d8078a794fc9e445a21646d54e40a874f49cbe3d3cafef1dab35ab55",
-				"stapel_image_shell/dockerInstructions with signature 8e63dbfd3f18f150804c9623452b9dd430cff79f56ed543dee55ae8e",
-				"stapel_image_from_image/from with signature abb47ce1e3b4f27c21d1643c4fff6cb19ee573b1d25bed9a4fd19635",
+				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_image/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"stapel_image_shell/from", "tag: 4c102ca0d0645f3ba5def446ddebeeec76adffe91264b678507037bd-",
+				"stapel_image_shell/beforeInstall", "tag: 4dbbb84d19fcda50b578576c221d14e1b296a2e0437dd44356b4f86f-",
+				"stapel_image_shell/importsBeforeInstall", "tag: a83bed392f696e0c6e2f15014706f93aa1a60bacfa52935bd6a22887-",
+				"stapel_image_shell/gitArchive", "tag: 417f06df5f1434365e23943f8bc75b6fc8117f48fc124631ceed3c26-",
+				"stapel_image_shell/install", "tag: c91779d2713c9cb4f7559d0b6356968ee0de1e026849269db10ff16b-",
+				"stapel_image_shell/beforeSetup", "tag: b60efd01e74f1567e427dadadd8f7ab8afa593e6979417864ede004e-",
+				"stapel_image_shell/setup", "tag: 2bd3f896c6c0081261961ee72631e4042b983ec8ddde05bcdb6c3b29-",
+				"stapel_image_shell/importsAfterSetup", "tag: f94feaa781d594c2e33c450f85527704e8f0395bb3ad8b02ad892bdf-",
+				"stapel_image_shell/dockerInstructions", "tag: 5b472b016aa6d05fea9e8b7e8410a43cadfd7832db522fb14460a688-",
+				"stapel_image_from_image/from", "tag: ec92ec7f41214433b845eba1feb0cb120c8bad981487832a6f54cbd2-",
 			},
 		}),
 		Entry("stapel_image_from_artifact", entry{
 			imageName: "stapel_image_from_artifact",
 			expectedSignatures: []string{
-				"import_artifact/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"import_image/from with signature 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47",
-				"stapel_artifact_shell/from with signature 397ac70071d48fdf1b586124cb4ded4743af5f5607b51181ac3a050b",
-				"stapel_artifact_shell/beforeInstall with signature 4291ffe66dfc08a229e4b3490eafc5bef1f216e98fa4045c9f91adab",
-				"stapel_artifact_shell/importsBeforeInstall with signature eabe68ed5026dbabe78ff8c99e5f3f6666f366b167c796c4f691fe60",
-				"stapel_artifact_shell/gitArchive with signature e92aa641a479c867cc08c64b02289055d0ebb05bf02189bb4b357427",
-				"stapel_artifact_shell/install with signature c95e58cb28fc319b83c4641791478f8170897eaa13b82e3b7ff035aa",
-				"stapel_artifact_shell/beforeSetup with signature f2b08e786597679441e3074146498f47826ee56ab370a62d8e907793",
-				"stapel_artifact_shell/setup with signature a699d04d07a2704b9daa80882a2342bf39a093534387e0cabfe28065",
-				"stapel_artifact_shell/importsAfterSetup with signature d8078a794fc9e445a21646d54e40a874f49cbe3d3cafef1dab35ab55",
-				"stapel_image_from_artifact/from with signature 097fa71cef389a87cad9538b202dd954492451673e80cfa1cb3e95a1",
+				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
+				"import_image/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
+				"stapel_artifact_shell/from", "tag: 4c102ca0d0645f3ba5def446ddebeeec76adffe91264b678507037bd-",
+				"stapel_artifact_shell/beforeInstall", "tag: 4dbbb84d19fcda50b578576c221d14e1b296a2e0437dd44356b4f86f-",
+				"stapel_artifact_shell/importsBeforeInstall", "tag: a83bed392f696e0c6e2f15014706f93aa1a60bacfa52935bd6a22887-",
+				"stapel_artifact_shell/gitArchive", "tag: 417f06df5f1434365e23943f8bc75b6fc8117f48fc124631ceed3c26-",
+				"stapel_artifact_shell/install", "tag: c91779d2713c9cb4f7559d0b6356968ee0de1e026849269db10ff16b-",
+				"stapel_artifact_shell/beforeSetup", "tag: b60efd01e74f1567e427dadadd8f7ab8afa593e6979417864ede004e-",
+				"stapel_artifact_shell/setup", "tag: 2bd3f896c6c0081261961ee72631e4042b983ec8ddde05bcdb6c3b29-",
+				"stapel_artifact_shell/importsAfterSetup", "tag: f94feaa781d594c2e33c450f85527704e8f0395bb3ad8b02ad892bdf-",
+				"stapel_image_from_artifact/from", "tag: fd76841961a39e279d67d71540b00b4d8dba16c46a95a062f598d20d-",
 			},
 		}),
 	)
