@@ -56,7 +56,7 @@ mount:
   to: /build
 - from: tmp_dir
   to: /tmp
-- fromPath: /test
+- fromPath: /tmp/test
   to: /from
 import:
 - artifact: import_artifact
@@ -146,7 +146,7 @@ mount:
   to: /build
 - from: tmp_dir
   to: /tmp
-- fromPath: /test
+- fromPath: /tmp/test
   to: /from
 import:
 - artifact: import_artifact
@@ -196,6 +196,9 @@ docker:
 ---
 {{ . }}: import_{{ . }}
 from: alpine
+shell:
+  install:
+  - mkdir -p /test /test2
 ---
 {{ end }}
 image: stapel_image_from_image

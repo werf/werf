@@ -29,9 +29,12 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 	isEmpty := true
 	for _, gitMapping := range s.gitMappings {
 		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.Labels())
-		if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
+		if commit == "" {
+			return true, nil
+		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
 			return false, err
 		} else if !exist {
+			// TODO: is this right behaviour?
 			return true, nil
 		}
 

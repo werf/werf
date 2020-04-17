@@ -26,7 +26,7 @@ const (
 )
 
 type BuildPhaseOptions struct {
-	SignaturesOnly    bool
+	ShouldBeBuiltMode bool
 	ImageBuildOptions imagePkg.BuildOptions
 	IntrospectOptions IntrospectOptions
 }
@@ -194,10 +194,10 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 		return false, nil
 	}
 
-	if err := phase.calculateStageSignature(img, stg); err != nil {
+	if err := phase.calculateStageSignature(img, stg, phase.ShouldBeBuiltMode); err != nil {
 		return false, err
 	}
-	if phase.SignaturesOnly {
+	if phase.ShouldBeBuiltMode {
 		return true, nil
 	}
 	if err := phase.prepareStage(img, stg); err != nil {
@@ -206,6 +206,9 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 	if err := phase.buildStage(img, stg); err != nil {
 		return false, err
 	}
+
+	phase.PrevBuiltImage = phase.PrevImage
+	logboek.Debug.LogF("Set prev built image after image has been built = %q\n", phase.PrevBuiltImage.Name())
 
 	return true, nil
 }
@@ -241,7 +244,7 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 	return signature, nil
 }
 
-func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface, shouldBeBuiltMode bool) error {
 	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.PrevImage, phase.PrevBuiltImage)
 	if err != nil {
 		return err
@@ -296,6 +299,11 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	}
 
 	if !suitableImageFound {
+		if shouldBeBuiltMode {
+			phase.printShouldBeBuiltError(img, stg)
+			return fmt.Errorf("stages required")
+		}
+
 		// Will build a new image
 		i = phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, uuid.New().String())
 		stg.SetImage(i)
@@ -317,6 +325,47 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	stg.SetContentSignature(stageContentSig)
 
 	return nil
+}
+
+func (phase *BuildPhase) printShouldBeBuiltError(img *Image, stg stage.Interface) {
+	logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
+
+	var reasonNumber int
+	reasonNumberFunc := func() string {
+		reasonNumber++
+		return fmt.Sprintf("(%d) ", reasonNumber)
+	}
+
+	logboek.LogWarnLn()
+	logboek.LogWarnLn("There are some possible reasons:")
+	logboek.LogWarnLn()
+
+	if img.isDockerfileImage {
+		logboek.LogWarnLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
+- .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
+- auto-generated file`)
+		logboek.LogWarnLn()
+	}
+
+	logboek.LogWarnLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
+- environment variable (e.g. {{ env "JOB_ID" }})
+- dynamic go template function (e.g. one of sprig date functions http://masterminds.github.io/sprig/date.html)
+- auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
+	logboek.LogWarnLn()
+
+	logboek.LogWarnLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+
+To quickly find the problem compare current and previous rendered werf configurations.
+Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
+E.g.:
+
+  diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`)
+	logboek.LogWarnLn()
+
+	logboek.LogWarnLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
+- automatically with werf cleanup command
+- manually with werf purge, werf stages purge or werf host purge commands`)
+	logboek.LogWarnLn()
 }
 
 func (phase *BuildPhase) selectSuitableStagesStorageImage(stg stage.Interface, imagesDescs []*storage.ImageInfo) (bool, *image.StageImage, error) {
