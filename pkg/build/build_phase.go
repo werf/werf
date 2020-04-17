@@ -207,9 +207,6 @@ func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) (bool, er
 		return false, err
 	}
 
-	phase.PrevBuiltImage = phase.PrevImage
-	logboek.Debug.LogF("Set prev built image after image has been built = %q\n", phase.PrevBuiltImage.Name())
-
 	return true, nil
 }
 
@@ -313,9 +310,9 @@ func (phase *BuildPhase) calculateStageSignature(img *Image, stg stage.Interface
 	logboek.Debug.LogF("Set prev non empty stage = %q %s\n", phase.PrevNonEmptyStage.Name(), phase.PrevNonEmptyStage.GetSignature())
 	phase.PrevImage = i
 	logboek.Debug.LogF("Set prev image = %q\n", phase.PrevImage.Name())
-	if phase.PrevImage.IsExists() {
-		phase.PrevBuiltImage = phase.PrevImage
-		logboek.Debug.LogF("Set prev built image = %q\n", phase.PrevBuiltImage.Name())
+	if i.IsExists() {
+		phase.PrevBuiltImage = i
+		logboek.Debug.LogF("Set prev built image = %q (image already exists)\n", phase.PrevBuiltImage.Name())
 	}
 
 	stageContentSig, err := calculateSignature(fmt.Sprintf("%s-content", stg.Name()), "", phase.PrevNonEmptyStage, phase.Conveyor)
@@ -660,6 +657,10 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 			)
 			i := phase.Conveyor.GetOrCreateStageImage(phase.PrevImage, imgInfo.ImageName)
 			stg.SetImage(i)
+			phase.PrevImage = i
+			logboek.Debug.LogF("Set prev image = %q\n", phase.PrevImage.Name())
+			phase.PrevBuiltImage = i
+			logboek.Debug.LogF("Set prev built image = %q (discard newly built image, set built image to already existing image)\n", phase.PrevBuiltImage.Name())
 
 			if err := logboek.Info.LogProcess(
 				fmt.Sprintf("Sync stage %q signature %s image %s from stages storage", stg.Name(), stg.GetSignature(), i.Name()),
@@ -685,6 +686,9 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 
 	stageImageObj.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImageObj)
+
+	phase.PrevBuiltImage = stageImageObj
+	logboek.Debug.LogF("Set prev built image = %q (newly built image)\n", phase.PrevBuiltImage.Name())
 
 	if err := logboek.Info.LogProcess(
 		fmt.Sprintf("Store stage %q signature %s image %s into stages storage", stageImage.Name(), stg.GetSignature(), stageImage.Name()),
