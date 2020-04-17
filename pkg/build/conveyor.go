@@ -218,8 +218,7 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
-		NewShouldBeBuiltPhase(c),
+		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
 	}
 
 	return c.runPhases(phases, false)
@@ -287,8 +286,7 @@ func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{CalculateStagesOnly: true}),
-		NewShouldBeBuiltPhase(c),
+		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
 		NewPublishImagesPhase(c, c.ImagesRepo, opts),
 	}
 
@@ -307,7 +305,6 @@ func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
-		NewShouldBeBuiltPhase(c),
 		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
 	}
 

@@ -21,9 +21,9 @@ import (
 )
 
 type BuildPhaseOptions struct {
-	CalculateStagesOnly bool
-	ImageBuildOptions   container_runtime.BuildOptions
-	IntrospectOptions   IntrospectOptions
+	ShouldBeBuiltMode bool
+	ImageBuildOptions container_runtime.BuildOptions
+	IntrospectOptions IntrospectOptions
 }
 
 type BuildStagesOptions struct {
@@ -127,8 +127,8 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 		return nil
 	}
 
-	if phase.CalculateStagesOnly {
-		return phase.calculateStage(img, stg)
+	if phase.ShouldBeBuiltMode {
+		return phase.calculateStage(img, stg, true)
 	} else {
 		if stg.Name() != "from" && stg.Name() != "dockerfile" {
 			if phase.StagesIterator.PrevNonEmptyStage == nil {
@@ -142,7 +142,7 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 			}
 		}
 
-		if err := phase.calculateStage(img, stg); err != nil {
+		if err := phase.calculateStage(img, stg, false); err != nil {
 			return err
 		}
 
@@ -207,7 +207,7 @@ func castToStageImage(img container_runtime.ImageInterface) *container_runtime.S
 	return img.(*container_runtime.StageImage)
 }
 
-func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldBeBuiltMode bool) error {
 	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
 	if err != nil {
 		return err
@@ -229,6 +229,11 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface) error {
 			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
 		} else {
+			if shouldBeBuiltMode {
+				phase.printShouldBeBuiltError(img, stg)
+				return fmt.Errorf("stages required")
+			}
+
 			// Will build a new image
 			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), uuid.New().String())
 			stg.SetImage(i)
@@ -500,4 +505,51 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 	})
 
 	return signature, nil
+}
+
+// TODO: move these prints to the after-images hook, print summary over all images
+func (phase *BuildPhase) printShouldBeBuiltError(img *Image, stg stage.Interface) {
+	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
+	logboek.Default.LogProcess("Built stages cache check", logProcessOptions, func() error {
+		logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
+
+		var reasonNumber int
+		reasonNumberFunc := func() string {
+			reasonNumber++
+			return fmt.Sprintf("(%d) ", reasonNumber)
+		}
+
+		logboek.LogWarnLn()
+		logboek.LogWarnLn("There are some possible reasons:")
+		logboek.LogWarnLn()
+
+		if img.isDockerfileImage {
+			logboek.LogWarnLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
+- .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
+- auto-generated file`)
+			logboek.LogWarnLn()
+		}
+
+		logboek.LogWarnLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
+- environment variable (e.g. {{ env "JOB_ID" }})
+- dynamic go template function (e.g. one of sprig date functions http://masterminds.github.io/sprig/date.html)
+- auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
+		logboek.LogWarnLn()
+
+		logboek.LogWarnLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+
+To quickly find the problem compare current and previous rendered werf configurations.
+Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
+E.g.:
+
+  diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`)
+		logboek.LogWarnLn()
+
+		logboek.LogWarnLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
+- automatically with werf cleanup command
+- manually with werf purge, werf stages purge or werf host purge commands`)
+		logboek.LogWarnLn()
+
+		return nil
+	})
 }
