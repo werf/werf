@@ -29,6 +29,10 @@ func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 	return &FileStagesStorageCache{CacheDir: cacheDir}
 }
 
+func (cache *FileStagesStorageCache) String() string {
+	return fmt.Sprintf("%s", cache.CacheDir)
+}
+
 func (cache *FileStagesStorageCache) invalidateIfOldCacheExists(projectName string) error {
 	if lock, err := cache.lock(); err != nil {
 		return err
@@ -96,6 +100,14 @@ func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []i
 	return true, res, nil
 }
 
+func (cache *FileStagesStorageCache) DeleteAllStages(projectName string) error {
+	projectCacheDir := filepath.Join(cache.CacheDir, projectName)
+	if err := os.RemoveAll(projectCacheDir); err != nil {
+		return fmt.Errorf("unable to remove %s: %s", err)
+	}
+	return nil
+}
+
 func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
 	if err := cache.invalidateIfOldCacheExists(projectName); err != nil {
 		return false, nil, err
@@ -106,17 +118,20 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
 		return false, nil, nil
 	} else if err != nil {
-		return false, nil, fmt.Errorf("error accessing file %s: %s", sigFile, err)
+		logboek.ErrF("Error accessing file %s: %s: ignore cache\n", sigFile, err)
+		return false, nil, nil
 	}
 
 	dataBytes, err := ioutil.ReadFile(sigFile)
 	if err != nil {
-		return false, nil, fmt.Errorf("error reading file %s: %s", sigFile, err)
+		logboek.ErrF("Error reading file %s: %s: ignore cache\n", sigFile, err)
+		return false, nil, nil
 	}
 
 	res := &StagesStorageCacheRecord{}
 	if err := json.Unmarshal(dataBytes, res); err != nil {
-		return false, nil, fmt.Errorf("error unmarshalling json from %s: %s", sigFile, err)
+		logboek.ErrF("Error unmarshalling json from %s: %s: ignoring cache\n", sigFile, err)
+		return false, nil, nil
 	}
 
 	return true, res.Stages, nil

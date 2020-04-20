@@ -242,14 +242,20 @@ func runDeploy() error {
 		}()
 
 		logboek.LogOptionalLn()
-		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
-		defer c.Terminate()
 
-		if err = c.ShouldBeBuilt(); err != nil {
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+		defer conveyorWithRetry.Terminate()
+
+		if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+			if err := c.ShouldBeBuilt(build.ShouldBeBuiltOptions{}); err != nil {
+				return err
+			}
+
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, tag, tagStrategy, false)
+			return nil
+		}); err != nil {
 			return err
 		}
-
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, tag, tagStrategy, false)
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
