@@ -139,6 +139,7 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleModifyFileDiff(line)
 		}
 		if strings.HasPrefix(line, "index ") {
+			p.state = modifyFileDiff
 			return p.handleIndexDiffLine(line)
 		}
 		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
@@ -162,6 +163,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		if strings.HasPrefix(line, "diff --git ") {
 			return p.handleDiffBegin(line)
 		}
+		if strings.HasPrefix(line, "index ") {
+			return p.handleIndexDiffLine(line)
+		}
 		if strings.HasPrefix(line, "Submodule ") {
 			return p.handleSubmoduleLine(line)
 		}
@@ -180,6 +184,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		if strings.HasPrefix(line, "diff --git ") {
 			return p.handleDiffBegin(line)
 		}
+		if strings.HasPrefix(line, "index ") {
+			return p.handleIndexDiffLine(line)
+		}
 		if strings.HasPrefix(line, "Submodule ") {
 			return p.handleSubmoduleLine(line)
 		}
@@ -197,6 +204,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		}
 		if strings.HasPrefix(line, "diff --git ") {
 			return p.handleDiffBegin(line)
+		}
+		if strings.HasPrefix(line, "index ") {
+			return p.handleIndexDiffLine(line)
 		}
 		if strings.HasPrefix(line, "Submodule ") {
 			return p.handleSubmoduleLine(line)
@@ -297,15 +307,17 @@ func (p *diffParser) handleModifyFileDiff(line string) error {
 
 // TODO: remove index line from resulting patch completely in v1.2
 func (p *diffParser) handleIndexDiffLine(line string) error {
-	p.state = modifyFileDiff
+	var prefix, hashes, suffix string
 
 	parts := strings.SplitN(line, " ", 3)
-	if len(parts) != 3 {
+	if len(parts) == 3 {
+		prefix, hashes, suffix = parts[0], parts[1], parts[2]
+	} else if len(parts) == 2 {
+		prefix, hashes = parts[0], parts[1]
+	} else {
 		// unexpected format
 		return p.writeOutLine(line)
 	}
-
-	prefix, hashes, suffix := parts[0], parts[1], parts[2]
 
 	hashesParts := strings.SplitN(hashes, "..", 2)
 	if len(hashesParts) != 2 {
@@ -314,6 +326,7 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 	}
 
 	stripHashFunc := func(h string) string {
+		// TODO: remove index line from resulting patch completely in v1.2
 		if len(h) < 8 {
 			return h
 		}
@@ -330,7 +343,13 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 		rightHashes = append(rightHashes, stripHashFunc(h))
 	}
 
-	newLine := fmt.Sprintf("%s %s..%s %s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","), suffix)
+	var newLine string
+
+	if suffix == "" {
+		newLine = fmt.Sprintf("%s %s..%s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","))
+	} else {
+		newLine = fmt.Sprintf("%s %s..%s %s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","), suffix)
+	}
 
 	return p.writeOutLine(newLine)
 }
