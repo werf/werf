@@ -126,7 +126,7 @@ func runCleanup() error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData)
+	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
 	}

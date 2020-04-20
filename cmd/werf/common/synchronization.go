@@ -2,33 +2,30 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/flant/werf/pkg/storage"
 	"github.com/flant/werf/pkg/werf"
 )
 
-const (
-	WerfSynchronizationKubernetesNamespace = "werf-synchronization"
-)
-
 func GetStagesStorageCache(synchronization string) (storage.StagesStorageCache, error) {
-	switch synchronization {
-	case storage.LocalStagesStorageAddress:
+	if synchronization == storage.LocalStorageAddress {
 		return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir()), nil
-	case storage.KubernetesStagesStorageAddress:
-		return storage.NewKubernetesStagesStorageCache(WerfSynchronizationKubernetesNamespace), nil
-	default:
+	} else if strings.HasPrefix(synchronization, "kubernetes://") {
+		ns := strings.TrimPrefix(synchronization, "kubernetes://")
+		return storage.NewKubernetesStagesStorageCache(ns), nil
+	} else {
 		panic(fmt.Sprintf("unknown synchronization param %q", synchronization))
 	}
 }
 
 func GetStorageLockManager(synchronization string) (storage.LockManager, error) {
-	switch synchronization {
-	case storage.LocalStagesStorageAddress:
+	if synchronization == storage.LocalStorageAddress {
 		return storage.NewGenericLockManager(werf.GetHostLocker()), nil
-	case storage.KubernetesStagesStorageAddress:
-		return storage.NewKubernetesLockManager(WerfSynchronizationKubernetesNamespace), nil
-	default:
+	} else if strings.HasPrefix(synchronization, "kubernetes://") {
+		ns := strings.TrimPrefix(synchronization, "kubernetes://")
+		return storage.NewKubernetesLockManager(ns), nil
+	} else {
 		panic(fmt.Sprintf("unknown synchronization param %q", synchronization))
 	}
 }

@@ -150,7 +150,7 @@ func runSyncWorker(projectName string, fromStagesStorage storage.StagesStorage, 
 }
 
 func syncStage(projectName string, stageID image.StageID, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
-	if fromStagesStorage.Address() == storage.LocalStagesStorageAddress || toStagesStorage.Address() == storage.LocalStagesStorageAddress {
+	if fromStagesStorage.Address() == storage.LocalStorageAddress || toStagesStorage.Address() == storage.LocalStorageAddress {
 		opts.CleanupLocalCache = false
 	}
 

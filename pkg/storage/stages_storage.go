@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	LocalStagesStorageAddress      = ":local"
-	KubernetesStagesStorageAddress = ":kubernetes"
-	NamelessImageRecordTag         = "__nameless__"
+	LocalStorageAddress             = ":local"
+	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
+	NamelessImageRecordTag          = "__nameless__"
 )
 
 type StagesStorage interface {
@@ -41,7 +41,7 @@ type StagesStorageOptions struct {
 }
 
 func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
-	if stagesStorageAddress == LocalStagesStorageAddress {
+	if stagesStorageAddress == LocalStorageAddress {
 		return NewLocalDockerServerStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
 		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
