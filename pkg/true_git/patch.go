@@ -77,7 +77,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 		commonGitOpts = append(commonGitOpts, "-c", "diff.context=999999999")
 	}
 
-	diffOpts := []string{}
+	diffOpts := []string{"--full-index"}
 	if withSubmodules {
 		diffOpts = append(diffOpts, "--submodule=diff")
 	} else {
