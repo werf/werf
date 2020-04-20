@@ -205,10 +205,13 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	logboek.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
-	defer c.Terminate()
 
-	if err = c.BuildAndPublish(opts); err != nil {
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+	defer conveyorWithRetry.Terminate()
+
+	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+		return c.BuildAndPublish(opts)
+	}); err != nil {
 		return err
 	}
 

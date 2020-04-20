@@ -164,10 +164,12 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		TagOptions:      tagOpts,
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
-	defer c.Terminate()
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+	defer conveyorWithRetry.Terminate()
 
-	if err = c.PublishImages(opts); err != nil {
+	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+		return c.PublishImages(opts)
+	}); err != nil {
 		return err
 	}
 

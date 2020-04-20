@@ -154,14 +154,20 @@ func run(imageName string) error {
 		return err
 	}
 
-	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
-	defer c.Terminate()
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
+	defer conveyorWithRetry.Terminate()
 
-	if err = c.ShouldBeBuilt(); err != nil {
+	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+		if err = c.ShouldBeBuilt(build.ShouldBeBuiltOptions{}); err != nil {
+			return err
+		}
+
+		fmt.Println(c.GetImageNameForLastImageStage(imageName))
+
+		return nil
+	}); err != nil {
 		return err
 	}
-
-	fmt.Println(c.GetImageNameForLastImageStage(imageName))
 
 	return nil
 }

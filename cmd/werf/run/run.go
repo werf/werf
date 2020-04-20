@@ -232,14 +232,24 @@ func runRun() error {
 	}
 
 	logboek.Info.LogOptionalLn()
-	c := build.NewConveyor(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
-	defer c.Terminate()
 
-	if err = c.ShouldBeBuilt(); err != nil {
+	var dockerImageName string
+
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
+	defer conveyorWithRetry.Terminate()
+
+	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+		if err := c.ShouldBeBuilt(build.ShouldBeBuiltOptions{FetchLastStage: true}); err != nil {
+			return err
+		}
+
+		dockerImageName = c.GetImageNameForLastImageStage(imageName)
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
-	dockerImageName := c.GetImageNameForLastImageStage(imageName)
 	var dockerRunArgs []string
 	dockerRunArgs = append(dockerRunArgs, cmdData.DockerOptions...)
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)

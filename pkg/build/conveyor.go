@@ -212,7 +212,11 @@ type TagOptions struct {
 	TagByStagesSignature bool
 }
 
-func (c *Conveyor) ShouldBeBuilt() error {
+type ShouldBeBuiltOptions struct {
+	FetchLastStage bool
+}
+
+func (c *Conveyor) ShouldBeBuilt(opts ShouldBeBuiltOptions) error {
 	if err := c.determineStages(); err != nil {
 		return err
 	}
@@ -221,7 +225,20 @@ func (c *Conveyor) ShouldBeBuilt() error {
 		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
 	}
 
-	return c.runPhases(phases, false)
+	if err := c.runPhases(phases, false); err != nil {
+		return err
+	}
+
+	if opts.FetchLastStage {
+		for _, imageName := range c.imageNamesToProcess {
+			lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
+			if err := c.StagesManager.FetchStage(lastImageStage); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
@@ -518,23 +535,6 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 
 	return nil
 }
-
-/*
-TODO: locks and log
-func (c *Conveyor) runPhases(phases []Phase) error {
-		logboek.LogOptionalLn()
-
-		for _, phase := range phases {
-			err := phase.Run(c)
-
-			if err != nil {
-				c.StorageLockManager.ReleaseAllStageLocks()
-				return err
-			}
-		}
-	return nil
-}
-*/
 
 func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
