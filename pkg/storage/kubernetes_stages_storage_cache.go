@@ -27,6 +27,10 @@ type KubernetesStagesStorageCacheData struct {
 	StagesBySignature map[string][]image.StageID `json:"stagesBySignature"`
 }
 
+func (cache *KubernetesStagesStorageCache) String() string {
+	return fmt.Sprintf("kuberntes ns/%s", cache.Namespace)
+}
+
 func (cache *KubernetesStagesStorageCache) extractCacheData(obj *v1.ConfigMap) (*KubernetesStagesStorageCacheData, error) {
 	if data, hasKey := obj.Data[StagesStorageCacheConfigMapKey]; hasKey {
 		var cacheData *KubernetesStagesStorageCacheData
@@ -38,6 +42,12 @@ func (cache *KubernetesStagesStorageCache) extractCacheData(obj *v1.ConfigMap) (
 		return cacheData, nil
 	} else {
 		return nil, nil
+	}
+}
+
+func (cache *KubernetesStagesStorageCache) unsetCacheData(obj *v1.ConfigMap) {
+	if obj.Data != nil {
+		delete(obj.Data, StagesStorageCacheConfigMapKey)
 	}
 }
 
@@ -65,6 +75,13 @@ func (cache *KubernetesStagesStorageCache) GetAllStages(projectName string) (boo
 		return true, res, nil
 	}
 	return false, nil, nil
+}
+
+func (cache *KubernetesStagesStorageCache) DeleteAllStages(projectName string) error {
+	return cache.changeCacheData(projectName, func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error {
+		cache.unsetCacheData(obj)
+		return nil
+	})
 }
 
 func (cache *KubernetesStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {

@@ -1,6 +1,7 @@
 package stages_manager
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -20,6 +21,17 @@ import (
 	"github.com/flant/werf/pkg/storage"
 	"gopkg.in/yaml.v2"
 )
+
+var (
+	ErrShouldResetStagesStorageCache = errors.New("should reset stages storage cache")
+)
+
+func ShouldResetStagesStorageCache(err error) bool {
+	if err != nil {
+		return strings.HasSuffix(err.Error(), ErrShouldResetStagesStorageCache.Error())
+	}
+	return false
+}
 
 type StagesManager struct {
 	StagesSwitchFromLocalBlockDir string
@@ -48,6 +60,13 @@ func NewStagesManager(projectName string, storageLockManager storage.LockManager
 //return m.StagesStorage.GetAllStages(m.ProjectName)
 //}
 //}
+
+func (m *StagesManager) ResetStagesStorageCache() error {
+	msg := fmt.Sprintf("Reset stages storage cache %s for project %q", m.StagesStorageCache.String(), m.ProjectName)
+	return logboek.Default.LogProcess(msg, logboek.LevelLogProcessOptions{}, func() error {
+		return m.StagesStorageCache.DeleteAllStages(m.ProjectName)
+	})
+}
 
 func (m *StagesManager) getStagesSwitchFromLocalBlock() (string, error) {
 	f := filepath.Join(m.StagesSwitchFromLocalBlockDir, m.ProjectName)
@@ -161,11 +180,12 @@ func (m *StagesManager) DeleteStages(options storage.DeleteImageOptions, stages 
 }
 
 func (m *StagesManager) FetchStage(stg stage.Interface) error {
+	logboek.Debug.LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
 	if freshStageDescription, err := m.StagesStorage.GetStageDescription(m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 		return err
 	} else if freshStageDescription == nil {
-		// TODO: stages manager should report to the conveyor that conveoyor should be reset
-		return fmt.Errorf("Invalid stage %s image %q! Stage is no longer available in the %s. Remove cache directory %s and retry!", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), filepath.Join(werf.GetStagesStorageCacheDir(), m.ProjectName, stg.GetSignature()))
+		logboek.ErrF("Invalid stage %s image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
+		return ErrShouldResetStagesStorageCache
 	}
 
 	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
@@ -363,8 +383,8 @@ func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.Stage
 			}
 			return stageDesc, nil
 		} else {
-			logboek.Default.LogF("Not found signature %q uniqueID %q stage info in %s\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
-			return nil, fmt.Errorf("Invalid stage by signature %q uniqueID %q found in the stages storage cache! Stage is no longer available in the %s. Remove cache directory %s and retry!", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), filepath.Join(werf.GetStagesStorageCacheDir(), m.ProjectName))
+			logboek.ErrF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
+			return nil, ErrShouldResetStagesStorageCache
 		}
 	}
 }
