@@ -2,6 +2,7 @@ package switch_from_local
 
 import (
 	"fmt"
+	"strings"
 
 	stages_common "github.com/flant/werf/cmd/werf/stages/common"
 
@@ -97,11 +98,19 @@ func runSwitch() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	synchronization, err := common.GetSynchronization(&commonCmdData)
+	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime, storage.LocalStorageAddress)
 	if err != nil {
 		return err
 	}
-	if synchronization == storage.KubernetesStagesStorageAddress {
+	if fromStagesStorage.Address() != storage.LocalStorageAddress {
+		return fmt.Errorf("cannot switch from non-local stages storage, omit --from param or specify --from=%s", storage.LocalStorageAddress)
+	}
+
+	synchronization, err := common.GetSynchronization(&commonCmdData, fromStagesStorage.Address())
+	if err != nil {
+		return err
+	}
+	if strings.HasPrefix(synchronization, "kubernetes://") {
 		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 			return fmt.Errorf("cannot initialize kube: %s", err)
 		}
@@ -117,13 +126,6 @@ func runSwitch() error {
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 
-	fromStagesStorage, err := stages_common.NewFromStagesStorage(&commonCmdData, &cmdData, containerRuntime, storage.LocalStagesStorageAddress)
-	if err != nil {
-		return err
-	}
-	if fromStagesStorage.Address() != storage.LocalStagesStorageAddress {
-		return fmt.Errorf("cannot switch from non-local stages storage, omit --from param or specify --from=%s", storage.LocalStagesStorageAddress)
-	}
 	if err := stagesManager.UseStagesStorage(fromStagesStorage); err != nil {
 		return err
 	}
@@ -132,7 +134,7 @@ func runSwitch() error {
 	if err != nil {
 		return err
 	}
-	if toStagesStorage.Address() == storage.LocalStagesStorageAddress {
+	if toStagesStorage.Address() == storage.LocalStorageAddress {
 		return fmt.Errorf("cannot switch to local stages storage, specify repo address --to=REPO")
 	}
 

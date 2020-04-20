@@ -86,7 +86,7 @@ func (m *StagesManager) getStagesSwitchFromLocalBlock() (string, error) {
 func (m *StagesManager) checkStagesSwitchFromLocalBlock(stagesStorageAddress string) error {
 	if switchFromLocalBlock, err := m.getStagesSwitchFromLocalBlock(); err != nil {
 		return err
-	} else if switchFromLocalBlock != "" && stagesStorageAddress == storage.LocalStagesStorageAddress {
+	} else if switchFromLocalBlock != "" && stagesStorageAddress == storage.LocalStorageAddress {
 		return fmt.Errorf(
 			`Project %q stages storage has been switched from %s to %s!
 
@@ -94,9 +94,9 @@ func (m *StagesManager) checkStagesSwitchFromLocalBlock(stagesStorageAddress str
  2. If 'werf ci-env' command is used, then WERF_STAGES_STORAGE already should be exported — make sure that WERF_STAGES_STORAGE equals %s in this case.
  3. Otherwise explicitly specify --stages-storage=%s (or export WERF_STAGES_STORAGE=%s).`,
 			m.ProjectName,
-			storage.LocalStagesStorageAddress,
+			storage.LocalStorageAddress,
 			switchFromLocalBlock,
-			storage.LocalStagesStorageAddress,
+			storage.LocalStorageAddress,
 			switchFromLocalBlock,
 			switchFromLocalBlock,
 			switchFromLocalBlock,

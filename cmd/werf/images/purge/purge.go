@@ -2,10 +2,9 @@ package purge
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/pkg/storage"
-
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -98,11 +97,11 @@ func runPurge() error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData)
+	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
 	}
-	if synchronization == storage.KubernetesStagesStorageAddress {
+	if strings.HasPrefix(synchronization, "kubernetes://") {
 		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
 			return fmt.Errorf("cannot initialize kube: %s", err)
 		}
