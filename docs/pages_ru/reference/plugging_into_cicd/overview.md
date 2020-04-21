@@ -121,7 +121,7 @@ Werf использует так называемую _сигнатуру ста
 **ЗАМЕЧАНИЕ** Команда `werf ci-env` возвращает bash-скрипт, команды которого экспортируют необходимые [переменные окружения werf](#передача-cli-параметров-через-переменные-окружения). Поэтому, применение команды `werf ci-env` подразумевает использование ее вывода в bash-команде `source`. Например:
 
 ```shell
-source <(werf ci-env gitlab --verbose)
+source $(werf ci-env gitlab --verbose --as-file)
 werf build-and-publish --stages-storage :local
 ```
 
