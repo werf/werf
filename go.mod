@@ -174,5 +174,4 @@ replace github.com/docker/cli => github.com/docker/cli v0.0.0-20190321234815-f40
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 
-
 go 1.13
