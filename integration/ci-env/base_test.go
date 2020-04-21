@@ -19,7 +19,10 @@ var _ = Describe("ci-env", func() {
 		Ω(werf.Init("", "")).Should(Succeed())
 	})
 
-	ciSystems := []string{"gitlab"}
+	ciSystems := []string{
+		"gitlab",
+		"github",
+	}
 
 	for i := range ciSystems {
 		ciSystem := ciSystems[i]
