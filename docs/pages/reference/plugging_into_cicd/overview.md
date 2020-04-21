@@ -118,7 +118,7 @@ The [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.
 **NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-parameters-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
 
 ```shell
-source <(werf ci-env gitlab --verbose)
+source $(werf ci-env gitlab --verbose --as-file)
 werf build-and-publish --stages-storage :local
 ```
 

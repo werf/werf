@@ -105,7 +105,7 @@ Build:
   stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - werf build-and-publish --stages-storage :local
   tags:
     - werf
@@ -141,7 +141,7 @@ Build:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     ## Следующая команда непосредственно выполняет деплой
     - werf deploy --stages-storage :local
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
@@ -183,7 +183,7 @@ Stop review:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -278,7 +278,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local
   only:
@@ -306,7 +306,7 @@ Build:
   stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - werf build-and-publish --stages-storage :local
   tags:
     - werf
@@ -317,7 +317,7 @@ Build:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - werf deploy --stages-storage :local
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -341,7 +341,7 @@ Stop review:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -380,7 +380,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local
   only:

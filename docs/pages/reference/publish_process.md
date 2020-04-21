@@ -205,7 +205,7 @@ Let's say we have a `werf.yaml` configuration file that defines two images, `bac
 Running the following command in a GitLab CI job (in some git-branch or tag — irrelevant) for a project named `web/core/system` and the Docker registry configured as `registry.hello.com/web/core/system`:
 
 ```shell
-type werf && source <(werf ci-env gitlab)
+type werf && source $(werf ci-env gitlab --verbose --as-file)
 werf publish --stages-storage :local
 ```
 
@@ -228,7 +228,7 @@ Let's say we have a `werf.yaml` configuration file that defines two images, `bac
 Running the following command in a GitLab CI job for a project named `web/core/system` with the git branch set as `core/feature/ADD_SETTINGS` and the Docker registry configured as `registry.hello.com/web/core/system`:
 
 ```shell
-type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
 werf publish --stages-storage :local
 ```
 
@@ -243,7 +243,7 @@ Note that werf automatically applies slug to the resulting tag of the docker ima
 Let's suppose we have a werf.yaml with a single unnamed image. Running the following command in the GitLab CI job for the project named `web/core/queue` with the git-tag named `v2.3.1` and a Docker registry configured as `registry.hello.com/web/core/queue`:
 
 ```shell
-type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
 werf publish --stages-storage :local
 ```
 

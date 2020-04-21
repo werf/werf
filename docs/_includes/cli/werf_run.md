@@ -50,6 +50,10 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --kube-config='':
+            Kubernetes config file path
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -120,11 +124,12 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto     
             mode (detect implementation by a registry).
-      --synchronization=':local':
+  -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be    
-            specified for all werf processes that work with a single stages storage. :local address 
-            allows execution of werf processes from a single host only.
+            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
+            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
+            address should be specified for all werf processes that work with a single stages       
+            storage. :local address allows execution of werf processes from a single host only.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

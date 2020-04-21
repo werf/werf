@@ -209,7 +209,7 @@ werf publish --stages-storage :local --images-repo registry.hello.com/web/core/s
 Запуск следующей команды в задании pipeline GitLab CI (для любой git-ветки или тега — не важно):
 
 ```shell
-type werf && source <(werf ci-env gitlab)
+type werf && source $(werf ci-env gitlab --verbose --as-file)
 werf publish --stages-storage :local
 ```
 
@@ -232,7 +232,7 @@ werf publish --stages-storage :local
 Запуск следующей команды в задании pipeline GitLab CI для ветки `core/feature/ADD_SETTINGS`:
 
 ```shell
-type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
 werf publish --stages-storage :local
 ```
 
@@ -249,7 +249,7 @@ werf publish --stages-storage :local
 Запуск следующей команды в задании pipeline GitLab CI для тега `v2.3.1`:
 
 ```shell
-type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
 werf publish --stages-storage :local
 ```
 

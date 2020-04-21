@@ -1,10 +1,13 @@
 package ci_env
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
@@ -20,6 +23,8 @@ import (
 
 var cmdData struct {
 	TaggingStrategy string
+	AsFile          bool
+	Shell           string
 }
 
 var commonCmdData common.CmdData
@@ -33,17 +38,28 @@ func NewCmd() *cobra.Command {
 
 Currently supported only GitLab CI`,
 		Example: `  # Load generated werf environment variables on GitLab job runner
-  $ source <(werf ci-env gitlab)`,
+  $ . $(werf ci-env gitlab --as-file)
+
+  # Load generated werf environment variables on GitLab job runner using powershell
+  $ Invoke-Expression -Command "werf ci-env gitlab --as-file --shell powershell" | Out-String -OutVariable WERF_CI_ENV_SCRIPT_PATH
+  $ . $WERF_CI_ENV_SCRIPT_PATH.Trim()
+
+  # Load generated werf environment variables on GitLab job runner using cmd.exe
+  $ FOR /F "tokens=*" %g IN ('werf ci-env gitlab --as-file --shell cmdexe') do (SET WERF_CI_ENV_SCRIPT_PATH=%g)
+  $ %WERF_CI_ENV_SCRIPT_PATH%`,
 		RunE: runCIEnv,
 	}
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", "stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature; tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
+	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", `* stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature;
+* tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables.`)
+	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
+	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", "WERF_SHELL", "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
 
 	return cmd
 }
@@ -62,6 +78,13 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	switch cmdData.Shell {
+	case "", "default", "cmdexe", "powershell":
+	default:
+		common.PrintHelp(cmd)
+		return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
+	}
+
 	switch cmdData.TaggingStrategy {
 	case "tag-or-branch", "stages-signature":
 	default:
@@ -69,23 +92,41 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("provided tagging-strategy '%s' not supported", cmdData.TaggingStrategy)
 	}
 
-	ciSystem := args[0]
+	var w io.Writer
+	if cmdData.AsFile {
+		w = bytes.NewBuffer(nil)
+	} else {
+		w = os.Stdout
+	}
 
+	ciSystem := args[0]
 	switch ciSystem {
 	case "gitlab":
-		err := generateGitlabEnvs(cmdData.TaggingStrategy)
+		err := generateGitlabEnvs(w, cmdData.TaggingStrategy)
 		if err != nil {
-			fmt.Println()
-			printError(err.Error())
+			if !cmdData.AsFile {
+				writeError(w, err.Error())
+			}
+			return err
 		}
-		return err
 	default:
 		common.PrintHelp(cmd)
 		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
 	}
+
+	if cmdData.AsFile {
+		sourceFilePath, err := createSourceFile(w.(*bytes.Buffer).Bytes())
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(sourceFilePath)
+	}
+
+	return nil
 }
 
-func generateGitlabEnvs(taggingStrategy string) error {
+func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	dockerConfigPath := *commonCmdData.DockerConfig
 	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
@@ -124,17 +165,17 @@ func generateGitlabEnvs(taggingStrategy string) error {
 		}
 	}
 
-	printHeader("DOCKER CONFIG", false)
-	printExportCommand("DOCKER_CONFIG", dockerConfig, true)
+	writeHeader(w, "DOCKER CONFIG", false)
+	writeExportCommand(w, "DOCKER_CONFIG", dockerConfig, true)
 
-	printHeader("STAGES_STORAGE", true)
-	printExportCommand("WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
+	writeHeader(w, "STAGES_STORAGE", true)
+	writeExportCommand(w, "WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
 
-	printHeader("IMAGES REPO", true)
-	printExportCommand("WERF_IMAGES_REPO", ciRegistryImage, false)
-	printExportCommand("WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
+	writeHeader(w, "IMAGES REPO", true)
+	writeExportCommand(w, "WERF_IMAGES_REPO", ciRegistryImage, false)
+	writeExportCommand(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
 
-	printHeader("TAGGING", true)
+	writeHeader(w, "TAGGING", true)
 	switch taggingStrategy {
 	case "tag-or-branch":
 		var ciGitTag, ciGitBranch string
@@ -150,64 +191,64 @@ func generateGitlabEnvs(taggingStrategy string) error {
 		}
 
 		if ciGitTag != "" {
-			printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
+			writeExportCommand(w, "WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
 		}
 		if ciGitBranch != "" {
-			printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
+			writeExportCommand(w, "WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
 		}
 
 		if ciGitTag == "" && ciGitBranch == "" {
 			return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", cmdData.TaggingStrategy)
 		}
 	case "stages-signature":
-		printExportCommand("WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
+		writeExportCommand(w, "WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
 	}
 
-	printHeader("DEPLOY", true)
-	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
+	writeHeader(w, "DEPLOY", true)
+	writeExportCommand(w, "WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
 	var projectGit string
 	ciProjectUrlEnv := os.Getenv("CI_PROJECT_URL")
 	if ciProjectUrlEnv != "" {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", ciProjectUrlEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
 
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("CI_COMMIT_SHA")
 	if ciCommitShaEnv != "" {
 		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
 
 	var gitlabCIPipelineUrl string
 	ciPipelineIdEnv := os.Getenv("CI_PIPELINE_ID")
 	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
 		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s/pipelines/%s", ciProjectUrlEnv, ciPipelineIdEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
 
 	var gitlabCiJobUrl string
 	ciJobIdEnv := os.Getenv("CI_JOB_ID")
 	if ciProjectUrlEnv != "" && os.Getenv("CI_JOB_ID") != "" {
 		gitlabCiJobUrl = fmt.Sprintf("gitlab.ci.werf.io/job-url=%s/-/jobs/%s", ciProjectUrlEnv, ciJobIdEnv)
 	}
-	printExportCommand("WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
 	cleanupConfig, err := getCleanupConfig()
 	if err != nil {
 		return fmt.Errorf("unable to get cleanup config: %s", err)
 	}
 
-	printHeader("IMAGE CLEANUP POLICIES", true)
-	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
-	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
-	printExportCommand("WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
-	printExportCommand("WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
+	writeHeader(w, "IMAGE CLEANUP POLICIES", true)
+	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
+	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
+	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
+	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
+	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
+	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
 
-	printHeader("OTHER", true)
+	writeHeader(w, "OTHER", true)
 
 	werfLogColorMode := "on"
 	ciServerVersion := os.Getenv("CI_SERVER_VERSION")
@@ -223,64 +264,90 @@ func generateGitlabEnvs(taggingStrategy string) error {
 		}
 	}
 
-	printExportCommand("WERF_LOG_COLOR_MODE", werfLogColorMode, false)
-	printExportCommand("WERF_LOG_PROJECT_DIR", "1", false)
-	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
-	printExportCommand("WERF_LOG_TERMINAL_WIDTH", "95", false)
+	writeExportCommand(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
+	writeExportCommand(w, "WERF_LOG_PROJECT_DIR", "1", false)
+	writeExportCommand(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
+	writeExportCommand(w, "WERF_LOG_TERMINAL_WIDTH", "95", false)
 
 	return nil
 }
 
-func printError(errMsg string) {
+func writeError(w io.Writer, errMsg string) {
 	if *commonCmdData.LogVerbose {
-		fmt.Println("echo")
-		fmt.Printf("echo 'Error: %s'\n", errMsg)
+		_, _ = fmt.Fprintln(w, "echo")
+		_, _ = fmt.Fprintf(w, "echo 'Error: %s'\n", errMsg)
 	}
 
-	fmt.Printf("exit 1\n")
-	fmt.Println()
+	_, _ = fmt.Fprintf(w, "exit 1\n")
+	_, _ = fmt.Fprintln(w)
 }
 
-func printHeader(header string, withNewLine bool) {
-	header = fmt.Sprintf("### %s", header)
+func writeHeader(w io.Writer, header string, withNewLine bool) {
+	var commentSigns string
+	switch cmdData.Shell {
+	case "cmdexe":
+		commentSigns = "::"
+	default:
+		commentSigns = "###"
+	}
+
+	header = fmt.Sprintf("%s %s", commentSigns, header)
 
 	if withNewLine {
-		fmt.Println()
+		_, _ = fmt.Fprintln(w)
 	}
-	fmt.Println(header)
+	_, _ = fmt.Fprintln(w, header)
 
 	if *commonCmdData.LogVerbose {
 		if withNewLine {
-			fmt.Println("echo")
+			_, _ = fmt.Fprintln(w, "echo")
 		}
 		echoHeader := fmt.Sprintf("echo '%s'", header)
-		fmt.Println(echoHeader)
+		_, _ = fmt.Fprintln(w, echoHeader)
 	}
 }
 
-func printExportCommand(key, value string, override bool) {
+func writeExportCommand(w io.Writer, key, value string, override bool) {
+	var commentSign string
+	switch cmdData.Shell {
+	case "cmdexe":
+		commentSign = "::"
+	default:
+		commentSign = "#"
+	}
+
 	if !override && os.Getenv(key) != "" {
-		skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
-		fmt.Println(skipComment)
+		skipComment := fmt.Sprintf("%s skip %s=\"%s\"", commentSign, key, os.Getenv(key))
+		_, _ = fmt.Fprintln(w, skipComment)
 
 		if *commonCmdData.LogVerbose {
 			echoSkip := fmt.Sprintf("echo '%s'", skipComment)
-			fmt.Println(echoSkip)
+			_, _ = fmt.Fprintln(w, echoSkip)
 		}
 
 		return
 	}
 
-	exportCommand := fmt.Sprintf("export %s=\"%s\"", key, value)
-	if value == "" {
-		exportCommand = fmt.Sprintf("# %s", exportCommand)
+	var exportFormat string
+	switch cmdData.Shell {
+	case "powershell":
+		exportFormat = "$Env:%s = \"%s\""
+	case "cmd.exe":
+		exportFormat = "set %s=%s"
+	default:
+		exportFormat = "export %s=\"%s\""
 	}
 
-	fmt.Println(exportCommand)
+	exportCommand := fmt.Sprintf(exportFormat, key, value)
+	if value == "" {
+		exportCommand = fmt.Sprintf("%s %s", commentSign, exportCommand)
+	}
+
+	_, _ = fmt.Fprintln(w, exportCommand)
 
 	if *commonCmdData.LogVerbose {
 		echoExportCommand := fmt.Sprintf("echo '%s'", exportCommand)
-		fmt.Println(echoExportCommand)
+		_, _ = fmt.Fprintln(w, echoExportCommand)
 	}
 }
 
@@ -318,4 +385,51 @@ func getCleanupConfig() (CleanupConfig, error) {
 	}
 
 	return config, nil
+}
+
+func createSourceFile(data []byte) (string, error) {
+	sourceDir := filepath.Join(werf.GetServiceDir(), "tmp", "ci_env")
+	err := os.MkdirAll(sourceDir, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
+	files, err := ioutil.ReadDir(sourceDir)
+	if err != nil {
+		return "", err
+	}
+
+	// keep no more than 100 source files, remain 50 during cleaning
+	if len(files) >= 100 {
+		for i := len(files) - 50; i >= 0; i-- {
+			file := files[i]
+			if file.IsDir() {
+				continue
+			}
+
+			sourceFilePath := filepath.Join(sourceDir, file.Name())
+			if err := os.Remove(sourceFilePath); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	tempFilePattern := fmt.Sprintf("source_%d_*", time.Now().Unix())
+	switch cmdData.Shell {
+	case "cmdexe":
+		tempFilePattern += ".bat"
+	case "powershell":
+		tempFilePattern += ".ps1"
+	}
+
+	f, err := ioutil.TempFile(sourceDir, tempFilePattern)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := f.Write(data); err != nil {
+		return "", err
+	}
+
+	return f.Name(), nil
 }

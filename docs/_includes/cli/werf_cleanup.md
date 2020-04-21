@@ -151,11 +151,12 @@ werf cleanup [options]
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto     
             mode (detect implementation by a registry).
-      --synchronization=':local':
+  -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be    
-            specified for all werf processes that work with a single stages storage. :local address 
-            allows execution of werf processes from a single host only.
+            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
+            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
+            address should be specified for all werf processes that work with a single stages       
+            storage. :local address allows execution of werf processes from a single host only.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --without-kube=false:

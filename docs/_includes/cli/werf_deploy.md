@@ -201,11 +201,12 @@ werf deploy [options]
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --synchronization=':local':
+  -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be    
-            specified for all werf processes that work with a single stages storage. :local address 
-            allows execution of werf processes from a single host only.
+            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
+            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
+            address should be specified for all werf processes that work with a single stages       
+            storage. :local address allows execution of werf processes from a single host only.
       --tag-by-stages-signature=false:
             Use stages-signature tagging strategy and tag each image by the corresponding signature 
             of last image stage (option can be enabled by specifying                                

@@ -28,12 +28,12 @@ If the script is launched for the first time or there is no suitable werf binary
 Otherwise, the update runs in the background, and werf alias or a function binds to the existing werf binary based on local channel mapping.
 
 <div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'unix')">Unix shell</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'powershell')">PowerShell</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'cmdexe')">cmd.exe</a>
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'unix_tab')">Unix shell</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'powershell_tab')">PowerShell</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'cmdexe_tab')">cmd.exe</a>
 </div>
 
-<div id="unix" class="tabs__content active" markdown="1">
+<div id="unix_tab" class="tabs__content active" markdown="1">
 
 ```shell
 if multiwerf werf-path MAJOR.MINOR CHANNEL >~/.multiwerf/multiwerf_use_first_werf_path.log 2>&1; then
@@ -56,7 +56,7 @@ eval "$WERF_FUNC"
 
 </div>
 
-<div id="powershell" class="tabs__content" markdown="1">
+<div id="powershell_tab" class="tabs__content" markdown="1">
 
 ```shell
 if ((Invoke-Expression -Command "multiwerf werf-path MAJOR.MINOR CHANNEL" | Out-String -OutVariable WERF_PATH) -and ($LastExitCode -eq 0)) {
@@ -71,7 +71,7 @@ function werf { & $WERF_PATH.Trim() $args }
 
 </div>
 
-<div id="cmdexe" class="tabs__content" markdown="1">
+<div id="cmdexe_tab" class="tabs__content" markdown="1">
 
 ```shell
 FOR /F "tokens=*" %%g IN ('multiwerf werf-path MAJOR.MINOR CHANNEL') do (SET WERF_PATH=%%g)

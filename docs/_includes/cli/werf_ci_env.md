@@ -17,17 +17,27 @@ werf ci-env CI_SYSTEM [options]
 
 ```shell
   # Load generated werf environment variables on GitLab job runner
-  $ source <(werf ci-env gitlab)
+  $ . $(werf ci-env gitlab --as-file)
+
+  # Load generated werf environment variables on GitLab job runner using powershell
+  $ Invoke-Expression -Command "werf ci-env gitlab --as-file --shell powershell" | Out-String -OutVariable WERF_CI_ENV_SCRIPT_PATH
+  $ . $WERF_CI_ENV_SCRIPT_PATH.Trim()
+
+  # Load generated werf environment variables on GitLab job runner using cmd.exe
+  $ FOR /F "tokens=*" %g IN ('werf ci-env gitlab --as-file --shell cmdexe') do (SET WERF_CI_ENV_SCRIPT_PATH=%g)
+  $ %WERF_CI_ENV_SCRIPT_PATH%
 ```
 
 {{ header }} Options
 
 ```shell
+      --as-file=false:
+            Create the script and print the path for sourcing (default $WERF_AS_FILE).
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command will copy specified or default (~/.docker) config to the temporary directory    
-            and may perform additional login with new config
+            and may perform additional login with new config.
   -h, --help=false:
             help for ci-env
       --home-dir='':
@@ -51,10 +61,14 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --shell='WERF_SHELL':
+            Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
+            shell (default $WERF_SHELL).
       --tagging-strategy='stages-signature':
-            stages-signature: always use '--tag-by-stages-signature' option to tag all published    
-            images by corresponding stages-signature; tag-or-branch: generate auto                  
-            '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables
+            * stages-signature: always use '--tag-by-stages-signature' option to tag all published  
+            images by corresponding stages-signature;
+            * tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified   
+            CI_SYSTEM environment variables.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
