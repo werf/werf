@@ -108,6 +108,10 @@ werf build-and-publish [IMAGE_NAME...] [options]
             STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
             gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
             importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
+      --kube-config='':
+            Kubernetes config file path
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -176,11 +180,12 @@ werf build-and-publish [IMAGE_NAME...] [options]
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto     
             mode (detect implementation by a registry).
-      --synchronization=':local':
+  -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local or $WERF_SYNCHRONIZATION if set). The same address should be    
-            specified for all werf processes that work with a single stages storage. :local address 
-            allows execution of werf processes from a single host only.
+            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
+            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
+            address should be specified for all werf processes that work with a single stages       
+            storage. :local address allows execution of werf processes from a single host only.
       --tag-by-stages-signature=false:
             Use stages-signature tagging strategy and tag each image by the corresponding signature 
             of last image stage (option can be enabled by specifying                                
