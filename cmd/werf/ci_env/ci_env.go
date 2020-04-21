@@ -24,6 +24,7 @@ import (
 var cmdData struct {
 	TaggingStrategy string
 	AsFile          bool
+	Shell           string
 }
 
 var commonCmdData common.CmdData
@@ -37,7 +38,15 @@ func NewCmd() *cobra.Command {
 
 Currently supported only GitLab CI`,
 		Example: `  # Load generated werf environment variables on GitLab job runner
-  $ . $(werf ci-env gitlab --as-file)`,
+  $ . $(werf ci-env gitlab --as-file)
+
+  # Load generated werf environment variables on GitLab job runner using powershell
+  $ Invoke-Expression -Command "werf ci-env gitlab --as-file --shell powershell" | Out-String -OutVariable WERF_CI_ENV_SCRIPT_PATH
+  $ . $WERF_CI_ENV_SCRIPT_PATH.Trim()
+
+  # Load generated werf environment variables on GitLab job runner using cmd.exe
+  $ FOR /F "tokens=*" %g IN ('werf ci-env gitlab --as-file --shell cmdexe') do (SET WERF_CI_ENV_SCRIPT_PATH=%g)
+  $ %WERF_CI_ENV_SCRIPT_PATH%`,
 		RunE: runCIEnv,
 	}
 
@@ -50,6 +59,7 @@ Currently supported only GitLab CI`,
 	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", `* stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature;
 * tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables.`)
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
+	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", "WERF_SHELL", "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
 
 	return cmd
 }
@@ -66,6 +76,13 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 		return err
+	}
+
+	switch cmdData.Shell {
+	case "", "default", "cmdexe", "powershell":
+	default:
+		common.PrintHelp(cmd)
+		return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
 	}
 
 	switch cmdData.TaggingStrategy {
@@ -266,7 +283,15 @@ func writeError(w io.Writer, errMsg string) {
 }
 
 func writeHeader(w io.Writer, header string, withNewLine bool) {
-	header = fmt.Sprintf("### %s", header)
+	var commentSigns string
+	switch cmdData.Shell {
+	case "cmdexe":
+		commentSigns = "::"
+	default:
+		commentSigns = "###"
+	}
+
+	header = fmt.Sprintf("%s %s", commentSigns, header)
 
 	if withNewLine {
 		_, _ = fmt.Fprintln(w)
@@ -283,8 +308,16 @@ func writeHeader(w io.Writer, header string, withNewLine bool) {
 }
 
 func writeExportCommand(w io.Writer, key, value string, override bool) {
+	var commentSign string
+	switch cmdData.Shell {
+	case "cmdexe":
+		commentSign = "::"
+	default:
+		commentSign = "#"
+	}
+
 	if !override && os.Getenv(key) != "" {
-		skipComment := fmt.Sprintf("# skip %s=\"%s\"", key, os.Getenv(key))
+		skipComment := fmt.Sprintf("%s skip %s=\"%s\"", commentSign, key, os.Getenv(key))
 		_, _ = fmt.Fprintln(w, skipComment)
 
 		if *commonCmdData.LogVerbose {
@@ -295,9 +328,19 @@ func writeExportCommand(w io.Writer, key, value string, override bool) {
 		return
 	}
 
-	exportCommand := fmt.Sprintf("export %s=\"%s\"", key, value)
+	var exportFormat string
+	switch cmdData.Shell {
+	case "powershell":
+		exportFormat = "$Env:%s = \"%s\""
+	case "cmd.exe":
+		exportFormat = "set %s=%s"
+	default:
+		exportFormat = "export %s=\"%s\""
+	}
+
+	exportCommand := fmt.Sprintf(exportFormat, key, value)
 	if value == "" {
-		exportCommand = fmt.Sprintf("# %s", exportCommand)
+		exportCommand = fmt.Sprintf("%s %s", commentSign, exportCommand)
 	}
 
 	_, _ = fmt.Fprintln(w, exportCommand)
@@ -371,7 +414,15 @@ func createSourceFile(data []byte) (string, error) {
 		}
 	}
 
-	f, err := ioutil.TempFile(sourceDir, fmt.Sprintf("source_%d_*", time.Now().Unix()))
+	tempFilePattern := fmt.Sprintf("source_%d_*", time.Now().Unix())
+	switch cmdData.Shell {
+	case "cmdexe":
+		tempFilePattern += ".bat"
+	case "powershell":
+		tempFilePattern += ".ps1"
+	}
+
+	f, err := ioutil.TempFile(sourceDir, tempFilePattern)
 	if err != nil {
 		return "", err
 	}
