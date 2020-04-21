@@ -17,6 +17,10 @@ func (c *WerfConfig) HasImageOrArtifact(imageName string) bool {
 	return c.HasImage(imageName) || c.GetArtifact(imageName) != nil
 }
 
+func (c *WerfConfig) HasNamelessImage() bool {
+	return c.HasImage("")
+}
+
 func (c *WerfConfig) HasImage(imageName string) bool {
 	return c.GetImage(imageName) != nil
 }

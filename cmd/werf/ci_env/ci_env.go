@@ -16,6 +16,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -36,7 +37,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Generate werf environment variables for specified CI system",
 		Long: `Generate werf environment variables for specified CI system.
 
-Currently supported only GitLab CI`,
+Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 		Example: `  # Load generated werf environment variables on GitLab job runner
   $ . $(werf ci-env gitlab --as-file)
 
@@ -50,6 +51,7 @@ Currently supported only GitLab CI`,
 		RunE: runCIEnv,
 	}
 
+	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")
@@ -65,10 +67,11 @@ Currently supported only GitLab CI`,
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
-	if err := common.ProcessLogOptions(&commonCmdData); err != nil {
-		common.PrintHelp(cmd)
-		return err
-	}
+	//if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+	//	common.PrintHelp(cmd)
+	//	return err
+	//}
+	logging.EnableLogQuiet()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -101,6 +104,14 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	ciSystem := args[0]
 	switch ciSystem {
+	case "github":
+		err := generateGithubEnvs(w, cmdData.TaggingStrategy)
+		if err != nil {
+			if !cmdData.AsFile {
+				writeError(w, err.Error())
+			}
+			return err
+		}
 	case "gitlab":
 		err := generateGitlabEnvs(w, cmdData.TaggingStrategy)
 		if err != nil {
@@ -127,20 +138,8 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 }
 
 func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
-	dockerConfigPath := *commonCmdData.DockerConfig
-	if *commonCmdData.DockerConfig == "" {
-		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
-	}
-
-	tmp_manager.AutoGCEnabled = false
-
-	dockerConfig, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
+	dockerConfig, err := generateSessionDockerConfigDir()
 	if err != nil {
-		return fmt.Errorf("unable to create tmp docker config: %s", err)
-	}
-
-	// Init with new docker config dir
-	if err := docker.Init(dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -235,18 +234,9 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 	writeExportCommand(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
-	cleanupConfig, err := getCleanupConfig()
-	if err != nil {
-		return fmt.Errorf("unable to get cleanup config: %s", err)
+	if err = generateImageCleanupPolicies(w); err != nil {
+		return err
 	}
-
-	writeHeader(w, "IMAGE CLEANUP POLICIES", true)
-	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
-	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
-	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
-	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
-	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
-	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
 
 	writeHeader(w, "OTHER", true)
 
@@ -265,6 +255,145 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 
 	writeExportCommand(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
+	writeExportCommand(w, "WERF_LOG_PROJECT_DIR", "1", false)
+	writeExportCommand(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
+	writeExportCommand(w, "WERF_LOG_TERMINAL_WIDTH", "95", false)
+
+	return nil
+}
+
+func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
+	dockerConfigDir, err := generateSessionDockerConfigDir()
+	if err != nil {
+		return err
+	}
+
+	githubRegistry := "docker.pkg.github.com"
+	ciGithubToken := os.Getenv("GITHUB_TOKEN")
+	ciGithubActor := os.Getenv("GITHUB_ACTOR")
+	if ciGithubActor != "" && ciGithubToken != "" {
+		err := docker.Login(ciGithubActor, ciGithubToken, githubRegistry)
+		if err != nil {
+			return fmt.Errorf("unable to login into docker repo %s: %s", githubRegistry, err)
+		}
+	}
+
+	ciGithubOwnerWithProject := os.Getenv("GITHUB_REPOSITORY")
+
+	var imagesRepo, stagesStorageRepo string
+	if ciGithubOwnerWithProject != "" {
+		projectDir, err := common.GetProjectDir(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("getting project dir failed: %s", err)
+		}
+
+		werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
+		if err != nil {
+			return fmt.Errorf("unable to load werf config: %s", err)
+		}
+
+		projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
+		if werfConfig.HasNamelessImage() {
+			imagesRepo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+		} else {
+			imagesRepo = projectRepo
+		}
+
+		stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
+	} else if os.Getenv("IMAGES REPO") != "" && os.Getenv("STAGES_STORAGE") == "" {
+		stagesStorageRepo = fmt.Sprintf("%s/stages", os.Getenv("IMAGES REPO"))
+	}
+
+	writeHeader(w, "DOCKER CONFIG", false)
+	writeExportCommand(w, "DOCKER_CONFIG", dockerConfigDir, true)
+
+	writeHeader(w, "STAGES_STORAGE", true)
+	writeExportCommand(w, "WERF_STAGES_STORAGE", stagesStorageRepo, false)
+
+	writeHeader(w, "IMAGES REPO", true)
+	writeExportCommand(w, "WERF_IMAGES_REPO", imagesRepo, false)
+
+	writeHeader(w, "TAGGING", true)
+	switch taggingStrategy {
+	case "stages-signature":
+		writeExportCommand(w, "WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
+	default:
+		return fmt.Errorf("provided tagging-strategy '%s' not supported", taggingStrategy)
+	}
+
+	writeHeader(w, "DEPLOY", true)
+	var projectGit string
+	if ciGithubOwnerWithProject != "" {
+		projectGit = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s", ciGithubOwnerWithProject))
+	}
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+
+	var ciCommit string
+	ciCommitShaEnv := os.Getenv("GITHUB_SHA")
+	if ciCommitShaEnv != "" {
+		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
+	}
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
+
+	var workflowUrl string
+	ciWorkflowRunIdEnv := os.Getenv("GITHUB_RUN_ID")
+	if ciGithubOwnerWithProject != "" && ciWorkflowRunIdEnv != "" {
+		workflowUrl = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s/actions/runs/%s", ciGithubOwnerWithProject, ciWorkflowRunIdEnv))
+	}
+	writeExportCommand(w, "WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL", workflowUrl, false)
+
+	if err = generateImageCleanupPolicies(w); err != nil {
+		return err
+	}
+
+	if err = generateOther(w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateSessionDockerConfigDir() (string, error) {
+	dockerConfigPath := *commonCmdData.DockerConfig
+	if *commonCmdData.DockerConfig == "" {
+		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
+	}
+
+	tmp_manager.AutoGCEnabled = false
+
+	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to create tmp docker config: %s", err)
+	}
+
+	// Init with new docker config dir
+	if err := docker.Init(dockerConfigDir, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+		return "", err
+	}
+
+	return dockerConfigDir, nil
+}
+
+func generateImageCleanupPolicies(w io.Writer) error {
+	cleanupConfig, err := getCleanupConfig()
+	if err != nil {
+		return fmt.Errorf("unable to get cleanup config: %s", err)
+	}
+
+	writeHeader(w, "IMAGE CLEANUP POLICIES", true)
+	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
+	writeExportCommand(w, "WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
+	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
+	writeExportCommand(w, "WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
+	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
+	writeExportCommand(w, "WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
+
+	return nil
+}
+
+func generateOther(w io.Writer) error {
+	writeHeader(w, "OTHER", true)
+	writeExportCommand(w, "WERF_LOG_COLOR_MODE", "on", false)
 	writeExportCommand(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeExportCommand(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	writeExportCommand(w, "WERF_LOG_TERMINAL_WIDTH", "95", false)
