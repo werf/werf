@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/lockgate"
+
+	"github.com/flant/werf/pkg/werf"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/container_runtime"
@@ -143,6 +147,12 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 
+	if _, lock, err := werf.AcquireHostLock(fmt.Sprintf("managed_image.%s-%s", projectName, imageName), lockgate.AcquireOptions{}); err != nil {
+		return err
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	if isExists, err := storage.DockerRegistry.IsRepoImageExists(fullImageName); err != nil {
 		return err
 	} else if isExists {
@@ -158,7 +168,7 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 			return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 		}
 		defer func() {
-			if err := docker.CliRmi(fullImageName); err != nil {
+			if err := docker.CliRmi("--force", fullImageName); err != nil {
 				// TODO: errored repo state
 				logboek.Error.LogF("unable to remove temporary image %q: %s", fullImageName, err)
 			}

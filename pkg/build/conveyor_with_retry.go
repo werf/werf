@@ -1,8 +1,6 @@
 package build
 
 import (
-	"fmt"
-
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/stages_manager"
@@ -19,8 +17,6 @@ type ConveyorWithRetryWrapper struct {
 	StagesManager       *stages_manager.StagesManager
 	ImagesRepo          storage.ImagesRepo
 	StorageLockManager  storage.LockManager
-
-	conveyorsToTerminate []*Conveyor
 }
 
 func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *ConveyorWithRetryWrapper {
@@ -38,16 +34,6 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProc
 }
 
 func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
-	var terminateErrors []error
-	for _, conveyorToTerminate := range wrapper.conveyorsToTerminate {
-		if err := conveyorToTerminate.Terminate(); err != nil {
-			terminateErrors = append(terminateErrors, err)
-		}
-	}
-
-	if len(terminateErrors) > 0 {
-		return fmt.Errorf("there were errors during conveyors termination")
-	}
 	return nil
 }
 
@@ -64,16 +50,22 @@ Retry:
 		wrapper.ImagesRepo,
 		wrapper.StorageLockManager,
 	)
-	wrapper.conveyorsToTerminate = append(wrapper.conveyorsToTerminate, newConveyor)
 
-	if err := f(newConveyor); stages_manager.ShouldResetStagesStorageCache(err) {
-		if err := newConveyor.StagesManager.ResetStagesStorageCache(); err != nil {
-			return err
+	if shouldRetry, err := func() (bool, error) {
+		defer newConveyor.Terminate()
+
+		if err := f(newConveyor); stages_manager.ShouldResetStagesStorageCache(err) {
+			if err := newConveyor.StagesManager.ResetStagesStorageCache(); err != nil {
+				return false, err
+			}
+			return true, nil
+		} else {
+			return false, err
 		}
-		goto Retry
-	} else if err != nil {
+	}(); err != nil {
 		return err
+	} else if shouldRetry {
+		goto Retry
 	}
-
 	return nil
 }
