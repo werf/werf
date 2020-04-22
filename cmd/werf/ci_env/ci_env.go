@@ -59,7 +59,7 @@ Currently supported only GitLab CI`,
 	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", `* stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature;
 * tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables.`)
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
-	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", "WERF_SHELL", "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
+	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", os.Getenv("WERF_SHELL"), "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
 
 	return cmd
 }
