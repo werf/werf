@@ -108,7 +108,7 @@ func DefaultLockerOnWait(lock lockgate.LockHandle, doWait func() error) error {
 }
 
 func DefaultLockerOnLostLease(lock lockgate.LockHandle) error {
-	panic(fmt.Sprintf("Locker has lost lease for locked %q id %s. Will crash current process immediately!", lock.LockName, lock.ID))
+	panic(fmt.Sprintf("Locker has lost lease for locked %q uuid %s. Will crash current process immediately!", lock.LockName, lock.UUID))
 }
 
 func Init(tmpDirOption, homeDirOption string) error {
