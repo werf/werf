@@ -168,7 +168,7 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if inspect == nil {
-			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name(), err)
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
 		} else {
 			i.baseImage.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO

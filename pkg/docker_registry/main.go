@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"io/ioutil"
+	"os"
 
 	"github.com/google/go-containerregistry/pkg/logs"
 
@@ -14,7 +15,12 @@ func Init(insecureRegistry, skipTlsVerifyRegistry bool) error {
 	if logboek.Debug.IsAccepted() {
 		logs.Progress.SetOutput(logboek.GetOutStream())
 		logs.Warn.SetOutput(logboek.GetErrStream())
-		logs.Debug.SetOutput(logboek.GetOutStream())
+
+		if debugDockerRegistryAPI() {
+			logs.Debug.SetOutput(logboek.GetOutStream())
+		} else {
+			logs.Debug.SetOutput(ioutil.Discard)
+		}
 	} else {
 		logs.Progress.SetOutput(ioutil.Discard)
 		logs.Warn.SetOutput(ioutil.Discard)
@@ -31,4 +37,8 @@ func Init(insecureRegistry, skipTlsVerifyRegistry bool) error {
 
 func API() *api {
 	return generic
+}
+
+func debugDockerRegistryAPI() bool {
+	return os.Getenv("WERF_DEBUG_DOCKER_REGISTRY_API") == "1"
 }

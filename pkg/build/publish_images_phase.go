@@ -345,8 +345,6 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		}
 
 		return phase.ImagesRepo.PublishImage(publishImage)
-
-		return nil
 	}
 
 	return logboek.Default.LogProcess(

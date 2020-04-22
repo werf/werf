@@ -103,7 +103,7 @@ func (cache *FileStagesStorageCache) GetAllStages(projectName string) (bool, []i
 func (cache *FileStagesStorageCache) DeleteAllStages(projectName string) error {
 	projectCacheDir := filepath.Join(cache.CacheDir, projectName)
 	if err := os.RemoveAll(projectCacheDir); err != nil {
-		return fmt.Errorf("unable to remove %s: %s", err)
+		return fmt.Errorf("unable to remove %s: %s", projectCacheDir, err)
 	}
 	return nil
 }
