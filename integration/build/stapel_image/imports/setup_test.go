@@ -33,6 +33,7 @@ var _ = ginkgo.SynchronizedAfterSuite(func() {}, func() {
 
 var _ = ginkgo.BeforeEach(func() {
 	utils.BeforeEachOverrideWerfProjectName(stubs)
+	stubs.SetEnv("WERF_DISABLE_AUTO_GC", "1")
 })
 
 var _ = ginkgo.AfterEach(func() {
