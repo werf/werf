@@ -62,12 +62,12 @@ var _ = Describe("context", func() {
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 
-		if runtime.GOOS != "windows" && entry.expectedWindowsSignature != "" {
-			Ω(string(output)).Should(ContainSubstring(entry.expectedSignature))
-		} else if runtime.GOOS != "darwin" && entry.expectedDarwinSignature != "" {
+		if runtime.GOOS == "windows" && entry.expectedWindowsSignature != "" {
+			Ω(string(output)).Should(ContainSubstring(entry.expectedWindowsSignature))
+		} else if runtime.GOOS == "darwin" && entry.expectedDarwinSignature != "" {
 			Ω(string(output)).Should(ContainSubstring(entry.expectedDarwinSignature))
 		} else {
-			Ω(string(output)).Should(ContainSubstring(entry.expectedWindowsSignature))
+			Ω(string(output)).Should(ContainSubstring(entry.expectedSignature))
 		}
 	}
 
