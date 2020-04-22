@@ -1,4 +1,4 @@
-project: werf-integration-test
+project: none
 configVersion: 1
 ---
 image: dockerfile_image
