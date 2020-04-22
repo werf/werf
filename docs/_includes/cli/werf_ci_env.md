@@ -5,7 +5,7 @@
 {% endif %}
 Generate werf environment variables for specified CI system.
 
-Currently supported only GitLab CI
+Currently supported only GitLab (gitlab) and GitHub (github) CI systems
 
 {{ header }} Syntax
 
@@ -33,6 +33,8 @@ werf ci-env CI_SYSTEM [options]
 ```shell
       --as-file=false:
             Create the script and print the path for sourcing (default $WERF_AS_FILE).
+      --dir='':
+            Change to the specified directory to find werf.yaml config
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -61,7 +63,7 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --shell='WERF_SHELL':
+      --shell='':
             Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
             shell (default $WERF_SHELL).
       --tagging-strategy='stages-signature':
