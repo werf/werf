@@ -48,6 +48,7 @@ var _ = Describe("context", func() {
 	type entry struct {
 		prepareFixturesFunc      func()
 		expectedSignature        string
+		expectedDarwinSignature  string
 		expectedWindowsSignature string
 	}
 
@@ -61,8 +62,10 @@ var _ = Describe("context", func() {
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 
-		if runtime.GOOS != "windows" {
+		if runtime.GOOS != "windows" && entry.expectedWindowsSignature != "" {
 			Ω(string(output)).Should(ContainSubstring(entry.expectedSignature))
+		} else if runtime.GOOS != "darwin" && entry.expectedDarwinSignature != "" {
+			Ω(string(output)).Should(ContainSubstring(entry.expectedDarwinSignature))
 		} else {
 			Ω(string(output)).Should(ContainSubstring(entry.expectedWindowsSignature))
 		}
@@ -75,6 +78,7 @@ var _ = Describe("context", func() {
 				Ω(os.RemoveAll(filepath.Join(testDirPath, ".git"))).Should(Succeed())
 			},
 			expectedSignature:        "10577fbfd229120fa34bc07fd40630af70a8051017b31ec4a86c1f76",
+			expectedDarwinSignature:  "6419296f73e469ab97cb99defc7dc20c9ad7e9fbf211539e2d0f6639",
 			expectedWindowsSignature: "36407a81113c9555fe5483ab04f42b8004cdbf0120b00bc129118f9b",
 		}),
 		Entry("with ls-tree", entry{
