@@ -15,7 +15,7 @@ jobs:
         - acr
         - dockerhub
         - ecr
-        - gcr
+        # - gcr
         # - github
         # - harbor
         - quay
