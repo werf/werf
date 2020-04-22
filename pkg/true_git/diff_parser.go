@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -262,7 +263,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				return nil
 			}
 
-			newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+			newPath := p.trimFileBaseFilepath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -275,7 +276,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				return nil
 			}
 
-			newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+			newPath := p.trimFileBaseFilepath(path)
 			p.Paths = appendUnique(p.Paths, newPath)
 			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
 
@@ -356,7 +357,7 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 
 func (p *diffParser) handleModifyFilePathA(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	return p.writeOutLine(newLine)
@@ -364,7 +365,7 @@ func (p *diffParser) handleModifyFilePathA(line string) error {
 
 func (p *diffParser) handleModifyFilePathB(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -382,7 +383,7 @@ func (p *diffParser) handleSubmoduleLine(line string) error {
 
 func (p *diffParser) handleNewFilePath(line string) error {
 	path := strings.TrimPrefix(line, "+++ b/")
-	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
 	p.state = diffBody
@@ -390,9 +391,13 @@ func (p *diffParser) handleNewFilePath(line string) error {
 	return p.writeOutLine(newLine)
 }
 
+func (p *diffParser) trimFileBaseFilepath(path string) string {
+	return filepath.ToSlash(p.PathMatcher.TrimFileBaseFilepath(filepath.FromSlash(path)))
+}
+
 func (p *diffParser) handleDeleteFilePath(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
-	newPath := p.PathMatcher.TrimFileBaseFilepath(path)
+	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	p.state = diffBody
