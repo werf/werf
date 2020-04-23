@@ -12,14 +12,25 @@ type DismissOptions struct {
 	WithHooks     bool
 }
 
-func RunDismiss(projectName, releaseName, namespace, _ string, storageLockManager storage.LockManager, opts DismissOptions) error {
-	if lock, err := storageLockManager.LockDeployProcess(projectName, releaseName, kube.Context); err != nil {
+func RunDismiss(projectName, release, namespace, _ string, storageLockManager storage.LockManager, opts DismissOptions) error {
+	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
 		return err
 	} else {
 		defer storageLockManager.Unlock(lock)
 	}
 
+	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
+		logboek.LogF("Kubernetes namespace: %s\n", namespace)
+		logboek.LogF("Helm release storage namespace: %s\n", helm.HelmReleaseStorageNamespace)
+		logboek.LogF("Helm release storage type: %s\n", helm.HelmReleaseStorageType)
+		logboek.LogF("Helm release name: %s\n", release)
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	logboek.Debug.LogF("Dismiss options: %#v\n", opts)
 	logboek.Debug.LogF("Namespace: %s\n", namespace)
-	return helm.PurgeHelmRelease(releaseName, namespace, opts.WithNamespace, opts.WithHooks)
+	return helm.PurgeHelmRelease(release, namespace, opts.WithNamespace, opts.WithHooks)
 }

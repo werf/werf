@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/flant/lockgate/pkg/file_lock"
 	"github.com/flant/logboek"
 
 	"github.com/flant/lockgate"
@@ -147,6 +148,8 @@ func Init(tmpDirOption, homeDirOption string) error {
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
 	serviceDir = filepath.Join(homeDir, "service")
+
+	file_lock.LegacyHashFunction = true
 
 	if locker, err := lockgate.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %s", err)

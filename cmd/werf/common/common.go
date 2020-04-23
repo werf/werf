@@ -856,6 +856,10 @@ func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesStorage, nil
 }
 
+func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
+	return *cmdData.StagesStorage
+}
+
 func GetImagesRepoWithOptionalStubRepoAddress(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
 	return getImagesRepo(projectName, cmdData, true)
 }

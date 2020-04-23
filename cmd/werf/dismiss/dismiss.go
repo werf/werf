@@ -5,8 +5,6 @@ import (
 
 	"github.com/flant/werf/pkg/storage"
 
-	"github.com/flant/werf/pkg/container_runtime"
-
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -156,42 +154,16 @@ func runDismiss() error {
 		return err
 	}
 
-	var storageLockManager storage.LockManager
-
-	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-
-		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
-		if err != nil {
-			return err
-		}
-		storageLockManager, err = common.GetStorageLockManager(synchronization)
-		if err != nil {
-			return err
-		}
-	} else {
-		synchronization, err := common.GetSynchronization(&commonCmdData, storage.LocalStorageAddress)
-		if err != nil {
-			return err
-		}
-		storageLockManager, err = common.GetStorageLockManager(synchronization)
-		if err != nil {
-			return err
-		}
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	if stagesStorageAddress == "" {
+		stagesStorageAddress = storage.LocalStorageAddress
 	}
-
-	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
-		logboek.LogF("Kubernetes namespace: %s\n", namespace)
-		logboek.LogF("Helm release storage namespace: %s\n", *commonCmdData.HelmReleaseStorageNamespace)
-		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
-		logboek.LogF("Helm release name: %s\n", release)
-
-		return nil
-	}); err != nil {
+	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorageAddress)
+	if err != nil {
+		return err
+	}
+	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	if err != nil {
 		return err
 	}
 
