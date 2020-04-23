@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/storage"
 
@@ -189,56 +188,23 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 }
 
 func initImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	projectName := utils.ProjectName()
-
-	i, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoAddress,
-		imageRepoMode,
-		storage.ImagesRepoOptions{
-			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
-				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
-			},
-		},
-	)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	imagesRepo = i
+	imagesRepo = utils.NewImagesRepo(imagesRepoAddress, imageRepoMode, implementationName, dockerRegistryOptions)
 }
 
 func initStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	s, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		&container_runtime.LocalDockerServerRuntime{},
-		storage.StagesStorageOptions{
-			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
-			},
-		},
-	)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stagesStorage = s
+	stagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
 func imagesRepoAllImageRepoTags(imageName string) []string {
-	tags, err := imagesRepo.GetAllImageRepoTags(imageName)
-	Ω(err).ShouldNot(HaveOccurred())
-	return tags
+	return utils.ImagesRepoAllImageRepoTags(imagesRepo, imageName)
 }
 
 func stagesStorageRepoImagesCount() int {
-	repoImages, err := stagesStorage.GetAllStages(utils.ProjectName())
-	Ω(err).ShouldNot(HaveOccurred())
-	return len(repoImages)
+	return utils.StagesStorageRepoImagesCount(stagesStorage)
 }
 
 func stagesStorageManagedImagesCount() int {
-	managedImages, err := stagesStorage.GetManagedImages(utils.ProjectName())
-	Ω(err).ShouldNot(HaveOccurred())
-	return len(managedImages)
+	return utils.StagesStorageManagedImagesCount(stagesStorage)
 }
 
 func implementationListToCheck() []string {
