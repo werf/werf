@@ -114,8 +114,14 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				var imagesRepoImplementationName string
 				var imagesRepoDockerRegistryOptions docker_registry.DockerRegistryOptions
 
-				if implementationName == ":local" {
-					stagesStorageAddress = ":local"
+				if implementationName == ":local" || implementationName == ":local_with_stages_storage_repo" {
+					if implementationName == ":local" {
+						stagesStorageAddress = ":local"
+					} else {
+						stagesStorageAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName(), "stages"}, "/")
+						stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
+						stubs.SetEnv("WERF_SYNCHRONIZATION", ":local")
+					}
 
 					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
 					imagesRepoMode = docker_registry.MultirepoRepoMode
@@ -272,16 +278,16 @@ environLoop:
 	if len(list) != 0 {
 		return list
 	} else {
-		return []string{":local"}
+		return []string{":local", ":local_with_stages_storage_repo"}
 	}
 }
 
 func implementationStagesStorageAddress(_ string) string {
-	return ":local" // TODO
+	return ":local"
 }
 
 func implementationStagesStorageDockerRegistryOptions(_ string) docker_registry.DockerRegistryOptions {
-	return docker_registry.DockerRegistryOptions{} // TODO
+	return docker_registry.DockerRegistryOptions{}
 }
 
 func implementationImagesRepoAddress(implementationName string) string {

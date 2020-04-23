@@ -1,6 +1,7 @@
 package cleanup_test
 
 import (
+	"fmt"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -61,6 +62,12 @@ var _ = forEachDockerRegistryImplementation("purging stages", func() {
 			})
 
 			Context("when there is running container based on werf image", func() {
+				BeforeEach(func() {
+					if stagesStorage.Address() != ":local" {
+						Skip(fmt.Sprintf("to test :local stages storage (%s)", stagesStorage.Address()))
+					}
+				})
+
 				BeforeEach(func() {
 					utils.RunSucceedCommand(
 						testDirPath,
