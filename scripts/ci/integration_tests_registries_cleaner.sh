@@ -14,7 +14,7 @@ ACR)
   ;;
 
 ECR)
-  aws ecr describe-repositories | jq '.repositories[].repositoryName' | tr -d '"' | xargs -r -n1 sh -c 'echo $0; aws ecr delete-repository --repository-name $0 || exit 255'
+  aws ecr describe-repositories | jq '.repositories[].repositoryName' | tr -d '"' | xargs -r -n1 sh -c 'echo $0; aws ecr delete-repository --repository-name $0 --force || exit 255'
   ;;
 
 DOCKERHUB)

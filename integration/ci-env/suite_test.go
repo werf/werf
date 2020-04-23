@@ -15,6 +15,7 @@ func TestIntegration(t *testing.T) {
 	RunSpecs(t, "CI-env Suite")
 }
 
+var testDirPath string
 var werfBinPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {

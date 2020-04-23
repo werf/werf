@@ -347,10 +347,11 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.I
 		}
 
 		parts := strings.SplitN(k, imagePkg.WerfMountCustomDirLabelPrefix, 2)
-		from := strings.Replace(parts[1], "--", "/", -1)
+		fromPath := strings.Replace(parts[1], "--", "/", -1)
+		fromFilepath := filepath.FromSlash(fromPath)
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
-		mountpointsByFrom[from] = mountpoints
+		mountpointsByFrom[fromFilepath] = mountpoints
 	}
 
 	return mountpointsByFrom
@@ -399,7 +400,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image container_runtime.ImageInterface) {
 	for from, mountpoints := range mountpointsByFrom {
-		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
+		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.Replace(filepath.ToSlash(from), "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
