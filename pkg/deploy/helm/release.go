@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -61,12 +59,6 @@ var (
 )
 
 func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
-	return withLockedHelmRelease(releaseName, func() error {
-		return doPurgeHelmRelease(releaseName, namespace, withNamespace, withHooks)
-	})
-}
-
-func doPurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
 	if err := logboek.Info.LogProcess("Checking release existence", logboek.LevelLogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
@@ -172,18 +164,7 @@ type ChartOptions struct {
 	ChartValuesOptions
 }
 
-func withLockedHelmRelease(releaseName string, f func() error) error {
-	lockName := fmt.Sprintf("helm_release.%s-kube_context.%s", releaseName, helmSettings.KubeContext)
-	return werf.WithHostLock(lockName, lockgate.AcquireOptions{}, f)
-}
-
-func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) error {
-	return withLockedHelmRelease(releaseName, func() error {
-		return doDeployHelmChart(chartPath, releaseName, namespace, opts)
-	})
-}
-
-func doDeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) (err error) {
+func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) (err error) {
 	var isReleaseExists bool
 
 	preDeployFunc := func() error {

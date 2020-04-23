@@ -190,7 +190,7 @@ func mergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 //readFile load a file from the local directory or a remote file with a url.
 func readFile(filePath, CertFile, KeyFile, CAFile string) ([]byte, error) {
 	u, _ := url.Parse(filePath)
-	p := getter.All(helmSettings)
+	p := getter.All(HelmSettings)
 
 	// FIXME: maybe someone handle other protocols like ftp.
 	getterConstructor, err := p.ByScheme(u.Scheme)

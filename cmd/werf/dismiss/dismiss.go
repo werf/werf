@@ -3,6 +3,10 @@ package dismiss
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/storage"
+
+	"github.com/flant/werf/pkg/container_runtime"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -60,6 +64,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
+
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd)
@@ -128,6 +135,8 @@ func runDismiss() error {
 	}
 	logboek.LogOptionalLn()
 
+	projectName := werfConfig.Meta.Project
+
 	err = kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
@@ -147,6 +156,34 @@ func runDismiss() error {
 		return err
 	}
 
+	var storageLockManager storage.LockManager
+
+	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+
+		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
+		if err != nil {
+			return err
+		}
+		storageLockManager, err = common.GetStorageLockManager(synchronization)
+		if err != nil {
+			return err
+		}
+	} else {
+		synchronization, err := common.GetSynchronization(&commonCmdData, storage.LocalStorageAddress)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err = common.GetStorageLockManager(synchronization)
+		if err != nil {
+			return err
+		}
+	}
+
 	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
 		logboek.LogF("Kubernetes namespace: %s\n", namespace)
 		logboek.LogF("Helm release storage namespace: %s\n", *commonCmdData.HelmReleaseStorageNamespace)
@@ -158,7 +195,7 @@ func runDismiss() error {
 		return err
 	}
 
-	return deploy.RunDismiss(release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
+	return deploy.RunDismiss(projectName, release, namespace, *commonCmdData.KubeContext, storageLockManager, deploy.DismissOptions{
 		WithNamespace: cmdData.WithNamespace,
 		WithHooks:     cmdData.WithHooks,
 	})

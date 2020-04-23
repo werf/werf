@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/flant/werf/pkg/image"
 
 	"github.com/flant/werf/pkg/stages_manager"
@@ -191,25 +193,26 @@ func runDeploy() error {
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
-	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		projectName := werfConfig.Meta.Project
+	var storageLockManager storage.LockManager
 
+	projectName := werfConfig.Meta.Project
+
+	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
 		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
 		if err != nil {
 			return err
 		}
-
 		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 		if err != nil {
 			return err
 		}
-		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+		storageLockManager, err = common.GetStorageLockManager(synchronization)
 		if err != nil {
 			return err
 		}
-		storageLockManager, err := common.GetStorageLockManager(synchronization)
+		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 		if err != nil {
 			return err
 		}
@@ -256,6 +259,15 @@ func runDeploy() error {
 		}); err != nil {
 			return err
 		}
+	} else {
+		synchronization, err := common.GetSynchronization(&commonCmdData, storage.LocalStorageAddress)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err = common.GetStorageLockManager(synchronization)
+		if err != nil {
+			return err
+		}
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
@@ -279,7 +291,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(projectName, projectDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

@@ -45,9 +45,10 @@ var (
 )
 
 var (
+	HelmSettings helm_env.EnvSettings
+
 	tillerReleaseServer          = &tiller.ReleaseServer{}
 	tillerSettings               = tiller_env.New()
-	helmSettings                 helm_env.EnvSettings
 	resourcesWaiter              *ResourcesWaiter
 	releaseLogMessages           []string
 	releaseLogSecretValuesToMask []string
@@ -112,13 +113,13 @@ func Init(options InitOptions) error {
 		return nil
 	}
 
-	helmSettings.KubeConfig = options.KubeConfig
-	helmSettings.KubeContext = options.KubeContext
-	helmSettings.TillerNamespace = options.HelmReleaseStorageNamespace
+	HelmSettings.KubeConfig = options.KubeConfig
+	HelmSettings.KubeContext = options.KubeContext
+	HelmSettings.TillerNamespace = options.HelmReleaseStorageNamespace
 
 	configFlags := genericclioptions.NewConfigFlags(true)
-	configFlags.Context = &helmSettings.KubeContext
-	configFlags.KubeConfig = &helmSettings.KubeConfig
+	configFlags.Context = &HelmSettings.KubeContext
+	configFlags.KubeConfig = &HelmSettings.KubeConfig
 	configFlags.Namespace = &options.HelmReleaseStorageNamespace
 
 	kubeClient := kube.New(configFlags)
