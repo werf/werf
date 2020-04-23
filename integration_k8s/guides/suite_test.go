@@ -3,7 +3,6 @@ package guides_test
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/prashantv/gostub"
@@ -13,7 +12,6 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"github.com/flant/werf/pkg/testing/utils"
-	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
 )
 
 func TestIntegration(t *testing.T) {
@@ -33,19 +31,15 @@ var tmpDir string
 var testDirPath string
 var werfBinPath string
 var stubs = gostub.New()
-var registry, registryContainerName string
-var registryProjectRepository string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
 	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
 	werfBinPath = string(computedPathToWerf)
-	registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
 var _ = SynchronizedAfterSuite(func() {
-	utilsDocker.ContainerStopAndRemove(registryContainerName)
 }, func() {
 	gexec.CleanupBuildArtifacts()
 })
@@ -56,7 +50,10 @@ var _ = BeforeEach(func() {
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 
-	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
+	imagesRepoAddress := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
+
+	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
+	stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
 })
 
 var _ = AfterEach(func() {
