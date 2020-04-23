@@ -71,5 +71,5 @@ func genericStagesAndImagesLockName(projectName string) string {
 }
 
 func genericDeployReleaseLockName(projectName string, releaseName string, kubeContextName string) string {
-	return fmt.Sprintf("project/%s-release/%s-kube_context/%s", projectName, releaseName, kubeContextName)
+	return fmt.Sprintf("project/%s;release/%s;kube_context/%s", projectName, releaseName, kubeContextName)
 }

@@ -292,6 +292,8 @@ github.com/flant/lockgate v0.0.0-20200421144738-26e2de457b66 h1:lKOQSfPSxScr3JeT
 github.com/flant/lockgate v0.0.0-20200421144738-26e2de457b66/go.mod h1:r51aBxbaufxAzjs4WiA0FihS6a/a8Z2T+6TkGj4z+aE=
 github.com/flant/lockgate v0.0.0-20200422080457-cdd4264f705b h1:4FmA9jgqcEEdUyaWxpeLdPRWC9OvFeHa/e+NwXWavVg=
 github.com/flant/lockgate v0.0.0-20200422080457-cdd4264f705b/go.mod h1:r51aBxbaufxAzjs4WiA0FihS6a/a8Z2T+6TkGj4z+aE=
+github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263 h1:uPA08xQJzABlcaDfxuxSN6VwY284AfgiOmr9/4hy+MY=
+github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263/go.mod h1:RBJF6PjUgAZADae/SC3skanE/vD9Jrnbs7F6hqLo7ik=
 github.com/flant/logboek v0.2.5/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.2.6-0.20190918091020-d00ba619a349/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=

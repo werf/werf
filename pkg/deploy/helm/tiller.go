@@ -45,7 +45,9 @@ var (
 )
 
 var (
-	HelmSettings helm_env.EnvSettings
+	HelmSettings                helm_env.EnvSettings
+	HelmReleaseStorageNamespace string
+	HelmReleaseStorageType      string
 
 	tillerReleaseServer          = &tiller.ReleaseServer{}
 	tillerSettings               = tiller_env.New()
@@ -116,6 +118,9 @@ func Init(options InitOptions) error {
 	HelmSettings.KubeConfig = options.KubeConfig
 	HelmSettings.KubeContext = options.KubeContext
 	HelmSettings.TillerNamespace = options.HelmReleaseStorageNamespace
+
+	HelmReleaseStorageNamespace = options.HelmReleaseStorageNamespace
+	HelmReleaseStorageType = options.HelmReleaseStorageType
 
 	configFlags := genericclioptions.NewConfigFlags(true)
 	configFlags.Context = &HelmSettings.KubeContext

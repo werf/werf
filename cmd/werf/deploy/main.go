@@ -260,7 +260,11 @@ func runDeploy() error {
 			return err
 		}
 	} else {
-		synchronization, err := common.GetSynchronization(&commonCmdData, storage.LocalStorageAddress)
+		stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+		if stagesStorageAddress == "" {
+			stagesStorageAddress = storage.LocalStorageAddress
+		}
+		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorageAddress)
 		if err != nil {
 			return err
 		}

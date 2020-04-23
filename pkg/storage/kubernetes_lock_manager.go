@@ -125,5 +125,5 @@ func kuberntesStagesAndImagesLockName(_ string) string {
 }
 
 func kubernetesDeployReleaseLockName(_ string, releaseName string, kubeContextName string) string {
-	return fmt.Sprintf("release/%s-kube_context/%s", releaseName, kubeContextName)
+	return fmt.Sprintf("release/%s;kube-context/%s", releaseName, kubeContextName)
 }
