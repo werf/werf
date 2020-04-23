@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/werf/pkg/storage"
+
 	"github.com/ghodss/yaml"
 
 	"k8s.io/helm/pkg/chartutil"
@@ -35,7 +37,13 @@ type DeployOptions struct {
 	ThreeWayMergeMode    helm.ThreeWayMergeModeType
 }
 
-func Deploy(projectDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(projectName, projectDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, storageLockManager storage.LockManager, opts DeployOptions) error {
+	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
+		return err
+	} else {
+		defer storageLockManager.Unlock(lock)
+	}
+
 	var werfChart *werf_chart.WerfChart
 
 	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {

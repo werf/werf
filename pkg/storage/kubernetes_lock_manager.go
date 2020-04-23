@@ -87,6 +87,15 @@ func (manager *KuberntesLockManager) LockStagesAndImages(projectName string, opt
 	}
 }
 
+func (manager *KuberntesLockManager) LockDeployProcess(projectName string, releaseName string, kubeContextName string) (LockHandle, error) {
+	if locker, err := manager.getLockerForProject(projectName); err != nil {
+		return LockHandle{}, err
+	} else {
+		_, lock, err := locker.Acquire(kubernetesDeployReleaseLockName(projectName, releaseName, kubeContextName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
+	}
+}
+
 func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
 	if locker, err := manager.getLockerForProject(lock.ProjectName); err != nil {
 		return err
@@ -100,17 +109,21 @@ func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
 }
 
 func kubernetesStageLockName(_, signature string) string {
-	return fmt.Sprintf("%s", signature)
+	return fmt.Sprintf("stage/%s", signature)
 }
 
 func kubernetesStageCacheLockName(_, signature string) string {
-	return fmt.Sprintf("%s.cache", signature)
+	return fmt.Sprintf("stage-cache/%s", signature)
 }
 
 func kuberntesImageLockName(_, imageName string) string {
-	return fmt.Sprintf("%s.image", imageName)
+	return fmt.Sprintf("image/%s", imageName)
 }
 
 func kuberntesStagesAndImagesLockName(_ string) string {
 	return fmt.Sprintf("stages_and_images")
+}
+
+func kubernetesDeployReleaseLockName(_ string, releaseName string, kubeContextName string) string {
+	return fmt.Sprintf("release/%s-kube_context/%s", releaseName, kubeContextName)
 }
