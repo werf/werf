@@ -24,9 +24,6 @@ author: Artem Kladov <artem.kladov@flant.com>
 * GitLab со встроенным Docker registry.
 * Узел, на котором установлен werf (узел сборки и деплоя).
 
-Обратите внимание, что процесс сборки и процесс деплоя выполняются на одном и том же узле — пока это единственно верный путь, т.к. распределённая сборка еще не поддерживается ([issue](https://github.com/flant/werf/issues/1614)).
-Таким образом, в настоящий момент поддерживается только локальное хранилище стадий — `--stages-storage :local`.
-
 Организовать работу werf внутри Docker-контейнера можно, но мы не поддерживаем данный способ.
 Найти информацию по этому вопросу и обсудить можно в [issue](https://github.com/flant/werf/issues/1926).
 В данном примере и в целом мы рекомендуем использовать _shell executor_.
@@ -106,7 +103,7 @@ Build:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
-    - werf build-and-publish --stages-storage :local
+    - werf build-and-publish
   tags:
     - werf
   except:
@@ -143,8 +140,7 @@ Build:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     ## Следующая команда непосредственно выполняет деплой
-    - werf deploy --stages-storage :local
-        --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## Обратите внимание, что стадия деплоя обязательно зависит от стадии сборки. В случае ошибки на стадии сборки деплой не будет выполняться.
   dependencies:
     - Build
@@ -280,7 +276,7 @@ Cleanup:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
-    - werf cleanup --stages-storage :local
+    - werf cleanup
   only:
     - schedules
   tags:
@@ -307,7 +303,7 @@ Build:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
-    - werf build-and-publish --stages-storage :local
+    - werf build-and-publish
   tags:
     - werf
   except:
@@ -318,8 +314,7 @@ Build:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
-    - werf deploy --stages-storage :local
-        --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build
   tags:
@@ -382,7 +377,7 @@ Cleanup:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
-    - werf cleanup --stages-storage :local
+    - werf cleanup
   only:
     - schedules
   tags:

@@ -122,7 +122,7 @@ Werf использует так называемую _сигнатуру ста
 
 ```shell
 source $(werf ci-env gitlab --verbose --as-file)
-werf build-and-publish --stages-storage :local
+werf build-and-publish
 ```
 
 Использование такой конструкции также выводит экспортируемые значения в терминал.
@@ -232,6 +232,10 @@ export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 #### DOCKER_CONFIG
 
 Путь к новому временному файлу конфигурации Docker сгенерированный командой [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html).
+
+#### WERF_STAGES_STORAGE
+
+Согласно процедуре [интеграции с Docker registry](#интеграция-с-docker-registry), команда [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) определяет Docker registry и устанавливает параметр `--stages-storage`, используя переменную окружения `WERF_STAGES_STORAGE`.
 
 #### WERF_IMAGES_REPO
 
