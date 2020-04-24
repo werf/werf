@@ -25,13 +25,9 @@ To begin, you'll need the following:
 * GitLab with enabled Docker registry
 * werf node (node for build and for deploy)
 
-Pay attention, that both the build process and the deployment process run on the same node — this is the only right way to use local stages storage specified with `--stages-storage :local` (distributed stages storage not supported yet, will be added soon).
-
 We don't recommend to run werf in docker as it can give an unexpected result.
 
 In order to set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with `shell` executor is needed to run `werf`.
-
-werf use `~/.werf/` folder to store build cache and other files. werf assumes this folder is preserved for all pipelines. That is why for build processes we don't recommend you to use environments which are don't preserve a GitLab runner's state (files between runs), e.g. some cloud environments.
 
 The deployment process needs access to the cluster through the kubectl, and therefore you need to setup kubectl on a werf node. werf will use default kubectl context for deploy unless you specify otherwise (e.g. with the `--kube-context` option or `$WERF_KUBE_CONTEXT` environment variable).
 
@@ -108,7 +104,7 @@ Build:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
-    - werf build-and-publish --stages-storage :local
+    - werf build-and-publish
   tags:
     - werf
   except:
@@ -142,8 +138,7 @@ Add the following lines to `.gitlab-ci.yml` file:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     ## Next command makes deploy and will be discussed further
-    - werf deploy --stages-storage :local
-        --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
@@ -275,7 +270,7 @@ Cleanup:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
-    - werf cleanup --stages-storage :local
+    - werf cleanup
   only:
     - schedules
   tags:
@@ -303,7 +298,7 @@ Build:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
-    - werf build-and-publish --stages-storage :local
+    - werf build-and-publish
   tags:
     - werf
   except:
@@ -315,8 +310,7 @@ Build:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     ## Next command makes deploy and will be discussed further
-    - werf deploy --stages-storage :local
-        --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
@@ -381,7 +375,7 @@ Cleanup:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
-    - werf cleanup --stages-storage :local
+    - werf cleanup
   only:
     - schedules
   tags:
