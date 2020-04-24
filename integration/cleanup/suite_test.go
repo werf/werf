@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/storage"
 
@@ -114,8 +113,14 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				var imagesRepoImplementationName string
 				var imagesRepoDockerRegistryOptions docker_registry.DockerRegistryOptions
 
-				if implementationName == ":local" {
-					stagesStorageAddress = ":local"
+				if implementationName == ":local" || implementationName == ":local_with_stages_storage_repo" {
+					if implementationName == ":local" {
+						stagesStorageAddress = ":local"
+					} else {
+						stagesStorageAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName(), "stages"}, "/")
+						stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
+						stubs.SetEnv("WERF_SYNCHRONIZATION", ":local")
+					}
 
 					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
 					imagesRepoMode = docker_registry.MultirepoRepoMode
@@ -183,56 +188,23 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 }
 
 func initImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	projectName := utils.ProjectName()
-
-	i, err := storage.NewImagesRepo(
-		projectName,
-		imagesRepoAddress,
-		imageRepoMode,
-		storage.ImagesRepoOptions{
-			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
-				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
-			},
-		},
-	)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	imagesRepo = i
+	imagesRepo = utils.NewImagesRepo(imagesRepoAddress, imageRepoMode, implementationName, dockerRegistryOptions)
 }
 
 func initStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	s, err := storage.NewStagesStorage(
-		stagesStorageAddress,
-		&container_runtime.LocalDockerServerRuntime{},
-		storage.StagesStorageOptions{
-			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
-			},
-		},
-	)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stagesStorage = s
+	stagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
 func imagesRepoAllImageRepoTags(imageName string) []string {
-	tags, err := imagesRepo.GetAllImageRepoTags(imageName)
-	Ω(err).ShouldNot(HaveOccurred())
-	return tags
+	return utils.ImagesRepoAllImageRepoTags(imagesRepo, imageName)
 }
 
 func stagesStorageRepoImagesCount() int {
-	repoImages, err := stagesStorage.GetAllStages(utils.ProjectName())
-	Ω(err).ShouldNot(HaveOccurred())
-	return len(repoImages)
+	return utils.StagesStorageRepoImagesCount(stagesStorage)
 }
 
 func stagesStorageManagedImagesCount() int {
-	managedImages, err := stagesStorage.GetManagedImages(utils.ProjectName())
-	Ω(err).ShouldNot(HaveOccurred())
-	return len(managedImages)
+	return utils.StagesStorageManagedImagesCount(stagesStorage)
 }
 
 func implementationListToCheck() []string {
@@ -272,16 +244,16 @@ environLoop:
 	if len(list) != 0 {
 		return list
 	} else {
-		return []string{":local"}
+		return []string{":local", ":local_with_stages_storage_repo"}
 	}
 }
 
 func implementationStagesStorageAddress(_ string) string {
-	return ":local" // TODO
+	return ":local"
 }
 
 func implementationStagesStorageDockerRegistryOptions(_ string) docker_registry.DockerRegistryOptions {
-	return docker_registry.DockerRegistryOptions{} // TODO
+	return docker_registry.DockerRegistryOptions{}
 }
 
 func implementationImagesRepoAddress(implementationName string) string {
