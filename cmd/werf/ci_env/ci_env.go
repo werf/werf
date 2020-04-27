@@ -147,6 +147,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	ciJobToken := os.Getenv("CI_JOB_TOKEN")
 
 	var imagesUsername, imagesPassword string
+	var stagesStorageRepoImplementation string
 	var imagesRepoImplementation string
 	var doLogin bool
 	if ciRegistryImage != "" && ciJobToken != "" {
@@ -155,6 +156,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 		doLogin = true
 
 		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
 	}
 
 	if doLogin {
@@ -169,10 +171,15 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 
 	writeHeader(w, "STAGES_STORAGE", true)
 	writeExportCommand(w, "WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
+	if stagesStorageRepoImplementation != "" {
+		writeExportCommand(w, "WERF_STAGES_STORAGE_REPO_IMPLEMENTATION", stagesStorageRepoImplementation, false)
+	}
 
 	writeHeader(w, "IMAGES REPO", true)
 	writeExportCommand(w, "WERF_IMAGES_REPO", ciRegistryImage, false)
-	writeExportCommand(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
+	if imagesRepoImplementation != "" {
+		writeExportCommand(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
+	}
 
 	writeHeader(w, "TAGGING", true)
 	switch taggingStrategy {
