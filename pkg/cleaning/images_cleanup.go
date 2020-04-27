@@ -122,36 +122,42 @@ func (m *imagesCleanupManager) run() error {
 			return err
 		}
 
-		repoImages := m.getImagesRepoImages()
+		repoImagesToCleanup := m.getImagesRepoImages()
+		resultRepoImages := map[string][]*image.Info{}
 
 		var err error
 		if m.LocalGit != nil {
 			if !m.WithoutKube {
 				if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
-					repoImages, err = exceptRepoImagesByWhitelist(repoImages, m.KubernetesContextsClients)
+					repoImagesToCleanup, resultRepoImages, err = exceptRepoImagesByWhitelist(repoImagesToCleanup, m.KubernetesContextsClients)
 					return err
 				}); err != nil {
 					return err
 				}
 			}
 
-			for imageName, repoImageList := range repoImages {
+			for imageName, repoImageListToCleanup := range repoImagesToCleanup {
 				logProcessMessage := fmt.Sprintf("Processing image %s", logging.ImageLogName(imageName, false))
 				if err := logboek.Default.LogProcess(
 					logProcessMessage,
 					logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
 					func() error {
-						repoImageList, err = m.repoImagesCleanupByNonexistentGitPrimitive(repoImageList)
+						repoImageListToCleanup, err = m.repoImagesCleanupByNonexistentGitPrimitive(repoImageListToCleanup)
 						if err != nil {
 							return err
 						}
 
-						repoImageList, err = m.repoImagesCleanupByPolicies(repoImageList)
+						resultRepoImageList, err := m.repoImagesCleanupByPolicies(repoImageListToCleanup)
 						if err != nil {
 							return err
 						}
 
-						repoImages[imageName] = repoImageList
+						_, ok := resultRepoImages[imageName]
+						if !ok {
+							resultRepoImages[imageName] = resultRepoImageList
+						} else {
+							resultRepoImages[imageName] = append(resultRepoImages[imageName], resultRepoImageList...)
+						}
 
 						return nil
 					},
@@ -161,13 +167,13 @@ func (m *imagesCleanupManager) run() error {
 			}
 		}
 
-		m.setImagesRepoImages(repoImages)
+		m.setImagesRepoImages(resultRepoImages)
 
 		return nil
 	})
 }
 
-func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, error) {
+func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, map[string][]*image.Info, error) {
 	var deployedDockerImagesNames []string
 	for contextName, kubernetesClient := range kubernetesContextsClients {
 		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
@@ -180,19 +186,28 @@ func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]*image.Info,
 
 			return nil
 		}); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	for imageName, repoImages := range repoImagesByImageName {
+	exceptedRepoImages := map[string][]*image.Info{}
+	for imageName, repoImageList := range repoImages {
 		var newRepoImages []*image.Info
 
 	Loop:
-		for _, repoImage := range repoImages {
-			imageName := fmt.Sprintf("%s:%s", repoImage.Repository, repoImage.Tag)
+		for _, repoImage := range repoImageList {
+			dockerImageName := fmt.Sprintf("%s:%s", repoImage.Repository, repoImage.Tag)
 			for _, deployedDockerImageName := range deployedDockerImagesNames {
-				if deployedDockerImageName == imageName {
-					logboek.Default.LogLnDetails(imageName)
+				if deployedDockerImageName == dockerImageName {
+					exceptedImageList, ok := exceptedRepoImages[imageName]
+					if !ok {
+						exceptedImageList = []*image.Info{}
+					}
+
+					exceptedImageList = append(exceptedImageList, repoImage)
+					exceptedRepoImages[imageName] = exceptedImageList
+
+					logboek.Default.LogLnDetails(dockerImageName)
 					continue Loop
 				}
 			}
@@ -200,10 +215,10 @@ func exceptRepoImagesByWhitelist(repoImagesByImageName map[string][]*image.Info,
 			newRepoImages = append(newRepoImages, repoImage)
 		}
 
-		repoImagesByImageName[imageName] = newRepoImages
+		repoImages[imageName] = newRepoImages
 	}
 
-	return repoImagesByImageName, nil
+	return repoImages, exceptedRepoImages, nil
 }
 
 func (m *imagesCleanupManager) repoImagesCleanupByNonexistentGitPrimitive(repoImages []*image.Info) ([]*image.Info, error) {

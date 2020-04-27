@@ -85,3 +85,7 @@ var _ = AfterEach(func() {
 func imagesRepoAllImageRepoTags(imageName string) []string {
 	return utils.ImagesRepoAllImageRepoTags(imagesRepo, imageName)
 }
+
+func stagesStorageRepoImagesCount() int {
+	return utils.StagesStorageRepoImagesCount(stagesStorage)
+}
