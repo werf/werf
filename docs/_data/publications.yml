@@ -3,6 +3,13 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Content-based tagging in the werf builder"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/content-based-tagging-in-werf-eb96d22ac509"
+    img: "/images/publications/en_170420.png"
+    created: 2020-04-17
+    comment: |
+      <p>werf is our Open Source GitOps tool to build your applications and deploy them to Kubernetes. The<a href="https://medium.com/flant-com/werf-1-1-release-notes-and-future-plans-df49f6b229c1" target="_blank" rel="noopener nofollow"> v1.1</a> release introduced a new feature in the image builder: the <em>content-based tagging</em>. Until now, the typical tagging strategy in werf involved tagging Docker images by a Git tag, Git branch, or Git commit. However, all these strategies have drawbacks that are fully resolved by implementing the new tagging strategy. In this article, we discuss its advantages.</p>
   - title: "werf 1.1: Release notes and future plans"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/werf-1-1-release-notes-and-future-plans-df49f6b229c1"
@@ -83,6 +90,21 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Полная поддержка популярных реализаций Docker Registry в werf"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/496992/"
+    img: "/images/publications/ru_160420.png"
+    created: 2020-04-16
+    comment: |
+      <p>Все популярные реализации реестров для образов контейнеров поддерживают <a href="https://docs.docker.com/registry/spec/api/">Docker Registry HTTP API</a> и позволяют использовать одни и те же инструменты для работы с ними. Тем не менее, часть реализаций имеет свои особенности и ограничения, а значит — если вам нужно их поддерживать в своем инструментарии для CI/CD, — с этой спецификой необходимо считаться. Так у нас и случилось в процессе работы над GitOps-утилитой
+      <a href="https://werf.io/">werf</a>, когда мы захотели улучшить в ней то, как обеспечивается жизненный цикл образов.</p>
+  - title: "Content-based tagging в сборщике werf: зачем и как это работает?"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/495112/"
+    img: "/images/publications/ru_030420.png"
+    created: 2020-04-03
+    comment: |
+      <p>werf — наша GitOps CLI-утилита с открытым кодом для сборки и доставки приложений в Kubernetes. В <a href="https://habr.com/ru/company/flant/blog/493170/" target="_blank" rel="noopener">релизе v1.1</a> была представлена новая возможность в сборщике образов: тегирование образов по содержимому или <i>content-based tagging</i>. До сих пор типичная схема тегирования в werf предполагала тегирование Docker-образов по Git-тегу, Git-ветке или Git-коммиту. Но у всех этих схем есть недостатки, которые полностью решаются новой стратегией тегирования. Узнайте подробности о ней и чем она так хороша.</p>
   - title: "Релиз werf 1.1: улучшения в сборщике сегодня и планы на будущее"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/493170/"
