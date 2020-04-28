@@ -77,7 +77,7 @@ var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 						)
 
 						count := stagesStorageRepoImagesCount()
-						Ω(count).Should(Equal(count))
+						Ω(count).Should(Equal(4))
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -139,7 +139,7 @@ var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 					)
 
 					countAfterFirstBuild := stagesStorageRepoImagesCount()
-					Ω(countAfterFirstBuild).Should(Equal(countAfterFirstBuild))
+					Ω(countAfterFirstBuild).Should(Equal(4))
 
 					stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
 
