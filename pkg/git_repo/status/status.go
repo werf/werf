@@ -1,6 +1,7 @@
 package status
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -57,7 +58,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 	}
 
 	var worktreeStatusPaths []string
-	for fileStatusPath, _ := range worktreeStatus {
+	for fileStatusPath := range worktreeStatus {
 		worktreeStatusPaths = append(worktreeStatusPaths, fileStatusPath)
 	}
 
@@ -118,7 +119,8 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 					result.submoduleResults = append(result.submoduleResults, submoduleResult)
 					continue
 				}
-				return nil, err
+
+				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
 			}
 
 			submoduleStatus, err := submodule.Status()
