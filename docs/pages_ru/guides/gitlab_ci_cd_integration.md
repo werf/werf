@@ -7,7 +7,9 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Обзор задачи
 
-В статье рассматривается пример настройки CI/CD с использованием GitLab CI и werf.
+В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI и werf.
+
+Окончательные версии конфигураций .gitlab-ci.yml для различных workflow доступны [в конце статьи](#полный-gitlab-ciyml-для-различных-стратегий). 
 
 ## Требования
 
@@ -22,23 +24,19 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 * Кластер Kubernetes.
 * GitLab со встроенным Docker registry.
-* Узел, на котором установлен werf (узел сборки и деплоя).
+* Узел или группа узлов, с предустановленным werf и зависимостями.
 
 Организовать работу werf внутри Docker-контейнера можно, но мы не поддерживаем данный способ.
 Найти информацию по этому вопросу и обсудить можно в [issue](https://github.com/flant/werf/issues/1926).
 В данном примере и в целом мы рекомендуем использовать _shell executor_.
 
-Для хранения кэша сборки и служебных файлов werf использует папку `~/.werf`. Папка должна сохраняться и быть доступной на всех этапах pipeline. Это ещё одна из причин по которой мы рекомендуем отдавать предпочтение _shell executor_ вместо эфемерных окружений.
-
 Процесс деплоя требует наличия доступа к кластеру через `kubectl`, поэтому необходимо установить и настроить `kubectl` на узле, с которого будет запускаться werf.
-Если не указывать конкретный контекст опцией `--kube-context` или переменной окружения `$WERF_KUBE_CONTEXT`, то werf будет использовать контекст `kubectl` по умолчанию.  
+Если не указывать конкретный контекст опцией `--kube-context` или переменной окружения `WERF_KUBE_CONTEXT`, то werf будет использовать контекст `kubectl` по умолчанию.  
 
-В конечном счете werf требует наличия доступа:
+В конечном счете werf требует наличия доступа на используемых узлах:
 - к Git-репозиторию кода приложения;
 - к Docker registry;
 - к кластеру Kubernetes.
-
-Также необходимо присвоить тег `werf` соответствующему GitLab-runner'у.
 
 ### Настройка runner
 
@@ -75,169 +73,334 @@ author: Artem Kladov <artem.kladov@flant.com>
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
    ```
 
-После того как GitLab-runner настроен можно переходить к настройке pipeline.
+После того, как GitLab-runner настроен, можно переходить к настройке pipeline.
 
 ## Pipeline
 
-Создадим файл `.gitlab-ci.yml` в корне проекта и добавим следующие строки:
-
-```yaml
-stages:
-  - build
-  - deploy
-  - cleanup
-```
-
-Мы определили следующие стадии:
-* `build` — стадия сборки образов приложения;
-* `deploy` — стадия деплоя приложения для одного из контуров кластера (например, stage, test, review, production или любой другой);
+В статье будет рассмотрен pipeline состоящий из следующего набора стадий:
+* `build-and-publish` — стадия сборки и публикации образов приложения;
+* `deploy` — стадия деплоя приложения для одного из контуров кластера;
+* `dismiss` — стадия удаления приложения для review окружения;
 * `cleanup` — стадия очистки хранилища стадий и Docker registry.
 
-### Сборка приложения
-
-Добавим следующие строки в файл `.gitlab-ci.yml`:
+### Сборка и публикация образов приложения
 
 ```yaml
-Build:
-  stage: build
+Build and Publish:
+  stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf build-and-publish
-  tags:
-    - werf
-  except:
-    - schedules
+  except: [schedules]
+  tags: [werf]
 ```
 
-Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
-Так как при очистке не требуется выполнять сборку образов, то указываем `except: schedules`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
+> Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
+> Так как при очистке не требуется выполнять сборку образов, то указываем `except: [schedules]`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
 
-Для авторизации в Docker registry (при выполнении push/pull образов) werf использует переменную окружения GitLab `CI_JOB_TOKEN` (подробнее про модель разграничения доступа при выполнении заданий в GitLab можно прочитать [здесь](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)).
-Это не единственный, но самый рекомендуемый вариант в случае работы с GitLab (подробно про авторизацию werf в Docker registry можно прочесть [здесь]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker)).
-В простейшем случае, если вы используете встроенный в GitLab Docker registry, вам не нужно делать никаких дополнительных действий для авторизации.
+Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в Docker registry, вызова `docker login`. 
 
-Если вам нужно чтобы werf не использовал переменную `CI_JOB_TOKEN` либо вы используете невстроенный в GitLab Docker registry (например, `Google Container Registry`), то можно ознакомиться с вариантами авторизации [здесь]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker).
+В простейшем случае, при использовании встроенного Docker registry, авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitLab `CI_JOB_TOKEN` (подробнее про модель разграничения доступа при выполнении заданий в GitLab можно прочитать [здесь](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)) и `CI_REGISTRY_IMAGE`.
+
+При вызове `werf ci-env` создаётся временный docker config, который используется всеми командами в shell-сессии (в том числе docker). Таким образов, параллельные задания никак не пересекаются при использовании docker и временный токен в конфигурации не перетирается. 
+
+Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker)).   
+
+> Для удаления образов из встроенного в GitLab Docker registry требуется `Personal Access Token`. Подробнее далее в разделе посвящённом [очистке](#очистка-образов)
 
 ### Выкат приложения
 
 Набор контуров (а равно — окружений GitLab) в кластере Kubernetes для деплоя приложения зависит от ваших потребностей, но наиболее используемые контуры следующие:
-* Контур review. Динамический (временный) контур, используемый разработчиками в процессе работы над приложением для оценки работоспособности написанного кода, первичной оценки работоспособности приложения и т.п. Данный контур удаляется (а соответствующее окружение GitLab останавливается) после удаления ветки в репозитории либо вручную.
-* Контур test. Тестовый контур, используемый разработчиками после завершения работы над какой-либо задачей для демонстрации результата, более полного тестирования приложения с тестовым набором данных и т.п. В тестовый контур можно вручную деплоить приложения из любой ветки и любой тег.
-* Контур stage. Данный контур может использоваться для проведения финального тестирования приложения. Деплой в контур stage производится автоматически после принятия merge-request в ветку master, но это необязательно и вы можете настроить собственную логику.
-* Контур production. Финальный контур в pipeline, предназначенный для деплоя готовой к продуктивной эксплуатации версии приложения. Мы подразумеваем, что на данный контур деплоятся только приложения из тегов и только вручную.
+* Контур production. Финальный контур в pipeline, предназначенный для эксплуатации версии приложения, доставки конечному пользователю.
+* Контур staging. Контур, который может использоваться для проведения финального тестирования приложения в приближенной к production среде. 
+* Контур review. Динамический (временный) контур, используемый разработчиками при разработке для оценки работоспособности написанного кода, первичной оценки работоспособности приложения и т.п.
 
-Описанный набор контуров и их функционал — это не правила и вы можете описывать CI/CD процессы под свои нужны.
+> Описанный набор и их функции — это не истина в последней инстанции и вы можете описывать CI/CD процессы под ваши нужны с произвольным количеством контуров со своей логикой. 
+> Далее будут представлены популярные стратегии и практики, на базе которых мы предлагаем выстраивать ваши процессы в GitLab CI 
 
-Прежде всего необходимо описать шаблон, который мы будем использовать во всех заданиях деплоя, что позволит уменьшить размер файла `.gitlab-ci.yml` и улучшит его читаемость.
-
-Добавим следующие строки в файл `.gitlab-ci.yml`:
+Прежде всего необходимо описать шаблон, общую часть для деплоя в любой контур, что позволит уменьшить размер файла `.gitlab-ci.yml`, улучшит его читаемость, а также позволит далее сосредоточиться на workflow.
 
 ```yaml
 .base_deploy: &base_deploy
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
-    ## Следующая команда непосредственно выполняет деплой
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  ## Обратите внимание, что стадия деплоя обязательно зависит от стадии сборки. В случае ошибки на стадии сборки деплой не будет выполняться.
   dependencies:
-    - Build
-  tags:
-    - werf
+    - Build and Publish
+  except: [schedules]
+  tags: [werf]
 ```
 
-Обратите внимание на команду `werf deploy`.
-Эта команда — основной шаг в процессе деплоя. В параметре `global.ci_url` передается URL для доступа к разворачиваемому в контуре приложению.
-Вы можете использовать эти данные в ваших helm-шаблонах, например, для конфигурации Ingress-ресурсов.
+При использовании шаблона `base_deploy` для каждого контура будет определяться своё окружение GitLab:                
 
-Для того чтобы деплоить приложение в разные контуры кластера в helm-шаблонах можно использовать переменную `.Values.global.env`, обращаясь к ней внутри Go-шаблона (Go template).
-Во время деплоя werf устанавливает переменную `global.env` в соответствии с именем окружения GitLab.
+```yaml
+environment:
+  name: <environment name>
+  url: <url>
+  ...
+```
 
-#### Контур review
+При выполнении задания, `werf ci-env` устанавливает переменную `global.env` в соответствии с именем окружения GitLab (`CI_ENVIRONMENT_SLUG`).
 
-Как было сказано выше, контур review — динамический контур (временный контур, контур разработчика) для оценки работоспособности написанного кода, первичной оценки работоспособности приложения и т.п.
+Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.global.env`.
 
-Добавим следующие строки в файл `.gitlab-ci.yml`:
+Также в шаблоне используется адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `global.ci_url`. 
+Это значение может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов.
+
+#### Варианты организации review окружения
+
+Как уже было сказано ранее, review окружение это временный контур, поэтому помимо выката у этого окружения также должна быть и очистка.
+
+Рассмотрим базовые конфигурации `Review` и `Stop Review` заданий, которые лягут в основу предложенных стратегий.
 
 ```yaml
 Review:
   <<: *base_deploy
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
-    ## Измените суффикс доменного имени (здесь — `kube.DOMAIN`) при необходимости
     url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
-    on_stop: Stop review
-  only:
-    - branches
-  except:
-    - master
-    - schedules
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  only: [merge_requests]
 
-Stop review:
-  stage: deploy
+Stop Review: 
+  stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
-  tags:
-    - werf
-  only:
-    - branches
-  except:
-    - master
-    - schedules
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
   when: manual
+  tags: [werf]
 ```
 
-В примере выше определены два задания:
+В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается имя используемой git-ветки. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
 
-1. Review.
-    В данном задании устанавливается переменная `name` со значением, использующим переменную окружения GitLab `CI_COMMIT_REF_SLUG`.
-    GitLab формирует уникальное значение в переменной окружения `CI_COMMIT_REF_SLUG` для каждой ветки.
+Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз, и, соответственно, namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
 
-    Переменная `url` может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов.
-2. Stop review.
-    В данном задании werf удаляет helm-релиз, и, соответственно, namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Это задание может быть запущено вручную после деплоя на review-контур, а также оно может быть запущено GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
+Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace](https://werf.io/documentation/configuration/deploy_into_kubernetes.html). Так как при удалении ветки нет возможности использовать исходники из git, в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`). 
 
-Задание `Review` не должно запускаться при изменениях в ветке master, т.к. это контур review — контур только для разработчиков.
+Таким образом, по умолчанию закладываем следующие варианты удаления review окружения:
+* вручную;
+* автоматически при отсутствии активности MR в течение суток и при удалении ветки.
 
-#### Контур test
+Далее разберём основные стратегии при организации выката review окружения. 
 
-Мы не приводим описание заданий деплоя на контур test в настоящем примере, т.к. задания деплоя на контур test очень похожи на задания деплоя на контур stage.
-Попробуйте описать задания деплоя на контур test по аналогии самостоятельно и надеемся вы получите удовольствие.
+> Мы не ограничиваем вас предложенными вариантами, даже напротив — рекомендуем комбинировать предложенные варианты, создавать стратегию под нужды вашей команды
 
-#### Контур stage
+##### №1 Вручную 
 
-Как описывалось выше на контур stage можно деплоить только приложение из ветки master и это допустимо делать автоматически.
+При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
-Добавим следующие строки в файл `.gitlab-ci.yml`:
+Он самый простой и может быть удобен в случае, когда review окружение не используется в разработке, выкаты происходят редко.
+По сути для проверки перед принятием MR. 
 
 ```yaml
-Deploy to Stage:
+Review:
   <<: *base_deploy
   environment:
-    name: stage
+    name: review/${CI_COMMIT_REF_SLUG}
     url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
-  only:
-    - master
-  except:
-    - schedules
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  only: [merge_requests]
+  when: manual
+
+Stop Review: 
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
 ```
 
-Эта часть конфигурации использует общий шаблон и устанавливает переменные окружения, свойственные данному контуру — `name` и `url`.
+##### №2 Автоматически по имени ветки
 
-#### Контур production
-
-Контур production — последний среди рассматриваемых и самый важный, так как он предназначен для конечного пользователя. Обычно в это окружения выкатываются теги и только вручную.
-
-Добавим следующие строки в файл `.gitlab-ci.yml`:
+В предложенном ниже варианте автоматический релиз выполняется для каждого комита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
 ```yaml
+Review:
+  <<: *base_deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  rules:
+    - if: $CI_MERGE_REQUEST_ID && $CI_COMMIT_REF_NAME =~ /^review-/
+
+Stop Review: 
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
+```
+
+##### №3 Полуавтоматический режим с лейблом (рекомендованный)
+
+Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
+
+При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого комита. 
+При снятии лейбла происходит остановка окружения GitLab, удаление review-релиза.    
+
+```yaml
+Review:
+  stage: deploy
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - >
+      if [ -z "$PRIVATE_TOKEN" ]; then
+        echo "\$PRIVATE_TOKEN is not defined" >&2
+        exit 1
+      fi
+
+      if curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID} | jq .labels[] | grep -q '^"review"$'; then
+        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+      else
+        if werf helm get $(werf helm get-release) 2>/dev/null; then
+          werf dismiss --with-namespace
+        fi
+      fi
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  dependencies:
+    - Build and Publish
+  only: [merge_requests]
+  tags: [werf]
+
+Stop Review:
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
+```
+
+Для проверки наличия лейбла у MR используется GitLab API. 
+Так как токена `CI_JOB_TOKEN` не достаточно для работы с private репозиториями, необходимо сгенерировать специальный токен `PRIVATE_TOKEN`
+
+#### Варианты организации staging и production окружений
+
+##### №1 Fast and Furious или True CI/CD (рекомендованный)
+
+Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
+
+```yaml
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [merge_requests]
+  when: manual
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [master]
+```
+
+Варианты отката изменений в production:
+- [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
+- выкат стабильного MR или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback).
+
+##### №2 Push the Button
+
+Выкат **production** осуществляется по кнопке у комита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
+
+```yaml
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [master]
+  when: manual  
+```
+
+Варианты отката изменений в production:
+- по кнопке у стабильного комита или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) (**рекомендованный**);
+- выкат стабильного MR и нажатии кнопки.
+
+##### №3 Tag everything (рекомендованный)
+
+Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у комита в master.
+
+```yaml
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+  when: manual
+
 Deploy to Production:
   <<: *base_deploy
   environment:
@@ -245,21 +408,54 @@ Deploy to Production:
     url: http://www.company.my
   only:
     - tags
-  when: manual
-  except:
-    - schedules
 ```
 
-Обратите внимание на переменную `url` — так как мы деплоим приложение на контур production мы знаем публичный URL, по которому доступно приложение, и явно указываем его здесь. Далее мы будем использовать переменную `.Values.global.ci_url` в helm-шаблонах (вспомните описание шаблона `base_deploy` в начале статьи).
+Варианты отката изменений в production:
+- нажатие кнопки на другом теге (**рекомендованный**);
+- создание нового тега на старый комит (так делать не надо).
+
+##### №4 Branch, branch, branch!
+
+Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
+
+```yaml
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [production]
+```
+
+Варианты отката изменений в production:
+- воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback);
+- [revert изменений](https://git-scm.com/docs/git-revert) в ветке production;
+- [revert изменений](https://git-scm.com/docs/git-revert) в master и fast-forward merge в ветку production;
+- удаление коммита из ветки production и push-force.
 
 ### Очистка образов
 
+```yaml
+Cleanup:
+  stage: cleanup
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
+    - werf cleanup
+  only: [schedules]
+  tags: [werf]
+```
+
 В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
 Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
-
-В результате работы werf наполняет локальное хранилище стадий, а также Docker registry собранными образами.
-
-Для работы очистки в файле `.gitlab-ci.yml` выделена отдельная стадия — `cleanup`.
 
 Чтобы использовать очистку, необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в Docker registry перед очисткой.
 
@@ -267,119 +463,425 @@ Deploy to Production:
 
 Чтобы передать `Personal Access Token` в переменную окружения GitLab откройте ваш проект, затем откройте `Settings` —> `CI/CD` и разверните `Variables`. Создайте новую переменную окружения `WERF_IMAGES_CLEANUP_PASSWORD` и в качестве ее значения укажите содержимое `Personal Access Token`. Для безопасности отметьте созданную переменную как `protected`.
 
-Добавим следующие строки в файл `.gitlab-ci.yml`:
-
-```yaml
-Cleanup:
-  stage: cleanup
-  script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
-    - werf cleanup
-  only:
-    - schedules
-  tags:
-    - werf
-```
-
 Стадия очистки запускается только по расписанию, которое вы можете определить открыв раздел `CI/CD` —> `Schedules` настроек проекта в GitLab. Нажмите кнопку `New schedule`, заполните описание задания и определите шаблон запуска в обычном cron-формате. В качестве ветки оставьте master (название ветки не влияет на процесс очистки), отметьте `Active` и сохраните pipeline.
 
-> Как это работает:
-   - `werf ci-env` создает временный конфигурационный файл для docker (отдельный при каждом запуске и соответственно для каждого задания GitLab), а также экспортирует переменную окружения DOCKER_CONFIG со значением пути к созданному конфигурационному файлу;
-   - `docker login` использует временный конфигурационный файл для docker, путь к которому был указан ранее в переменной окружения DOCKER_CONFIG для авторизации в Docker registry;
-   - `werf cleanup` также использует временный конфигурационный файл из DOCKER_CONFIG.
+## Полный .gitlab-ci.yml для различных стратегий
 
-## .gitlab-ci.yml
+<div class="tabs" style="display: grid">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_1')">№1 Fast and Furious (рекомендованный)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_2')">№2 Push the Button</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_3')">№3 Tag everything (рекомендованный)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_4')">№4 Branch, branch, branch!</a>
+</div>
 
+<div id="complete_gitlab_ci_1" class="tabs__content no_toc_section active" markdown="1">
+
+#### Детали конфигурации 
+{:.no_toc}
+
+* [Сборка и публикация](#сборка-и-публикация-образов-приложения).
+* Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
+* Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious или True CI/CD](#1-fast-and-furious-или-true-cicd-рекомендованный).
+* [Очистка стадий](#очистка-образов). 
+
+#### .gitlab-ci.yml 
+{:.no_toc}
+
+{% raw %}
 ```yaml
 stages:
-  - build
+  - build-and-publish
   - deploy
+  - dismiss
   - cleanup
 
-Build:
-  stage: build
+Build and Publish:
+  stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf build-and-publish
-  tags:
-    - werf
-  except:
-    - schedules
+  except: [schedules]
+  tags: [werf]
 
 .base_deploy: &base_deploy
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
-    - Build
-  tags:
-    - werf
+    - Build and Publish
+  tags: [werf]
 
 Review:
-  <<: *base_deploy
-  environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
-    on_stop: Stop review
-  only:
-    - branches
-  except:
-    - master
-    - schedules
-
-Stop review:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - >
+      if [ -z "$PRIVATE_TOKEN" ]; then
+        echo "\$PRIVATE_TOKEN is not defined" >&2
+        exit 1
+      fi
+
+      if curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID} | jq .labels[] | grep -q '^"review"$'; then
+        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+      else
+        if werf helm get $(werf helm get-release) 2>/dev/null; then
+          werf dismiss --with-namespace
+        fi
+      fi
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  dependencies:
+    - Build and Publish
+  only: [merge_requests]
+  tags: [werf]
+
+Stop Review:
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
-  tags:
-    - werf
-  only:
-    - branches
-  except:
-    - master
-    - schedules
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
   when: manual
+  tags: [werf]
 
-Deploy to Stage:
+Deploy to Staging:
   <<: *base_deploy
   environment:
-    name: stage
+    name: staging
     url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
-  only:
-    - master
-  except:
-    - schedules
+  only: [merge_requests]
+  when: manual
 
 Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
     url: http://www.company.my
-  only:
-    - tags
-  when: manual
-  except:
-    - schedules
+  only: [master]
 
 Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
-  only:
-    - schedules
-  tags:
-    - werf
+  only: [schedules]
+  tags: [werf]
 ```
+{% endraw %}
+
+</div>
+<div id="complete_gitlab_ci_2" class="tabs__content no_toc_section" markdown="1">
+
+#### Детали конфигурации
+{:.no_toc}
+
+* [Сборка и публикация](#сборка-и-публикация-образов-приложения).
+* Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
+* Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button).
+* [Очистка стадий](#очистка-образов). 
+
+#### .gitlab-ci.yml
+{:.no_toc}
+
+{% raw %}
+```yaml
+stages:
+  - build-and-publish
+  - deploy
+  - dismiss
+  - cleanup
+
+Build and Publish:
+  stage: build-and-publish
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf build-and-publish
+  except: [schedules]
+  tags: [werf]
+
+.base_deploy: &base_deploy
+  stage: deploy
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+  dependencies:
+    - Build and Publish
+  except: [schedules]
+  tags: [werf]
+
+Review:
+  <<: *base_deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  only: [merge_requests]
+  when: manual
+
+Stop Review: 
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
+
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [master]
+  when: manual  
+
+Cleanup:
+  stage: cleanup
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
+    - werf cleanup
+  only: [schedules]
+  tags: [werf]
+```
+{% endraw %}
+</div>
+
+<div id="complete_gitlab_ci_3" class="tabs__content no_toc_section" markdown="1">
+
+#### Детали конфигурации
+{:.no_toc}
+
+* [Сборка и публикация](#сборка-и-публикация-образов-приложения).
+* Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
+* Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
+* [Очистка стадий](#очистка-образов). 
+
+#### .gitlab-ci.yml
+{:.no_toc}
+
+{% raw %}
+```yaml
+stages:
+  - build-and-publish
+  - deploy
+  - dismiss
+  - cleanup
+
+Build and Publish:
+  stage: build-and-publish
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf build-and-publish
+  except: [schedules]
+  tags: [werf]
+
+.base_deploy: &base_deploy
+  stage: deploy
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+  dependencies:
+    - Build and Publish
+  except: [schedules]
+  tags: [werf]
+
+Review:
+  <<: *base_deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  only: [merge_requests]
+  when: manual
+
+Stop Review: 
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
+
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+  when: manual
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [tags]
+
+Cleanup:
+  stage: cleanup
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
+    - werf cleanup
+  only: [schedules]
+  tags: [werf]
+```
+{% endraw %}
+</div>
+
+<div id="complete_gitlab_ci_4" class="tabs__content no_toc_section" markdown="1">
+
+#### Детали конфигурации
+{:.no_toc}
+
+* [Сборка и публикация](#сборка-и-публикация-образов-приложения).
+* Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
+* Выкат на staging и production контуры осуществляется по стратегии [№4 Branch, branch, branch!](#4-branch-branch-branch).
+* [Очистка стадий](#очистка-образов). 
+
+#### .gitlab-ci.yml
+{:.no_toc}
+
+{% raw %}
+```yaml
+stages:
+  - build-and-publish
+  - deploy
+  - dismiss
+  - cleanup
+
+Build and Publish:
+  stage: build-and-publish
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf build-and-publish
+  except: [schedules]
+  tags: [werf]
+
+.base_deploy: &base_deploy
+  stage: deploy
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+  dependencies:
+    - Build and Publish
+  except: [schedules]
+  tags: [werf]
+
+Review:
+  <<: *base_deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    on_stop: Stop Review
+    auto_stop_in: 1 day
+  artifacts:
+    paths:
+      - werf.yaml
+  rules:
+    - if: $CI_MERGE_REQUEST_ID && $CI_COMMIT_REF_NAME =~ /^review-/
+
+Stop Review: 
+  stage: dismiss
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - werf dismiss --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - Review
+  only: [merge_requests]
+  when: manual
+  tags: [werf]
+
+Deploy to Staging:
+  <<: *base_deploy
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+  only: [master]
+
+Deploy to Production:
+  <<: *base_deploy
+  environment:
+    name: production
+    url: http://www.company.my
+  only: [production]
+    
+Cleanup:
+  stage: cleanup
+  script:
+    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
+    - werf cleanup
+  only: [schedules]
+  tags: [werf]
+```
+{% endraw %}
+</div>
