@@ -81,3 +81,7 @@ func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage image.ImageInterface
 
 	return size, nil
 }
+
+func (s *GitCacheStage) GetNextStageDependencies(c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(c)
+}
