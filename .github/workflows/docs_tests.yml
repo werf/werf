@@ -67,5 +67,6 @@ jobs:
             --allow-hash-href \
             --empty-alt-ignore \
             --check_html \
-            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/" \
+            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/" \
+            --url_swap  "https\://ru.werf.io:,https\://werf.io:"
             ./_site/
