@@ -129,7 +129,7 @@ func processSpecificEntryFilepath(repository *git.Repository, tree *object.Tree,
 				return lsTreeEntries, submodulesResults, nil
 			}
 
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", submoduleFullFilepath, err)
 		}
 
 		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(submoduleRepository, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, pathMatcher)
@@ -253,7 +253,8 @@ func lsTreeSubmoduleEntryMatch(repository *git.Repository, repositoryFullFilepat
 
 				return nil, nil, nil
 			}
-			return nil, nil, err
+
+			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", lsTreeEntry.FullFilepath, err)
 		}
 
 		submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(submoduleRepository, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, pathMatcher)
@@ -354,7 +355,7 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 					continue
 				}
 
-				return nil, err
+				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
 			}
 
 			submoduleFullFilepaths, err := notInitializedSubmoduleFullFilepaths(submoduleRepository, submoduleFullFilepath, pathMatcher)

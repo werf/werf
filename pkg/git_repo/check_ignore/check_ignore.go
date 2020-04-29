@@ -88,7 +88,7 @@ mainLoop:
 				continue
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFilepath, err)
 		}
 
 		submoduleResult, err := checkIgnore(submoduleRepository, submoduleAbsFilepath, submoduleAbsFilepathsToCheck)
