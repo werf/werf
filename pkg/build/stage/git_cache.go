@@ -81,3 +81,7 @@ func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage container_runtime.Im
 
 	return size, nil
 }
+
+func (s *GitCacheStage) GetNextStageDependencies(c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(c)
+}
