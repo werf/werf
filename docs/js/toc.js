@@ -49,6 +49,10 @@
     })
     .addClass('clickable-header')
     .each(function(_, header) {
+      if ($(header).hasClass("no_toc")) {
+        return
+      }
+
       this_level = get_level(header);
       if (!settings.noBackToTopLinks && this_level === highest_level) {
         $(header).addClass('top-level-header').after(return_to_top);
