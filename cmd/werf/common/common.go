@@ -40,6 +40,7 @@ type CmdData struct {
 	TagGitCommit         *string
 	TagByStagesSignature *bool
 
+	HelmChartDir                     *string
 	Environment                      *string
 	Release                          *string
 	Namespace                        *string
@@ -185,6 +186,11 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
 	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
 	cmd.Flags().BoolVarP(cmdData.TagByStagesSignature, "tag-by-stages-signature", "", GetBoolEnvironmentDefaultFalse("WERF_TAG_BY_STAGES_SIGNATURE"), "Use stages-signature tagging strategy and tag each image by the corresponding signature of last image stage (option can be enabled by specifying $WERF_TAG_BY_STAGES_SIGNATURE=true)")
+}
+
+func SetupHelmChartDir(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HelmChartDir = new(string)
+	cmd.Flags().StringVarP(cmdData.HelmChartDir, "helm-chart-dir", "", os.Getenv("WERF_HELM_CHART_DIR"), "Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -1102,6 +1108,28 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	return currentDir, nil
+}
+
+func GetHelmChartDir(projectDir string, cmdData *CmdData) (string, error) {
+	var helmChartDir string
+
+	customHelmChartDir := *cmdData.HelmChartDir
+	if customHelmChartDir != "" {
+		helmChartDir = customHelmChartDir
+	} else {
+		helmChartDir = filepath.Join(projectDir, ".helm")
+	}
+
+	exist, err := util.FileExists(helmChartDir)
+	if err != nil {
+		return "", err
+	}
+
+	if !exist {
+		return "", fmt.Errorf("helm chart dir %s not found", helmChartDir)
+	}
+
+	return helmChartDir, nil
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {

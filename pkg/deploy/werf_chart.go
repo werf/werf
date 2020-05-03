@@ -7,8 +7,8 @@ import (
 	"github.com/flant/werf/pkg/deploy/werf_chart"
 )
 
-func PrepareWerfChart(projectName, chartDir, env string, m secret.Manager, secretValues []string, serviceValues map[string]interface{}) (*werf_chart.WerfChart, error) {
-	werfChart, err := werf_chart.InitWerfChart(projectName, chartDir, env, m)
+func PrepareWerfChart(projectName, helmChartDir, env string, m secret.Manager, secretValues []string, serviceValues map[string]interface{}) (*werf_chart.WerfChart, error) {
+	werfChart, err := werf_chart.InitWerfChart(projectName, helmChartDir, env, m)
 	if err != nil {
 		return nil, err
 	}

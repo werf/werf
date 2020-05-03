@@ -48,6 +48,8 @@ werf helm render [options]
             ~/.docker (in the order of priority)
       --env='':
             Use specified environment (default $WERF_ENV)
+      --helm-chart-dir='':
+            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
   -h, --help=false:
             help for render
       --home-dir='':

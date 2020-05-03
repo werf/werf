@@ -19,8 +19,6 @@ import (
 )
 
 const (
-	ProjectHelmChartDirName = ".helm"
-
 	DefaultSecretValuesFileName = "secret-values.yaml"
 	SecretDirName               = "secret"
 )

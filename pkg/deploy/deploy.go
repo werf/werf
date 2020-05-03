@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -37,7 +36,7 @@ type DeployOptions struct {
 	ThreeWayMergeMode    helm.ThreeWayMergeModeType
 }
 
-func Deploy(projectName, projectDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, storageLockManager storage.LockManager, opts DeployOptions) error {
+func Deploy(projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, storageLockManager storage.LockManager, opts DeployOptions) error {
 	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
 		return err
 	} else {
@@ -55,7 +54,7 @@ func Deploy(projectName, projectDir string, imagesRepository string, images []im
 		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
 		logboek.LogF("Helm release name: %s\n", release)
 
-		m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
+		m, err := GetSafeSecretManager(projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
 			return err
 		}
@@ -72,8 +71,7 @@ func Deploy(projectName, projectDir string, imagesRepository string, images []im
 			return nil
 		})
 
-		projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
-		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
+		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 		if err != nil {
 			return err
 		}

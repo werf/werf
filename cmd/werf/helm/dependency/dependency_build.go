@@ -53,13 +53,18 @@ func newDependencyBuildCmd() *cobra.Command {
 
 			helm_common.InitHelmSettings(&helmCommonCmdData)
 
-			chartPath, err := getWerfChartPath(commonCmdData)
+			projectDir, err := common.GetProjectDir(&commonCmdData)
 			if err != nil {
-				return err
+				return fmt.Errorf("getting project dir failed: %s", err)
+			}
+
+			helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+			if err != nil {
+				return fmt.Errorf("getting helm chart dir failed: %s", err)
 			}
 
 			dbc.helmhome = helm_common.HelmSettings.Home
-			dbc.chartpath = chartPath
+			dbc.chartpath = helmChartDir
 
 			return dbc.run()
 		},
@@ -67,6 +72,8 @@ func newDependencyBuildCmd() *cobra.Command {
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupLogOptions(&commonCmdData, cmd)
+
+	common.SetupHelmChartDir(&commonCmdData, cmd)
 
 	f := cmd.Flags()
 	f.BoolVar(&dbc.verify, "verify", false, "verify the packages against signatures")

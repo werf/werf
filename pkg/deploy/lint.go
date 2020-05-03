@@ -3,13 +3,11 @@ package deploy
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/images_manager"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util/secretvalues"
@@ -24,10 +22,10 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
+func RunLint(projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
 	logboek.Debug.LogF("Lint options: %#v\n", opts)
 
-	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
+	m, err := GetSafeSecretManager(projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
 		return err
 	}
@@ -39,8 +37,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, imagesRepository 
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	projectChartDir := filepath.Join(projectDir, werf_chart.ProjectHelmChartDirName)
-	werfChart, err := PrepareWerfChart(werfConfig.Meta.Project, projectChartDir, opts.Env, m, opts.SecretValues, serviceValues)
+	werfChart, err := PrepareWerfChart(werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}

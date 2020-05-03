@@ -50,6 +50,8 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupHelmChartDir(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
@@ -63,6 +65,11 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
+	}
+
+	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
 	newSecret, err := secret.GetManager(projectDir)
@@ -81,23 +88,22 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return err
 	}
 
-	return secretsRegenerate(newSecret, oldSecret, projectDir, secretValuesPaths...)
+	return secretsRegenerate(newSecret, oldSecret, helmChartDir, secretValuesPaths...)
 }
 
-func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string, secretValuesPaths ...string) error {
+func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir string, secretValuesPaths ...string) error {
 	var secretFilesPaths []string
 	regeneratedFilesData := map[string][]byte{}
 	secretFilesData := map[string][]byte{}
 	secretValuesFilesData := map[string][]byte{}
 
-	helmChartPath := filepath.Join(projectPath, ".helm")
-	isHelmChartDirExist, err := util.FileExists(helmChartPath)
+	isHelmChartDirExist, err := util.FileExists(helmChartDir)
 	if err != nil {
 		return err
 	}
 
 	if isHelmChartDirExist {
-		defaultSecretValuesPath := filepath.Join(helmChartPath, "secret-values.yaml")
+		defaultSecretValuesPath := filepath.Join(helmChartDir, "secret-values.yaml")
 		isDefaultSecretValuesExist, err := util.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
@@ -107,7 +113,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 			secretValuesPaths = append(secretValuesPaths, defaultSecretValuesPath)
 		}
 
-		secretDirectory := filepath.Join(helmChartPath, "secret")
+		secretDirectory := filepath.Join(helmChartDir, "secret")
 		isSecretDirectoryExist, err := util.FileExists(secretDirectory)
 		if err != nil {
 			return err
