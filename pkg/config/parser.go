@@ -25,14 +25,14 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func RenderWerfConfig(werfConfigPath string, imagesToProcess []string) error {
-	werfConfig, err := GetWerfConfig(werfConfigPath, false)
+func RenderWerfConfig(werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string) error {
+	werfConfig, err := GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, false)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
+		werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -61,8 +61,8 @@ func RenderWerfConfig(werfConfigPath string, imagesToProcess []string) error {
 	return nil
 }
 
-func GetWerfConfig(werfConfigPath string, logRenderedFilePath bool) (*WerfConfig, error) {
-	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
+func GetWerfConfig(werfConfigPath, werfConfigTemplatesDir string, logRenderedFilePath bool) (*WerfConfig, error) {
+	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -202,7 +202,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func parseWerfConfigYaml(werfConfigPath string) (string, error) {
+func parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir string) (string, error) {
 	data, err := ioutil.ReadFile(werfConfigPath)
 	if err != nil {
 		return "", err
@@ -211,16 +211,14 @@ func parseWerfConfigYaml(werfConfigPath string) (string, error) {
 	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl))
 
-	projectDir := filepath.Dir(werfConfigPath)
-	werfConfigsDir := filepath.Join(projectDir, ".werf")
-	werfConfigsTemplates, err := getWerfConfigsTemplates(werfConfigsDir)
+	werfConfigsTemplates, err := getWerfConfigTemplates(werfConfigTemplatesDir)
 	if err != nil {
 		return "", err
 	}
 
 	if len(werfConfigsTemplates) != 0 {
 		for _, templatePath := range werfConfigsTemplates {
-			templateName, err := filepath.Rel(werfConfigsDir, templatePath)
+			templateName, err := filepath.Rel(werfConfigTemplatesDir, templatePath)
 			if err != nil {
 				return "", err
 			}
@@ -248,7 +246,7 @@ func parseWerfConfigYaml(werfConfigPath string) (string, error) {
 	return config, err
 }
 
-func getWerfConfigsTemplates(path string) ([]string, error) {
+func getWerfConfigTemplates(path string) ([]string, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
 	}

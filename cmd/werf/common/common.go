@@ -26,11 +26,13 @@ import (
 )
 
 type CmdData struct {
-	ProjectName *string
-	Dir         *string
-	TmpDir      *string
-	HomeDir     *string
-	SSHKeys     *[]string
+	ProjectName        *string
+	Dir                *string
+	ConfigPath         *string
+	ConfigTemplatesDir *string
+	TmpDir             *string
+	HomeDir            *string
+	SSHKeys            *[]string
 
 	TagCustom            *[]string
 	TagGitBranch         *string
@@ -106,12 +108,22 @@ func GetLongCommandDescription(text string) string {
 
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ProjectName = new(string)
-	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use specified project name (default $WERF_PROJECT_NAME)")
+	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use custom project name (default $WERF_PROJECT_NAME)")
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dir = new(string)
-	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", "", "Change to the specified directory to find werf.yaml config")
+	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use custom working directory (default $WERF_DIR or current directory)")
+}
+
+func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ConfigPath = new(string)
+	cmd.Flags().StringVarP(cmdData.ConfigPath, "config", "", os.Getenv("WERF_CONFIG"), `Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)`)
+}
+
+func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ConfigTemplatesDir = new(string)
+	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Change to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -1007,39 +1019,71 @@ func getImagesRepoMode(cmdData *CmdData) (string, error) {
 	}
 }
 
-func GetOptionalWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, false)
+func GetOptionalWerfConfig(projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, false)
 	if err != nil {
 		return nil, err
 	}
+
 	if werfConfigPath != "" {
-		return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+		werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
+		return config.GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 	}
+
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(projectDir string, logRenderedFilePath bool) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, true)
+func GetRequiredWerfConfig(projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, true)
 	if err != nil {
 		return nil, err
 	}
-	return config.GetWerfConfig(werfConfigPath, logRenderedFilePath)
+
+	werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
+
+	return config.GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 }
 
-func GetWerfConfigPath(projectDir string, required bool) (string, error) {
-	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
-		werfConfigPath := filepath.Join(projectDir, werfConfigName)
-		if exist, err := util.FileExists(werfConfigPath); err != nil {
+func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (string, error) {
+	var configPathToCheck []string
+
+	customConfigPath := *cmdData.ConfigPath
+	if customConfigPath != "" {
+		configPathToCheck = append(configPathToCheck, customConfigPath)
+	} else {
+		for _, werfDefaultConfigName := range []string{"werf.yml", "werf.yaml"} {
+			configPathToCheck = append(configPathToCheck, filepath.Join(projectDir, werfDefaultConfigName))
+		}
+	}
+
+	for _, werfConfigPath := range configPathToCheck {
+		exist, err := util.FileExists(werfConfigPath)
+		if err != nil {
 			return "", err
-		} else if exist {
-			return werfConfigPath, err
+		}
+
+		if exist {
+			return werfConfigPath, nil
 		}
 	}
 
 	if required {
-		return "", fmt.Errorf("werf.yaml not found")
+		if customConfigPath != "" {
+			return "", fmt.Errorf("configration file %s not found", customConfigPath)
+		} else {
+			return "", fmt.Errorf("configration file werf.yaml not found")
+		}
+	}
+
+	return "", nil
+}
+
+func GetWerfConfigTemplatesDir(projectDir string, cmdData *CmdData) string {
+	customConfigTemplatesDir := *cmdData.ConfigTemplatesDir
+	if customConfigTemplatesDir != "" {
+		return customConfigTemplatesDir
 	} else {
-		return "", nil
+		return filepath.Join(projectDir, ".werf")
 	}
 }
 

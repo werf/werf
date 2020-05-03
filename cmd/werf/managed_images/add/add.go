@@ -38,6 +38,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupProjectName(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
@@ -86,7 +88,7 @@ func run(imageName string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetOptionalWerfConfig(projectDir, false)
+	werfConfig, err := common.GetOptionalWerfConfig(projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

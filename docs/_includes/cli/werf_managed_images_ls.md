@@ -14,8 +14,13 @@ werf managed-images ls [options]
 {{ header }} Options
 
 ```shell
+      --config='':
+            Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
+      --config-templates-dir='':
+            Change to the custom configuration templates directory (default                         
+            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir='':
-            Change to the specified directory to find werf.yaml config
+            Use custom working directory (default $WERF_DIR or current directory)
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -52,7 +57,7 @@ werf managed-images ls [options]
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
   -N, --project-name='':
-            Use specified project name (default $WERF_PROJECT_NAME)
+            Use custom project name (default $WERF_PROJECT_NAME)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)

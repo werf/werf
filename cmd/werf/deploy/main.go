@@ -73,6 +73,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
@@ -184,7 +186,7 @@ func runDeploy() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, true)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

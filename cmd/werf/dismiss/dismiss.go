@@ -60,6 +60,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	}
 
 	common.SetupTmpDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
 
@@ -127,7 +129,7 @@ func runDismiss() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, true)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, true)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

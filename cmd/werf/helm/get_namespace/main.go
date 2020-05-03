@@ -28,6 +28,8 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -52,7 +54,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, false)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

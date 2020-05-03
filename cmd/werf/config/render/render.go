@@ -35,16 +35,20 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("getting project dir failed: %s", err)
 			}
 
-			werfConfigPath, err := common.GetWerfConfigPath(projectDir, true)
+			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true)
 			if err != nil {
 				return err
 			}
 
-			return config.RenderWerfConfig(werfConfigPath, args)
+			werfConfigTemplatesDir := common.GetWerfConfigTemplatesDir(projectDir, &commonCmdData)
+
+			return config.RenderWerfConfig(werfConfigPath, werfConfigTemplatesDir, args)
 		},
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
