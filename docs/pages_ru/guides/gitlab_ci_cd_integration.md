@@ -9,7 +9,9 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI и werf.
 
-Окончательные версии конфигураций .gitlab-ci.yml для различных workflow доступны [в конце статьи](#полный-gitlab-ciyml-для-различных-стратегий). 
+Окончательные версии .gitlab-ci.yml для различных workflow доступны [в конце статьи](#полный-gitlab-ciyml-для-различных-workflow). 
+
+> С общей информацией по организации CI/CD с помощью werf можно ознакомиться в [отдельной статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html)
 
 ## Требования
 
@@ -96,8 +98,8 @@ Build and Publish:
   tags: [werf]
 ```
 
-> Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
-> Так как при очистке не требуется выполнять сборку образов, то указываем `except: [schedules]`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
+Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
+Так как при очистке не требуется выполнять сборку образов, то указываем `except: [schedules]`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
 
 Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в Docker registry, вызова `docker login`. 
 
@@ -154,7 +156,7 @@ environment:
 
 Как уже было сказано ранее, review окружение это временный контур, поэтому помимо выката у этого окружения также должна быть и очистка.
 
-Рассмотрим базовые конфигурации `Review` и `Stop Review` заданий, которые лягут в основу предложенных стратегий.
+Рассмотрим базовые конфигурации `Review` и `Stop Review` заданий, которые лягут в основу всех предложенных вариантов.
 
 ```yaml
 Review:
@@ -199,9 +201,11 @@ Stop Review:
 
 Далее разберём основные стратегии при организации выката review окружения. 
 
-> Мы не ограничиваем вас предложенными вариантами, даже напротив — рекомендуем комбинировать предложенные варианты, создавать стратегию под нужды вашей команды
+> Мы не ограничиваем вас предложенными вариантами, даже напротив — рекомендуем комбинировать их и создавать конфигурацию workflow под нужды вашей команды
 
 ##### №1 Вручную 
+
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-pull-request-по-кнопке) 
 
 При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
@@ -242,6 +246,8 @@ Stop Review:
 
 ##### №2 Автоматически по имени ветки
 
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
+
 В предложенном ниже варианте автоматический релиз выполняется для каждого комита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
 ```yaml
@@ -278,6 +284,8 @@ Stop Review:
 
 ##### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
+
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
 При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого комита. 
@@ -290,12 +298,28 @@ Review:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - >
+      # do optional deploy/dismiss
+      
       if [ -z "$PRIVATE_TOKEN" ]; then
         echo "\$PRIVATE_TOKEN is not defined" >&2
         exit 1
       fi
 
-      if curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID} | jq .labels[] | grep -q '^"review"$'; then
+      api_url=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}
+
+      if ! response_body=$(curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${api_url}); then
+        echo "GET ${api_url}"
+        echo ${response_body}
+        exit 1
+      fi
+
+      if ! echo ${response_body} | jq .labels[] >/dev/null 2>&1; then
+        echo "GET ${api_url}"
+        echo ${response_body}
+        exit 1
+      fi
+
+      if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
         werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
@@ -338,7 +362,14 @@ Stop Review:
 
 #### Варианты организации staging и production окружений
 
-##### №1 Fast and Furious или True CI/CD (рекомендованный)
+
+Предложенные далее варианты являются наиболее эффективными комбинациями правил выката **staging** и **production** окружений.
+
+В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных workflow, предложенных в [конце статьи](#полный-gitlab-ciyml-для-различных-workflow). 
+
+##### №1 Fast and Furious (рекомендованный)
+
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -365,6 +396,8 @@ Deploy to Production:
 
 ##### №2 Push the Button
 
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-автоматически)
+
 Выкат **production** осуществляется по кнопке у комита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
 ```yaml
@@ -389,6 +422,8 @@ Deploy to Production:
 - выкат стабильного MR и нажатии кнопки.
 
 ##### №3 Tag everything (рекомендованный)
+
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-по-кнопке)
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у комита в master.
 
@@ -415,6 +450,8 @@ Deploy to Production:
 - создание нового тега на старый комит (так делать не надо).
 
 ##### №4 Branch, branch, branch!
+
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-ветки-автоматически)
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -465,7 +502,7 @@ Cleanup:
 
 Стадия очистки запускается только по расписанию, которое вы можете определить открыв раздел `CI/CD` —> `Schedules` настроек проекта в GitLab. Нажмите кнопку `New schedule`, заполните описание задания и определите шаблон запуска в обычном cron-формате. В качестве ветки оставьте master (название ветки не влияет на процесс очистки), отметьте `Active` и сохраните pipeline.
 
-## Полный .gitlab-ci.yml для различных стратегий
+## Полный .gitlab-ci.yml для различных workflow
 
 <div class="tabs" style="display: grid">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_1')">№1 Fast and Furious (рекомендованный)</a>
@@ -479,10 +516,12 @@ Cleanup:
 #### Детали конфигурации 
 {:.no_toc}
 
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#1-fast-and-furious)
+
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
-* Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
-* Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious или True CI/CD](#1-fast-and-furious-или-true-cicd-рекомендованный).
-* [Очистка стадий](#очистка-образов). 
+* Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
+* Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious (рекомендованный)](#1-fast-and-furious-рекомендованный).
+* [Очистка стадий](#очистка-образов).
 
 #### .gitlab-ci.yml 
 {:.no_toc}
@@ -520,12 +559,28 @@ Review:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --verbose --as-file)
     - >
+      # do optional deploy/dismiss
+      
       if [ -z "$PRIVATE_TOKEN" ]; then
         echo "\$PRIVATE_TOKEN is not defined" >&2
         exit 1
       fi
 
-      if curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID} | jq .labels[] | grep -q '^"review"$'; then
+      api_url=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}
+
+      if ! response_body=$(curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${api_url}); then
+        echo "GET ${api_url}"
+        echo ${response_body}
+        exit 1
+      fi
+
+      if ! echo ${response_body} | jq .labels[] >/dev/null 2>&1; then
+        echo "GET ${api_url}"
+        echo ${response_body}
+        exit 1
+      fi
+
+      if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
         werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
@@ -594,6 +649,8 @@ Cleanup:
 
 #### Детали конфигурации
 {:.no_toc}
+
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#2-push-the-button)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -694,6 +751,8 @@ Cleanup:
 #### Детали конфигурации
 {:.no_toc}
 
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#3-tag-everything)
+
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
@@ -792,6 +851,8 @@ Cleanup:
 
 #### Детали конфигурации
 {:.no_toc}
+
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#4-branch-branch-branch)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
