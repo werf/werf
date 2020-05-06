@@ -34,7 +34,7 @@ werf helm secret values edit FILE_PATH [options]
 
 ```shell
       --dir='':
-            Change to the specified directory to find werf.yaml config
+            Use custom working directory (default $WERF_DIR or current directory)
   -h, --help=false:
             help for edit
       --home-dir='':

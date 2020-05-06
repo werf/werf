@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -34,6 +33,8 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.imagesOnly, "images-only", "", false, "Show image names without artifacts")
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
@@ -54,12 +55,7 @@ func run() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfigPath, err := common.GetWerfConfigPath(projectDir, true)
-	if err != nil {
-		return err
-	}
-
-	werfConfig, err := config.GetWerfConfig(werfConfigPath, false)
+	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
 	if err != nil {
 		return err
 	}

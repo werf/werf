@@ -15,7 +15,7 @@ werf host project purge [PROJECT_NAME ...] [options]
 
 ```shell
       --dir='':
-            Change to the specified directory to find werf.yaml config
+            Use custom working directory (default $WERF_DIR or current directory)
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

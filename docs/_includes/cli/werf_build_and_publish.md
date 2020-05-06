@@ -52,8 +52,13 @@ werf build-and-publish [IMAGE_NAME...] [options]
 {{ header }} Options
 
 ```shell
+      --config='':
+            Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
+      --config-templates-dir='':
+            Change to the custom configuration templates directory (default                         
+            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir='':
-            Change to the specified directory to find werf.yaml config
+            Use custom working directory (default $WERF_DIR or current directory)
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
