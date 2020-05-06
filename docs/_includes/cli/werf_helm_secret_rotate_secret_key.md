@@ -36,6 +36,8 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 ```shell
       --dir='':
             Use custom working directory (default $WERF_DIR or current directory)
+      --helm-chart-dir='':
+            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
   -h, --help=false:
             help for rotate-secret-key
       --home-dir='':

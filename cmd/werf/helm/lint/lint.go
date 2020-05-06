@@ -44,6 +44,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupHelmChartDir(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
@@ -78,6 +79,11 @@ func runLint() error {
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
+	}
+
+	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
 	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, true)
@@ -119,7 +125,7 @@ func runLint() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(projectDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

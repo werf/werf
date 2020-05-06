@@ -74,6 +74,8 @@ werf deploy [options]
             storage and images repo
       --env='':
             Use specified environment (default $WERF_ENV)
+      --helm-chart-dir='':
+            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --helm-release-storage-namespace='kube-system':
             Helm release storage namespace (same as --tiller-namespace for regular helm, default    
             $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')

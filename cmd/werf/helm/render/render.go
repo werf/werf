@@ -50,6 +50,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupHelmChartDir(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -96,6 +97,11 @@ func runRender(outputFilePath string) error {
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
+	}
+
+	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
 	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
@@ -166,7 +172,7 @@ func runRender(outputFilePath string) error {
 	}
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(buf, projectDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
+	if err := deploy.RunRender(buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
 		WithoutImagesRepo:    withoutImagesRepo,

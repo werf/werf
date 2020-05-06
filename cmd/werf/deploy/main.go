@@ -86,6 +86,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 
+	common.SetupHelmChartDir(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
@@ -179,6 +180,11 @@ func runDeploy() error {
 	}
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
+
+	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
+	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
@@ -297,7 +303,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectName, projectDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
+	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

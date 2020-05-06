@@ -60,12 +60,17 @@ func newDependencyUpdateCmd() *cobra.Command {
 
 			helm_common.InitHelmSettings(&helmCommonCmdData)
 
-			chartPath, err := getWerfChartPath(commonCmdData)
+			projectDir, err := common.GetProjectDir(&commonCmdData)
 			if err != nil {
-				return err
+				return fmt.Errorf("getting project dir failed: %s", err)
 			}
 
-			duc.chartpath = chartPath
+			helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+			if err != nil {
+				return fmt.Errorf("getting helm chart dir failed: %s", err)
+			}
+
+			duc.chartpath = helmChartDir
 			duc.helmhome = helm_common.HelmSettings.Home
 
 			return duc.run()
@@ -79,6 +84,8 @@ func newDependencyUpdateCmd() *cobra.Command {
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupLogOptions(&commonCmdData, cmd)
+
+	common.SetupHelmChartDir(&commonCmdData, cmd)
 
 	helm_common.SetupHelmHome(&helmCommonCmdData, cmd)
 

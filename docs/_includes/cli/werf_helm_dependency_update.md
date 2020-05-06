@@ -29,6 +29,8 @@ werf helm dependency update [options]
 ```shell
       --dir='':
             Use custom working directory (default $WERF_DIR or current directory)
+      --helm-chart-dir='':
+            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --helm-home='~/.helm':
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
