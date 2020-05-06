@@ -14,8 +14,11 @@ werf completion [options]
 {{ header }} Examples
 
 ```shell
-  # Load completion run
+  # Load bash completion
   $ source <(werf completion)
+
+  # Load zsh completion
+  $ source <(werf completion --shell=zsh)
 ```
 
 {{ header }} Options
@@ -23,5 +26,7 @@ werf completion [options]
 ```shell
   -h, --help=false:
             help for completion
+      --shell='bash':
+            Set to bash or zsh (default $WERF_SHELL or bash)
 ```
 
