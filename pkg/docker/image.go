@@ -84,6 +84,7 @@ tryPull:
 				"i/o timeout",
 				"504 Gateway Time-out",
 				"504 Gateway Timeout",
+				"Internal Server Error",
 			}
 
 			for _, specificError := range specificErrors {
@@ -155,6 +156,7 @@ tryPush:
 				"Only schema version 2 is supported",
 				"504 Gateway Time-out",
 				"504 Gateway Timeout",
+				"Internal Server Error",
 			}
 
 			for _, specificError := range specificErrors {
