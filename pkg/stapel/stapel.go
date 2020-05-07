@@ -81,10 +81,6 @@ func LsBinPath() string {
 	return embeddedBinPath("ls")
 }
 
-func MvBinPath() string {
-	return embeddedBinPath("mv")
-}
-
 func RmBinPath() string {
 	return embeddedBinPath("rm")
 }
@@ -103,10 +99,6 @@ func InstallBinPath() string {
 
 func XargsBinPath() string {
 	return embeddedBinPath("xargs")
-}
-
-func FindBinPath() string {
-	return embeddedBinPath("find")
 }
 
 func TarBinPath() string {

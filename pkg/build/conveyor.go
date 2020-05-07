@@ -85,7 +85,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		baseImagesRepoErrCache: make(map[string]error),
 		imagesInOrder:          []*Image{},
 		remoteGitRepos:         make(map[string]*git_repo.Remote),
-		tmpDir:                 filepath.Join(baseTmpDir, string(util.GenerateConsistentRandomString(10))),
+		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
 
 		ContainerRuntime:   containerRuntime,

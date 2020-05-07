@@ -196,38 +196,6 @@ tryPull:
 	return err
 }
 
-func Push(imageName string) error {
-tryPush:
-	err := CliPush(imageName)
-	if err != nil {
-		specificErrors := []string{
-			"Client.Timeout exceeded while awaiting headers",
-			"TLS handshake timeout",
-			"i/o timeout",
-		}
-
-		for _, specificError := range specificErrors {
-			if strings.Index(err.Error(), specificError) != -1 {
-				fmt.Fprintf(GinkgoWriter, "Retrying push in 5 seconds ...")
-				time.Sleep(5 * time.Second)
-				goto tryPush
-			}
-		}
-	}
-
-	return err
-}
-
-func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
-	ctx := context.Background()
-	images, err := apiClient.ImageList(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return images, nil
-}
-
 func imageInspect(ref string) (*types.ImageInspect, error) {
 	ctx := context.Background()
 	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
