@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -48,6 +50,33 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 
 		decryptAndCheckFileOrValues(secretType, "result", withPipe)
 	}
+
+	var editItBody = func(secretType string) {
+		if runtime.GOOS == "windows" {
+			Skip("skip on windows")
+		}
+
+		utils.CopyIn(utils.FixturePath(secretType), testDirPath)
+
+		envs := os.Environ()
+		envs = append(envs, "EDITOR=./editor.sh")
+
+		_, _ = utils.RunCommandWithOptions(
+			testDirPath,
+			werfBinPath,
+			[]string{"helm", "secret", secretType, "edit", "result"},
+			utils.RunCommandOptions{
+				Env:           envs,
+				ShouldSucceed: true,
+			},
+		)
+
+		decryptAndCheckFileOrValues(secretType, "result", false)
+	}
+
+	var _ = DescribeTable("edit", editItBody,
+		Entry("secret file", "file"),
+		Entry("secret file", "values"))
 
 	var _ = DescribeTable("encryption", encryptItBody,
 		Entry("secret file", "file", false),

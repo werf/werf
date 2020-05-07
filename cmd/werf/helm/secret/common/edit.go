@@ -192,9 +192,7 @@ func editor() (string, []string, error) {
 	}
 
 	for _, bin := range []string{"vim", "vi", "nano"} {
-		cmd := exec.Command("which", bin)
-		cmd.Env = os.Environ()
-		if err := cmd.Run(); err != nil {
+		if _, err := exec.LookPath(bin); err != nil {
 			continue
 		}
 
