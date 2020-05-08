@@ -80,7 +80,7 @@ _Зависимости стадии_ — это данные, которые н
 </div>
 
 <div id="dependencies">
-{% for stage in site.data.stages.entries %}
+{% for stage in site.data.stages.ru.entries %}
 <div class="stage {{stage.type}}">
   <div class="stage-body">
     <div class="stage-base">
@@ -107,7 +107,7 @@ _Зависимости стадии_ — это данные, которые н
 
 {% if stage.references %}
 <div class="references">
-    References:
+    Подробнее:
     <ul>
     {% for reference in stage.references %}
         <li><a href="{{ reference.link }}">{{ reference.name }}</a></li>

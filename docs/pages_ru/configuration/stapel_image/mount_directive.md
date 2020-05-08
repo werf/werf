@@ -1,5 +1,5 @@
 ---
-title: Монтирование, для уменьшения размера и ускорения сборки
+title: Ускорение сборки и уменьшение размера за счёт маунтов
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
