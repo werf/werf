@@ -68,35 +68,6 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	return nil
 }
 
-func valuesToStrvals(values map[string]interface{}) []string {
-	var result []string
-
-	for key, value := range values {
-		result = append(result, valueToStrvals(key, value)...)
-	}
-
-	return result
-}
-
-func valueToStrvals(valuePath string, value interface{}) []string {
-	var result []string
-
-	switch x := value.(type) {
-	case []interface{}:
-		for ind, v := range x {
-			result = append(result, valueToStrvals(fmt.Sprintf("%s[%d]", valuePath, ind), v)...)
-		}
-	case map[string]interface{}:
-		for k, v := range x {
-			result = append(result, valueToStrvals(strings.Join([]string{valuePath, k}, "."), v)...)
-		}
-	default:
-		result = append(result, fmt.Sprintf("%s=%v", valuePath, x))
-	}
-
-	return result
-}
-
 func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.ChartOptions) error {
 	opts.SecretValues = append(chart.SecretValues, opts.SecretValues...)
 	opts.Set = append(chart.Set, opts.Set...)

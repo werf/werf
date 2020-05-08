@@ -43,7 +43,7 @@ func NewAesSecret(key []byte) (*AesSecret, error) {
 }
 
 func (s *AesSecret) Encrypt(data []byte) ([]byte, error) {
-	dataToEncrypt := pad([]byte(data))
+	dataToEncrypt := pad(data)
 
 	cipherData := make([]byte, aes.BlockSize+len(dataToEncrypt))
 	iv := cipherData[:aes.BlockSize]

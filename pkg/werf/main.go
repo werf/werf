@@ -69,10 +69,6 @@ func GetStagesStorageCacheDir() string {
 	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
 }
 
-func GetStorageLockManagerDir() string {
-	return filepath.Join(GetSharedContextDir(), "storage", "locks")
-}
-
 func GetHostLocker() lockgate.Locker {
 	return hostLocker
 }

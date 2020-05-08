@@ -19,7 +19,6 @@ const (
 	LocalStage_ImageRepoFormat = "werf-stages-storage/%s"
 	LocalStage_ImageFormat     = "werf-stages-storage/%s:%s-%s"
 
-	LocalManagedImageRecord_ImageNamePrefix = "werf-managed-images/"
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
 )

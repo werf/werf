@@ -25,6 +25,7 @@ func SucceedCommandOutputString(dir, command string, args ...string) string {
 }
 
 type RunCommandOptions struct {
+	Env           []string
 	ToStdin       string
 	ShouldSucceed bool
 }
@@ -38,6 +39,10 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 
 	if dir != "" {
 		cmd.Dir = dir
+	}
+
+	if len(options.Env) != 0 {
+		cmd.Env = options.Env
 	}
 
 	if options.ToStdin != "" {

@@ -34,8 +34,6 @@ const (
 	ShowLogsUntilAnnoName         = "werf.io/show-logs-until"
 
 	ShowEventsAnnoName = "werf.io/show-service-messages"
-
-	HelmHookAnnoName = "helm.sh/hook"
 )
 
 var (

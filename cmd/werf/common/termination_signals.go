@@ -51,19 +51,3 @@ func WithoutTerminationSignalsTrap(f func() error) error {
 
 	return f()
 }
-
-func WithTerminationSignalsTrap(f func() error) error {
-	savedTrapEnabled := terminationSignalsTrapEnabled
-
-	if !terminationSignalsTrapEnabled {
-		EnableTerminationSignalsTrap()
-	}
-
-	defer func() {
-		if !savedTrapEnabled {
-			DisableTerminationSignalsTrap()
-		}
-	}()
-
-	return f()
-}

@@ -18,11 +18,9 @@ import (
 )
 
 const (
-	RepoStage_ImageTagFormat = "%s-%s"
-	RepoStage_ImageFormat    = "%s:%s-%s"
+	RepoStage_ImageFormat = "%s:%s-%s"
 
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
-	RepoManagedImageRecord_ImageTagFormat  = "managed-image-%s"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 )
 

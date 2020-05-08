@@ -173,7 +173,7 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 		return environmentOption, nil
 	}
 
-	tmpl = tmpl.Funcs(template.FuncMap(funcMap))
+	tmpl = tmpl.Funcs(funcMap)
 
 	tmpl, err := tmpl.Parse(templateText)
 	if err != nil {

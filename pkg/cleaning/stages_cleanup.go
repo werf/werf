@@ -208,7 +208,7 @@ func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) 
 }
 
 func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*image.Info) {
-	for imageName, _ := range repoImages {
+	for imageName := range repoImages {
 		repoImageList = append(repoImageList, repoImages[imageName]...)
 	}
 

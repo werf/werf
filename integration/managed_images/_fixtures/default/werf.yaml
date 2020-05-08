@@ -1,0 +1,8 @@
+project: none
+configVersion: 1
+---
+image: [a, b, c]
+from: alpine
+---
+artifact: d
+from: alpine

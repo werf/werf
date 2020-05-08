@@ -1,17 +1,12 @@
 package util
 
 import (
-	"crypto/md5"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
-	"golang.org/x/crypto/sha3"
-
-	"github.com/google/uuid"
-
 	"github.com/spaolacci/murmur3"
+	"golang.org/x/crypto/sha3"
 )
 
 func MurmurHash(args ...string) string {
@@ -31,16 +26,6 @@ func Sha256Hash(args ...string) string {
 	return fmt.Sprintf("%x", sum)
 }
 
-func MD5Hash(args ...string) string {
-	h := md5.New()
-	h.Write([]byte(prepareHashArgs(args...)))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
 func prepareHashArgs(args ...string) string {
 	return strings.Join(args, ":::")
-}
-
-func UUIDToShortString(id uuid.UUID) string {
-	return hex.EncodeToString(id[:])
 }
