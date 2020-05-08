@@ -2,6 +2,7 @@ name: Documentation validation
 on:
   push:
     paths:
+      - '.github/workflows/docs_tests.yml'
       - 'cmd/**'
       - 'docs/**'
       - 'README.md'
@@ -67,6 +68,6 @@ jobs:
             --allow-hash-href \
             --empty-alt-ignore \
             --check_html \
-            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/" \
+            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/" \
             --url_swap  "https\://ru.werf.io:,https\://werf.io:" \
             ./_site/
