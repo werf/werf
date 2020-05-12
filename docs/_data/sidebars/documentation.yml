@@ -134,6 +134,9 @@ entries:
           - title: GitLab CI/CD integration
             url: /documentation/guides/gitlab_ci_cd_integration.html
 
+          - title: GitHub CI/CD integration
+            url: /documentation/guides/github_ci_cd_integration.html
+
           - title: Unsupported CI/CD integration
             url: /documentation/guides/unsupported_ci_cd_integration.html
 
