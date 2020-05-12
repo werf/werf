@@ -2,16 +2,14 @@
 title: Интеграция с GitLab CI/CD
 sidebar: documentation
 permalink: documentation/guides/gitlab_ci_cd_integration.html
-author: Artem Kladov <artem.kladov@flant.com>
+author: Artem Kladov, Alexey Igrychev <artem.kladov@flant.com,alexey.igrychev@flant.com>
 ---
 
 ## Обзор задачи
 
-В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI и werf.
+В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI/CD и werf. Сначала будут рассмотрены и объяснены примеры создания стадий запуска werf, затем в конце статьи будут приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ci.yml-для-готовых-workflow) для готовых вариантов workflow, один из которых предлагается выбрать.
 
-Окончательные версии .gitlab-ci.yml для различных workflow доступны [в конце статьи](#полный-gitlab-ciyml-для-различных-workflow). 
-
-> С общей информацией по организации CI/CD с помощью werf можно ознакомиться в [отдельной статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html)
+> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, отличающегося от готовых, можно ознакомиться в [общей статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html)
 
 ## Требования
 
@@ -92,7 +90,7 @@ Build and Publish:
   stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf build-and-publish
   except: [schedules]
   tags: [werf]
@@ -113,10 +111,10 @@ Build and Publish:
 
 ### Выкат приложения
 
-Набор контуров (а равно — окружений GitLab) в кластере Kubernetes для деплоя приложения зависит от ваших потребностей, но наиболее используемые контуры следующие:
-* Контур production. Финальный контур в pipeline, предназначенный для эксплуатации версии приложения, доставки конечному пользователю.
-* Контур staging. Контур, который может использоваться для проведения финального тестирования приложения в приближенной к production среде. 
-* Контур review. Динамический (временный) контур, используемый разработчиками при разработке для оценки работоспособности написанного кода, первичной оценки работоспособности приложения и т.п.
+Набор контуров (а равно — окружений GitLab) в кластере Kubernetes для деплоя приложения зависит от ваших потребностей, но наиболее используемые контуры, которые будут использоваться в приведённых конфигурациях — это:
+* [Контур production]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
+* [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
+* [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
 
 > Описанный набор и их функции — это не истина в последней инстанции и вы можете описывать CI/CD процессы под ваши нужны с произвольным количеством контуров со своей логикой. 
 > Далее будут представлены популярные стратегии и практики, на базе которых мы предлагаем выстраивать ваши процессы в GitLab CI 
@@ -128,7 +126,7 @@ Build and Publish:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -175,7 +173,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -205,7 +203,7 @@ Stop Review:
 
 ##### №1 Вручную 
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-pull-request-по-кнопке) 
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
 
 При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
@@ -230,7 +228,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -246,7 +244,7 @@ Stop Review:
 
 ##### №2 Автоматически по имени ветки
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого комита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
@@ -264,11 +262,11 @@ Review:
   rules:
     - if: $CI_MERGE_REQUEST_ID && $CI_COMMIT_REF_NAME =~ /^review-/
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -284,7 +282,7 @@ Stop Review:
 
 ##### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
@@ -296,7 +294,7 @@ Review:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - >
       # do optional deploy/dismiss
       
@@ -343,7 +341,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -362,14 +360,13 @@ Stop Review:
 
 #### Варианты организации staging и production окружений
 
-
 Предложенные далее варианты являются наиболее эффективными комбинациями правил выката **staging** и **production** окружений.
 
-В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных workflow, предложенных в [конце статьи](#полный-gitlab-ciyml-для-различных-workflow). 
+В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных готовых workflow, предложенных в [конце статьи](#полный-gitlab-ciyml-для-готовых-workflow). 
 
 ##### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious).
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -396,7 +393,7 @@ Deploy to Production:
 
 ##### №2 Push the Button
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button).
 
 Выкат **production** осуществляется по кнопке у комита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
@@ -423,7 +420,7 @@ Deploy to Production:
 
 ##### №3 Tag everything (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything).
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у комита в master.
 
@@ -451,7 +448,7 @@ Deploy to Production:
 
 ##### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-ветки-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch).
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -484,7 +481,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
   only: [schedules]
@@ -502,7 +499,7 @@ Cleanup:
 
 Стадия очистки запускается только по расписанию, которое вы можете определить открыв раздел `CI/CD` —> `Schedules` настроек проекта в GitLab. Нажмите кнопку `New schedule`, заполните описание задания и определите шаблон запуска в обычном cron-формате. В качестве ветки оставьте master (название ветки не влияет на процесс очистки), отметьте `Active` и сохраните pipeline.
 
-## Полный .gitlab-ci.yml для различных workflow
+## Полный .gitlab-ci.yml для готовых workflow
 
 <div class="tabs" style="display: grid">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_1')">№1 Fast and Furious (рекомендованный)</a>
@@ -516,7 +513,7 @@ Cleanup:
 #### Детали конфигурации 
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#1-fast-and-furious)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
@@ -538,7 +535,7 @@ Build and Publish:
   stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf build-and-publish
   except: [schedules]
   tags: [werf]
@@ -547,7 +544,7 @@ Build and Publish:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -557,7 +554,7 @@ Review:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - >
       # do optional deploy/dismiss
       
@@ -604,7 +601,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -636,7 +633,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
   only: [schedules]
@@ -650,7 +647,7 @@ Cleanup:
 #### Детали конфигурации
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#2-push-the-button)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -672,7 +669,7 @@ Build and Publish:
   stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf build-and-publish
   except: [schedules]
   tags: [werf]
@@ -681,7 +678,7 @@ Build and Publish:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -705,7 +702,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -737,7 +734,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
   only: [schedules]
@@ -751,7 +748,7 @@ Cleanup:
 #### Детали конфигурации
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#3-tag-everything)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -773,7 +770,7 @@ Build and Publish:
   stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf build-and-publish
   except: [schedules]
   tags: [werf]
@@ -782,7 +779,7 @@ Build and Publish:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -806,7 +803,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -838,7 +835,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
   only: [schedules]
@@ -852,7 +849,7 @@ Cleanup:
 #### Детали конфигурации
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#4-branch-branch-branch)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
@@ -874,7 +871,7 @@ Build and Publish:
   stage: build-and-publish
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf build-and-publish
   except: [schedules]
   tags: [werf]
@@ -883,7 +880,7 @@ Build and Publish:
   stage: deploy
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -907,7 +904,7 @@ Stop Review:
   stage: dismiss
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -938,7 +935,7 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --verbose --as-file)
+    - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup
   only: [schedules]

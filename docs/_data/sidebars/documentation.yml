@@ -84,6 +84,9 @@ entries:
         - title: Working with Docker registries
           url: /documentation/reference/working_with_docker_registries.html
 
+        - title: CI/CD workflows overview
+          url: /documentation/reference/ci_cd_workflows_overview.html
+
         - title: Plugging into CI/CD
           sfi:
 
