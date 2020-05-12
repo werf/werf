@@ -1,4 +1,4 @@
-name: Site deployment
+name: Website deployment
 on:
   pull_request:
     types: [labeled]
@@ -40,7 +40,7 @@ jobs:
     steps:
 
     # TODO: variables[review_sha]=${{ github.sha }} (currently, werf does not fetch PRs' refs)
-    - name: Trigger Review Job
+    - name: Deploy website to review
       run: |
         curl -X POST \
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
@@ -49,7 +49,7 @@ jobs:
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
       if: github.event_name == 'pull_request'
 
-    - name: Trigger Main Job
+    - name: Deploy website to production
       run: |
         curl -X POST \
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
