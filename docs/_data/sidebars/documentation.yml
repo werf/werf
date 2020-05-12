@@ -365,7 +365,7 @@ entries:
               - title: Базовый образ (обязательно)
                 url: /documentation/configuration/stapel_image/base_image.html
 
-              - title: Добавление Docker-инструкций
+              - title: Использование Docker-инструкций
                 url: /documentation/configuration/stapel_image/docker_directive.html
 
               - title: Добавление исходного кода из git-репозиториев
@@ -374,7 +374,7 @@ entries:
               - title: Запуск инструкций сборки
                 url: /documentation/configuration/stapel_image/assembly_instructions.html
 
-              - title: Монтирование, для уменьшения размера и ускорения сборки
+              - title: Ускорение сборки и уменьшение размера за счёт маунтов
                 url: /documentation/configuration/stapel_image/mount_directive.html
 
               - title: Импорт из артефактов и образов

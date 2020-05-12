@@ -1,5 +1,5 @@
 ---
-title: Добавление Docker-инструкций
+title: Использование Docker-инструкций
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>

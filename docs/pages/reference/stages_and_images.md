@@ -84,7 +84,7 @@ Left column contains a short description of dependencies, right column includes 
 </div>
 
 <div id="dependencies">
-{% for stage in site.data.stages.entries %}
+{% for stage in site.data.stages.en.entries %}
 <div class="stage {{stage.type}}">
   <div class="stage-body">
     <div class="stage-base">
