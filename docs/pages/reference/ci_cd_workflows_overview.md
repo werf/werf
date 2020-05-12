@@ -1,55 +1,57 @@
 ---
-title: Организация CI/CD с помощью werf
+title: CI/CD workflows overview
 sidebar: documentation
 permalink: documentation/reference/ci_cd_workflows_overview.html
 author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 
-В данной статье рассмотрим основные варианты организации CI/CD, которые можно реализовать с использованием werf.
+In this article we will describe what CI/CD means and overview CI/CD workflows, which can be implemented with werf.
 
-Цель организации CI/CD для нас проста: доставить новые изменения в коде до конечного пользователя как можно быстрее. CI/CD состоит из 2х частей: CI подразумевает непрерывное слияние изменений в основную кодовую базу, а CD непрерывную доставку этих изменений до пользователя.
+Let's define the main goal of using CI/CD for some project: deliver application code changes to the end user as fast as possible. CI/CD consists of 2 parts: CI means continuous integration of application code changes into main code base, and CD means continuous delivery of these changes to the end user.
 
-Сначала мы дадим понятия окружений и workflow, а затем перейдем к описанию готовых workflow, которые можно сконструировать из приведённых составляющих. Рекомендуется также ознакомится со следующими статьями для настройки конкретных CI/CD систем:
- - Инструкция для [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html).
- - Инструкция для [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+Firstly some basic terms like environment and workflow are defined, then workflow building blocks are defined and then there is a description of ready-to-use workflows, which can be constructed using provided workflow building blocks.
 
-## Основы
+It is recommended also to read one the following guides about CI/CD configuration for needed CI/CD system:
+ - [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
+ - [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
 
-> NOTICE: По тексту далее git можно интерпретировать как имя нарицательное для любой системы контроля версий, однако werf поддерживает лишь эту систему контроля версий. Предполагается знакомство читателя с такими терминами, связанными с git, как: ветка (branch), тег (tag), мастер (master), коммит (commit), слияние изменений (merge), rebase, реверт (revert), fast-forward merge, процедура git push-force. Рекомендуется ознакомится и понять каждый из приведенных терминов для полного понимания материала данной статьи.
+## Basics
 
-### Окружение
+> NOTICE: In the following text term "git" can be interpreted as a common name for any version control system, but werf supports only git version control system. It is supposed that reader is familiar with the following terms related to the git: branch, tag, master, commit, merge, rebase, fast-forward merge, git push-force procedure. It is recommended to get to know with these terms for full understanding of this article. 
+
+### Environment
 
 #### Production
 
-В этом окружении работает разрабатываемая система, это целевое окружение для всех изменений, которые делают разработчики системы. Этим окружением пользуются реальные пользователи в процессе эксплуатации системы.
+Real users interact with application in production environment. This is also the target environment for all application code changes, which are made by application developers.
 
-Существуют также так называемые _production-like_ окружения, особенность которых в том, что конфигурация выделенных для окружения ресурсов (инфраструктура, конфигурация железа, версии софта, операционная система, сетевая организация), а также внешние сервисы — по максимуму насколько возможно совпадают с production окружением. Есть нюансы, из-за которых различия могут быть, но в каждом конкретном _production-like_ окружении определяются свои допустимые риски связанные с различием с production окружением. Примеры таких окружений: [staging](#staging) и [testing](#testing) — рассмотрены далее.
+There are also so called _production-like_ environments. Production-like environment is separate from production, but have the same configuration of hardware and software, network infrastructure, operation system, software versions, etc. In real world there may be some differences though, but each project defines own accetable risks related to the difference between production-like and production environments. Example of production-like environments: [staging](#staging) and [testing](#testing). 
 
 #### Staging
 
-Staging — это [production-like окружение](#production), в котором происходит финальная проверка перед выкатом на [production](#production). Staging даёт возможность полнее протестировать бизнес-функции приложения и обычно это то место, куда идут менеджеры, тестировщики, заказчики.
+Staging is a [production-like environment](#production) which serves as a playground to check your application before deploying to production. Staging is also the place to test new business function by managers, testers and client customers. Real users do not interact with staging environment.
 
-В случае, если приложение связано с какими либо внешними сервисами, staging — это единственное окружение помимо [production](#production), где можно проверить как новая версия работает в связке с реальными версиями внешних систем.
+In the case when your application uses some external services, then staging typically is the only environment (besides production itself) which uses the same external services APIs and versions as production does.
 
 #### Testing
 
-Testing — это [production-like окружение](#production), цель которого: выявить проблемы, которые возникнут у приложения на [production](#production) окружении. В данном окружении могут работать "долгие" автоматизированные тесты приложения, которые проверяют множество аспектов его работы. Чем больше различий между testing и production, тем больше рисков получить нерабочее приложение после очередного выката, поэтому рекомендуется максимально повторять production окружение (одинаковый софт, версии, библиотеки, IP-адреса и порты, железо и т.д.).
+Testing is a [production-like environment](#production) which have the following goal: reveal problems which will occur with the new version of application in the production environment. Some long-running application tests may use this environment to implement full fledged application testing in production-like environment. The more difference between testing and production environments the more risks to deploy application with bugs to the production environment. That's why it is recomended to have production-like environment as similar to production as possible (same software versions, libraries, operating system, IP-addresses and ports, hardware etc.). 
 
 #### Review
 
-Динамический (временный) контур, используемый разработчиками при разработке для оценки работоспособности написанного кода, первичной оценки работоспособности приложения и проведения таких экспериментов, которые нельзя делать на [producion-like окружениях](#production).
+Dynamical (temporary) environment which used by an application developers to check newly written code and perform such experiments that are not allowed in [production-like environmnets](#production).    
 
-Особенность review-окружений в том, что их можно создавать динамически в любых количествах (в разумных пределах, насколько позволяют ресурсы). Как правило создание и удаление такого окружения инициируется разработчиком через CI/CD систему, также такое окружение может быть удалено автоматически после отсутствия активности в течение некоторого времени.
+It is possible to dynamically create arbitrary number of review environments (as resources permit). Application developer usually creates and terminates such environment using CI/CD system. Also review environment could be removed automatically when some time of inactivity passed.
 
-### Релизы и CI/CD
+### Releases and CI/CD
 
-**Релиз** — это оформленная версия приложения с какими-то изменениями с момента предыдущего релиза.
+**Release** — is a prepared application version that contains some changes since previous application release.
 
-В каскадном (или водопадном) подходе к разработке софта релизы обычно делаются редко и содержат множество изменений. Доставка таких релизов в окружения также происходит редко, но в этот момент все усилия команды тратятся на слежение за новой версией, исправление ошибок, проверку что всё прошло успешно. Обычно это отдельный и очень ответственный этап разработки, и пока он длится, новых изменений никто не делает (а если и делает, то пока нету возможности доставить их пользователю до нового релиза). Новая версия ещё не была проверена в реальной жизни, или была проверена тестами, но этого всё равно может быть недостаточно — с этим связаны большие риски, что новая версия приложения не заработает.
+In waterfall model releases are rare (monthly, half-early, early, ...) and each release usually contains big blob of changes. Deployment of such release is also a rare and special event. Developers team working hard to make new version work and fix new bugs. Usually this is separate and very important stage of development process. And while this stage is active no more new features for the user will be made (even if some of developers implement new cool feature instead of debugging new release — this feature will only be available after next release). New application version contains many changes and was not tested in real life yet. So the probability that new version will perform well is very low (even if application uses automatic tests). Application users are also suffer during this stage. 
 
-В CI/CD подходе релизы делаются часто и релизы могут содержать мало изменений. Поощряется, чтобы разработчики разбивали новые фичи на такие куски, которые можно сразу обкатать на production-like или production окружениях. Более того, разработчики, которые прониклись таким подходом, сами хотят как можно быстрее пустить новый код в работу и получить обратную связь — после этого опираясь на проверенный код проще делаются новые изменения. До конца доделаным можно считать лишь тот код, который не только написан, но и задействован в production. 
+On the contrary, releases contain small portions of changes and releases are frequent in CI/CD practice. Developers are encouraged to implement new features in such a way so it is possible to instantly check and use new version in production-like or production environment. Moreover developers who are inspired by this approach usually want to push and check their newly written code to the production-like and production as fast as possible and then it is easier to perform new changes on top of previous changes, which have been proved to work well. Only code that is written and used in production can be considered as working.
 
-Важный момент в организации настоящего CI/CD процесса в том, чтобы изменения в коде быстро доносились до production-like окружений — будь то staging, testing или же сам production. Типичным антипаттерном при использовании CI/CD является единовременный выкат на production-like или production окружение множества накопившихся изменений, сделанных ранее в проекте. Такое может происходить из-за неправильной организации управления проектом, в которой разработчикам не позволяется выкатывать на production-like окружения без каких-то лишних согласований (естественно проверку кода автоматическими тестами никто не отменял). Либо это может быть связано с тем, что CI/CD система технически построена на неудобных инструментах и примитивах, и со стороны кажется, что она похожа на CI/CD, а по факту неудобна для разработчиков (например, использование git-тегов с сообщением для каждого релиза).
+The important moment to implement a real CI/CD process is to deploy new code to production-like environment (staging, testing or production itself) fast and early. Typical antipattern of CI/CD practice is to deploy to production-like or production environment many accumulated changes in the source code. In other words use something resembling waterfall model on top of components designed to implement CI/CD practice. Такое может происходить из-за неправильной организации управления проектом, в которой разработчикам не позволяется выкатывать на production-like окружения без каких-то лишних согласований (естественно проверку кода автоматическими тестами никто не отменял). Либо это может быть связано с тем, что CI/CD система технически построена на неудобных инструментах и примитивах, и со стороны кажется, что она похожа на CI/CD, а по факту неудобна для разработчиков (например, использование git-тегов с сообщением для каждого релиза).
 
 Хорошая CI/CD система должна помогать разработчикам удобно доносить изменения до production в течение минут, иметь возможности отката, тестировать эти изменения на лету, но не ставить лишних барьеров и не требовать бессмысленных повторяющихся действий.
 
