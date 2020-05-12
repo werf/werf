@@ -520,7 +520,7 @@ All of these annotations can be combined and used together for resource.
 
 #### Failures allowed per replica
 
-`"werf.io/failures-allowed-per-replica": DIGIT`
+`"werf.io/failures-allowed-per-replica": "NUMBER"`
 
 By default 1 failure per replica is allowed before considering whole deploy process as failed. This setting is related to [fail mode](#fail-mode): it defines a threshold before fail mode comes into play.
 
@@ -538,9 +538,9 @@ Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) that applies to
 
 #### Skip logs
 
-`"werf.io/skip-logs": true|false`
+`"werf.io/skip-logs": "true"|"false"`
 
-Set to `true` to suppress all logs of all containers of all Pods owned by resource with this annotation. Annotation is disabled by default.
+Set to `"true"` to suppress all logs of all containers of all Pods owned by resource with this annotation. Annotation is disabled by default.
 
 #### Skip logs for containers
 
@@ -556,9 +556,9 @@ Comman-separated list on containers names of all Pods owned by resource with thi
 
 #### Show service messages
 
-`"werf.io/show-service-messages": true|false`
+`"werf.io/show-service-messages": "true"|"false"`
 
-Set to `true` to enable additional debug info for resource including Kubernetes events in realtime text stream during tracking. By default werf will show these service messages only when this resource has failed whole deploy process.
+Set to `"true"` to enable additional debug info for resource including Kubernetes events in realtime text stream during tracking. By default werf will show these service messages only when this resource has failed whole deploy process.
 
 ### Annotate and label chart resources
 
