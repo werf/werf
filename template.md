@@ -162,7 +162,7 @@ Werf подразумевает что ваша сборка будет прои
 Не забыв [установить werf](https://werf.io/documentation/guides/installation.html) локально, запускаем сборку с помощью [werf build](https://werf.io/documentation/cli/main/build.html)!
 
 ```
-user:~/{{chat}}$  werf build --stages-storage :local
+$  werf build --stages-storage :local
 ```
 
 ![alt_text](images/-0.gif "image_tooltip")
