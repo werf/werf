@@ -165,8 +165,8 @@ func TestKubernetesNamespace(t *testing.T) {
 		},
 		{
 			name:   "maxSizeExceeded",
-			data:   strings.Repeat("x", dnsLabelMaxSize+1),
-			result: strings.Repeat("x", dnsLabelMaxSize-servicePartSize) + "-afd4efcd",
+			data:   strings.Repeat("x", kubernetesNamespaceMaxSize+1),
+			result: strings.Repeat("x", kubernetesNamespaceMaxSize-servicePartSize) + "-afd4efcd",
 		},
 	}
 
@@ -177,8 +177,8 @@ func TestKubernetesNamespace(t *testing.T) {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
 			}
 
-			if len(result) > dnsLabelMaxSize {
-				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", dnsLabelMaxSize, len(result))
+			if len(result) > kubernetesNamespaceMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", kubernetesNamespaceMaxSize, len(result))
 			}
 		})
 	}
