@@ -169,21 +169,21 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 }
 
 func (s *BaseStage) selectStagesAncestorsByGitMappings(stages []*image.StageDescription) ([]*image.StageDescription, error) {
-	suitableStages := []*image.StageDescription{}
-	currentCommits := make(map[string]string)
+	var suitableStages []*image.StageDescription
+	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
 		currentCommit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
-		currentCommits[gitMapping.Name] = currentCommit
+		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
 	}
 
 ScanImages:
 	for _, stageDesc := range stages {
-		for _, gitMapping := range s.gitMappings {
-			currentCommit := currentCommits[gitMapping.Name]
+		for i, gitMapping := range s.gitMappings {
+			currentCommit := currentCommitsByIndex[i]
 
 			commit := gitMapping.GetGitCommitFromImageLabels(stageDesc.Info.Labels)
 			if commit != "" {
