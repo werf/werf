@@ -1,17 +1,33 @@
 package image
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
 type StageID struct {
 	Signature string `json:"signature"`
-	UniqueID  string `json:"uniqueID"`
+	UniqueID  int64  `json:"uniqueID"`
 }
 
 func (id StageID) String() string {
 	return fmt.Sprintf("signature:%s uniqueID:%s", id.Signature, id.UniqueID)
 }
 
+func (id StageID) UniqueIDAsTime() time.Time {
+	return time.Unix(id.UniqueID/1000, id.UniqueID%1000)
+}
+
 type StageDescription struct {
 	StageID *StageID `json:"stageID"`
 	Info    *Info    `json:"info"`
+}
+
+func ParseUniqueIDAsTimestamp(uniqueID string) (int64, error) {
+	if timestamp, err := strconv.ParseInt(uniqueID, 10, 64); err != nil {
+		return 0, err
+	} else {
+		return timestamp, nil
+	}
 }

@@ -2,7 +2,9 @@ package build
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -342,6 +344,13 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) error {
 	stageImage := stg.GetImage()
 
+	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD"); v != "" {
+		seconds := 0
+		fmt.Sscanf(v, "%d", &seconds)
+		fmt.Printf("Sleeping %d seconds before building new image by signature %s...\n", seconds, stg.GetSignature())
+		time.Sleep(time.Duration(seconds) * time.Second)
+	}
+
 	if err := logboek.WithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
 		if err := stageImage.Build(phase.ImageBuildOptions); err != nil {
 			return err
@@ -349,6 +358,13 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %s with signature %s: %s", stg.Name(), stg.GetSignature(), err)
+	}
+
+	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
+		seconds := 0
+		fmt.Sscanf(v, "%d", &seconds)
+		fmt.Printf("Sleeping %d seconds before saving newly built image %s into stages storage %s by signature %s...\n", seconds, stg.GetImage().GetBuiltId(), phase.Conveyor.StagesManager.StagesStorage.String(), stg.GetSignature())
+		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
 	if lock, err := phase.Conveyor.StorageLockManager.LockStage(phase.Conveyor.projectName(), stg.GetSignature()); err != nil {

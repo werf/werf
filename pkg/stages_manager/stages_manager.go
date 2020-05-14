@@ -389,13 +389,12 @@ func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.Stage
 	}
 }
 
-func (m *StagesManager) GenerateStageUniqueID(signature string, stages []*image.StageDescription) (string, string) {
+func (m *StagesManager) GenerateStageUniqueID(signature string, stages []*image.StageDescription) (string, int64) {
 	var imageName string
 
 	for {
 		timeNow := time.Now().UTC()
-		timeNowMicroseconds := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
-		uniqueID := fmt.Sprintf("%d", timeNowMicroseconds)
+		uniqueID := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 		imageName = m.StagesStorage.ConstructStageImageName(m.ProjectName, signature, uniqueID)
 
 		for _, stageDesc := range stages {

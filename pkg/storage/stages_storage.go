@@ -14,10 +14,10 @@ const (
 type StagesStorage interface {
 	GetAllStages(projectName string) ([]image.StageID, error)
 	GetStagesBySignature(projectName, signature string) ([]image.StageID, error)
-	GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error)
+	GetStageDescription(projectName, signature string, uniqueID int64) (*image.StageDescription, error)
 	DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error
 
-	ConstructStageImageName(projectName, signature, uniqueID string) string
+	ConstructStageImageName(projectName, signature string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
 	FetchImage(img container_runtime.Image) error
