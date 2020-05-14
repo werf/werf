@@ -167,22 +167,21 @@ func (s *BaseStage) selectCacheImageByOldestCreationTimestamp(images []*storage.
 }
 
 func (s *BaseStage) selectCacheImagesAncestorsByGitMappings(images []*storage.ImageInfo) ([]*storage.ImageInfo, error) {
-	suitableImages := []*storage.ImageInfo{}
-	currentCommits := make(map[string]string)
+	var suitableStages []*image.StageDescription
+	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
 		currentCommit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
-		currentCommits[gitMapping.Name] = currentCommit
+		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
 	}
 
 ScanImages:
 	for _, img := range images {
 		for _, gitMapping := range s.gitMappings {
-			currentCommit := currentCommits[gitMapping.Name]
-
+			currentCommit := currentCommitsByIndex[i]
 			commit := gitMapping.GetGitCommitFromImageLabels(img.Labels)
 			if commit != "" {
 				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
