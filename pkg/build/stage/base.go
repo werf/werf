@@ -161,7 +161,7 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	for _, stageDesc := range stages {
 		if oldestStage == nil {
 			oldestStage = stageDesc
-		} else if stageDesc.Info.GetCreatedAt().Before(oldestStage.Info.GetCreatedAt()) {
+		} else if stageDesc.StageID.UniqueIDAsTime().Before(oldestStage.StageID.UniqueIDAsTime()) {
 			oldestStage = stageDesc
 		}
 	}

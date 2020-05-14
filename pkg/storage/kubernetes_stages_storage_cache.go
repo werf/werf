@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/flant/logboek"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -36,7 +38,8 @@ func (cache *KubernetesStagesStorageCache) extractCacheData(obj *v1.ConfigMap) (
 		var cacheData *KubernetesStagesStorageCacheData
 
 		if err := json.Unmarshal([]byte(data), &cacheData); err != nil {
-			return nil, fmt.Errorf("invalid json in cm/%s by key %q: %s", obj.Name, StagesStorageCacheConfigMapKey, err)
+			logboek.ErrF("Error unmarshalling stages storage cache json in cm/%s by key %q: %s: will ignore cache\n", obj.Name, StagesStorageCacheConfigMapKey, err)
+			return nil, nil
 		}
 
 		return cacheData, nil

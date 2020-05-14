@@ -17,15 +17,19 @@ import (
 const (
 	LocalStage_ImageRepoPrefix = "werf-stages-storage/"
 	LocalStage_ImageRepoFormat = "werf-stages-storage/%s"
-	LocalStage_ImageFormat     = "werf-stages-storage/%s:%s-%s"
+	LocalStage_ImageFormat     = "werf-stages-storage/%s:%s-%d"
 
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
 )
 
-func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, string) {
+func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
-	return parts[0], parts[1]
+	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
+		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %s", parts[1], err)
+	} else {
+		return parts[0], uniqueID, nil
+	}
 }
 
 type LocalDockerServerStagesStorage struct {
@@ -37,7 +41,7 @@ func NewLocalDockerServerStagesStorage(localDockerServerRuntime *container_runti
 	return &LocalDockerServerStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
 }
 
-func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
+func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, signature string, uniqueID int64) string {
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
@@ -48,7 +52,7 @@ func (storage *LocalDockerServerStagesStorage) GetAllStages(projectName string) 
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	return convertToStagesList(images), nil
+	return convertToStagesList(images)
 }
 
 func (storage *LocalDockerServerStagesStorage) DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error {
@@ -90,7 +94,7 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error) {
+func (storage *LocalDockerServerStagesStorage) GetStageDescription(projectName, signature string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
 
 	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(stageImageName); err != nil {
@@ -151,7 +155,7 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName stri
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	res := []string{}
+	var res []string
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
@@ -176,14 +180,14 @@ func (storage *LocalDockerServerStagesStorage) GetStagesBySignature(projectName,
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
 	}
 
-	return convertToStagesList(images), nil
+	return convertToStagesList(images)
 }
 
-func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(img container_runtime.Image) (bool, error) {
+func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(_ container_runtime.Image) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) FetchImage(img container_runtime.Image) error {
+func (storage *LocalDockerServerStagesStorage) FetchImage(_ container_runtime.Image) error {
 	return nil
 }
 
@@ -301,7 +305,9 @@ func logContainerName(container types.Container) string {
 	return name
 }
 
-func convertToStagesList(imageSummaryList []types.ImageSummary) (stagesList []image.StageID) {
+func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID, error) {
+	var stagesList []image.StageID
+
 	for _, imageSummary := range imageSummaryList {
 		repoTags := imageSummary.RepoTags
 		if len(repoTags) == 0 {
@@ -310,12 +316,15 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) (stagesList []im
 
 		for _, repoTag := range repoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
-			signature, uniqueID := getSignatureAndUniqueIDFromLocalStageImageTag(tag)
-			stagesList = append(stagesList, image.StageID{Signature: signature, UniqueID: uniqueID})
+			if signature, uniqueID, err := getSignatureAndUniqueIDFromLocalStageImageTag(tag); err != nil {
+				return nil, err
+			} else {
+				stagesList = append(stagesList, image.StageID{Signature: signature, UniqueID: uniqueID})
+			}
 		}
 	}
 
-	return stagesList
+	return stagesList, nil
 }
 
 func deleteRepoImageListInLocalDockerServerStagesStorage(imageInfoList []*image.Info, rmiForce bool) error {

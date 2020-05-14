@@ -18,15 +18,19 @@ import (
 )
 
 const (
-	RepoStage_ImageFormat = "%s:%s-%s"
+	RepoStage_ImageFormat = "%s:%s-%d"
 
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 )
 
-func getSignatureAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, string) {
+func getSignatureAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
-	return parts[0], parts[1]
+	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
+		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %s", parts[1], err)
+	} else {
+		return parts[0], uniqueID, nil
+	}
 }
 
 type RepoStagesStorage struct {
@@ -55,7 +59,7 @@ func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime
 	}, nil
 }
 
-func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature, uniqueID string) string {
+func (storage *RepoStagesStorage) ConstructStageImageName(projectName, signature string, uniqueID int64) string {
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
 }
 
@@ -72,10 +76,13 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 				continue
 			}
 
-			signature, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
-			res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+			if signature, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+				return nil, err
+			} else {
+				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
 
-			logboek.Debug.LogF("Selected stage by signature %q uniqueID %q\n", signature, uniqueID)
+				logboek.Debug.LogF("Selected stage by signature %q uniqueID %d\n", signature, uniqueID)
+			}
 		}
 
 		return res, nil
@@ -110,11 +117,12 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 				logboek.Debug.LogF("Discard tag %q: should have prefix %q\n", tag, signature)
 				continue
 			}
-			_, uniqueID := getSignatureAndUniqueIDFromRepoStageImageTag(tag)
-
-			logboek.Debug.LogF("Tag %q is suitable for signature %q\n", tag, signature)
-
-			res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+			if _, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+				return nil, err
+			} else {
+				logboek.Debug.LogF("Tag %q is suitable for signature %q\n", tag, signature)
+				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+			}
 		}
 	}
 
@@ -123,10 +131,10 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) GetStageDescription(projectName, signature, uniqueID string) (*image.StageDescription, error) {
+func (storage *RepoStagesStorage) GetStageDescription(projectName, signature string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
 
-	logboek.Debug.LogF("-- RepoStagesStorage GetStageDescription %s %s %s\n", projectName, signature, uniqueID)
+	logboek.Debug.LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, signature, uniqueID)
 	logboek.Debug.LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(stageImageName); err != nil {
@@ -204,7 +212,7 @@ func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) 
 func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string, error) {
 	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
-	res := []string{}
+	var res []string
 
 	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to get repo %q tags: %s", storage.RepoAddress, err)

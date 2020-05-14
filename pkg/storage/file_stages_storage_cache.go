@@ -118,19 +118,19 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
 		return false, nil, nil
 	} else if err != nil {
-		logboek.ErrF("Error accessing file %s: %s: ignore cache\n", sigFile, err)
+		logboek.ErrF("Error accessing file %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 
 	dataBytes, err := ioutil.ReadFile(sigFile)
 	if err != nil {
-		logboek.ErrF("Error reading file %s: %s: ignore cache\n", sigFile, err)
+		logboek.ErrF("Error reading file %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 
 	res := &StagesStorageCacheRecord{}
 	if err := json.Unmarshal(dataBytes, res); err != nil {
-		logboek.ErrF("Error unmarshalling json from %s: %s: ignoring cache\n", sigFile, err)
+		logboek.ErrF("Error unmarshalling json from %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 
