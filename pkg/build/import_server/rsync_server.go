@@ -53,6 +53,7 @@ func RunRsyncServer(dockerImageName string, tmpDir string) (*RsyncServer, error)
 lock file = /.werf/rsyncd.lock
 log file = /.werf/rsyncd.log
 uid = root
+gid = root
 port = %s
 
 [import]
