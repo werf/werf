@@ -509,15 +509,13 @@ rails:
 
 #### Деплой в Gitlab CI
 
-Далее нам нужно описать стадии выката.
+Опишем деплой приложения в Kubernetes. Деплой будет осуществляться на два стенда: staging и production.
 
-В общей сложности они у нас будут отличаться только параметрами, потому мы напишем для них небольшой шаблон:
+Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды: 
 
 ```
 .base_deploy: &base_deploy
   script:
-    - type multiwerf && source <(multiwerf use ${WERF_VERSION})
-    - type werf && source <(werf ci-env gitlab --tagging-strategy stages-signature --verbose)
     - werf deploy --stages-storage :local
   dependencies:
     - Build
@@ -525,47 +523,35 @@ rails:
     - article-werf
 ```
 
-Скрипт стадий выката отличается от сборки всего одной командой:
-
-```
-    - werf deploy --stages-storage :local
-```
-
-```
-.base_deploy:
-  stage: deploy
-  script:
-    - werf deploy
-      --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build
-  tags:
-    - werf
-  except:
-    - schedules
-
-Deploy to stage:
-  extends: .base_deploy
-  environment:
-    name: stage
-    url: http://example-1-stage.example.com
-  only:
-    - master
-
-Deploy to production:
-  extends: .base_deploy
-  environment:
-    name: production
-    url: http://example-1.example.com
-  only:
-    - master
-  when: manual
+Выкат, например, на Staging, будет выглядеть так: 
+ 
+ ```
+ Deploy to Stage:
+   extends: .base_deploy
+   stage: deploy
+   environment:
+     name: stage
+   except:
+     - schedules
+   only:
+     - merge_requests
+   when: manual
 ```
 
+Нет необходимости пробрасывать переменные окружения, создаваемые GitLab CI — этим занимается Werf. Достаточно только указать название стенда
 
-В данном файле мы описали базовые правила для деплоя (base_deploy) и расширили их на выкат в 2 окружения (у нас это будут разные namespaces в kubernetes). Для данного приложения мы хотим производить выкат из master ветки автоматически в stage окружение и вручную в production. Environment.url передается в base_deploy и преобразуется в hostname без указания схемы. Данный подход позволяет воспользоваться быстрым открытием нашего приложения в браузере из интерфейса gitlab.
+```yaml
+environment:
+     name: stage
+```
 
-После пуша всех изменений в gitlab - у нас автоматически запускается сборка и деплой приложения в наш kubernetes кластер.
+_Обратите внимание: домены каждого из стендов указываются в helm-шаблонах._
+
+_Остальные настройки подробно описывать не будем, разобраться в них можно с [помощью документации Gitlab](https://docs.gitlab.com/ce/ci/yaml/)_
+
+После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Stage.
+
+![alt_text](images/-6.png "image_tooltip")
 
 Посмотреть статус выполнения pipeline можно в интерфейсе gitlab **CI / CD - Pipelines**
 
