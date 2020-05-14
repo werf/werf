@@ -21,10 +21,8 @@ var (
 	projectNameRegex   = regexp.MustCompile(`^(?:[a-z0-9]|[a-z0-9][a-z0-9-]*[a-z0-9])$`)
 	projectNameMaxSize = 50
 
-	dnsLabelRegex   = regexp.MustCompile(`^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$`)
-	dnsLabelMaxSize = 63
-
-	helmReleaseMaxSize = 53
+	kubernetesNamespaceMaxSize = 63
+	helmReleaseMaxSize         = 53
 )
 
 func Slug(data string) string {
@@ -36,61 +34,61 @@ func Slug(data string) string {
 }
 
 func Project(name string) string {
-	if shouldNotBeSlugged(name, projectNameRegex, projectNameMaxSize) {
-		return name
+	if err := validateProject(name); err != nil {
+		res := slugify(name)
+		if len(res) > projectNameMaxSize {
+			res = res[:projectNameMaxSize]
+		}
+		return res
 	}
-
-	res := slugify(name)
-
-	if len(res) > projectNameMaxSize {
-		res = res[:projectNameMaxSize]
-	}
-
-	return res
+	return name
 }
 
 func ValidateProject(name string) error {
+	return validateProject(name)
+}
+
+func validateProject(name string) error {
 	if shouldNotBeSlugged(name, projectNameRegex, projectNameMaxSize) {
 		return nil
 	}
-	return fmt.Errorf("Project name should comply with regex '%s' and be maximum %d chars", projectNameRegex, projectNameMaxSize)
+	return fmt.Errorf("project name should comply with regex '%s' and be maximum %d chars", projectNameRegex, projectNameMaxSize)
 }
 
-func DockerTag(tag string) string {
-	if shouldNotBeSlugged(tag, dockerTagRegexp, dockerTagMaxSize) {
-		return tag
+func DockerTag(name string) string {
+	if err := validateDockerTag(name); err != nil {
+		return slug(name, dockerTagMaxSize)
 	}
-
-	return slug(tag, dockerTagMaxSize)
+	return name
 }
 
-func ValidateDockerTag(tag string) error {
-	if shouldNotBeSlugged(tag, dockerTagRegexp, dockerTagMaxSize) {
+func ValidateDockerTag(name string) error {
+	return validateDockerTag(name)
+}
+
+func validateDockerTag(name string) error {
+	if shouldNotBeSlugged(name, dockerTagRegexp, dockerTagMaxSize) {
 		return nil
 	}
-	return fmt.Errorf("Docker tag should comply with regex '%s' and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
+	return fmt.Errorf("docker tag should comply with regex '%s' and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
 }
 
-func KubernetesNamespace(namespace string) string {
-	if shouldNotBeSlugged(namespace, dnsLabelRegex, dnsLabelMaxSize) {
-		return namespace
+func KubernetesNamespace(name string) string {
+	if err := validateKubernetesNamespace(name); err != nil {
+		return slug(name, kubernetesNamespaceMaxSize)
 	}
-
-	return slug(namespace, dnsLabelMaxSize)
+	return name
 }
 
 func ValidateKubernetesNamespace(namespace string) error {
-	if shouldNotBeSlugged(namespace, dnsLabelRegex, dnsLabelMaxSize) {
-		return nil
-	}
-	return fmt.Errorf("Kubernetes namespace should comply with DNS Label requirements: %s and %d bytes max", dnsLabelRegex, dnsLabelMaxSize)
+	return validateKubernetesNamespace(namespace)
 }
 
-func validateHelmRelease(name string) error {
-	errorMsgPrefix := fmt.Sprintf("Helm release name should be a valid DNS-1123 subdomain and be maximum %d chars", helmReleaseMaxSize)
+func validateKubernetesNamespace(name string) error {
+	errorMsgPrefix := fmt.Sprintf("kubernetes namespace should be a valid DNS-1123 subdomain")
 	if len(name) == 0 {
 		return nil
-	} else if len(name) > helmReleaseMaxSize {
+	} else if len(name) > kubernetesNamespaceMaxSize {
 		return fmt.Errorf("%s: %q is %d chars long", errorMsgPrefix, name, len(name))
 	} else if msgs := validation.IsDNS1123Subdomain(name); len(msgs) > 0 {
 		return fmt.Errorf("%s: %s", errorMsgPrefix, strings.Join(msgs, ", "))
@@ -107,6 +105,18 @@ func HelmRelease(name string) string {
 
 func ValidateHelmRelease(name string) error {
 	return validateHelmRelease(name)
+}
+
+func validateHelmRelease(name string) error {
+	errorMsgPrefix := fmt.Sprintf("helm release name should be a valid DNS-1123 subdomain and be maximum %d chars", helmReleaseMaxSize)
+	if len(name) == 0 {
+		return nil
+	} else if len(name) > helmReleaseMaxSize {
+		return fmt.Errorf("%s: %q is %d chars long", errorMsgPrefix, name, len(name))
+	} else if msgs := validation.IsDNS1123Subdomain(name); len(msgs) > 0 {
+		return fmt.Errorf("%s: %s", errorMsgPrefix, strings.Join(msgs, ", "))
+	}
+	return nil
 }
 
 func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
