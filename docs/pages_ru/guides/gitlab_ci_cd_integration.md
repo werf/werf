@@ -7,9 +7,32 @@ author: Artem Kladov, Alexey Igrychev <artem.kladov@flant.com,alexey.igrychev@fl
 
 ## Обзор задачи
 
-В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI/CD и werf. Сначала будут рассмотрены и объяснены примеры создания стадий запуска werf, затем в конце статьи будут приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ci.yml-для-готовых-workflow) для готовых вариантов workflow, один из которых предлагается выбрать.
+В статье рассматриваются различные варианты настройки CI/CD с использованием GitLab CI/CD и werf.
 
-> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, отличающегося от готовых, можно ознакомиться в [общей статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html)
+Конечный pipeline состоит из следующего набора стадий:
+* `build-and-publish` — стадия сборки и публикации образов приложения;
+* `deploy` — стадия деплоя приложения для одного из контуров кластера;
+* `dismiss` — стадия удаления приложения для review окружения;
+* `cleanup` — стадия очистки хранилища стадий и Docker registry.
+
+Набор контуров (а равно — окружений GitLab) в кластере Kubernetes может варьироваться в зависимости от многих факторов.
+В статье будут приведены различные варианты организации окружений для следующих:
+* [Контур production]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
+* [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
+* [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
+
+Далее последовательно рассматриваются стадии pipeline и различные варианты их организации. Изложение построено от общего к частному. В конце статьи приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ci.yml-для-готовых-workflow) для готовых workflow.
+
+Независимо от workflow, все версии конфигурации подчиняются следующим правилам:
+* [*Сборка и публикация*](#сборка-и-публикация-образов-приложения) выполняется при каждом push в репозитории.
+* [*Выкат/удаление* review окружений](#варианты-организации-review-окружения):
+  * *Выкат* на review окружение возможен только в рамках Merge Request (MR).
+  * Review окружения удаляются с помощью инструментария GitHub (по кнопке в разделе Environment), автоматически при удалении ветки или отсутствии активности в MR в течение суток.
+* [*Очистка*](#очистка-образов) запускается один раз в день по расписанию на master.
+
+Для выкатов review окружения и staging и production окружений предложены самые популярные варианты по организации. Каждый вариант для staging и production окружений сопровождается всевозможными способами отката релиза в production.
+
+> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, можно ознакомиться в [общей статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html)
 
 ## Требования
 
@@ -17,6 +40,7 @@ author: Artem Kladov, Alexey Igrychev <artem.kladov@flant.com,alexey.igrychev@fl
 * GitLab-сервер версии выше 10.x либо учетная запись на [gitlab.com](https://gitlab.com/).
 * Docker registry, встроенный в GitLab или выделенный.
 * Приложение, которое успешно собирается и деплоится с werf.
+* Понимание [основных концептов GitLab CI/CD](https://docs.gitlab.com/ee/ci/).
 
 ## Инфраструктура
 
@@ -75,15 +99,7 @@ author: Artem Kladov, Alexey Igrychev <artem.kladov@flant.com,alexey.igrychev@fl
 
 После того, как GitLab-runner настроен, можно переходить к настройке pipeline.
 
-## Pipeline
-
-В статье будет рассмотрен pipeline состоящий из следующего набора стадий:
-* `build-and-publish` — стадия сборки и публикации образов приложения;
-* `deploy` — стадия деплоя приложения для одного из контуров кластера;
-* `dismiss` — стадия удаления приложения для review окружения;
-* `cleanup` — стадия очистки хранилища стадий и Docker registry.
-
-### Сборка и публикация образов приложения
+## Сборка и публикация образов приложения
 
 ```yaml
 Build and Publish:
@@ -107,17 +123,7 @@ Build and Publish:
 
 Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker)).   
 
-> Для удаления образов из встроенного в GitLab Docker registry требуется `Personal Access Token`. Подробнее далее в разделе посвящённом [очистке](#очистка-образов)
-
-### Выкат приложения
-
-Набор контуров (а равно — окружений GitLab) в кластере Kubernetes для деплоя приложения зависит от ваших потребностей, но наиболее используемые контуры, которые будут использоваться в приведённых конфигурациях — это:
-* [Контур production]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
-* [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
-* [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
-
-> Описанный набор и их функции — это не истина в последней инстанции и вы можете описывать CI/CD процессы под ваши нужны с произвольным количеством контуров со своей логикой. 
-> Далее будут представлены популярные стратегии и практики, на базе которых мы предлагаем выстраивать ваши процессы в GitLab CI 
+## Выкат приложения
 
 Прежде всего необходимо описать шаблон, общую часть для деплоя в любой контур, что позволит уменьшить размер файла `.gitlab-ci.yml`, улучшит его читаемость, а также позволит далее сосредоточиться на workflow.
 
@@ -137,22 +143,27 @@ Build and Publish:
 При использовании шаблона `base_deploy` для каждого контура будет определяться своё окружение GitLab:                
 
 ```yaml
-environment:
-  name: <environment name>
-  url: <url>
+Example:
+  <<: *base_deploy
+  environment:
+    name: <environment name>
+    url: <url>
+    ...
   ...
 ```
 
-При выполнении задания, `werf ci-env` устанавливает переменную `global.env` в соответствии с именем окружения GitLab (`CI_ENVIRONMENT_SLUG`).
+При выполнении задания, `werf ci-env` устанавливает переменную `WERF_ENV` в соответствии с именем окружения GitLab (`CI_ENVIRONMENT_SLUG`).
 
-Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.global.env`.
+Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.global.env`, что соответствует значению опции `--env` или переменной окружения `WERF_ENV`.
 
 Также в шаблоне используется адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `global.ci_url`. 
 Это значение может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов.
 
-#### Варианты организации review окружения
+Далее будут представлены популярные стратегии и практики, на базе которых мы предлагаем выстраивать ваши процессы в GitLab. 
 
-Как уже было сказано ранее, review окружение это временный контур, поэтому помимо выката у этого окружения также должна быть и очистка.
+### Варианты организации review окружения
+
+Как уже было сказано ранее, review окружение — это временный контур, поэтому помимо выката, у этого окружения также должна быть и очистка.
 
 Рассмотрим базовые конфигурации `Review` и `Stop Review` заданий, которые лягут в основу всех предложенных вариантов.
 
@@ -160,8 +171,8 @@ environment:
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -176,7 +187,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -187,11 +198,11 @@ Stop Review:
   tags: [werf]
 ```
 
-В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается имя используемой git-ветки. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
+В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается уникальный идентификатор MR. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
 
 Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз, и, соответственно, namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
 
-Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace](https://werf.io/documentation/configuration/deploy_into_kubernetes.html). Так как при удалении ветки нет возможности использовать исходники из git, в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`). 
+Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace](https://werf.io/documentation/configuration/deploy_into_kubernetes.html). При удалении ветки нет возможности использовать исходники из git, поэтому в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`). 
 
 Таким образом, по умолчанию закладываем следующие варианты удаления review окружения:
 * вручную;
@@ -201,21 +212,21 @@ Stop Review:
 
 > Мы не ограничиваем вас предложенными вариантами, даже напротив — рекомендуем комбинировать их и создавать конфигурацию workflow под нужды вашей команды
 
-##### №1 Вручную 
+#### №1 Вручную 
 
 > Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
 
 При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
-Он самый простой и может быть удобен в случае, когда review окружение не используется в разработке, выкаты происходят редко.
-По сути для проверки перед принятием MR. 
+Он самый простой и может быть удобен в случае, когда выкаты происходят редко и review окружение не используется при разработке.
+По сути, для проверки перед принятием MR. 
 
 ```yaml
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -231,7 +242,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -242,18 +253,18 @@ Stop Review:
   tags: [werf]
 ```
 
-##### №2 Автоматически по имени ветки
+#### №2 Автоматически по имени ветки
 
 > Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
 
-В предложенном ниже варианте автоматический релиз выполняется для каждого комита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
+В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
 ```yaml
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -269,7 +280,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -280,13 +291,13 @@ Stop Review:
   tags: [werf]
 ```
 
-##### №3 Полуавтоматический режим с лейблом (рекомендованный)
+#### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
 > Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
-При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого комита. 
+При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого коммита. 
 При снятии лейбла происходит остановка окружения GitLab, удаление review-релиза.    
 
 ```yaml
@@ -325,8 +336,8 @@ Review:
         fi
       fi
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -344,7 +355,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -356,17 +367,17 @@ Stop Review:
 ```
 
 Для проверки наличия лейбла у MR используется GitLab API. 
-Так как токена `CI_JOB_TOKEN` не достаточно для работы с private репозиториями, необходимо сгенерировать специальный токен `PRIVATE_TOKEN`
+Так как токена `CI_JOB_TOKEN` недостаточно для работы с private репозиториями, необходимо сгенерировать специальный токен `PRIVATE_TOKEN`.
 
-#### Варианты организации staging и production окружений
+### Варианты организации staging и production окружений
 
 Предложенные далее варианты являются наиболее эффективными комбинациями правил выката **staging** и **production** окружений.
 
 В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных готовых workflow, предложенных в [конце статьи](#полный-gitlab-ciyml-для-готовых-workflow). 
 
-##### №1 Fast and Furious (рекомендованный)
+#### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious).
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -375,7 +386,7 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [merge_requests]
   when: manual
 
@@ -383,7 +394,7 @@ Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [master]
 ```
 
@@ -391,45 +402,45 @@ Deploy to Production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
 - выкат стабильного MR или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback).
 
-##### №2 Push the Button
+#### №2 Push the Button
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button).
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
-Выкат **production** осуществляется по кнопке у комита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
+Выкат **production** осуществляется по кнопке у коммита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [master]
   when: manual  
 ```
 
 Варианты отката изменений в production:
-- по кнопке у стабильного комита или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) (**рекомендованный**);
+- по кнопке у стабильного коммита или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) (**рекомендованный**);
 - выкат стабильного MR и нажатии кнопки.
 
-##### №3 Tag everything (рекомендованный)
+#### №3 Tag everything (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything).
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
-Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у комита в master.
+Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у коммита в master.
 
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
   when: manual
 
@@ -437,18 +448,18 @@ Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only:
     - tags
 ```
 
 Варианты отката изменений в production:
 - нажатие кнопки на другом теге (**рекомендованный**);
-- создание нового тега на старый комит (так делать не надо).
+- создание нового тега на старый коммит (так делать не надо).
 
-##### №4 Branch, branch, branch!
+#### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически). Вариант также описан в [соответствующем разделе статьи]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch).
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -457,14 +468,14 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [production]
 ```
 
@@ -474,7 +485,7 @@ Deploy to Production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master и fast-forward merge в ветку production;
 - удаление коммита из ветки production и push-force.
 
-### Очистка образов
+## Очистка образов
 
 ```yaml
 Cleanup:
@@ -510,7 +521,7 @@ Cleanup:
 
 <div id="complete_gitlab_ci_1" class="tabs__content no_toc_section active" markdown="1">
 
-#### Детали конфигурации 
+### Детали workflow 
 {:.no_toc}
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
@@ -520,7 +531,7 @@ Cleanup:
 * Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious (рекомендованный)](#1-fast-and-furious-рекомендованный).
 * [Очистка стадий](#очистка-образов).
 
-#### .gitlab-ci.yml 
+### .gitlab-ci.yml 
 {:.no_toc}
 
 {% raw %}
@@ -585,8 +596,8 @@ Review:
         fi
       fi
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -604,7 +615,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -618,7 +629,7 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [merge_requests]
   when: manual
 
@@ -626,7 +637,7 @@ Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [master]
 
 Cleanup:
@@ -644,7 +655,7 @@ Cleanup:
 </div>
 <div id="complete_gitlab_ci_2" class="tabs__content no_toc_section" markdown="1">
 
-#### Детали конфигурации
+### Детали workflow
 {:.no_toc}
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
@@ -654,7 +665,7 @@ Cleanup:
 * Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button).
 * [Очистка стадий](#очистка-образов). 
 
-#### .gitlab-ci.yml
+### .gitlab-ci.yml
 {:.no_toc}
 
 {% raw %}
@@ -688,8 +699,8 @@ Build and Publish:
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -705,7 +716,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -719,14 +730,14 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [master]
   when: manual  
 
@@ -745,7 +756,7 @@ Cleanup:
 
 <div id="complete_gitlab_ci_3" class="tabs__content no_toc_section" markdown="1">
 
-#### Детали конфигурации
+### Детали workflow
 {:.no_toc}
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
@@ -755,7 +766,7 @@ Cleanup:
 * Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
 * [Очистка стадий](#очистка-образов). 
 
-#### .gitlab-ci.yml
+### .gitlab-ci.yml
 {:.no_toc}
 
 {% raw %}
@@ -789,8 +800,8 @@ Build and Publish:
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -806,7 +817,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -820,7 +831,7 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
   when: manual
 
@@ -828,7 +839,7 @@ Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [tags]
 
 Cleanup:
@@ -846,7 +857,7 @@ Cleanup:
 
 <div id="complete_gitlab_ci_4" class="tabs__content no_toc_section" markdown="1">
 
-#### Детали конфигурации
+### Детали workflow
 {:.no_toc}
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
@@ -856,7 +867,7 @@ Cleanup:
 * Выкат на staging и production контуры осуществляется по стратегии [№4 Branch, branch, branch!](#4-branch-branch-branch).
 * [Очистка стадий](#очистка-образов). 
 
-#### .gitlab-ci.yml
+### .gitlab-ci.yml
 {:.no_toc}
 
 {% raw %}
@@ -890,8 +901,8 @@ Build and Publish:
 Review:
   <<: *base_deploy
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    name: review-${CI_MERGE_REQUEST_ID}
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
     on_stop: Stop Review
     auto_stop_in: 1 day
   artifacts:
@@ -907,7 +918,7 @@ Stop Review:
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
-    name: review/${CI_COMMIT_REF_SLUG}
+    name: review-${CI_MERGE_REQUEST_ID}
     action: stop
   variables:
     GIT_STRATEGY: none
@@ -921,14 +932,14 @@ Deploy to Staging:
   <<: *base_deploy
   environment:
     name: staging
-    url: http://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.kube.DOMAIN
+    url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
   <<: *base_deploy
   environment:
     name: production
-    url: http://www.company.my
+    url: https://www.company.org
   only: [production]
     
 Cleanup:
