@@ -154,9 +154,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 			case *instructions.CopyCommand:
 				if c.From != "" {
 					relatedStageIndex, err := strconv.Atoi(c.From)
-					if err != nil || relatedStageIndex >= len(stagesDependencies) {
-						return "", fmt.Errorf("COPY --from refers to nonexistent dockerfile stage %s", c.From)
-					} else {
+					if err == nil && relatedStageIndex < len(stagesDependencies) {
 						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
 					}
 				}
