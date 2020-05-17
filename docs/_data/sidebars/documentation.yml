@@ -140,6 +140,9 @@ entries:
           - title: Unsupported CI/CD integration
             url: /documentation/guides/unsupported_ci_cd_integration.html
 
+          - title: Switch to distributed mode
+            url: /documentation/guides/switch_to_distributed_mode.html
+
           - title: Advanced build
             sfi:
 
@@ -480,6 +483,9 @@ entries:
 
           - title: Интеграция с неподдерживаемыми системами CI/CD
             url: /documentation/guides/unsupported_ci_cd_integration.html
+
+          - title: Переключение на распределённый режим
+            url: /documentation/guides/switch_to_distributed_mode.html
 
           - title: Расширенная сборка
             sfi:
