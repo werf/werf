@@ -2,7 +2,7 @@
 title: Stages and Images
 sidebar: documentation
 permalink: documentation/reference/stages_and_images.html
-author: Alexey Igrychev <alexey.igrychev@flant.com>
+author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 
 We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.
@@ -164,31 +164,63 @@ $.noConflict();
 
 ## Stages storage
 
-The _stages storage_ contains the stages of the project.
-Stages can be stored in the Docker Repo or locally on a host machine.
+_Stages storage_ contains the stages of the project. Stages can be stored in the Docker Repo or locally on a host machine.
 
-Most commands use _stages_ and require the reference to a specific _stages storage_, defined by the `--stages-storage` option or `WERF_STAGES_STORAGE` environment variable.
-At the moment, only the local storage, `:local`, is supported.
+Most commands use _stages_ and require the reference to a specific _stages storage_ defined by the `--stages-storage` option or `WERF_STAGES_STORAGE` environment variable.
+
+There are 2 types of stages storage:
+ 1. _Local stages storage_. Uses local docker server runtime to store stages as docker-images. Local stages storage is selected by param `--stages-storage=:local`. This was the only supported choise for stages storage prior version v1.1.10.
+ 2. _Remote stages storage_. Uses docker registry to store images. Remote stages storage is selected by param `--stages-storage=DOCKER_REPO_DOMAIN`, for example `--stages-storage=registry.mycompany.com/web/frontend/stages`. **NOTE** Each project should specify unique docker repo domain, that used only by this project.
+
+Stages will be [named differently](#stage-naming) depending on local or remote stages storage is being used.
+
+When docker registry is used as the stages storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
+
+It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
+
+Host requirements to use remote stages storage:
+ - Connection to docker registry.
+ - Connection to the Kubernetes cluster (used to synchronize multiple build/publish/deploy processes running from different machines, see more info below).
+
+Note that all werf commands that need an access to the stages should specify the same stages storage. So if it is a local stages storage, then all commands should run from the same host. It is irrelevant on which host werf command is running as long as the same remote stages storage used for the commands like: build, publish, cleanup, deploy, etc.
 
 ### Stage naming
 
-_Stages_ in the _stages storage_ are named using the following schema — `werf-stages-storage/PROJECT_NAME:SIGNATURE-TIMESTAMP_MILLISEC`.
+Stages in the _local stages storage_ are named using the following schema: `werf-stages-storage/PROJECT_NAME:SIGNATURE-TIMESTAMP_MILLISEC`. For example:
 
-Signature identifier of the stage represents content of the stage and depends on git history which lead to this content.
+```
+werf-stages-storage/myproject                   9f3a82975136d66d04ebcb9ce90b14428077099417b6c170e2ef2fef-1589786063772   274bd7e41dd9        16 seconds ago      65.4MB
+werf-stages-storage/myproject                   7a29ff1ba40e2f601d1f9ead88214d4429835c43a0efd440e052e068-1589786061907   e455d998a06e        18 seconds ago      65.4MB
+werf-stages-storage/myproject                   878f70c2034f41558e2e13f9d4e7d3c6127cdbee515812a44fef61b6-1589786056879   771f2c139561        23 seconds ago      65.4MB
+werf-stages-storage/myproject                   5e4cb0dcd255ac2963ec0905df3c8c8a9be64bbdfa57467aabeaeb91-1589786050923   699770c600e6        29 seconds ago      65.4MB
+werf-stages-storage/myproject                   14df0fe44a98f492b7b085055f6bc82ffc7a4fb55cd97d30331f0a93-1589786048987   54d5e60e052e        31 seconds ago      64.2MB
+```
 
-`TIMESTAMP_MILLISEC` is generated during [stage saving procedure](#stage-building-and-saving) after stage built.
+Stages in the _remote stages storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:SIGNATURE-TIMESTAMP_MILLISEC`. For example:
+
+```
+localhost:5000/myproject-stages                 d4bf3e71015d1e757a8481536eeabda98f51f1891d68b539cc50753a-1589714365467   7c834f0ff026        20 hours ago        66.7MB
+localhost:5000/myproject-stages                 e6073b8f03231e122fa3b7d3294ff69a5060c332c4395e7d0b3231e3-1589714362300   2fc39536332d        20 hours ago        66.7MB
+localhost:5000/myproject-stages                 20dcf519ff499da126ada17dbc1e09f98dd1d9aecb85a7fd917ccc96-1589714359522   f9815cec0867        20 hours ago        65.4MB
+localhost:5000/myproject-stages                 1dbdae9cc1c9d5d8d3721e32be5ed5542199def38ff6e28270581cdc-1589714352200   6a37070d1b46        20 hours ago        65.4MB
+localhost:5000/myproject-stages                 f88cb5a1c353a8aed65d7ad797859b39d357b49a802a671d881bd3b6-1589714347985   5295f82d8796        20 hours ago        65.4MB
+localhost:5000/myproject-stages                 796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1589714344546   a02ec3540da5        20 hours ago        64.2MB
+```
+
+_Signature_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
+
+`TIMESTAMP_MILLISEC` is generated during [stage saving procedure](#stage-building-and-saving) after stage built. It is guaranteed that timestamp will be unique within specified stages storage.
 
 ### Stage selection
 
 Werf stage selection algorithm is based on the git commits ancestry detection:
 
- 1. Werf calculates a stage signature for some stage.
- 2. There may be multiple stages in the stages storage by this signature, werf selects all suitable stages by the signature.
- 3. If current stage is related to git (git-archive, user stage with git patch or git latest patch), then werf selects only
-    those stages which are relaed to the commit that is ancestor of current git commit.
- 4. Select from the remaining stages the _oldest_ by the creation timestamp.
+ 1. Calculate a stage signature for some stage.
+ 2. There may be multiple stages in the stages storage by this signature — so select all suitable stages by the signature.
+ 3. If current stage is related to git (git-archive, user stage with git patch, git cache or git latest patch), then select only those stages which are related to the commit that is ancestor of current git commit.
+ 4. Select the _oldest_ by the `TIMESTAMP_MILLISEC` from the remaining stages.
 
-There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from being reused for totally different branch.
+There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from being reused for different branch.
 
 ### Stage building and saving
 
@@ -198,7 +230,7 @@ Note that multiple processes (on a single or multiple hosts) may start building 
 
 In other words: the first process which finishes the build (the fastest one) will have a chance to save newly built stage into the stages storage. The slow build process will not block faster processes from saving build results and building next stages.
 
-To select stages and save new ones into the stages storage werf uses [synchronization lock manager](#synchronization-lock-manager) to coordinate multiple werf processes.
+To select stages and save new ones into the stages storage werf uses [synchronization service components](#synchronization-locks-and-stages-storage-cache) to coordinate multiple werf processes and store stages cache needed for werf builder.
 
 ### Image stages signature
 
@@ -228,18 +260,55 @@ Currently, _images_ can only be created during the [_publishing process_]({{ sit
 
 Images should be defined in the werf configuration file `werf.yaml`.
 
-To publish new images into the images repo werf uses [synchronization lock manager](#synchronization-lock-manager) to coordinate multiple werf processes. Only a single werf process can perform publishing of the same image at a time.
+To publish new images into the images repo werf uses [synchronization service components](#synchronization-manager) to coordinate multiple werf processes. Only a single werf process can perform publishing of the same image at a time.
 
-## Synchronization lock manager
+## Synchronization: locks and stages storage cache
 
-Synchornization lock manager is a service component of the werf to coordinate multiple werf processes when selecting and saving stages into stages storage and publishing images into images repo.
+Synchronization is a group of service components of the werf to coordinate multiple werf processes when selecting and saving stages into stages storage and publishing images into images repo. There are 2 such synchronization components:
 
-All commands that requires stages storage (`--stages-storage`) and images repo (`--images-repo`) params also require _syncrhonization lock manager_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
-At the moment, only the local syncrhonization lock manager, `:local`, is supported.
+ 1. _Stages storage cache_ is an internal werf cache, which significantly improves performance of the werf invocations when stages already exists in the stages storage. Stages storage cache contains the mapping of stages existing in stages storage by the signature (or in other words this cache contains precalculated result of stages selection by signature algorithm). This cache should be coherent with stages storage itself and werf will automatically reset this cache automatically when detects an inconsistency between stages storage cache and stages storage.
+ 2. _Lock manager_. Locks are needed to organize correct publishing of new stages into stages-storage, publishing images into images-repo and for concurrent deploy processes that uses the same release name.
 
-(An implementation backed up by the Redis or Kubernetes server will be added to implement distributed builds soon.)
+All commands that requires stages storage (`--stages-storage`) and images repo (`--images-repo`) params also use _synchronization service components_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
 
-NOTE that multiple werf processes working with the same project should use the same _stages storage_ and _syncrhonization lock manager_.
+There are 2 types of sycnhronization components:
+ 1. Local. Selected by `--synchronization=:local` param.
+   - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE` files by default, each file contains a mapping of images existing in stages storage by some signature.
+   - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.
+ 2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE` param.
+  - Kubernetes _stages storage cache_ is stored in the specified `NAMESPACE` in ConfigMap named by project `cm/PROJECT_NAME`.
+  - Kubernetes _lock manager_  uses ConfigMap named by project `cm/PROJECT_NAME` (the same as stages storage cache) to store distributed locks in the annotations. [Lockgate library](https://github.com/flant/lockgate) is used as implementation of distributed locks using kubernetes resource annotations.
+
+Werf uses `--synchronization=:local` (local _stages storage cache_ and local _lock manager_) by default when _local stages storage_ is used (`--stages-storage=:local`).
+
+Werf uses `--synchronization=kubernetes://werf-synchronization` (kubernetes _stages storage cache_ and kubernetes _lock manager_) by default when docker-registry is used as _stages storage_. Stages storage cache and locks for each project is stored in the `cm/PROJECT_NAME` in the common namespace `werf-synchronization`.
+
+User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|kubernetes://NAMESPACE` param (arbitrary namespace may be specified, `werf-synchronization` is the default one).
+
+**NOTE:** Multiple werf processes working with the same project should use the same _stages storage_ and _syncrhonization_.
+
+## Working with stages
+
+### Sync command
+
+`werf stages sync --from=:local|REPO --to=:local|REPO`
+
+ - Command will copy only difference of stages from one stages-storage to another.
+ - Command will copy multiple stages in parallel.
+ - Command run result is idempotent: sync can be called multiple times, interrupted, then called again — the result will be the same. Stages that are already synced will not be synced again on subsequent sync calls.
+ - There are delete options: `--remove-source` and `--cleanup-local-cache`, which control whether werf will delete synced stages from source stages-storage and whether werf will cleanup localhost from temporary docker images created during sync process.
+ - This command can be used to download project stages-storage to the localhost for development purpose as well as backup and migrating purposes.
+ 
+### Switch-from-local command
+
+`werf stages switch-from-local --to=REPO`
+
+ - Command will automatically [sync](#sync-command) existing stages from :local stages storage to the specified REPO.
+ - Command will block project from being used with `:local` stages-storage.
+   - This means after werf stages switch-from-local is done, any werf command that specifies `:local` stages-storage for the project will fail preventing storing and using build results from different stages-storages.
+   - Note that project is blocked after all existing stages has been synced.
+
+See [switching to distributed mode article]({{ site.baseurl }}/documentation/guides/switch_to_distributed_mode.html) for guided steps.
 
 ## Further reading
 
