@@ -91,6 +91,10 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 	if imageName == "" {
 		tag = NamelessImageRecordTag
 	}
+
+	tag = strings.ReplaceAll(tag, "/", "__slash__")
+	tag = strings.ReplaceAll(tag, "+", "__plus__")
+
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
@@ -159,6 +163,9 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName stri
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
+			tag = strings.ReplaceAll(tag, "__slash__", "/")
+			tag = strings.ReplaceAll(tag, "__plus__", "+")
+
 			if tag == NamelessImageRecordTag {
 				res = append(res, "")
 			} else {
