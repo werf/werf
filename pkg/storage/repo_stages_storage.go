@@ -222,6 +222,9 @@ func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string
 				continue
 			}
 
+			tag = strings.ReplaceAll(tag, "__slash__", "/")
+			tag = strings.ReplaceAll(tag, "__plus__", "+")
+
 			managedImageName := strings.TrimPrefix(tag, RepoManagedImageRecord_ImageTagPrefix)
 			if managedImageName == NamelessImageRecordTag {
 				res = append(res, "")
@@ -284,5 +287,9 @@ func makeRepoManagedImageRecord(repoAddress, imageName string) string {
 	if imageName == "" {
 		tagSuffix = NamelessImageRecordTag
 	}
+
+	tagSuffix = strings.ReplaceAll(tagSuffix, "/", "__slash__")
+	tagSuffix = strings.ReplaceAll(tagSuffix, "+", "__plus__")
+
 	return fmt.Sprintf(RepoManagedImageRecord_ImageNameFormat, repoAddress, tagSuffix)
 }
