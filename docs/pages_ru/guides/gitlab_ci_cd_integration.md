@@ -101,6 +101,7 @@ author: Artem Kladov, Alexey Igrychev <artem.kladov@flant.com,alexey.igrychev@fl
 
 ## Сборка и публикация образов приложения
 
+{% raw %}
 ```yaml
 Build and Publish:
   stage: build-and-publish
@@ -111,6 +112,7 @@ Build and Publish:
   except: [schedules]
   tags: [werf]
 ```
+{% endraw %}
 
 Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
 Так как при очистке не требуется выполнять сборку образов, то указываем `except: [schedules]`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
@@ -127,6 +129,7 @@ Build and Publish:
 
 Прежде всего необходимо описать шаблон, общую часть для деплоя в любой контур, что позволит уменьшить размер файла `.gitlab-ci.yml`, улучшит его читаемость, а также позволит далее сосредоточиться на workflow.
 
+{% raw %}
 ```yaml
 .base_deploy: &base_deploy
   stage: deploy
@@ -139,9 +142,11 @@ Build and Publish:
   except: [schedules]
   tags: [werf]
 ```
+{% endraw %}
 
 При использовании шаблона `base_deploy` для каждого контура будет определяться своё окружение GitLab:                
 
+{% raw %}
 ```yaml
 Example:
   <<: *base_deploy
@@ -151,6 +156,7 @@ Example:
     ...
   ...
 ```
+{% endraw %}
 
 При выполнении задания, `werf ci-env` устанавливает переменную `WERF_ENV` в соответствии с именем окружения GitLab (`CI_ENVIRONMENT_SLUG`).
 
@@ -167,6 +173,7 @@ Example:
 
 Рассмотрим базовые конфигурации `Review` и `Stop Review` заданий, которые лягут в основу всех предложенных вариантов.
 
+{% raw %}
 ```yaml
 Review:
   <<: *base_deploy
@@ -197,10 +204,11 @@ Stop Review:
   when: manual
   tags: [werf]
 ```
+{% endraw %}
 
 В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается уникальный идентификатор MR. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
 
-Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз, и, соответственно, namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
+Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
 
 Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace](https://werf.io/documentation/configuration/deploy_into_kubernetes.html). При удалении ветки нет возможности использовать исходники из git, поэтому в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`). 
 
@@ -221,6 +229,7 @@ Stop Review:
 Он самый простой и может быть удобен в случае, когда выкаты происходят редко и review окружение не используется при разработке.
 По сути, для проверки перед принятием MR. 
 
+{% raw %}
 ```yaml
 Review:
   <<: *base_deploy
@@ -252,6 +261,7 @@ Stop Review:
   when: manual
   tags: [werf]
 ```
+{% endraw %}
 
 #### №2 Автоматически по имени ветки
 
@@ -259,6 +269,7 @@ Stop Review:
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
+{% raw %}
 ```yaml
 Review:
   <<: *base_deploy
@@ -290,6 +301,7 @@ Stop Review:
   when: manual
   tags: [werf]
 ```
+{% endraw %}
 
 #### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
@@ -300,6 +312,7 @@ Stop Review:
 При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого коммита. 
 При снятии лейбла происходит остановка окружения GitLab, удаление review-релиза.    
 
+{% raw %}
 ```yaml
 Review:
   stage: deploy
@@ -365,6 +378,7 @@ Stop Review:
   when: manual
   tags: [werf]
 ```
+{% endraw %}
 
 Для проверки наличия лейбла у MR используется GitLab API. 
 Так как токена `CI_JOB_TOKEN` недостаточно для работы с private репозиториями, необходимо сгенерировать специальный токен `PRIVATE_TOKEN`.
@@ -381,6 +395,7 @@ Stop Review:
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
+{% raw %}
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
@@ -397,6 +412,7 @@ Deploy to Production:
     url: https://www.company.org
   only: [master]
 ```
+{% endraw %}
 
 Варианты отката изменений в production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
@@ -408,6 +424,7 @@ Deploy to Production:
 
 Выкат **production** осуществляется по кнопке у коммита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
+{% raw %}
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
@@ -424,6 +441,7 @@ Deploy to Production:
   only: [master]
   when: manual  
 ```
+{% endraw %}
 
 Варианты отката изменений в production:
 - по кнопке у стабильного коммита или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) (**рекомендованный**);
@@ -435,6 +453,7 @@ Deploy to Production:
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у коммита в master.
 
+{% raw %}
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
@@ -452,6 +471,7 @@ Deploy to Production:
   only:
     - tags
 ```
+{% endraw %}
 
 Варианты отката изменений в production:
 - нажатие кнопки на другом теге (**рекомендованный**);
@@ -463,6 +483,7 @@ Deploy to Production:
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
+{% raw %}
 ```yaml
 Deploy to Staging:
   <<: *base_deploy
@@ -478,6 +499,7 @@ Deploy to Production:
     url: https://www.company.org
   only: [production]
 ```
+{% endraw %}
 
 Варианты отката изменений в production:
 - воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback);
@@ -487,6 +509,7 @@ Deploy to Production:
 
 ## Очистка образов
 
+{% raw %}
 ```yaml
 Cleanup:
   stage: cleanup
@@ -498,6 +521,7 @@ Cleanup:
   only: [schedules]
   tags: [werf]
 ```
+{% endraw %}
 
 В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
 Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
