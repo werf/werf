@@ -31,6 +31,8 @@ werf ci-env CI_SYSTEM [options]
 {{ header }} Options
 
 ```shell
+      --as-env-file=false:
+            Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).
       --as-file=false:
             Create the script and print the path for sourcing (default $WERF_AS_FILE).
       --config='':
@@ -68,6 +70,8 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -o, --output-file-path='':
+            Write to custom file (default $WERF_OUTPUT_FILE_PATH).
       --shell='':
             Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
             shell (default $WERF_SHELL).
