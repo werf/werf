@@ -237,9 +237,9 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 				} else if latestReleaseRevisionStatus == "FAILED" {
 					threeWayMergeMode := getActualThreeWayMergeMode(opts.ThreeWayMergeMode)
 
-					if threeWayMergeMode == threeWayMergeDisabled {
+					if threeWayMergeMode == ThreeWayMergeDisabled {
 						releaseShouldBeRolledBack = true
-					} else if threeWayMergeMode == threeWayMergeOnlyNewReleases && !latestReleaseThreeWayMergeEnabled {
+					} else if threeWayMergeMode == ThreeWayMergeOnlyNewReleases && !latestReleaseThreeWayMergeEnabled {
 						releaseShouldBeRolledBack = true
 					}
 				}
