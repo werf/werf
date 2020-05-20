@@ -152,26 +152,36 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 		return err
 	}
 
-	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
-	ciJobToken := os.Getenv("CI_JOB_TOKEN")
+	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
+	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
 	var imagesUsername, imagesPassword string
+	var doLogin bool
+	if ciRegistryImageEnv != "" && ciJobTokenEnv != "" {
+		imagesUsername = "gitlab-ci-token"
+		imagesPassword = ciJobTokenEnv
+		doLogin = true
+	}
+
 	var stagesStorageRepoImplementation string
 	var imagesRepoImplementation string
-	var doLogin bool
-	if ciRegistryImage != "" && ciJobToken != "" {
-		imagesUsername = "gitlab-ci-token"
-		imagesPassword = ciJobToken
-		doLogin = true
 
-		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+	ciRegistryEnv := os.Getenv("CI_REGISTRY")
+	werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
+	werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
+
+	if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
 		stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
 	}
 
+	if werfImagesRepoEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
+		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+	}
+
 	if doLogin {
-		err := docker.Login(imagesUsername, imagesPassword, ciRegistryImage)
+		err := docker.Login(imagesUsername, imagesPassword, ciRegistryImageEnv)
 		if err != nil {
-			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImage, err)
+			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImageEnv, err)
 		}
 	}
 
@@ -179,13 +189,13 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "STAGES_STORAGE", true)
-	writeEnv(w, "WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImage), false)
+	writeEnv(w, "WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImageEnv), false)
 	if stagesStorageRepoImplementation != "" {
 		writeEnv(w, "WERF_STAGES_STORAGE_REPO_IMPLEMENTATION", stagesStorageRepoImplementation, false)
 	}
 
 	writeHeader(w, "IMAGES REPO", true)
-	writeEnv(w, "WERF_IMAGES_REPO", ciRegistryImage, false)
+	writeEnv(w, "WERF_IMAGES_REPO", ciRegistryImageEnv, false)
 	if imagesRepoImplementation != "" {
 		writeEnv(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
 	}
