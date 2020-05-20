@@ -34,9 +34,14 @@ type DeployOptions struct {
 	UserExtraLabels      map[string]string
 	IgnoreSecretKey      bool
 	ThreeWayMergeMode    helm.ThreeWayMergeModeType
+	DryRun               bool
 }
 
 func Deploy(projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, storageLockManager storage.LockManager, opts DeployOptions) error {
+	if opts.DryRun {
+		fmt.Printf("Deploy DryRun\n")
+		return nil
+	}
 	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
 		return err
 	} else {

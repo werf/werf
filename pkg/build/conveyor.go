@@ -313,6 +313,8 @@ func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
 type BuildAndPublishOptions struct {
 	BuildStagesOptions
 	PublishImagesOptions
+
+	DryRun bool
 }
 
 func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
@@ -323,6 +325,11 @@ func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
 		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
+	}
+
+	if opts.DryRun {
+		fmt.Printf("BuildAndPublish DryRun\n")
+		return nil
 	}
 
 	return c.runPhases(phases, true)
