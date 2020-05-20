@@ -258,80 +258,80 @@ Deleting the review environment:
  - By closing or merging a PR.
  - Automatically when the time-lo-live period since the previous deployment expires (in other words, if there is no activity in the environment).
 
-## Сравнение составляющих блоков для построения workflow
+## Comparing building blocks for creating a workflow
 
-### Степень управляемости через git
+### The level of git control
 
-|   | **Откат через git** | **Ручной откат** |
+|   | **Rollback via git** | **Rollback manually** |
 |:---:|:---:|:---:|
-| **Выкат через git** | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически);<br>[Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически);<br>[Выкат на production из ветки автоматически](#выкат-на-production-из-ветки-автоматически);<br>[Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически);<br>[Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически);<br>[Выкат на review из pull request автоматически](#выкат-на-review-из-pull-request-автоматически);<br>[Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически);<br>[Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически);<br>[Выкат на production из ветки автоматически](#выкат-на-production-из-ветки-автоматически);<br>[Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически);<br>[Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически);<br>[Выкат на review из pull request автоматически](#выкат-на-review-из-pull-request-автоматически);<br>[Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); |
-| **Ручной выкат** | [Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); | [Выкат на production из master по кнопке](#выкат-на-production-из-master-по-кнопке);<br>[Выкат на production из тега по кнопке](#выкат-на-production-из-тега-по-кнопке);<br>[Выкат на production из ветки по кнопке](#выкат-на-production-из-ветки-по-кнопке);<br>[Выкат на production-like из pull request по кнопке](#выкат-на-production-like-из-pull-request-по-кнопке);<br>[Выкат на review из pull request по кнопке](#выкат-на-review-из-pull-request-по-кнопке);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); |
+| **Deploy via git** | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering); | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering); |
+| **Deploy manually** | [Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering); | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button);<br>[Deploy to production using a tag at the click of a button](#Deploy-to-production-using-a-tag-at-the-click-of-a-button);<br>[Deploy to production from a branch at the click of a button](#Deploy-to-production-from-a-branch-at-the-click-of-a-button);<br>[Deploy to production-like using a pull request at the click of a button](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button);<br>[Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering); |
 
-### Соответствие CI/CD
+### Does the building block meet the criteria for CI/CD?
 
-|   | **True CI/CD** | **Рекомендовано для werf** |
+|   | **True CI/CD** | **Recommended for werf** |
 |:---:|:---:|:---:|
-| [**Выкат на production из master автоматически**](#выкат-на-production-из-master-автоматически) | да | да |
-| [**Выкат на production из master по кнопке**](#выкат-на-production-из-master-по-кнопке) | нет | нет |
-| [**Выкат на production из тега автоматически**](#выкат-на-production-из-тега-автоматически) | нет | да |
-| [**Выкат на production из тега по кнопке**](#выкат-на-production-из-тега-по-кнопке) | нет | да |
-| [**Выкат на production из ветки автоматически**](#выкат-на-production-из-ветки-автоматически) | да | нет |
-| [**Выкат на production из ветки по кнопке**](#выкат-на-production-из-ветки-по-кнопке) | нет | нет |
-| [**Выкат на production-like из pull request по кнопке**](#выкат-на-production-like-из-pull-request-по-кнопке) | нет | да |
-| [**Выкат на staging из master автоматически**](#выкат-на-staging-из-master-автоматически) | да | да |
-| [**Выкат на staging из master по кнопке**](#выкат-на-staging-из-master-по-кнопке) | нет | нет |
-| [**Выкат на production-like из ветки автоматически**](#выкат-на-production-like-из-ветки-автоматически) | да | нет |
-| [**Выкат на production-like из ветки по кнопке**](#выкат-на-production-like-из-ветки-по-кнопке) | нет | нет |
-| [**Выкат на review из pull request автоматически**](#выкат-на-review-из-pull-request-автоматически) | да | нет |
-| [**Выкат на review из ветки по шаблону автоматически**](#выкат-на-review-из-ветки-по-шаблону-автоматически) | да | нет |
-| [**Выкат на review из pull request по кнопке**](#выкат-на-review-из-pull-request-по-кнопке) | нет | нет |
-| [**Выкат на review из pull request автоматически после ручной активации**](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) | да | да |
+| [**Automatically deploy to production from master**](#Automatically-deploy-to-production-from-master) | yes | yes |
+| [**Deploy to production from master at the click of a button**](#Deploy-to-production-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production using a tag**](#Automatically-deploy-to-production-using-a-tag) | no | yes |
+| [**Deploy to production using a tag at the click of a button**](#Deploy-to-production-using-a-tag-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to production from a branch**](#Automatically-deploy-to-production-from-a-branch) | yes | no |
+| [**Deploy to production from a branch at the click of a button**](#Deploy-to-production-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Deploy to production-like using a pull request at the click of a button**](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to staging from master**](#Automatically-deploy-to-staging-from-master) | yes | yes |
+| [**Deploy to staging from master at the click of a button**](#Deploy-to-staging-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production-like from a branch**](#Automatically-deploy-to-production-like-from-a-branch) | yes | no |
+| [**Deploy to production-like from a branch at the click of a button**](#Deploy-to-production-like-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to review using a pull request**](#Automatically-deploy-to-review-using-a-pull-request) | yes | no |
+| [**Automatically deploy to review from a branch using a pattern**](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) | yes | no |
+| [**Deploy to review using a pull request at the click of a button**](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to review using a pull request; manual triggering**](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering) | yes | yes |
 
-## Готовые конфигурации workflow
+## Ready-made workflow configurations
 
-Мы предлагаем пользователю на выбор несколько готовых конфигураций workflow для проекта. Эти конфигурации составлены из приведенных выше блоков workflow. В документации эти готовые конфигурации могут называться также стратегиями workflow.
+In this section, we offer the user the selection of ready-made workflow configurations tailored to various use cases. These configurations are made up of the workflow blocks listed above. In the documentation, these ready-made configurations can also be referred to as workflow strategies.
 
-Конкретные конфиги по каждой из конфигураций можно найти в инструкциях по конкретной CI/CD системе. Например, Gitlab CI: ссылка, Github Actions: ссылка.
+The exact configuration for each type of the CI/CD system you can find in the documentation for that system. For example, Gitlab CI: link, Github Actions: link.
 
 ### №1 Fast and Furious
 
-Конфигурация рекомендована в качестве наиболее соответствующей канонам CI/CD, которую можно реализовать с помощью werf.
+We recommend this configuration as the most consistent with the principles of CI/CD of those that can be implemented using werf.
 
-В данной конфигурации может быть произвольное число production-like окружений, как то: testing, staging, development, qa, и т.д.
+This configuration supports any number of production-like environments, such as testing, staging, development, qa, and so on.
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически) + откат через revert |
-| Staging / Testing / Development / QA | [Выкат на production-like из pull request по кнопке](#выкат-на-production-like-из-pull-request-по-кнопке) |
-| Review | [Выкат на review из pull request автоматически после ручной активации](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) |
+| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging / Testing / Development / QA | [Deploy to production-like using a pull request at the click of a button](#Deploy-to production-like-using-a-pull-request-at-the-click-of-a-button) |
+| Review | [Automatically deploy to review using a pull request; manual triggering](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering) |
 
 ### №2 Push the button
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master по кнопке](#выкат-на-production-из-master-по-кнопке) |
-| Staging | [Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически) |
-| Testing / Development / QA | [Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически) |
-| Review | [Выкат на review из pull request по кнопке](#выкат-на-review-из-pull-request-по-кнопке) |
+| Production | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button) |
+| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
+| Testing / Development / QA | [Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch) |
+| Review | [Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) |
 
 ### №3 Tag everything
 
-Не все проекты сходу готовы к внедрению CI/CD. В таких проектах используется более классический метод создания релизов только после активной фазы разработки. Переход к CI/CD в таких проектах требует усилий по преодолению привычных вещей и переосмысления как от разработчиков, так и от devops. Поэтому для таких проектов мы предлагаем и классическую конфигурацию, которая также рекомендована для werf в случае невозможности использования [fast & furious](#1-fast-and-furious).
+Not all projects are ready to implement the CI/CD approach. These projects use the more classical approach, that implies making releases after the active development phase is complete. The transition to the CI/CD approach in such projects requires both developers and DevOps engineers to change personal habits and rethink the workflow. Therefore, for such projects, we also offer a classic configuration. We recommend to use it with werf if [fast & furious](#1-fast-and-furious) does not suit you.
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически) |
-| Staging | [Выкат на staging из master автоматически или выкат на staging из master по кнопке](#выкат-на-staging-из-master-автоматически-или-выкат-на-staging-из-master-по-кнопке) |
-| Review | [Выкат на review из pull request автоматически после ручной активации](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) |
+| Production | [Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag) |
+| Staging | [Automatically deploy to staging from master or Deploy to staging from master at the click of a button](#Automatically-deploy-to-staging-from-master) |
+| Review | [Automatically deploy to review using a pull request; manual triggering](#Automatically-deploy-to-review-using-a-pull-request;-manual-triggering) |
 
 ### №4 Branch, branch, branch
 
-Управляем выкатом прямо через git с использованием веткок и процедур git merge, rebase и push-force. Через создание определённых имен веток получаем автоматический выкат на review окружения.
+Directly manage the deployment process via git by using branches and git merge, rebase, push-force procedures. By creating branches with specific names, you can trigger an automatic deployment to review environments.
 
-Рекомендуем для тех, кто хочет управлять CI/CD полностью из git. Отметим, что подход также является соответствующим канонам CI/CD, как и fast & furious.
+We recommend this configuration for those who would like to manage the CI/CD process via git only. Note that this approach is also consistent with the CI/CD principles (just like the fast & furious approach described above).
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически) + откат через revert |
-| Staging | [Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически) |
-| Review | [Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически) |
+| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
+| Review | [Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) |
