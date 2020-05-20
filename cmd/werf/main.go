@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/flant/werf/cmd/werf/diff"
+
 	"github.com/flant/werf/cmd/werf/converge"
 
 	"github.com/spf13/cobra"
@@ -104,6 +106,7 @@ Find more information at https://werf.io`),
 			Message: "Main Commands:",
 			Commands: []*cobra.Command{
 				converge.NewCmd(),
+				diff.NewCmd(),
 				build.NewCmd(),
 				publish.NewCmd(),
 				build_and_publish.NewCmd(),
