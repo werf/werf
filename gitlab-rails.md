@@ -74,8 +74,19 @@ assets_generator_chosen: "assets:precompile"
 
 ## Настройка Gitlab Runner
 
-{{TODO: наверное надо это сюда в шаблон вписать}}
+{{TODO: откорректировать то, что ниже}}
 
+Теперь обязательно на сервере с gitlab-runner, который занимается сборкой вашего приложения, установить [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/). И положить в домашнюю директорию пользователя gitlab-runner конфиг kubernetes в папку `.kube` (нужно её создать, если её нет)
+
+Конфиг можно взять на мастере кластера kubernetes в `/etc/kubernetes/admin.conf`
+
+Скопируйте его и положите в папку `.kube` переименовав файл в `config`.
+
+![alt_text](images/-5.png "image_tooltip")
+
+Обычно в конфиге указан прямой адрес мастера kubernetes. Соответственно нужно чтобы мастер нашего кластера был доступен по сети для gitlab-runner.
+
+Всё это мы сделали для того чтобы werf мог общаться с API kubernetes и деплоить в него наши приложения, это и есть второй ответ на вопрос “Как werf понимает куда ему нужно деплоить?”. По умолчанию деплой будет происходить в namespace состоящий из имени проекта задаваемого в `werf.yaml` и окружения задаваемого в `.gitlab-ci.yml` куда мы деплоим наше приложение.
 # Hello world
 
 В первой главе мы покажем поэтапную сборку и деплой приложения без задействования внешних ресурсов таких как база данных и сборку ассетов.
@@ -183,13 +194,13 @@ $  werf build --stages-storage :local
 
 Вот и всё, наша сборка успешно завершилась. К слову если сборка падает и вы хотите изнутри контейнера её подебажить вручную, то вы можете добавить в команду сборки флаги:
 
-```
+```yaml
 --introspect-before-error
 ```
 
 или
 
-```
+```yaml
 --introspect-error
 ```
 
@@ -264,6 +275,8 @@ Build:
 
 {{TODO: картинка-пример}}
 
+{{Отдельно проговариваем историю с проброской конфигов в стадию сборки.}} 
+
 Теперь мы можем запушить наши изменения и увидеть что наша стадия успешно выполнилась.
 
 ![alt_text](images/-3.png "image_tooltip")
@@ -326,6 +339,8 @@ $ werf helm render
 #### Описание приложения в хельме
 
 Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment, Service и завернуть трафик на приложение, донастроив роутинг в кластере.
+
+{{TODO: вот это единое в шаблоне надо привести в порядок}}
 
 Не забываем создать валидный ключ для доступа из kubernetes к registry gitlab.
 
@@ -511,9 +526,9 @@ rails:
 
 Опишем деплой приложения в Kubernetes. Деплой будет осуществляться на два стенда: staging и production.
 
-Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды:
+Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды: 
 
-```
+```yaml
 .base_deploy: &base_deploy
   script:
     - werf deploy --stages-storage :local
@@ -523,9 +538,9 @@ rails:
     - article-werf
 ```
 
-Выкат, например, на Staging, будет выглядеть так:
-
- ```
+Выкат, например, на Staging, будет выглядеть так: 
+ 
+ ```yaml
  Deploy to Stage:
    extends: .base_deploy
    stage: deploy
@@ -647,7 +662,7 @@ Asset Pipeline представляет фреймворк для соедине
 
 Добавим стадию сборки ассетов для приложения в файл `werf.yaml`
 
-```
+```yaml
   setup:
   - name: build assets
     shell: RAILS_ENV=production SECRET_KEY_BASE=fake bundle exec rake assets:precompile
@@ -815,7 +830,7 @@ import:
 
 Добавим в файл `.helm/requirements.yaml` следующие изменения:
 
-```
+```yaml
 dependencies:
 - name: redis
   version: 9.3.2
@@ -825,7 +840,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в `.gitlab-ci`
 
-```
+```yaml
 .base_deploy:
   stage: deploy
   script:
@@ -836,7 +851,7 @@ dependencies:
 
 Опишем параметры для redis в файле `.helm/values.yaml`
 
-```
+```yaml
 redis:
   enabled: true
 ```
@@ -845,7 +860,7 @@ redis:
 
 Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы сервисы:
 
-```
+```yaml
 # Source: example-2/charts/redis/templates/redis-master-svc.yaml
 apiVersion: v1
 kind: Service
@@ -863,32 +878,27 @@ metadata:
 
 В нашем приложении - мы будем  подключаться к мастер узлу редиса. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному редису.
 
-Рассмотрим настройки подключение к redis из нашего приложения на примере стандартного cable (config/cable.yml)
+Рассмотрим настройки подключение к redis из нашего приложения на примере стандартного cable (`config/cable.yml`)
 
-
-```
+```yaml
 production:
   adapter: redis
   url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
   channel_prefix: example_2_production
 ```
 
-
 В данном файле мы видим что адрес подключения берется из переменной окружения `REDIS_URL` и если такая переменная не задана - подставляется значение по умолчанию `redis://localhost:6379/1`
 
 Для подключения нашего приложения к redis нам необходимо добавить в список зависимостей `gem 'redis', '~> 4.0'` и указать переменную окружения `REDIS_URL` при деплое нашего приложения в файле с описанием деплоймента.
 
-
-```
+```yaml
 - name: REDIS_URL
   value: "redis://{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master:6379/1"
 ```
 
-
 В итоге, при деплое нашего приложения преобразуется например в строку
 
 `redis://example-2-stage-redis-master:6379/1 `для stage окружения
-
 
 # Подключаем базу данных
 
@@ -897,10 +907,10 @@ production:
 
 ## Как подключить БД
 
-Подключим postgresql helm сабчартом, для этого внесем изменения в файл `.helm/requirements.yam.`
+Подключим postgresql helm сабчартом, для этого внесем изменения в файл `.helm/requirements.yaml`
 
 
-```
+```yaml
 dependencies:
 - name: postgresql
   version: 8.0.0
@@ -912,7 +922,7 @@ dependencies:
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в .gitlab-ci
 
 
-```
+```yaml
 .base_deploy:
   stage: deploy
   script:
@@ -925,7 +935,7 @@ dependencies:
 Опишем параметры для postgresql в файле `.helm/values.yaml`
 
 
-```
+```yaml
 postgresql:
   enabled: true
   postgresqlDatabase: hello_world
@@ -968,7 +978,7 @@ production:
 Параметры подключения приложения к базе данным мы опишем в файле `.helm/templates/_envs.tpl`
 
 
-```
+```yaml
 {{- define "database_envs" }}
 - name: DATABASE_URL
   value: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Chart.Name }}-{{ .Values.global.env }}-postgresql:5432"
@@ -980,7 +990,7 @@ production:
 
 Такой подход позволит нам переиспользовать данное определение переменных окружения для нескольких контейнеров. Имя для сервиса postgresql генерируется из названия нашего приложения, имени окружения и добавлением postgresql
 
-Остальные значения подставляются из файлов values.yaml и secret-values.yaml
+Остальные значения подставляются из файлов `values.yaml` и `secret-values.yaml`
 
 
 ## Выполнение миграций
@@ -990,7 +1000,7 @@ production:
 Добавим запуск миграций после каждого деплоя приложения.
 
 
-```
+```yaml
 ---
 apiVersion: batch/v1
 kind: Job
@@ -1036,7 +1046,7 @@ spec:
 Если мы хотим воспользоваться пакетом rubocop-rails нам нужно добавть эту зависимость в наше приложение, собрать образ приложения и запустить выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
 
-```
+```yaml
 Rubocop check:
   script:
     - werf run rails -- rubocop --require rubocop-rails
