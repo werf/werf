@@ -39,9 +39,9 @@ import (
 type ThreeWayMergeModeType string
 
 var (
-	threeWayMergeEnabled         ThreeWayMergeModeType = "enabled"
-	threeWayMergeOnlyNewReleases ThreeWayMergeModeType = "onlyNewReleases"
-	threeWayMergeDisabled        ThreeWayMergeModeType = "disabled"
+	ThreeWayMergeEnabled         ThreeWayMergeModeType = "enabled"
+	ThreeWayMergeOnlyNewReleases ThreeWayMergeModeType = "onlyNewReleases"
+	ThreeWayMergeDisabled        ThreeWayMergeModeType = "disabled"
 )
 
 var (
@@ -603,11 +603,11 @@ func formatTestResults(results []*release.TestRun) string {
 
 func convertThreeWayMergeModeForHelm(threeWayMergeMode ThreeWayMergeModeType) services.ThreeWayMergeMode {
 	switch threeWayMergeMode {
-	case threeWayMergeEnabled:
+	case ThreeWayMergeEnabled:
 		return services.ThreeWayMergeMode_enabled
-	case threeWayMergeDisabled:
+	case ThreeWayMergeDisabled:
 		return services.ThreeWayMergeMode_disabled
-	case threeWayMergeOnlyNewReleases:
+	case ThreeWayMergeOnlyNewReleases:
 		return services.ThreeWayMergeMode_onlyNewReleases
 	default:
 		panic("non empty threeWayMergeMode required!")
@@ -616,17 +616,17 @@ func convertThreeWayMergeModeForHelm(threeWayMergeMode ThreeWayMergeModeType) se
 
 func getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType) ThreeWayMergeModeType {
 	if currentDate.After(noDisableThreeWayMergeDeadline) {
-		return threeWayMergeEnabled
+		return ThreeWayMergeEnabled
 	}
 
 	if userSpecifiedThreeWayMergeMode != "" {
 		return userSpecifiedThreeWayMergeMode
 	} else if currentDate.Before(threeWayMergeOnlyNewReleasesEnabledDeadline) {
-		return threeWayMergeDisabled
+		return ThreeWayMergeDisabled
 	} else if currentDate.Before(threeWayMergeEnabledDeadline) {
-		return threeWayMergeOnlyNewReleases
+		return ThreeWayMergeOnlyNewReleases
 	} else {
-		return threeWayMergeEnabled
+		return ThreeWayMergeEnabled
 	}
 }
 
@@ -636,11 +636,11 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 	disabledDescExtra := ""
 	onlyNewReleasesDescExtra := ""
 	switch threeWayMergeMode {
-	case threeWayMergeEnabled:
+	case ThreeWayMergeEnabled:
 		enabledDescExtra = "(CURRENT)"
-	case threeWayMergeDisabled:
+	case ThreeWayMergeDisabled:
 		disabledDescExtra = "(CURRENT)"
-	case threeWayMergeOnlyNewReleases:
+	case ThreeWayMergeOnlyNewReleases:
 		onlyNewReleasesDescExtra = "(CURRENT)"
 	}
 
@@ -649,11 +649,11 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 	releaseResourceName := fmt.Sprintf("%s/%s.v%d", strings.ToLower(tillerSettings.Releases.Name()), newRelease.GetName(), newRelease.GetVersion())
 
 	if currentDate.After(noDisableThreeWayMergeDeadline) {
-		if userSpecifiedThreeWayMergeMode != "" && userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
+		if userSpecifiedThreeWayMergeMode != "" && userSpecifiedThreeWayMergeMode != ThreeWayMergeEnabled {
 			logboek.LogWarnF("WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore, starting with %s!\n", userSpecifiedThreeWayMergeMode, noDisableThreeWayMergeDeadline)
 			logboek.LogWarnF("WARNING werf will always use \"enabled\" three-way-merge-mode.")
 		}
-	} else if userSpecifiedThreeWayMergeMode != threeWayMergeEnabled {
+	} else if userSpecifiedThreeWayMergeMode != ThreeWayMergeEnabled {
 		logboek.Default.LogFHighlight("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)
 
 		if newRelease.ThreeWayMergeEnabled {
@@ -697,11 +697,11 @@ func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRe
 				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeEnabledDeadline) +
 					"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!")
 
-			if userSpecifiedThreeWayMergeMode == threeWayMergeDisabled {
+			if userSpecifiedThreeWayMergeMode == ThreeWayMergeDisabled {
 				logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"disabled\" and\n")
 				logboek.LogWarnF("WARNING should be switched to \"onlyNewReleases\" or \"enabled\"\n")
 				logboek.LogWarnF("WARNING as soon as possible, because two-way-merge will be DEPRECATED soon!\n")
-			} else if userSpecifiedThreeWayMergeMode == threeWayMergeOnlyNewReleases {
+			} else if userSpecifiedThreeWayMergeMode == ThreeWayMergeOnlyNewReleases {
 				if !newRelease.ThreeWayMergeEnabled {
 					logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"onlyNewReleases\" and current release\n")
 					logboek.LogWarnF("WARNING %q is old and does not use three way merge.\n", newRelease.GetName())
