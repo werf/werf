@@ -371,7 +371,7 @@ Go templates are available within YAML configuration. The following functions ar
   ```
   {% endraw %}
 
-* `.Files.Get` function for getting project file content:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
+* `.Files.Get` and `.Files.Glob` functions to work with project files:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get and .Files.Glob" data-anchorjs-icon=""></a>
 
   <div class="tabs">
     <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
@@ -379,6 +379,9 @@ Go templates are available within YAML configuration. The following functions ar
   </div>
   
   <div id="ansible" class="tabs__content active" markdown="1">
+  
+  **.Files.Get**
+  
   {% raw %}
   ```yaml
   project: my-project
@@ -396,9 +399,36 @@ Go templates are available within YAML configuration. The following functions ar
         dest: /etc/nginx/nginx.conf
   ```
   {% endraw %}
+  
+  **.Files.Glob**
+  
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+  
+  image: app
+  from: alpine
+  ansible:
+    install:
+    - raw: mkdir /app
+    setup:
+  {{ range $path, $content := .Files.Glob ".werf/files/*" }}
+    - name: "Setup /app/{{ base $path }}"
+      copy:
+        content: |
+  {{ $content | indent 8 }}
+        dest: /app/{{ base $path }}
+  {{ end }}
+  ```
+  {% endraw %}
   </div>
   
   <div id="shell" class="tabs__content" markdown="1">
+  
+  **.Files.Get**
+  
   {% raw %}
   ```yaml
   project: my-project
@@ -410,10 +440,33 @@ Go templates are available within YAML configuration. The following functions ar
   shell:
     setup:
     - |
-      head -c -1 <<EOF | tee file > /etc/nginx/nginx.conf
+      head -c -1 <<EOF > /etc/nginx/nginx.conf
   {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
       EOF
   ```
   {% endraw %}
+  
+  **.Files.Glob**
+  
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+
+  image: app
+  from: alpine
+  shell:
+    install: mkdir /app
+    setup:
+  {{ range $path, $content := .Files.Glob ".werf/files/*" }}
+    - |
+      head -c -1 <<EOF > /app/{{ base $path }}
+  {{ $content | indent 4 }}
+      EOF
+  {{ end }}
+  ```
+  {% endraw %}
+  
   </div>
   

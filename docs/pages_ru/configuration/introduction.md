@@ -382,7 +382,7 @@ shell:
   ```
   {% endraw %}
 
-* Функция `.Files.Get` для получения содержимого какого-либо файла проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
+* Функции `.Files.Get` и `.Files.Glob` для работы с файлами проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
  <div class="tabs">
    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
@@ -390,40 +390,93 @@ shell:
  </div>
 
  <div id="ansible" class="tabs__content active" markdown="1">
- {% raw %}
- ```yaml
- project: my-project
- configVersion: 1
- ---
+   
+**.Files.Get**
 
- image: app
- from: alpine
- ansible:
-   setup:
-   - name: "Setup /etc/nginx/nginx.conf"
-     copy:
-       content: |
- {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-       dest: /etc/nginx/nginx.conf
- ```
- {% endraw %}
- </div>
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
 
- <div id="shell" class="tabs__content" markdown="1">
- {% raw %}
- ```yaml
- project: my-project
- configVersion: 1
- ---
+image: app
+from: alpine
+ansible:
+ setup:
+ - name: "Setup /etc/nginx/nginx.conf"
+   copy:
+     content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+     dest: /etc/nginx/nginx.conf
+```
+{% endraw %}
 
- image: app
- from: alpine
- shell:
-   setup:
-   - |
-     head -c -1 <<EOF | tee file > /etc/nginx/nginx.conf
- {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
-     EOF
- ```
- {% endraw %}
- </div>
+**.Files.Glob**
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+ansible:
+ install:
+ - raw: mkdir /app
+ setup:
+{{ range $path, $content := .Files.Glob ".werf/files/*" }}
+ - name: "Setup /app/{{ base $path }}"
+   copy:
+     content: |
+{{ $content | indent 8 }}
+     dest: /app/{{ base $path }}
+{{ end }}
+```
+{% endraw %}
+</div>
+
+<div id="shell" class="tabs__content" markdown="1">
+
+**.Files.Get**
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+ setup:
+ - |
+   head -c -1 <<EOF > /etc/nginx/nginx.conf
+{{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+   EOF
+```
+{% endraw %}
+
+**.Files.Glob**
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+ install: mkdir /app
+ setup:
+{{ range $path, $content := .Files.Glob ".werf/files/*" }}
+ - |
+   head -c -1 <<EOF > /app/{{ base $path }}
+{{ $content | indent 4 }}
+   EOF
+{{ end }}
+```
+{% endraw %}
+
+</div>
