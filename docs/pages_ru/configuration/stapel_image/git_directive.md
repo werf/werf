@@ -3,8 +3,8 @@ title: Добавление исходного кода из git-репозит�
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/git_directive.html
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=1016&amp;h=72">
+  <a class="google-drawings" href="../../../images/configuration/git_directive1.png" data-featherlight="image">
+      <img src="../../../images/configuration/git_directive1_preview.png">
   </a>
 
   <div class="tabs">

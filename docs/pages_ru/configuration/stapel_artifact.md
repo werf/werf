@@ -4,8 +4,8 @@ sidebar: documentation
 permalink: documentation/configuration/stapel_artifact.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
-  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
+  <a class="google-drawings" href="../../images/configuration/stapel_artifact1.png" data-featherlight="image">
+      <img src="../../images/configuration/stapel_artifact1_preview.png">
   </a>
 ---
 
@@ -50,8 +50,8 @@ artifact: "application assets"
 
 <div class="summary">
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=1016&amp;h=72">
+<a class="google-drawings" href="../../images/configuration/stapel_artifact2.png" data-featherlight="image">
+  <img src="../../images/configuration/stapel_artifact2_preview.png">
 </a>
 
 </div>
@@ -66,8 +66,8 @@ artifact: "application assets"
 
 <div class="summary">
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=1428&h=649" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=426&h=216">
+<a class="google-drawings" href="../../images/configuration/stapel_artifact3.png" data-featherlight="image">
+  <img src="../../images/configuration/stapel_artifact3_preview.png">
 </a>
 
 </div>

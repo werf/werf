@@ -3,8 +3,8 @@ title: Запуск инструкций сборки
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/assembly_instructions.html
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72" alt="Инструкции сборки">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions1.png" data-featherlight="image">
+      <img src="../../../images/configuration/assembly_instructions1_preview.png" alt="Инструкции сборки">
   </a>
 
   <div class="tabs">
@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Запуск инструкций сборки при изменениях в git-репозитории</b>
 
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Запуск инструкций сборки при изменениях в git-репозитории">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
   </a>
 ---
 
@@ -467,8 +467,8 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 ## Зависимость от изменений в git-репозитории
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Зависимость от изменений в git-репозитории">
+<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
   </a>
 
 Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 
