@@ -169,19 +169,31 @@ func debugWorktreeSwitch() bool {
 
 func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules bool) error {
 	var err error
-
-	err = os.MkdirAll(workTreeDir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to create work tree dir %s: %s", workTreeDir, err)
-	}
-
 	var cmd *exec.Cmd
 	var output *bytes.Buffer
 
+	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
+		cmd = exec.Command(
+			"git", "--git-dir", repoDir,
+			"worktree", "add", "--force", "--detach", "--no-checkout", workTreeDir,
+		)
+		output = setCommandRecordingLiveOutput(cmd)
+		if debugWorktreeSwitch() {
+			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
+		}
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("git worktree add failed: %s\n%s", err, output.String())
+		}
+	} else if err != nil {
+		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
+	}
+
 	cmd = exec.Command(
-		"git", "-c", "core.autocrlf=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
+		"git", "-c", "core.autocrlf=false",
 		"reset", "--hard", commit,
 	)
+	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
@@ -192,9 +204,10 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	}
 
 	cmd = exec.Command(
-		"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+		"git", "--work-tree", workTreeDir,
 		"clean", "-d", "-f", "-f", "-x",
 	)
+	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
@@ -218,7 +231,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		}
 
 		cmd = exec.Command(
-			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+			"git", "--work-tree", workTreeDir,
 			"submodule", "foreach", "--recursive",
 			"git", "-c", "core.autocrlf=false", "reset", "--hard",
 		)
@@ -233,7 +246,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		}
 
 		cmd = exec.Command(
-			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
+			"git", "--work-tree", workTreeDir,
 			"submodule", "foreach", "--recursive",
 			"git", "clean", "-d", "-f", "-f", "-x",
 		)
