@@ -38,11 +38,11 @@
         },
         {
           "name": "ea",
-          "version": "v1.1.14"
+          "version": "v1.1.14+fix1"
         },
         {
           "name": "stable",
-          "version": "v1.1.8+fix20"
+          "version": "v1.1.14+fix1"
         },
         {
           "name": "rock-solid",
