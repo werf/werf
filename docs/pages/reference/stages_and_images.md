@@ -24,20 +24,20 @@ The werf assembly process involves a sequential build of stages using the _stage
 </div>
 
 <div id="dockerfile-image-tab" class="tabs__content active">
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=821&amp;h=59">
+<a class="google-drawings" href="../../images/reference/stages_and_images1.png" data-featherlight="image">
+<img src="../../images/reference/stages_and_images1_preview.png">
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=2000&amp;h=881" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=821&amp;h=362" >
+<a class="google-drawings" href="../../images/reference/stages_and_images2.png" data-featherlight="image">
+<img src="../../images/reference/stages_and_images2_preview.png" >
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
+<a class="google-drawings" href="../../images/reference/stages_and_images3.png" data-featherlight="image">
+<img src="../../images/reference/stages_and_images3_preview.png">
 </a>
 </div>
 
@@ -58,8 +58,8 @@ being reused for totally different branches, [see stage selection algorithm]({{ 
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=572&amp;h=577" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=286&amp;h=288">
+<a class="google-drawings" href="../../images/reference/stages_and_images4.png" data-featherlight="image">
+<img src="../../images/reference/stages_and_images4_preview.png">
 </a>
 
 ## Stage dependencies

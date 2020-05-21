@@ -4,8 +4,8 @@ sidebar: documentation
 permalink: documentation/configuration/stapel_image/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=1016&amp;h=72">
+  <a class="google-drawings" href="../../../images/configuration/base_image1.png" data-featherlight="image">
+      <img src="../../../images/configuration/base_image1_preview.png">
   </a>
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
@@ -77,8 +77,8 @@ fromImageArtifact: <artifact name>
 Также эта рекомендация будет полезной, если вам, по каким-либо причинам, не хватает существующего _конвейера стадий_.
 Используя в качестве _базового образа_ образ, описанный в том же `werf.yaml`, вы по сути можете построить свой _конвейер стадий_.
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=1629&amp;h=1435" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vTmQBPjB6p_LUpwiae09d_Jp0JoS6koTTbCwKXfBBAYne9KCOx2CvcM6DuD9pnopdeHF--LPpxJJFhB/pub?w=850&amp;h=673">
+<a class="google-drawings" href="../../../images/configuration/base_image2.png" data-featherlight="image">
+<img src="../../../images/configuration/base_image2_preview.png">
 </a>
 
 ## fromCacheVersion

@@ -3,8 +3,8 @@ title: Running assembly instructions
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/assembly_instructions.html
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72" alt="Assembly instructions">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions1.png" data-featherlight="image">
+      <img src="../../../images/configuration/assembly_instructions1_preview.png" alt="Assembly instructions">
   </a>
 
   <div class="tabs">
@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Running assembly instructions with git</b>
 
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Running assembly instructions with git">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Running assembly instructions with git">
   </a>
 ---
 
@@ -508,8 +508,8 @@ So this configuration rebuilds _beforeInstall_ user stage on every commit.
 
 ## Dependency on git repo changes
 
-<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Dependency on git repo changes">
+<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
   </a>
 
 As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#rebuild-of-gitarchive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).

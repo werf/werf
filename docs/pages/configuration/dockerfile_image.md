@@ -4,8 +4,8 @@ sidebar: documentation
 permalink: documentation/configuration/dockerfile_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=2031&amp;h=144" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRrzxht-PmC-4NKq95DtLS9E7JrvtuHy0JpMKdylzlZtEZ5m7bJwEMJ6rXTLevFosWZXmi9t3rDVaPB/pub?w=1016&amp;h=72">
+  <a class="google-drawings" href="../../images/configuration/dockerfile_image1.png" data-featherlight="image">
+    <img src="../../images/configuration/dockerfile_image1_preview.png">
   </a>
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>
