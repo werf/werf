@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+	"github.com/bmatcuk/doublestar"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
@@ -309,11 +310,11 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 }
 
 type files struct {
-	HomePath string
+	ProjectDir string
 }
 
 func (f files) Get(path string) string {
-	filePath := filepath.Join(f.HomePath, path)
+	filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		logboek.LogWarnF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
@@ -325,6 +326,50 @@ func (f files) Get(path string) string {
 		return ""
 	}
 	return string(b)
+}
+
+func (f files) Glob(pattern string) map[string]string {
+	result := map[string]string{}
+
+	matches, err := doublestar.Glob(filepath.Join(f.ProjectDir, filepath.FromSlash(pattern)))
+	if err != nil {
+		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: glob failed: %s!\n", pattern, err)
+		return result
+	}
+
+	var resultPaths []string
+	for _, path := range matches {
+		s, err := os.Lstat(path)
+		if err != nil {
+			logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: stat file %s failed: %s!\n", pattern, path, err)
+			return result
+		}
+
+		if s.IsDir() {
+			continue
+		}
+
+		resultPaths = append(resultPaths, path)
+	}
+
+	if len(resultPaths) == 0 {
+		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
+		return result
+	}
+
+	for _, path := range resultPaths {
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: read file %s failed: %s!\n", pattern, path, err)
+			return result
+		}
+
+		resultPath := strings.TrimPrefix(path, f.ProjectDir+string(os.PathSeparator))
+		resultPath = filepath.ToSlash(resultPath)
+		result[resultPath] = string(b)
+	}
+
+	return result
 }
 
 func splitContent(content []byte) (docsContents [][]byte) {
