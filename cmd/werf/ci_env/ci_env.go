@@ -155,27 +155,28 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
-	var imagesUsername, imagesPassword string
-	var doLogin bool
-	if ciRegistryImageEnv != "" && ciJobTokenEnv != "" {
-		imagesUsername = "gitlab-ci-token"
-		imagesPassword = ciJobTokenEnv
-		doLogin = true
-	}
-
 	var stagesStorageRepoImplementation string
 	var imagesRepoImplementation string
+	var imagesUsername, imagesPassword string
+	var doLogin bool
+	if ciRegistryImageEnv != "" {
+		if ciJobTokenEnv != "" {
+			imagesUsername = "gitlab-ci-token"
+			imagesPassword = ciJobTokenEnv
+			doLogin = true
+		}
 
-	ciRegistryEnv := os.Getenv("CI_REGISTRY")
-	werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
-	werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
+		ciRegistryEnv := os.Getenv("CI_REGISTRY")
+		werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
+		werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
 
-	if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
-		stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
-	}
+		if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
+			stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		}
 
-	if werfImagesRepoEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
-		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		if werfImagesRepoEnv == "" || strings.HasPrefix(werfImagesRepoEnv, ciRegistryEnv) {
+			imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		}
 	}
 
 	if doLogin {
