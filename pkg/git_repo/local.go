@@ -43,6 +43,10 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
 }
 
+func (repo *Local) CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error) {
+	return repo.createVirtualMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
+}
+
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {

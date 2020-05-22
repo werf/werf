@@ -244,6 +244,27 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
+func (repo *Base) createVirtualMergeCommit(gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
+	repository, err := git.PlainOpen(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
+	}
+	commitHash, err := newHash(toCommit)
+	if err != nil {
+		return "", fmt.Errorf("bad commit hash %s: %s", toCommit, err)
+	}
+	v1MergeIntoCommitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return "", fmt.Errorf("bad commit %s: %s", toCommit, err)
+	}
+	hasSubmodules, err := HasSubmodulesInCommit(v1MergeIntoCommitObj)
+	if err != nil {
+		return "", err
+	}
+
+	return true_git.CreateDetachedMergeCommit(gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules})
+}
+
 func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {

@@ -53,6 +53,7 @@ type GitRepo interface {
 	FindCommitIdByMessage(regex string) (string, error)
 	IsAncestor(ancestorCommit, descendantCommit string) (bool, error)
 
+	CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error)
 	CreatePatch(PatchOptions) (Patch, error)
 	CreateArchive(ArchiveOptions) (Archive, error)
 	Checksum(ChecksumOptions) (Checksum, error)

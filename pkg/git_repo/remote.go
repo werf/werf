@@ -28,6 +28,14 @@ type Remote struct {
 	IsDryRun bool
 }
 
+func (repo *Remote) CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error) {
+	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
+	if err != nil {
+		return "", err
+	}
+	return repo.createVirtualMergeCommit(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, fromCommit, toCommit)
+}
+
 func (repo *Remote) GetClonePath() string {
 	return filepath.Join(GetGitRepoCacheDir(), "remote", slug.Slug(repo.Url))
 }
@@ -274,23 +282,23 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 }
 
 func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
-	workTreeDir, err := repo.getWorkTreeDir()
+	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.createPatch(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+	return repo.createPatch(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
 }
 
 func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	workTreeDir, err := repo.getWorkTreeDir()
+	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
 	if err != nil {
 		return nil, err
 	}
-	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
 }
 
 func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	workTreeDir, err := repo.getWorkTreeDir()
+	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +307,7 @@ func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error
 		"Calculating checksum",
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeDir, opts)
+			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
 			return nil
 		},
 	)
@@ -311,7 +319,7 @@ func (repo *Remote) IsCommitExists(commit string) (bool, error) {
 	return repo.isCommitExists(repo.GetClonePath(), repo.GetClonePath(), commit)
 }
 
-func (repo *Remote) getWorkTreeDir() (string, error) {
+func (repo *Remote) getWorkTreeCacheDir() (string, error) {
 	ep, err := transport.NewEndpoint(repo.Url)
 	if err != nil {
 		return "", fmt.Errorf("bad endpoint url `%s`: %s", repo.Url, err)
