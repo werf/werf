@@ -313,16 +313,23 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 			return fmt.Errorf("getting project dir failed: %s", err)
 		}
 
-		werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, true)
+		werfConfig, err := common.GetOptionalWerfConfig(projectDir, &commonCmdData, true)
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}
 
 		projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
-		if werfConfig.HasNamelessImage() {
-			imagesRepo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+		multirepo := projectRepo
+		monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+
+		if werfConfig != nil {
+			if werfConfig.HasNamelessImage() {
+				imagesRepo = monorepo
+			} else {
+				imagesRepo = multirepo
+			}
 		} else {
-			imagesRepo = projectRepo
+			imagesRepo = monorepo
 		}
 
 		stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
@@ -353,6 +360,9 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s", ciGithubOwnerWithProject))
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+
+	writeHeader(w, "CLEANUP", true)
+	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("GITHUB_SHA")
