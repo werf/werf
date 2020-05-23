@@ -155,27 +155,28 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
-	var imagesUsername, imagesPassword string
-	var doLogin bool
-	if ciRegistryImageEnv != "" && ciJobTokenEnv != "" {
-		imagesUsername = "gitlab-ci-token"
-		imagesPassword = ciJobTokenEnv
-		doLogin = true
-	}
-
 	var stagesStorageRepoImplementation string
 	var imagesRepoImplementation string
+	var imagesUsername, imagesPassword string
+	var doLogin bool
+	if ciRegistryImageEnv != "" {
+		if ciJobTokenEnv != "" {
+			imagesUsername = "gitlab-ci-token"
+			imagesPassword = ciJobTokenEnv
+			doLogin = true
+		}
 
-	ciRegistryEnv := os.Getenv("CI_REGISTRY")
-	werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
-	werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
+		ciRegistryEnv := os.Getenv("CI_REGISTRY")
+		werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
+		werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
 
-	if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
-		stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
-	}
+		if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
+			stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		}
 
-	if werfImagesRepoEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
-		imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		if werfImagesRepoEnv == "" || strings.HasPrefix(werfImagesRepoEnv, ciRegistryEnv) {
+			imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		}
 	}
 
 	if doLogin {
@@ -313,16 +314,23 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 			return fmt.Errorf("getting project dir failed: %s", err)
 		}
 
-		werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, true)
+		werfConfig, err := common.GetOptionalWerfConfig(projectDir, &commonCmdData, true)
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}
 
 		projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
-		if werfConfig.HasNamelessImage() {
-			imagesRepo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+		multirepo := projectRepo
+		monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+
+		if werfConfig != nil {
+			if werfConfig.HasNamelessImage() {
+				imagesRepo = monorepo
+			} else {
+				imagesRepo = multirepo
+			}
 		} else {
-			imagesRepo = projectRepo
+			imagesRepo = monorepo
 		}
 
 		stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
@@ -353,6 +361,9 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s", ciGithubOwnerWithProject))
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+
+	writeHeader(w, "CLEANUP", true)
+	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("GITHUB_SHA")
