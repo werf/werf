@@ -102,3 +102,7 @@ func (r *defaultImplementation) String() string {
 func IsManifestUnknownError(err error) bool {
 	return strings.Contains(err.Error(), "MANIFEST_UNKNOWN")
 }
+
+func IsNameUnknownError(err error) bool {
+	return strings.Contains(err.Error(), "NAME_UNKNOWN")
+}

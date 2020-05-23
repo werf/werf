@@ -373,7 +373,7 @@ func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.Stage
 		}, nil
 	} else {
 		logboek.Info.LogF("Not found %s image info in manifest cache (CACHE MISS)\n", stageImageName)
-		logboek.Info.LogF("Getting signature %q uniqueID %q stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
+		logboek.Info.LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
 		if stageDesc, err := m.StagesStorage.GetStageDescription(m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
 			return nil, fmt.Errorf("error getting signature %q uniqueID %q stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 		} else if stageDesc != nil {
