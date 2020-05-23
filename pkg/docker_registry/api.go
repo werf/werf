@@ -34,7 +34,7 @@ func newAPI(options apiOptions) *api {
 func (api *api) Tags(reference string) ([]string, error) {
 	tags, err := api.list(reference)
 	if err != nil {
-		if strings.Contains(err.Error(), "NAME_UNKNOWN") {
+		if IsNameUnknownError(err) {
 			return []string{}, nil
 		}
 		return nil, err
@@ -53,7 +53,7 @@ func (api *api) IsRepoImageExists(reference string) (bool, error) {
 
 func (api *api) TryGetRepoImage(reference string) (*image.Info, error) {
 	if imgInfo, err := api.GetRepoImage(reference); err != nil {
-		if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
+		if IsManifestUnknownError(err) || IsNameUnknownError(err) {
 			return imgInfo, nil
 		}
 		return imgInfo, err
