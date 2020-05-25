@@ -93,6 +93,10 @@ werf images publish [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --publish-report-format='json':
+            Publish report format (only json available for now)
+      --publish-report-path='':
+            Publish report contains image info: full docker repo, tag, ID — for each published image
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
