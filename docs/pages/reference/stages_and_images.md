@@ -260,7 +260,7 @@ Currently, _images_ can only be created during the [_publishing process_]({{ sit
 
 Images should be defined in the werf configuration file `werf.yaml`.
 
-To publish new images into the images repo werf uses [synchronization service components](#synchronization-manager) to coordinate multiple werf processes. Only a single werf process can perform publishing of the same image at a time.
+To publish new images into the images repo werf uses [synchronization service components](#synchronization-locks-and-stages-storage-cache) to coordinate multiple werf processes. Only a single werf process can perform publishing of the same image at a time.
 
 ## Synchronization: locks and stages storage cache
 

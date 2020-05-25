@@ -21,7 +21,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 * [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
 * [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
 
-Далее последовательно рассматриваются стадии pipeline и различные варианты их организации. Изложение построено от общего к частному. В конце статьи приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ci.yml-для-готовых-workflow) для готовых workflow.
+Далее последовательно рассматриваются стадии pipeline и различные варианты их организации. Изложение построено от общего к частному. В конце статьи приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ciyml-для-готовых-workflow) для готовых workflow.
 
 Независимо от workflow, все версии конфигурации подчиняются следующим правилам:
 * [*Сборка и публикация*](#сборка-и-публикация-образов-приложения) выполняется при каждом push в репозитории.

@@ -24,12 +24,12 @@ The set of tiers (as well as GitLab environments) in a Kubernetes cluster may va
 * [Staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
 * [Review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
 
-Below, we discuss various pipeline stages and options for setting them up. We will start with general terms and then proceed to the particularities. At the end of the article, you may find [ready-made .gitlab-ci.yml](#the-complete-gitlab-ci.yml-for-ready-made-workflows) XXXXXXXXXXXXXX files tailored for specific workflows.
+Below, we discuss various pipeline stages and options for setting them up. We will start with general terms and then proceed to the particularities. At the end of the article, you may find [ready-made .gitlab-ci.yml](#the-complete-gitlab-ciyml-for-ready-made-workflows) files tailored for specific workflows.
 
 Regardless of the workflow in question, all configuration versions are subject to the following rules:
 
 * [*Building and publishing*](#building-and-publishing-application-images) are performed after each push to the repository.
-* [*Deploying/deleting*](#setting-up-a-review-environment-various-scenarios) review environments:
+* [*Deploying/deleting*](#setting-up-a-review-environment--various-scenarios) review environments:
  * You can only roll out to the review environment as part of the Merge Request (MR).
  * Review environments are deleted using GitHub tools (by clicking the button in the Environment section), or automatically when a branch is deleted, or if there is no activity in the MR for a day.
 * [*The cleanup process*](#cleaning-up-images) runs once a day according to the master schedule.
@@ -127,7 +127,7 @@ In the simplest case, if an integrated Docker registry is used, then the authori
 
 As a result of the `werf ci-env` command, a temporary docker config is created. It is used by all the commands in the shell session (including docker). It means that parallel tasks do not overlap when using docker, and the temporary token is preserved (not overwritten) in the configuration.
 
-If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker) sheds more light on authorization).
+If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#docker-authorization) sheds more light on authorization).
 
 ## Deploying an application
 
@@ -556,12 +556,12 @@ The cleanup stage runs on a schedule only. You can define the schedule by openin
 
 > You can read more about workflow scenarios in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
-* [Building and publishing](#сборка-и-публикация-образов-приложения).
+* [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 3 Semi-automatic mode using a label (recommended)](#3-semi-automatic-mode-using-a-label-recommended).
 * Deploying to staging and production tiers via the strategy [No. 1 Fast and Furious (recommended)](#1-fast-and-furious-recommended).
 * [Cleaning up stages](#cleaning-up-images).
 
-###.gitlab-ci.yml
+### .gitlab-ci.yml
 
 {:.no_toc}
 
@@ -691,12 +691,12 @@ Cleanup:
 
 > You can read more about workflow scenarios in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
-* [Building and publishing](#сборка-и-публикация-образов-приложения).
+* [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers via the strategy [No. 2 Push the Button](#2-push-the-button).
 * [Cleaning up stages](#cleaning-up-images).
 
-###.gitlab-ci.yml
+### .gitlab-ci.yml
 
 {:.no_toc}
 
@@ -794,7 +794,7 @@ Cleanup:
 
 > You can read more about workflow scenarios in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
-* [Building and publishing](#сборка-и-публикация-образов-приложения).
+* [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers via the strategy [No. 3 Tag Everything](#3-tag-everything-recommended).
 * [Cleaning up stages](#cleaning-up-images). 
@@ -895,7 +895,7 @@ Cleanup:
 
 > You can read more about workflow scenarios in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
-* [Building and publishing](#сборка-и-публикация-образов-приложения).
+* [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 2 Automatically using a branch name](#2-automatically-using-a-branch-name).
 * Deploying to staging and production tiers via the strategy [No. 4 Branch, branch, branch!](#4-branch-branch-branch).
 * [Cleaning up stages](#cleaning-up-images). 
