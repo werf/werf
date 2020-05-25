@@ -22,15 +22,26 @@ const (
 
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
+
+	UnexpectedTagFormatErrorPrefix = "unexpected tag format"
 )
 
 func getSignatureAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
+
+	if len(parts) != 2 {
+		return "", 0, fmt.Errorf("%s %s", UnexpectedTagFormatErrorPrefix, repoStageImageTag)
+	}
+
 	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
-		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %s", parts[1], err)
+		return "", 0, fmt.Errorf("%s %s: unable to parse unique id %s as timestamp: %s", UnexpectedTagFormatErrorPrefix, repoStageImageTag, parts[1], err)
 	} else {
 		return parts[0], uniqueID, nil
 	}
+}
+
+func isUnexpectedTagFormatError(err error) bool {
+	return strings.HasPrefix(err.Error(), UnexpectedTagFormatErrorPrefix)
 }
 
 type RepoStagesStorage struct {
@@ -77,6 +88,10 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 			}
 
 			if signature, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+				if isUnexpectedTagFormatError(err) {
+					logboek.Debug.LogLn(strings.Title(err.Error()))
+					continue
+				}
 				return nil, err
 			} else {
 				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
@@ -118,6 +133,10 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 				continue
 			}
 			if _, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+				if isUnexpectedTagFormatError(err) {
+					logboek.Debug.LogLn(strings.Title(err.Error()))
+					continue
+				}
 				return nil, err
 			} else {
 				logboek.Debug.LogF("Tag %q is suitable for signature %q\n", tag, signature)
