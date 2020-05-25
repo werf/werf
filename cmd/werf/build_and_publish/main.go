@@ -105,6 +105,10 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupPublishReportPath(&commonCmdData, cmd)
 	common.SetupPublishReportFormat(&commonCmdData, cmd)
 
+	common.SetupVirtualMerge(&commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
@@ -236,7 +240,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {

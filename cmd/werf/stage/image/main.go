@@ -76,6 +76,10 @@ func NewCmd() *cobra.Command {
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupVirtualMerge(&commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -170,7 +174,7 @@ func run(imageName string) error {
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {

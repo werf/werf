@@ -209,7 +209,7 @@ func (m *StagesManager) FetchStage(stg stage.Interface) error {
 	return nil
 }
 
-func (m *StagesManager) SelectSuitableStage(stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error) {
+func (m *StagesManager) SelectSuitableStage(c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error) {
 	if len(stages) == 0 {
 		return nil, nil
 	}
@@ -220,7 +220,7 @@ func (m *StagesManager) SelectSuitableStage(stg stage.Interface, stages []*image
 		logboek.LevelLogProcessOptions{},
 		func() error {
 			var err error
-			stageDesc, err = stg.SelectSuitableStage(stages)
+			stageDesc, err = stg.SelectSuitableStage(c, stages)
 			return err
 		},
 	); err != nil {

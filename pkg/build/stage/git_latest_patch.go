@@ -27,17 +27,18 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runti
 
 	isEmpty := true
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
-		if commit == "" {
-			return true, nil
-		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
-			return false, err
-		} else if !exist {
-			// TODO: is this right behaviour?
-			return true, nil
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+		if err != nil {
+			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
 
-		if empty, err := gitMapping.IsPatchEmpty(prevBuiltImage); err != nil {
+		if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
+			return false, fmt.Errorf("unable to check existance of commit %q in the repo %s: %s", commit, gitMapping.GitRepo().GetName(), err)
+		} else if !exist {
+			return false, fmt.Errorf("commit %q is not exist in the repo %s", commit, gitMapping.GitRepo().GetName())
+		}
+
+		if empty, err := gitMapping.IsPatchEmpty(c, prevBuiltImage); err != nil {
 			return false, err
 		} else if !empty {
 			isEmpty = false
@@ -48,11 +49,11 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runti
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {
-		patchContent, err := gitMapping.GetPatchContent(prevBuiltImage)
+		patchContent, err := gitMapping.GetPatchContent(c, prevBuiltImage)
 		if err != nil {
 			return "", fmt.Errorf("error getting patch between previous built image %s and current commit for git mapping %s: %s", prevBuiltImage.Name(), gitMapping.Name, err)
 		}
@@ -63,8 +64,8 @@ func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, _, prevBuiltImage cont
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitLatestPatchStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
-	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
+func (s *GitLatestPatchStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(c, stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}

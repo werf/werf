@@ -224,7 +224,7 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldB
 	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stageSig); err != nil {
 		return err
 	} else {
-		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(stg, stages); err != nil {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(phase.Conveyor, stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
 			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
@@ -376,7 +376,7 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stg.GetSignature()); err != nil {
 		return err
 	} else {
-		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(stg, stages); err != nil {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(phase.Conveyor, stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
 			logboek.Default.LogF(

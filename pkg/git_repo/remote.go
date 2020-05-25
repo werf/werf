@@ -27,12 +27,16 @@ type Remote struct {
 	IsDryRun bool
 }
 
-func (repo *Remote) CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error) {
+func (repo *Remote) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
 	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
 	if err != nil {
 		return "", err
 	}
-	return repo.createVirtualMergeCommit(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, fromCommit, toCommit)
+}
+
+func (repo *Remote) GetMergeCommitParents(commit string) ([]string, error) {
+	return repo.getMergeCommitParents(repo.GetClonePath(), commit)
 }
 
 func (repo *Remote) GetClonePath() string {

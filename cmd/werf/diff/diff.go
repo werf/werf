@@ -105,6 +105,10 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	common.SetupVirtualMerge(&commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
 	return cmd
@@ -257,7 +261,7 @@ func runDiff() error {
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var imagesInfoGetters []images_manager.ImageInfoGetter

@@ -69,6 +69,8 @@ type GitMapping struct {
 	ContainerArchivesDir string
 	ScriptsDir           string
 	ContainerScriptsDir  string
+
+	BaseCommitByPrevBuiltImageName map[string]string
 }
 
 type ContainerFileDescriptor struct {
@@ -194,7 +196,7 @@ func (gm *GitMapping) IsLocal() bool {
 	}
 }
 
-func (gm *GitMapping) LatestCommit() (string, error) {
+func (gm *GitMapping) getLatestCommit() (string, error) {
 	if gm.Commit != "" {
 		return gm.Commit, nil
 	}
@@ -249,13 +251,18 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image container_runtime.ImageInterface) error {
-	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
+func (gm *GitMapping) ApplyPatchCommand(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get base commit from built image: %s", err)
 	}
 
-	commands, err := gm.baseApplyPatchCommand(fromCommit, toCommit, prevBuiltImage)
+	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	if err != nil {
+		return fmt.Errorf("unable to get latest commit info: %s", err)
+	}
+
+	commands, err := gm.baseApplyPatchCommand(fromCommit, toCommitInfo.Commit, prevBuiltImage)
 	if err != nil {
 		return err
 	}
@@ -264,42 +271,141 @@ func (gm *GitMapping) ApplyPatchCommand(prevBuiltImage, image container_runtime.
 		return err
 	}
 
-	gm.AddGitCommitToImageLabels(image, toCommit)
+	gm.AddGitCommitToImageLabels(image, toCommitInfo)
 
 	return nil
 }
 
-func (gm *GitMapping) GetCommitsToPatch(prevBuiltImage container_runtime.ImageInterface) (string, string, error) {
-	fromCommit := gm.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
-	if fromCommit == "" {
-		panic("Commit should be in prev built image labels!")
+func (gm *GitMapping) GetLatestCommitInfo(c Conveyor) (ImageCommitInfo, error) {
+	res := ImageCommitInfo{}
+
+	if commit, err := gm.getLatestCommit(); err != nil {
+		return ImageCommitInfo{}, err
+	} else {
+		res.Commit = commit
 	}
 
-	toCommit, err := gm.LatestCommit()
-	if err != nil {
-		return "", "", err
+	if _, isLocal := gm.GitRepo().(*git_repo.Local); isLocal && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
+		res.VirtualMerge = true
+		res.VirtualMergeFromCommit = c.GetLocalGitRepoVirtualMergeOptions().VirtualMergeFromCommit
+		res.VirtualMergeIntoCommit = c.GetLocalGitRepoVirtualMergeOptions().VirtualMergeIntoCommit
+
+		if res.VirtualMergeFromCommit == "" || res.VirtualMergeIntoCommit == "" {
+			if parents, err := gm.GitRepo().GetMergeCommitParents(res.Commit); err != nil {
+				return ImageCommitInfo{}, fmt.Errorf("unable to get virtual merge commit %s parents for git repo %s: %s", res.Commit, gm.GitRepo().GetName(), err)
+			} else if len(parents) == 2 {
+				if res.VirtualMergeIntoCommit == "" {
+					res.VirtualMergeIntoCommit = parents[0]
+					logboek.Debug.LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
+				}
+				if res.VirtualMergeFromCommit == "" {
+					res.VirtualMergeFromCommit = parents[1]
+					logboek.Debug.LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
+				}
+			}
+		}
+
+		if res.VirtualMergeFromCommit == "" {
+			return ImageCommitInfo{}, fmt.Errorf("unable to detect --virtual-merge-from-commit for virtual merge commit %s", res.Commit)
+		}
+		if res.VirtualMergeIntoCommit == "" {
+			return ImageCommitInfo{}, fmt.Errorf("unable to detect --virtual-merge-into-commit for virtual merge commit %s", res.Commit)
+		}
 	}
 
-	return fromCommit, toCommit, nil
+	return res, nil
 }
 
-func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInterface, commit string) {
+func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInterface, commitInfo ImageCommitInfo) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		gm.ImageGitCommitLabel(): commit,
+		gm.ImageGitCommitLabel(): commitInfo.Commit,
 	})
+
+	if commitInfo.VirtualMerge {
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+			gm.VirtualMergeLabel():           "true",
+			gm.VirtualMergeFromCommitLabel(): commitInfo.VirtualMergeFromCommit,
+			gm.VirtualMergeIntoCommitLabel(): commitInfo.VirtualMergeIntoCommit,
+		})
+	}
 }
 
-func (gm *GitMapping) GetGitCommitFromImageLabels(labels map[string]string) string {
-	commit, ok := labels[gm.ImageGitCommitLabel()]
-	if !ok {
-		return ""
+func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	if baseCommit, hasKey := gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Name()]; hasKey {
+		return baseCommit, nil
 	}
 
-	return commit
+	prevBuiltImageCommitInfo, err := gm.GetBuiltImageCommitInfo(prevBuiltImage.GetStageDescription().Info.Labels)
+	if err != nil {
+		return "", fmt.Errorf("error getting prev built image %s commits info: %s", prevBuiltImage.Name(), err)
+	}
+
+	var baseCommit string
+	if prevBuiltImageCommitInfo.VirtualMerge {
+		if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
+			return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %s", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
+		} else {
+			logboek.Info.LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
+			baseCommit = detachedMergeCommit
+		}
+	} else {
+		baseCommit = prevBuiltImageCommitInfo.Commit
+	}
+
+	gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Name()] = baseCommit
+	return baseCommit, nil
+}
+
+type ImageCommitInfo struct {
+	Commit string
+	VirtualMergeOptions
+}
+
+func makeInvalidImageError(label string) error {
+	return fmt.Errorf("invalid image: not found commit id by label %q", label)
+}
+
+func (gm *GitMapping) GetBuiltImageCommitInfo(builtImageLabels map[string]string) (ImageCommitInfo, error) {
+	res := ImageCommitInfo{}
+
+	res.VirtualMerge = builtImageLabels[gm.VirtualMergeLabel()] == "true"
+	if res.VirtualMerge {
+		if commit, hasKey := builtImageLabels[gm.VirtualMergeFromCommitLabel()]; !hasKey {
+			return ImageCommitInfo{}, makeInvalidImageError(gm.VirtualMergeFromCommitLabel())
+		} else {
+			res.VirtualMergeFromCommit = commit
+		}
+
+		if commit, hasKey := builtImageLabels[gm.VirtualMergeIntoCommitLabel()]; !hasKey {
+			return ImageCommitInfo{}, makeInvalidImageError(gm.VirtualMergeIntoCommitLabel())
+		} else {
+			res.VirtualMergeIntoCommit = commit
+		}
+	}
+
+	if commit, hasKey := builtImageLabels[gm.ImageGitCommitLabel()]; !hasKey {
+		return ImageCommitInfo{}, makeInvalidImageError(gm.ImageGitCommitLabel())
+	} else {
+		res.Commit = commit
+	}
+
+	return res, nil
 }
 
 func (gm *GitMapping) ImageGitCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-commit", gm.GetParamshash())
+}
+
+func (gm *GitMapping) VirtualMergeLabel() string {
+	return fmt.Sprintf("werf-git-%s-virtual-merge", gm.GetParamshash())
+}
+
+func (gm *GitMapping) VirtualMergeFromCommitLabel() string {
+	return fmt.Sprintf("werf-git-%s-virtual-merge-from-commit", gm.GetParamshash())
+}
+
+func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
+	return fmt.Sprintf("werf-git-%s-virtual-merge-into-commit", gm.GetParamshash())
 }
 
 func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
@@ -469,13 +575,13 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyArchiveCommand(image container_runtime.ImageInterface) error {
-	commit, err := gm.LatestCommit()
+func (gm *GitMapping) ApplyArchiveCommand(c Conveyor, image container_runtime.ImageInterface) error {
+	commitInfo, err := gm.GetLatestCommitInfo(c)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	commands, err := gm.baseApplyArchiveCommand(commit, image)
+	commands, err := gm.baseApplyArchiveCommand(commitInfo.Commit, image)
 	if err != nil {
 		return err
 	}
@@ -484,7 +590,7 @@ func (gm *GitMapping) ApplyArchiveCommand(image container_runtime.ImageInterface
 		return err
 	}
 
-	gm.AddGitCommitToImageLabels(image, commit)
+	gm.AddGitCommitToImageLabels(image, commitInfo)
 
 	return nil
 }
@@ -534,21 +640,21 @@ func (gm *GitMapping) baseApplyArchiveCommand(commit string, image container_run
 	return commands, err
 }
 
-func (gm *GitMapping) StageDependenciesChecksum(stageName StageName) (string, error) {
+func (gm *GitMapping) StageDependenciesChecksum(c Conveyor, stageName StageName) (string, error) {
 	depsPaths := gm.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
 		return "", nil
 	}
 
-	commit, err := gm.LatestCommit()
+	commitInfo, err := gm.GetLatestCommitInfo(c)
 	if err != nil {
-		return "", fmt.Errorf("unable to get latest commit: %s", err)
+		return "", fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
 	checksumOpts := git_repo.ChecksumOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
 		Paths:         depsPaths,
-		Commit:        commit,
+		Commit:        commitInfo.Commit,
 	}
 
 	checksum, err := gm.getOrCreateChecksum(checksumOpts)
@@ -566,20 +672,20 @@ func (gm *GitMapping) StageDependenciesChecksum(stageName StageName) (string, er
 	return checksum.String(), nil
 }
 
-func (gm *GitMapping) PatchSize(fromCommit string) (int64, error) {
-	toCommit, err := gm.LatestCommit()
+func (gm *GitMapping) PatchSize(c Conveyor, fromCommit string) (int64, error) {
+	toCommitInfo, err := gm.GetLatestCommitInfo(c)
 	if err != nil {
-		return 0, fmt.Errorf("unable to get latest commit: %s", err)
+		return 0, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	if fromCommit == toCommit {
+	if fromCommit == toCommitInfo.Commit {
 		return 0, nil
 	}
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions:         gm.getRepoFilterOptions(),
 		FromCommit:            fromCommit,
-		ToCommit:              toCommit,
+		ToCommit:              toCommitInfo.Commit,
 		WithEntireFileContext: true,
 		WithBinary:            true,
 	}
@@ -649,19 +755,25 @@ func formatParamshashPaths(paths ...string) []string {
 	return resultPaths
 }
 
-func (gm *GitMapping) GetPatchContent(prevBuiltImage container_runtime.ImageInterface) (string, error) {
-	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
+func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
-	if fromCommit == toCommit {
+
+	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	if err != nil {
+		return "", fmt.Errorf("unable to get latest commit info: %s", err)
+	}
+
+	if fromCommit == toCommitInfo.Commit {
 		return "", nil
 	}
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
 		FromCommit:    fromCommit,
-		ToCommit:      toCommit,
+		ToCommit:      toCommitInfo.Commit,
 	}
 	patch, err := gm.getOrCreatePatch(patchOpts)
 	if err != nil {
@@ -675,13 +787,18 @@ func (gm *GitMapping) GetPatchContent(prevBuiltImage container_runtime.ImageInte
 	return string(data), nil
 }
 
-func (gm *GitMapping) IsPatchEmpty(prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	fromCommit, toCommit, err := gm.GetCommitsToPatch(prevBuiltImage)
+func (gm *GitMapping) IsPatchEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
 
-	return gm.baseIsPatchEmpty(fromCommit, toCommit)
+	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	if err != nil {
+		return false, fmt.Errorf("unable to get latest commit info: %s", err)
+	}
+
+	return gm.baseIsPatchEmpty(fromCommit, toCommitInfo.Commit)
 }
 
 func (gm *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
@@ -703,15 +820,15 @@ func (gm *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error
 	return patch.IsEmpty(), nil
 }
 
-func (gm *GitMapping) IsEmpty() (bool, error) {
-	commit, err := gm.LatestCommit()
+func (gm *GitMapping) IsEmpty(c Conveyor) (bool, error) {
+	commitInfo, err := gm.GetLatestCommitInfo(c)
 	if err != nil {
-		return false, fmt.Errorf("unable to get latest commit: %s", err)
+		return false, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
-		Commit:        commit,
+		Commit:        commitInfo.Commit,
 	}
 
 	archive, err := gm.getOrCreateArchive(archiveOpts)

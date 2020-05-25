@@ -76,6 +76,10 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupPublishReportPath(commonCmdData, cmd)
 	common.SetupPublishReportFormat(commonCmdData, cmd)
 
+	common.SetupVirtualMerge(commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -190,7 +194,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		PublishReportFormat: publishReportFormat,
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {

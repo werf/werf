@@ -66,9 +66,15 @@ type Conveyor struct {
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
+
+	ConveyorOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *Conveyor {
+type ConveyorOptions struct {
+	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
+}
+
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -92,9 +98,15 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		ImagesRepo:         imagesRepo,
 		StorageLockManager: storageLockManager,
 		StagesManager:      stagesManager,
+
+		ConveyorOptions: opts,
 	}
 
 	return c
+}
+
+func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
+	return c.ConveyorOptions.LocalGitRepoVirtualMergeOptions
 }
 
 func (c *Conveyor) GetImportServer(imageName, stageName string) (import_server.ImportServer, error) {
@@ -809,7 +821,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 
 	if len(gitMappings) != 0 {
 		err := logboek.Info.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LevelLogProcessOptions{}, func() error {
-			resGitMappings, err := filterAndLogGitMappings(gitMappings)
+			resGitMappings, err := filterAndLogGitMappings(c, gitMappings)
 			if err != nil {
 				return err
 			}
@@ -827,7 +839,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	return res, nil
 }
 
-func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
+func filterAndLogGitMappings(c *Conveyor, gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
 	var res []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
@@ -890,12 +902,16 @@ func filterAndLogGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappi
 
 			logboek.Info.LogLn()
 
-			commit, err := gitMapping.LatestCommit()
+			commitInfo, err := gitMapping.GetLatestCommitInfo(c)
 			if err != nil {
 				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			logboek.Info.LogFDetails("Commit %s will be used\n", commit)
+			if commitInfo.VirtualMerge {
+				logboek.Info.LogFDetails("Commit %s will be used (virtual merge of %s into %s)\n", commitInfo.Commit, commitInfo.VirtualMergeFromCommit, commitInfo.VirtualMergeIntoCommit)
+			} else {
+				logboek.Info.LogFDetails("Commit %s will be used\n", commitInfo.Commit)
+			}
 
 			res = append(res, gitMapping)
 
@@ -957,6 +973,8 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 		Owner:              local.Owner,
 		Group:              local.Group,
 		StagesDependencies: stageDependencies,
+
+		BaseCommitByPrevBuiltImageName: make(map[string]string),
 	}
 
 	return gitMapping

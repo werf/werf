@@ -99,6 +99,10 @@ type CmdData struct {
 
 	PublishReportPath   *string
 	PublishReportFormat *string
+
+	VirtualMerge           *bool
+	VirtualMergeFromCommit *string
+	VirtualMergeIntoCommit *string
 }
 
 const (
@@ -1379,4 +1383,19 @@ func TerminateWithError(errMsg string, exitCode int) {
 
 	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
+}
+
+func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMerge = new(bool)
+	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
+}
+
+func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMergeFromCommit = new(string)
+	cmd.Flags().StringVarP(cmdData.VirtualMergeFromCommit, "virtual-merge-from-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_FROM_COMMIT"), "Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)")
+}
+
+func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMergeIntoCommit = new(string)
+	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }

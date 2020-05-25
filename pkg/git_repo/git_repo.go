@@ -50,7 +50,9 @@ type GitRepo interface {
 	IsCommitExists(commit string) (bool, error)
 	IsAncestor(ancestorCommit, descendantCommit string) (bool, error)
 
-	CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error)
+	GetMergeCommitParents(commit string) ([]string, error)
+
+	CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error)
 	CreatePatch(PatchOptions) (Patch, error)
 	CreateArchive(ArchiveOptions) (Archive, error)
 	Checksum(ChecksumOptions) (Checksum, error)

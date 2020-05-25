@@ -13,4 +13,11 @@ type Conveyor interface {
 	GetImageIDForImageStage(imageName, stageName string) string
 
 	GetImportServer(imageName, stageName string) (import_server.ImportServer, error)
+	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
+}
+
+type VirtualMergeOptions struct {
+	VirtualMerge           bool
+	VirtualMergeFromCommit string
+	VirtualMergeIntoCommit string
 }
