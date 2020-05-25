@@ -14,7 +14,7 @@
   title: Деплой
   url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
 /documentation/reference/plugging_into_cicd:
-  title: Работа с CI/CD
+  title: Интеграция с CI/CD
   url: /documentation/reference/plugging_into_cicd/overview.html
 /documentation/reference/development_and_debug:
   title: Разработка и отладка

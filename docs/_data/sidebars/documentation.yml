@@ -437,7 +437,10 @@ entries:
         - title: Работа с Docker registries
           url: /documentation/reference/working_with_docker_registries.html
 
-        - title: Работа с CI/CD
+        - title: Организация CI/CD с помощью werf
+          url: /documentation/reference/ci_cd_workflows_overview.html
+
+        - title: Интеграция с CI/CD
           sfi:
 
             - title: Общие сведения
