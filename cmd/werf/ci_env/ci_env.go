@@ -429,8 +429,8 @@ func generateOther(w io.Writer) error {
 
 func writeError(w io.Writer, errMsg string) {
 	if *commonCmdData.LogVerbose {
-		writeLn(w, echoLine(""))
-		writeLn(w, echoLine("Error: "+errMsg))
+		writeEcho(w, "")
+		writeEcho(w, "Error: "+errMsg)
 	}
 
 	writeLn(w, "exit 1")
@@ -446,11 +446,10 @@ func writeHeader(w io.Writer, header string, withNewLine bool) {
 
 	if *commonCmdData.LogVerbose {
 		if withNewLine {
-			writeLn(w, echoLine(""))
+			writeEcho(w, "")
 		}
 
-		echoHeader := echoLine(headerLine)
-		writeLn(w, echoHeader)
+		writeEcho(w, headerLine)
 	}
 }
 
@@ -462,7 +461,7 @@ func writeEnv(w io.Writer, key, value string, override bool) {
 		writeLn(w, skipLine)
 
 		if *commonCmdData.LogVerbose {
-			writeLn(w, echoLine(skipLine))
+			writeEcho(w, skipLine)
 		}
 
 		return
@@ -475,8 +474,16 @@ func writeEnv(w io.Writer, key, value string, override bool) {
 	writeLn(w, envLine)
 
 	if *commonCmdData.LogVerbose {
-		writeLn(w, echoLine(envLine))
+		writeEcho(w, envLine)
 	}
+}
+
+func writeEcho(w io.Writer, message string) {
+	if cmdData.AsEnvFile {
+		return
+	}
+
+	writeLn(w, fmt.Sprintf("echo '%s'", message))
 }
 
 func writeLn(w io.Writer, message string) {
@@ -502,14 +509,6 @@ func envLine(envKey, envValue string) string {
 	}
 
 	return fmt.Sprintf(exportFormat, envKey, envValue)
-}
-
-func echoLine(message string) string {
-	if cmdData.AsEnvFile {
-		return ""
-	}
-
-	return fmt.Sprintf("echo '%s'", message)
 }
 
 func skipLine(message string) string {
