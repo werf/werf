@@ -73,6 +73,9 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupKubeConfig(commonCmdData, cmd)
 	common.SetupKubeContext(commonCmdData, cmd)
 
+	common.SetupPublishReportPath(commonCmdData, cmd)
+	common.SetupPublishReportFormat(commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -175,9 +178,16 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		}
 	}()
 
+	publishReportFormat, err := common.GetPublishReportFormat(commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	opts := build.PublishImagesOptions{
-		ImagesToPublish: imagesToProcess,
-		TagOptions:      tagOpts,
+		ImagesToPublish:     imagesToProcess,
+		TagOptions:          tagOpts,
+		PublishReportPath:   *commonCmdData.PublishReportPath,
+		PublishReportFormat: publishReportFormat,
 	}
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)

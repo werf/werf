@@ -96,6 +96,9 @@ type CmdData struct {
 	LogTerminalWidth *int64
 
 	ThreeWayMergeMode *string
+
+	PublishReportPath   *string
+	PublishReportFormat *string
 }
 
 const (
@@ -140,6 +143,25 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html).\nOption can be specified multiple times to use multiple keys")
+}
+
+func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.PublishReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", "", "Publish report contains image info: full docker repo, tag, ID — for each published image")
+}
+
+func SetupPublishReportFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.PublishReportFormat = new(string)
+	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now)")
+}
+
+func GetPublishReportFormat(cmdData *CmdData) (build.PublishReportFormat, error) {
+	switch format := build.PublishReportFormat(*cmdData.PublishReportFormat); format {
+	case build.PublishReportJSON:
+		return format, nil
+	default:
+		return "", fmt.Errorf("bad --publish-report-format given %q, expected: \"json\"", format)
+	}
 }
 
 func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
