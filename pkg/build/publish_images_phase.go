@@ -1,7 +1,9 @@
 package build
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/flant/logboek"
@@ -27,6 +29,9 @@ func NewPublishImagesPhase(c *Conveyor, imagesRepo storage.ImagesRepo, opts Publ
 		TagsByScheme:         tagsByScheme,
 		TagByStagesSignature: opts.TagByStagesSignature,
 		ImagesRepo:           imagesRepo,
+		PublishReport:        &PublishReport{Images: make(map[string]PublishReportImageRecord)},
+		PublishReportPath:    opts.PublishReportPath,
+		PublishReportFormat:  opts.PublishReportFormat,
 	}
 }
 
@@ -36,6 +41,27 @@ type PublishImagesPhase struct {
 	TagsByScheme         map[tag_strategy.TagStrategy][]string
 	TagByStagesSignature bool
 	ImagesRepo           storage.ImagesRepo
+
+	PublishReport       *PublishReport
+	PublishReportPath   string
+	PublishReportFormat PublishReportFormat
+}
+
+type PublishReportFormat string
+
+const (
+	PublishReportJSON PublishReportFormat = "json"
+)
+
+type PublishReport struct {
+	Images map[string]PublishReportImageRecord
+}
+
+type PublishReportImageRecord struct {
+	WerfImageName string
+	DockerRepo    string
+	DockerTag     string
+	DockerImageID string
 }
 
 func (phase *PublishImagesPhase) Name() string {
@@ -47,6 +73,18 @@ func (phase *PublishImagesPhase) BeforeImages() error {
 }
 
 func (phase *PublishImagesPhase) AfterImages() error {
+	if data, err := json.Marshal(phase.PublishReport); err != nil {
+		return fmt.Errorf("unable to prepare publish report: %s", err)
+	} else {
+		logboek.Debug.LogF("Publish report:\n%s\n", data)
+
+		if phase.PublishReportPath != "" && phase.PublishReportFormat == PublishReportJSON {
+			if err := ioutil.WriteFile(phase.PublishReportPath, append(data, []byte("\n")...), 0644); err != nil {
+				return fmt.Errorf("unable to write publish report to %s: %s", phase.PublishReportPath, err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -79,113 +117,6 @@ func (phase *PublishImagesPhase) AfterImageStages(img *Image) error {
 func (phase *PublishImagesPhase) ImageProcessingShouldBeStopped(img *Image) bool {
 	return false
 }
-
-/*
-func (p *PublishImagesPhase) Run(c *Conveyor) error {
-	logProcessOptions := logboek.LogProcessOptions{ColorizeMsgFunc: logboek.ColorizeHighlight}
-	return logboek.LogProcess("Publishing images", logProcessOptions, func() error {
-		return p.run(c)
-	})
-}
-
-func (p *PublishImagesPhase) run(c *Conveyor) error {
-	// TODO: Push stages should occur on the BuildStagesPhase
-
-	for _, image := range imagesToPublish {
-		if image.isArtifact { // FIXME: distributed stages
-			continue
-		}
-
-		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
-			//if p.WithStages {
-			//	err := logboek.LogProcess("Pushing stages cache", logboek.LogProcessOptions{}, func() error {
-			//		if err := p.publishImageStages(c, image); err != nil {
-			//			return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
-			//		}
-			//
-			//		return nil
-			//	})
-			//
-			//	if err != nil {
-			//		return err
-			//	}
-			//}
-
-			if !image.isArtifact {
-				if err := p.publishImage(c, image); err != nil {
-					return fmt.Errorf("unable to push image %s: %s", image.LogName(), err)
-				}
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-//func (p *PublishImagesPhase) publishImageStages(c *Conveyor, image *Image) error {
-//	stages := image.GetStages()
-//
-//	existingTags, err := docker_registry.Tags(p.ImagesRepo)
-//	if err != nil {
-//		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.ImagesRepo, err)
-//	}
-//
-//	for _, stage := range stages {
-//		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
-//		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
-//
-//		if util.IsStringsContainValue(existingTags, stageTagName) {
-//			logboek.LogHighlightLn(stage.Name())
-//
-//			logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
-//			logboek.LogInfoF("      image: %s\n", stageImageName)
-//
-//			logboek.LogOptionalLn()
-//
-//			continue
-//		}
-//
-//		err := func() error {
-//			imageLockName := image.ImageLockName(stageImageName)
-//			if err := lockgate.Lock(imageLockName, lockgate.LockOptions{}); err != nil {
-//				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
-//			}
-//
-//			defer lockgate.Unlock(imageLockName)
-//
-//			stageImage := c.GetStageImage(stage.GetImage().Name())
-//
-//			successInfoSectionFunc := func() {
-//				_ = logboek.WithIndent(func() error {
-//					logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
-//					logboek.LogInfoF("      image: %s\n", stageImageName)
-//
-//					return nil
-//				})
-//			}
-//
-//			logProcessOptions := logboek.LogProcessOptions{SuccessInfoSectionFunc: successInfoSectionFunc, ColorizeMsgFunc: logboek.ColorizeHighlight}
-//			return logboek.LogProcess(fmt.Sprintf("Publishing %s", stage.Name()), logProcessOptions, func() error {
-//				if err := stageImage.Export(stageImageName); err != nil {
-//					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
-//				}
-//
-//				return nil
-//			})
-//		}()
-//
-//		if err != nil {
-//			return err
-//		}
-//	}
-//
-//	return nil
-//}
-*/
 
 func (phase *PublishImagesPhase) publishImage(img *Image) error {
 	existingTags, err := phase.fetchExistingTags(img.GetName())
@@ -262,7 +193,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
 
-	alreadyExists, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageMetaTag, lastStageImage)
+	alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(initialExistingTagsList, img.GetName(), imageMetaTag, lastStageImage)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
@@ -277,6 +208,13 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		})
 
 		logboek.LogOptionalLn()
+
+		phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+			WerfImageName: img.GetName(),
+			DockerRepo:    imageRepository,
+			DockerTag:     imageActualTag,
+			DockerImageID: alreadyExistingImageID,
+		}
 
 		return nil
 	}
@@ -324,7 +262,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		alreadyExists, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, lastStageImage)
+		alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, lastStageImage)
 		if err != nil {
 			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
@@ -341,10 +279,28 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 
 			logboek.LogOptionalLn()
 
+			phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+				WerfImageName: img.GetName(),
+				DockerRepo:    imageRepository,
+				DockerTag:     imageActualTag,
+				DockerImageID: alreadyExistingImageID,
+			}
+
 			return nil
 		}
 
-		return phase.ImagesRepo.PublishImage(publishImage)
+		if err := phase.ImagesRepo.PublishImage(publishImage); err != nil {
+			return err
+		}
+
+		phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+			WerfImageName: img.GetName(),
+			DockerRepo:    imageRepository,
+			DockerTag:     imageActualTag,
+			DockerImageID: publishImage.MustGetBuiltId(),
+		}
+
+		return nil
 	}
 
 	return logboek.Default.LogProcess(
@@ -356,14 +312,15 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag string, lastStageImage container_runtime.ImageInterface) (bool, error) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag string, lastStageImage container_runtime.ImageInterface) (bool, string, error) {
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(werfImageName, imageMetaTag)
 
 	if !util.IsStringsContainValue(existingTags, imageActualTag) {
-		return false, nil
+		return false, "", nil
 	}
 
-	var parentID string
+	var repoImageParentID string
+	var repoImageID string
 	var err error
 	getImageParentIDFunc := func() error {
 		repoImage, err := phase.ImagesRepo.GetRepoImage(werfImageName, imageMetaTag)
@@ -371,15 +328,16 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 			return err
 		}
 
-		parentID = repoImage.ParentID
+		repoImageID = repoImage.ID
+		repoImageParentID = repoImage.ParentID
 		return nil
 	}
 
 	logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", imageActualTag)
 	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageParentIDFunc)
 	if err != nil {
-		return false, fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
+		return false, "", fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
-	return lastStageImage.GetStageDescription().Info.ID == parentID, nil
+	return lastStageImage.GetStageDescription().Info.ID == repoImageParentID, repoImageID, nil
 }

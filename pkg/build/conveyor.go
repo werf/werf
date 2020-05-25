@@ -295,6 +295,9 @@ func (c *Conveyor) BuildStages(opts BuildStagesOptions) error {
 type PublishImagesOptions struct {
 	ImagesToPublish []string
 	TagOptions
+
+	PublishReportPath   string
+	PublishReportFormat PublishReportFormat
 }
 
 func (c *Conveyor) PublishImages(opts PublishImagesOptions) error {
