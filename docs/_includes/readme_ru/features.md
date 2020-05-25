@@ -13,9 +13,9 @@
 - Локальная разработка приложений с werf [#1940](https://github.com/flant/werf/issues/1940).
 - ~Тегирование, основанное на контенте~ [#1184](https://github.com/flant/werf/issues/1184).
 - Лучшие практики и рецепты для наиболее популярных CI-систем [#1617](https://github.com/flant/werf/issues/1617).
-- Поддержка большинства сервисов, предоставляющих Docker registry [#2199](https://github.com/flant/werf/issues/2199).
+- ~Поддержка большинства имлементаций Docker registry~ [#2199](https://github.com/flant/werf/issues/2199).
 - Параллельная сборка образов [#2200](https://github.com/flant/werf/issues/2200).
-- Распределенная сборка с общим Docker registry [#1614](https://github.com/flant/werf/issues/1614).
+- ~Распределенная сборка с общим Docker registry~ [#1614](https://github.com/flant/werf/issues/1614).
 - Поддержка Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
 - Kaniko-подобная сборка без привязки к локальному Docker-демону [#1618](https://github.com/flant/werf/issues/1618).
 
