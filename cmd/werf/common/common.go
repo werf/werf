@@ -151,12 +151,12 @@ Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see http
 
 func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.PublishReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", "", "Publish report contains image info: full docker repo, tag, ID — for each published image")
+	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", os.Getenv("WERF_PUBLISH_REPORT_PATH"), "Publish report contains image info: full docker repo, tag, ID — for each published image ($WERF_PUBLISH_REPORT_PATH by default)")
 }
 
 func SetupPublishReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.PublishReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now)")
+	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by default)")
 }
 
 func GetPublishReportFormat(cmdData *CmdData) (build.PublishReportFormat, error) {
