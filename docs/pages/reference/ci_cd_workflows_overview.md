@@ -2,336 +2,336 @@
 title: CI/CD workflows overview
 sidebar: documentation
 permalink: documentation/reference/ci_cd_workflows_overview.html
-author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
+author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-In this article we will describe what CI/CD means and overview CI/CD workflows, which can be implemented with werf.
+In this article, we will discuss what CI/CD means and overview CI/CD workflows that can be implemented with werf.
 
-Let's define the main goal of using CI/CD for some project: deliver application code changes to the end user as fast as possible. CI/CD consists of 2 parts: CI means continuous integration of application code changes into main code base, and CD means continuous delivery of these changes to the end user.
+As you know, the primary purpose of using CI/CD for any project is to deliver application code changes to the end user as fast as possible. CI/CD consists of 2 parts: CI means continuous integration of application code changes into the main codebase, and CD means continuous delivery of these changes to the end user.
 
-Firstly some basic terms like environment and workflow are defined, then workflow building blocks are defined and then there is a description of ready-to-use workflows, which can be constructed using provided workflow building blocks.
+We will start with defining some basic terms like environment and workflow, and then move on to workflow building blocks and describe some ready-to-use workflows that can be constructed using provided workflow building blocks.
 
-It is recommended also to read one the following guides about CI/CD configuration for needed CI/CD system:
+We also recommend you to read one the following guides about configuring the specific CI/CD system:
  - [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
- - [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+ - [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
 
 ## Basics
 
-> NOTICE: In the following text term "git" can be interpreted as a common name for any version control system, but werf supports only git version control system. It is supposed that reader is familiar with the following terms related to the git: branch, tag, master, commit, merge, rebase, fast-forward merge, git push-force procedure. It is recommended to get to know with these terms for full understanding of this article. 
+> NOTICE: In the text below, the term "git" can be interpreted as a common name for any version control system. However, werf supports only the Git version control system. We suppose our readers are familiar with the following git-related terms: branch, tag, master, commit, merge, rebase, fast-forward merge, and the git push-force procedure. To fully appreciate this article, readers are advised to get a good understanding of these terms. 
 
 ### Environment
 
 #### Production
 
-Real users interact with application in production environment. This is also the target environment for all application code changes, which are made by application developers.
+Generally, end users interact with an application in the production environment. It is also the target environment for all application code changes made by application developers.
 
-There are also so called _production-like_ environments. Production-like environment is separate from production, but have the same configuration of hardware and software, network infrastructure, operation system, software versions, etc. In real world there may be some differences though, but each project defines own accetable risks related to the difference between production-like and production environments. Example of production-like environments: [staging](#staging) and [testing](#testing). 
+Also, there are so-called _production-like_ environments. Production-like environments are separate from production but have the same hardware and software configuration, network infrastructure, operating system, software versions, etc. In the real world, there may be some differences, though. Still, each project defines its acceptable risks related to differences between production-like and production environments. Examples of production-like environments – [staging](#staging) and [testing](#testing) – are provided below.
 
 #### Staging
 
-Staging is a [production-like environment](#production) which serves as a playground to check your application before deploying to production. Staging is also the place to test new business function by managers, testers and client customers. Real users do not interact with staging environment.
+Staging is a [production-like environment](#production) serving as a playground to examine your application before deploying it to production. Also, staging is the place to test new business functionality by managers, testers, and customers. End users do not interact with the staging environment in any way.
 
-In the case when your application uses some external services, then staging typically is the only environment (besides production itself) which uses the same external services APIs and versions as production does.
+If your application uses some external services, then staging is the only environment typically (besides the production itself) that uses the same set of external services APIs and versions.
 
 #### Testing
 
-Testing is a [production-like environment](#production) which have the following goal: reveal problems which will occur with the new version of application in the production environment. Some long-running application tests may use this environment to implement full fledged application testing in production-like environment. The more difference between testing and production environments the more risks to deploy application with bugs to the production environment. That's why it is recomended to have production-like environment as similar to production as possible (same software versions, libraries, operating system, IP-addresses and ports, hardware etc.). 
+Testing is a [production-like environment](#production) with the following goal: to reveal problems with the new version of an application that may arise in the production environment. Some long-running application tests may use this environment to perform full-fledged application testing in a production-like environment. The higher the difference between testing and production environments, the higher the risk of deploying a buggy application to the production environment. That's why we recommend making a production-like environment as close as possible to a production one (same software versions, libraries, operating system, IP-addresses and ports, hardware, etc.). 
 
 #### Review
 
-Dynamical (temporary) environment which used by an application developers to check newly written code and perform such experiments that are not allowed in [production-like environmnets](#production).    
+Review is a dynamic (temporary) environment used by application developers to test newly written code and conduct experiments not allowed in [production-like environmnets](#production).    
 
-It is possible to dynamically create arbitrary number of review environments (as resources permit). Application developer usually creates and terminates such environment using CI/CD system. Also review environment could be removed automatically when some time of inactivity passed.
+It is possible to dynamically create an arbitrary number of review environments (as resources permit). Application developer usually creates and terminates such an environment using a CI/CD system. Also, a review environment could be automatically removed after a period of inactivity.
 
 ### Releases and CI/CD
 
-**Release** — is a prepared application version that contains some changes since previous application release.
+The **release** — is a fully-functioning version of an application that contains some changes made since the previous application release.
 
-In waterfall model releases are rare (monthly, half-early, early, ...) and each release usually contains big blob of changes. Deployment of such release is also a rare and special event. Developers team working hard to make new version work and fix new bugs. Usually this is separate and very important stage of development process. And while this stage is active no more new features for the user will be made (even if some of developers implement new cool feature instead of debugging new release — this feature will only be available after next release). New application version contains many changes and was not tested in real life yet. So the probability that new version will perform well is very low (even if application uses automatic tests). Application users are also suffer during this stage. 
+In the waterfall model, releases are somewhat rare (monthly, half-yearly, yearly, and so on), and each release usually contains a big blob of changes. Deploying such a release is also a rare and unique event. Developer teams work hard to make the new version work properly while fixing all the bugs discovered. Usually, that is a separate and essential stage of the development process. And while this stage is in force, no new features are being implemented (some developers might work on an original, cool idea instead of debugging the latest release, but it will be available after the next release anyway). The latest version of an application contains many changes and has not been tested in real-life yet. So, there is a low probability that it will be running smoothly (even if an application uses automatic testing). Application users are also suffering during this stage.
 
-On the contrary, releases contain small portions of changes and releases are frequent in CI/CD practice. Developers are encouraged to implement new features in such a way so it is possible to instantly check and use new version in production-like or production environment. Moreover developers who are inspired by this approach usually want to push and check their newly written code to the production-like and production as fast as possible and then it is easier to perform new changes on top of previous changes, which have been proved to work well. Only code that is written and used in production can be considered as working.
+On the other hand, in the CI/CD practice, releases contain small portions of changes and are frequently released. Developers are encouraged to implement new features in a way that makes it possible to instantly check and use the new version in production-like or production environments. Moreover, developers inspired by this approach usually want to push and test their newly written code to the production-like and production environments as fast as possible. The reason is simple: it is easier to make new changes on top of the existing ones that have proven to work well. Note that the code can only be considered working if it is running in production successfully.
 
-The important moment to implement a real CI/CD process is to deploy new code to production-like environment (staging, testing or production itself) fast and early. Typical antipattern of CI/CD practice is to deploy to production-like or production environment many accumulated changes in the source code. In other words use something resembling waterfall model on top of components designed to implement CI/CD practice. Такое может происходить из-за неправильной организации управления проектом, в которой разработчикам не позволяется выкатывать на production-like окружения без каких-то лишних согласований (естественно проверку кода автоматическими тестами никто не отменял). Либо это может быть связано с тем, что CI/CD система технически построена на неудобных инструментах и примитивах, и со стороны кажется, что она похожа на CI/CD, а по факту неудобна для разработчиков (например, использование git-тегов с сообщением для каждого релиза).
+The real CI/CD process implies a quick and effortless deployment of new code to the production-like environment (staging, testing, or the production itself). The common anti-pattern in the CI/CD practice is the deployment of many accumulated changes in the source code to the production-like or production environment all at once. In other words, do not build a waterfall-like model on top of the components specially designed for CI/CD. It could be due to the wrong project organization that does not allow developers to deploy code to production-like environments all by themselves, without input from the management (automatic testing is still in place, obviously). Or it could be due to the fact that the CI/CD system is based on hard-to-use tools and primitives. In this case, the system looks like a regular CI/CD process, but in fact, it is totally developer-unfriendly (for example, using git tags with a message for each release).
 
-Хорошая CI/CD система должна помогать разработчикам удобно доносить изменения до production в течение минут, иметь возможности отката, тестировать эти изменения на лету, но не ставить лишних барьеров и не требовать бессмысленных повторяющихся действий.
+A good CI/CD system should be able to deliver changes to production within minutes; it must be able to roll back/test these changes on-the-fly while avoiding unnecessary barriers and pointless repetitive actions.
 
-Также признаком хорошо построенной CI/CD системы является синхронизация состояния кода в git и выкаченного приложения на production-like и production окружениях. Например, приложение, выкаченное для staging соответствует последнему изменению сделанному в ветку staging (это лишь один из вариантов организации). Если код в ветке staging сломан, то и выкаченное приложение в окружении staging также сломано. Пользоваться приложением нельзя, но и пользоваться кодом из ветки staging тоже нельзя — ведь на нерабочем коде нельзя построить новых изменений. Поэтому мы держим код ветки staging (последний коммит в эту ветку) и приложение в синхронизированном состоянии, а не откатываем окружение staging на старый коммит. И поэтому в данной ситуации логично либо быстро фиксить проблему и выкатывать новое изменение в ветку с автоматическим выкатом на контур, либо делать revert внесённого изменения с автоматическим выкатом на контур — одно из двух.
+The synchronization of the state of the code in git and an application deployed to the production-like/production environments is also a sign of a well-built CI/CD system. For example, the state of the application deployed to the staging environment corresponds to the last change made to the staging branch (that is just one of the possible options for organizing the structure). If the code in the staging branch does not work, then the application deployed to the staging environment does not work either. In this case, you cannot use the app. At the same time, you cannot use the code from the staging branch either since the non-working code cannot serve as a basis for new changes. That is why we keep the code in the staging branch (the last commit to this branch) and the application in a synchronized state instead of rolling back the staging environment to the previous commit. Thus, in such circumstances, it makes perfect sense to either fix the problem quickly and roll out the correct code to the branch (with the following automatic deployment to the environment) or revert changes (also with the automatic deployment to the environment).
 
-В дальнейших разделах мы определим возможные варианты конфигураций workflow и насколько каждый из них соответствует подходам CI/CD.
+In the sections below, we will define possible workflow configurations and take a look at to what extent each one of them is consistent with the CI/CD approach.
 
-### Что такое pipeline и workflow
+### Pipelines and workflows
 
-С помощью git пользователь вносит изменения в кодовую базу проекта. Каждый коммит в гит активирует так называемый **pipeline** со стороны CI/CD системы. Pipeline разбит на стадии, которые могут запускаться последовательно или параллельно.
+As you know, the user makes changes to the project's code base using git. Every git commit triggers the so-called **pipeline** on the side of the CI/CD system.  The pipeline is split into stages that can be run sequentially or in parallel.
 
-Главное назначение pipeline — донести внесённое в гит изменение до некоторого окружения. В случае непрохождения какой-то стадии pipeline прерывается и пользователь тем самым получает обратную связь. Коммит, который успешно проходит по всем необходимым стадиям попадает на некоторый контур/окружение.
+The main purpose of the pipeline is to deliver changes committed to git to some environment. If some stage of the pipeline fails, then the pipeline interrupts, and the user gets some feedback. A commit that successfully passes through all the stages ends up in a certain environment.
 
-Бывают следующие основные типы стадий:
- - Build-and-Publish — сборка образов приложения и их публикация в хранилище образов.
- - Deploy — непосредственно выкат приложения на контур.
- - Cleanup — очистка неиспользуемых образов и связанного кеша из хранилища.
+There are the following main types of stages:
+ - Build-and-Publish — build app images and publish them to the image store.
+ - Deploy — deploy an application to the environment.
+ - Cleanup — clean up unused images and the associated cache from the repository.
 
 #### Pull request
 
-Пользователь вносит изменения в кодовую базу путём создания коммитов в git и pull request-ов в CI/CD системе. Обычно pull request — это сущность, которая связывает коммит в git и pipeline (а также позволяет делать review, оставлять комментарии и пр.). В разных CI/CD системах pull request может называться по-разному (Merge Request в GItlab CI) или вообще отсутствовать (Jenkins).
+The user makes changes to the code base by creating commits in git and pull requests in the CI/CD system. Normally, a pull request is a thing that binds together a commit in git and a pipeline (also, it allows you to do a review, leave comments, and so on). Pull requests may have different names in various CI/CD systems (e.g., Merge Request in GitLab CI/CD) or may not exist at all (Jenkins).
 
 #### Workflow
 
-Pipeline-ы и стадии внутри pipeline-ов могут быть активированы как автоматически, так и вручную. Способы активации pipeline-ов, их устройство, связь с гит, требуемые действия со стороны пользователя — всё это будет определяться так называемым workflow. 
-Возможно множество вариантов workflow для достижения одной и той же цели. Далее мы рассмотрим те варианты, которые можно реализовать с использованием werf.
+Pipelines and stages within pipelines can be triggered either automatically or manually. The so-called workflow defines pipelines activation, their structure, the way they integrate with git, as well as the required actions on the part of the user. 
+You can create multiple workflows to achieve the same goal. Next, we will focus on alternatives that can be implemented using werf.
 
-### Варианты ручного запуска pipeline
+### Run a pipeline manually
 
-Ручной запуск pipeline предполагает:
- - Нажатие кнопки в CI/CD системе (например Gitlab CI).
- - Назначение label в CI/CD системе (например Gitlab CI или Github Actions). Label обычно назначается на pull request и снимается с pull request пользователем или автоматически CI/CD системой во время работы pipeline.
-   - Например, пользователь назначает label "run tests" на его pull request и CI/CD система автоматически запускает соответствующий pipeline. Во время работы этого pipeline label "run tests" снимается с pull request. Далее для перезапуска пользователь может опять назначить этот label. И т.д.
-   - Label используется как альтернатива кнопкам, либо в случаях когда кнопки не поддерживаются CI/CD системой (например, Github Actions).
-Для review окружений назначение пользователем label является сигналом к активации review окружения, а его снятие (вручную/автоматом) — к деактивации. Вариант будет подробнее рассмотрен (далее)(#автоматом-для-pull-request-после-ручной-активации).
- - Запрос через API CI/CD системы (например через HTTP по определённому url в Github Actions).
+You can run a pipeline manually by one of the following methods:
+ - By clicking a button in a CI/CD system (for example, in GitLab CI/CD).
+ - By assigning a label in a CI/CD system (e.g., GitLab CI/CD or GitHub Actions). A label is usually assigned to/withdrawn from the pull request by the user or automatically by the CI/CD system while the pipeline is running.
+   - For example, the user assigns the "run tests" label to his pull request, and the CI/CD system automatically triggers the corresponding pipeline. While this pipeline is running, the "run tests" label is revoked from the pull request. Then the user can assign this label again to restart the process,  and so on.
+   - Label serves as an alternative to buttons or is used in cases when the CI/CD system does not support buttons (e.g., GitHub Actions). 
+   For review environments, assigning a label by the user is a signal to activate the review environment, and removing it (manually or automatically) is a signal to deactivate it. This option will be discussed in more detail (later) (#automatically-deploy-to-review-using-a-pull-request-manual-triggering).
+ - By sending a request to the API of the CI/CD system (for example, via HTTP at a specific url in GitHub Actions).
 
-### Стадия тестирования
+### The testing stage
 
-Для правильной организации CI/CD критично во время внесения изменений в кодовую базу проекта получать быструю обратную связь в автоматическом режиме с помощью тестов. Причём стадию тестирования можно разбить на 2 условных этапа: на первичном этапе тесты проходят быстро и покрывают большую часть функций, на вторичном этапе тесты могут работать долго и проверять больше аспектов приложение. Первичные тесты обычно запускаются автоматически и их прохождение является обязательным условием для допуска изменений к релизу.
+To implement a proper CI/CD, it is critical to automatically get instant feedback when making changes to the project codebase. The testing stage can be divided into two nominal stages: during the primary stage, tests run fast and cover most of the functions; during the secondary stage, tests can run for a prolonged time and verify more aspects of the application. Generally, primary tests are run automatically, and passing them is a prerequisite for changes to be released.
 
-## Что читать дальше
+## Further reading
 
-Дальше рекомендуется ознакомится с инструкцией по вашей CI/CD системе:
- - Инструкция для [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html).
- - Инструкция для [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+We recommend you to read the guide for your specific CI/CD system:
+ - The [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) guide.
+ - The [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) guide.
 
-Если вы хотите узнать больше подробностей по методике составления workflow или для вашей CI/CD системы не нашлось инструкции, тогда можно ознакомится с дальнейшими разделами где определяются [составляющие workflow](#составляющие-workflow-для-отдельных-окружений) и [готовые конфигурации workflow](#готовые-конфигурации-workflow). После этого вы будете готовы выбрать готовую конфигурацию или составить свою и реализовать её для вашей CI/CD системы с использованием werf.
+If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#составляющие-workflow-для-отдельных-окружений) and [ready-made workflow configurations](#готовые-конфигурации-workflow) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
 
-## Составляющие workflow для отдельных окружений
+## Workflow components for various environments
 
-Далее рассмотрим различные варианты выката production и других окружений в связке с git. Каждый пункт определяет строительный блок, который можно использовать для работы с определённым окружением. Мы будем называть такой строительный блок блоком workflow. Из блоков workflow в дальнейшем можно собрать свой workflow или взять готовую конфигурацию (см. далее [готовые конфигурации workflow](#готовые-конфигурации-workflow)).
+Next, we will discuss various options for rolling out to production and other environments in conjunction with git. Each section describes a building block that you can use to work with a specific environment. We will call such a block a "workflow block". You can build your own workflow using workflow blocks or make use of a ready-made configuration (see [Ready-made workflow configurations](#готовые-конфигурации-workflow) below).
 
-Review окружения создаются и удаляются динамически по требованию разработчиков. С этим связаны особенности выката в эти окружения. В разделах, связанных с review, будет описано не только как создать review-окружение, но и как его удалить.
+Review environments are created and deleted dynamically as per the developers' request. Thus, there are some specificities when deploying code to these environments. In the review-related sections, we will describe how to create as well as delete a review environment.
 
-### Выкат на production из master автоматически
+### Automatically deploy to production from master
 
-Merge или коммит в ветку master вызывает pipeline выката непосредственно на production.
+A merge request or a commit to the master branch triggers the pipeline to deploy directly to production.
 
-Состояние ветки в любой момент времени отражает состояние окружения. Поэтому данный вариант является соответствующим подходу true CI/CD.
+The state of the branch reflects the state of the environment at any given time. Therefore, this option complies with the true CI/CD approach.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке master. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the master branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
-### Выкат на production из master по кнопке
+### Deploy to production from master at the click of a button
 
-Pipeline выката в production может быть запущен вручную только на коммите из ветки master. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+You can manually run a pipeline to deploy to production for a commit in the master branch only. The pipeline is triggered [manually](#варианты-ручного-запуска-pipeline) using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в ветке master, затем запуск pipeline средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API. В данном случае вариант не рекомендован, т.к. состояние мастера не всегда соответствует состоянию окружения (в отличие от варианта master-автоматом), поэтому создавать лишний revert не имеет большого смысла именно для задачи отката.
+Rollback options:
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - By reverting a commit in the master branch and then [manually](#run-a-pipeline-manually) run the pipeline using the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master is not consistent with the state of the environment at all times (as opposed to the automatic deployment). Thus, it does not make sense to revert exclusively for the rollback.
 
-### Выкат на production из тега автоматически
+### Automatically deploy to production using a tag
 
-Создание нового тега автоматически вызывает pipeline выката на production-окружение из коммита, связанного с этим тегом.
+Creating a new tag automatically triggers the pipeline to deploy the code to the production environment on the basis of the commit associated with this tag.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом теге.
- - Создание нового тега на старый коммит, далее автоматический вызов pipeline выката для нового тега. Не предпочтительный вариант, т.к. плодятся лишние теги.
+Rollback options:
+ - Recommended: by means of CI/CD system; [re-run the pipeline manually](#run-a-pipeline-manually) using the old tag.
+ - By creating a new tag linked to the old commit; the pipeline will be run automatically for the new tag. It is not the best option since it leads to the generation of unnecessary tags.
 
-### Выкат на production из тега по кнопке
+### Deploy to production using a tag at the click of a button
 
-Pipeline выката в production-окружение может быть вызван только на существующем теге в git. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+The pipeline to deploy to the production environment can only be triggered using the existing tag in git. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом теге.
+Rollback options:
+- By means of the CI/CD system; [re-run the pipeline manually](#run-a-pipeline-manually) using the old tag.
 
-### Выкат на production из ветки автоматически
+### Automatically deploy to production from a branch
 
-Merge или коммит в специальную ветку вызывает pipeline выката непосредственно на production (вариант похож на (master-автоматически)(#master-автоматически), но используется отдельная ветка).
+A merge request or a commit to the specific branch triggers the pipeline to deploy to production (this option is similar to the (master-automatically) (#master-automatically), but involves a separate branch).
 
-Состояние специальной ветки в любой момент времени отражает состояние окружения. Поэтому данный вариант является соответствующим подходу true CI/CD.
+The state of the specific branch is consistent with the state of the environment at any given time. Therefore, this option complies with the true CI/CD approach.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в master, затем fast-forward merge в специальную ветку.
- - Удаление коммита в специальной ветке (через удаление коммита в git, затем процедура git push-force).
+Rollback options:
+- Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "undo" button performs precisely these steps).
+ - By reverting the commit in the master, then fast-forwarding merge to the specific branch.
+ - By deleting the commit in the specific branch (delete the commit in git and then use the git push-force procedure).
 
-### Выкат на production из ветки по кнопке
+### Deploy to production from a branch at the click of a button
 
-Pipeline выката в production может быть запущен вручную только на коммите из специальной ветки. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+Manually run a pipeline to deploy to production for a commit to the specific branch only. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в ветке, затем запуск pipeline средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API. В данном случае вариант не рекомендован, т.к. состояние мастера не всегда соответствует состоянию окружения (в отличие от варианта master-автоматом), поэтому создавать лишний revert не имеет большого смысла именно для задачи отката.
+Rollback options:
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - By reverting the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master is not consistent with the state of the environment at all times (as opposed to the automatic deployment). Thus, it does not make sense to revert exclusively for the rollback.
 
-### Выкат на production-like из pull request по кнопке
+### Deploy to production-like using a pull request at the click of a button
 
-Pipeline выката в production может быть запущен на любом коммите в pull request. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+The pipeline to deploy to production can be run on any commit to the pull request. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
-### Выкат на staging из master автоматически
+### Automatically deploy to staging from master
 
-Merge или коммит в ветку master вызывает pipeline выката непосредственно на staging окружение.
+A merge request or a commit to the master branch triggers the pipeline to deploy directly to the staging environment.
 
-Состояние ветки в любой момент времени отражает состояние окружения. Поэтому данный вариант является соответствующим подходу true CI/CD.
+The state of the branch reflects the state of the environment at any given time. Therefore, this option complies with the true CI/CD approach.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке master. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the master branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps)..
 
-### Выкат на staging из master по кнопке
+### Deploy to staging from master at the click of a button
 
-Pipeline выката в staging может быть запущен вручную только на коммите из ветки master. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+The pipeline to deploy to staging can only be [run manually](#run-a-pipeline-manually) on a commit from the master branch. The pipeline is triggered manually using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в ветке master, затем запуск pipeline средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API. В данном случае вариант не рекомендован, т.к. состояние мастера не всегда соответствует состоянию окружения (в отличие от варианта Выкат на staging из master автоматически), поэтому создавать лишний revert не имеет большого смысла именно для задачи отката.
+Rollback options:
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - Revert the commit in the master branch and then [manually](#run-a-pipeline-manually) run the pipeline using the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master does not consistent with the state of the environment at all times (as opposed to the automatic deployment from master to staging). Thus, it does not make sense to revert exclusively for the rollback.
 
-### Выкат на production-like из ветки автоматически
+### Automatically deploy to production-like from a branch
 
-Merge или коммит в специальную ветку вызывает pipeline выката непосредственно на production-like окружение (вариант похож на (master-автоматически)(#master-автоматически), но используется отдельная ветка). Для каждого конкретного production-like окружения, как то: staging или testing — используется отдельная ветка.
+A merge request or a commit to the specific branch triggers the pipeline to deploy to the production-like environment (this option is similar to (master-automatically) (#master-automatically), but involves a separate branch). A separate branch is used for each specific production-like environment, such as staging or testing.
 
-Состояние специальной ветки в любой момент времени отражает состояние окружения. Поэтому данный вариант является соответствующим подходу true CI/CD.
+The state of the specific branch is consistent with the state of the environment at any given time. Therefore, this option complies with the true CI/CD approach.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в master, затем fast-forward merge в специальную ветку.
- - Удаление коммита в специальной ветке (через удаление коммита в git, затем процедура git push-force).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - Revert the commit in the master, then fast-forward merge to the specific branch.
+ - Delete the commit in the specific branch (by deleting the commit in git and then using the git push-force procedure).
 
-### Выкат на production-like из ветки по кнопке
+### Deploy to production-like from a branch at the click of a button
 
-Pipeline выката в production-like окружение может быть запущен вручную только на коммите из специальной ветки. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API.
+Manually run a pipeline to deploy to the production-like environment for a commit to the specific branch only. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в ветке, затем запуск pipeline средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API. В данном случае вариант не рекомендован, т.к. состояние ветки не всегда соответствует состоянию окружения (в отличие от варианта Выкат на production-like из ветки автоматически), поэтому создавать лишний revert не имеет большого смысла именно для задачи отката.
+Rollback options:
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - Revert the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the branch is not consistent with the state of the environment at all times (as opposed to the automatic deployment to the production-like environment). Thus, it does not make sense to revert exclusively for the purposes of a rollback.
 
-### Выкат на review из pull request автоматически
+### Automatically deploy to review using a pull request
 
-Создание pull request автоматически вызывает выкат в отдельное review окружение. Название этого окружения связано с именем ветки. Дальнейшие коммиты в ветку, связанную с pull request автоматически вызывают выкат в review окружение.
+Further commits to the branch tied to the pull request automatically trigger roll-outs to the review environment.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
-Удаление review-окружения:
- - По закрытию или принятию PR.
- - Автоматически по истечению time-to-live с последнего выката на данное окружение (другими словами, при отсутствии активности в данном окружении).
+Deleting the review environment:
+ - By closing or merging a PR.
+ - Automatically when the time-lo-live period since the last deployment expires (in other words, if there is no activity in the environment).
 
-### Выкат на review из ветки по шаблону автоматически
+### Automatically deploy to review from a branch using a pattern
 
-Создание pull request для ветки, подходящей под определённый паттерн автоматически вызывает выкат в отдельное review окружение. Название этого окружения связано с именем ветки. Дальнейшие коммиты в ветку, связанную с pull request автоматически вызывают выкат в review окружение.
+Creating a pull request for a branch that matches some  specific pattern automatically triggers a roll-out to a separate review environment. The name of this environment is associated with the name of the branch. Further commits to the branch associated with the pull request automatically trigger a roll-out to the review environment.
 
-Например, для паттерна `review_*` создание pull request для ветки `review_myfeature1` вызовет автоматическое создание соответствующего review окружения.
+For example, if you have a `review_*` pattern, then the creation of a pull request for the branch called `review_myfeature1` would automatically lead to the creation of the corresponding review-environment.
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
-Удаление review-окружения:
- - По закрытию или принятию PR.
- - Автоматически по истечению time-to-live с последнего выката на данное окружение (другими словами, при отсутствии активности в данном окружении).
+Deleting the review environment:
+ - By closing or merging a PR.
+ - Automatically when the time-lo-live period since the last deployment expires (in other words, if there is no activity in the environment).
 
-### Выкат на review из pull request по кнопке
+### Deploy to review using a pull request at the click of a button
 
-Pipeline выката в review-окружение может быть запущен вручную только на коммите из ветки соответствующей этому окружению. Название этого окружения связано с именем ветки. Запуск pipeline производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе, повесить label или вызов API. 
+The pipeline to deploy to the review environment can only be run manually on a commit from the branch tied to this environment. The name of this environment is associated with the name of the branch. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button, an API call, or by assigning a label.
 
-Варианты отката:
- - Рекомендованный: средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
- - Реверт коммита в ветке, затем запуск pipeline средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе или вызов API. В данном случае вариант не рекомендован, т.к. состояние ветки не всегда соответствует состоянию окружения (в отличие от вариантов "автоматом для pull-request" и "автоматом для pull-request по паттерну"), поэтому создавать лишний revert не имеет большого смысла именно для задачи отката.
+Rollback options:
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
+ - Revert the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the branch does not always correspond to the state of the environment (in contrast to "deploy automatically using the pull request" and "deploy automatically using the pull request and a pattern"), so it does not make sense to perform a revert solely for the rollback.
 
-Удаление review-окружения:
- - По закрытию или принятию PR.
- - Автоматически по истечению time-to-live с последнего выката на данное окружение (другими словами, при отсутствии активности в данном окружении).
+Deleting the review environment:
+ - By closing or merging a PR.
+ - Automatically when the time-lo-live period since the last deployment expires (in other words, if there is no activity in the environment).
 
-### Выкат на review из pull request автоматически после ручной активации
+### Automatically deploy to review using a pull request; manual triggering
 
-Review-окружение для pull request создаётся после его ручной активации средствами CI/CD системы. С этого момента любой коммит в ветку, связанную с pull request, вызывает автоматический выкат на review окружение. После работы с review его можно деактивировать вручную средствами CI/CD системы.
+The review environment is created for the pull request after the pipeline is manually run by the means of the CI/CD system. From this point on, any commit to the branch tied to the pull request leads to an automatic roll-out to the review environment. After the work is complete, you can deactivate the review environment manually using the CI/CD system.
 
-Pipeline выката в review-окружение может быть запущен только на коммите из ветки соответствующей этому окружению. Название этого окружения связано с именем ветки. Запуск pipeline для активации review окружения производится средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе, повесить label или вызов API. 
+The pipeline to deploy to the review environment can only be run manually on a commit from the branch tied to this environment. The name of this environment is associated with the name of the branch. The pipeline to activate the environment is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button, an API call, or by assigning a label. 
 
-Варианты отката:
- - Рекомендованный: откат через реверт коммита в ветке. В этом случае поддерживается состояние ветки в синхронизированном с окружением состоянии, поэтому это предпочтительный вариант для сохранения целостности схемы.
- - Средствами CI/CD системы, повторный [ручной вызов pipeline](#варианты-ручного-запуска-pipeline) на старом коммите (например, в Gitlab CI кнопка "откатить" по факту выполняет именно эти шаги).
+Rollback options:
+ - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
-Удаление review-окружения:
- - Запуск pipeline для деактивации review окружения средствами CI/CD системы [вручную](#варианты-ручного-запуска-pipeline): кнопка в CI/CD системе, снять ранее повешенный label или вызов API.
- - По закрытию или принятию PR.
- - Автоматически по истечению time-to-live с последнего выката на данное окружение (другими словами, при отсутствии активности в данном окружении).
+Deleting the review environment:
+ - The pipeline to deactivate the environment is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button, an API call, or by assigning a label.
+ - By closing or merging a PR.
+ - Automatically when the time-lo-live period since the previous deployment expires (in other words, if there is no activity in the environment).
 
-## Сравнение составляющих блоков для построения workflow
+## Comparing building blocks for creating a workflow
 
-### Степень управляемости через git
+### The level of git control
 
-|   | **Откат через git** | **Ручной откат** |
+|   | **Rollback via git** | **Rollback manually** |
 |:---:|:---:|:---:|
-| **Выкат через git** | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически);<br>[Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически);<br>[Выкат на production из ветки автоматически](#выкат-на-production-из-ветки-автоматически);<br>[Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически);<br>[Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически);<br>[Выкат на review из pull request автоматически](#выкат-на-review-из-pull-request-автоматически);<br>[Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически);<br>[Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически);<br>[Выкат на production из ветки автоматически](#выкат-на-production-из-ветки-автоматически);<br>[Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически);<br>[Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически);<br>[Выкат на review из pull request автоматически](#выкат-на-review-из-pull-request-автоматически);<br>[Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); |
-| **Ручной выкат** | [Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); | [Выкат на production из master по кнопке](#выкат-на-production-из-master-по-кнопке);<br>[Выкат на production из тега по кнопке](#выкат-на-production-из-тега-по-кнопке);<br>[Выкат на production из ветки по кнопке](#выкат-на-production-из-ветки-по-кнопке);<br>[Выкат на production-like из pull request по кнопке](#выкат-на-production-like-из-pull-request-по-кнопке);<br>[Выкат на review из pull request по кнопке](#выкат-на-review-из-pull-request-по-кнопке);<br>[Выкат на review из pull request автоматически после ручной активации (полуавтоматический)](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации); |
+| **Deploy via git** | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
+| **Deploy manually** | [Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button);<br>[Deploy to production using a tag at the click of a button](#Deploy-to-production-using-a-tag-at-the-click-of-a-button);<br>[Deploy to production from a branch at the click of a button](#Deploy-to-production-from-a-branch-at-the-click-of-a-button);<br>[Deploy to production-like using a pull request at the click of a button](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button);<br>[Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
 
-### Соответствие CI/CD
+### Does the building block meet the criteria for CI/CD?
 
-|   | **True CI/CD** | **Рекомендовано для werf** |
+|   | **True CI/CD** | **Recommended for werf** |
 |:---:|:---:|:---:|
-| [**Выкат на production из master автоматически**](#выкат-на-production-из-master-автоматически) | да | да |
-| [**Выкат на production из master по кнопке**](#выкат-на-production-из-master-по-кнопке) | нет | нет |
-| [**Выкат на production из тега автоматически**](#выкат-на-production-из-тега-автоматически) | нет | да |
-| [**Выкат на production из тега по кнопке**](#выкат-на-production-из-тега-по-кнопке) | нет | да |
-| [**Выкат на production из ветки автоматически**](#выкат-на-production-из-ветки-автоматически) | да | нет |
-| [**Выкат на production из ветки по кнопке**](#выкат-на-production-из-ветки-по-кнопке) | нет | нет |
-| [**Выкат на production-like из pull request по кнопке**](#выкат-на-production-like-из-pull-request-по-кнопке) | нет | да |
-| [**Выкат на staging из master автоматически**](#выкат-на-staging-из-master-автоматически) | да | да |
-| [**Выкат на staging из master по кнопке**](#выкат-на-staging-из-master-по-кнопке) | нет | нет |
-| [**Выкат на production-like из ветки автоматически**](#выкат-на-production-like-из-ветки-автоматически) | да | нет |
-| [**Выкат на production-like из ветки по кнопке**](#выкат-на-production-like-из-ветки-по-кнопке) | нет | нет |
-| [**Выкат на review из pull request автоматически**](#выкат-на-review-из-pull-request-автоматически) | да | нет |
-| [**Выкат на review из ветки по шаблону автоматически**](#выкат-на-review-из-ветки-по-шаблону-автоматически) | да | нет |
-| [**Выкат на review из pull request по кнопке**](#выкат-на-review-из-pull-request-по-кнопке) | нет | нет |
-| [**Выкат на review из pull request автоматически после ручной активации**](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) | да | да |
+| [**Automatically deploy to production from master**](#Automatically-deploy-to-production-from-master) | yes | yes |
+| [**Deploy to production from master at the click of a button**](#Deploy-to-production-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production using a tag**](#Automatically-deploy-to-production-using-a-tag) | no | yes |
+| [**Deploy to production using a tag at the click of a button**](#Deploy-to-production-using-a-tag-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to production from a branch**](#Automatically-deploy-to-production-from-a-branch) | yes | no |
+| [**Deploy to production from a branch at the click of a button**](#Deploy-to-production-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Deploy to production-like using a pull request at the click of a button**](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to staging from master**](#Automatically-deploy-to-staging-from-master) | yes | yes |
+| [**Deploy to staging from master at the click of a button**](#Deploy-to-staging-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production-like from a branch**](#Automatically-deploy-to-production-like-from-a-branch) | yes | no |
+| [**Deploy to production-like from a branch at the click of a button**](#Deploy-to-production-like-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to review using a pull request**](#Automatically-deploy-to-review-using-a-pull-request) | yes | no |
+| [**Automatically deploy to review from a branch using a pattern**](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) | yes | no |
+| [**Deploy to review using a pull request at the click of a button**](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to review using a pull request; manual triggering**](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) | yes | yes |
 
-## Готовые конфигурации workflow
+## Ready-made workflow configurations
 
-Мы предлагаем пользователю на выбор несколько готовых конфигураций workflow для проекта. Эти конфигурации составлены из приведенных выше блоков workflow. В документации эти готовые конфигурации могут называться также стратегиями workflow.
+In this section, we offer the user the selection of ready-made workflow configurations tailored to various use cases. These configurations are made up of the workflow blocks listed above. In the documentation, these ready-made configurations can also be referred to as workflow strategies.
 
-Конкретные конфиги по каждой из конфигураций можно найти в инструкциях по конкретной CI/CD системе. Например, Gitlab CI: ссылка, Github Actions: ссылка.
+The exact configuration for each type of the CI/CD system you can find in the documentation for that system. For example, GitLab CI/CD: link, GitHub Actions: link.
 
 ### №1 Fast and Furious
 
-Конфигурация рекомендована в качестве наиболее соответствующей канонам CI/CD, которую можно реализовать с помощью werf.
+We recommend this configuration as the most consistent with the principles of CI/CD of those that can be implemented using werf.
 
-В данной конфигурации может быть произвольное число production-like окружений, как то: testing, staging, development, qa, и т.д.
+This configuration supports any number of production-like environments, such as testing, staging, development, qa, and so on.
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически) + откат через revert |
-| Staging / Testing / Development / QA | [Выкат на production-like из pull request по кнопке](#выкат-на-production-like-из-pull-request-по-кнопке) |
-| Review | [Выкат на review из pull request автоматически после ручной активации](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) |
+| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging / Testing / Development / QA | [Deploy to production-like using a pull request at the click of a button](#Deploy-to production-like-using-a-pull-request-at-the-click-of-a-button) |
+| Review | [Automatically deploy to review using a pull request; manual triggering](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) |
 
 ### №2 Push the button
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master по кнопке](#выкат-на-production-из-master-по-кнопке) |
-| Staging | [Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически) |
-| Testing / Development / QA | [Выкат на production-like из ветки автоматически](#выкат-на-production-like-из-ветки-автоматически) |
-| Review | [Выкат на review из pull request по кнопке](#выкат-на-review-из-pull-request-по-кнопке) |
+| Production | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button) |
+| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
+| Testing / Development / QA | [Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch) |
+| Review | [Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) |
 
 ### №3 Tag everything
 
-Не все проекты сходу готовы к внедрению CI/CD. В таких проектах используется более классический метод создания релизов только после активной фазы разработки. Переход к CI/CD в таких проектах требует усилий по преодолению привычных вещей и переосмысления как от разработчиков, так и от devops. Поэтому для таких проектов мы предлагаем и классическую конфигурацию, которая также рекомендована для werf в случае невозможности использования [fast & furious](#1-fast-and-furious).
+Not all projects are ready to implement the CI/CD approach. These projects use the more classical approach, that implies making releases after the active development phase is complete. The transition to the CI/CD approach in such projects requires both developers and DevOps engineers to change personal habits and rethink the workflow. Therefore, for such projects, we also offer a classic configuration. We recommend to use it with werf if [fast & furious](#1-fast-and-furious) does not suit you.
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из тега автоматически](#выкат-на-production-из-тега-автоматически) |
-| Staging | [Выкат на staging из master автоматически или выкат на staging из master по кнопке](#выкат-на-staging-из-master-автоматически-или-выкат-на-staging-из-master-по-кнопке) |
-| Review | [Выкат на review из pull request автоматически после ручной активации](#выкат-на-review-из-pull-request-автоматически-после-ручной-активации) |
+| Production | [Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag) |
+| Staging | [Automatically deploy to staging from master or Deploy to staging from master at the click of a button](#Automatically-deploy-to-staging-from-master) |
+| Review | [Automatically deploy to review using a pull request; manual triggering](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) |
 
 ### №4 Branch, branch, branch
 
-Управляем выкатом прямо через git с использованием веткок и процедур git merge, rebase и push-force. Через создание определённых имен веток получаем автоматический выкат на review окружения.
+Directly manage the deployment process via git by using branches and git merge, rebase, push-force procedures. By creating branches with specific names, you can trigger an automatic deployment to review environments.
 
-Рекомендуем для тех, кто хочет управлять CI/CD полностью из git. Отметим, что подход также является соответствующим канонам CI/CD, как и fast & furious.
+We recommend this configuration for those who would like to manage the CI/CD process via git only. Note that this approach is also consistent with the CI/CD principles (just like the fast & furious approach described above).
 
-| **Окружение** | **Блок workflow** |
+| **Environment** | **The workflow block** |
 | :---: | :---: |
-| Production | [Выкат на production из master автоматически](#выкат-на-production-из-master-автоматически) + откат через revert |
-| Staging | [Выкат на staging из master автоматически](#выкат-на-staging-из-master-автоматически) |
-| Review | [Выкат на review из ветки по шаблону автоматически](#выкат-на-review-из-ветки-по-шаблону-автоматически) |
+| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
+| Review | [Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) |
