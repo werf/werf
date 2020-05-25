@@ -2,7 +2,7 @@
 title: GitLab CI/CD integration
 sidebar: documentation
 permalink: documentation/guides/gitlab_ci_cd_integration.html
-author: Artem Kladov <artem.kladov@flant.com>
+author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 > **NOTE** This article contains old obsolete info. Newer article available only in russian: [https://ru.werf.io/v1.1-alpha/documentation/guides/gitlab_ci_cd_integration.html](https://ru.werf.io/v1.1-alpha/documentation/guides/gitlab_ci_cd_integration.html) — and will be translated very soon.
@@ -24,7 +24,7 @@ The set of tiers (as well as GitLab environments) in a Kubernetes cluster may va
 * [Staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
 * [Review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
 
-Below, we discuss various pipeline stages and options for setting them up. We will start with general terms and then proceed to the particularities. At the end of the article, you may find [ready-made .gitlab-ci.yml](#полный-gitlab-ci.yml-для-готовых-workflow) XXXXXXXXXXXXXX files tailored for specific workflows.
+Below, we discuss various pipeline stages and options for setting them up. We will start with general terms and then proceed to the particularities. At the end of the article, you may find [ready-made .gitlab-ci.yml](#the-complete-gitlab-ci.yml-for-ready-made-workflows) XXXXXXXXXXXXXX files tailored for specific workflows.
 
 Regardless of the workflow in question, all configuration versions are subject to the following rules:
 

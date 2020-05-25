@@ -2,7 +2,7 @@
 title: CI/CD workflows overview
 sidebar: documentation
 permalink: documentation/reference/ci_cd_workflows_overview.html
-author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
+author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 In this article, we will discuss what CI/CD means and overview CI/CD workflows that can be implemented with werf.
@@ -13,7 +13,7 @@ We will start with defining some basic terms like environment and workflow, and 
 
 We also recommend you to read one the following guides about configuring the specific CI/CD system:
  - [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
- - [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+ - [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
 
 ## Basics
 
@@ -72,7 +72,7 @@ There are the following main types of stages:
 
 #### Pull request
 
-The user makes changes to the code base by creating commits in git and pull requests in the CI/CD system. Normally, a pull request is a thing that binds together a commit in git and a pipeline (also, it allows you to do a review, leave comments, and so on). Pull requests may have different names in various CI/CD systems (e.g., Merge Request in GItLab CI) or may not exist at all (Jenkins).
+The user makes changes to the code base by creating commits in git and pull requests in the CI/CD system. Normally, a pull request is a thing that binds together a commit in git and a pipeline (also, it allows you to do a review, leave comments, and so on). Pull requests may have different names in various CI/CD systems (e.g., Merge Request in GitLab CI/CD) or may not exist at all (Jenkins).
 
 #### Workflow
 
@@ -82,12 +82,12 @@ You can create multiple workflows to achieve the same goal. Next, we will focus 
 ### Run a pipeline manually
 
 You can run a pipeline manually by one of the following methods:
- - By clicking a button in a CI/CD system (for example, in Gitlab CI).
- - By assigning a label in a CI/CD system (e.g., Gitlab CI or Github Actions). A label is usually assigned to/withdrawn from the pull request by the user or automatically by the CI/CD system while the pipeline is running.
+ - By clicking a button in a CI/CD system (for example, in GitLab CI/CD).
+ - By assigning a label in a CI/CD system (e.g., GitLab CI/CD or GitHub Actions). A label is usually assigned to/withdrawn from the pull request by the user or automatically by the CI/CD system while the pipeline is running.
    - For example, the user assigns the "run tests" label to his pull request, and the CI/CD system automatically triggers the corresponding pipeline. While this pipeline is running, the "run tests" label is revoked from the pull request. Then the user can assign this label again to restart the process,  and so on.
-   - Label serves as an alternative to buttons or is used in cases when the CI/CD system does not support buttons (e.g., Github Actions). 
+   - Label serves as an alternative to buttons or is used in cases when the CI/CD system does not support buttons (e.g., GitHub Actions). 
    For review environments, assigning a label by the user is a signal to activate the review environment, and removing it (manually or automatically) is a signal to deactivate it. This option will be discussed in more detail (later) (#automatically-deploy-to-review-using-a-pull-request-manual-triggering).
- - By sending a request to the API of the CI/CD system (for example, via HTTP at a specific url in Github Actions).
+ - By sending a request to the API of the CI/CD system (for example, via HTTP at a specific url in GitHub Actions).
 
 ### The testing stage
 
@@ -97,7 +97,7 @@ To implement a proper CI/CD, it is critical to automatically get instant feedbac
 
 We recommend you to read the guide for your specific CI/CD system:
  - The [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) guide.
- - The [Github Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) guide.
+ - The [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) guide.
 
 If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#составляющие-workflow-для-отдельных-окружений) and [ready-made workflow configurations](#готовые-конфигурации-workflow) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
 
@@ -115,14 +115,14 @@ The state of the branch reflects the state of the environment at any given time.
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the master branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 ### Deploy to production from master at the click of a button
 
 You can manually run a pipeline to deploy to production for a commit in the master branch only. The pipeline is triggered [manually](#варианты-ручного-запуска-pipeline) using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
- - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - By reverting a commit in the master branch and then [manually](#run-a-pipeline-manually) run the pipeline using the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master is not consistent with the state of the environment at all times (as opposed to the automatic deployment). Thus, it does not make sense to revert exclusively for the rollback.
 
 ### Automatically deploy to production using a tag
@@ -148,7 +148,7 @@ The state of the specific branch is consistent with the state of the environment
 
 Rollback options:
 - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "undo" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "undo" button performs precisely these steps).
  - By reverting the commit in the master, then fast-forwarding merge to the specific branch.
  - By deleting the commit in the specific branch (delete the commit in git and then use the git push-force procedure).
 
@@ -157,7 +157,7 @@ Rollback options:
 Manually run a pipeline to deploy to production for a commit to the specific branch only. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
- - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - By reverting the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master is not consistent with the state of the environment at all times (as opposed to the automatic deployment). Thus, it does not make sense to revert exclusively for the rollback.
 
 ### Deploy to production-like using a pull request at the click of a button
@@ -165,7 +165,7 @@ Rollback options:
 The pipeline to deploy to production can be run on any commit to the pull request. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 ### Automatically deploy to staging from master
 
@@ -175,14 +175,14 @@ The state of the branch reflects the state of the environment at any given time.
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the master branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps)..
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps)..
 
 ### Deploy to staging from master at the click of a button
 
 The pipeline to deploy to staging can only be [run manually](#run-a-pipeline-manually) on a commit from the master branch. The pipeline is triggered manually using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
- - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - Revert the commit in the master branch and then [manually](#run-a-pipeline-manually) run the pipeline using the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the master does not consistent with the state of the environment at all times (as opposed to the automatic deployment from master to staging). Thus, it does not make sense to revert exclusively for the rollback.
 
 ### Automatically deploy to production-like from a branch
@@ -193,7 +193,7 @@ The state of the specific branch is consistent with the state of the environment
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - Revert the commit in the master, then fast-forward merge to the specific branch.
  - Delete the commit in the specific branch (by deleting the commit in git and then using the git push-force procedure).
 
@@ -202,7 +202,7 @@ Rollback options:
 Manually run a pipeline to deploy to the production-like environment for a commit to the specific branch only. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
- - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - Revert the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the branch is not consistent with the state of the environment at all times (as opposed to the automatic deployment to the production-like environment). Thus, it does not make sense to revert exclusively for the purposes of a rollback.
 
 ### Automatically deploy to review using a pull request
@@ -211,7 +211,7 @@ Further commits to the branch tied to the pull request automatically trigger rol
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 Deleting the review environment:
  - By closing or merging a PR.
@@ -225,7 +225,7 @@ For example, if you have a `review_*` pattern, then the creation of a pull reque
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 Deleting the review environment:
  - By closing or merging a PR.
@@ -236,7 +236,7 @@ Deleting the review environment:
 The pipeline to deploy to the review environment can only be run manually on a commit from the branch tied to this environment. The name of this environment is associated with the name of the branch. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button, an API call, or by assigning a label.
 
 Rollback options:
- - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
  - Revert the commit in the specific branch and then [manually](#run-a-pipeline-manually) run the pipeline using the means of the CI/CD system: either by hitting a button in the CI/CD or by an API call. We do not recommend this option because the state of the branch does not always correspond to the state of the environment (in contrast to "deploy automatically using the pull request" and "deploy automatically using the pull request and a pattern"), so it does not make sense to perform a revert solely for the rollback.
 
 Deleting the review environment:
@@ -251,7 +251,7 @@ The pipeline to deploy to the review environment can only be run manually on a c
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in Gitlab CI, the "rollback" button performs precisely these steps).
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 Deleting the review environment:
  - The pipeline to deactivate the environment is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button, an API call, or by assigning a label.
@@ -291,7 +291,7 @@ Deleting the review environment:
 
 In this section, we offer the user the selection of ready-made workflow configurations tailored to various use cases. These configurations are made up of the workflow blocks listed above. In the documentation, these ready-made configurations can also be referred to as workflow strategies.
 
-The exact configuration for each type of the CI/CD system you can find in the documentation for that system. For example, Gitlab CI: link, Github Actions: link.
+The exact configuration for each type of the CI/CD system you can find in the documentation for that system. For example, GitLab CI/CD: link, GitHub Actions: link.
 
 ### №1 Fast and Furious
 
