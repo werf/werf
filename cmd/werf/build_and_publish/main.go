@@ -102,6 +102,9 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupPublishReportPath(&commonCmdData, cmd)
+	common.SetupPublishReportFormat(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
@@ -210,6 +213,11 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
+	publishReportFormat, err := common.GetPublishReportFormat(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
 			ImageBuildOptions: container_runtime.BuildOptions{
@@ -219,8 +227,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 			IntrospectOptions: introspectOptions,
 		},
 		PublishImagesOptions: build.PublishImagesOptions{
-			ImagesToPublish: imagesToProcess,
-			TagOptions:      tagOpts,
+			ImagesToPublish:     imagesToProcess,
+			TagOptions:          tagOpts,
+			PublishReportPath:   *commonCmdData.PublishReportPath,
+			PublishReportFormat: publishReportFormat,
 		},
 	}
 
