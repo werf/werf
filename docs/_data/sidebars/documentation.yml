@@ -163,6 +163,9 @@ entries:
           - title: Main Commands
             sfi:
 
+              - title: converge
+                url: /documentation/cli/main/converge.html
+
               - title: build
                 url: /documentation/cli/main/build.html
 
