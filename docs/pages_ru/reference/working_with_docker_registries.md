@@ -25,6 +25,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _Harbor_          	                |         **ок**        	|                            **ок**                            	        |
 | [_Quay_](#quay)            	        |         **ок**        	|                            **ок**                            	        |
 
+> В ближайшее время планируется добавить поддержку для JFrog Container Registry и Nexus Registry
+
 Следующие имплементации полностью поддерживаются и от пользователя требуется только выполнить [авторизацию Docker](#авторизация-docker): 
 * _Default_.
 * _GCR_.
