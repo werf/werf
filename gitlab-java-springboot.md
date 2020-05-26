@@ -1049,12 +1049,38 @@ app:
           value: {{ pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default | quote }}
 ```
 
-И мы в зависимости от используемого окружения можем подставлять нужные нам значения.
+И мы, в зависимости от используемого окружения, можем подставлять нужные нам значения.
 
 
 # Работа с электронной почтой
 
 На наш взгляд самым правильным способом отправки email-сообщений будет внешнее api - провайдер для почты. Например sendgrid, mailgun, amazon ses и подобные.
+
+Рассмотрим на примере sendgrid. spring умеет с ним работать, даже есть [автоконфигуратор](https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/autoconfigure/sendgrid/SendGridAutoConfiguration.html). Для этого нужно использовать [библиотеку sendgrid для java](https://github.com/sendgrid/sendgrid-java)
+Включим библиотеку в pom.xml, согласно документации:
+```xml
+...
+dependencies {
+  ...
+  implementation 'com.sendgrid:sendgrid-java:4.5.0'
+}
+
+repositories {
+  mavenCentral()
+}
+```
+
+Доступы к sendgrid, как и в случае с s3 пропишем в .helm/values.yaml, пробросим их в виде переменных окружения в наше приложение через deployment, а в коде (в application.properties) сопоставим [java-переменные](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html) используемые в коде и переменные окружения:
+
+```
+# SENDGRID (SendGridAutoConfiguration)
+spring.sendgrid.api-key= ${SGAPIKEY}
+spring.sendgrid.username= ${SGUSERNAME}
+spring.sendgrid.password= ${SGPASSWORD}
+spring.sendgrid.proxy.host= ${SGPROXYHOST} #optional
+```
+
+Теперь можем использовать эти данные в приложении для отправки почты
 
 # Подключаем redis
 
@@ -1165,7 +1191,8 @@ spring.redis.port=${REDISPORT}
 
 ## Как подключить БД
 
-Нашему приложению, несомненно нужно общаться не только с redis, но и с реляционной БД, например mysql. От предыдущего пункта подключение принципиально не отличается тем не менее. Описываем в коде, прописывая вместо реальных хостов переменные окружения. Правим helm-чарты, добавляя туда нужные переменные окружения и их значения.
+Разумеется, нашему приложению может потребоваться не только подключение к redis, но и к другим БД. Но от предыдущего пункта настройка принципиально не отличается. 
+Описываем подключение application.properties, прописывая вместо реальных хостов переменные окружения. Правим helm-чарты, добавляя туда нужные переменные окружения и их значения.
 Сгенерируем скелет приложения в start.spring.io. В зависимости добавим web и mysql. Скачаем, разархивируем. Все как и раньше.
 Возьмем за основу уже готовый werf.yaml, тот что использовался в главе оптимизация сборки. Без ассетов - для более простого восприятия.
 
@@ -1190,7 +1217,6 @@ mysql:
   user:
     _default: springuser
 ```
-
 
 ```yaml
 mysql:
@@ -1219,7 +1245,7 @@ mysql:
 
 добавится следующая секция в deployment.yaml:
 
-```
+```yaml
     spec:
      initContainers:
      - name: wait-mysql
@@ -1258,29 +1284,90 @@ curl example.com/demo/all |jq
 
 ## Выполнение миграций
 
-
-[https://www.liquibase.org/get_started/quickstart_sql.html](https://www.liquibase.org/get_started/quickstart_sql.html)
-[https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/howto-database-initialization.html](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/howto-database-initialization.html)
+Обычной практикой при использовании kubernetes является выполнение миграций в БД с помощью Job в кубернетес. Это единоразовое выполнение команды в контейнере с определенными параметрами.
+Однако в нашем случае spring сам выполняет миграции в соответствии с правилами, которые описаны в самом коде. Подробно о том как это делается и настраивается прописано в [документации](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/howto-database-initialization.html). Там рассматривается несколько вариантов работы с бд вообще - Spring Batch Database, Flyway и Liquibase. С точки зрения helm-чартов или сборки совсем ничего не поменятся. Все доступы у нас уже прописаны.
 
 ## Накатка фикстур при первом выкате
 
-[https://www.liquibase.org/get_started/quickstart_sql.html](https://www.liquibase.org/get_started/quickstart_sql.html)
-[https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/howto-database-initialization.html](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/howto-database-initialization.html)
+Аналогично предыдущему пункту про выполнение миграций, накатка фикстур производится фреймворком самостоятельно используя вышеназванные инструменты для миграций.
 
 # Юнит-тесты и Линтеры
 
-[https://spring.io/guides/gs/testing-web/](https://spring.io/guides/gs/testing-web/) unit-test \
-[https://spring.io/guides/gs/maven/](https://spring.io/guides/gs/maven/) unit-test
+Java - компилируемый язык, значит в случае проблем в коде приложение с большой вероятностью просто не соберется. Тем не менее хорошо бы получать информацию о проблеме в коде не дожидаясь пока упадет сборка.
+Чтобы этого избежать пробежимся по коду линтером, а затем запустим unit-тесты.
+Для запуска линта воспользуемся [maven checkstyle plugin](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html). Запускать можно его несколькими способами - либо вынести на отдельную стадию в gitlab-ci - перед сборкой или вызывать только при merge request. Например:
 
-[https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html) lint
+``` yaml
+test: 
+  stage: test
+  script: mvn checkstyle:checkstyle
+  only:
+  - merge_requests
+```
 
-Юниты выполняются при сборк, другие типы тестов могут и должны выполняться на других стадиях. Пока это в доке отстутствует, будет в будущем.
+Так же можно добавить этот плагин в pom.xml в секцию build (подробно описано в [документации](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html) или можно посмотреть на готовый [pom.xml](воттут)) и тогда checkstyle будет выполняться до самой сборки при выполнении `mvn package`. Воспользуемся как раз этим способом для нашего примера. Стоит отметить, что в нашем случае используется [google_checks.xml](https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml) для описания checkstyle и мы запускаем их на стадии validate - до компиляции.
+
+Для unit-тестирования воспользуемся инструментом предлагаемым по умолчанию - junit. Если вы пользовались start.spring.io - то он уже включен в pom.xml автоматичекси, если нет, то нужно его там прописать.
+Запускаются тесты при выполнении `mvn package`.
 
 # Несколько приложений в одной репе
 
+Как было уже описано в главе про сборку ассетов - можно использовать один репозиторий для сборки нескольких приложений - у нас это были бек на Java и фронт, представляющий собой собранную webpack-ом статику в контейнере с nginx.
+Подробно такая сборка описана в отдельной [статье](https://ru.werf.io/documentation/guides/advanced_build/multi_images.html).
+Вкратце напомню о чем шла речь.
+У нас есть основное приложение - Java и ассеты, собираемые webpack-ом. 
+Все что связано с генерацией ассетов лежит в assets. Мы добавили отдельный artifact (на основе nodejs) и image (на основе nginx:alpine). 
+В artifact добавляем в /app нашу папку assets, там все собираем, как описано было ранее и отдаем результат в image с nginx.
+
+```yaml
+git:
+  - add: /assets
+    to: /app
+    excludePaths:
+
+    stageDependencies:
+      install:
+      - package.json
+      - webpack.config.js
+      setup:
+      - "**/*"
+```
+
+Такая организация репозитория удобна, если нужно выкатывать приложение целиком, или команда разработки не большая. Мы уже [рассказывали](https://www.youtube.com/watch?v=g9cgppj0gKQ) в каких случаях это правильный путь.
+
+
 1. Добавляем кронджоб
 2. Добавляем воркер/консюмер
-3. Добавляем вторую приложуху на другом языке (например, это может быть webscoket’ы на nodejs; показать организацию helm, организацию werf.yaml, и ссылку на другую статью). Генерация ассетов подойдет?
 
 # Динамические окружения
 
+Во время разработки и эксплуатации приложения может потребоваться использовать не только условные stage и production окружения. Зачастую, удобно что-то разрабатывать в изолированном от других задач стенде.
+Поскольку у нас уже готовы описание сборки, helm-чарты, достаточно прописать запуск таких стендов (review-стенды или feature-стенды) из веток. Для этого добавим в .gitlab-ci.yaml кнопки для start и stop этих стендов:
+
+```yaml
+Deploy to Review:
+  extends: .base_deploy
+  stage: deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    on_stop: Stop Review
+  only:
+    - feature*
+  when: manual
+```
+
+и стоп:
+```yaml
+Stop Review:
+  stage: deploy
+  script:
+    - werf dismiss --env $CI_ENVIRONMENT_SLUG --namespace ${CI_ENVIRONMENT_SLUG} --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  only:
+    - feature*
+  when: manual
+```
+
+здесь мы видим новую для нас команду [werf dismiss](https://werf.io/documentation/cli/main/dismiss.html). Она удалит приложение из kubernetes, helm-релиз так же будет удален вместе с namespace в который выкатывалось приложение.
