@@ -1,0 +1,32 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $.Chart.Name }}-fixtures
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/weight": "10"
+spec:
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      name: {{ $.Chart.Name }}-fixtures
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-postgres
+        image: postgres:12
+        command:
+        - "sh"
+        - "-c"
+        - "until pg_isready -h {{ pluck .Values.global.env .Values.app.postgresql.host | first }} -U {{ .Values.app.postgresql.user }}; do sleep 2; done;"
+      containers:
+      - name: init-tables
+{{ tuple "node" . | include "werf_container_image" | indent 8 }}
+        command: ['npm']
+        args: ['run', 'fixtures']
+        workingDir: /app
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://{{ pluck .Values.global.env .Values.app.postgresql.user | first | default .Values.app.postgresql.user._default }}:{{ pluck .Values.global.env .Values.app.postgresql.password | first | default .Values.app.postgresql.password._default }}@{{ pluck .Values.global.env .Values.app.postgresql.host | first | default .Values.app.postgresql.host._default }}:5432/{{ pluck .Values.global.env .Values.app.postgresql.db | first | default .Values.app.postgresql.db._default }}"
+{{ tuple "node" . | include "werf_container_env" | indent 8 }}
