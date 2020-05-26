@@ -473,7 +473,7 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 
 Стадия _gitArchive_ выполняется после пользовательской стадии _beforeInstall_, а стадия _gitLatestPatch_ после пользовательской стадии _setup_, если в локальном git-репозитории есть изменения. 
-Таким образом, чтобы выполнить сборку с последней версией исходного кода, можно либо пересобрать стадию _gitArchive_ с помощью [специального коммита]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#сброс-стадии-gitarchive), либо пересобрать стадию _beforeInstall_, изменив значение директивы _cacheVersion_ либо изменив сами инструкции стадии _beforeInstall_.
+Таким образом, чтобы выполнить сборку с последней версией исходного кода, можно пересобрать стадию _beforeInstall_, изменив значение директивы _cacheVersion_ либо изменив сами инструкции стадии _beforeInstall_.
 
 Пользовательские стадии _install_, _beforeSetup_ и _setup_ также могут зависеть от изменений в git-репозитории. В этом случае (если такая зависимость определена) git-патч применяется перед выполнением _пользовательской стадии_, чтобы сборочные инструкции выполнялись с последней версией кода приложения.
 

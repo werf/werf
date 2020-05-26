@@ -512,7 +512,7 @@ So this configuration rebuilds _beforeInstall_ user stage on every commit.
     <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
   </a>
 
-As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#rebuild-of-gitarchive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
+As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
 
 _install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 

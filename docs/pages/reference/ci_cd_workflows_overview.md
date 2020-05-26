@@ -99,11 +99,11 @@ We recommend you to read the guide for your specific CI/CD system:
  - The [GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) guide.
  - The [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) guide.
 
-If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#составляющие-workflow-для-отдельных-окружений) and [ready-made workflow configurations](#готовые-конфигурации-workflow) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
+If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#workflow-components-for-various-environments) and [ready-made workflow configurations](#ready-made-workflow-configurations) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
 
 ## Workflow components for various environments
 
-Next, we will discuss various options for rolling out to production and other environments in conjunction with git. Each section describes a building block that you can use to work with a specific environment. We will call such a block a "workflow block". You can build your own workflow using workflow blocks or make use of a ready-made configuration (see [Ready-made workflow configurations](#готовые-конфигурации-workflow) below).
+Next, we will discuss various options for rolling out to production and other environments in conjunction with git. Each section describes a building block that you can use to work with a specific environment. We will call such a block a "workflow block". You can build your own workflow using workflow blocks or make use of a ready-made configuration (see [Ready-made workflow configurations](#ready-made-workflow-configurations) below).
 
 Review environments are created and deleted dynamically as per the developers' request. Thus, there are some specificities when deploying code to these environments. In the review-related sections, we will describe how to create as well as delete a review environment.
 
@@ -119,7 +119,7 @@ Rollback options:
 
 ### Deploy to production from master at the click of a button
 
-You can manually run a pipeline to deploy to production for a commit in the master branch only. The pipeline is triggered [manually](#варианты-ручного-запуска-pipeline) using the CI/CD system's tools, such as a dedicated button or an API call.
+You can manually run a pipeline to deploy to production for a commit in the master branch only. The pipeline is triggered [manually](#run-a-pipeline-manually) using the CI/CD system's tools, such as a dedicated button or an API call.
 
 Rollback options:
  - Recommended: By means of the CI/CD system; the user can [manually re-run the pipeline](#run-a-pipeline-manually) on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
@@ -263,28 +263,28 @@ Deleting the review environment:
 ### The level of git control
 
 |   | **Rollback via git** | **Rollback manually** |
-|:---:|:---:|:---:|
-| **Deploy via git** | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#Automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#Automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
-| **Deploy manually** | [Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button);<br>[Deploy to production using a tag at the click of a button](#Deploy-to-production-using-a-tag-at-the-click-of-a-button);<br>[Deploy to production from a branch at the click of a button](#Deploy-to-production-from-a-branch-at-the-click-of-a-button);<br>[Deploy to production-like using a pull request at the click of a button](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button);<br>[Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
+|:---|:---|:---|
+| **Deploy via git** | [Automatically deploy to production from master](#automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Automatically deploy to production from master](#automatically-deploy-to-production-from-master);<br>[Automatically deploy to production using a tag](#automatically-deploy-to-production-using-a-tag);<br>[Automatically deploy to production from a branch](#automatically-deploy-to-production-from-a-branch);<br>[Automatically deploy to staging from master](#automatically-deploy-to-staging-from-master);<br>[Automatically deploy to production-like from a branch](#automatically-deploy-to-production-like-from-a-branch);<br>[Automatically deploy to review using a pull request](#automatically-deploy-to-review-using-a-pull-request);<br>[Automatically deploy to review from a branch using a pattern](#automatically-deploy-to-review-from-a-branch-using-a-pattern);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
+| **Deploy manually** | [Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); | [Deploy to production from master at the click of a button](#deploy-to-production-from-master-at-the-click-of-a-button);<br>[Deploy to production using a tag at the click of a button](#deploy-to-production-using-a-tag-at-the-click-of-a-button);<br>[Deploy to production from a branch at the click of a button](#deploy-to-production-from-a-branch-at-the-click-of-a-button);<br>[Deploy to production-like using a pull request at the click of a button](#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button);<br>[Deploy to review using a pull request at the click of a button](#deploy-to-review-using-a-pull-request-at-the-click-of-a-button);<br>[Automatically deploy to review using a pull request; manual triggering (semi-automatic)](#automatically-deploy-to-review-using-a-pull-request-manual-triggering); |
 
 ### Does the building block meet the criteria for CI/CD?
 
 |   | **True CI/CD** | **Recommended for werf** |
-|:---:|:---:|:---:|
-| [**Automatically deploy to production from master**](#Automatically-deploy-to-production-from-master) | yes | yes |
-| [**Deploy to production from master at the click of a button**](#Deploy-to-production-from-master-at-the-click-of-a-button) | no | no |
-| [**Automatically deploy to production using a tag**](#Automatically-deploy-to-production-using-a-tag) | no | yes |
-| [**Deploy to production using a tag at the click of a button**](#Deploy-to-production-using-a-tag-at-the-click-of-a-button) | no | yes |
-| [**Automatically deploy to production from a branch**](#Automatically-deploy-to-production-from-a-branch) | yes | no |
-| [**Deploy to production from a branch at the click of a button**](#Deploy-to-production-from-a-branch-at-the-click-of-a-button) | no | no |
-| [**Deploy to production-like using a pull request at the click of a button**](#Deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) | no | yes |
-| [**Automatically deploy to staging from master**](#Automatically-deploy-to-staging-from-master) | yes | yes |
-| [**Deploy to staging from master at the click of a button**](#Deploy-to-staging-from-master-at-the-click-of-a-button) | no | no |
-| [**Automatically deploy to production-like from a branch**](#Automatically-deploy-to-production-like-from-a-branch) | yes | no |
-| [**Deploy to production-like from a branch at the click of a button**](#Deploy-to-production-like-from-a-branch-at-the-click-of-a-button) | no | no |
-| [**Automatically deploy to review using a pull request**](#Automatically-deploy-to-review-using-a-pull-request) | yes | no |
-| [**Automatically deploy to review from a branch using a pattern**](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) | yes | no |
-| [**Deploy to review using a pull request at the click of a button**](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) | no | no |
+|:---|:---:|:---:|
+| [**Automatically deploy to production from master**](#automatically-deploy-to-production-from-master) | yes | yes |
+| [**Deploy to production from master at the click of a button**](#deploy-to-production-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production using a tag**](#automatically-deploy-to-production-using-a-tag) | no | yes |
+| [**Deploy to production using a tag at the click of a button**](#deploy-to-production-using-a-tag-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to production from a branch**](#automatically-deploy-to-production-from-a-branch) | yes | no |
+| [**Deploy to production from a branch at the click of a button**](#deploy-to-production-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Deploy to production-like using a pull request at the click of a button**](#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) | no | yes |
+| [**Automatically deploy to staging from master**](#automatically-deploy-to-staging-from-master) | yes | yes |
+| [**Deploy to staging from master at the click of a button**](#deploy-to-staging-from-master-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to production-like from a branch**](#automatically-deploy-to-production-like-from-a-branch) | yes | no |
+| [**Deploy to production-like from a branch at the click of a button**](#deploy-to-production-like-from-a-branch-at-the-click-of-a-button) | no | no |
+| [**Automatically deploy to review using a pull request**](#automatically-deploy-to-review-using-a-pull-request) | yes | no |
+| [**Automatically deploy to review from a branch using a pattern**](#automatically-deploy-to-review-from-a-branch-using-a-pattern) | yes | no |
+| [**Deploy to review using a pull request at the click of a button**](#deploy-to-review-using-a-pull-request-at-the-click-of-a-button) | no | no |
 | [**Automatically deploy to review using a pull request; manual triggering**](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) | yes | yes |
 
 ## Ready-made workflow configurations
@@ -300,28 +300,28 @@ We recommend this configuration as the most consistent with the principles of CI
 This configuration supports any number of production-like environments, such as testing, staging, development, qa, and so on.
 
 | **Environment** | **The workflow block** |
-| :---: | :---: |
-| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
-| Staging / Testing / Development / QA | [Deploy to production-like using a pull request at the click of a button](#Deploy-to production-like-using-a-pull-request-at-the-click-of-a-button) |
+| :--- | :--- |
+| Production | [Automatically deploy to production from master](#automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging / Testing / Development / QA | [Deploy to production-like using a pull request at the click of a button](#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) |
 | Review | [Automatically deploy to review using a pull request; manual triggering](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) |
 
 ### №2 Push the button
 
 | **Environment** | **The workflow block** |
-| :---: | :---: |
-| Production | [Deploy to production from master at the click of a button](#Deploy-to-production-from-master-at-the-click-of-a-button) |
-| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
-| Testing / Development / QA | [Automatically deploy to production-like from a branch](#Automatically-deploy-to-production-like-from-a-branch) |
-| Review | [Deploy to review using a pull request at the click of a button](#Deploy-to-review-using-a-pull-request-at-the-click-of-a-button) |
+| :--- | :--- |
+| Production | [Deploy to production from master at the click of a button](#deploy-to-production-from-master-at-the-click-of-a-button) |
+| Staging | [Automatically deploy to staging from master](#automatically-deploy-to-staging-from-master) |
+| Testing / Development / QA | [Automatically deploy to production-like from a branch](#automatically-deploy-to-production-like-from-a-branch) |
+| Review | [Deploy to review using a pull request at the click of a button](#deploy-to-review-using-a-pull-request-at-the-click-of-a-button) |
 
 ### №3 Tag everything
 
 Not all projects are ready to implement the CI/CD approach. These projects use the more classical approach, that implies making releases after the active development phase is complete. The transition to the CI/CD approach in such projects requires both developers and DevOps engineers to change personal habits and rethink the workflow. Therefore, for such projects, we also offer a classic configuration. We recommend to use it with werf if [fast & furious](#1-fast-and-furious) does not suit you.
 
 | **Environment** | **The workflow block** |
-| :---: | :---: |
-| Production | [Automatically deploy to production using a tag](#Automatically-deploy-to-production-using-a-tag) |
-| Staging | [Automatically deploy to staging from master or Deploy to staging from master at the click of a button](#Automatically-deploy-to-staging-from-master) |
+| :--- | :--- |
+| Production | [Automatically deploy to production using a tag](#automatically-deploy-to-production-using-a-tag) |
+| Staging | [Automatically deploy to staging from master or Deploy to staging from master at the click of a button](#automatically-deploy-to-staging-from-master) |
 | Review | [Automatically deploy to review using a pull request; manual triggering](#automatically-deploy-to-review-using-a-pull-request-manual-triggering) |
 
 ### №4 Branch, branch, branch
@@ -331,7 +331,7 @@ Directly manage the deployment process via git by using branches and git merge, 
 We recommend this configuration for those who would like to manage the CI/CD process via git only. Note that this approach is also consistent with the CI/CD principles (just like the fast & furious approach described above).
 
 | **Environment** | **The workflow block** |
-| :---: | :---: |
-| Production | [Automatically deploy to production from master](#Automatically-deploy-to-production-from-master) + rollback changes via revert |
-| Staging | [Automatically deploy to staging from master](#Automatically-deploy-to-staging-from-master) |
-| Review | [Automatically deploy to review from a branch using a pattern](#Automatically-deploy-to-review-from-a-branch-using-a-pattern) |
+| :--- | :--- |
+| Production | [Automatically deploy to production from master](#automatically-deploy-to-production-from-master) + rollback changes via revert |
+| Staging | [Automatically deploy to staging from master](#automatically-deploy-to-staging-from-master) |
+| Review | [Automatically deploy to review from a branch using a pattern](#automatically-deploy-to-review-from-a-branch-using-a-pattern) |

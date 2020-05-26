@@ -630,7 +630,7 @@ labels:
 
 #### №2 Автоматически по имени ветки
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в PR, в случае, если имя git-ветки содержит `review`. 
 
@@ -786,7 +786,7 @@ on:
 
 #### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
@@ -959,11 +959,11 @@ pull_request:
 
 Предложенные далее варианты являются наиболее эффективными комбинациями правил выката **staging** и **production** окружений.
 
-В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных workflow, предложенных в [конце статьи](#полный-gitlab-ciyml-для-различных-workflow). 
+В нашем случае, данные окружения являются определяющими, поэтому названия вариантов соответствуют названиям окончательных workflow, предложенных в [конце статьи](#полный-набор-конфигураций-для-готовых-workflow). 
 
 #### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -1122,7 +1122,7 @@ jobs:
 
 #### №2 Push the Button
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
 Выкат **production** осуществляется по кнопке у коммита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
@@ -1268,7 +1268,7 @@ jobs:
 
 #### №3 Tag everything (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-staging-из-master-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у коммита в master.
 
@@ -1415,7 +1415,7 @@ jobs:
 
 #### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#выкат-на-production-like-из-ветки-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -1645,7 +1645,7 @@ jobs:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#1-fast-and-furious)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
 * Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious (рекомендованный)](#1-fast-and-furious-рекомендованный).
@@ -2022,7 +2022,7 @@ jobs:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#2-push-the-button)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button).
@@ -2389,7 +2389,7 @@ jobs:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#3-tag-everything)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
@@ -2757,7 +2757,7 @@ jobs:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#4-branch-branch-branch)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
 * Выкат на staging и production контуры осуществляется по стратегии [№4 Branch, branch, branch!](#4-branch-branch-branch).
