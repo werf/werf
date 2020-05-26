@@ -136,7 +136,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -162,7 +162,7 @@ Example:
 
 Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.global.env`, что соответствует значению опции `--env` или переменной окружения `WERF_ENV`.
 
-Также в шаблоне используется адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `global.ci_url`. 
+Также в шаблоне используется адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `global.env_url`. 
 Это значение может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов.
 
 Далее будут представлены популярные стратегии и практики, на базе которых мы предлагаем выстраивать ваши процессы в GitLab. 
@@ -342,7 +342,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -553,7 +553,7 @@ Cleanup:
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
 * Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious (рекомендованный)](#1-fast-and-furious-рекомендованный).
-* [Очистка стадий](#очистка-образов).
+* [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### .gitlab-ci.yml 
 {:.no_toc}
@@ -580,7 +580,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   tags: [werf]
@@ -613,7 +613,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -687,7 +687,7 @@ Cleanup:
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button).
-* [Очистка стадий](#очистка-образов). 
+* [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### .gitlab-ci.yml
 {:.no_toc}
@@ -714,7 +714,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -788,7 +788,7 @@ Cleanup:
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
-* [Очистка стадий](#очистка-образов). 
+* [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### .gitlab-ci.yml
 {:.no_toc}
@@ -815,7 +815,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -889,7 +889,7 @@ Cleanup:
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
 * Выкат на staging и production контуры осуществляется по стратегии [№4 Branch, branch, branch!](#4-branch-branch-branch).
-* [Очистка стадий](#очистка-образов). 
+* [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### .gitlab-ci.yml
 {:.no_toc}
@@ -916,7 +916,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
