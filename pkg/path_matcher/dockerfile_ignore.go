@@ -2,11 +2,11 @@ package path_matcher
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/docker/docker/pkg/fileutils"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher, greedySearch bool) *DockerfileIgnorePathMatcher {
@@ -86,7 +86,7 @@ func (f *DockerfileIgnorePathMatcher) processDirOrSubmodulePath(path string) (bo
 	}
 
 	relPath := rel(path, f.basePath)
-	relPathParts := strings.Split(relPath, string(os.PathSeparator))
+	relPathParts := util.SplitFilepath(relPath)
 	var patterns []*pattern
 
 	for _, p := range f.patternMatcher.Patterns() {

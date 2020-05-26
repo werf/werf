@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/util"
+
 	"github.com/bmatcuk/doublestar"
 )
 
@@ -87,7 +89,7 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 	}
 
 	relPath := rel(path, f.basePath)
-	relPathParts := strings.Split(relPath, string(os.PathSeparator))
+	relPathParts := util.SplitFilepath(relPath)
 	inProgressIncludePaths := f.includePaths[:]
 	inProgressExcludePaths := f.excludePaths[:]
 	var matchedIncludePaths, matchedExcludePaths []string
