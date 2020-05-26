@@ -13,7 +13,6 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/bmatcuk/doublestar"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
@@ -328,45 +327,61 @@ func (f files) Get(path string) string {
 	return string(b)
 }
 
+// Glob returns the hash of regular files and their contents for the paths that are matched pattern
+// This function follows only symlinks pointed to a regular file (not to a directory)
 func (f files) Glob(pattern string) map[string]string {
 	result := map[string]string{}
 
-	matches, err := doublestar.Glob(filepath.Join(f.ProjectDir, filepath.FromSlash(pattern)))
-	if err != nil {
-		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: glob failed: %s!\n", pattern, err)
-		return result
-	}
-
-	var resultPaths []string
-	for _, path := range matches {
-		s, err := os.Lstat(path)
+	err := util.WalkByPattern(f.ProjectDir, filepath.FromSlash(pattern), func(path string, s os.FileInfo, err error) error {
 		if err != nil {
-			logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: stat file %s failed: %s!\n", pattern, path, err)
-			return result
+			return err
 		}
 
 		if s.IsDir() {
-			continue
+			return nil
 		}
 
-		resultPaths = append(resultPaths, path)
-	}
+		var filePath string
+		if s.Mode()&os.ModeSymlink == os.ModeSymlink {
+			link, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return fmt.Errorf("eval symlink %s failed: %s", path, err)
+			}
 
-	if len(resultPaths) == 0 {
-		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
-		return result
-	}
+			linkStat, err := os.Lstat(link)
+			if err != nil {
+				return fmt.Errorf("lstat %s failed: %s", linkStat, err)
+			}
 
-	for _, path := range resultPaths {
-		b, err := ioutil.ReadFile(path)
+			if linkStat.IsDir() {
+				return nil
+			}
+
+			filePath = link
+		} else {
+			filePath = path
+		}
+
+		b, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: read file %s failed: %s!\n", pattern, path, err)
-			return result
+			return fmt.Errorf("read file %s failed: %s", filePath, err)
 		}
 
 		resultPath := strings.TrimPrefix(path, f.ProjectDir+string(os.PathSeparator))
 		resultPath = filepath.ToSlash(resultPath)
 		result[resultPath] = string(b)
+
+		return nil
+	})
+
+	if err != nil {
+		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
+		return nil
+	}
+
+	if len(result) == 0 {
+		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
+		return nil
 	}
 
 	return result
