@@ -3,19 +3,16 @@ package git_repo
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+	"github.com/go-git/go-git/v5"
 
 	"github.com/flant/logboek"
 
 	"github.com/flant/werf/pkg/git_repo/check_ignore"
-	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/git_repo/status"
 	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/true_git/ls_tree"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -47,19 +44,37 @@ func (repo *Local) CreateVirtualMergeCommit(fromCommit, toCommit string) (string
 	return repo.createVirtualMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
 }
 
-func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
+type LsTreeOptions struct {
+	Commit        string
+	UseHeadCommit bool
+}
+
+func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
 
-	return ls_tree.LsTree(repository, pathMatcher)
+	var commit string
+	if opts.UseHeadCommit {
+		if headCommit, err := repo.HeadCommit(); err != nil {
+			return nil, fmt.Errorf("unable to get repo head commit: %s", err)
+		} else {
+			commit = headCommit
+		}
+	} else if opts.Commit == "" {
+		panic(fmt.Sprintf("no commit specified for LsTree procedure: specify Commit or HeadCommit"))
+	} else {
+		commit = opts.Commit
+	}
+
+	return ls_tree.LsTree(repository, commit, pathMatcher)
 }
 
 func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
 
 	return status.Status(repository, repo.Path, pathMatcher)
@@ -68,18 +83,10 @@ func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result,
 func (repo *Local) CheckIgnore(paths []string) (*check_ignore.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repo.Path, err)
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
 
 	return check_ignore.CheckIgnore(repository, repo.Path, paths)
-}
-
-func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {
-	head, err := repo.HeadCommit()
-	if err != nil {
-		return "", fmt.Errorf("error getting head commit: %s", err)
-	}
-	return repo.findCommitIdByMessage(repo.Path, regex, head)
 }
 
 func (repo *Local) IsEmpty() (bool, error) {
@@ -95,28 +102,17 @@ func (repo *Local) RemoteOriginUrl() (string, error) {
 }
 
 func (repo *Local) HeadCommit() (string, error) {
-	ref, err := repo.getReferenceForRepo(repo.Path)
-	if err != nil {
-		return "", fmt.Errorf("cannot get repo `%s` head ref: %s", repo.Path, err)
-	}
-	return fmt.Sprintf("%s", ref.Hash()), nil
+	return repo.getHeadCommit(repo.Path)
 }
 
 func (repo *Local) IsHeadReferenceExist() (bool, error) {
-	_, err := repo.getReferenceForRepo(repo.Path)
-	if err != nil {
-		if err == plumbing.ErrReferenceNotFound {
-			return false, nil
-		}
-
+	_, err := repo.getHeadCommit(repo.Path)
+	if err == errHeadNotFound {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
-
 	return true, nil
-}
-
-func (repo *Local) HeadBranchName() (string, error) {
-	return repo.getHeadBranchName(repo.Path)
 }
 
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
@@ -162,88 +158,4 @@ func (repo *Local) getRepoWorkTreeCacheDir() string {
 	repoId := util.Sha256Hash(fullPath)
 
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoId)
-}
-
-func (repo *Local) IsBranchState() bool {
-	_, err := repo.HeadBranchName()
-	if err == errNotABranch {
-		return false
-	} else if err != nil {
-		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
-		return false
-	}
-	return true
-}
-
-func (repo *Local) GetCurrentBranchName() string {
-	name, err := repo.HeadBranchName()
-	if err != nil {
-		logboek.LogWarnF("ERROR: Getting branch of local git: %s\n", err)
-		return ""
-	}
-	return name
-}
-
-func (repo *Local) IsTagState() bool {
-	return repo.GetCurrentTagName() != ""
-}
-
-func (repo *Local) findTagByCommitID(repoPath string, commitID plumbing.Hash) (string, error) {
-	repository, err := git.PlainOpen(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
-	}
-
-	references, err := repository.References()
-	if err != nil {
-		return "", err
-	}
-
-	tagPrefix := "refs/tags/"
-
-	var res *plumbing.Reference
-
-	err = references.ForEach(func(r *plumbing.Reference) error {
-		refName := r.Name().String()
-		if strings.HasPrefix(refName, tagPrefix) {
-			if r.Hash() == commitID {
-				res = r
-				return storer.ErrStop
-			}
-		}
-		return nil
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	if res != nil {
-		return strings.TrimPrefix(res.Name().String(), tagPrefix), nil
-	}
-	return "", nil
-}
-
-func (repo *Local) GetCurrentTagName() string {
-	ref, err := repo.getReferenceForRepo(repo.Path)
-	if err != nil {
-		logboek.LogWarnF("ERROR: Cannot get local git repo head ref: %s\n", err)
-		return ""
-	}
-
-	tag, err := repo.findTagByCommitID(repo.Path, ref.Hash())
-	if err != nil {
-		logboek.LogWarnF("ERROR: Cannot get local git repo tag: %s\n", err)
-		return ""
-	}
-	return tag
-}
-
-func (repo *Local) GetHeadCommit() string {
-	ref, err := repo.getReferenceForRepo(repo.Path)
-	if err != nil {
-		logboek.LogWarnF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
-		return ""
-	}
-	return fmt.Sprintf("%s", ref.Hash())
 }

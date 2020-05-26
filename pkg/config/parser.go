@@ -13,7 +13,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
 	"github.com/flant/logboek"

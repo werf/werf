@@ -18,9 +18,9 @@ import (
 
 	"github.com/flant/werf/pkg/container_runtime"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/git_repo/status"
 	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/flant/werf/pkg/true_git/ls_tree"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -289,7 +289,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithGit(wildcards []string) (str
 	if s.mainLsTreeResult == nil {
 		processMsg := fmt.Sprintf("ls-tree (%s)", s.dockerignorePathMatcher.String())
 		logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
-		result, err := s.localGitRepo.LsTree(s.dockerignorePathMatcher)
+		result, err := s.localGitRepo.LsTree(s.dockerignorePathMatcher, git_repo.LsTreeOptions{UseHeadCommit: true})
 		if err != nil {
 			if err.Error() == "entry not found" {
 				logboek.Debug.LogFWithCustomStyle(

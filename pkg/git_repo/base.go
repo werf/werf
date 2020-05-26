@@ -6,25 +6,21 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 
-	"gopkg.in/src-d/go-billy.v4/osfs"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/cache"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-	"gopkg.in/src-d/go-git.v4/storage/filesystem"
-
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/git_repo/ls_tree"
 	"github.com/flant/werf/pkg/path_matcher"
 	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/true_git/ls_tree"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 var (
-	errNotABranch = errors.New("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
+	errNotABranch   = errors.New("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
+	errHeadNotFound = errors.New("HEAD not found")
 )
 
 type Base struct {
@@ -62,51 +58,6 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 	return "", nil
 }
 
-func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommit string) (string, error) {
-	repository, err := git.PlainOpen(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
-	}
-
-	headHash, err := newHash(headCommit)
-	if err != nil {
-		return "", fmt.Errorf("bad head commit hash `%s`: %s", headCommit, err)
-	}
-
-	commitObj, err := repository.CommitObject(headHash)
-	if err != nil {
-		return "", fmt.Errorf("cannot find head commit %s: %s", headCommit, err)
-	}
-
-	commitIter := object.NewCommitIterBSF(commitObj, nil, nil)
-
-	regexObj, err := regexp.Compile(regex)
-	if err != nil {
-		return "", fmt.Errorf("bad regex `%s`: %s", regex, err)
-	}
-
-	var foundCommit *object.Commit
-
-	err = commitIter.ForEach(func(c *object.Commit) error {
-		if c != nil && regexObj.Match([]byte(c.Message)) {
-			foundCommit = c
-			return storer.ErrStop
-		}
-
-		return nil
-	})
-
-	if err != nil && err != plumbing.ErrObjectNotFound {
-		return "", fmt.Errorf("failed to traverse repository: %s", err)
-	}
-
-	if foundCommit != nil {
-		return foundCommit.Hash.String(), nil
-	}
-
-	return "", nil
-}
-
 func (repo *Base) isEmpty(repoPath string) (bool, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -128,29 +79,17 @@ func (repo *Base) isEmpty(repoPath string) (bool, error) {
 	return false, nil
 }
 
-func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, error) {
-	var err error
-
-	repository, err := git.PlainOpen(repoPath)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+func (repo *Base) getHeadCommit(repoPath string) (string, error) {
+	if res, err := true_git.ShowRef(repoPath); err != nil {
+		return "", fmt.Errorf("show ref for %s failed: %s", repoPath, err)
+	} else {
+		for _, ref := range res.Refs {
+			if ref.IsHEAD {
+				return ref.Commit, nil
+			}
+		}
 	}
-
-	return repository.Head()
-}
-
-func (repo *Base) getHeadBranchName(repoPath string) (string, error) {
-	ref, err := repo.getReferenceForRepo(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot get repo `%s` head: %s", repoPath, err)
-	}
-
-	if ref.Name().IsBranch() {
-		branchRef := ref.Name()
-		return strings.Split(string(branchRef), "refs/heads/")[1], nil
-	}
-
-	return "", errNotABranch
+	return "", errHeadNotFound
 }
 
 func (repo *Base) String() string {
@@ -432,7 +371,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 	}
 
 	err = true_git.WithWorkTree(gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(worktreeDir string) error {
-		repositoryWithPreparedWorktree, err := GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
+		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
 		if err != nil {
 			return err
 		}
@@ -450,7 +389,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			processMsg,
 			logboek.LevelLogProcessOptions{},
 			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, pathMatcher)
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher)
 				return err
 			},
 		); err != nil {
@@ -501,10 +440,4 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 	}
 
 	return checksum, nil
-}
-
-func GitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repository, error) {
-	worktreeFilesystem := osfs.New(worktreeDir)
-	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
-	return git.Open(storage, worktreeFilesystem)
 }
