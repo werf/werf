@@ -1,0 +1,39 @@
+project: chat
+configVersion: 1
+---
+image: node
+from: node:14-stretch
+git:
+- add: /node
+  to: /app
+  stageDependencies:
+    install:
+    - package.json
+ansible:
+  beforeInstall:
+  - name: Install dependencies
+    apt:
+      name:
+      - tzdata
+      - locales
+      update_cache: yes
+  install:
+  - name: npm сi
+    shell: npm сi
+    args:
+      chdir: /app
+  setup:
+  - name: npm run build
+    shell: npm run build
+    args:
+      chdir: /app
+---
+image: node_assets
+from: nginx:stable-alpine
+docker:
+  EXPOSE: '80'
+import:
+- image: node
+  add: /app/dist/assets
+  to: /usr/share/nginx/html/assets
+  after: setup

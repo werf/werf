@@ -1,0 +1,30 @@
+---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: {{ .Chart.Name }}
+    spec:
+      revisionHistoryLimit: 3
+      strategy:
+        type: RollingUpdate
+      replicas: 1
+      selector:
+        matchLabels:
+          app: {{ $.Chart.Name }}
+      template:
+        metadata:
+          labels:
+            app: {{ $.Chart.Name }}
+        spec:
+          imagePullSecrets:
+          - name: "registrysecret"
+          containers:
+          - name: {{ $.Chart.Name }}
+    {{ tuple "node" . | include "werf_container_image" | indent 8 }}
+            workingDir: /app
+            command: ["node","/app/src/js/index.js"]
+            ports:
+            - containerPort: 8080
+              protocol: TCP
+            env:
+    {{ tuple "node" . | include "werf_container_env" | indent 8 }}
