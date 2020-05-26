@@ -39,8 +39,6 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
-// TODO: This is interface for build pkg only -- should be renamed.
-// Do not add operations that are not designed for build pkg usage.
 type GitRepo interface {
 	String() string
 	GetName() string
@@ -50,7 +48,6 @@ type GitRepo interface {
 	LatestBranchCommit(branch string) (string, error)
 	TagCommit(tag string) (string, error)
 	IsCommitExists(commit string) (bool, error)
-	FindCommitIdByMessage(regex string) (string, error)
 	IsAncestor(ancestorCommit, descendantCommit string) (bool, error)
 
 	CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error)

@@ -9,16 +9,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/src-d/go-billy.v4/osfs"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/cache"
-	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
-	"gopkg.in/src-d/go-git.v4/storage/filesystem"
-
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/git_repo/ls_tree"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
+
 	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/flant/werf/pkg/true_git/ls_tree"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -92,9 +88,9 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
 	}
 
-	repository, err := gitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
+	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
 	if err != nil {
-		return nil, fmt.Errorf("git open with custom worktree dir failed: %s", err)
+		return nil, fmt.Errorf("git open failed: %s", err)
 	}
 
 	desc := &ArchiveDescriptor{
@@ -134,7 +130,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 
 	logProcessMsg := fmt.Sprintf("ls-tree (%s)", opts.PathMatcher.String())
 	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-	result, err := ls_tree.LsTree(repository, opts.PathMatcher)
+	result, err := ls_tree.LsTree(repository, opts.Commit, opts.PathMatcher)
 	if err != nil {
 		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 		return nil, err
@@ -144,6 +140,8 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 	logProcessMsg = fmt.Sprintf("ls-tree result walk (%s)", opts.PathMatcher.String())
 	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
+		logboek.Debug.LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
+
 		desc.IsEmpty = false
 
 		gitFileMode := lsTreeEntry.Mode
@@ -243,10 +241,4 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 	}
 
 	return desc, nil
-}
-
-func gitOpenWithCustomWorktreeDir(gitDir string, worktreeDir string) (*git.Repository, error) {
-	worktreeFilesystem := osfs.New(worktreeDir)
-	storage := filesystem.NewStorage(osfs.New(gitDir), cache.NewObjectLRUDefault())
-	return git.Open(storage, worktreeFilesystem)
 }

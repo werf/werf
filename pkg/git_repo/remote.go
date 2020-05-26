@@ -6,19 +6,18 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
-
-	"github.com/flant/werf/pkg/true_git"
+	"gopkg.in/ini.v1"
 
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/werf"
 
-	"gopkg.in/ini.v1"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 
+	"github.com/flant/lockgate"
 	"github.com/flant/logboek"
 )
 
@@ -42,14 +41,6 @@ func (repo *Remote) GetClonePath() string {
 
 func (repo *Remote) RemoteOriginUrl() (string, error) {
 	return repo.remoteOriginUrl(repo.GetClonePath())
-}
-
-func (repo *Remote) FindCommitIdByMessage(regex string) (string, error) {
-	head, err := repo.HeadCommit()
-	if err != nil {
-		return "", fmt.Errorf("error getting head commit: %s", err)
-	}
-	return repo.findCommitIdByMessage(repo.GetClonePath(), regex, head)
 }
 
 func (repo *Remote) IsEmpty() (bool, error) {
@@ -180,30 +171,7 @@ func (repo *Remote) Fetch() error {
 }
 
 func (repo *Remote) HeadCommit() (string, error) {
-	repoPath := repo.GetClonePath()
-
-	repository, err := git.PlainOpen(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
-	}
-
-	branch, err := repo.HeadBranchName()
-	if err != nil {
-		return "", fmt.Errorf("cannot detect head branch name of repo `%s`: %s", repoPath, err)
-	}
-
-	refName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch))
-
-	ref, err := repository.Reference(refName, true)
-	if err != nil {
-		return "", fmt.Errorf("cannot resolve reference `%s` of repo `%s`: %s", refName, repoPath, err)
-	}
-
-	return ref.Hash().String(), nil
-}
-
-func (repo *Remote) HeadBranchName() (string, error) {
-	return repo.getHeadBranchName(repo.GetClonePath())
+	return repo.getHeadCommit(repo.GetClonePath())
 }
 
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {
