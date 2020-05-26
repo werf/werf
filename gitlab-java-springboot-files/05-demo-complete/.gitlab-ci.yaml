@@ -1,0 +1,84 @@
+variables:
+  WERF_VERSION: "1.1 stable"
+  WERF_STAGES_STORAGE: ":local"
+
+stages:
+  - build
+  - deploy
+
+Build:
+  stage: build
+  script:
+    - type multiwerf && source <(multiwerf use ${WERF_VERSION})
+    - type werf && source <(werf ci-env gitlab --verbose)
+    - werf build-and-publish
+  tags:
+    - werf
+
+.base_deploy: &base_deploy 
+ stage: deploy 
+ script: 
+   - echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3 
+   - type multiwerf && source <(multiwerf use ${WERF_VERSION}) 
+   - type werf && source <(werf ci-env gitlab --verbose) 
+   - werf helm repo init
+   - werf helm dependency update
+   - werf deploy --stages-storage :local 
+     --namespace ${CI_NAMESPACE} 
+     --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)" 
+     --set "global.env=${CI_ENVIRONMENT_SLUG}" 
+     --set "global.ci_url=$(basename ${CI_ENVIRONMENT_URL})"
+     --timeout ${CI_TIMEOUT:-10800} 
+ except: 
+   - schedules 
+ tags: 
+   - werf
+
+Deploy to Stage:
+  extends: .base_deploy
+  stage: deploy
+  environment:
+    name: stage
+    url: http://stage.example.com
+  except:
+    - schedules
+  only:
+    - merge_requests
+    - master
+  when: manual
+
+Deploy to Production:
+  extends: .base_deploy
+  stage: deploy
+  environment:
+    name: production
+    url: http://example.com
+  except:
+    - schedules
+  only:
+    - merge_requests
+    - master
+  when: manual
+
+Deploy to Review:
+  extends: .base_deploy
+  stage: deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: review-${CI_COMMIT_REF_SLUG}.example.com 
+    on_stop: Stop Review
+  only:
+    - /^feature-*$/
+  when: manual
+
+Stop Review:
+  stage: deploy
+  script:
+    - werf dismiss --env $CI_ENVIRONMENT_SLUG --namespace ${CI_ENVIRONMENT_SLUG} --with-namespace
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  only:
+    - /^feature-*$/
+  when: manual
+
