@@ -61,7 +61,7 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
-				return fmt.Errorf("release %s is not found", releaseName)
+				return fmt.Errorf("release %s was not found", releaseName)
 			}
 
 			return fmt.Errorf("release status failed: %s", err)
@@ -69,6 +69,10 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 
 		return nil
 	}); err != nil {
+		if isReleaseNotFoundError(err) {
+			logboek.Default.LogLnDetails(err.Error())
+			return nil
+		}
 		return err
 	}
 
