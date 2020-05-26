@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name | quote }}
+    spec:
+      initContainers:
+      - name: wait-mysql
+        image: alpine:3.9
+        command:
+        - /bin/sh
+        - -c
+        - while ! getent ahostsv4 $MYSQL_HOST; do echo waiting for mysql; sleep 2; done
+        env:
+        - name: MYSQL_HOST
+          value: {{ pluck .Values.global.env .Values.infr.mysql.host | first | default .Values.infr.mysql.host._default }}
+      containers:
+      - name: {{ .Chart.Name | quote }}
+{{ tuple "hello" . | include "werf_container_image" | indent 8 }}
+        command:
+        - java
+        - -jar
+        - /app/target/demo-1.0.jar $JAVA_OPT
+        workingDir: /app
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: JAVA_OPT
+          value: {{ pluck .Values.global.env .Values.app.java_opt | first | default .Values.app.java_opt._default }}
+        - name: REDISHOST
+          value: {{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}
+        - name: REDISPORT
+          value: {{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}
+        - name: MYSQL_HOST
+          value: {{ pluck .Values.global.env .Values.infr.mysql.host | first | default .Values.infr.mysql.host._default }}
+        - name: MYSQL_DATABASE
+          value: {{ pluck .Values.global.env .Values.infr.mysql.db | first | default .Values.infr.mysql.db._default }}
+        - name: MYSQL_PASSWORD
+          value: {{ pluck .Values.global.env .Values.infr.mysql.password | first | default .Values.infr.mysql.password._default }}
+        - name: MYSQL_USER
+          value: {{ pluck .Values.global.env .Values.infr.mysql.user | first | default .Values.infr.mysql.user._default }}
+{{ tuple "hello" . | include "werf_container_env" | indent 8 }}
