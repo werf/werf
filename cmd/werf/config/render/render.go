@@ -35,6 +35,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("getting project dir failed: %s", err)
 			}
 
+			// TODO disable logboek only for this action
 			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true)
 			if err != nil {
 				return err

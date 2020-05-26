@@ -2,8 +2,8 @@ package path_matcher
 
 import (
 	"fmt"
-	"os"
-	"strings"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewSimplePathMatcher(basePath string, paths []string, greedySearch bool) *SimplePathMatcher {
@@ -78,7 +78,7 @@ func (f *SimplePathMatcher) processDirOrSubmodulePath(path string) (bool, bool) 
 	}
 
 	relPath := rel(path, f.basePath)
-	relPathParts := strings.Split(relPath, string(os.PathSeparator))
+	relPathParts := util.SplitFilepath(relPath)
 	inProgressPaths := f.paths[:]
 	var matchedIncludePaths []string
 
