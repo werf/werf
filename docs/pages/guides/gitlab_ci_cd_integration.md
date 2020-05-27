@@ -140,7 +140,7 @@ First of all, you need to define a template – the general part of the deployme
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -166,7 +166,7 @@ When running a job, `werf ci-env` sets the `WERF_ENV` variable according to the 
 
 In order to configure the application for using in different tiers, you can take advantage of Go templates and the `.Values.global.env` variable in helm templates. This is analogous to setting the `–-env` option or the `WERF_ENV` environment variable.
 
-The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `global.ci_url` parameter. 
+The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `global.env_url` parameter. 
 This value can be used in helm templates, for example, for configuring Ingress resources.
 
 Below, we will discuss some popular strategies and practices that may serve as a basis for building your processes in GitLab.
@@ -345,7 +345,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -587,7 +587,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   tags: [werf]
@@ -620,7 +620,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -722,7 +722,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -824,7 +824,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -925,7 +925,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
