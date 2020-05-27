@@ -67,12 +67,12 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 ```
 {% endraw %}
 
-Следующим шагом используется action `flant/werf-actions/converge@v1`, который объединяет все необходимые шаги, подготавливает окружение и вызывает соответствующую команду.  
+Следующим шагом используется action `flant/werf-actions/converge`, который объединяет все необходимые шаги, подготавливает окружение и вызывает соответствующую команду.  
 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -89,7 +89,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -106,7 +106,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     env: ANY_ENV_NAME
   env:
@@ -141,7 +141,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 В нём пропущено условие запуска, т.к. оно зависит от выбранного варианта организации.
 
 От базовой конфигурации задание отличается только появившимся шагом `Define environment url`. 
-На этом шаге генерируется уникальный URL, по которому после выката будет доступно наше приложение (при соответствующей организации helm templates). 
+На этом шаге генерируется уникальный URL для каждого PR, по которому после выката будет доступно наше приложение (при соответствующей организации helm templates). 
 
 {% raw %}
 ```yaml
@@ -271,15 +271,15 @@ pull_request:
 
 Варианты отката изменений в production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
-- выкат стабильного PR или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback).
+- выкат стабильного PR.
 
-#### №2 Push the Button
+#### №2 Push the Button (*)
 
 > Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
-Выкат **production** осуществляется вручную на master, а выкат в **staging** происходит автоматически при любых изменениях в master.
+{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
-На текущий момент GitHub позволяет вручную инициировать запуск на master только при использовании [repository_dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch), что и будет продемонстрировано далее.
+Выкат **production** осуществляется вручную на master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
 {% include /guides/github_ci_cd_integration/production_staging_2.md %}
 
@@ -310,13 +310,13 @@ curl \
 Варианты отката изменений в production:
 - выкат стабильного PR и инициализация выката при помощи repository_dispatch.
 
-#### №3 Tag everything (рекомендованный)
+#### №3 Tag everything (*)
 
 > Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
-Выкат в **production** выполняется при проставлении тега, а в **staging** осуществляется вручную на master.
+{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
-На текущий момент GitHub позволяет вручную инициировать запуск на master только при использовании [repository_dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch), что и будет продемонстрировано далее.
+Выкат в **production** выполняется при проставлении тега, а в **staging** осуществляется вручную на master.
 
 {% include /guides/github_ci_cd_integration/production_staging_3.md %}
 
@@ -343,7 +343,7 @@ curl \
 Для использования данного подхода можно добавить скрипт в репозиторий проекта, использовать postman, плагин для браузера и т.д.
 
 Варианты отката изменений в production:
-- создание нового тега на старый коммит (так делать не надо).
+- создание нового тега на старый коммит.
 
 #### №4 Branch, branch, branch!
 
@@ -381,8 +381,8 @@ curl \
 
 <div class="tabs" style="display: grid">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_1')">№1 Fast and Furious (рекомендованный)</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_2')">№2 Push the Button</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_3')">№3 Tag everything (рекомендованный)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_2')">№2 Push the Button (*)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_3')">№3 Tag everything (*)</a>
   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_4')">№4 Branch, branch, branch!</a>
 </div>
 
@@ -411,8 +411,10 @@ curl \
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
+{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
-* Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button).
+* Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button-).
 * [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### Конфигурации
@@ -429,8 +431,10 @@ curl \
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
+{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
-* Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-рекомендованный).
+* Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-).
 * [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки. 
 
 ### Конфигурации

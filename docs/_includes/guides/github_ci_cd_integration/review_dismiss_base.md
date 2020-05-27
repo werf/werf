@@ -25,7 +25,7 @@ jobs:
           echo ::set-env name=WERF_SET_ENV_URL::global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN
   
       - name: Dismiss
-        uses: flant/werf-actions/dismiss@v1
+        uses: flant/werf-actions/dismiss@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

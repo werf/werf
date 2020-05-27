@@ -12,17 +12,18 @@ jobs:
 
   labels:
     name: Label taking off
-    runs-on: ubuntu-latest
     if: github.event.label.name == 'staging_deploy'
+    runs-on: ubuntu-latest
     steps:
       
       - name: Take off label
         uses: actions/github-script@v1
         with:
-          script: "github.issues.removeLabel({...context.issue, name: github.event.label.name})"
+          script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
   converge:
     name: Converge
+    if: github.event.label.name == 'staging_deploy'
     runs-on: ubuntu-latest
     steps:
 
@@ -31,16 +32,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Define environment url
-        run: |
-          github_repository_id=$(echo ${GITHUB_REPOSITORY} | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
-          echo ::set-env name=WERF_SET_ENV_URL::global.env_url=http://${github_repository_id}.kube.DOMAIN
-
       - name: Converge
         uses: flant/werf-actions/converge@v1
         with:
           env: staging
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
+        env:
+          WERF_SET_ENV_URL: "global.env_url=http://staging-company.kube.DOMAIN"
 ```
 {% endraw %}
 
