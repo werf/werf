@@ -141,8 +141,12 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html).\nOption can be specified multiple times to use multiple keys")
+	sshKeys := predefinedValuesByEnvNamePrefix("WERF_SSH_KEY")
+
+	cmdData.SSHKeys = &sshKeys
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", sshKeys, `Use only specific ssh key(s).
+Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa", $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
 func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -189,13 +193,7 @@ func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
-	var tagCustom []string
-	for _, keyValue := range os.Environ() {
-		parts := strings.SplitN(keyValue, "=", 2)
-		if strings.HasPrefix(parts[0], "WERF_TAG_CUSTOM") {
-			tagCustom = append(tagCustom, parts[1])
-		}
-	}
+	tagCustom := predefinedValuesByEnvNamePrefix("WERF_TAG_CUSTOM")
 
 	cmdData.TagCustom = &tagCustom
 	cmdData.TagGitBranch = new(string)
@@ -208,6 +206,26 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
 	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
 	cmd.Flags().BoolVarP(cmdData.TagByStagesSignature, "tag-by-stages-signature", "", GetBoolEnvironmentDefaultFalse("WERF_TAG_BY_STAGES_SIGNATURE"), "Use stages-signature tagging strategy and tag each image by the corresponding signature of last image stage (option can be enabled by specifying $WERF_TAG_BY_STAGES_SIGNATURE=true)")
+}
+
+func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
+	var result []string
+
+environLoop:
+	for _, keyValue := range os.Environ() {
+		parts := strings.SplitN(keyValue, "=", 2)
+		if strings.HasPrefix(parts[0], envNamePrefix) {
+			for _, exceptEnvNamePrefix := range envNamePrefixesToExcept {
+				if strings.HasPrefix(parts[0], exceptEnvNamePrefix) {
+					continue environLoop
+				}
+			}
+
+			result = append(result, parts[1])
+		}
+	}
+
+	return result
 }
 
 func SetupHelmChartDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -231,17 +249,21 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddAnnotations = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
+	addAnnotations := predefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION")
+
+	cmdData.AddAnnotations = &addAnnotations
+	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", addAnnotations, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.
-Also can be specified in $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1", $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")`)
+Also, can be specified with $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1", $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddLabels = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
+	addLabels := predefinedValuesByEnvNamePrefix("WERF_ADD_LABEL")
+
+	cmdData.AddLabels = &addLabels
+	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", addLabels, `Add label to deploying resources (can specify multiple).
 Format: labelName=labelValue.
-Also can be specified in $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")`)
+Also, can be specified with $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")`)
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
@@ -632,23 +654,35 @@ Defaults to:
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Set = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", []string{}, "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	set := predefinedValuesByEnvNamePrefix("WERF_SET", "WERF_SET_STRING")
+
+	cmdData.Set = &set
+	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", set, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
 }
 
 func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SetString = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", []string{}, "Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	setString := predefinedValuesByEnvNamePrefix("WERF_SET_STRING")
+
+	cmdData.SetString = &setString
+	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", setString, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
 }
 
 func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Values = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, "Specify helm values in a YAML file or a URL (can specify multiple)")
+	values := predefinedValuesByEnvNamePrefix("WERF_VALUES")
+
+	cmdData.Values = &values
+	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", values, `Specify helm values in a YAML file or a URL (can specify multiple).
+Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
 }
 
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SecretValues = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, "Specify helm secret values in a YAML file (can specify multiple)")
+	secretValues := predefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES")
+
+	cmdData.SecretValues = &secretValues
+	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", secretValues, `Specify helm secret values in a YAML file (can specify multiple).
+Also, can be defined with $WERF_SECRET_VALUES* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)`)
 }
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
