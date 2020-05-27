@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -103,18 +102,11 @@ func GetHooksStatusProgressPeriod(cmdData *CmdData) time.Duration {
 }
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
-	extraAnnotations := map[string]string{}
+	extraAnnotationMap := map[string]string{}
 	var addAnnotations []string
 
 	if *cmdData.AddAnnotations != nil {
 		addAnnotations = append(addAnnotations, *cmdData.AddAnnotations...)
-	}
-
-	for _, keyValue := range os.Environ() {
-		parts := strings.SplitN(keyValue, "=", 2)
-		if strings.HasPrefix(parts[0], "WERF_ADD_ANNOTATION") {
-			addAnnotations = append(addAnnotations, parts[1])
-		}
 	}
 
 	for _, addAnnotation := range addAnnotations {
@@ -123,25 +115,18 @@ func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
 			return nil, fmt.Errorf("bad --add-annotation value %s", addAnnotation)
 		}
 
-		extraAnnotations[parts[0]] = parts[1]
+		extraAnnotationMap[parts[0]] = parts[1]
 	}
 
-	return extraAnnotations, nil
+	return extraAnnotationMap, nil
 }
 
 func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
-	extraLabels := map[string]string{}
+	extraLabelMap := map[string]string{}
 	var addLabels []string
 
 	if *cmdData.AddLabels != nil {
 		addLabels = append(addLabels, *cmdData.AddLabels...)
-	}
-
-	for _, keyValue := range os.Environ() {
-		parts := strings.SplitN(keyValue, "=", 2)
-		if strings.HasPrefix(parts[0], "WERF_ADD_LABEL") {
-			addLabels = append(addLabels, parts[1])
-		}
 	}
 
 	for _, addLabel := range addLabels {
@@ -150,10 +135,10 @@ func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
 			return nil, fmt.Errorf("bad --add-label value %s", addLabel)
 		}
 
-		extraLabels[parts[0]] = parts[1]
+		extraLabelMap[parts[0]] = parts[1]
 	}
 
-	return extraLabels, nil
+	return extraLabelMap, nil
 }
 
 func renderDeployParamTemplate(templateName, templateText string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {

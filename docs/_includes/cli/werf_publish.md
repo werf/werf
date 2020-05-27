@@ -119,9 +119,11 @@ werf publish [IMAGE_NAME...] [options]
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]:
-            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://werf.io/documentation/reference/toolbox/ssh.html).
-            Option can be specified multiple times to use multiple keys
+            Use only specific ssh key(s).
+            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
+            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
+            https://werf.io/documentation/reference/toolbox/ssh.html
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment).
