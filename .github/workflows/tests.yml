@@ -1,4 +1,4 @@
-name: Running tests
+name: Tests
 on:
   pull_request:
     types: [labeled]

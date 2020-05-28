@@ -1,4 +1,4 @@
-name: Website deployment
+name: Website Deployment
 on:
   pull_request:
     types: [labeled]

@@ -1,4 +1,4 @@
-name: Running daily tests
+name: Daily Tests
 on:
   schedule:
   - cron:  '0 8 * * *'
