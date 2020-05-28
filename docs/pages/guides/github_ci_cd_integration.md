@@ -15,7 +15,7 @@ The workflow in the repository (a set of GitHub workflow configurations) will be
 * `dismiss` — the job to delete an application (it is used for review environments only);
 * `cleanup` — the job to clean up the stages storage and the Docker registry.
 
-Jobs are based on comprehensive GitHub Actions, [flant/werf-actions](https://github.com/flant/werf-actions), that include all the necessary steps for setting up a specific environment and running commands required by werf. Below, we will discuss examples of their use (detailed information is available in the related repository).
+Jobs are based on comprehensive GitHub Actions, [flant/werf-actions](https://github.com/flant/werf-actions), that include all the necessary steps for setting up a specific environment and running required werf commands. Below, we will discuss examples of their use (detailed information is available in the related repository).
 
 The specific set of tiers in the Kubernetes cluster depends on many various factors. In this article, we will examine various options for setting up environments for the following tiers:
 
@@ -43,7 +43,7 @@ We provide various configuration options for deploying to review, staging, and p
 * An application you are going to build and deploy with werf.
 * A good understanding of GitHub Actions basics.
 
-> Examples in this article are based on virtual machines provided by GitHub running on Linux (runs-on: ubuntu-latest). At the same time, all examples are also valid for pre-installed self-hosted runners based on any OS
+> Examples in this article are based on virtual machines provided by GitHub running on Linux (`runs-on: ubuntu-latest`). At the same time, all examples are also valid for pre-installed self-hosted runners based on any OS
 
 ## Building, publishing images, and deploying an application
 
@@ -55,7 +55,7 @@ First of all, you need to define a template — the general part of the deployme
 >
 {% include /guides/github_ci_cd_integration/build_and_publish_note.md %}
 
-First of all, you have to perform a `code checkout` — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the `action actions/checkout@v2` creates when used with no parameters specified. 
+First of all, you have to perform a `Checkout code` step — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the action `actions/checkout@v2` creates when used with no parameters specified. 
 werf generates stages on the basis of the git history. So, if there is no history, then each build would run without previously built images. Therefore, it is essential to use the `fetch-depth: 0` parameter to access the entire history when building, publishing (`werf build-and-publish`), deploying (`werf deploy`), and running (`werf run`). In other words, for all commands that stages use.
 
 {% raw %}
@@ -67,12 +67,12 @@ werf generates stages on the basis of the git history. So, if there is no histor
 ```
 {% endraw %}
 
-The action `flant/werf-actions/converge@v1` combines all the necessary steps, sets up an environment, and invokes the appropriate command.
+The action `flant/werf-actions/converge` combines all the necessary steps, sets up an environment, and invokes the appropriate command.
 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -90,7 +90,7 @@ The `kubectl` interface is already pre-installed on GitHub virtual machines, so 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -107,7 +107,7 @@ Now, let us explore other parameters used in this step:
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@v1
+  uses: flant/werf-actions/converge@master
   with:
     env: ANY_ENV_NAME
   env:
@@ -122,7 +122,7 @@ You must define an environment for each tier. In our case, it is defined by:
 
 In order to configure the application for using in different tiers, you can use Go templates and the `.Values.global.env` variable. This is analogous to setting the `env` parameter of the action.
 
-> The address of an environment is optional. In this article, it is used solely for illustrative purposes and to demonstrate the usage of werf when working with actions (all werf options can be set via environment variables).
+> The address of an environment is optional. In this article, it is used solely for illustrative purposes and to demonstrate the usage of werf when working with actions (all werf options can be set via environment variables)
 
 You can also use the environment address — the URL for accessing the application deployed to the tier — in helm templates (for example, for configuring Ingress resources). It is passed via the `global.env_url` parameter. You can find out the URL via the `WERF_SET_ENV_URL` environment variable (it is analogous to running werf with the `--set` (`WERF_SET_<ANY_NAME>`) argument).
 
@@ -170,7 +170,7 @@ The review release is deleted at the `Dismiss` step: werf deletes the helm relea
 
 Now, let us explore the main strategies to deploy the review environment.
 
-> We do not limit you to the options offered, but quite the opposite: we recommend combining them and creating a workflow configuration that suits your team's needs.
+> We do not limit you to the options offered, but quite the opposite: we recommend combining them and creating a workflow configuration that suits your team's needs
 
 #### 1. Manually
 
@@ -270,15 +270,15 @@ The code is automatically deployed to **production** in response to any changes 
 Options for rolling back changes in production:
 
 - by [revert](https://git-scm.com/docs/git-revert)-ing changes in master (**recommended**);
-- by deploying a stable PR or via the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button.
+- by deploying a stable PR.
 
-#### 2. Push the button
+#### 2. Push the button (*)
 
 > This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-staging-from-master) sections
 
-Deploying to **production** is triggered by clicking the button associated with the commit in master, and rolling out to **staging** is performed automatically in response to changes in master.
+{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
-Currently, GitHub allows you to trigger a workflow manually via the [repository_dispatch] (https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) webhook event only. We are going to illustrate this process below.
+Deploying to **production** is triggered by clicking the button associated with the commit in master, and rolling out to **staging** is performed automatically in response to changes in master.
 
 {% include /guides/github_ci_cd_integration/production_staging_2.md %}
 
@@ -305,17 +305,15 @@ curl \
 ```
 To use this approach, you can add the script to the project repository, use the postman platform, a browser plugin, etc.
 
-Options for rolling back changes in production:
+Options for rolling back changes in production: by rolling out a stable PR and triggering the deployment via the repository_dispatch webhook.
 
-- by rolling out a stable PR and triggering the deployment via the repository_dispatch webhook.
-
-#### 3. Tag everything (recommended)
+#### 3. Tag everything (*)
 
 > This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
 
-The rollout to **production** is triggered when the tag is assigned; deploying to **staging** is performed manually on master.
+{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
-Currently, GitHub allows you to trigger a workflow manually via the [repository_dispatch] (https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) webhook event only. We are going to illustrate this process below.
+The rollout to **production** is triggered when the tag is assigned; deploying to **staging** is performed manually on master.
 
 {% include /guides/github_ci_cd_integration/production_staging_3.md %}
 
@@ -340,9 +338,7 @@ curl \
 
 To use this approach, you can add the script to the project repository, use the postman platform, a browser plugin, etc.
 
-Options for rolling back changes in production:
-
-by assigning a new tag to the old commit (not recommended).
+Options for rolling back changes in production: by assigning a new tag to the old commit (not recommended).
 
 #### 4. Branch, branch, branch!
 
@@ -380,8 +376,8 @@ werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker
 
 <div class="tabs" style="display: grid">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_1')">№1 Fast and Furious (recommended)</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_2')">№2 Push the Button</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_3')">№3 Tag everything (recommended)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_2')">№2 Push the Button (*)</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_3')">№3 Tag everything (*)</a>
   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_github_ci_4')">№4 Branch, branch, branch!</a>
 </div>
 
@@ -410,6 +406,8 @@ Workflow details
 
 > You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#2-push-the-button)
 
+{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
+
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers is carried out according to the strategy [No. 2 Push the Button](#2-push-the-button).
 * [Cleaning up stages](#cleaning-up-images) runs once a day according to the schedule.
@@ -427,6 +425,8 @@ Related configuration files
 {:.no_toc}
 
 > You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#3-tag-everything)
+
+{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers is carried out according to the strategy [No. 3 Tag everything](#3-tag-everything-recommended).
