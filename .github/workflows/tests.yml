@@ -9,32 +9,16 @@ env:
 
 jobs:
 
-  stub:
-    name: Greeting
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Greeting
-      run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
-
   unlabel:
-    name: Optional unlabeling
+    name: Label taking off
+    if: github.event_name == 'pull_request' && github.event.label.name == 'run tests'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.label.id == 1745044226 # run tests label
     steps:
 
-    - uses: actions/github-script@0.3.0
+    - uses: actions/github-script@v1
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const eventLabelName = '${{github.event.label.name}}'
-          const response = await github.issues.listLabelsOnIssue({...context.issue})
-          for (const label of response.data) {
-            if (label.name === eventLabelName) {
-              github.issues.removeLabel({...context.issue, name: eventLabelName})
-              break
-            }
-          }
+        script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
   precompiled_tests_binaries:
     name: Precompiled tests binaries
