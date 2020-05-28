@@ -223,14 +223,12 @@ func parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir string) (string,
 				return "", err
 			}
 
-			extraTemplate := tmpl.New(templateName)
-
-			var filePathData []byte
-			if filePathData, err = ioutil.ReadFile(templatePath); err != nil {
+			var templateData []byte
+			if templateData, err = ioutil.ReadFile(templatePath); err != nil {
 				return "", err
 			}
 
-			if _, err := extraTemplate.Parse(string(filePathData)); err != nil {
+			if err := addTemplate(tmpl, templateName, string(templateData)); err != nil {
 				return "", err
 			}
 		}
@@ -244,6 +242,12 @@ func parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir string) (string,
 	config, err := executeTemplate(tmpl, "werfConfig", map[string]interface{}{"Files": files})
 
 	return config, err
+}
+
+func addTemplate(tmpl *template.Template, templateName string, templateContent string) error {
+	extraTemplate := tmpl.New(templateName)
+	_, err := extraTemplate.Parse(templateContent)
+	return err
 }
 
 func getWerfConfigTemplates(path string) ([]string, error) {
@@ -284,6 +288,14 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
+	}
+	funcMap["tpl"] = func(templateContent string, data interface{}) (string, error) {
+		templateName := util.GenerateConsistentRandomString(10)
+		if err := addTemplate(tmpl, templateName, templateContent); err != nil {
+			return "", err
+		}
+
+		return executeTemplate(tmpl, templateName, data)
 	}
 	return funcMap
 }

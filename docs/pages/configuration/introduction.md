@@ -95,6 +95,8 @@ configVersion: 1
 
 ## Organizing configuration
 
+### With templates dir
+
 Part of the configuration can be moved in ***separate template files*** and then included into __werf.yaml__. _Template files_ should live in the ***.werf*** directory with **.tmpl** extension (any nesting is supported).
 
 > **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects
@@ -275,6 +277,77 @@ shell:
 </div>
 </div>
 
+### With tpl function
+
+The `tpl` function allows the user to evaluate strings as Go templates inside a template. Thus, werf partials can be located anywhere in the project and be included in `werf.yaml`.
+
+It is worth noting that these files can use anything defined in `werf.yaml` and templates in `.werf` ([templates dir](#with-templates-dir)).
+
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_backend')">backend/werf-partial.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_frontend')">frontend/werf-partial.yaml</a>
+</div>
+
+<div id="tpl_werf_yaml" class="tabs__content active" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "BaseImage" "node:14.3" }}
+
+project: app
+configVersion: 1
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
+{{- define "common install commands" }}
+- npm install
+- npm run build
+{{- end }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_backend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: backend
+from: {{ .BaseImage }}
+git:
+- add: /backend
+  to: /app/backend
+shell:
+  install:
+  - cd /app/backend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_frontend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: frontend
+from: {{ .BaseImage }}
+git:
+- add: /frontend
+  to: /app/frontend
+shell:
+  install:
+  - cd /app/frontend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+  
 ## Processing of config
 
 The following steps could describe the processing of a YAML configuration file:
@@ -370,6 +443,8 @@ Go templates are available within YAML configuration. The following functions ar
   {{- end }}
   ```
   {% endraw %}
+
+* `tpl` function to evaluate strings (either content of environment variable or project file) as Go templates inside a template: [example with project files](#with-tpl-function).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
 
 * `.Files.Get` and `.Files.Glob` functions to work with project files:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get and .Files.Glob" data-anchorjs-icon=""></a>
 
@@ -469,4 +544,3 @@ Go templates are available within YAML configuration. The following functions ar
   {% endraw %}
   
   </div>
-  
