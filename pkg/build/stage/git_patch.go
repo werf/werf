@@ -46,18 +46,22 @@ func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.Ima
 		return true, nil
 	}
 
-	return s.hasPrevBuiltStageHadActualGitMappings(prevBuiltImage)
+	return s.hasPrevBuiltStageHadActualGitMappings(c, prevBuiltImage)
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
-		latestCommit, err := gitMapping.LatestCommit()
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
 
-		if commit != latestCommit {
+		latestCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
+		if err != nil {
+			return false, fmt.Errorf("unable to get latest commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
+		}
+
+		if commit != latestCommitInfo.Commit {
 			return false, nil
 		}
 	}
@@ -79,7 +83,7 @@ func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container
 
 func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyPatchCommand(prevBuiltImage, image); err != nil {
+		if err := gitMapping.ApplyPatchCommand(c, prevBuiltImage, image); err != nil {
 			return err
 		}
 	}

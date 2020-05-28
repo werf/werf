@@ -20,8 +20,8 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
-	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(stages)
+func (s *GitCacheStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(c, stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
@@ -35,7 +35,7 @@ func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.Ima
 		return true, err
 	}
 
-	patchSize, err := s.gitMappingsPatchSize(prevBuiltImage)
+	patchSize, err := s.gitMappingsPatchSize(c, prevBuiltImage)
 	if err != nil {
 		return false, err
 	}
@@ -45,8 +45,8 @@ func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.Ima
 	return isEmpty, nil
 }
 
-func (s *GitCacheStage) GetDependencies(_ Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
-	patchSize, err := s.gitMappingsPatchSize(prevBuiltImage)
+func (s *GitCacheStage) GetDependencies(c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	patchSize, err := s.gitMappingsPatchSize(c, prevBuiltImage)
 	if err != nil {
 		return "", err
 	}
@@ -54,12 +54,12 @@ func (s *GitCacheStage) GetDependencies(_ Conveyor, _, prevBuiltImage container_
 	return util.Sha256Hash(fmt.Sprintf("%d", patchSize/patchSizeStep)), nil
 }
 
-func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage container_runtime.ImageInterface) (int64, error) {
+func (s *GitCacheStage) gitMappingsPatchSize(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage.GetStageDescription().Info.Labels)
-		if commit == "" {
-			return 0, fmt.Errorf("invalid stage image: can not find git commit in stage image labels: delete stage image %s manually and retry the build", prevBuiltImage.Name())
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+		if err != nil {
+			return 0, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
 
 		exist, err := gitMapping.GitRepo().IsCommitExists(commit)
@@ -68,7 +68,7 @@ func (s *GitCacheStage) gitMappingsPatchSize(prevBuiltImage container_runtime.Im
 		}
 
 		if exist {
-			patchSize, err := gitMapping.PatchSize(commit)
+			patchSize, err := gitMapping.PatchSize(c, commit)
 			if err != nil {
 				return 0, err
 			}

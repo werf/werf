@@ -37,8 +37,8 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitArchiveStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
-	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(stages)
+func (s *GitArchiveStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(c, stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
@@ -66,7 +66,7 @@ func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image contain
 	}
 
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyArchiveCommand(image); err != nil {
+		if err := gitMapping.ApplyArchiveCommand(c, image); err != nil {
 			return err
 		}
 	}

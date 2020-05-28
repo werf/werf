@@ -183,7 +183,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
-func (repo *Base) createVirtualMergeCommit(gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
+func (repo *Base) createDetachedMergeCommit(gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
 	repository, err := git.PlainOpen(path)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
@@ -202,6 +202,29 @@ func (repo *Base) createVirtualMergeCommit(gitDir, path, workTreeCacheDir string
 	}
 
 	return true_git.CreateDetachedMergeCommit(gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules})
+}
+
+func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
+	repository, err := git.PlainOpen(gitDir)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo at %s: %s", gitDir, err)
+	}
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %s: %s", commit, err)
+	}
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit %s: %s", commit, err)
+	}
+
+	var res []string
+
+	for _, parent := range commitObj.ParentHashes {
+		res = append(res, parent.String())
+	}
+
+	return res, nil
 }
 
 func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {

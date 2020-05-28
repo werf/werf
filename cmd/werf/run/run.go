@@ -118,6 +118,10 @@ func NewCmd() *cobra.Command {
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupVirtualMerge(&commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().StringVarP(&cmdData.RawDockerOptions, "docker-options", "", os.Getenv("WERF_DOCKER_OPTIONS"), "Define docker run options (default $WERF_DOCKER_OPTIONS)")
@@ -250,7 +254,7 @@ func runRun() error {
 
 	var dockerImageName string
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {

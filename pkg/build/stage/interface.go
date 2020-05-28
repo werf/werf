@@ -10,7 +10,6 @@ type Interface interface {
 	LogDetailedName() string
 
 	IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error)
-	ShouldBeReset(builtImage container_runtime.ImageInterface) (bool, error)
 
 	GetDependencies(c Conveyor, prevImage container_runtime.ImageInterface, prevBuiltImage container_runtime.ImageInterface) (string, error)
 	GetNextStageDependencies(c Conveyor) (string, error)
@@ -31,5 +30,5 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error)
+	SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error)
 }

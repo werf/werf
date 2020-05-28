@@ -114,6 +114,10 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupThreeWayMergeMode(&commonCmdData, cmd)
 
+	common.SetupVirtualMerge(&commonCmdData, cmd)
+	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
+	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
 	return cmd
@@ -254,7 +258,7 @@ func runDeploy() error {
 
 		logboek.LogOptionalLn()
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {

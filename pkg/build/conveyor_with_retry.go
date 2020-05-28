@@ -17,9 +17,11 @@ type ConveyorWithRetryWrapper struct {
 	StagesManager       *stages_manager.StagesManager
 	ImagesRepo          storage.ImagesRepo
 	StorageLockManager  storage.LockManager
+
+	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
 		ImageNamesToProcess: imageNamesToProcess,
@@ -30,6 +32,7 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProc
 		StagesManager:       stagesManager,
 		ImagesRepo:          imagesRepo,
 		StorageLockManager:  storageLockManager,
+		ConveyorOptions:     opts,
 	}
 }
 
@@ -49,6 +52,7 @@ Retry:
 		wrapper.StagesManager,
 		wrapper.ImagesRepo,
 		wrapper.StorageLockManager,
+		wrapper.ConveyorOptions,
 	)
 
 	if shouldRetry, err := func() (bool, error) {

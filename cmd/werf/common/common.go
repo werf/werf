@@ -99,6 +99,10 @@ type CmdData struct {
 
 	PublishReportPath   *string
 	PublishReportFormat *string
+
+	VirtualMerge           *bool
+	VirtualMergeFromCommit *string
+	VirtualMergeIntoCommit *string
 }
 
 const (
@@ -151,12 +155,12 @@ Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see http
 
 func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.PublishReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", "", "Publish report contains image info: full docker repo, tag, ID — for each published image")
+	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", os.Getenv("WERF_PUBLISH_REPORT_PATH"), "Publish report contains image info: full docker repo, tag, ID — for each published image ($WERF_PUBLISH_REPORT_PATH by default)")
 }
 
 func SetupPublishReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.PublishReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now)")
+	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by default)")
 }
 
 func GetPublishReportFormat(cmdData *CmdData) (build.PublishReportFormat, error) {
@@ -1379,4 +1383,19 @@ func TerminateWithError(errMsg string, exitCode int) {
 
 	logboek.LogErrorLn(msg)
 	os.Exit(exitCode)
+}
+
+func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMerge = new(bool)
+	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
+}
+
+func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMergeFromCommit = new(string)
+	cmd.Flags().StringVarP(cmdData.VirtualMergeFromCommit, "virtual-merge-from-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_FROM_COMMIT"), "Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)")
+}
+
+func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.VirtualMergeIntoCommit = new(string)
+	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }

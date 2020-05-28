@@ -35,10 +35,10 @@ type UserStage struct {
 	builder builder.Builder
 }
 
-func (s *UserStage) getStageDependenciesChecksum(name StageName) (string, error) {
+func (s *UserStage) getStageDependenciesChecksum(c Conveyor, name StageName) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		checksum, err := gitMapping.StageDependenciesChecksum(name)
+		checksum, err := gitMapping.StageDependenciesChecksum(c, name)
 		if err != nil {
 			return "", err
 		}

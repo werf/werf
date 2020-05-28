@@ -117,17 +117,21 @@ func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
 	return "", nil
 }
 
-func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
+func (s *BaseStage) getNextStageGitDependencies(c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if s.image.GetStageDescription() != nil {
-			args = append(args, gitMapping.GetGitCommitFromImageLabels(s.image.GetStageDescription().Info.Labels))
+			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.image.GetStageDescription().Info.Labels); err != nil {
+				return "", fmt.Errorf("unable to get built image commit info from image %s: %s", s.image.Name(), err)
+			} else {
+				args = append(args, commitInfo.Commit)
+			}
 		} else {
-			latestCommit, err := gitMapping.LatestCommit()
+			latestCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
 			if err != nil {
 				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %s", gitMapping.Name, err)
 			}
-			args = append(args, latestCommit)
+			args = append(args, latestCommitInfo.Commit)
 		}
 	}
 
@@ -138,21 +142,6 @@ func (s *BaseStage) getNextStageGitDependencies(_ Conveyor) (string, error) {
 }
 
 func (s *BaseStage) IsEmpty(_ Conveyor, _ container_runtime.ImageInterface) (bool, error) {
-	return false, nil
-}
-
-func (s *BaseStage) ShouldBeReset(builtImage container_runtime.ImageInterface) (bool, error) {
-	for _, gitMapping := range s.gitMappings {
-		commit := gitMapping.GetGitCommitFromImageLabels(builtImage.GetStageDescription().Info.Labels)
-		if commit == "" {
-			return false, nil
-		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
-			return false, err
-		} else if !exist {
-			return true, nil
-		}
-	}
-
 	return false, nil
 }
 
@@ -168,15 +157,23 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	return oldestStage, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(stages []*image.StageDescription) ([]*image.StageDescription, error) {
+func (s *BaseStage) selectStagesAncestorsByGitMappings(c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
 	var suitableStages []*image.StageDescription
 	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
-		currentCommit, err := gitMapping.LatestCommit()
+		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
 		if err != nil {
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
+
+		var currentCommit string
+		if currentCommitInfo.VirtualMerge {
+			currentCommit = currentCommitInfo.VirtualMergeFromCommit
+		} else {
+			currentCommit = currentCommitInfo.Commit
+		}
+
 		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
 	}
 
@@ -185,26 +182,33 @@ ScanImages:
 		for i, gitMapping := range s.gitMappings {
 			currentCommit := currentCommitsByIndex[i]
 
-			commit := gitMapping.GetGitCommitFromImageLabels(stageDesc.Info.Labels)
-			if commit != "" {
-				isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commit, currentCommit)
-				if err != nil {
-					return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commit, currentCommit, err)
-				}
-
-				if !isOurAncestor {
-					logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
-					continue ScanImages
-				}
-
-				logboek.Debug.LogF(
-					"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
-					commit, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
-				)
-			} else {
-				logboek.Debug.LogF("WARNING: No git commit found in image %s, skipping\n", stageDesc.Info.Name)
+			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
+			if err != nil {
+				logboek.LogErrorF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
+
+			var commitToCheckAncestry string
+			if imageCommitInfo.VirtualMerge {
+				commitToCheckAncestry = imageCommitInfo.VirtualMergeFromCommit
+			} else {
+				commitToCheckAncestry = imageCommitInfo.Commit
+			}
+
+			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commitToCheckAncestry, currentCommit)
+			if err != nil {
+				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commitToCheckAncestry, currentCommit, err)
+			}
+
+			if !isOurAncestor {
+				logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				continue ScanImages
+			}
+
+			logboek.Debug.LogF(
+				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
+				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
+			)
 		}
 
 		suitableStages = append(suitableStages, stageDesc)
@@ -213,7 +217,7 @@ ScanImages:
 	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectSuitableStage(stages []*image.StageDescription) (*image.StageDescription, error) {
+func (s *BaseStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 

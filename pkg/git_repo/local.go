@@ -40,8 +40,12 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
 }
 
-func (repo *Local) CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error) {
-	return repo.createVirtualMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
+func (repo *Local) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
+	return repo.createDetachedMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
+}
+
+func (repo *Local) GetMergeCommitParents(commit string) ([]string, error) {
+	return repo.getMergeCommitParents(repo.GitDir, commit)
 }
 
 type LsTreeOptions struct {
