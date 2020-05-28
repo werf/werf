@@ -69,7 +69,7 @@ werf images publish [IMAGE_NAME...] [options]
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':

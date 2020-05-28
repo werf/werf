@@ -33,7 +33,7 @@ werf helm list [FILTER] [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':

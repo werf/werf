@@ -28,7 +28,7 @@ werf stages cleanup [options]
             Command needs granted permissions to read, pull and delete images from the specified    
             stages storage, read images from the specified images repo
       --dry-run=false:
-            Indicate what the command would do without actually doing that
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
   -h, --help=false:
             help for cleanup
       --home-dir='':
@@ -59,7 +59,7 @@ werf stages cleanup [options]
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':

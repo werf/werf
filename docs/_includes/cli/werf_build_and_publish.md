@@ -114,7 +114,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
             gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
             importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
