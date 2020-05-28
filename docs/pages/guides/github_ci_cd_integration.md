@@ -211,7 +211,7 @@ labels:
 
 #### 2. Automatically using a branch name
 
-> This option implements the approach described in the [Automatically deploy to review from a branch using a pattern]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-review-from-a-branch-using-a-pattern) section.
+> This option implements the approach described in the [Automatically deploy to review from a branch using a pattern]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-from-a-branch-using-a-pattern) section.
 
 In the configuration below, the code is automatically released with every commit in the PR (if the name of the git branch contains the `review` prefix).
 
@@ -235,7 +235,7 @@ on:
 
 #### 3. Semi-automatic mode using a label (recommended)
 
-> This option implements the approach described in the [Automatically deploy to review using a pull request; manual triggering]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering)
+> This option implements the approach described in the [Automatically deploy to review using a pull request; manual triggering]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering)
 
 Semi-automatic mode with a label is a comprehensive solution that combines the previous two options.
 
@@ -261,7 +261,7 @@ In our case, these environments are the most important ones. Thus, the names of 
 
 #### 1. Fast and Furious (recommended)
 
-> This option implements the approaches described in the [Automatically deploy to production from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-production-from-master) and [Deploy to production-like using a pull request at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) sections 
+> This option implements the approaches described in the [Automatically deploy to production from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-master) and [Deploy to production-like using a pull request at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) sections 
 
 The code is automatically deployed to **production** in response to any changes in master. At the same time, you can deploy an application to **staging** by clicking the button in the PR.
 
@@ -274,7 +274,7 @@ Options for rolling back changes in production:
 
 #### 2. Push the button (*)
 
-> This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-staging-from-master) sections
+> This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-staging-from-master) sections
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -309,7 +309,7 @@ Options for rolling back changes in production: by rolling out a stable PR and t
 
 #### 3. Tag everything (*)
 
-> This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
+> This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -342,7 +342,7 @@ Options for rolling back changes in production: by assigning a new tag to the ol
 
 #### 4. Branch, branch, branch!
 
-> This option implements the approaches described in the [Automatically deploy to production from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-production-from-a-branch) and [Automatically deploy to production-like from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#automatically-deploy-to-production-like-from-a-branch) sections
+> This option implements the approaches described in the [Automatically deploy to production from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-a-branch) and [Automatically deploy to production-like from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-like-from-a-branch) sections
 
 The code is deployed to **production** automatically; rolling out to **staging** is performed in response to changes in the master branch.
 
@@ -386,7 +386,7 @@ werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker
 Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#1-fast-and-furious)
+> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * Deploying to the review tier via the strategy [No. 3 Semi-automatic mode using a label (recommended)](#3-semi-automatic-mode-using-a-label-recommended).
 * Deploying to staging and production tiers via the strategy [No. 1 Fast and Furious (recommended)](#1-fast-and-furious-recommended).
@@ -404,12 +404,12 @@ Workflow details
 Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#2-push-the-button)
+> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
-* Deploying to staging and production tiers is carried out according to the strategy [No. 2 Push the Button](#2-push-the-button).
+* Deploying to staging and production tiers is carried out according to the strategy [No. 2 Push the Button](#2-push-the-button-).
 * [Cleaning up stages](#cleaning-up-images) runs once a day according to the schedule.
 
 Related configuration files
@@ -424,12 +424,12 @@ Related configuration files
 ### Workflow components
 {:.no_toc}
 
-> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#3-tag-everything)
+> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
-* Deploying to staging and production tiers is carried out according to the strategy [No. 3 Tag everything](#3-tag-everything-recommended).
+* Deploying to staging and production tiers is carried out according to the strategy [No. 3 Tag everything](#3-tag-everything-).
 * [Cleaning up stages](#cleaning-up-images) runs once a day according to the schedule.
 
 ### Related configuration files
@@ -444,7 +444,7 @@ Related configuration files
 ### Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflow_overview.html#4-branch-branch-branch)
+> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * Deploying to the review tier using the strategy [No. 2 Automatically using a branch name](#2-automatically-using-a-branch-name.
 * Deploying to staging and production tiers is carried out according to the strategy [No. 4 Branch, branch, branch!](#4-branch-branch-branch).
