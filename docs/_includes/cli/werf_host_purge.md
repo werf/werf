@@ -29,7 +29,7 @@ werf host purge [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
       --dry-run=false:
-            Indicate what the command would do without actually doing that
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --force=false:
             First remove containers that use werf docker images which are going to be deleted
   -h, --help=false:

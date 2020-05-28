@@ -40,7 +40,7 @@ werf cleanup [options]
             Command needs granted permissions to read, pull and delete images from the specified    
             stages storage and images repo
       --dry-run=false:
-            Indicate what the command would do without actually doing that
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --git-commit-strategy-expiry-days=-1:
             Keep images published with the git-commit tagging strategy in the images repo for the   
             specified maximum days since image published. Republished image will be kept specified  
@@ -89,7 +89,7 @@ werf cleanup [options]
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':

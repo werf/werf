@@ -34,7 +34,7 @@ werf purge [options]
             Command needs granted permissions to delete images from the specified stages storage    
             and images repo
       --dry-run=false:
-            Indicate what the command would do without actually doing that
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --force=false:
             First remove containers that use werf docker images which are going to be deleted
   -h, --help=false:
@@ -67,7 +67,7 @@ werf purge [options]
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
-            Kubernetes config file path
+            Kubernetes config file path (default $WERF_KUBE_CONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':

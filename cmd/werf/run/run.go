@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -119,7 +120,7 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
-	cmd.Flags().StringVarP(&cmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
+	cmd.Flags().StringVarP(&cmdData.RawDockerOptions, "docker-options", "", os.Getenv("WERF_DOCKER_OPTIONS"), "Define docker run options (default $WERF_DOCKER_OPTIONS)")
 
 	return cmd
 }

@@ -273,7 +273,7 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfig = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
+	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", os.Getenv("WERF_KUBE_CONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG)")
 }
 
 func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {
@@ -491,7 +491,7 @@ func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DryRun = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", GetBoolEnvironmentDefaultFalse("WERF_DRY_RUN"), "Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)")
 }
 
 func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
