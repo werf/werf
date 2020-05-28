@@ -362,9 +362,6 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
 
-	writeHeader(w, "CLEANUP", true)
-	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
-
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("GITHUB_SHA")
 	if ciCommitShaEnv != "" {
@@ -378,6 +375,9 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 		workflowUrl = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s/actions/runs/%s", ciGithubOwnerWithProject, ciWorkflowRunIdEnv))
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL", workflowUrl, false)
+
+	writeHeader(w, "CLEANUP", true)
+	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
 	if err = generateImageCleanupPolicies(w); err != nil {
 		return err

@@ -12,14 +12,14 @@ jobs:
 
   labels:
     name: Label taking off
-    runs-on: ubuntu-latest
     if: github.event.label.name == 'review_start'
+    runs-on: ubuntu-latest
     steps:
 
       - name: Take off label
         uses: actions/github-script@v1
         with:
-          script: "github.issues.removeLabel({...context.issue, name: github.event.label.name})"
+          script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
   converge:
     name: Converge
@@ -39,7 +39,7 @@ jobs:
           echo ::set-env name=WERF_SET_ENV_URL::global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN
   
       - name: Converge
-        uses: flant/werf-actions/converge@v1
+        uses: flant/werf-actions/converge@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -62,15 +62,15 @@ on:
 jobs:
 
   labels:
-    name: Label taking off 
-    runs-on: ubuntu-latest
+    name: Label taking off
     if: github.event.label.name == 'review_stop'
+    runs-on: ubuntu-latest
     steps:
     
       - name: Take off label
         uses: actions/github-script@v1
         with:
-          script: "github.issues.removeLabel({...context.issue, name: github.event.label.name})"
+          script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
   dismiss:
     name: Dismiss
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Dismiss
-        uses: flant/werf-actions/dismiss@v1
+        uses: flant/werf-actions/dismiss@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

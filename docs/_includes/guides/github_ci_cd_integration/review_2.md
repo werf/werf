@@ -55,6 +55,7 @@ jobs:
 
   dismiss:
     name: Dismiss
+    if: ${{ contains( github.head_ref, 'review' ) }}
     runs-on: ubuntu-latest
     steps:
 
