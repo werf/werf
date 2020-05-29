@@ -25,6 +25,9 @@
 /documentation/guides:
   title: Руководства
   url: /documentation/guides/installation.html
+/documentation/guides/applications-guide:
+  title: Гайды для различных языков и CI-систем
+  url: /documentation/guides/applications-guide/index.html
 /documentation/guides/advanced_build:
   title: Расширенная сборка
   url: /documentation/guides/advanced_build/first_application.html

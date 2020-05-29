@@ -12,7 +12,7 @@ entries:
         url: /documentation/index.html
 
       - title: К выбору языка и CI-системы
-        url: /documentation/index.html
+        url: /documentation/guides/applications-guide/
 
       - title: Оглавление
         sf:

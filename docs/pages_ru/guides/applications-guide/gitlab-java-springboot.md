@@ -1,5 +1,5 @@
 ---
-title: Шаблон
+title: Гайд по использованию Java Springboot + GitLab + Werf
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-java-springboot.html
 author: Евгений Ермонин <evgeny.ermonin@flant.com>
@@ -24,18 +24,6 @@ assets_generator_possible:
  - maven frontend plugin
 assets_generator_chosen: "webpack"
 ---
-
-<ul>
-    <li>
-        <strong>GitLab</strong>
-        <ul>
-            <li><a href="gitlab-nodejs.html">NodeJS</a></li>
-            <li><a href="gitlab-python-django.html">Python: Django</a></li>
-            <li><a href="gitlab-rails.html">Ruby On Rails</a></li>
-            <li><a href="gitlab-java-springboot.html">Java: Springboot</a></li>
-        </ul>
-    </li>
-</ul>
 
 <a name="preparing" />
 
@@ -282,7 +270,7 @@ $  werf build --stages-storage :local
 Либо вместо этого использовать [werf run](https://werf.io/documentation/cli/main/run.html):
 
 
-```
+```bash
 werf run --stages-storage :local --docker-options="-d -p 8080:8080 --restart=always" -- java -jar /app/target/demo-1.0.jar
 ```
 
