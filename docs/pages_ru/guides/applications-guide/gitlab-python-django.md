@@ -1,4 +1,10 @@
 ---
+title: Гайд по использованию Django + GitLab + Werf
+sidebar: applications-guide
+permalink: documentation/guides/applications-guide/gitlab-python-django.html
+author: Храмов Иван <ivan.khramov@flant.com>
+layout: guide
+toc: false
 author_team: "echo"
 author_name: "Храмов Иван"
 ci: "gitlab"
@@ -21,21 +27,9 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
-# Чек-лист готовности статьи
-<ol>
-<li>Все примеры кладём в <a href="https://github.com/flant/examples">https://github.com/flant/examples</a>
+<a name="preparing" />
 
-<li>Для каждой статьи может и должно быть НЕСКОЛЬКО примеров, условно говоря — по примеру на главу это нормально.
-
-<li>Делаем примеры И на Dockerfile, И на Stapel
-
-<li>Про хельм говорим, про особенности говорим, но в подробности не вдаёмся — считаем, что человек умеет в кубовые ямлы.
-
-<li>Обязательно тестируйте свои примеры перед публикацией
-</li>
-</ol>
-
-# Введение
+# Подготовка
 
 Рассмотрим разные способы которые помогут собрать приложение на Django и запустить его в kubernetes кластере.
 
