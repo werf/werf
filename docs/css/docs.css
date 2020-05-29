@@ -100,6 +100,26 @@
     margin: 0;
 }
 
+.root-open {
+  position: fixed;
+  overflow: scroll;
+  height: 100%;
+  width: 270px;
+  display: block;
+}
+
+.open {
+  display: block;
+}
+
+.open .sidebar__submenu {
+  display: block;
+}
+
+#mysidebar {
+  margin-bottom: 250px;
+}
+
 .sidebar__submenu .sidebar__submenu {
     padding-top: 0px;
 }
@@ -120,6 +140,10 @@
 
 .sidebar__submenu-item.active > a {
     color: #0066FF;
+}
+
+.root-open .sidebar__submenu .sidebar__submenu-item.active > a {
+  color: #000000;
 }
 
 .sidebar__submenu-item_parent > a:after {
