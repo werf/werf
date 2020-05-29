@@ -487,6 +487,9 @@ entries:
           - title: Первые шаги
             url: /documentation/guides/getting_started.html
 
+          - title: Гайды для различных языков и CI-систем
+            url: /documentation/guides/applications-guide/index.html
+
           - title: Деплой в Kubernetes
             url: /documentation/guides/deploy_into_kubernetes.html
 
