@@ -104,6 +104,8 @@ configVersion: 1
 
 ## Описание конфигурации в нескольких файлах 
 
+### При использовании директории шаблонов
+
 Часть конфигурации может быть вынесена в ***отдельные файлы шаблонов*** и затем включаться в __werf.yaml__. 
 _Файлы шаблонов_ должны размещаться в папке ***.werf*** и иметь расширение **.tmpl** (поддерживается вложенность).
 
@@ -286,6 +288,77 @@ shell:
 </div>
 </div>
 
+### При использовании функции tpl
+
+Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта. Таким образом, шаблоны могут располагаться в произвольном месте в проекте и добавляться в `werf.yaml`.
+
+Стоит отметить, что шаблоны выполняются в общем контексте, поэтому в них доступны все шаблоны и значения из `werf.yaml` и [директории шаблонов](#при-использовании-директории-шаблонов). 
+
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_backend')">backend/werf-partial.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_frontend')">frontend/werf-partial.yaml</a>
+</div>
+
+<div id="tpl_werf_yaml" class="tabs__content active" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "BaseImage" "node:14.3" }}
+
+project: app
+configVersion: 1
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
+{{- define "common install commands" }}
+- npm install
+- npm run build
+{{- end }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_backend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: backend
+from: {{ .BaseImage }}
+git:
+- add: /backend
+  to: /app/backend
+shell:
+  install:
+  - cd /app/backend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_frontend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: frontend
+from: {{ .BaseImage }}
+git:
+- add: /frontend
+  to: /app/frontend
+shell:
+  install:
+  - cd /app/frontend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
 ## Этапы обработки конфигурации
 
 Следующие шаги описывают как происходит обработка конфигурации:
@@ -381,6 +454,8 @@ shell:
   {{- end }}
   ```
   {% endraw %}
+
+* Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта: [раннее описанный пример с файлами проекта](#при-использовании-функции-tpl).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
 
 * Функции `.Files.Get` и `.Files.Glob` для работы с файлами проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
