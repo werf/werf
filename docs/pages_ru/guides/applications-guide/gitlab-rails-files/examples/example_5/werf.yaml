@@ -1,0 +1,65 @@
+project: example-5
+configVersion: 1
+---
+{{ $_ := set . "RUBY_VERSION" "2.7.1" }}
+{{ $_ := set . "NODE_MAJOR" "12" }}
+---
+image: backend
+from: ruby:{{ .RUBY_VERSION }}
+docker:
+  WORKDIR: /app
+git:
+- add: /backend
+  to: /app
+  stageDependencies:
+    install:
+    - Gemfile
+    - Gemfile.lock
+    setup:
+    - '*'
+ansible:
+  beforeInstall:
+  - name: install bundler
+    shell: gem install bundler
+  install:
+  - name: bundle install
+    shell: bundle config set without 'development test' && bundle install
+    args:
+      chdir: /app
+---
+artifact: frontend-build
+from: node:{{ .NODE_MAJOR }}
+git:
+- add: /frontend
+  to: /app
+  stageDependencies:
+    install:
+    - package.json
+    setup:
+    - '*'
+ansible:
+  install:
+  - name: npm i
+    shell: npm i
+    args:
+      chdir: /app
+  setup:
+  - name: npm run build
+    shell: npm run build
+    args:
+      chdir: /app
+---
+image: frontend
+from: nginx:alpine
+ansible:
+  beforeInstall:
+  - name: Add nginx config
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+import:
+- artifact: frontend-build
+  add: /app/build
+  to: /www
+  after: setup
