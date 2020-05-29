@@ -1,0 +1,30 @@
+project: example-1
+configVersion: 1
+---
+{{ $_ := set . "RUBY_VERSION" "2.7.1" }}
+---
+image: rails
+from: ruby:{{ .RUBY_VERSION }}
+docker:
+  WORKDIR: /app
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - Gemfile
+    - Gemfile.lock
+    setup:
+    - '*'
+ansible:
+  beforeInstall:
+  - name: install bundler
+    shell: gem install bundler
+  install:
+  - name: bundle install
+    shell: bundle config set without 'development test' && bundle install
+    args:
+      chdir: /app
+mount:
+- from: build_dir
+  to: /usr/local/bundle

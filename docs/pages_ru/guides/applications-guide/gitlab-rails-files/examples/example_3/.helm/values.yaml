@@ -1,0 +1,11 @@
+rails:
+  key: val
+
+postgresql:
+  enabled: true
+  postgresqlDatabase: hello_world
+  postgresqlUsername: hello_world_user
+  postgresqlHost: postgres
+  imageTag: "12"
+  persistence:
+    enabled: true
