@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-frontend
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-frontend
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-frontend
+    spec:
+      imagePullSecrets:
+      - name: registrysecret
+      containers:
+      - name: frontend
+{{ tuple "frontend" . | include "werf_container_image" | indent 8 }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/usr/sbin/nginx", "-s", "quit"]
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
