@@ -1,0 +1,41 @@
+project: spring
+configVersion: 1
+---
+artifact: build
+from: maven:3-jdk-8
+git:
+- add: /
+  to: /app
+  excludePaths:
+  - assets
+  stageDependencies:
+    beforeSetup:
+    - pom.xml
+    setup:
+    - src
+mount:
+- from: build_dir
+  to: /root/.m2/repository
+ansible:
+  beforeSetup:
+  - name: dependency resolve
+    shell: |
+      mvn -B -f pom.xml dependency:resolve
+    args:
+      chdir: /app
+      executable: /bin/bash
+  setup:
+  - name: Build jar
+    shell: |
+      mvn -B -X -f pom.xml package
+    args:
+      chdir: /app
+      executable: /bin/bash
+---
+image: hello
+from: openjdk:8-jdk-alpine
+import:
+- artifact: build
+  add: /app/target/demo-1.0.jar
+  to: /app/demo.jar
+  after: setup

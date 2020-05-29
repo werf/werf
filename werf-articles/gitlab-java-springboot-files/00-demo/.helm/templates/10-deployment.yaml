@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name | quote }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name | quote }}
+{{ tuple "hello" . | include "werf_container_image" | indent 8 }}
+        command:
+        - java
+        - -jar
+        - /app/target/demo-1.0.jar $JAVA_OPT
+        workingDir: /app
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: JAVA_OPT
+          value: {{ pluck .Values.global.env .Values.app.java_opt | first | default .Values.app.java_opt._default }}
+{{ tuple "hello" . | include "werf_container_env" | indent 8 }}

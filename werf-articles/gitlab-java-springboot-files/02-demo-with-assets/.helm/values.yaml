@@ -1,0 +1,13 @@
+app:
+  java_opt:
+    _default: "--debug"
+    production: ""
+  url:
+    _default: stage.example.com
+    production: example.com
+  s3:
+    epurl:
+      _default: https://s3.us-east-2.amazonaws.com
+    bucket:
+      _default: mydefaultbucket
+      production: myproductionbucket
