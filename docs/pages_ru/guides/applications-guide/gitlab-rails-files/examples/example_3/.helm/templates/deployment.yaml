@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      imagePullSecrets:
+      - name: registrysecret
+      containers:
+      - name: rails
+        command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
+{{ tuple "rails" . | include "werf_container_image" | indent 8 }}
+        env:
+{{ tuple "rails" . | include "werf_container_env" | indent 8 }}
+{{- include "apps_envs" . | indent 8 }}
+{{- include "database_envs" . | indent 8 }}
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP

@@ -1,0 +1,4 @@
+rails:
+  key: val
+redis:
+  enabled: true

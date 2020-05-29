@@ -1,0 +1,10 @@
+{
+  "name": "example_2",
+  "private": true,
+  "dependencies": {
+    "@rails/ujs": "^6.0.0",
+    "turbolinks": "^5.2.0",
+    "@rails/actioncable": "^6.0.0"
+  },
+  "version": "0.1.0"
+}
