@@ -329,8 +329,8 @@ func (f files) Get(path string) string {
 
 // Glob returns the hash of regular files and their contents for the paths that are matched pattern
 // This function follows only symlinks pointed to a regular file (not to a directory)
-func (f files) Glob(pattern string) map[string]string {
-	result := map[string]string{}
+func (f files) Glob(pattern string) map[string]interface{} {
+	result := map[string]interface{}{}
 
 	err := util.WalkByPattern(f.ProjectDir, filepath.FromSlash(pattern), func(path string, s os.FileInfo, err error) error {
 		if err != nil {

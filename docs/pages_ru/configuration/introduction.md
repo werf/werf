@@ -534,6 +534,8 @@ shell:
 
 **.Files.Glob**
 
+> Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Результаты вызова функции можно объединить со [sprig функцией `merge`](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
+
 {% raw %}
 ```yaml
 project: my-project
