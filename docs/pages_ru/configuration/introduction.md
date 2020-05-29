@@ -465,24 +465,96 @@ shell:
  </div>
 
  <div id="ansible" class="tabs__content active" markdown="1">
- {% raw %}
- ```yaml
- project: my-project
- configVersion: 1
- ---
+   
+**.Files.Get**
 
- image: app
- from: alpine
- ansible:
-   setup:
-   - name: "Setup /etc/nginx/nginx.conf"
-     copy:
-       content: |
- {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-       dest: /etc/nginx/nginx.conf
- ```
- {% endraw %}
- </div>
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+ansible:
+ setup:
+ - name: "Setup /etc/nginx/nginx.conf"
+   copy:
+     content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+     dest: /etc/nginx/nginx.conf
+```
+{% endraw %}
+
+**.Files.Glob**
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+ansible:
+ install:
+ - raw: mkdir /app
+ setup:
+{{ range $path, $content := .Files.Glob ".werf/files/*" }}
+ - name: "Setup /app/{{ base $path }}"
+   copy:
+     content: |
+{{ $content | indent 8 }}
+     dest: /app/{{ base $path }}
+{{ end }}
+```
+{% endraw %}
+</div>
+
+<div id="shell" class="tabs__content" markdown="1">
+
+**.Files.Get**
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+ setup:
+ - |
+   head -c -1 <<EOF > /etc/nginx/nginx.conf
+{{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+   EOF
+```
+{% endraw %}
+
+**.Files.Glob**
+
+> Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Результаты вызова функции можно объединить со [sprig функцией `merge`](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+ install: mkdir /app
+ setup:
+{{ range $path, $content := .Files.Glob ".werf/files/*" }}
+ - |
+   head -c -1 <<EOF > /app/{{ base $path }}
+{{ $content | indent 4 }}
+   EOF
+{{ end }}
+```
+{% endraw %}
 
  <div id="shell" class="tabs__content" markdown="1">
  {% raw %}

@@ -490,4 +490,29 @@ Go templates are available within YAML configuration. The following functions ar
       EOF
   ```
   {% endraw %}
+  
+  **.Files.Glob**
+  
+  > The function supports [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Results can be merged with [`merge` sprig function](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (e.g `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
+  
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+
+  image: app
+  from: alpine
+  shell:
+    install: mkdir /app
+    setup:
+  {{ range $path, $content := .Files.Glob ".werf/files/*" }}
+    - |
+      head -c -1 <<EOF > /app/{{ base $path }}
+  {{ $content | indent 4 }}
+      EOF
+  {{ end }}
+  ```
+  {% endraw %}
+  
   </div>
