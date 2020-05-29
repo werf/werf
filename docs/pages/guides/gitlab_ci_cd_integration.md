@@ -5,8 +5,6 @@ permalink: documentation/guides/gitlab_ci_cd_integration.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-> **NOTE** This article contains old obsolete info. Newer article available only in russian: [https://ru.werf.io/v1.1-alpha/documentation/guides/gitlab_ci_cd_integration.html](https://ru.werf.io/v1.1-alpha/documentation/guides/gitlab_ci_cd_integration.html) — and will be translated very soon.
-
 ## Task Overview
 
 In this article, we will explore various options for configuring CI/CD using GitLab CI/CD and werf.
