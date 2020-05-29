@@ -1,0 +1,30 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $.Values.global.werf.name }}-migrate-db
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "2"
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: {{ $.Values.global.werf.name }}-migrate-db
+    spec:
+      initContainers:
+      - name: wait-postgres
+        image: postgres:12
+        command:
+          - "sh"
+          - "-c"
+          - "until pg_isready -h {{ .Chart.Name }}-{{ .Values.global.env }}-postgresql -U {{ .Values.postgresql.postgresqlUsername }}; do sleep 2; done;"
+      containers:
+      - name: rails
+{{ tuple "rails" . | include "werf_container_image" | indent 8 }}
+        command: ["bundle", "exec", "rake", "db:migrate"]
+        env:
+{{- include "apps_envs" . | indent 10 }}
+{{- include "database_envs" . | indent 10 }}
+{{ tuple "rails" . | include "werf_container_env" | indent 10 }}
+      restartPolicy: Never
