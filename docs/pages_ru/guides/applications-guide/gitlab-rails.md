@@ -1,3 +1,39 @@
+---
+title: Шаблон
+sidebar: applications-guide
+permalink: documentation/guides/applications-guide/gitlab-rails.html
+author: alexey.chazov <alexey.chazov@flant.com>
+layout: guide
+toc: false
+author_team: "bravo"
+author_name: "alexey.chazov"
+ci: "gitlab"
+language: "ruby"
+framework: "rails"
+is_compiled: 0
+package_managers_possible:
+ - bundler
+package_managers_chosen: "bundler"
+unit_tests_possible:
+ - Rspec
+unit_tests_chosen: "Rspec"
+assets_generator_possible:
+ - webpack
+ - gulp
+assets_generator_chosen: "webpack"
+---
+
+<ul>
+    <li>
+        <strong>GitLab</strong>
+        <ul>
+            <li><a href="gitlab-nodejs.html">NodeJS</a></li>
+            <li><a href="gitlab-python-django.html">Python: Django</a></li>
+            <li><a href="gitlab-rails.html">Ruby On Rails</a></li>
+            <li><a href="gitlab-java-springboot.html">Java: Springboot</a></li>
+        </ul>
+    </li>
+</ul>
 # Введение
 
 Рассмотрим разные способы которые помогут ruby on rails программисту собрать приложение и запустить его в kubernetes кластере.

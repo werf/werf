@@ -1,4 +1,10 @@
 ---
+title: Шаблон
+sidebar: applications-guide
+permalink: documentation/guides/applications-guide/gitlab-nodejs.html
+author: Andrey Koregin <andrey.koregin@flant.com>
+layout: guide
+toc: false
 author_team: "Alfa"
 author_name: "Andrey Koregin"
 ci: "gitlab"
@@ -23,19 +29,17 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
-# Чек-лист готовности статьи
-<ol>
-<li>Все примеры кладём в <a href="https://github.com/flant/examples">https://github.com/flant/examples</a>
-
-<li>Для каждой статьи может и должно быть НЕСКОЛЬКО примеров, условно говоря — по примеру на главу это нормально.
-
-<li>Делаем примеры И на Dockerfile, И на Stapel
-
-<li>Про хельм говорим, про особенности говорим, но в подробности не вдаёмся — считаем, что человек умеет в кубовые ямлы.
-
-<li>Обязательно тестируйте свои примеры перед публикацией
-</li>
-</ol>
+<ul>
+    <li>
+        <strong>GitLab</strong>
+        <ul>
+            <li><a href="gitlab-nodejs.html">NodeJS</a></li>
+            <li><a href="gitlab-python-django.html">Python: Django</a></li>
+            <li><a href="gitlab-rails.html">Ruby On Rails</a></li>
+            <li><a href="gitlab-java-springboot.html">Java: Springboot</a></li>
+        </ul>
+    </li>
+</ul>
 
 # Введение
 

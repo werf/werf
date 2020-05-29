@@ -1,0 +1,94 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+  en:
+    f:
+      - title: Back to documentation
+        url: /documentation/index.html
+
+  ru:
+    f:
+      - title: Назад к документации
+        url: /documentation/index.html
+
+      - title: К выбору языка и CI-системы
+        url: /documentation/index.html
+
+      - title: Оглавление
+        sf:
+
+          - title: Подготовка
+            hash: "#preparing"
+            sfi:
+              - title: Подготовка приложения
+                hash: "#preparing-app"
+              - title: Подготовка среды
+                hash: "#preparing-env"
+
+          - title: Hello World приложение
+            hash: "#hello-world"
+            sfi:
+              - title: Локальная сборка
+                hash: "#hello-world-local"
+              - title: Построение CI-процесса
+                hash: "#hello-world-ci"
+                sfi:
+                - title: Сборка в Gitlab CI
+                  hash: "#hello-world-ci-build"
+                - title: Деплой в Kubernetes
+                  hash: "#hello-world-ci-deploy"
+
+          - title: Подключаем зависимости
+            hash: "#dependencies"
+            sfi:
+              - title: Подключение менеджера зависимостей
+                hash: "#dependencies-implementation"
+              - title: Оптимизация сборки
+                hash: "#dependencies-optimization"
+
+          - title: Генерируем и раздаём ассеты
+            hash: "#assets"
+            sfi:
+              - title: Сценарий сборки ассетов
+                hash: "#assets-scenario"
+              - title: Какие изменения необходимо внести
+                hash: "#assets-implementation"
+
+          - title: Работа с файлами
+            hash: "#files"
+
+          - title: Работа с электронной почтой
+            hash: "#email"
+
+          - title: Подключаем Redis
+            hash: "#redis"
+            sfi:
+              - title: Завести Redis в Kubernetes
+                hash: "#redis-to-kubernetes"
+              - title: Подключение приложения к Redis
+                hash: "#redis-to-app"
+
+          - title: Подключаем базу данных
+            hash: "#database"
+            sfi:
+              - title: Общий подход
+                hash: "#database-generic"
+              - title: Подключение приложения к базе данных
+                hash: "#database-app-connection"
+              - title: Выполнение миграций
+                hash: "#database-migrations"
+              - title: Накатка фикстур
+                hash: "#database-fixtures"
+
+          - title: Юнит-тесты и Линтеры
+            hash: "#unit-testing"
+
+          - title: Несколько приложений в одной репе
+            hash: "#multiple-apps"
+
+          - title: Динамические окружения
+            hash: "#feature-envs"
+
+
+
+
