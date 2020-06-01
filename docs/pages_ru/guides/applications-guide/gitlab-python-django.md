@@ -27,7 +27,9 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
-# Введение
+<a name="preparing" />
+
+# Подготовка
 
 Рассмотрим разные способы которые помогут собрать приложение на Django и запустить его в kubernetes кластере.
 

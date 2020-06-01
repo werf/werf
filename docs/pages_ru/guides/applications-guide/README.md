@@ -1,9 +1,8 @@
 ---
-title: 
-sidebar: applications-guide
+title: Гайды для различных языков и CI-систем
+sidebar: documentation
 permalink: documentation/guides/applications-guide/index.html
 author: Igor Tsupko <igor.tsupko@flant.com>
-layout: guide
 toc: false
 ---
 
