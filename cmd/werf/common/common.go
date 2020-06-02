@@ -200,12 +200,12 @@ func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Release = new(string)
-	cmd.Flags().StringVarP(cmdData.Release, "release", "", "", "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml)")
+	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)")
 }
 
 func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Namespace = new(string)
-	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", "", "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml)")
+	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)")
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
