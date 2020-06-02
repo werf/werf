@@ -1,4 +1,4 @@
-<div class="details">
+<div class="details active">
 <a href="javascript:void(0)" class="details__summary">.github\workflows\review_deployment_dismiss.yml</a>
 <div class="details__content" markdown="1">
 
