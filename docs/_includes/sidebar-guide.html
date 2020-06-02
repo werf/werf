@@ -5,7 +5,7 @@
   {%- for folder in sidebar.f %}
     {%- if folder.fi %}
     <li class="sidebar__item sidebar__item_parent active">
-        <a href="{{ folder.hash }}">{{ folder.title }}{{ folder.url }}</a>
+        <a href="{{ folder.url }}">{{ folder.title }}{{ folder.url }}</a>
         <ul class="sidebar__submenu open">
         {%- for folderitem in folder.fi %}
             {%- if folderitem.external_url %}
@@ -22,12 +22,12 @@
     </li>
     {% elsif folder.sf %}
         <li class="sidebar__item sidebar__item_parent active">
-            <a href="{{ folder.hash }}">{{ folder.title }}{{ folder.url }}</a>
+            <a href="{{ folder.url }}">{{ folder.title }}{{ folder.url }}</a>
             <ul class="sidebar__submenu open">
             {%- for subfolders in folder.sf %}
             {%- if subfolders.sfi %}
               <li class="sidebar__submenu-item sidebar__submenu-item_parent active">
-                <a href="{{ subfolders.hash }}">{{ subfolders.title }}</a>
+                <a href="{{ subfolders.url }}">{{ subfolders.title }}</a>
                 <ul class="sidebar__submenu open">
                   {%- for subfolderitem in subfolders.sfi %}
                   {%- if subfolderitem.external_url %}
