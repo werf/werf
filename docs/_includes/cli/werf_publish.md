@@ -94,9 +94,11 @@ werf publish [IMAGE_NAME...] [options]
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --publish-report-format='json':
-            Publish report format (only json available for now)
+            Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by      
+            default)
       --publish-report-path='':
-            Publish report contains image info: full docker repo, tag, ID — for each published image
+            Publish report contains image info: full docker repo, tag, ID — for each published      
+            image ($WERF_PUBLISH_REPORT_PATH by default)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
@@ -172,5 +174,14 @@ werf publish [IMAGE_NAME...] [options]
             specifying git tag in the $WERF_TAG_GIT_TAG)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --virtual-merge=false:
+            Enable virtual/ephemeral merge commit mode when building current application state      
+            ($WERF_VIRTUAL_MERGE by default)
+      --virtual-merge-from-commit='':
+            Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull  
+            request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)
+      --virtual-merge-into-commit='':
+            Commit hash for virtual/ephemeral merge commit which is base for changes introduced in  
+            the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)
 ```
 

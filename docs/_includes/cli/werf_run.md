@@ -139,5 +139,14 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             storage. :local address allows execution of werf processes from a single host only.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --virtual-merge=false:
+            Enable virtual/ephemeral merge commit mode when building current application state      
+            ($WERF_VIRTUAL_MERGE by default)
+      --virtual-merge-from-commit='':
+            Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull  
+            request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)
+      --virtual-merge-into-commit='':
+            Commit hash for virtual/ephemeral merge commit which is base for changes introduced in  
+            the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)
 ```
 
