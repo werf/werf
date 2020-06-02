@@ -108,6 +108,16 @@
   display: block;
 }
 
+.expand {
+  padding-left: 15px;
+  border-left: 3px solid #000000;
+  margin-left: 30px;
+}
+
+.expand .expand-click {
+  padding-top: 15px;
+}
+
 .open {
   display: block;
 }

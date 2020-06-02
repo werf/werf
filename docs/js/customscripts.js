@@ -56,6 +56,7 @@ $(function() {
 });
 
 // Load versions and append them to topnavbar
+/*
 $(document).ready(function () {
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
   var releasesInfo = window.releasesInfo;
@@ -152,6 +153,38 @@ $(document).ready(function () {
   $('.header__menu').addClass('header__menu_active')
 
 });
+
+*/
+$(document).ready(function () {
+
+  var elements = document.querySelectorAll('p');
+  console.log(elements);
+  Array.prototype.forEach.call(elements, function(el, i) {
+    if (el.innerHTML == '[expand]') {
+      var parentcontent = el.parentNode.innerHTML.replace('<p>[expand]</p>', '<div class="expand"><div class="expand-content">').replace('<p>[/expand]</p>', '</div></div>');
+      el.parentNode.innerHTML = parentcontent;
+    }
+  });
+
+  $('.expand').each(function(element){
+    var patt = /\[expand-title\](.+)\[\/expand-title\]+/i
+    var my_html = $(this).html();
+    var matches = patt.exec(my_html);
+    $(this).html(my_html.replace(patt,""));
+    $(this).prepend('<a href="#" class="expand-click">'+matches[1]+'</a>');
+  });
+
+  $('.expand-content').hide();
+
+  $('.expand').each(function(){
+    $('.expand .expand-click').click(function(event){
+      event.preventDefault();
+      console.log($(this).parent());
+      $(this).parent().find('.expand-content').toggle();
+    });
+  });
+});
+
 
 
 // Update github counters

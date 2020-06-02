@@ -28,6 +28,10 @@
 /documentation/guides/applications-guide:
   title: Гайды для различных языков и CI-систем
   url: /documentation/guides/applications-guide/index.html
+/documentation/guides/applications-guide/gitlab-rails:
+  title: Gitlab CI + Ruby On Rails
+  url: /documentation/guides/applications-guide/gitlab-rails/000-task.html
+
 /documentation/guides/advanced_build:
   title: Расширенная сборка
   url: /documentation/guides/advanced_build/first_application.html
