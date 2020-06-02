@@ -56,6 +56,7 @@ $(function() {
 });
 
 // Load versions and append them to topnavbar
+/*
 $(document).ready(function () {
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
   var releasesInfo = window.releasesInfo;
@@ -154,6 +155,18 @@ $(document).ready(function () {
   $('.header__menu').addClass('header__menu_active')
 
 });
+
+*/
+$(document).ready(function () {
+  $('.expand-content').hide();
+
+  $('.expand .expand-click').click(function(event){
+    event.preventDefault();
+    console.log($(this).parent());
+    $(this).parent().find('.expand-content').toggle();
+  });
+});
+
 
 
 // Update GitHub stats

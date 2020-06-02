@@ -17,16 +17,19 @@ entries:
       - title: Оглавление
         sf:
 
-          - title: Подготовка
-            hash: "#preparing"
+          - title: Как использовать гайд
+            url: /documentation/guides/applications-guide/gitlab-rails/000-task.html
+
+          - title: Подготовка к работе
+            url: /documentation/guides/applications-guide/gitlab-rails/010-preparing.html
             sfi:
               - title: Подготовка приложения
                 hash: "#preparing-app"
               - title: Подготовка среды
                 hash: "#preparing-env"
 
-          - title: Hello World приложение
-            hash: "#hello-world"
+          - title: Базовые настройки
+            url: /documentation/guides/applications-guide/gitlab-rails/020-basic.html
             sfi:
               - title: Локальная сборка
                 hash: "#hello-world-local"
@@ -39,7 +42,7 @@ entries:
                   hash: "#hello-world-ci-deploy"
 
           - title: Подключаем зависимости
-            hash: "#dependencies"
+            url: /documentation/guides/applications-guide/gitlab-rails/030-dependencies.html
             sfi:
               - title: Подключение менеджера зависимостей
                 hash: "#dependencies-implementation"
@@ -47,7 +50,7 @@ entries:
                 hash: "#dependencies-optimization"
 
           - title: Генерируем и раздаём ассеты
-            hash: "#assets"
+            url: /documentation/guides/applications-guide/gitlab-rails/040-assets.html
             sfi:
               - title: Сценарий сборки ассетов
                 hash: "#assets-scenario"
@@ -55,13 +58,13 @@ entries:
                 hash: "#assets-implementation"
 
           - title: Работа с файлами
-            hash: "#files"
+            url: /documentation/guides/applications-guide/gitlab-rails/050-files.html
 
           - title: Работа с электронной почтой
-            hash: "#email"
+            url: /documentation/guides/applications-guide/gitlab-rails/060-email.html
 
           - title: Подключаем Redis
-            hash: "#redis"
+            url: /documentation/guides/applications-guide/gitlab-rails/070-redis.html
             sfi:
               - title: Завести Redis в Kubernetes
                 hash: "#redis-to-kubernetes"
@@ -69,7 +72,7 @@ entries:
                 hash: "#redis-to-app"
 
           - title: Подключаем базу данных
-            hash: "#database"
+            url: /documentation/guides/applications-guide/gitlab-rails/080-database.html
             sfi:
               - title: Общий подход
                 hash: "#database-generic"
@@ -81,13 +84,13 @@ entries:
                 hash: "#database-fixtures"
 
           - title: Юнит-тесты и Линтеры
-            hash: "#unit-testing"
+            url: /documentation/guides/applications-guide/gitlab-rails/090-unittesting.html
 
           - title: Несколько приложений в одной репе
-            hash: "#multiple-apps"
+            url: /documentation/guides/applications-guide/gitlab-rails/110-multipleapps.html
 
           - title: Динамические окружения
-            hash: "#feature-envs"
+            url: /documentation/guides/applications-guide/gitlab-rails/120-dynamicenvs.html
 
 
 

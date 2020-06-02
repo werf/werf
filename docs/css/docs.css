@@ -108,6 +108,22 @@
   display: block;
 }
 
+.expand {
+  padding-left: 15px;
+  border-left: 3px solid #000000;
+  margin-left: 30px;
+}
+
+.snippetcut {
+  padding: 5px 20px;
+  border-left: 9px solid #000066;
+  background: #9999ee;
+}
+
+.expand .expand-click {
+  padding-top: 15px;
+}
+
 .open {
   display: block;
 }
@@ -530,6 +546,18 @@
     background-repeat: no-repeat;
     background-size: contain;
     margin-right: 5px;
+}
+
+.filesused {
+  width: 400px;
+  border: 1px solid #eee;
+  padding: 0px 10px 10px 10px;
+  margin: 0px 0px 0px auto;
+}
+
+
+.docs .details .details__lnk {
+  text-align: right;
 }
 
 .docs .details.active .details__summary::before {
