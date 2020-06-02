@@ -86,10 +86,10 @@ werf dismiss [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
-            deploy.namespace custom template from werf.yaml)
+            deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
-            deploy.helmRelease custom template from werf.yaml)
+            deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --releases-history-max=0:
             Max releases to keep in release storage. Can be set by environment variable             
             $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
