@@ -8,7 +8,6 @@ import (
 
 	"gopkg.in/ini.v1"
 
-	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 
@@ -25,22 +24,45 @@ type Remote struct {
 	Base
 	Url      string
 	IsDryRun bool
+
+	Endpoint *transport.Endpoint
+}
+
+func OpenRemoteRepo(name, url string) (*Remote, error) {
+	repo := &Remote{
+		Base: Base{Name: name},
+		Url:  url,
+	}
+	return repo, repo.ValidateEndpoint()
+}
+
+func (repo *Remote) ValidateEndpoint() error {
+	if ep, err := transport.NewEndpoint(repo.Url); err != nil {
+		return fmt.Errorf("bad url '%s': %s", repo.Url, err)
+	} else {
+		repo.Endpoint = ep
+	}
+	return nil
 }
 
 func (repo *Remote) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
-	if err != nil {
-		return "", err
-	}
-	return repo.createDetachedMergeCommit(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), fromCommit, toCommit)
 }
 
 func (repo *Remote) GetMergeCommitParents(commit string) ([]string, error) {
 	return repo.getMergeCommitParents(repo.GetClonePath(), commit)
 }
 
+func (repo *Remote) getFilesystemRelativePathByEndpoint() string {
+	host := repo.Endpoint.Host
+	if repo.Endpoint.Port > 0 {
+		host += fmt.Sprintf(":%d", repo.Endpoint.Port)
+	}
+	return filepath.Join(fmt.Sprintf("protocol-%s", repo.Endpoint.Protocol), host, repo.Endpoint.Path)
+}
+
 func (repo *Remote) GetClonePath() string {
-	return filepath.Join(GetGitRepoCacheDir(), "remote", slug.Slug(repo.Url))
+	return filepath.Join(GetGitRepoCacheDir(), repo.getFilesystemRelativePathByEndpoint())
 }
 
 func (repo *Remote) RemoteOriginUrl() (string, error) {
@@ -217,7 +239,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	logboek.LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
+	logboek.Info.LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -248,38 +270,25 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
 
-	logboek.LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
+	logboek.Info.LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
 
 	return res, nil
 }
 
 func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
-	if err != nil {
-		return nil, err
-	}
-	return repo.createPatch(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
+	return repo.createPatch(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 }
 
 func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
-	if err != nil {
-		return nil, err
-	}
-	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
+	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 }
 
 func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	workTreeCacheDir, err := repo.getWorkTreeCacheDir()
-	if err != nil {
-		return nil, err
-	}
-
 	_ = logboek.Debug.LogProcess(
 		"Calculating checksum",
 		logboek.LevelLogProcessOptions{},
 		func() error {
-			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), workTreeCacheDir, opts)
+			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 			return nil
 		},
 	)
@@ -291,13 +300,8 @@ func (repo *Remote) IsCommitExists(commit string) (bool, error) {
 	return repo.isCommitExists(repo.GetClonePath(), repo.GetClonePath(), commit)
 }
 
-func (repo *Remote) getWorkTreeCacheDir() (string, error) {
-	ep, err := transport.NewEndpoint(repo.Url)
-	if err != nil {
-		return "", fmt.Errorf("bad endpoint url `%s`: %s", repo.Url, err)
-	}
-
-	return filepath.Join(GetWorkTreeCacheDir(), "remote", ep.Host, ep.Path), nil
+func (repo *Remote) getWorkTreeCacheDir() string {
+	return filepath.Join(GetWorkTreeCacheDir(), repo.getFilesystemRelativePathByEndpoint())
 }
 
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
