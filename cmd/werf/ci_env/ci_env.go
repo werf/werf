@@ -334,8 +334,8 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 		}
 
 		stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
-	} else if os.Getenv("IMAGES REPO") != "" && os.Getenv("STAGES_STORAGE") == "" {
-		stagesStorageRepo = fmt.Sprintf("%s/stages", os.Getenv("IMAGES REPO"))
+	} else if os.Getenv("IMAGES_REPO") != "" && os.Getenv("STAGES_STORAGE") == "" {
+		stagesStorageRepo = fmt.Sprintf("%s/stages", os.Getenv("IMAGES_REPO"))
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
