@@ -402,6 +402,7 @@ This means that as commits are added starting from the moment the first build is
 
 \* — the size of the patch for commit `4` exceeded 1 MiB, so this patch is applied in the layer for the _gitCache_ stage.
 
+<!---
 ### Rebuild of gitArchive stage
 
 For various reasons, you may want to reset the _gitArchive_ stage, for example, to decrease the size of _stages_ and the image.
@@ -420,6 +421,7 @@ You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset
 | Commit No. 6 is made, build at 13:22 |  *6 |  - | - |
 
 \* — commit `6` contains the **[werf reset]** string in its message, so the _gitArchive_ stage is rebuilt.
+--->
 
 ### _git stages_ and rebasing
 
