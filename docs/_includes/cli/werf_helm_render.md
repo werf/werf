@@ -102,12 +102,12 @@ werf helm render [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
-            deploy.namespace custom template from werf.yaml)
+            deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
   -o, --output-file-path='':
             Write to file instead of stdout
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
-            deploy.helmRelease custom template from werf.yaml)
+            deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
