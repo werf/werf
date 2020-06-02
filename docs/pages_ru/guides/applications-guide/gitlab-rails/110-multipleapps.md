@@ -1,7 +1,7 @@
 ---
 title: Гайд по использованию Ruby On Rails + GitLab + Werf
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails.html
+permalink: documentation/guides/applications-guide/gitlab-rails/110-multipleapps.html
 author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
