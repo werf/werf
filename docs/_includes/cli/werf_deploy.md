@@ -252,5 +252,14 @@ werf deploy [options]
             Specify helm values in a YAML file or a URL (can specify multiple).
             Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
             $WERF_VALUES_DB=.helm/values_db.yaml)
+      --virtual-merge=false:
+            Enable virtual/ephemeral merge commit mode when building current application state      
+            ($WERF_VIRTUAL_MERGE by default)
+      --virtual-merge-from-commit='':
+            Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull  
+            request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)
+      --virtual-merge-into-commit='':
+            Commit hash for virtual/ephemeral merge commit which is base for changes introduced in  
+            the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)
 ```
 
