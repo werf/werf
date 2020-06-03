@@ -27,7 +27,7 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runti
 
 	isEmpty := true
 	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
 		if err != nil {
 			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}

@@ -57,7 +57,7 @@ func (s *GitCacheStage) GetDependencies(c Conveyor, _, prevBuiltImage container_
 func (s *GitCacheStage) gitMappingsPatchSize(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
 		if err != nil {
 			return 0, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
