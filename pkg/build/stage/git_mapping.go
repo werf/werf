@@ -252,7 +252,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 }
 
 func (gm *GitMapping) ApplyPatchCommand(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
 	if err != nil {
 		return fmt.Errorf("unable to get base commit from built image: %s", err)
 	}
@@ -330,7 +330,7 @@ func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInt
 	}
 }
 
-func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	if baseCommit, hasKey := gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Name()]; hasKey {
 		return baseCommit, nil
 	}
@@ -342,11 +342,17 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(prevBuiltImage container_ru
 
 	var baseCommit string
 	if prevBuiltImageCommitInfo.VirtualMerge {
-		if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
-			return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %s", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
+		if latestCommit, err := gm.getLatestCommit(); err != nil {
+			return "", err
+		} else if _, isLocal := gm.GitRepo().(*git_repo.Local); isLocal && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
+			baseCommit = prevBuiltImageCommitInfo.Commit
 		} else {
-			logboek.Info.LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
-			baseCommit = detachedMergeCommit
+			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
+				return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %s", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
+			} else {
+				logboek.Info.LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
+				baseCommit = detachedMergeCommit
+			}
 		}
 	} else {
 		baseCommit = prevBuiltImageCommitInfo.Commit
@@ -756,7 +762,7 @@ func formatParamshashPaths(paths ...string) []string {
 }
 
 func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
@@ -788,7 +794,7 @@ func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runti
 }
 
 func (gm *GitMapping) IsPatchEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(prevBuiltImage)
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
 	if err != nil {
 		return false, fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
