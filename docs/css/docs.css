@@ -114,6 +114,12 @@
   margin-left: 30px;
 }
 
+.snippetcut {
+  padding: 5px 20px;
+  border-left: 9px solid #000066;
+  background: #9999ee;
+}
+
 .expand .expand-click {
   padding-top: 15px;
 }
@@ -528,6 +534,10 @@
     background-repeat: no-repeat;
     background-size: contain;
     margin-right: 5px;
+}
+
+.docs .details .details__lnk {
+  text-align: right;
 }
 
 .docs .details.active .details__summary::before {

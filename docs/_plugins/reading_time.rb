@@ -60,9 +60,13 @@ module Jekyll
         rendered_content = Jekyll::Converters::Markdown::KramdownParser.new(Jekyll.configuration()).convert(content)
 
         <<-HTML.gsub /^\s+/, '' # remove whitespaces from heredocs
-        <div class="expand">
-            <a href="#" class="expand-click">#{@config[:title]}</a>
-            <div class="expand-content" style="">#{rendered_content}</div>
+        <div class="details">
+            <p class="details__lnk"><a href="javascript:void(0)" class="details__summary">#{@config[:title]}</a></p>
+            <div class="details__content" markdown="1">
+                <div class="expand">
+                    #{rendered_content}
+                </div>
+            </div>
         </div>
         HTML
       end
@@ -117,8 +121,7 @@ module Jekyll
 
         <<-HTML.gsub /^\s+/, '' # remove whitespaces from heredocs
         <div class="expand">
-            <p><strong>#{@config[:name]}</strong></p>
-            <a href="#{@config[:url]}">#{@config[:url]}</a>
+            <p><strong>#{@config[:name]}</strong> <a href="#{@config[:url]}">🔗</a></p>
             #{rendered_content}
         </div>
         HTML
