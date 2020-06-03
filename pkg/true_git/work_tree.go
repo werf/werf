@@ -56,20 +56,6 @@ func withWorkTreeCacheLock(workTreeCacheDir string, f func() error) error {
 	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
-func checkIsWorkTreeValid(repoDir, workTreeDir, repoToCacheLinkFilePath string) (bool, error) {
-	if _, err := os.Stat(repoToCacheLinkFilePath); err == nil {
-		if data, err := ioutil.ReadFile(repoToCacheLinkFilePath); err != nil {
-			return false, fmt.Errorf("error reading %s: %s", repoToCacheLinkFilePath, err)
-		} else if strings.TrimSpace(string(data)) == workTreeDir {
-			return true, nil
-		}
-	} else if !os.IsNotExist(err) {
-		return false, fmt.Errorf("error accessing %s: %s", repoToCacheLinkFilePath, err)
-	}
-
-	return false, nil
-}
-
 func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %s", workTreeCacheDir, err)
@@ -84,41 +70,52 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 		return "", fmt.Errorf("unable to access %s: %s", gitDirPath, err)
 	}
 
-	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
 	workTreeDir := filepath.Join(workTreeCacheDir, "worktree")
 
-	realRepoDir, err := GetRealRepoDir(repoDir)
-	if err != nil {
-		return "", fmt.Errorf("unable to get real repo dir of repo %s: %s", repoDir, err)
-	}
-	repoToCacheLinkFilePath := filepath.Join(realRepoDir, "werf_work_tree_cache_dir")
-
-	currentCommit := ""
-
 	isWorkTreeDirExist := false
-	isWorkTreeValid := true
 	if _, err := os.Stat(workTreeDir); err == nil {
 		isWorkTreeDirExist = true
-		if isValid, err := checkIsWorkTreeValid(repoDir, workTreeDir, repoToCacheLinkFilePath); err != nil {
-			return "", fmt.Errorf("unable to check work tree %s validity with repo %s: %s", workTreeDir, repoDir, err)
-		} else {
-			isWorkTreeValid = isValid
-		}
 	} else if !os.IsNotExist(err) {
 		return "", fmt.Errorf("error accessing %s: %s", workTreeDir, err)
 	}
 
-	currentCommitExists := true
+	isWorkTreeRegistered := false
+	if workTreeList, err := GetWorkTreeList(repoDir); err != nil {
+		return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
+	} else {
+		for _, workTreeDesc := range workTreeList {
+			if workTreeDesc.Path == workTreeDir {
+				isWorkTreeRegistered = true
+			}
+		}
+	}
+
+	currentCommit := ""
+	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
+	currentCommitPathExists := true
 	if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
-		currentCommitExists = false
+		currentCommitPathExists = false
 	} else if err != nil {
 		return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
 	}
-	if currentCommitExists {
+
+	if isWorkTreeDirExist && !isWorkTreeRegistered {
+		logboek.Info.LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+
+		if err := os.RemoveAll(currentCommitPath); err != nil {
+			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+		}
+		currentCommitPathExists = false
+
+		if err := os.RemoveAll(workTreeDir); err != nil {
+			return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
+		}
+		isWorkTreeDirExist = false
+	} else if isWorkTreeDirExist && currentCommitPathExists {
 		if data, err := ioutil.ReadFile(currentCommitPath); err == nil {
 			currentCommit = strings.TrimSpace(string(data))
 
-			if currentCommit == commit && isWorkTreeDirExist && isWorkTreeValid {
+			if currentCommit == commit {
 				return workTreeDir, nil
 			}
 		} else {
@@ -127,14 +124,6 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 
 		if err := os.RemoveAll(currentCommitPath); err != nil {
 			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
-		}
-	}
-
-	if isWorkTreeDirExist && !isWorkTreeValid {
-		logboek.Info.LogFDetails("Removing invalidated work tree dir %s of repo %s\n", workTreeDir, repoDir)
-
-		if err := os.RemoveAll(workTreeDir); err != nil {
-			return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
 		}
 	}
 
@@ -150,10 +139,6 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 		return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
-	}
-
-	if err := ioutil.WriteFile(repoToCacheLinkFilePath, []byte(workTreeDir+"\n"), 0644); err != nil {
-		return "", fmt.Errorf("unable to write %s: %s", repoToCacheLinkFilePath, err)
 	}
 
 	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0644); err != nil {
@@ -174,7 +159,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 
 	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
 		cmd = exec.Command(
-			"git", "--git-dir", repoDir,
+			"git", "-C", repoDir,
 			"worktree", "add", "--force", "--detach", "--no-checkout", workTreeDir,
 		)
 		output = setCommandRecordingLiveOutput(cmd)
@@ -271,8 +256,48 @@ func GetRealRepoDir(repoDir string) (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("'git --git-dir %s rev-parse --git-dir' failed: %s:\n%s", repoDir, err, output)
+		return "", fmt.Errorf("'%s' failed: %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
 	}
 
 	return strings.TrimSpace(string(output)), nil
+}
+
+type WorktreeDescriptor struct {
+	Path   string
+	Head   string
+	Branch string
+}
+
+func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
+	gitArgs := []string{"-C", repoDir, "worktree", "list", "--porcelain"}
+
+	cmd := exec.Command("git", gitArgs...)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("'%s' failed: %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
+	}
+
+	var worktreeDesc *WorktreeDescriptor
+	var res []WorktreeDescriptor
+	for _, line := range strings.Split(string(output), "\n") {
+		if line == "" && worktreeDesc == nil {
+			continue
+		} else if worktreeDesc == nil {
+			worktreeDesc = &WorktreeDescriptor{}
+		}
+
+		if strings.HasPrefix(line, "worktree ") {
+			worktreeDesc.Path = strings.TrimPrefix(line, "worktree ")
+		} else if strings.HasPrefix(line, "HEAD ") {
+			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
+		} else if strings.HasPrefix(line, "branch ") {
+			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
+		} else if line == "" {
+			res = append(res, *worktreeDesc)
+			worktreeDesc = nil
+		}
+	}
+
+	return res, nil
 }

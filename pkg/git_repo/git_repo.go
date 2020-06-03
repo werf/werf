@@ -6,7 +6,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-const GitRepoCacheVersion = "1"
+const GitRepoCacheVersion = "2"
 
 type PatchOptions struct {
 	FilterOptions

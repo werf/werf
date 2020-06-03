@@ -800,9 +800,10 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
 		remoteGitRepo, exist := c.remoteGitRepos[remoteGitMappingConfig.Name]
 		if !exist {
-			remoteGitRepo = &git_repo.Remote{
-				Base: git_repo.Base{Name: remoteGitMappingConfig.Name},
-				Url:  remoteGitMappingConfig.Url,
+			var err error
+			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url)
+			if err != nil {
+				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %s", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
 			}
 
 			if err := logboek.Info.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LevelLogProcessOptions{}, func() error {
