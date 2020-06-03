@@ -61,9 +61,7 @@ assets_generator_chosen: "webpack"
 . $(multiwerf use 1.1 stable --as-file)
 ```
 
-[expand]
-
-[expand-title]Тут заголовок[/expand-title]
+{% offtopic title="Тут заголовок" %}
 
 Перед деплоем нашего приложения необходимо убедиться что наша инфраструктура готова к тому чтобы использовать werf. Используя [инструкцию](https://ru.werf.io/documentation/guides/gitlab_ci_cd_integration.html#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-runner) по подготовке к использованию Werf в Gitlab CI, вам нужно убедиться что все следующие пункты выполнены:
 
@@ -74,6 +72,15 @@ assets_generator_chosen: "webpack"
 *   Для пользователя, которого использует gitlab-runner и под которым запускается сборка и деплой, установлен kubectl и добавлен конфигурационный файл для подключения к kubernetes.
 *   Для gitlab включен и настроен gitlab registry
 *   Gitlab-runner имеет доступ к API kubernetes и запускается по тегу werf
+ 
+{% endofftopic %}
 
-[/expand]
+фылопыва ыфраш аршцу апшзйц паз
+
+{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml" %}
+```yaml
+project: example-1
+configVersion: 1
+```
+{% endsnippetcut %}
 

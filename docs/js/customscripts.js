@@ -156,32 +156,12 @@ $(document).ready(function () {
 
 */
 $(document).ready(function () {
-
-  var elements = document.querySelectorAll('p');
-  console.log(elements);
-  Array.prototype.forEach.call(elements, function(el, i) {
-    if (el.innerHTML == '[expand]') {
-      var parentcontent = el.parentNode.innerHTML.replace('<p>[expand]</p>', '<div class="expand"><div class="expand-content">').replace('<p>[/expand]</p>', '</div></div>');
-      el.parentNode.innerHTML = parentcontent;
-    }
-  });
-
-  $('.expand').each(function(element){
-    var patt = /\[expand-title\](.+)\[\/expand-title\]+/i
-    var my_html = $(this).html();
-    var matches = patt.exec(my_html);
-    $(this).html(my_html.replace(patt,""));
-    $(this).prepend('<a href="#" class="expand-click">'+matches[1]+'</a>');
-  });
-
   $('.expand-content').hide();
 
-  $('.expand').each(function(){
-    $('.expand .expand-click').click(function(event){
-      event.preventDefault();
-      console.log($(this).parent());
-      $(this).parent().find('.expand-content').toggle();
-    });
+  $('.expand .expand-click').click(function(event){
+    event.preventDefault();
+    console.log($(this).parent());
+    $(this).parent().find('.expand-content').toggle();
   });
 });
 
