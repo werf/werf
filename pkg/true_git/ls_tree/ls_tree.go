@@ -387,22 +387,22 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 func submoduleRepositoryAndTree(repository *git.Repository, submoduleName string) (*git.Repository, *object.Tree, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot inspect worktree: %s", err)
 	}
 
 	submodule, err := worktree.Submodule(submoduleName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot inspect submodule %q: %s", submoduleName, err)
 	}
 
 	submoduleRepository, err := submodule.Repository()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot inspect submodule %q repository: %s", submoduleName, err)
 	}
 
 	submoduleStatus, err := submodule.Status()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot get submodule %q status: %s", submoduleName, err)
 	}
 
 	if debugProcess() {
@@ -418,12 +418,12 @@ func submoduleRepositoryAndTree(repository *git.Repository, submoduleName string
 
 	commit, err := submoduleRepository.CommitObject(submoduleStatus.Expected)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot inspect submodule %q commit %q: %s", submoduleName, submoduleStatus.Expected, err)
 	}
 
 	submoduleTree, err := commit.Tree()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot inspect submodule %q commit %q tree: %s", submoduleName, submoduleStatus.Expected, err)
 	}
 
 	return submoduleRepository, submoduleTree, nil
