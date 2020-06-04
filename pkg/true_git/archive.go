@@ -130,7 +130,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 
 	logProcessMsg := fmt.Sprintf("ls-tree (%s)", opts.PathMatcher.String())
 	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-	result, err := ls_tree.LsTree(repository, opts.Commit, opts.PathMatcher)
+	result, err := ls_tree.LsTree(repository, opts.Commit, opts.PathMatcher, true)
 	if err != nil {
 		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 		return nil, err
