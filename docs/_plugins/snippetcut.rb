@@ -16,17 +16,14 @@ module Jekyll
         @config = {}
         override_config(@@DEFAULTS)
 
-        params = markup.split
+        params = markup.scan /([a-z]+)\=\"(.+?)\"/
         if params.size > 0
           config = {}
           params.each do |param|
-            param = param.gsub /\s+/, ''
-            key, value = param.split(':',2)
-            config[key.to_sym] = value
+            config[param[0].to_sym] = param[1]
           end
           override_config(config)
         end
-
       end
 
       def override_config(config)
@@ -38,12 +35,12 @@ module Jekyll
 
         rendered_content = Jekyll::Converters::Markdown::KramdownParser.new(Jekyll.configuration()).convert(content)
 
-        <<-HTML.gsub /^\s+/, '' # remove whitespaces from heredocs
-        <div class="expand">
-            <p><strong>#{@config[:name]}</strong> <a href="#{@config[:url]}">🔗</a></p>
-            #{rendered_content}
-        </div>
-        HTML
+        %Q(
+<div class="expand">
+<p><strong>#{@config[:name]}</strong> <a href="#{@config[:url]}">🔗</a></p>
+#{rendered_content}
+</div>
+        )
       end
     end
   end
