@@ -536,6 +536,14 @@
     margin-right: 5px;
 }
 
+.filesused {
+  width: 400px;
+  border: 1px solid #eee;
+  padding: 0px 10px 10px 10px;
+  margin: 0px 0px 0px auto;
+}
+
+
 .docs .details .details__lnk {
   text-align: right;
 }
