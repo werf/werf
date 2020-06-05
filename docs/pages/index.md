@@ -4,15 +4,43 @@ permalink: /
 layout: default
 ---
 
+<div class="presentation" id="presentation">
+    <div class="presentation__bg" id="presentation-bg"></div>
+    <div class="page__container presentation__container">
+        <div class="presentation__row">
+            <div class="presentation__row-item" id="presentation-title">
+                <div class="presentation__subtitle">Consistent delivery tool</div>
+                <h1 class="presentation__title">What you Git<br/> is what you get!</h1>
+                <ul class="presentation__features">
+                    <li>Single source of truth in Git.</li>
+                    <li>Build. Deploy to Kubernetes. Stay in sync.</li>
+                    <li>Open Source. Written in Go.</li>
+                </ul>
+            </div>
+            <div class="presentation__row-item presentation__row-item_scheme">
+                {% include scheme.md %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="welcome">
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
+                It’s GitOps,<br/>
+                but done <span>another way</span>!
+            </h1>
+            <div class="welcome__subtitle">
+                Git as a single source of&nbsp;truth, allowing you to&nbsp;make the&nbsp;whole delivery pipeline deterministic and&nbsp;idempotent. 
+                You can use it from your CI, or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
+            </div>
+            <!-- <h1 class="welcome__title">
                 GitOps CLI tool
             </h1>
             <div class="welcome__subtitle">
                  Deliver your application quickly & easily.<br/>Open Source. Written in Go.
-            </div>
+            </div> -->
             <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="werf.io">
@@ -21,9 +49,9 @@ layout: default
             </form>
             -->
             <div class="welcome__extra-content">
-                <div class="welcome__extra-content-title">
+                <!-- <div class="welcome__extra-content-title">
                     CLI tool to use in CI/CD pipelines
-                </div>
+                </div> -->
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
