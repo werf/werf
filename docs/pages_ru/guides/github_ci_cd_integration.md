@@ -134,7 +134,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Рассмотрим базовые GitHub workflow файлы, которые лягут в основу всех предложенных вариантов.
 
-Сначала разберём файл `.github\workflows\review_deployment.yml`.
+Сначала разберём файл `.github/workflows/review_deployment.yml`.
 
 {% include /guides/github_ci_cd_integration/review_base.md %}
 
@@ -153,7 +153,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 ```
 {% endraw %}
 
-Далее файл `.github\workflows\review_deployment_dismiss.yml`.
+Далее файл `.github/workflows/review_deployment_dismiss.yml`.
 
 {% include /guides/github_ci_cd_integration/review_dismiss_base.md %}
 
