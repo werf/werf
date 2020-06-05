@@ -51,6 +51,7 @@ func (repo *Local) GetMergeCommitParents(commit string) ([]string, error) {
 type LsTreeOptions struct {
 	Commit        string
 	UseHeadCommit bool
+	Strict        bool
 }
 
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
@@ -72,7 +73,7 @@ func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptio
 		commit = opts.Commit
 	}
 
-	return ls_tree.LsTree(repository, commit, pathMatcher)
+	return ls_tree.LsTree(repository, commit, pathMatcher, opts.Strict)
 }
 
 func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {

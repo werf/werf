@@ -412,7 +412,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 			processMsg,
 			logboek.LevelLogProcessOptions{},
 			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher)
+				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
 				return err
 			},
 		); err != nil {

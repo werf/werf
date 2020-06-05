@@ -29,7 +29,7 @@ func newHash(s string) (plumbing.Hash, error) {
 	return h, nil
 }
 
-func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, strict bool) (*Result, error) {
 	commitHash, err := newHash(commit)
 	if err != nil {
 		return nil, fmt.Errorf("invalid commit %q: %s", commit, err)
@@ -54,7 +54,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 		notInitializedSubmoduleFullFilepaths: []string{},
 	}
 
-	worktreeNotInitializedSubmodulePaths, err := notInitializedSubmoduleFullFilepaths(repository, "", pathMatcher)
+	worktreeNotInitializedSubmodulePaths, err := notInitializedSubmoduleFullFilepaths(repository, "", pathMatcher, strict)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,7 @@ func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath stri
 	return entryTree, nil
 }
 
-func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) ([]string, error) {
+func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher, strict bool) ([]string, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -355,7 +355,7 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 		if isMatched || shouldGoThrough {
 			submoduleRepository, err := submodule.Repository()
 			if err != nil {
-				if err == git.ErrSubmoduleNotInitialized {
+				if err == git.ErrSubmoduleNotInitialized && !strict {
 					resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepath)
 
 					if debugProcess() {
@@ -372,7 +372,7 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
 			}
 
-			submoduleFullFilepaths, err := notInitializedSubmoduleFullFilepaths(submoduleRepository, submoduleFullFilepath, pathMatcher)
+			submoduleFullFilepaths, err := notInitializedSubmoduleFullFilepaths(submoduleRepository, submoduleFullFilepath, pathMatcher, strict)
 			if err != nil {
 				return nil, err
 			}
