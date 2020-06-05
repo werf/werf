@@ -4,15 +4,42 @@ permalink: /
 layout: default
 ---
 
+<div class="presentation" id="presentation">
+    <div class="presentation__bg" id="presentation-bg"></div>
+    <div class="page__container presentation__container">
+        <div class="presentation__row">
+            <div class="presentation__row-item" id="presentation-title">
+                <div class="presentation__subtitle">Инструмент консистентной доставки</div>
+                <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Что ты git'ишь, то и видишь!">*</span></h1>
+                <ul class="presentation__features">
+                    <li>Git — единый источник истины.</li>
+                    <li>Сборка. Деплой в Kubernetes. Постоянная синхронизация.</li>
+                    <li>Open Source. Написано на Go.</li>
+                </ul>
+            </div>
+            <div class="presentation__row-item presentation__row-item_scheme">
+                {% include scheme_ru.md %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="welcome">
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
+                Это GitOps, но <span>по-другому</span>!
+            </h1>
+            <div class="welcome__subtitle">
+                Git, будучи единым источником истины, позволяет добиться детерминированного и&nbsp;идемпотентного процесса доставки по&nbsp;всему пайплайну. 
+                Возможно применение как из&nbsp;CI-системы, так&nbsp;и&nbsp;с&nbsp;оператором (фича в&nbsp;разработке и&nbsp;будет доступна в&nbsp;ближайшее время).
+            </div>
+            <!-- <h1 class="welcome__title">
                 GitOps-утилита
             </h1>
             <div class="welcome__subtitle">
                  Выкатывайте приложения быстро и просто.<br/>Open Source. Написана на Go.
-            </div>
+            </div> -->            
             <!--
             <form action="https://www.google.com/search" class="welcome__search" method="get" name="searchform" target="_blank">
                 <input name="sitesearch" type="hidden" value="ru.werf.io">
@@ -21,9 +48,9 @@ layout: default
             </form>
             -->
             <div class="welcome__extra-content">
-                <div class="welcome__extra-content-title">
+                <!--<div class="welcome__extra-content-title">
                     CLI-утилита для использования в <span>пайплайнах CI/CD</span>
-                </div>
+                </div>-->
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
