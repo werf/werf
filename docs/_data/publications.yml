@@ -3,6 +3,20 @@ en:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Distributed CI/CD with werf"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/werf-distributed-build-deploy-7724f6c31988"
+    img: "/images/publications/en_020620.png"
+    created: 2020-06-02
+    comment: |
+      <p>werf is our Open Source tool to build your applications and deploy them to Kubernetes — continuously & consistently. Today we are excited to announce that werf has learned to operate in a distributed mode!</p>
+  - title: "Full support for popular Docker Registry implementations in werf"
+    medium_title: "Read on Medium"
+    medium_url: "https://medium.com/flant-com/docker-registry-support-in-werf-fa8eee780c44"
+    img: "/images/publications/en_060520.png"
+    created: 2020-05-06
+    comment: |
+      <p>Container registries tend to support the Docker Registry HTTP API, allowing their users to rely on the same tools to operate them. However, some implementations have their peculiarities and limitations. Thus, you have to take into account their specifics when using them as part of your CI/CD toolchain. That is exactly what happened when we decided to improve the way our werf GitOps utility manages the lifecycle of images.</p>
   - title: "Content-based tagging in the werf builder"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/content-based-tagging-in-werf-eb96d22ac509"
@@ -90,6 +104,13 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Организация распределенного CI/CD с помощью werf"
+    habr_title: "Прочитать на Хабре"
+    habr_url: "https://habr.com/ru/company/flant/blog/504390/"
+    img: "/images/publications/ru_020620.png"
+    created: 2020-06-02
+    comment: |
+      <p>Сегодня мы с радостью сообщаем, что werf научилась работать в распределенном режиме, начиная с версии v1.1.10 (доступна в каналах v1.1 alpha, beta, ea и stable). Для его подключения требуется минимум усилий...</p>
   - title: "Полная поддержка популярных реализаций Docker Registry в werf"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/496992/"
