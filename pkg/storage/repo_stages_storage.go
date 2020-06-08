@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 
 	"github.com/werf/werf/pkg/werf"
 

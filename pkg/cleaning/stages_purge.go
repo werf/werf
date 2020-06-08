@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/stages_manager"

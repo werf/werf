@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/flant/lockgate"
+import "github.com/werf/lockgate"
 
 type LockManager interface {
 	LockStage(projectName, signature string) (LockHandle, error)

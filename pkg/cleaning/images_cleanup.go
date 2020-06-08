@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/werf/werf/pkg/werf"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/werf"
 )

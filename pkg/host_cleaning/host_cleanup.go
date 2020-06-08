@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/docker/docker/api/types"

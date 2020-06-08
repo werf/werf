@@ -16,7 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 )
 
