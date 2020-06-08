@@ -23,7 +23,7 @@ werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
  * Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
 
- * Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+ * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
  * Installed `kubectl` on a host machine configured to access your Kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 

@@ -83,13 +83,13 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    
 1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
 1. Install [werf dependencies]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
-1. Install [multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+1. Install [multiwerf](https://github.com/werf/multiwerf) under the `gitlab-runner` user:
 
    ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
-   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+   curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
    ```
    
 1. Copy the kubectl config to the home directory of the gitlab-runner user.

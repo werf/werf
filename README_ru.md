@@ -141,7 +141,7 @@ sudo usermod -aG docker $USER
 
 ## Установка werf
 
-Существует множество способов установки werf и большинство освещается в [Руководстве по установке](https://ru.werf.io/documentation/guides/installation.html). Далее будет рассмотрена установка с помощью [multiwerf](https://github.com/flant/multiwerf), рекомендованным способом как при локальной разработке, так и в CI. 
+Существует множество способов установки werf и большинство освещается в [Руководстве по установке](https://ru.werf.io/documentation/guides/installation.html). Далее будет рассмотрена установка с помощью [multiwerf](https://github.com/werf/multiwerf), рекомендованным способом как при локальной разработке, так и в CI. 
 
 <!-- WERF DOCS PARTIAL BEGIN: Installing with multiwerf -->
 
@@ -157,7 +157,7 @@ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
 # установка multiwerf в директорию ~/bin
 mkdir -p ~/bin
 cd ~/bin
-curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
 ##### Добавление werf alias в текущую shell-сессию
@@ -273,7 +273,7 @@ werf использует [семантическое версионирован
   Мы **гарантируем**, что версия из канала обновлений `stable` перейдет в канал обновлений `rock-solid` не ранее чем через 2 недели плотного тестирования.
   Мы **гарантируем** обратную совместимость между версиями канала обновлений `rock-solid` в пределах минорной версии (1.1.x).
 
-Соответствие каналов и релизов описывается в файле [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json), а использование актуальной версии werf в рамках канала должно быть организовано с помощью утилиты [multiwerf](https://github.com/flant/multiwerf).
+Соответствие каналов и релизов описывается в файле [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json), а использование актуальной версии werf в рамках канала должно быть организовано с помощью утилиты [multiwerf](https://github.com/werf/multiwerf).
 
 Каналы стабильности и частые релизы позволяют получать непрерывную обратную связь по новым изменениям, выполнять быстрый откат проблемных изменений, а также обеспечивать высокую степень стабильности и при этом приемлемую скорость разработки. 
 

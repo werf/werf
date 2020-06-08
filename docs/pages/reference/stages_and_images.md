@@ -277,7 +277,7 @@ There are 2 types of sycnhronization components:
    - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.
  2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE` param.
   - Kubernetes _stages storage cache_ is stored in the specified `NAMESPACE` in ConfigMap named by project `cm/PROJECT_NAME`.
-  - Kubernetes _lock manager_  uses ConfigMap named by project `cm/PROJECT_NAME` (the same as stages storage cache) to store distributed locks in the annotations. [Lockgate library](https://github.com/flant/lockgate) is used as implementation of distributed locks using kubernetes resource annotations.
+  - Kubernetes _lock manager_  uses ConfigMap named by project `cm/PROJECT_NAME` (the same as stages storage cache) to store distributed locks in the annotations. [Lockgate library](https://github.com/werf/lockgate) is used as implementation of distributed locks using kubernetes resource annotations.
 
 Werf uses `--synchronization=:local` (local _stages storage cache_ and local _lock manager_) by default when _local stages storage_ is used (`--stages-storage=:local`).
 

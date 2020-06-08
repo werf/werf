@@ -138,7 +138,7 @@ sudo usermod -aG docker $USER
 
 ## Installing werf
 
-There are a lot of ways to install werf, but using [multiwerf](https://github.com/flant/multiwerf) is a recommended practice both for local development and CI usage. 
+There are a lot of ways to install werf, but using [multiwerf](https://github.com/werf/multiwerf) is a recommended practice both for local development and CI usage. 
 
 > The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html)
 
@@ -156,7 +156,7 @@ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
 # install multiwerf into ~/bin directory
 mkdir -p ~/bin
 cd ~/bin
-curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
 ##### Add werf alias to the current shell session
@@ -276,7 +276,7 @@ All changes go through all stability channels:
   We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
   We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
 
-The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
 
 > When using release channels, you do not specify a version, because the version is managed automatically within the channel
   

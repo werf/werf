@@ -26,7 +26,7 @@ All changes go through all stability channels:
   We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
   We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
 
-The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
 
 > When using release channels, you do not specify a version, because the version is managed automatically within the channel
   

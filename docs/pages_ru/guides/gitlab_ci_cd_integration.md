@@ -81,13 +81,13 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 1. Установим [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) и настроим `kubectl`, если они не были установлены ранее.
 1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#требования).
-1. Установим [multiwerf](https://github.com/flant/multiwerf) пользователем `gitlab-runner`:
+1. Установим [multiwerf](https://github.com/werf/multiwerf) пользователем `gitlab-runner`:
 
    ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
-   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+   curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
    ```
 
 1. Скопируем файл конфигурации `kubectl` в домашнюю папку пользователя `gitlab-runner`.
