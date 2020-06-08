@@ -14,6 +14,9 @@ create_github_release() {
 JSON
 )
 
+    echo "DEBUG: https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases"
+    echo "DEBUG: $GHPAYLOAD"
+
     curlResponse=$(mktemp)
     status=$(curl -s -w %{http_code} -o $curlResponse \
         --request POST \
