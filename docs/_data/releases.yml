@@ -29,7 +29,7 @@ releases:
     system file  \n  \nAllow `REPO/.git` to be the file with content like:  \n  \n```
     \ \ngitdir: REAL_REPO_DIR  \n```  \n  \nThis `REPO/.git` file is created by git
     when repo-dir reside outside of work tree dir.  \n  \n# [fix 3-way-merge] No additional
-    patches filtering when creating final 3wm patch  \n  \nhttps://github.com/flant/helm/pull/32
+    patches filtering when creating final 3wm patch  \n  \nhttps://github.com/werf/helm/pull/32
     \ \n  \n# Installation  \n  \n[Linux amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-linux-amd64-v1.0.6-rc.5)
     \ \n  \n[Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-darwin-amd64-v1.0.6-rc.5)
     \ \n  \n[Windows amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-windows-amd64-v1.0.6-rc.5.exe)
@@ -470,7 +470,7 @@ releases:
     \ \n942c67cb737351a548ecc25920a07e2bc3f6e139 [tests] Simple werf.io getting-started
     test  \nd7b2b440117af70bee71916646c5eb6870c50009 Update flant/werf-builder:1.1.0
     build cache image  \n2ac3d3f521586cefd0d16d964130b7adaa36acf9 [go.mod] Update
-    flant/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
+    werf/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
     [go.mod] Pin github.com/containerd/containerd to v1.2.3  \n00bbbd3cf8f539f32d8509391cb66e9a53788980
     [docs] Rework README and main page werf.io werf intro  \ne1329242239e9c28bc1f1317ef6db99e0a7cffca
     [stapel image] Fix `warning: unable to access '/root/.config/git/attributes':
@@ -838,7 +838,7 @@ releases:
     \ \n942c67cb737351a548ecc25920a07e2bc3f6e139 [tests] Simple werf.io getting-started
     test  \nd7b2b440117af70bee71916646c5eb6870c50009 Update flant/werf-builder:1.1.0
     build cache image  \n2ac3d3f521586cefd0d16d964130b7adaa36acf9 [go.mod] Update
-    flant/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
+    werf/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
     [go.mod] Pin github.com/containerd/containerd to v1.2.3  \n00bbbd3cf8f539f32d8509391cb66e9a53788980
     [docs] Rework README and main page werf.io werf intro  \ne1329242239e9c28bc1f1317ef6db99e0a7cffca
     [stapel image] Fix `warning: unable to access '/root/.config/git/attributes':
@@ -1292,7 +1292,7 @@ releases:
     system file  \n  \nAllow `REPO/.git` to be the file with content like:  \n  \n```
     \ \ngitdir: REAL_REPO_DIR  \n```  \n  \nThis `REPO/.git` file is created by git
     when repo-dir reside outside of work tree dir.  \n  \n# [fix 3-way-merge] No additional
-    patches filtering when creating final 3wm patch  \n  \nhttps://github.com/flant/helm/pull/32
+    patches filtering when creating final 3wm patch  \n  \nhttps://github.com/werf/helm/pull/32
     \ \n  \n# Installation  \n  \n[Linux amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-linux-amd64-v1.0.6-rc.5)
     \ \n  \n[Darwin amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-darwin-amd64-v1.0.6-rc.5)
     \ \n  \n[Windows amd64](https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-windows-amd64-v1.0.6-rc.5.exe)
@@ -1731,7 +1731,7 @@ releases:
     \ \n942c67cb737351a548ecc25920a07e2bc3f6e139 [tests] Simple werf.io getting-started
     test  \nd7b2b440117af70bee71916646c5eb6870c50009 Update flant/werf-builder:1.1.0
     build cache image  \n2ac3d3f521586cefd0d16d964130b7adaa36acf9 [go.mod] Update
-    flant/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
+    werf/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
     [go.mod] Pin github.com/containerd/containerd to v1.2.3  \n00bbbd3cf8f539f32d8509391cb66e9a53788980
     [docs] Rework README and main page werf.io werf intro  \ne1329242239e9c28bc1f1317ef6db99e0a7cffca
     [stapel image] Fix `warning: unable to access '/root/.config/git/attributes':
@@ -2099,7 +2099,7 @@ releases:
     \ \n942c67cb737351a548ecc25920a07e2bc3f6e139 [tests] Simple werf.io getting-started
     test  \nd7b2b440117af70bee71916646c5eb6870c50009 Update flant/werf-builder:1.1.0
     build cache image  \n2ac3d3f521586cefd0d16d964130b7adaa36acf9 [go.mod] Update
-    flant/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
+    werf/helm and werf/kubedog to use k8s.io/kubernetes v1.16.0  \n82c98019bb62f83003ff7084347a10e04fa17783
     [go.mod] Pin github.com/containerd/containerd to v1.2.3  \n00bbbd3cf8f539f32d8509391cb66e9a53788980
     [docs] Rework README and main page werf.io werf intro  \ne1329242239e9c28bc1f1317ef6db99e0a7cffca
     [stapel image] Fix `warning: unable to access '/root/.config/git/attributes':
