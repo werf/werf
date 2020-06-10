@@ -499,14 +499,14 @@ metadata:
 </div>
 
 <div id="show-service-messages" class="tabs__content active">
-  <img src="https://raw.githubusercontent.com/werf/werf-demos/master/deploy/werf-new-track-modes-1.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
 </div>
 <div id="skip-logs" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/werf/werf-demos/master/deploy/werf-new-track-modes-2.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-2.gif" />
 </div>
 
 <div id="track-termination-mode" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/werf/werf-demos/master/deploy/werf-new-track-modes-3.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-3.gif" />
 </div>
 
 #### Track termination mode
