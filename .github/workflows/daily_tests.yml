@@ -458,7 +458,7 @@ jobs:
         git fetch origin +refs/tags/v1.0.10:refs/tags/v1.0.10
 
         # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
+        git clone https://github.com/werf/ginkgo.git fork
         cd fork/ginkgo
         go build .
         mv ginkgo $GITHUB_WORKSPACE
@@ -532,7 +532,7 @@ jobs:
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
         # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
+        git clone https://github.com/werf/ginkgo.git fork
         cd fork/ginkgo
         go build .
         mv ginkgo $GITHUB_WORKSPACE
