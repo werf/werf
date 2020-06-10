@@ -14,7 +14,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 * `dismiss` — задание удаления приложения (используется только для review окружений);
 * `cleanup` — задание очистки хранилища стадий и Docker registry.
 
-Ключевыми шагами заданий будут наши комплексные GitHub Actions, [flant/werf-actions](https://github.com/flant/werf-actions), которые сочетают в себе все необходимые шаги по подготовке окружения и выполнения требуемых werf команд. В статье будут рассмотрены примеры использования большинства из них, больше подробностей можно найти в репозитории набора.
+Ключевыми шагами заданий будут наши комплексные GitHub Actions, [werf/actions](https://github.com/werf/actions), которые сочетают в себе все необходимые шаги по подготовке окружения и выполнения требуемых werf команд. В статье будут рассмотрены примеры использования большинства из них, больше подробностей можно найти в репозитории набора.
 
 Набор контуров в кластере Kubernetes может варьироваться в зависимости от многих факторов.
 В статье будут приведены различные варианты организации окружений для следующих:
@@ -67,12 +67,12 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 ```
 {% endraw %}
 
-Следующим шагом используется action `flant/werf-actions/converge`, который объединяет все необходимые шаги, подготавливает окружение и вызывает соответствующую команду.  
+Следующим шагом используется action `werf/actions/converge`, который объединяет все необходимые шаги, подготавливает окружение и вызывает соответствующую команду.  
 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -89,7 +89,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -106,7 +106,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     env: ANY_ENV_NAME
   env:

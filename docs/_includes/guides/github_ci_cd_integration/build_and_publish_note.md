@@ -16,7 +16,7 @@
 >         fetch-depth: 0
 > 
 >     - name: Build and Publish
->       uses: flant/werf-actions/build-and-publish@master
+>       uses: werf/actions/build-and-publish@master
 >       with:
 >         kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 > 
@@ -32,7 +32,7 @@
 >         fetch-depth: 0
 > 
 >     - name: Deploy
->       uses: flant/werf-actions/deploy@master
+>       uses: werf/actions/deploy@master
 >       with:
 >         env: production
 >         kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
