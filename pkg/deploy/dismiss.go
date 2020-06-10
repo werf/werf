@@ -1,8 +1,8 @@
 package deploy
 
 import (
-	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/storage"
 )

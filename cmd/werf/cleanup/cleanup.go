@@ -8,8 +8,8 @@ import (
 
 	"github.com/werf/werf/pkg/stages_manager"
 
-	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"

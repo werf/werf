@@ -6,17 +6,17 @@ import (
 
 	stages_common "github.com/werf/werf/cmd/werf/stages/common"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/storage"
 
 	"github.com/flant/logboek"
+	"github.com/spf13/cobra"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var cmdData stages_common.SyncCmdData

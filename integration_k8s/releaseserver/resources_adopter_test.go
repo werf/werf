@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/testing/utils"
 	"github.com/werf/werf/pkg/testing/utils/liveexec"
 	"github.com/werf/werf/pkg/testing/utils/resourcesfactory"

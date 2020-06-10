@@ -12,8 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/werf/werf/cmd/werf/common"
 	helm_common "github.com/werf/werf/cmd/werf/helm/common"

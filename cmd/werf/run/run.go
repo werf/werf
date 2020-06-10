@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stages_manager"
 

@@ -27,7 +27,6 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/fatih/color v1.9.0
-	github.com/flant/kubedog v0.3.5-0.20200228135326-83b69f5024b7
 	github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263
 	github.com/flant/logboek v0.3.4
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -66,6 +65,7 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20190130224639-b4281fa67095 // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
+	github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190809123943-df4f5c81cb3b // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a // indirect

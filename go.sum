@@ -239,8 +239,6 @@ github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL
 github.com/flant/helm v0.0.0-20200506171044-5fb767b2db6c h1:4J50AoJgSC31EqG9T2TdHSDF+NuxGtakkaFfgxjMmg0=
 github.com/flant/helm v0.0.0-20200506171044-5fb767b2db6c/go.mod h1:rBQrZQK7AGqzCP1Ve/pE1irL0A9WGQySaDXhpZ6AIJM=
 github.com/flant/kubedog v0.3.4/go.mod h1:o9cSuE3Z/kgxKhLCLUGUc9vPOFQgmY0B+7bdOQq++7o=
-github.com/flant/kubedog v0.3.5-0.20200228135326-83b69f5024b7 h1:MxWMApTpuVPnsFU/Di/Ltv60stjqz+6/hJDWFv760vM=
-github.com/flant/kubedog v0.3.5-0.20200228135326-83b69f5024b7/go.mod h1:Tkg/l35Ep+mhIlDi8N2cSqOckllKjXSsJrDZnpJ/Wg4=
 github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263 h1:uPA08xQJzABlcaDfxuxSN6VwY284AfgiOmr9/4hy+MY=
 github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263/go.mod h1:RBJF6PjUgAZADae/SC3skanE/vD9Jrnbs7F6hqLo7ik=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=

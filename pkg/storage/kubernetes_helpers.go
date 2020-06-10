@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/kube"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

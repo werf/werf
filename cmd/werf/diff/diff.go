@@ -8,7 +8,7 @@ import (
 
 	"github.com/werf/werf/pkg/images_manager"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
 
