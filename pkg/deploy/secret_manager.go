@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/deploy/werf_chart"

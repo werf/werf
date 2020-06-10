@@ -352,8 +352,8 @@ RUN bash -ec "echo '142.93.108.123 gonum.org www.gonum.org' >> /etc/hosts && go 
 
 ADD cmd /werf/cmd
 ADD pkg /werf/pkg
-RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/flant/logboek/c_lib
-RUN cp /root/go/pkg/mod/github.com/flant/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
+RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/werf/logboek/c_lib
+RUN cp /root/go/pkg/mod/github.com/werf/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
 RUN cp /werf/pkg/build/builder/ansible/crypt.py $TOOLS/embedded/lib/python2.7
 
 # Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)

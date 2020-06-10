@@ -17,7 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 
 	"github.com/flant/lockgate"
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type Remote struct {

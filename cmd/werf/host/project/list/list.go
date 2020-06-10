@@ -12,7 +12,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-units"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"

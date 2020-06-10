@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/git_repo/check_ignore"
 	"github.com/werf/werf/pkg/git_repo/status"

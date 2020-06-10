@@ -3,7 +3,7 @@ package cleaning
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"

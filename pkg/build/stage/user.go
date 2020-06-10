@@ -3,7 +3,7 @@ package stage
 import (
 	"os"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"

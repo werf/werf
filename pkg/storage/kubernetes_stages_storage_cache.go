@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/errors"

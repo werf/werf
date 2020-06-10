@@ -3,7 +3,7 @@ package deploy
 import (
 	"github.com/ghodss/yaml"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/tag_strategy"

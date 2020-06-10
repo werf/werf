@@ -9,8 +9,8 @@ import (
 
 	"github.com/werf/werf/pkg/image"
 
-	"github.com/flant/logboek"
 	"github.com/spf13/cobra"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	stages_common "github.com/werf/werf/cmd/werf/stages/common"
 	"github.com/werf/werf/pkg/container_runtime"

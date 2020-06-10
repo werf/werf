@@ -9,8 +9,8 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/storage"
 
-	"github.com/flant/logboek"
 	"github.com/spf13/cobra"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"

@@ -12,8 +12,8 @@ import (
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
-	"github.com/flant/logboek"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"

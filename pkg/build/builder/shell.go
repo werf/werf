@@ -8,7 +8,7 @@ import (
 
 	"gopkg.in/oleiade/reflections.v1"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/stapel"

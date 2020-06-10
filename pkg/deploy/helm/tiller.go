@@ -33,7 +33,7 @@ import (
 	tiller_env "k8s.io/helm/pkg/tiller/environment"
 	"k8s.io/helm/pkg/timeconv"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type ThreeWayMergeModeType string

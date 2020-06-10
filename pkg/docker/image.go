@@ -10,7 +10,7 @@ import (
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 	"golang.org/x/net/context"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type apiError struct {

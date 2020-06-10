@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/werf/pkg/stages_manager"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"

@@ -14,7 +14,7 @@ import (
 
 	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type WithWorkTreeOptions struct {

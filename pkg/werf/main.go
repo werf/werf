@@ -7,7 +7,7 @@ import (
 	"runtime"
 
 	"github.com/flant/lockgate/pkg/file_lock"
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/flant/lockgate"
 )

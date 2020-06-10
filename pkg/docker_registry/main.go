@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/logs"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 var generic *api

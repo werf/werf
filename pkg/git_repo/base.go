@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"

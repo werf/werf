@@ -13,7 +13,7 @@ import (
 
 	"github.com/docker/docker/pkg/stringid"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/image"

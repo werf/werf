@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/lockgate"
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/werf"
 )
 

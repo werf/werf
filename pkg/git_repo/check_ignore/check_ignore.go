@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 func CheckIgnore(repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {

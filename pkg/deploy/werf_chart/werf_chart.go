@@ -10,7 +10,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/util"

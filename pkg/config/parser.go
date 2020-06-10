@@ -16,7 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/logging"

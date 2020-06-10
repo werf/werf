@@ -3,7 +3,7 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
 )

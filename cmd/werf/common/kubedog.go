@@ -4,8 +4,8 @@ import (
 	"flag"
 	"io/ioutil"
 
-	"github.com/flant/logboek"
 	"github.com/werf/kubedog/pkg/display"
+	"github.com/werf/logboek"
 	"k8s.io/klog"
 )
 

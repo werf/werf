@@ -13,8 +13,8 @@ import (
 
 	helm_kube "k8s.io/helm/pkg/kube"
 
-	"github.com/flant/logboek"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )

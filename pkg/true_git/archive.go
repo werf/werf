@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
