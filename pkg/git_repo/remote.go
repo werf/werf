@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/ini.v1"
 
-	"github.com/flant/werf/pkg/true_git"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

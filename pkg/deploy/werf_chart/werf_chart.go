@@ -11,11 +11,11 @@ import (
 	"github.com/ghodss/yaml"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/util/secretvalues"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (
@@ -38,7 +38,7 @@ type WerfChart struct {
 }
 
 func (chart *WerfChart) SetGlobalAnnotation(name, value string) error {
-	// TODO: https://github.com/flant/werf/issues/1069
+	// TODO: https://github.com/werf/werf/issues/1069
 	return nil
 }
 

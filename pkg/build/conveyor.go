@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/stages_manager"
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
@@ -22,17 +22,17 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/build/import_server"
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/path_matcher"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/build/import_server"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Conveyor struct {

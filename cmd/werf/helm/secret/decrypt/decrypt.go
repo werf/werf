@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/flant/werf/cmd/werf/common"
-	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {

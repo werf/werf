@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 var (

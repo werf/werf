@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func GetStagesStorageCache(synchronization string) (storage.StagesStorageCache, error) {

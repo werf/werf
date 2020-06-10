@@ -17,8 +17,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 func GetEnvironmentOrStub(environmentOption string) string {

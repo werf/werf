@@ -13,9 +13,9 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
-	"github.com/flant/werf/pkg/path_matcher"
-	"github.com/flant/werf/pkg/true_git/ls_tree"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"github.com/werf/werf/pkg/util"
 )
 
 type ArchiveOptions struct {

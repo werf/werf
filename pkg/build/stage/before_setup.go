@@ -1,10 +1,10 @@
 package stage
 
 import (
-	"github.com/flant/werf/pkg/build/builder"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/build/builder"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/util"
 )
 
 func GenerateBeforeSetupStage(imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {

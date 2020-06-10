@@ -11,11 +11,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/stapel"
 )
 
 const rsyncServerPort = "873"

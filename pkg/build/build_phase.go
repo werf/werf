@@ -8,18 +8,18 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/util"
 
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/image"
-	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/image"
+	imagePkg "github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type BuildPhaseOptions struct {

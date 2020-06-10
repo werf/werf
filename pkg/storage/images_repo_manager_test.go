@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/docker_registry"
 )
 
 func TestGetImagesRepoManager(t *testing.T) {

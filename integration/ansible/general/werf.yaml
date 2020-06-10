@@ -16,7 +16,7 @@ ansible:
       dest: /tmp
   - name: check unarchive zip
     unarchive:
-      src: https://github.com/flant/werf/archive/v1.0.4-beta.7.zip
+      src: https://github.com/werf/werf/archive/v1.0.4-beta.7.zip
       dest: /tmp
       remote_src: yes
   - name: check groupadd

@@ -7,8 +7,8 @@ import (
 
 	"github.com/bmatcuk/doublestar"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/werf"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

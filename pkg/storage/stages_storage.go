@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
 )
 
 const (

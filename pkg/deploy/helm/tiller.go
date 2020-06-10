@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/flant/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/pkg/util/secretvalues"
 
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"

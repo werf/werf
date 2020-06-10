@@ -12,7 +12,7 @@ import (
 
 	"github.com/flant/lockgate"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/flant/logboek"
 )

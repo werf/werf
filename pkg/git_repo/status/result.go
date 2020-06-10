@@ -13,8 +13,8 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/path_matcher"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Result struct {

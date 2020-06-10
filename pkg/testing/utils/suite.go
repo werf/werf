@@ -33,7 +33,7 @@ func ProcessWerfBinPath() string {
 	werfBinPath := os.Getenv("WERF_TEST_BINARY_PATH")
 	if werfBinPath == "" {
 		var err error
-		werfBinPath, err = gexec.Build("github.com/flant/werf/cmd/werf")
+		werfBinPath, err = gexec.Build("github.com/werf/werf/cmd/werf")
 		Ω(err).ShouldNot(HaveOccurred())
 	}
 

@@ -8,21 +8,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	helm_common "github.com/flant/werf/cmd/werf/helm/common"
-	"github.com/flant/werf/pkg/deploy"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/deploy/werf_chart"
-	"github.com/flant/werf/pkg/tmp_manager"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	helm_common "github.com/werf/werf/cmd/werf/helm/common"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {

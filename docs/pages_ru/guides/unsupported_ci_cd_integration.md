@@ -5,7 +5,7 @@ permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-В настоящий момент werf поддерживает только работу с [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), но мы планируем в [скором будущем](https://github.com/flant/werf/issues/1682) обеспечить поддержку и других популярных CI-систем.
+В настоящий момент werf поддерживает только работу с [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), но мы планируем в [скором будущем](https://github.com/werf/werf/issues/1682) обеспечить поддержку и других популярных CI-систем.
 
 Чтобы использовать werf с любой CI/CD системой необходимо написать собственный скрипт, следуя [инструкциям]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные). 
 Получившийся скрипт необходимо использовать вместо вызова команды `werf ci-env`. Так же, как и команда, скрипт должен выполняться перед использованием команд werf вначале задания CI/CD.

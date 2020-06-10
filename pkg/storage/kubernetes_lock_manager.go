@@ -9,7 +9,7 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/lockgate"
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func NewKubernetesLockManager(namespace string) *KuberntesLockManager {

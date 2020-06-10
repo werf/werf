@@ -14,7 +14,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 func newHash(s string) (plumbing.Hash, error) {

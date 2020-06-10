@@ -12,8 +12,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/pkg/testing/utils"
+	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
 )
 
 func TestIntegration(t *testing.T) {
@@ -64,7 +64,7 @@ var _ = BeforeEach(func() {
 
 	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 	stubs.SetEnv("WERF_LOG_DEBUG", "false")
-        stubs.SetEnv("WERF_LOG_VERBOSE", "true")
+	stubs.SetEnv("WERF_LOG_VERBOSE", "true")
 })
 
 var _ = AfterEach(func() {

@@ -12,8 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type FlagExposer interface {

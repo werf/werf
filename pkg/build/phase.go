@@ -1,6 +1,6 @@
 package build
 
-import "github.com/flant/werf/pkg/build/stage"
+import "github.com/werf/werf/pkg/build/stage"
 
 type Phase interface {
 	Name() string

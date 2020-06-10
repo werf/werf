@@ -9,9 +9,9 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 )
 
 const (

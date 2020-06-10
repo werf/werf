@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/spf13/cobra"
+	"github.com/werf/werf/pkg/docker_registry"
 )
 
 type RepoData struct {

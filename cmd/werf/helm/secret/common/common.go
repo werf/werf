@@ -10,7 +10,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 type GenerateOptions struct {

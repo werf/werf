@@ -5,9 +5,9 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type ImagesPurgeOptions struct {

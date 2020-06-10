@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/true_git"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/werf"
 	uuid "github.com/satori/go.uuid"
 )
 

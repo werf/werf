@@ -3,7 +3,7 @@ package path_matcher
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewSimplePathMatcher(basePath string, paths []string, greedySearch bool) *SimplePathMatcher {

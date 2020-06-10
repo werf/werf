@@ -3,20 +3,20 @@ package dismiss
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/deploy"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {

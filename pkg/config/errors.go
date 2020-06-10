@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 type configError struct {

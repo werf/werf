@@ -3,8 +3,8 @@ package deploy
 import (
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 )
 
 func PrepareWerfChart(projectName, helmChartDir, env string, m secret.Manager, secretValues []string, serviceValues map[string]interface{}) (*werf_chart.WerfChart, error) {

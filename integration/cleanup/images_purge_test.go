@@ -6,10 +6,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/docker_registry"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/pkg/testing/utils"
+	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
 )
 
 var _ = forEachDockerRegistryImplementation("purging images", func() {

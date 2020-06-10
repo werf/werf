@@ -1,9 +1,9 @@
 package stage
 
 import (
-	"github.com/flant/werf/pkg/build/builder"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/build/builder"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 )
 
 func GenerateBeforeInstallStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {

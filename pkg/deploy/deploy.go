@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage"
 
 	"github.com/ghodss/yaml"
 
@@ -15,12 +15,12 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/deploy/werf_chart"
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/flant/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
 type DeployOptions struct {

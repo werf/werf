@@ -9,9 +9,9 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/testing/utils"
 )
 
 func init() {

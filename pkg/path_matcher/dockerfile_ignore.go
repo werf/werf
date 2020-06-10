@@ -6,7 +6,7 @@ import (
 
 	"github.com/docker/docker/pkg/fileutils"
 
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher, greedySearch bool) *DockerfileIgnorePathMatcher {

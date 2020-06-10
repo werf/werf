@@ -6,20 +6,20 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleaning"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/tmp_manager"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var commonCmdData common.CmdData

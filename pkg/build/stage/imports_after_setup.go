@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/flant/werf/pkg/config"
+import "github.com/werf/werf/pkg/config"
 
 func GenerateImportsAfterSetupStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *ImportsAfterSetupStage {
 	imports := getImports(imageBaseConfig, &getImportsOptions{After: Setup})

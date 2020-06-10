@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"mvdan.cc/xurls"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/templates"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/common/templates"
 )
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {

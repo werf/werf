@@ -6,7 +6,7 @@ import (
 	"github.com/flant/logboek"
 
 	"github.com/docker/docker/api/types"
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 
 	"github.com/docker/docker/client"
 )

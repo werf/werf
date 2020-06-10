@@ -9,7 +9,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 )
 
 const AzureCrImplementationName = "acr"

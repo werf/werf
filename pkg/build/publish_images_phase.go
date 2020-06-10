@@ -8,12 +8,12 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewPublishImagesPhase(c *Conveyor, imagesRepo storage.ImagesRepo, opts PublishImagesOptions) *PublishImagesPhase {

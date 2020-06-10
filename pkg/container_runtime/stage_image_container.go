@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
 	"github.com/docker/docker/api/types"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 type StageImageContainer struct {

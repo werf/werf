@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (

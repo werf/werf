@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/flant/werf/pkg/container_runtime"
+import "github.com/werf/werf/pkg/container_runtime"
 
 func newGitStage(name StageName, baseStageOptions *NewBaseStageOptions) *GitStage {
 	s := &GitStage{}

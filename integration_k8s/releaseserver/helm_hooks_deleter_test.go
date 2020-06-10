@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +21,7 @@ var _ = Describe("Helm hooks deleter", func() {
 			utils.RunCommand("helm_hooks_deleter_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/flant/werf/issues/1885", func() {
+		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/werf/werf/issues/1885", func() {
 			gotDeletingHookLine := false
 
 			Expect(werfDeploy("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{

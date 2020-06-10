@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

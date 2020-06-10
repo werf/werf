@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/werf/cmd/werf/common"
-	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/werf/werf/cmd/werf/common"
+	helmCommon "github.com/werf/werf/cmd/werf/helm/common"
 )
 
 const fetchDesc = `

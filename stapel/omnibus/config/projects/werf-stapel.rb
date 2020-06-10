@@ -1,6 +1,6 @@
 name "werf-stapel"
 maintainer "Flant"
-homepage "https://github.com/flant/werf"
+homepage "https://github.com/werf/werf"
 
 license "Apache 2.0"
 license_file "LICENSE"

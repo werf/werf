@@ -6,11 +6,11 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/flant/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
 type LintOptions struct {

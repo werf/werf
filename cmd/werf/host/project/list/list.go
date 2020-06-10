@@ -14,11 +14,11 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/docker"
-	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/docker"
+	imagePkg "github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {

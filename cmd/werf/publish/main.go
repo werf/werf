@@ -3,8 +3,8 @@ package publish
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/flant/werf/cmd/werf/common"
-	images_publish "github.com/flant/werf/cmd/werf/images/publish/cmd_factory"
+	"github.com/werf/werf/cmd/werf/common"
+	images_publish "github.com/werf/werf/cmd/werf/images/publish/cmd_factory"
 )
 
 var commonCmdData common.CmdData

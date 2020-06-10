@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId string, baseStageOptions *NewBaseStageOptions) *FromStage {

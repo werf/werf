@@ -11,14 +11,14 @@ import (
 
 	"github.com/flant/lockgate"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/storage"
 	"gopkg.in/yaml.v2"
 )
 

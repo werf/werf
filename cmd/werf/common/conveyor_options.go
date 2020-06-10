@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/flant/werf/pkg/build"
-	"github.com/flant/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/build/stage"
 )
 
 func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {

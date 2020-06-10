@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/stages_manager"
 
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type CleanupOptions struct {

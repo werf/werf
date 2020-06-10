@@ -6,7 +6,7 @@ if [ -z "$GITHUB_TOKEN" ] ; then
 fi
 
 curl \
-  --location --request POST 'https://api.github.com/repos/flant/werf/dispatches' \
+  --location --request POST 'https://api.github.com/repos/werf/werf/dispatches' \
   --header 'Content-Type: application/json' \
   --header 'Accept: application/vnd.github.everest-preview+json' \
   --header "Authorization: token $GITHUB_TOKEN" \

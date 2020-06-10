@@ -3,9 +3,9 @@ package common
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/build"
-	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 type TagOptionsGetterOptions struct {

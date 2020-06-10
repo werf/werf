@@ -9,7 +9,7 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 	v1 "k8s.io/api/core/v1"
 )
 

@@ -8,16 +8,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/config"
-	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/config"
+	imagePkg "github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type StageName string

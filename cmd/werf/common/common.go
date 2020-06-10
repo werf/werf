@@ -12,17 +12,17 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/build"
-	"github.com/flant/werf/pkg/build/stage"
-	cleanup "github.com/flant/werf/pkg/cleaning"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/build/stage"
+	cleanup "github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type CmdData struct {

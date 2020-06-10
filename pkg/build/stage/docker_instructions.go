@@ -3,9 +3,9 @@ package stage
 import (
 	"sort"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/util"
 )
 
 func GenerateDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {

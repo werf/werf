@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,7 +38,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("successfully installs packages using yum module", func() {
-			Skip("FIXME https://github.com/flant/werf/issues/1983")
+			Skip("FIXME https://github.com/werf/werf/issues/1983")
 			Expect(werfBuild("yum2", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})
@@ -49,7 +49,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("successfully installs packages using yum module", func() {
-			Skip("FIXME https://github.com/flant/werf/issues/1806")
+			Skip("FIXME https://github.com/werf/werf/issues/1806")
 			Expect(werfBuild("become_user", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})
@@ -60,7 +60,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("should fail to install package without a key and succeed with the key", func() {
-			Skip("https://github.com/flant/werf/issues/2000")
+			Skip("https://github.com/werf/werf/issues/2000")
 
 			gotNoPubkey := false
 			Expect(werfBuild("apt_key1-001", liveexec.ExecCommandOptions{
@@ -91,13 +91,13 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("should fail to install package without a key and succeed with the key", func() {
-			Skip("https://github.com/flant/werf/issues/2000")
+			Skip("https://github.com/werf/werf/issues/2000")
 
 			Expect(werfBuild("apt_key2", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})
 
-	Context("when apt-mark from apt module used (https://github.com/flant/werf/issues/1820)", func() {
+	Context("when apt-mark from apt module used (https://github.com/werf/werf/issues/1820)", func() {
 		AfterEach(func() {
 			werfPurge("apt_mark_panic_1820", liveexec.ExecCommandOptions{})
 		})
@@ -147,7 +147,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 	})
 
-	Context("Non standard PATH used in the base image (https://github.com/flant/werf/issues/1836) ", func() {
+	Context("Non standard PATH used in the base image (https://github.com/werf/werf/issues/1836) ", func() {
 		AfterEach(func() {
 			werfPurge("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{})
 		})

@@ -1,10 +1,10 @@
 package build
 
 import (
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/stages_manager"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type ConveyorWithRetryWrapper struct {

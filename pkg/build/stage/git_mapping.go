@@ -14,10 +14,10 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 type GitRepoCache struct {

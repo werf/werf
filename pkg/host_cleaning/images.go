@@ -10,7 +10,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {

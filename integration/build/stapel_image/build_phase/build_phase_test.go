@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
 	"github.com/otiai10/copy"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -3,16 +3,16 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_runtime"
 
 	"github.com/fatih/color"
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logging"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/logging"
 )
 
 type BaseImageType string

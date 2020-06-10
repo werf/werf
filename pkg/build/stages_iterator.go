@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
 )
 
 type StagesIterator struct {

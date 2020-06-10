@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/flant/werf/pkg/image"
+import "github.com/werf/werf/pkg/image"
 
 type StagesStorageCache interface {
 	GetAllStages(projectName string) (bool, []image.StageID, error)

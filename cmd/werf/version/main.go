@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 	"github.com/spf13/cobra"
 )
 

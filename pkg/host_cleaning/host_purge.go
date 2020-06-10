@@ -9,12 +9,12 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/tmp_manager"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type HostPurgeOptions struct {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/common"
 )
 
 var cmdData struct {

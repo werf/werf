@@ -3,9 +3,9 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewGitLatestPatchStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitLatestPatchStage {

@@ -340,7 +340,7 @@ rebuild _stages_. For now, there is a list of supported modules:
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-_werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/flant/werf/issues/new) if some module should be enabled.
+_werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
 
 ### Copy files
 
@@ -417,8 +417,8 @@ src: {{`{{item}}`}}
 ### Ansible problems
 
 - Live stdout implemented for raw and command modules. Other modules display stdout and stderr content after execution.
-- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/flant/werf/issues/784)).
-- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/flant/werf/issues/645)).
+- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/werf/werf/issues/784)).
+- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/werf/werf/issues/645)).
 
 ## User stages dependencies
 

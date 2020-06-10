@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils"
 )
 
 func LocalDockerRegistryRun() (string, string) {

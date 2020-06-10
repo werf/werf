@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	utilsDocker "github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/pkg/testing/utils"
+	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("Advanced build/Multi images", func() {

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/flant/werf/raw/master/docs/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
+  <img src="https://github.com/werf/werf/raw/master/docs/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
 </p>
 
 <p align="center">
@@ -7,8 +7,8 @@
   <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/badge/twitter-EN-611f69.svg?logo=twitter" alt="Twitter EN"></a>
   <a href="https://t.me/werf_ru"><img src="https://img.shields.io/badge/telegram-RU%20chat-179cde.svg?logo=telegram" alt="Telegram chat RU"></a><br>
   <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
-  <a href="https://godoc.org/github.com/flant/werf"><img src="https://godoc.org/github.com/flant/werf?status.svg" alt="GoDoc"></a>
-  <a href="https://codeclimate.com/github/flant/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/213fcda644a83581bf6e/test_coverage" /></a>
+  <a href="https://pkg.go.dev/github.com/werf/werf"><img src="https://pkg.go.dev/github.com/werf/werf?status.svg" alt="GoDoc"></a>
+  <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
 </p>
 ___
 
@@ -48,15 +48,15 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 ## Coming Soon
 
-- ~3-way-merge~ [#1616](https://github.com/flant/werf/issues/1616).
-- Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
-- ~Content-based tagging~ [#1184](https://github.com/flant/werf/issues/1184).
-- ~Support for the most Docker registry implementations~ [#2199](https://github.com/flant/werf/issues/2199).
-- Parallel image builds [#2200](https://github.com/flant/werf/issues/2200).
-- Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
-- ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/flant/werf/issues/1614).
-- Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
-- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
+- ~3-way-merge~ [#1616](https://github.com/werf/werf/issues/1616).
+- Developing applications locally with werf [#1940](https://github.com/werf/werf/issues/1940).
+- ~Content-based tagging~ [#1184](https://github.com/werf/werf/issues/1184).
+- ~Support for the most Docker registry implementations~ [#2199](https://github.com/werf/werf/issues/2199).
+- Parallel image builds [#2200](https://github.com/werf/werf/issues/2200).
+- Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/werf/werf/issues/1617).
+- ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/werf/werf/issues/1614).
+- Support for Helm 3 [#1606](https://github.com/werf/werf/issues/1606).
+- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/werf/werf/issues/1618).
 
 ## Complete List of Features
 
@@ -65,7 +65,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Effortlessly build as many images as you like in one project.
 - Build images using Dockerfiles or Stapel builder instructions.
 - Build images concurrently on a single host (using file locks).
-- Build images simultaneously (coming soon) [#2200](https://github.com/flant/werf/issues/2200).
+- Build images simultaneously (coming soon) [#2200](https://github.com/werf/werf/issues/2200).
 - Build images distributedly.
 - Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
@@ -100,7 +100,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Full compatibility with Helm 2.
 - Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).
 - Parallel builds on a single host (using file locks).
-- Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
+- Distributed parallel deploys (coming soon) [#1620](https://github.com/werf/werf/issues/1620).
 - Сontinuous delivery of images with permanent tags (e.g., when using a branch-based tagging strategy).
 
 ### Cleaning up
@@ -276,7 +276,7 @@ All changes go through all stability channels:
   We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
   We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
 
-The relations between channels and werf releases are described in [multiwerf.json](https://github.com/flant/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/flant/multiwerf). 
 
 > When using release channels, you do not specify a version, because the version is managed automatically within the channel
   
@@ -294,7 +294,7 @@ We are always in contact with the community through [Twitter](https://twitter.co
 
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
-Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
+Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues)
 
 <!-- WERF DOCS PARTIAL END -->
 

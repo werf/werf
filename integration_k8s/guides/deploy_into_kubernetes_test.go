@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils"
 )
 
 var _ = Describe("Deploy into kubernetes", func() {

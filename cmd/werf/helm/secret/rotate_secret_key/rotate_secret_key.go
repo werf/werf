@@ -11,10 +11,10 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var commonCmdData common.CmdData

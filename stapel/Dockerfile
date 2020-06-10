@@ -412,7 +412,7 @@ ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extr
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
 
-# TODO: FIXME: https://github.com/flant/werf/issues/1798
+# TODO: FIXME: https://github.com/werf/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
 
 # yum-utils package needed for ansible yum module to work

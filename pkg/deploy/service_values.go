@@ -5,8 +5,8 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 const (

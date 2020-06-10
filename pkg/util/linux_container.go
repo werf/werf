@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 func RemoveHostDirsWithLinuxContainer(mountDir string, dirs []string) error {

@@ -52,7 +52,7 @@ There are various configuration options for deploying to review, staging, and pr
 * GitLab with an integrated Docker registry.
 * A node (or a group of nodes) with werf and dependencies pre-installed.
 
-You can run werf in the Docker container, however, this method is not supported. You can find more information and discuss this approach in the relevant [issue](https://github.com/flant/werf/issues/1926). In this example (and in general), we recommend you to use the _shell executor_.
+You can run werf in the Docker container, however, this method is not supported. You can find more information and discuss this approach in the relevant [issue](https://github.com/werf/werf/issues/1926). In this example (and in general), we recommend you to use the _shell executor_.
 
 The deployment process requires access to the cluster via `kubectl`, so you have to install and configure the `kubectl` interface on the node where werf will be run. 
 werf will use the default `kubectl` context if there is no context specified via the `--kube-context` option or the `WERF_KUBE_CONTEXT` environment variable.
