@@ -208,7 +208,7 @@ shell:
 
 _Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus werf creates one layer for one _user stage_.
 
-werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _beforeInstall_ stage with `apt-get update` and `apt-get install` commands:
+werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). 
 
 ```yaml
 beforeInstall:
@@ -417,7 +417,6 @@ src: {{`{{item}}`}}
 ### Ansible problems
 
 - Live stdout implemented for raw and command modules. Other modules display stdout and stderr content after execution.
-- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/werf/werf/issues/784)).
 - `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/werf/werf/issues/645)).
 
 ## User stages dependencies
