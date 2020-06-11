@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -259,12 +260,14 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 	var checksum string
 	var err error
 
-	logProcessMsg := fmt.Sprintf("Calculating files checksum (%v)", wildcards)
+	normalizedWildcards := normalizeCopyAddSources(wildcards)
+
+	logProcessMsg := fmt.Sprintf("Calculating files checksum (%v)", normalizedWildcards)
 	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
 	if s.localGitRepo != nil {
-		checksum, err = s.calculateFilesChecksumWithGit(wildcards)
+		checksum, err = s.calculateFilesChecksumWithGit(normalizedWildcards)
 	} else {
-		projectFilesPaths, err := s.getProjectFilesByWildcards(wildcards)
+		projectFilesPaths, err := s.getProjectFilesByWildcards(normalizedWildcards)
 		if err != nil {
 			return "", err
 		}
@@ -513,14 +516,30 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 	return checksum, nil
 }
 
+func normalizeCopyAddSources(wildcards []string) []string {
+	var result []string
+	for _, wildcard := range wildcards {
+		normalizedWildcard := path.Clean(wildcard)
+		if normalizedWildcard == "/" {
+			normalizedWildcard = "."
+		} else if strings.HasPrefix(normalizedWildcard, "/") {
+			normalizedWildcard = strings.TrimPrefix(normalizedWildcard, "/")
+		}
+
+		result = append(result, normalizedWildcard)
+	}
+
+	return result
+}
+
 func uniquePaths(paths []string) []string {
 	var result []string
 	keys := make(map[string]bool)
 
-	for _, path := range paths {
-		if _, exist := keys[path]; !exist {
-			keys[path] = true
-			result = append(result, path)
+	for _, p := range paths {
+		if _, exist := keys[p]; !exist {
+			keys[p] = true
+			result = append(result, p)
 		}
 	}
 
