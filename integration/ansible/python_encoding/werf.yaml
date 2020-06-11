@@ -21,61 +21,13 @@ ansible:
 {{ tuple . "python3" | include "runScript" }}
 ---
 image: alpine-python3
-from: alpine
+from: python:3-alpine
 git:
 {{ include "appGit" . }}
 ansible:
-  beforeInstall:
-  - name: Install python3
-    apk:
-      name: python3
-      state: present
-      update_cache: yes
-  - name: Install pip3
-    apk:
-      name: py3-pip
-      state: present
   install:
 {{ tuple . "python3" | include "installRequirements" }}
 {{ tuple . "python3" | include "runScript" }}
----
-image: ubuntu-python2
-from: ubuntu:18.04
-git:
-{{ include "appGit" . }}
-ansible:
-  beforeInstall:
-  - name: Install python2
-    apt:
-      name: python
-      state: present
-      update_cache: yes
-  - name: Install pip2
-    apt:
-      name: python-pip
-      state: present
-  install:
-{{ tuple . "python" | include "installRequirements" }}
-{{ tuple . "python" | include "runScript" }}
----
-image: alpine-python2
-from: alpine
-git:
-{{ include "appGit" . }}
-ansible:
-  beforeInstall:
-  - name: Install python2
-    apk:
-      name: python2
-      state: present
-      update_cache: yes
-  - name: Install pip2
-    apk:
-      name: py-pip
-      state: present
-  install:
-{{ tuple . "python" | include "installRequirements" }}
-{{ tuple . "python" | include "runScript" }}
 
 {{ define "appGit" }}
 - add: /
