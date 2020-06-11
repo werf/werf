@@ -11,9 +11,9 @@ toc: false
     <li>
         <strong>GitLab</strong>
         <ul>
+            <li><strong><a href="gitlab-rails/000-task.html">Ruby On Rails</a></strong></li>
             <li><a href="gitlab-nodejs.html">NodeJS</a></li>
             <li><a href="gitlab-python-django.html">Python: Django</a></li>
-            <li><a href="gitlab-rails.html">Ruby On Rails</a></li>
             <li><a href="gitlab-java-springboot.html">Java: Springboot</a></li>
         </ul>
     </li>
