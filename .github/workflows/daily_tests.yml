@@ -1,4 +1,4 @@
-name: Running daily tests
+name: Daily Tests
 on:
   schedule:
   - cron:  '0 8 * * *'
@@ -51,9 +51,8 @@ jobs:
     - uses: actions/cache@v1
       with:
         path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+        key: go-${{ hashFiles('**/go.sum') }}
+        restore-keys: go-
           
     - name: Compile tests binaries
       run: |
@@ -259,7 +258,7 @@ jobs:
       WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
       WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
       WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
       WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
       WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}

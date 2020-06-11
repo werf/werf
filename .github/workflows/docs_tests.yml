@@ -1,4 +1,4 @@
-name: Documentation validation
+name: Documentation Validation
 on:
   push:
     paths:
