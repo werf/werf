@@ -22,40 +22,22 @@ entries:
 
           - title: Подготовка к работе
             url: /documentation/guides/applications-guide/gitlab-rails/010-preparing.html
-            sfi:
-              - title: Подготовка приложения
-                hash: "#preparing-app"
-              - title: Подготовка среды
-                hash: "#preparing-env"
 
           - title: Базовые настройки
-            url: /documentation/guides/applications-guide/gitlab-rails/020-basic.html
+            url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html"
             sfi:
-              - title: Локальная сборка
-                hash: "#hello-world-local"
+              - title: Сборка
+                url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#building"
+              - title: Конфигурирование инфраструктуры в виде кода
+                url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#config-iac"
               - title: Построение CI-процесса
-                hash: "#hello-world-ci"
-                sfi:
-                - title: Сборка в Gitlab CI
-                  hash: "#hello-world-ci-build"
-                - title: Деплой в Kubernetes
-                  hash: "#hello-world-ci-deploy"
+                url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#ci"
 
           - title: Подключаем зависимости
             url: /documentation/guides/applications-guide/gitlab-rails/030-dependencies.html
-            sfi:
-              - title: Подключение менеджера зависимостей
-                hash: "#dependencies-implementation"
-              - title: Оптимизация сборки
-                hash: "#dependencies-optimization"
 
           - title: Генерируем и раздаём ассеты
             url: /documentation/guides/applications-guide/gitlab-rails/040-assets.html
-            sfi:
-              - title: Сценарий сборки ассетов
-                hash: "#assets-scenario"
-              - title: Какие изменения необходимо внести
-                hash: "#assets-implementation"
 
           - title: Работа с файлами
             url: /documentation/guides/applications-guide/gitlab-rails/050-files.html
@@ -65,28 +47,21 @@ entries:
 
           - title: Подключаем Redis
             url: /documentation/guides/applications-guide/gitlab-rails/070-redis.html
-            sfi:
-              - title: Завести Redis в Kubernetes
-                hash: "#redis-to-kubernetes"
-              - title: Подключение приложения к Redis
-                hash: "#redis-to-app"
 
           - title: Подключаем базу данных
             url: /documentation/guides/applications-guide/gitlab-rails/080-database.html
             sfi:
-              - title: Общий подход
-                hash: "#database-generic"
-              - title: Подключение приложения к базе данных
-                hash: "#database-app-connection"
+              - title: Конфигурирование БД в Kubernetes
+                url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#kubeconfig"
+              - title: Подключение приложения к БД
+                url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#appconnect"
               - title: Выполнение миграций
-                hash: "#database-migrations"
-              - title: Накатка фикстур
-                hash: "#database-fixtures"
+                url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#migrations"
 
           - title: Юнит-тесты и Линтеры
             url: /documentation/guides/applications-guide/gitlab-rails/090-unittesting.html
 
-          - title: Несколько приложений в одной репе
+          - title: Несколько приложений в одном репозитории
             url: /documentation/guides/applications-guide/gitlab-rails/110-multipleapps.html
 
           - title: Динамические окружения
