@@ -23,7 +23,7 @@ type Local struct {
 }
 
 func OpenLocalRepo(name string, path string) (*Local, error) {
-	_, err := git.PlainOpen(path)
+	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
 			return nil, nil
@@ -55,7 +55,7 @@ type LsTreeOptions struct {
 }
 
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
-	repository, err := git.PlainOpen(repo.Path)
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
@@ -77,7 +77,7 @@ func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptio
 }
 
 func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
-	repository, err := git.PlainOpen(repo.Path)
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
@@ -86,7 +86,7 @@ func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result,
 }
 
 func (repo *Local) CheckIgnore(paths []string) (*check_ignore.Result, error) {
-	repository, err := git.PlainOpen(repo.Path)
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}

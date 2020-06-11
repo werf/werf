@@ -37,7 +37,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get %s commit info: %s", commit, err)
 	}
 
 	tree, err := commitObj.Tree()

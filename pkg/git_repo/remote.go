@@ -180,7 +180,7 @@ func (repo *Remote) Fetch() error {
 	}
 
 	return repo.withRemoteRepoLock(func() error {
-		rawRepo, err := git.PlainOpen(repo.GetClonePath())
+		rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
@@ -226,7 +226,7 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpen(repo.GetClonePath())
+	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -247,7 +247,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 func (repo *Remote) TagCommit(tag string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpen(repo.GetClonePath())
+	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}

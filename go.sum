@@ -197,6 +197,8 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/daviddengcn/go-colortext v0.0.0-20160507010035-511bcaf42ccd/go.mod h1:dv4zxwHi5C/8AeI+4gX4dCWOIvNi7I6JCSX0HvlKPgE=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
+github.com/distorhead/go-git/v5 v5.1.1-0.20200611092215-45f2d6a6e110 h1:DIvmh1bI8wn/9bKNuP33IluJwizhAe3s2shOB2+xsKE=
+github.com/distorhead/go-git/v5 v5.1.1-0.20200611092215-45f2d6a6e110/go.mod h1:Ei+xRz8QFO4e9W5f9/I3cYofFbNJaUASjwOyxqHv8Pg=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0 h1:E7NTtHfZYV+iu35yZ49AbrxqhMHpiOl3FstDYm38vQ0=
 github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=

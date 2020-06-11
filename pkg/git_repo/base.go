@@ -41,7 +41,7 @@ func (repo *Base) TagCommit(branch string) (string, error) {
 }
 
 func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -59,7 +59,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 }
 
 func (repo *Base) isEmpty(repoPath string) (bool, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -101,7 +101,7 @@ func (repo *Base) GetName() string {
 }
 
 func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -184,7 +184,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 }
 
 func (repo *Base) createDetachedMergeCommit(gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
-	repository, err := git.PlainOpen(path)
+	repository, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
 	}
@@ -205,7 +205,7 @@ func (repo *Base) createDetachedMergeCommit(gitDir, path, workTreeCacheDir strin
 }
 
 func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
-	repository, err := git.PlainOpen(gitDir)
+	repository, err := git.PlainOpenWithOptions(gitDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo at %s: %s", gitDir, err)
 	}
@@ -228,7 +228,7 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 }
 
 func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -281,9 +281,8 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 	return archive, nil
 }
 
-func (repo *Base) isCommitExists(repoPath,
-	gitDir string, commit string) (bool, error) {
-	repository, err := git.PlainOpen(repoPath)
+func (repo *Base) isCommitExists(repoPath, gitDir string, commit string) (bool, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -304,7 +303,7 @@ func (repo *Base) isCommitExists(repoPath,
 }
 
 func (repo *Base) tagsList(repoPath string) ([]string, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -337,7 +336,7 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 }
 
 func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
@@ -368,7 +367,7 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 }
 
 func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
