@@ -818,8 +818,8 @@ image: hello
 from: openjdk:8-jdk-alpine
 import:
 - artifact: build
-  add: /app/target/demo-1.0.jar
-  to: /app/app.jar
+  add: /app/target/*.jar
+  to: /app/demo.jar
   after: setup
 ```
 
