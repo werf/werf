@@ -38,7 +38,7 @@
         },
         {
           "name": "ea",
-          "version": "v1.1.16+fix2"
+          "version": "v1.1.16+fix7"
         },
         {
           "name": "stable",
@@ -46,6 +46,7 @@
         },
         {
           "name": "rock-solid",
+	  "_candidate": "v1.1.14+fix1",
           "version": "v1.1.8+fix20"
         }
       ]
