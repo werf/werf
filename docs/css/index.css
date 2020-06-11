@@ -168,6 +168,113 @@ html, body, .page {
     background-image: url('../images/icons/heart.png');
 }
 
+.presentation {
+    position: relative;
+}
+
+.presentation__container {
+    height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+.presentation__bg {
+    z-index: 1;
+    position: absolute;
+    right: 55%;
+    top: 50%;
+    margin-top: -800px;
+    width: 1591px;
+    height: 1901px;
+    background-repeat: no-repeat;
+    background-image: url('../images/backgrounds/presentation.svg');
+}
+
+.presentation__row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-self: flex-start;
+}
+
+.presentation__row-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.presentation__row-item_scheme {
+    transform: skew(-10deg);
+}
+
+.presentation__title {
+    font-size: 55px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 65px;
+    letter-spacing: normal;
+    color: #00122c;
+    margin: 0 0 30px 0;
+}
+
+.presentation__subtitle {
+    font-size: 26px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    color: #0066FF;
+    margin: 0 0 25px 0;
+}
+
+.presentation__features {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;    
+    font-size: 18px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    color: #00122c;   
+}
+
+.presentation__features li {
+    margin-bottom: 25px;
+}
+
+.presentation__features li:last-child {
+    margin-bottom: 0;
+}
+
+/* Animation, initial state */
+
+#presentation-scheme {
+    width: 580px;
+}
+
+#presentation-scheme g {
+    opacity: 1;
+}
+
+#presentation-scheme #scheme_step,
+#presentation-scheme #scheme_step_2,
+#presentation-scheme #scheme_step_connector,
+#presentation-scheme #scheme_step_connector_2,
+#presentation-scheme #scheme_smart_icon_check,
+#presentation-scheme #scheme_smart_icon_check_2 {
+    opacity: 0;
+}
+
 .welcome {
     min-height: 850px;
     background-position: top right;
@@ -180,25 +287,29 @@ html, body, .page {
 }
 
 .welcome__title {
-    font-size: 72px;
+    font-size: 55px;
     font-weight: 600;
     font-style: normal;
     font-stretch: normal;
-    line-height: 1.11;
+    line-height: 65px;
     letter-spacing: normal;
     color: #00122c;
-    margin: 0 0 10px 0;
+    margin: 0 0 30px 0;
+}
+
+.welcome__title span {
+    color: #0066FF;
 }
 
 .welcome__subtitle {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: normal;
     font-style: normal;
     font-stretch: normal;
-    line-height: normal;
+    line-height: 26px;
     letter-spacing: normal;
     color: #00122c;
-    margin-left: 15px;
+    max-width: 650px;   
 }
 
 /* .welcome__search {
@@ -234,7 +345,7 @@ html, body, .page {
 
 .welcome__extra-content {
     flex: 1;
-    margin-top: 20px;
+    margin-top: 30px;
 }
 
 .welcome__extra-content-title {
