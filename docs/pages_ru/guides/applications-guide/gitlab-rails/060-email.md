@@ -1,5 +1,5 @@
 ---
-title: Гайд по использованию Ruby On Rails + GitLab + Werf
+title: Работа с электронной почтой
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/060-email.html
 author: alexey.chazov <alexey.chazov@flant.com>
@@ -23,11 +23,17 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
-# Работа с электронной почтой
+В этой главе мы настроим в нашем базовом приложении работу с почтой.
 
-Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это mailgun.
+Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это [mailgun](https://www.mailgun.com/).
+
+{% offtopic title="А почему бы просто не установить sendmail?" %}
+TODO: ответить на этот непростой вопрос
+{% endofftopic %}
+
 Внутри исходного кода подключение к API и отправка сообщения может выглядеть так:
 
+{% snippetcut name="TODO название файла" url="#" %}
 ```ruby
 require 'mailgun-ruby'
 
@@ -44,17 +50,26 @@ message_params =  { from: 'bob@sending_domain.com',
 # Send your message through the client
 mg_client.send_message 'sending_domain.com', message_params
 ```
+{% endsnippetcut %}
 
-Главное заметить, что мы также как и в остальных случаях выносим основную конфигурацию в переменные. А далее мы по тому же принципу добавляем их параметризированно в наш secret-values.yaml не забыв использовать [шифрование](####секретные-переменные).
+Для работы с mailgun необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 ```yaml
 app:
   mailgun_apikey:
     _default: 192edaae18f13aaf120a66a4fefd5c4d-7fsaaa4e-kk5d08a5
 ```
+{% endsnippetcut %}
 
-И теперь мы можем использовать их внутри манифеста.
+После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
+
+{% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
         - name: MAILGUN_APIKEY
           value: {{ pluck .Values.global.env .Values.app.mailgun_apikey | first | default .Values.app.mailgun_apikey._default }}
 ```
+{% endsnippetcut %}
+
+TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем mailgun-ruby. Мало же просто его установить — надо ещё как-то юзать в коде.
+

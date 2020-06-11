@@ -1,5 +1,5 @@
 ---
-title: Гайд по использованию Ruby On Rails + GitLab + Werf
+title: Подключение базы данных
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/080-database.html
 author: alexey.chazov <alexey.chazov@flant.com>
@@ -23,16 +23,27 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
-# Подключаем базу данных
+TODO: а где всё хранится? Почему не слова о сторейджах?
 
-Для текущего примера в приложении должны быть установлены необходимые зависимости. В качестве примера - мы возьмем приложение для работы которого необходима база данных.
+В этой главе мы настроим в нашем базовом приложении продвинутую работу с базой данных, включающую в себя вопросы выполнения миграций. В качестве базы данных возьмём PostgreSQL.
 
+Мы не будем вносить изменения в сборку — будем использовать образы с DockerHub и конфигурировать их и инфраструктуру.
 
-## Как подключить БД
+<a name="kubeconfig" />
 
-Подключим postgresql helm сабчартом, для этого внесем изменения в файл `.helm/requirements.yaml`
+## Сконфигурировать PostgreSQL в Kubernetes
 
-[.helm/requirements.yaml](gitlab-rails-files/examples/example_3/.helm/requirements.yaml)
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим PostgreSQL как внешний subchart.
+
+Для этого нужно:
+
+1. прописать изменения в yaml файлы;
+2. указать Redis конфиги;
+3. подсказать werf, что ему нужно подтягивать subchart.
+
+Пропишем helm-зависимости:
+
+{% snippetcut name=".helm/requirements.yaml" url="gitlab-rails-files/examples/example_3/.helm/requirements.yaml" %}
 ```yaml
 dependencies:
 - name: postgresql
@@ -40,11 +51,11 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: postgresql.enabled
 ```
+{% endsnippetcut %}
 
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в .gitlab-ci
-
-[.gitlab-ci.yml](gitlab-rails-files/examples/example_3/.gitlab-ci.yml#L24)
+{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_3/.gitlab-ci.yml#L24" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -53,11 +64,11 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endsnippetcut %}
 
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-Опишем параметры для postgresql в файле `.helm/values.yaml`
-
-[.helm/values.yaml](gitlab-rails-files/examples/example_3/.helm/values.yaml#L4)
+{% snippetcut name=".helm/values.yaml" url="gitlab-rails-files/examples/example_3/.helm/values.yaml#L4" %}
 ```yaml
 postgresql:
   enabled: true
@@ -68,23 +79,28 @@ postgresql:
   persistence:
     enabled: true
 ```
+{% endsnippetcut %}
 
+Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
-Пароль от базы данных добавим в `secret-values.yaml`
-
-[.helm/secret-values.yaml](gitlab-rails-files/examples/example_3/.helm/secret-values.yaml#L3)
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="gitlab-rails-files/examples/example_3/.helm/secret-values.yaml#L3" %}
 ```yaml
 postgresql:
   postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
 ```
+{% endsnippetcut %}
+
+После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
+
+<a name="appconnect" />
 
 ## Подключение Rails приложения к базе postgresql
 
-Настройки подключения нашего приложения к базе данных мы будем передавать через переменные окружения. Такой подход позволит нам использовать один и тот же образ в разных окружениях, что должно исключить запуск непроверенного кода в production окружении.
+Для подключения Rails приложения к базе необходимо в Gemfile прописать нужный gem (`TODO: какой???`) и правильно сконфигурировать Rails приложение.
 
-Внесем изменения в файл настроек подключения к базе данных
+Внесем изменения в файл настроек подключения к базе данных:
 
-[config/database.yml](gitlab-rails-files/examples/example_3/config/database.yml#L17)
+{% snippetcut name="config/database.yml" url="gitlab-rails-files/examples/example_3/config/database.yml#L17" %}
 ```yaml
 default: &default
   adapter: postgresql
@@ -97,16 +113,13 @@ default: &default
 
 development:
   <<: *default
-test:
-  <<: *default
-production:
-  <<: *default
 ```
+{% endsnippetcut %}
 
+Для того, чтобы переменные окружения попали в контейнер — пропишем их в Pod-е. Для удобства и переиспользуемости — объявим эти переменные в блок `database_envs` в отдельном файле `_envs.tpl` и потом просто подключим в нужном контейнере.
 
-Параметры подключения приложения к базе данным мы опишем в файле `.helm/templates/_envs.tpl`
-
-[.helm/templates/_envs.tpl](gitlab-rails-files/examples/example_3/.helm/templates/_envs.tpl#L10)
+{% snippetcut name=".helm/templates/_envs.tpl" url="gitlab-rails-files/examples/example_3/.helm/templates/_envs.tpl#L10" %}
+{% raw %}
 ```yaml
 {{- define "database_envs" }}
 - name: DATABASE_HOST
@@ -119,24 +132,33 @@ production:
   value: {{ .Values.postgresql.postgresqlPassword }}
 {{- end }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-Такой подход позволит нам переиспользовать данное определение переменных окружения для нескольких контейнеров. Имя для сервиса postgresql генерируется из названия нашего приложения, имени окружения и добавлением postgresql
+Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`
 
-[.helm/templates/deployment.yaml](gitlab-rails-files/examples/example_3/.helm/templates/deployment.yaml#L24)
+{% snippetcut name=".helm/templates/deployment.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/deployment.yaml#L24" %}
+{% raw %}
 ```yaml
 {{- include "database_envs" . | indent 8 }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
 Остальные значения подставляются из файлов `values.yaml` и `secret-values.yaml`
 
+<a name="migrations" />
 
 ## Выполнение миграций
 
-Запуск миграций производится созданием приметива Job в kubernetes. Это единоразовый запуск пода с необходимыми нам контейнерами.
+Работа реальных приложений почти немыслима без выполнения миграций. С точки зрения Kubernetes миграции выполняются созданием объекта Job, который разово запускает под с необходимыми контейнерами. Запуск миграций мы пропишем после каждого деплоя приложения.
 
-Добавим запуск миграций после каждого деплоя приложения.
+TODO: разве "после деплоя, но до доступности"????
 
-[.helm/templates/job](gitlab-rails-files/examples/example_3/.helm/templates/job.yaml)
+TODO: вот этот пиздец внизу надо нарезать и рассказать по кускам.
+
+{% snippetcut name=".helm/templates/job.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/job.yaml" %}
+{% raw %}
 ```yaml
 ---
 apiVersion: batch/v1
@@ -169,12 +191,11 @@ spec:
 {{ tuple "rails" . | include "werf_container_env" | indent 10 }}
       restartPolicy: Never
 ```
+{% endraw %}
+{% endsnippetcut %}
 
 
 Аннотации `"helm.sh/hook": post-install,post-upgrade` указывают условия запуска job а `"helm.sh/hook-weight": "2"` указывают на порядок выполнения (от меньшего к большему)
 
 При запуске миграций мы используем тот же самый образ что и в деплойменте. Различие только в запускаемых командах.
-
-## Накатка фикстур при первом выкате
-
 
