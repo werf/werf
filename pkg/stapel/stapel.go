@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 const VERSION = "0.6.1"

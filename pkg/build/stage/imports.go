@@ -3,11 +3,11 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/container_runtime"
-	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	imagePkg "github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/util"
 )
 
 type getImportsOptions struct {

@@ -15,7 +15,7 @@ For example, we choose simple project — [Linux Tweet App](https://github.com/d
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
 * Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
-* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+* Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
 ### Select werf version
 

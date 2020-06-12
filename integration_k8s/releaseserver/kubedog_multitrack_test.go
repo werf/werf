@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

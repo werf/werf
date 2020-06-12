@@ -3,9 +3,9 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/build/builder"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/build/builder"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
 )
 
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *UserWithGitPatchStage {

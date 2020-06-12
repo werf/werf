@@ -311,7 +311,7 @@ $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron и другие.
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-При указании в _конфигурации сборки_ модуля отсутствующего в приведенном списке, сборка прервется с ошибкой. Не стесняйтесь [сообщать](https://github.com/flant/werf/issues/new) нам, если вы считаете что какой-либо модуль должен быть включен в список поддерживаемых.
+При указании в _конфигурации сборки_ модуля отсутствующего в приведенном списке, сборка прервется с ошибкой. Не стесняйтесь [сообщать](https://github.com/werf/werf/issues/new) нам, если вы считаете что какой-либо модуль должен быть включен в список поддерживаемых.
 
 ### Копирование файлов
 
@@ -386,8 +386,8 @@ src: {{`{{item}}`}}
 ### Проблемы с Ansible
 
 - Live-вывод реализован только для модулей `raw` и `command`. Остальные модули отображают вывод каналов `stdout` и `stderr` после выполнения, что приводит к задержкам, скачкообразному выводу.
-- Большой вывод в `stderr` может подвесить выполнение Ansible-задачи ([issue #784](https://github.com/flant/werf/issues/784)).
-- Модуль `apt` подвисает на некоторых версиях Debian и Ubuntu. Проявляется также на наследуемых образах([issue #645](https://github.com/flant/werf/issues/645)).
+- Большой вывод в `stderr` может подвесить выполнение Ansible-задачи ([issue #784](https://github.com/werf/werf/issues/784)).
+- Модуль `apt` подвисает на некоторых версиях Debian и Ubuntu. Проявляется также на наследуемых образах([issue #645](https://github.com/werf/werf/issues/645)).
 
 ## Зависимости пользовательских стадий
 

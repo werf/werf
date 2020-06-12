@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Converge
-        uses: flant/werf-actions/converge@v1
+        uses: werf/actions/converge@master
         with:
           env: staging
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -57,7 +57,7 @@ jobs:
           fetch-depth: 0
 
       - name: Converge
-        uses: flant/werf-actions/converge@v1
+        uses: werf/actions/converge@master
         with:
           env: production
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

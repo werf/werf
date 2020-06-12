@@ -430,7 +430,7 @@ On the step 5 werf tracks all release resources until each resource reaches "rea
 
 werf shows logs of resources Pods only until pod reaches "ready" state, except for Jobs. For Pods of a Job logs will be shown till Pods are terminated.
 
-Internally [kubedog library](https://github.com/flant/kubedog) is used to track resources. Deployments, StatefulSets, DaemonSets and Jobs are supported for tracking now. Service, Ingress, PVC and other are [soon to come](https://github.com/flant/werf/issues/1637).
+Internally [kubedog library](https://github.com/werf/kubedog) is used to track resources. Deployments, StatefulSets, DaemonSets and Jobs are supported for tracking now. Service, Ingress, PVC and other are [soon to come](https://github.com/werf/werf/issues/1637).
 
 ### Method of applying changes
 
@@ -494,13 +494,13 @@ All of these annotations can be combined and used together for resource.
   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'track-termination-mode')">NonBlocking track-termination-mode</a>
 </div>
 <div id="show-service-messages" class="tabs__content active">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
 </div>
 <div id="skip-logs" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-2.gif" />
 </div>
 <div id="track-termination-mode" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-3.gif" />
 </div>
 
 #### Track termination mode

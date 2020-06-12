@@ -6,10 +6,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/liveexec"
-	"github.com/flant/werf/pkg/testing/utils/resourcesfactory"
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/pkg/testing/utils/resourcesfactory"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

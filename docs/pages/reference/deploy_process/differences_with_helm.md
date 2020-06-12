@@ -41,7 +41,7 @@ Also werf fails fast when there is an error occurred during deploy process. With
 
 And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
 
-werf uses [kubedog resource tracking library](https://github.com/flant/kubedog) under the hood.
+werf uses [kubedog resource tracking library](https://github.com/werf/kubedog) under the hood.
 
 ## Annotate and label chart resources
 

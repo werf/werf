@@ -6,19 +6,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 type ImagesCleanupOptions struct {

@@ -3,9 +3,9 @@ package storage
 import (
 	"fmt"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func NewGenericLockManager(locker lockgate.Locker) *GenericLockManager {

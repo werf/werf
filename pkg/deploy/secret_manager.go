@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 )
 
 func GetSafeSecretManager(projectDir, helmChartDir string, secretValues []string, ignoreSecretKey bool) (secret.Manager, error) {

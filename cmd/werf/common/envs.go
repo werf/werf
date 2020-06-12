@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type Env string

@@ -44,8 +44,8 @@ go_build() {
             echo "# Building werf $VERSION for $os $arch ..."
 
             GOOS=$os GOARCH=$arch \
-              go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" \
-                       -o $outputFile github.com/flant/werf/cmd/werf
+              go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
+                       -o $outputFile github.com/werf/werf/cmd/werf
 
             echo "# Built $outputFile"
         done

@@ -3,10 +3,10 @@ package deploy
 import (
 	"github.com/ghodss/yaml"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/images_manager"
-	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 const (

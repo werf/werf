@@ -3,11 +3,11 @@ package storage
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/image"
 )
 
 type DockerImagesRepo struct {

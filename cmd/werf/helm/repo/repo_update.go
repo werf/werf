@@ -14,8 +14,8 @@ import (
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 
-	"github.com/flant/werf/cmd/werf/common"
-	helmCommon "github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/werf/werf/cmd/werf/common"
+	helmCommon "github.com/werf/werf/cmd/werf/helm/common"
 )
 
 const updateDesc = `

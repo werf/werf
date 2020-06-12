@@ -16,10 +16,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/util"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func SecretEdit(m secret.Manager, filePath string, values bool) error {

@@ -352,8 +352,8 @@ RUN bash -ec "echo '142.93.108.123 gonum.org www.gonum.org' >> /etc/hosts && go 
 
 ADD cmd /werf/cmd
 ADD pkg /werf/pkg
-RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/flant/logboek/c_lib
-RUN cp /root/go/pkg/mod/github.com/flant/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
+RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/werf/logboek/c_lib
+RUN cp /root/go/pkg/mod/github.com/werf/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
 RUN cp /werf/pkg/build/builder/ansible/crypt.py $TOOLS/embedded/lib/python2.7
 
 # Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)
@@ -412,7 +412,7 @@ ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extr
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
 ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
 
-# TODO: FIXME: https://github.com/flant/werf/issues/1798
+# TODO: FIXME: https://github.com/werf/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
 
 # yum-utils package needed for ansible yum module to work

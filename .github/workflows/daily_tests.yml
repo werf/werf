@@ -458,7 +458,7 @@ jobs:
         git fetch origin +refs/tags/v1.0.10:refs/tags/v1.0.10
 
         # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
+        git clone https://github.com/werf/ginkgo.git fork
         cd fork/ginkgo
         go build .
         mv ginkgo $GITHUB_WORKSPACE
@@ -532,7 +532,7 @@ jobs:
         echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
 
         # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
+        git clone https://github.com/werf/ginkgo.git fork
         cd fork/ginkgo
         go build .
         mv ginkgo $GITHUB_WORKSPACE
@@ -627,13 +627,13 @@ jobs:
       run: |
         # FIXME: determine problems with coverage records and remove seds
         find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/home/runner/work/werf/werf|github.com/flant/werf|g" {} +
+          sed -i -e "s|/home/runner/work/werf/werf|github.com/werf/werf|g" {} +
 
         find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/flant/werf|g" {} +
+          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/werf/werf|g" {} +
 
         find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/flant/werf/cmd/werf/main.go|g' {} +
+          sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/cmd/werf/main.go|g' {} +
 
         coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
         ./gocovmerge ${coverage_files[@]} > coverage.out
@@ -645,7 +645,7 @@ jobs:
 
         ./cc-test-reporter format-coverage \
             -t=gocov \
-            -p=github.com/flant/werf/ \
+            -p=github.com/werf/werf/ \
             coverage.out
 
         ./cc-test-reporter upload-coverage

@@ -5,15 +5,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 )
 
 type StageImage struct {

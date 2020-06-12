@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 func syncSubmodules(repoDir, workTreeDir string) error {

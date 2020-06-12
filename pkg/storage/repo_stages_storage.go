@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
 
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/docker_registry"
 )
 
 const (

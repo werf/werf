@@ -3,9 +3,9 @@ package utils
 import (
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/storage"
 )
 
 func NewImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.ImagesRepo {

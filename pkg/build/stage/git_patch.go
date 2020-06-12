@@ -3,7 +3,7 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_runtime"
 )
 
 type NewGitPatchStageOptions struct {

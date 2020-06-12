@@ -2,7 +2,7 @@ package container_runtime
 
 import (
 	"github.com/docker/docker/api/types"
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 )
 
 type BuildOptions struct {

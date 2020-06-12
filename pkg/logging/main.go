@@ -8,7 +8,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 var (

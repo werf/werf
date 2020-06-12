@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 type DockerfileImageBuilder struct {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type PatchOptions struct {

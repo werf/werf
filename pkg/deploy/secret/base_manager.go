@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/werf/pkg/secret"
+	"github.com/werf/werf/pkg/secret"
 )
 
 type BaseManager struct {

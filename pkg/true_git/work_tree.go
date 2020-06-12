@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type WithWorkTreeOptions struct {

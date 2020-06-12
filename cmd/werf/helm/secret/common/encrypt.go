@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/flant/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secret"
 )
 
 func SecretFileEncrypt(m secret.Manager, filePath, outputFilePath string) error {

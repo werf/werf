@@ -52,7 +52,7 @@ There are various configuration options for deploying to review, staging, and pr
 * GitLab with an integrated Docker registry.
 * A node (or a group of nodes) with werf and dependencies pre-installed.
 
-You can run werf in the Docker container, however, this method is not supported. You can find more information and discuss this approach in the relevant [issue](https://github.com/flant/werf/issues/1926). In this example (and in general), we recommend you to use the _shell executor_.
+You can run werf in the Docker container, however, this method is not supported. You can find more information and discuss this approach in the relevant [issue](https://github.com/werf/werf/issues/1926). In this example (and in general), we recommend you to use the _shell executor_.
 
 The deployment process requires access to the cluster via `kubectl`, so you have to install and configure the `kubectl` interface on the node where werf will be run. 
 werf will use the default `kubectl` context if there is no context specified via the `--kube-context` option or the `WERF_KUBE_CONTEXT` environment variable.
@@ -83,13 +83,13 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    
 1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
 1. Install [werf dependencies]({{ site.baseurl }}/documentation/guides/getting_started.html#requirements).
-1. Install [multiwerf](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+1. Install [multiwerf](https://github.com/werf/multiwerf) under the `gitlab-runner` user:
 
    ```shell
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
-   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+   curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
    ```
    
 1. Copy the kubectl config to the home directory of the gitlab-runner user.

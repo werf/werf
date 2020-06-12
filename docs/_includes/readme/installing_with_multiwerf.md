@@ -12,7 +12,7 @@ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
 # install multiwerf into ~/bin directory
 mkdir -p ~/bin
 cd ~/bin
-curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
 ##### Add werf alias to the current shell session

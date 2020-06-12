@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/flant/werf/pkg/testing/utils"
-	"github.com/flant/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils/docker"
 )
 
 var _ = Describe("git stages", func() {

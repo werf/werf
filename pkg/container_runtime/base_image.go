@@ -3,10 +3,10 @@ package container_runtime
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 
 	"github.com/docker/docker/api/types"
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 type baseImage struct {

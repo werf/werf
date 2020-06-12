@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/stages_manager"
 
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type StagesPurgeOptions struct {

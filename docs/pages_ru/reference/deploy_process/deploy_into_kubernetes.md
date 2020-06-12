@@ -432,9 +432,9 @@ werf полностью совместим с уже установленным 
 
 werf отслеживает и выводит логи подов Kubernetes только до перехода их в статус "Ready", но не включая задания (ресурсы с `Kind: Job`). Для подов заданий, логи выводятся до момента завершения работы соответствующих подов.
 
-С точки зрения реализации, для отслеживания ресурсов используется библиотека [kubedog](https://github.com/flant/kubedog).
+С точки зрения реализации, для отслеживания ресурсов используется библиотека [kubedog](https://github.com/werf/kubedog).
 В настоящий момент отслеживание ресурсов поддерживается для следующих типов: Deployment, StatefulSet, DaemonSet и Job.
-В [ближайшее время](https://github.com/flant/werf/issues/1637) планируется реализация поддержки отслеживания ресурсов с типом Service, Ingress, PVC и других.
+В [ближайшее время](https://github.com/werf/werf/issues/1637) планируется реализация поддержки отслеживания ресурсов с типом Service, Ingress, PVC и других.
 
 ### Методы применения изменений
 
@@ -499,14 +499,14 @@ metadata:
 </div>
 
 <div id="show-service-messages" class="tabs__content active">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-1.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
 </div>
 <div id="skip-logs" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-2.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-2.gif" />
 </div>
 
 <div id="track-termination-mode" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/flant/werf-demos/master/deploy/werf-new-track-modes-3.gif" />
+  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-3.gif" />
 </div>
 
 #### Track termination mode

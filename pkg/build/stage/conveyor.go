@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/flant/werf/pkg/build/import_server"
+import "github.com/werf/werf/pkg/build/import_server"
 
 type Conveyor interface {
 	GetImageStageContentSignature(imageName, stageName string) string

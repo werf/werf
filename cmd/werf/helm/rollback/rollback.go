@@ -5,14 +5,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/logboek"
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/deploy"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/true_git"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {

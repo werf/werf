@@ -13,11 +13,11 @@ import (
 	"gopkg.in/oleiade/reflections.v1"
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Ansible struct {

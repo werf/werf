@@ -6,16 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/stages_manager"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60

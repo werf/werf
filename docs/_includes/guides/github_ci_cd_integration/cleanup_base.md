@@ -20,7 +20,7 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Cleanup
-        uses: flant/werf-actions/cleanup@v1
+        uses: werf/actions/cleanup@master
         with:
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }} }}
 ```

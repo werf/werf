@@ -30,14 +30,14 @@ en:
     img: "/images/publications/en_270320.png"
     created: 2020-03-27
     comment: |
-      <p>werf is our Open Source GitOps tool to build your applications and deploy them to Kubernetes. As promised, the <a href="https://medium.com/flant-com/announcing-werf-1-0-stable-813b664a06ae" target="_blank" rel="noopener">release of werf 1.0</a> marked the beginning of the era of new features and revising established approaches. Now, we are excited to announce the latest version (v1.1) of our tool which is a massive step in the development of <em>its builder</em> and laying the groundwork for the future. Currently, version 1.1 is available in the <a href="https://github.com/flant/werf#backward-compatibility-promise" target="_blank" rel="noopener nofollow">1.1 <em>ea</em> channel</a>.</p>
+      <p>werf is our Open Source GitOps tool to build your applications and deploy them to Kubernetes. As promised, the <a href="https://medium.com/flant-com/announcing-werf-1-0-stable-813b664a06ae" target="_blank" rel="noopener">release of werf 1.0</a> marked the beginning of the era of new features and revising established approaches. Now, we are excited to announce the latest version (v1.1) of our tool which is a massive step in the development of <em>its builder</em> and laying the groundwork for the future. Currently, version 1.1 is available in the <a href="https://github.com/werf/werf#backward-compatibility-promise" target="_blank" rel="noopener nofollow">1.1 <em>ea</em> channel</a>.</p>
   - title: "Building & deploying a versioned documentation site with werf"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/dynamic-building-deploying-with-werf-5c65bb5c29cb"
     img: "/images/publications/en_210220.png"
     created: 2020-02-21
     comment: |
-      <p>You may already know our GitOps tool called <a href="https://github.com/flant/werf" target="_blank" rel="noopener nofollow">werf</a> — we have discussed it in <a href="https://medium.com/tag/werf/archive" target="_blank" rel="noopener">several of our articles</a>. Today, we would like to share our experience in building &amp; deploying the site with our tool’s documentation, <a href="https://werf.io/" target="_blank" rel="noopener nofollow">werf.io</a>. Despite it is a regular static site, the building process is noteworthy as we use a <em class="iq">dynamic</em> number of artifacts.</p>
+      <p>You may already know our GitOps tool called <a href="https://github.com/werf/werf" target="_blank" rel="noopener nofollow">werf</a> — we have discussed it in <a href="https://medium.com/tag/werf/archive" target="_blank" rel="noopener">several of our articles</a>. Today, we would like to share our experience in building &amp; deploying the site with our tool’s documentation, <a href="https://werf.io/" target="_blank" rel="noopener nofollow">werf.io</a>. Despite it is a regular static site, the building process is noteworthy as we use a <em class="iq">dynamic</em> number of artifacts.</p>
   - title: "Executing commands while deploying your app’s new release in Kubernetes"
     medium_title: "Read on Medium"
     medium_url: "https://medium.com/flant-com/custom-commands-deploying-in-kubernetes-df4ea4487f18"
@@ -132,7 +132,7 @@ ru:
     img: "/images/publications/ru_240320.png"
     created: 2020-03-24
     comment: |
-      <p>werf — наша GitOps CLI-утилита с открытым кодом для сборки и доставки приложений в Kubernetes. Как и обещали, <a href="https://habr.com/ru/company/flant/blog/481306/" target="_blank" rel="noopener">выход версии v1.0</a> знаменовал начало добавления в werf новых возможностей и пересмотра привычных подходов. Теперь мы рады представить релиз v1.1, который является большим шагом в развитии и заделом на будущее <i>сборщика</i> werf. Версия доступна на данный момент в <a href="https://github.com/flant/werf#backward-compatibility-promise" target="_blank" rel="noopener">канале 1.1 ea</a>.</p>
+      <p>werf — наша GitOps CLI-утилита с открытым кодом для сборки и доставки приложений в Kubernetes. Как и обещали, <a href="https://habr.com/ru/company/flant/blog/481306/" target="_blank" rel="noopener">выход версии v1.0</a> знаменовал начало добавления в werf новых возможностей и пересмотра привычных подходов. Теперь мы рады представить релиз v1.1, который является большим шагом в развитии и заделом на будущее <i>сборщика</i> werf. Версия доступна на данный момент в <a href="https://github.com/werf/werf#backward-compatibility-promise" target="_blank" rel="noopener">канале 1.1 ea</a>.</p>
   - title: "Динамическая сборка и деплой Docker-образов с werf на примере сайта версионированной документации"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/478690/"
@@ -193,7 +193,7 @@ ru:
     created: 2019-08-01
     img: "/images/publications/ru_460351.jpg"
     comment: |
-      <p>27 мая в главном зале конференции DevOpsConf 2019, проходящей в рамках фестиваля <a href="http://ritfest.ru/2019/">РИТ++ 2019</a>, в рамках секции «Непрерывная поставка», прозвучал доклад «werf — наш инструмент для CI/CD в Kubernetes». В нём рассказывается о тех <b>проблемах и вызовах, с которыми сталкивается каждый при деплое в Kubernetes</b>, а также о нюансах, которые могут быть заметны не сразу. Разбирая возможные пути решения, мы показываем, как это реализовано в Open Source-инструменте <a href="https://github.com/flant/werf">werf</a>.</p>
+      <p>27 мая в главном зале конференции DevOpsConf 2019, проходящей в рамках фестиваля <a href="http://ritfest.ru/2019/">РИТ++ 2019</a>, в рамках секции «Непрерывная поставка», прозвучал доклад «werf — наш инструмент для CI/CD в Kubernetes». В нём рассказывается о тех <b>проблемах и вызовах, с которыми сталкивается каждый при деплое в Kubernetes</b>, а также о нюансах, которые могут быть заметны не сразу. Разбирая возможные пути решения, мы показываем, как это реализовано в Open Source-инструменте <a href="https://github.com/werf/werf">werf</a>.</p>
   - title: "Как победить дракона: переписываем вашу программу на Golang"
     habr_title: "Прочитать на Хабре"
     habr_url: "https://habr.com/ru/company/flant/blog/437044/"

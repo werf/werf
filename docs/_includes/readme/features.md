@@ -10,15 +10,15 @@
 
 ## Coming Soon
 
-- ~3-way-merge~ [#1616](https://github.com/flant/werf/issues/1616).
-- Developing applications locally with werf [#1940](https://github.com/flant/werf/issues/1940).
-- ~Content-based tagging~ [#1184](https://github.com/flant/werf/issues/1184).
-- ~Support for the most Docker registry implementations~ [#2199](https://github.com/flant/werf/issues/2199).
-- Parallel image builds [#2200](https://github.com/flant/werf/issues/2200).
-- Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/flant/werf/issues/1617).
-- ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/flant/werf/issues/1614).
-- Support for Helm 3 [#1606](https://github.com/flant/werf/issues/1606).
-- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/flant/werf/issues/1618).
+- ~3-way-merge~ [#1616](https://github.com/werf/werf/issues/1616).
+- Developing applications locally with werf [#1940](https://github.com/werf/werf/issues/1940).
+- ~Content-based tagging~ [#1184](https://github.com/werf/werf/issues/1184).
+- ~Support for the most Docker registry implementations~ [#2199](https://github.com/werf/werf/issues/2199).
+- Parallel image builds [#2200](https://github.com/werf/werf/issues/2200).
+- Proven approaches and recipes for the most popular CI systems [#1617](https://github.com/werf/werf/issues/1617).
+- ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/werf/werf/issues/1614).
+- Support for Helm 3 [#1606](https://github.com/werf/werf/issues/1606).
+- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/werf/werf/issues/1618).
 
 ## Complete List of Features
 
@@ -27,7 +27,7 @@
 - Effortlessly build as many images as you like in one project.
 - Build images using Dockerfiles or Stapel builder instructions.
 - Build images concurrently on a single host (using file locks).
-- Build images simultaneously (coming soon) [#2200](https://github.com/flant/werf/issues/2200).
+- Build images simultaneously (coming soon) [#2200](https://github.com/werf/werf/issues/2200).
 - Build images distributedly.
 - Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
@@ -62,7 +62,7 @@
 - Full compatibility with Helm 2.
 - Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).
 - Parallel builds on a single host (using file locks).
-- Distributed parallel deploys (coming soon) [#1620](https://github.com/flant/werf/issues/1620).
+- Distributed parallel deploys (coming soon) [#1620](https://github.com/werf/werf/issues/1620).
 - Сontinuous delivery of images with permanent tags (e.g., when using a branch-based tagging strategy).
 
 ### Cleaning up

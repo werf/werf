@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/flant/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/pkg/util/secretvalues"
 
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
@@ -33,7 +33,7 @@ import (
 	tiller_env "k8s.io/helm/pkg/tiller/environment"
 	"k8s.io/helm/pkg/timeconv"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 )
 
 type ThreeWayMergeModeType string

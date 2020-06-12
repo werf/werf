@@ -6,4 +6,4 @@ We are always in contact with the community through [Twitter](https://twitter.co
 
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
-Your issues are processed carefully if posted to [issues at GitHub](https://github.com/flant/werf/issues)
+Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues)

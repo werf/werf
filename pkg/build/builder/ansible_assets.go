@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/werf/pkg/stapel"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 func (b *Ansible) createStageWorkDirStructure(userStageName string) error {

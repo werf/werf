@@ -1,7 +1,7 @@
 package docker_registry_test
 
 import (
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/docker_registry"
 
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"

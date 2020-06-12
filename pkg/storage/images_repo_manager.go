@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/docker_registry"
 )
 
 const (

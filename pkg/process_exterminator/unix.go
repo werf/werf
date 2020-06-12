@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func Init() error {

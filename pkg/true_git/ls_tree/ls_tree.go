@@ -12,9 +12,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 func newHash(s string) (plumbing.Hash, error) {

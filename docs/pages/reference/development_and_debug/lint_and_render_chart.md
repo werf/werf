@@ -26,7 +26,7 @@ Lint checks a [chart]({{ site.baseurl }}/documentation/reference/deploy_process/
  * errors in Go templates;
  * errors in YAML syntax;
  * errors in Kubernetes manifest syntax: wrong kind, missed resource fields, etc.;
- * errors in Kubernetes runtime logic [coming soon](https://github.com/flant/werf/issues/1187): missed resources labels, wrong names of related resources specified, check resources api version, etc.;
- * security risk analysis [coming soon](https://github.com/flant/werf/issues/1317).
+ * errors in Kubernetes runtime logic [coming soon](https://github.com/werf/werf/issues/1187): missed resources labels, wrong names of related resources specified, check resources api version, etc.;
+ * security risk analysis [coming soon](https://github.com/werf/werf/issues/1317).
 
 [`werf helm lint` command]({{ site.baseurl }}/documentation/cli/management/helm/lint.html) runs all of these checks and can be used either in local development or in the CI/CD pipeline to automate chart checking procedure. The same params as in [`werf deploy` command]({{ site.baseurl }}/documentation/cli/main/deploy.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#values), images repo, environment and other).

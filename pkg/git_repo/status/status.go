@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 var fileStatusMapping = map[rune]string{

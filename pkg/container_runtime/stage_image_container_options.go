@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	"github.com/flant/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker"
 )
 
 type StageImageContainerOptions struct {

@@ -31,14 +31,14 @@ jobs:
         if: contains( github.event.pull_request.labels.*.name, 'review' )
 
       - name: Converge
-        uses: flant/werf-actions/converge@v1
+        uses: werf/actions/converge@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         if: contains( github.event.pull_request.labels.*.name, 'review' )
 
       - name: Dismiss
-        uses: flant/werf-actions/dismiss@v1
+        uses: werf/actions/dismiss@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Dismiss
-        uses: flant/werf-actions/dismiss@v1
+        uses: werf/actions/dismiss@master
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

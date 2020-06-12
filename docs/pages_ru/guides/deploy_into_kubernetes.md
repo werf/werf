@@ -18,7 +18,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
    * Доступ от хостов Kubernetes с правами на push образов в Docker registry.
    * Доступ от хостов Kubernetes с правами на pull образов в Docker registry.
  * Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
- * Установленный [multiwerf](https://github.com/flant/multiwerf).
+ * Установленный [multiwerf](https://github.com/werf/multiwerf).
  * Установленный и сконфигурированный `kubectl` для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
 **Внимание!** Далее в качестве адреса репозитория будет использоваться значение `:minikube` . Если вы используете собственный кластер Kubernetes и Docker registry, то указывайте репозиторий проекта в Docker registry вместо аргумента `:minikube`.

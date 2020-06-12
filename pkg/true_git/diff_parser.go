@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flant/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 func makeDiffParser(out io.Writer, pathMatcher path_matcher.PathMatcher) *diffParser {

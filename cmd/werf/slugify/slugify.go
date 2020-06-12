@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/slug"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/slug"
 )
 
 var cmdData struct {

@@ -15,7 +15,7 @@ The workflow in the repository (a set of GitHub workflow configurations) will be
 * `dismiss` — the job to delete an application (it is used for review environments only);
 * `cleanup` — the job to clean up the stages storage and the Docker registry.
 
-Jobs are based on comprehensive GitHub Actions, [flant/werf-actions](https://github.com/flant/werf-actions), that include all the necessary steps for setting up a specific environment and running required werf commands. Below, we will discuss examples of their use (detailed information is available in the related repository).
+Jobs are based on comprehensive GitHub Actions, [werf/actions](https://github.com/werf/actions), that include all the necessary steps for setting up a specific environment and running required werf commands. Below, we will discuss examples of their use (detailed information is available in the related repository).
 
 The specific set of tiers in the Kubernetes cluster depends on many various factors. In this article, we will examine various options for setting up environments for the following tiers:
 
@@ -67,12 +67,12 @@ werf generates stages on the basis of the git history. So, if there is no histor
 ```
 {% endraw %}
 
-The action `flant/werf-actions/converge` combines all the necessary steps, sets up an environment, and invokes the appropriate command.
+The action `werf/actions/converge` combines all the necessary steps, sets up an environment, and invokes the appropriate command.
 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -90,7 +90,7 @@ The `kubectl` interface is already pre-installed on GitHub virtual machines, so 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -107,7 +107,7 @@ Now, let us explore other parameters used in this step:
 {% raw %}
 ```yaml
 - name: Converge
-  uses: flant/werf-actions/converge@master
+  uses: werf/actions/converge@master
   with:
     env: ANY_ENV_NAME
   env:

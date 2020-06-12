@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/true_git"
 
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf"
 
-	"github.com/flant/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo"
 )
 
 func do(v1FromCommit, v1IntoCommit, v2FromCommit, v2IntoCommit string) error {

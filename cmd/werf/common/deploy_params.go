@@ -9,9 +9,9 @@ import (
 
 	"github.com/Masterminds/sprig"
 
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/slug"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/slug"
 )
 
 func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {

@@ -13,8 +13,8 @@ import (
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
-	"github.com/flant/werf/cmd/werf/common"
-	helm_common "github.com/flant/werf/cmd/werf/helm/common"
+	"github.com/werf/werf/cmd/werf/common"
+	helm_common "github.com/werf/werf/cmd/werf/helm/common"
 )
 
 const dependencyListDesc = `

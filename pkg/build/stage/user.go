@@ -3,11 +3,11 @@ package stage
 import (
 	"os"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/build/builder"
-	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/build/builder"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/util"
 )
 
 func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {

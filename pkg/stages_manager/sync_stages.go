@@ -3,10 +3,10 @@ package stages_manager
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type SyncStagesOptions struct {

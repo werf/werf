@@ -11,9 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/storage"
-	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/testing/utils"
 )
 
 func TestIntegration(t *testing.T) {

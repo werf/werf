@@ -1,10 +1,10 @@
 package images_manager
 
 import (
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/storage"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type ImageInfoGetter interface {

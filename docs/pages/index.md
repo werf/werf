@@ -116,7 +116,7 @@ layout: default
             </div>
         </li>
     </ul>
-    <a href="https://github.com/flant/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
+    <a href="https://github.com/werf/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
         Check out a complete features list
     </a>
 </div>
@@ -238,56 +238,56 @@ layout: default
                     <div class="roadmap__steps-title">Milestones</div>
                     <ul class="roadmap__steps-list">                                          
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
-                            <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
+                            <a href="https://github.com/werf/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
                                 <strike>Use <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during helm release upgrade.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
-                            <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
+                            <a href="https://github.com/werf/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
                                 <strike>Content addressable tagging scheme.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
-                            <a href="https://github.com/flant/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
+                            <a href="https://github.com/werf/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
                             <span class="roadmap__steps-list-item-text">
                                 Support for the most Docker registry implementations.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
-                            <a href="https://github.com/flant/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
+                            <a href="https://github.com/werf/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
                             <span class="roadmap__steps-list-item-text">
                                 Distributed builds with common Docker registry.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
-                            <a href="https://github.com/flant/werf/issues/1940" class="roadmap__steps-list-item-issue" target="_blank">#1940</a>
+                            <a href="https://github.com/werf/werf/issues/1940" class="roadmap__steps-list-item-issue" target="_blank">#1940</a>
                             <span class="roadmap__steps-list-item-text">
                                 Easy local development of applications with werf.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2200">
-                            <a href="https://github.com/flant/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
+                            <a href="https://github.com/werf/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
                                 Parallel image builds.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
-                            <a href="https://github.com/flant/werf/issues/1617" class="roadmap__steps-list-item-issue" target="_blank">#1617</a>
+                            <a href="https://github.com/werf/werf/issues/1617" class="roadmap__steps-list-item-issue" target="_blank">#1617</a>
                             <span class="roadmap__steps-list-item-text">
                                 Proven approaches and recipes<br/>
                                 for most of the popular CI systems.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1606">
-                            <a href="https://github.com/flant/werf/issues/1606" class="roadmap__steps-list-item-issue" target="_blank">#1606</a>
+                            <a href="https://github.com/werf/werf/issues/1606" class="roadmap__steps-list-item-issue" target="_blank">#1606</a>
                             <span class="roadmap__steps-list-item-text">
                                 Helm 3 support.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1618">
-                            <a href="https://github.com/flant/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
+                            <a href="https://github.com/werf/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
                             <span class="roadmap__steps-list-item-text">
                                 Userspace builds that do not require Docker daemon<br/>
                                 (as in <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">kaniko</a>).
@@ -313,7 +313,7 @@ layout: default
             </div>
         </div>
         <div class="documentation__btns">
-            <a href="https://github.com/flant/werf" target="_blank" class="page__btn page__btn_b documentation__btn">
+            <a href="https://github.com/werf/werf" target="_blank" class="page__btn page__btn_b documentation__btn">
                 Get werf
             </a>
             <a href="{{ site.baseurl }}/documentation/guides/getting_started.html" class="page__btn page__btn_o documentation__btn">

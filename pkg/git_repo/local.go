@@ -6,14 +6,14 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/git_repo/check_ignore"
-	"github.com/flant/werf/pkg/git_repo/status"
-	"github.com/flant/werf/pkg/path_matcher"
-	"github.com/flant/werf/pkg/true_git"
-	"github.com/flant/werf/pkg/true_git/ls_tree"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/git_repo/check_ignore"
+	"github.com/werf/werf/pkg/git_repo/status"
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Local struct {

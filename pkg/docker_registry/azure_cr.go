@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/image"
+	"github.com/werf/werf/pkg/image"
 )
 
 const AzureCrImplementationName = "acr"

@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/docker_registry"
 
-	"github.com/flant/werf/pkg/testing/utils"
+	"github.com/werf/werf/pkg/testing/utils"
 )
 
 var _ = forEachDockerRegistryImplementation("cleaning images", func() {

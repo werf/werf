@@ -5,17 +5,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/lockgate"
-	"github.com/flant/werf/pkg/werf"
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/container_runtime"
-	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/tmp_manager"
 )
 
 type HostCleanupOptions struct {

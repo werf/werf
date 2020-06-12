@@ -16,13 +16,13 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
-	"github.com/flant/logboek"
+	"github.com/werf/logboek"
 
-	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/logging"
-	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/tmp_manager"
-	"github.com/flant/werf/pkg/util"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/util"
 )
 
 func RenderWerfConfig(werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string) error {
