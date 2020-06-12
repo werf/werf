@@ -1,4 +1,4 @@
-name: Site deployment
+name: Website Deployment
 on:
   push:
     branches:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Trigger Main Job
+    - name: Deploy website to production
       run: |
         curl -X POST \
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
