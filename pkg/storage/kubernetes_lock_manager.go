@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/werf/werf/pkg/werf/locker_with_retry"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -46,7 +48,10 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 			Resource: "configmaps",
 		}, name, manager.Namespace,
 	)
-	manager.LockerPerProject[projectName] = locker
+
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+
+	manager.LockerPerProject[projectName] = lockerWithRetry
 
 	return locker, nil
 }
