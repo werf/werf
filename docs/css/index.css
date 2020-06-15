@@ -211,6 +211,7 @@ html, body, .page {
 
 .presentation__row-item_scheme {
     transform: skew(-10deg);
+    padding-bottom: 50px;
 }
 
 .presentation__title {
