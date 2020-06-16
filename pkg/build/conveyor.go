@@ -587,6 +587,14 @@ func (c *Conveyor) GetImageTmpDir(imageName string) string {
 	return filepath.Join(c.tmpDir, "image", imageName)
 }
 
+func (c *Conveyor) GetProjectRepoCommit() (string, error) {
+	if c.localGitRepo != nil {
+		return c.localGitRepo.HeadCommit()
+	} else {
+		return "", nil
+	}
+}
+
 func prepareImageBasedOnStapelImageConfig(imageInterfaceConfig config.StapelImageInterface, c *Conveyor) (*Image, error) {
 	image := &Image{}
 

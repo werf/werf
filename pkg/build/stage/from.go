@@ -69,7 +69,11 @@ func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ container_runtime.I
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.addProjectRepoCommitToLabels(c, image); err != nil {
+		return err
+	}
+
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
 
