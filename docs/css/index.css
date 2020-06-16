@@ -211,6 +211,7 @@ html, body, .page {
 
 .presentation__row-item_scheme {
     transform: skew(-10deg);
+    padding-bottom: 50px;
 }
 
 .presentation__title {
@@ -268,8 +269,10 @@ html, body, .page {
 
 #presentation-scheme #scheme_step,
 #presentation-scheme #scheme_step_2,
+#presentation-scheme #scheme_step_3,
 #presentation-scheme #scheme_step_connector,
 #presentation-scheme #scheme_step_connector_2,
+#presentation-scheme #scheme_step_connector_3,
 #presentation-scheme #scheme_smart_icon_check,
 #presentation-scheme #scheme_smart_icon_check_2 {
     opacity: 0;
