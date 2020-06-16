@@ -242,13 +242,13 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/werf/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х стороннего слияния</a><br /> при обновлении Helm-релизов.</strike>
+                                Использование <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-х стороннего слияния</a><br /> при обновлении Helm-релизов.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/werf/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Тегирование, основанное на контенте.</strike>
+                                Тегирование, основанное на контенте.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
