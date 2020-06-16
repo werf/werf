@@ -240,13 +240,13 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/flant/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Use a <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during the helm release upgrade.</strike>
+                                Use a <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during the helm release upgrade.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/flant/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Content-based tagging scheme.</strike>
+                                Content-based tagging scheme.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
