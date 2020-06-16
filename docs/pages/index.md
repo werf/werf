@@ -12,7 +12,7 @@ layout: default
                 <div class="presentation__subtitle">Consistent delivery tool</div>
                 <h1 class="presentation__title">What you Git<br/> is what you get!</h1>
                 <ul class="presentation__features">
-                    <li>Single source of truth in Git.</li>
+                    <li>Git as a single source of truth.</li>
                     <li>Build. Deploy to Kubernetes. Stay in sync.</li>
                     <li>Open Source. Written in Go.</li>
                 </ul>
@@ -32,8 +32,8 @@ layout: default
                 but done <span>another way</span>!
             </h1>
             <div class="welcome__subtitle">
-                Git as a single source of&nbsp;truth, allowing you to&nbsp;make the&nbsp;whole delivery pipeline deterministic and&nbsp;idempotent. 
-                You can use it from your CI, or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
+                Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent. 
+                You can use it from within your CI or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
             </div>
             <!-- <h1 class="welcome__title">
                 GitOps CLI tool
@@ -55,10 +55,10 @@ layout: default
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
-                            werf is a single CLI tool that integrates well known tools:<br/> <code>git</code>, <code>helm</code> and <code>docker</code>.
+                            werf is an integrated CLI tool that combines several popular instruments:<br/> <code>git</code>, <code>helm</code>, and <code>docker</code>.
                         </li>
                         <li>
-                            werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using provided building blocks:
+                            werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using the built-in building blocks:
                             <ul>
                                 <li><code>werf build-and-publish</code>;</li>
                                 <li><code>werf deploy</code>;</li>
@@ -70,7 +70,7 @@ layout: default
                             Open Source, written in Go.
                         </li>
                         <li>
-                            werf is not a SAAS, we consider it a new generation<br/> of high-level CI/CD tools.
+                            werf is not a SAAS. werf is the new generation<br/> of high-level CI/CD tools.
                         </li>
                     </ul>
                 </div>
@@ -95,8 +95,8 @@ layout: default
                 <ul class="intro__list">
                     <li>Full compatibility with Helm.</li>
                     <li>Easy RBAC definition.</li>
-                    <li>Applying deployment configuration in Kubernetes does not guarantee the successful deployment of an application and its fully functional state. With werf, you get that guarantee.</li>
-                    <li>werf immediately fails if some problem is detected in the CI/CD job, thus allowing faster debugging of new versions of an application without unnecessary kubectl invocations.</li>
+                    <li>Applying the deployment configuration in Kubernetes does not guarantee the successful deployment of an application and its fully functional state. With werf, you get that guarantee.</li>
+                    <li>werf immediately fails if any problem is detected in the CI/CD job, allowing you to debug new versions of an application faster and without unnecessary kubectl invocations.</li>
                     <li>Configurable resource error and resource readiness detectors based on resource annotations.</li>
                     <li>Rich logging and error reporting capabilities.</li>
                 </ul>
@@ -108,16 +108,16 @@ layout: default
             </div>
             <div class="intro-extra__item-text">
                 <ul class="intro__list">
-                    <li>Build images with Dockerfiles or with an advanced image builder that supports incremental rebuilds based on the git history and ansible.</li>
-                    <li>Publish images to the registry using advanced image naming schemas.</li>
+                    <li>Build images using Dockerfiles or the advanced image builder that supports incremental rebuilds based on the git history and ansible.</li>
+                    <li>Publish images to the registry; apply advanced image naming schemas.</li>
                     <li>Deploy application images to the Kubernetes cluster.</li>
-                    <li>Clean up your Docker registry by deleting unused images that meet specific conditions.</li>
+                    <li>Clean up your Docker registry — delete unneeded images meeting specific conditions.</li>
                 </ul>
             </div>
         </li>
     </ul>
     <a href="https://github.com/werf/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
-        Check out a complete features list
+        Check out the complete features list
     </a>
 </div>
 
@@ -129,7 +129,7 @@ layout: default
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">4</div>
                     <div class="stats__list-item-title">releases per week</div>
-                    <div class="stats__list-item-subtitle">on average for the last year</div>
+                    <div class="stats__list-item-subtitle">on average during the last year</div>
                 </li>
                 <li class="stats__list-item">
                     <div class="stats__list-item-num">1400</div>
@@ -152,11 +152,11 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Complete application lifecycle management</div>
-                <div class="features__list-item-text">Manage the image building process, deploy an application to Kubernetes, easily remove unused images.</div>
+                <div class="features__list-item-text">Manage the process of building images, deploy the application to Kubernetes, easily remove unused images.</div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
-                <div class="features__list-item-title">Effortless deployment to <span>Kubernetes</span></div>
+                <div class="features__list-item-title">Hassle-free deployment to <span>Kubernetes</span></div>
                 <div class="features__list-item-text">Deploy to Kubernetes using standard Kubernetes package manager with interactive tracking of the deployment process and real-time logs browsing.</div>
             </li>
             <li class="features__list-item">
@@ -177,13 +177,13 @@ layout: default
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_debug"></div>
                 <div class="features__list-item-title">Advanced debugging tools for the building process</div>
-                <div class="features__list-item-text">During assembly, you can access any stage using introspection options.</div>
+                <div class="features__list-item-text">Introspection options allow you to access any stage during assembly.</div>
             </li>
             <li class="features__list-item"></li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
-                <div class="features__list-item-title">Compact configuration file</div>
-                <div class="features__list-item-text">Build multiple images using a single configuration file, share common configuration snippets via Go templates.</div>
+                <div class="features__list-item-title">Compact and concise configuration file</div>
+                <div class="features__list-item-text">Build multiple images using a single configuration file; share common configuration snippets via Go templates.</div>
             </li>
             <li class="features__list-item"></li>
         </ul>
@@ -193,16 +193,16 @@ layout: default
 <div class="community">
     <div class="page__container">
         <div class="community__content">
-            <div class="community__title">Friendly and growing community</div>
-            <div class="community__subtitle">werf’s developers are always in contact with the community<br/> in Twitter and Slack.</div>
+            <div class="community__title">Friendly and rapidly growing community</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community.<br/> You can reach us in Twitter and Slack.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
-                    Join via Twitter
+                    Join us in Twitter
                 </a>
                 <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_slack"></span>
-                    Join via Slack
+                    Join us in Slack
                 </a>
             </div>
         </div>
@@ -220,7 +220,7 @@ layout: default
                     <div class="roadmap__goals-title">Goals</div>
                     <ul class="roadmap__goals-list">
                         <li class="roadmap__goals-list-item">
-                            Feature-complete version of werf that works well in an environment with a single dedicated, persistent host to run all werf operations (build, deploy, and cleanup).
+                            Feature-complete version of werf that works well in an environment with a single dedicated, persistent host running all werf operations (build, deploy, and cleanup).
                         </li>
                         <li class="roadmap__goals-list-item">
                             Proven approaches and recipes <br/>
@@ -228,7 +228,7 @@ layout: default
                         </li>
                         <li class="roadmap__goals-list-item">
                             Build images in a userspace, <br/>
-                            in a container or a Kubernetes cluster.
+                            in a container, or a Kubernetes cluster.
                         </li>
                     </ul>
                 </div>
@@ -240,19 +240,19 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1616">
                             <a href="https://github.com/werf/werf/issues/1616" class="roadmap__steps-list-item-issue" target="_blank">#1616</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Use <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during helm release upgrade.</strike>
+                                <strike>Use a <a href="https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#merge-patch-calculation" target="_blank">3-way-merge</a> during the helm release upgrade.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/werf/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                <strike>Content addressable tagging scheme.</strike>
+                                <strike>Content-based tagging scheme.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
                             <a href="https://github.com/werf/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
                             <span class="roadmap__steps-list-item-text">
-                                Support for the most Docker registry implementations.
+                                Support for the majority of Docker registry implementations.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
@@ -264,13 +264,13 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
                             <a href="https://github.com/werf/werf/issues/1940" class="roadmap__steps-list-item-issue" target="_blank">#1940</a>
                             <span class="roadmap__steps-list-item-text">
-                                Easy local development of applications with werf.
+                                Effortless local development of applications with werf.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2200">
                             <a href="https://github.com/werf/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
-                                Parallel image builds.
+                                Concurrent building of images.
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
@@ -289,7 +289,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1618">
                             <a href="https://github.com/werf/werf/issues/1618" class="roadmap__steps-list-item-issue" target="_blank">#1618</a>
                             <span class="roadmap__steps-list-item-text">
-                                Userspace builds that do not require Docker daemon<br/>
+                                Userspace builds that do not require the Docker daemon<br/>
                                 (as in <a href="https://github.com/GoogleContainerTools/kaniko" target="_blank">kaniko</a>).
                             </span>
                         </li>
@@ -309,7 +309,7 @@ layout: default
                 Detailed documentation
             </div>
             <div class="documentation__info-text">
-                werf documentation comprises over 100 articles on typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and a thorough description of functions & architecture.
+                werf documentation comprises over 100 articles covering typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and providing a thorough description of functions & architecture.
             </div>
         </div>
         <div class="documentation__btns">
@@ -320,7 +320,7 @@ layout: default
                 Starters guide
             </a>
             <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
-                Explore CLI
+                Explore the CLI
             </a>
         </div>
     </div>
