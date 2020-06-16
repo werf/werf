@@ -156,27 +156,43 @@ $(document).ready(function () {
 });
 
 
-// Update github counters
+// Update GitHub stats
 $(document).ready(function () {
-  $.get("https://api.github.com/repos/werf/werf", function (data) {
-    $(".gh_counter").each(function (index) {
-      $(this).text(data.stargazers_count)
+  var github_requests = [],
+  github_stats = JSON.parse(localStorage.getItem('werf_github_stats')) || null;
+
+  function getGithubReuests() {
+    $('[data-roadmap-step]').each(function () {
+      var $step = $(this);
+      github_requests.push($.get('https://api.github.com/repos/werf/werf/issues/' + $step.data('roadmap-step'), function (data) {
+        github_stats['issues'][$step.data('roadmap-step')] = (data.state === 'closed');
+      }));
     });
-  });
-});
+    github_requests.push($.get("https://api.github.com/repos/werf/werf", function (data) {
+      github_stats['stargazers'] = data.stargazers_count
+    }));
+    return github_requests;
+  }
 
-
-// Update roadmap steps
-$(document).ready(function () {
-  $('[data-roadmap-step]').each(function (index) {
-    var $step = $(this);
-    $.get('https://api.github.com/repos/werf/werf/issues/' + $step.data('roadmap-step'), function (data) {
-      if (data.state === 'closed') {
-        $step.addClass('roadmap__steps-list-item_closed');
-      }
+  function updateGithubStats() {
+    $('.gh_counter').each(function () {
+      $(this).text(github_stats['stargazers']);
     });
-  });
+    $('[data-roadmap-step]').each(function () {
+      var $step = $(this);
+      if (github_stats['issues'][$step.data('roadmap-step')] == true) $step.addClass('roadmap__steps-list-item_closed');
+    });
+  }
 
+  if (github_stats == null || Date.now() > (github_stats['updated_on'] + 1000 * 60 * 60)) {
+    github_stats = {'updated_on': Date.now(), 'issues': {}, 'stargazers': 0};
+    $.when.apply($, getGithubReuests()).done(function() {
+      updateGithubStats();
+      localStorage.setItem('werf_github_stats', JSON.stringify(github_stats));
+    });
+  } else {
+    updateGithubStats();
+  }
 });
 
 $(document).ready(function () {
