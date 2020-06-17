@@ -3,7 +3,6 @@
 <head>
   {%- include head.html %}
   <script>
-    {%- if page.layout != 'guide' %}
     $(document).ready(function() {
       // Initialize navgoco with default options
       $("#mysidebar").navgoco({
@@ -33,7 +32,6 @@
       });
 
     });
-  {%-  endif %}
   </script>
   <script>
     $(function () {
