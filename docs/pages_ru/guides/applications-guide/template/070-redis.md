@@ -1,26 +1,8 @@
 ---
 title: Подключаем redis
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/070-redis.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/070-redis.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -49,7 +31,7 @@ TODO: чёт я нихуя не понял, а что с хранением да
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="gitlab-rails-files/examples/example_4/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_4/.helm/requirements.yaml" %}
 ```yaml
 dependencies:
 - name: redis
@@ -61,7 +43,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_4/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.gitlab-ci.yml#L24" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -74,7 +56,7 @@ dependencies:
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-{% snippetcut name=".helm/values.yaml" url="gitlab-rails-files/examples/example_4/.helm/values.yaml#L3" %}
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_4/.helm/values.yaml#L3" %}
 ```yaml
 redis:
   enabled: true
@@ -103,25 +85,18 @@ metadata:
 
 ## Подключение Rails приложения к базе redis
 
-В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis. Рассмотрим настройки подключение к redis из нашего приложения на примере стандартного cable (`config/cable.yml`) и стандартного гема `gem 'redis', '~> 4.0'`.
+В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis. Рассмотрим настройки подключение к redis из нашего приложения на примере ____________.
 
-{% snippetcut name="config/cable.yml" url="gitlab-rails-files/examples/example_4/config/cable.yml#L9" %}
+____________
+
+В данном файле мы видим что адрес подключения берется из переменной окружения ____________ и если такая переменная не задана - подставляется значение по умолчанию ____________. Пробросим в `____________` реальное название Service:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_4/.helm/templates/deployment.yaml#L29" %}
 ```yaml
-production:
-  adapter: redis
-  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
-  channel_prefix: example_2_production
+- name: ____________
+  value: "____________"
 ```
 {% endsnippetcut %}
 
-В данном файле мы видим что адрес подключения берется из переменной окружения `REDIS_URL` и если такая переменная не задана - подставляется значение по умолчанию `redis://localhost:6379/1`. Пробросим в `REDIS_URL` реальное название Service:
-
-{% snippetcut name=".helm/templates/deployment.yaml" url="gitlab-rails-files/examples/example_4/.helm/templates/deployment.yaml#L29" %}
-```yaml
-- name: REDIS_URL
-  value: "redis://{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master:6379/1"
-```
-{% endsnippetcut %}
-
-Таким образом, для каждого стенда будет прописываться корректное значение `REDIS_URL`, например `redis://example-2-stage-redis-master:6379/1` — для stage окружения.
+Таким образом, для каждого стенда будет прописываться корректное значение `____________`, например `redis://example-2-stage-redis-master:6379/1` — для stage окружения.
 
