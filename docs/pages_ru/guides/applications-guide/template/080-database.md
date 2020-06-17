@@ -1,26 +1,8 @@
 ---
 title: Подключение базы данных
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/080-database.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/080-database.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -54,7 +36,7 @@ TODO: а где всё хранится? Почему не слова о сто�
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="gitlab-rails-files/examples/example_3/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_3/.helm/requirements.yaml" %}
 ```yaml
 dependencies:
 - name: postgresql
@@ -66,7 +48,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_3/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_3/.gitlab-ci.yml#L24" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -79,7 +61,7 @@ dependencies:
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-{% snippetcut name=".helm/values.yaml" url="gitlab-rails-files/examples/example_3/.helm/values.yaml#L4" %}
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_3/.helm/values.yaml#L4" %}
 ```yaml
 postgresql:
   enabled: true
@@ -94,7 +76,7 @@ postgresql:
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
-{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="gitlab-rails-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="template-files/examples/example_3/.helm/secret-values.yaml#L3" %}
 ```yaml
 postgresql:
   postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
@@ -111,7 +93,7 @@ postgresql:
 
 Внесем изменения в файл настроек подключения к базе данных:
 
-{% snippetcut name="config/database.yml" url="gitlab-rails-files/examples/example_3/config/database.yml#L17" %}
+{% snippetcut name="config/database.yml" url="template-files/examples/example_3/config/database.yml#L17" %}
 ```yaml
 default: &default
   adapter: postgresql
@@ -129,7 +111,7 @@ development:
 
 Для того, чтобы переменные окружения попали в контейнер — пропишем их в Pod-е. Для удобства и переиспользуемости — объявим эти переменные в блок `database_envs` в отдельном файле `_envs.tpl` и потом просто подключим в нужном контейнере.
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="gitlab-rails-files/examples/example_3/.helm/templates/_envs.tpl#L10" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="template-files/examples/example_3/.helm/templates/_envs.tpl#L10" %}
 {% raw %}
 ```yaml
 {{- define "database_envs" }}
@@ -148,7 +130,7 @@ development:
 
 Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/deployment.yaml#L24" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_3/.helm/templates/deployment.yaml#L24" %}
 {% raw %}
 ```yaml
 {{- include "database_envs" . | indent 8 }}
@@ -168,7 +150,7 @@ TODO: разве "после деплоя, но до доступности"????
 
 TODO: вот этот пиздец внизу надо нарезать и рассказать по кускам.
 
-{% snippetcut name=".helm/templates/job.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
 {% raw %}
 ```yaml
 ---

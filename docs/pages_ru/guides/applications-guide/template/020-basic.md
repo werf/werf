@@ -1,33 +1,15 @@
 ---
 title: Базовые настройки
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/020-basic.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/020-basic.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
 
 Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит веб сервер для ruby. Управлять маршрутизацией запросов к приложению будет управлять Ingress в kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
-![](/images/applications-guide/gitlab-rails/020-basic-process-overview.png)
+![](/images/applications-guide/template/020-basic-process-overview.png)
 
 <a name="building" />
 
@@ -54,7 +36,7 @@ TODO: расписать проблематику где вести разраб
 Возьмём исходные коды приложения из git:
 
 ```bash
-$ git clone http://....... TODO
+____________
 ```
 
 Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
@@ -67,7 +49,7 @@ TODO: вариантов синтаксиса несколько вот раз �
 
 Начнём werf.yaml с обязательной [**секции мета-информации**]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации):
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
@@ -80,17 +62,17 @@ configVersion: 1
 
 После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [**image config section**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%81%D0%B5%D0%BA%D1%86%D0%B8%D1%8F-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0).
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
 ---
-image: rails
-from: ruby:2.7.1
+image: ____________
+from: ____________
 ```
 {% endsnippetcut %}
 
-В строке `image: rails` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: ruby:2.7.1` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
+В строке `image: ____________` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: ____________` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
 
 {% offtopic title="Что делать, если образов и других констант станет много" %}
 
@@ -100,13 +82,13 @@ TODO: кратко написать про шаблоны Go и дать ссы�
 
 Добавим исходный код нашего приложения в контейнер с помощью [**директивы git**](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html)
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
 ---
-image: rails
-from: ruby:2.7.1
+image: ____________
+from: ____________
 git:
 - add: /
   to: /app
@@ -146,10 +128,8 @@ TODO: Стадии — это очень важный инструмент, к�
 {% snippetcut name="werf.yaml" url="#" %}
 ```yaml
 shell:
-  beforeInstall:
-  - gem install bundler
-  install:
-  - bundle config set without 'development test' && bundle install
+  ____________
+  ____________
 ```
 {% endsnippetcut %}
 
@@ -233,14 +213,14 @@ werf-stages-storage/example-1:7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96
 Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):
 
 ```bash
-$ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- bash -c "RAILS_MASTER_KEY=0f4b75104a5b3b7ea9c98cc644ec0fa4 RAILS_ENV=production bundle exec rails server -b 0.0.0.0"
+$ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- bash -c "____________"
 ```
 
 Первая часть команды очень похожа на build, а во второй мы задаем [параметры docker](https://docs.docker.com/engine/reference/run/) и через двойную черту команду с которой хотим запустить наш image.
 
 Теперь наше приложение доступно локально на порту 3000:
 
-![alt_text](/images/applications-guide/gitlab-rails/2.png "image_tooltip")
+![alt_text](/images/applications-guide/template/2.png "image_tooltip")
 
 Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается [командой `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
 
@@ -304,15 +284,15 @@ TODO:  ^^ вот это выше надо причесать, дать ссыл�
 - [.helm/values.yaml](.helm/values.yaml)
 {% endfilesused %}
 
-Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `rails`. Укажем, **как этот контейнер будет запускаться**:
+Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `____________`. Укажем, **как этот контейнер будет запускаться**:
 
-{% snippetcut name="deployment.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/deployment.yaml#L17" %}
+{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml#L17" %}
 {% raw %}
 ```yaml
       containers:
-      - name: rails
-        command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
-{{ tuple "rails" . | include "werf_container_image" | indent 8 }}
+      - name: ____________
+        command: ____________
+{{ tuple "____________" . | include "werf_container_image" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -329,22 +309,23 @@ Werf складывает собранные образы в Registry с раз�
 
 Для корректной работы нашего приложения ему нужно узнать **переменные окружения**.
 
-Для Ruby on Rails это, например, `RAILS_ENV` в которой указывается окружение. Так же нужно добавить переменную `RAILS_MASTER_KEY` которая расшифровывает секретные значения.
+Для ____________ это, например, `____________` ____________
 
-{% snippetcut name="deployment.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/deployment.yaml#L21" %}
+{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml#L21" %}
 {% raw %}
 ```yaml
       env:
-      - name: RAILS_MASTER_KEY
-        value: 9eeddad83cebe240f55ae06ccdd95f8e
-      - name: RAILS_ENV
-        value: production
+      ____________
+      ____________
+      ____________
 {{ tuple "rails" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-Мы задали значение для `RAILS_MASTER_KEY` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
+____________
+____________
+____________
 
 Обратите также внимание на [функцию `werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
@@ -389,14 +370,11 @@ TODO: вот эти варианты надо оформить и куда-то 
 
 При запуске приложения в kubernetes необходимо **логи отправлять в stdout и stderr** - это необходимо для простого сбора логов например через `filebeat`, а так же чтобы не разрастались docker образы запущенных приложений.
 
-Для того чтобы логи приложения отправлялись в stdout нам необходимо будет добавить переменную окружения `RAILS_LOG_TO_STDOUT="true"` согласно [изменениям](https://github.com/rails/rails/pull/23734) в rails framework.
+Для того чтобы логи приложения отправлялись в stdout нам необходимо ____________
 
-{% snippetcut name="deployment.yaml" url="#" %}
-```yaml
-      - name: RAILS_LOG_TO_STDOUT
-        value: "true"
-```
-{% endsnippetcut %}
+____________
+____________
+____________
 
 #### Доступность Pod-а
 
@@ -417,12 +395,12 @@ TODO: вот эти варианты надо оформить и куда-то 
 В статьях и бытовой речи оба этих термина зачастую называют "Ingress", так что нужно догадываться по контексту.
 {% endofftopic %}
 
-Наше приложение работает на стандартном порту `3000` — **откроем порт Pod-у**:
+Наше приложение работает на стандартном порту `____________` — **откроем порт Pod-у**:
 
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
         ports:
-        - containerPort: 3000
+        - containerPort: ____________
           name: http
           protocol: TCP
 ```
@@ -430,7 +408,7 @@ TODO: вот эти варианты надо оформить и куда-то 
 
 Затем, **пропишем Service**, чтобы к Pod-у могли обращаться другие приложения кластера. 
 
-{% snippetcut name="service.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/service.yaml" %}
+{% snippetcut name="service.yaml" url="template-files/examples/example_1/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -443,7 +421,7 @@ spec:
     service: {{ .Chart.Name }}
   ports:
   - name: http
-    port: 3000
+    port: ____________
     protocol: TCP
 ```
 {% endraw %}
@@ -451,7 +429,7 @@ spec:
 
 Обратите внимание на поле `selector` у Service: он должен совпадать с аналогичным полем у Deployment и ошибки в этой части — самая частая проблема с настройкой маршрута до приложения.
 
-{% snippetcut name="deployment.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/deployment.yaml" %}
+{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: apps/v1
@@ -474,11 +452,11 @@ TODO: написать, что надо курлануть с любого по�
 
 После этого можно настраивать **роутинг на Ingress**. Укажем, запросы на какой домен и путь по какому протоколу направлять в какой сервис и на какой порт.
 
-{% snippetcut name="ingress.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="template-files/examples/example_1/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
-  - host: myrailsapp.io
+  - host: ____________
     http:
       paths:
       - path: /
@@ -491,7 +469,7 @@ TODO: написать, что надо курлануть с любого по�
 
 #### Разное поведение в разных окружениях
 
-Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.myrailsapp.io, либо myrailsapp.io — смотря куда мы задеплоились.
+Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.____________, либо ____________ — смотря куда мы задеплоились.
 
 В werf есть для этого есть три механики:
 
@@ -505,7 +483,7 @@ TODO: написать, что надо курлануть с любого по�
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
-{% snippetcut name="ingress.yaml" url="gitlab-rails-files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="template-files/examples/example_1/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -524,9 +502,9 @@ TODO: написать, что надо курлануть с любого по�
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
-![alt_text](/images/applications-guide/gitlab-rails/5.png "image_tooltip")
+![alt_text](/images/applications-guide/template/5.png "image_tooltip")
 
-После этого мы сможем задать секретную переменную `RAILS_MASTER_KEY`. Зайдите в режим редактирования секретных значений:
+После этого мы сможем задать секретную переменную `____________`. Зайдите в режим редактирования секретных значений:
 
 ```bash
 $ werf helm secret values edit .helm/secret-values.yaml
@@ -534,19 +512,19 @@ $ werf helm secret values edit .helm/secret-values.yaml
 
 Откроется консольный текстовый редактор с данными в расшифованном виде:
 
-{% snippetcut name="secret-values.yaml в расшифрованном виде" url="gitlab-rails-files/examples/example_1/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml в расшифрованном виде" url="template-files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
-rails:
-  master_key: 0f4b75104a5b3b7ea9c98cc644ec0fa4
+____________
+____________
 ```
 {% endsnippetcut %}
 
 После сохранения значения в файле зашифруются и примут примерно такой вид:
 
-{% snippetcut name="secret-values.yaml в зашифрованном виде" url="gitlab-rails-files/examples/example_1/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml в зашифрованном виде" url="template-files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
-rails:
-  master_key: 100083f330adfb9e13fff74c9ab71b93ed77704aca3a0c607679336e099d48977d6565b314c06b8ad7aefc9d8d90629e92d851b573a89915ff036239de129d722ef5
+____________
+____________
 ```
 {% endsnippetcut %}
 
@@ -596,7 +574,7 @@ example-1-9f6bd769f-rm8nz   1/1     Running   0          6m12s
 
 $ kubectl -n example-1-stage get ingress
 NAME        HOSTS                                           ADDRESS   PORTS   AGE
-example-1   stage.myrailsapp.io                                       80      6m18s
+example-1   stage.____________                                       80      6m18s
 ```
 
 А также вы должны увидеть ваш сервис через браузер.
@@ -635,7 +613,7 @@ Deploy to stage:
     - echo "todo deploy to stage"
   environment:
     name: stage
-    url: http://stage.myrailsapp.io
+    url: http://stage.____________
   only:
     - merge_requests
   when: manual
@@ -645,7 +623,7 @@ Deploy to production:
     - echo "todo deploy to production"
   environment:
     name: production
-    url: http://myrailsapp.io
+    url: http://____________
   only:
     - master
 ```
@@ -714,7 +692,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 Теперь при коммите кода в gitlab будет происходить сборка
 
-![alt_text](/images/applications-guide/gitlab-rails/3.png "image_tooltip")
+![alt_text](/images/applications-guide/template/3.png "image_tooltip")
 
 <a name="ci-deploy" />
 
@@ -724,7 +702,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды:
 
-{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_1/.gitlab-ci.yml#L21" %}
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_1/.gitlab-ci.yml#L21" %}
 ```yaml
 .base_deploy: &base_deploy
   script:
@@ -738,7 +716,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 В результате мы можем делать деплой, например, на staging с использованием базового шаблона:
 
-{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_1/.gitlab-ci.yml#L21" %}
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_1/.gitlab-ci.yml#L21" %}
  ```yaml
  Deploy to Stage:
    extends: .base_deploy
@@ -756,10 +734,10 @@ TODO: то, что написано ниже надо проверить на с
 
 После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Stage.
 
-![alt_text](/images/applications-guide/gitlab-rails/6.png "image_tooltip")
+![alt_text](/images/applications-guide/template/6.png "image_tooltip")
 
 Посмотреть статус выполнения pipeline можно в интерфейсе gitlab **CI / CD - Pipelines**
 
-![alt_text](/images/applications-guide/gitlab-rails/7.png "image_tooltip")
+![alt_text](/images/applications-guide/template/7.png "image_tooltip")
 
 TODO: наверное надо написать ещё главу про очистку образов!
