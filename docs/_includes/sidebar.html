@@ -50,6 +50,8 @@
         <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
     {%- elsif page.url == folder.url %}
         <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+    {%- elsif folder.type == 'secondary' %}
+        <li class="sidebar__item secondary"><a href="{{ folderitem.external_url }}" target="_blank">{{folder.title}}</a></li>
     {%- else %}
         <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
     {%- endif %}
