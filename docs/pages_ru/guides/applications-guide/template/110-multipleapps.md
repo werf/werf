@@ -1,26 +1,8 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/110-multipleapps.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/110-multipleapps.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -66,11 +48,11 @@ TODO: напомнить про то, что helm-шаблоны — это мн
 
 На стадии сборки приложения нам необходимо правильно организовать структуру файла `werf.yaml`, описав в нём сборку двух приложений на разном стеке. 
 
-Мы соберём два образа: `backend` c Rails-приложением и `frontend` c React-приложением. Для сборки последнего мы воспользуемся механизмом артефактов (и соберём артефакт `frontend-build`) — мы использовали подобное в главе [Генерируем и раздаем ассеты](040-assets.html).
+Мы соберём два образа: `backend` c ____________-приложением и `frontend` c ____________-приложением. Для сборки последнего мы воспользуемся механизмом артефактов (и соберём артефакт `____________`) — мы использовали подобное в главе [Генерируем и раздаем ассеты](040-assets.html).
 
 Сборка образа `backend` аналогична ранее описанному [базовому приложению](#) с [зависимостями](#), за исключением того, откуда берётся исходный код:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_5/werf.yaml#L12" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_5/werf.yaml#L12" %}
 ```yaml
 git:
 - add: /backend
@@ -82,13 +64,13 @@ git:
 
 Сборка для frontend приложения описана в файле `werf.yaml` как отдельный образ. Поскольку nodejs нужен только для сборки - соберем артефакт:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_5/werf.yaml#L30" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_5/werf.yaml#L30" %}
 {% raw %}
 ```yaml
-artifact: frontend-build
-from: node:{{ .NODE_MAJOR }}
+artifact: ____________
+from: ____________
 git:
-- add: /frontend
+- add: /____________
   to: /app
 ```
 {% endraw %}
@@ -154,7 +136,7 @@ spec:
 
 Маршрутизация запросов будет осуществляться через Ingress:
 
-{% snippetcut name="ingress.yaml" url="gitlab-rails-files/examples/example_5/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="template-files/examples/example_5/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:

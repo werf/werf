@@ -1,26 +1,8 @@
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/040-assets.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/040-assets.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -35,12 +17,12 @@ assets_generator_chosen: "webpack"
 
 Для генерации ассетов мы будем использовать команду `bundle exec rake assets:precompile`.
 
-Интуитивно понятно, что на одной из стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлы с помощью Rails — хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарт.
+Интуитивно понятно, что на одной из стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлы с помощью ____________ — хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарт.
 
 Реализовать раздачу сгенерированных ассетов можно сделать двумя способами:
 
-* Добавить в собираемый образ с Rails ещё и nginx, а потом этот образ запускать уже двумя разными способами: один раз для раздачи статики, второй — для работы Rails-приложения
-* Сделать два отдельных образа: в одном только nginx и сгенерированные ассеты, во втором — Rails-приложение 
+* Добавить в собираемый образ с ____________ ещё и nginx, а потом этот образ запускать уже двумя разными способами: один раз для раздачи статики, второй — для работы ____________-приложения
+* Сделать два отдельных образа: в одном только nginx и сгенерированные ассеты, во втором — ____________-приложение 
 
 {% offtopic title="Как правильно сделать выбор?" %}
 TODO: дать небольшое рассуждение как правильно делать выбор. Что надо опираться на то, что будет и как часто перекатываться. И может быть постараться разобрать два разных кейса.
@@ -51,8 +33,6 @@ TODO: дать небольшое рассуждение как правильн
 ## Подготовка к внесению изменений
 
 Перед тем, как вносить изменения — **необходимо убедиться, что в собранных ассетах нет привязки к конкретному окружению**. То есть в собранных не должно быть логинов, паролей, доменов и тому подобного. В момент сборки Asset Pipeline не должен подключаться к базе данных, использовать user-generated контент и тому подобное.   
-
-По непонятной причине, для генерации ассетов Rails ходит в базу данных, хотя не понятно для каких целей и для этого - нужен `SECRET_KEY_BASE​`. При текущей сборке - мы использовали костыль, передав фейковое значение. По этому поводу есть issue созданное более 2х лет назад, но в версии rails 2.7 проблема по-прежнему остаётся. Если вы знаете, зачем авторы Rails так сделали - сообщите нам, пожалуйста.
 
 ## Изменения в сборке
 
@@ -68,49 +48,22 @@ TODO: кратко рассказать, как отлаживать разра�
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в артефакте на стадии `setup`.
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
 {% raw %}
 ```yaml
 artifact: build
-from: ruby:2.7.1
+from: ____________
 ansible:
-  beforeInstall:
-  - name: install node
-    shell: curl -sL https://deb.nodesource.com/setup_{{ .NODE_MAJOR }}.x | bash -
-  - name: install yarn repo
-    shell:
-      curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-      && echo 'deb http://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list
-  - name: Update repositories cache
-    shell: apt-get update -qq
-  - name: install dependencies
-    apt:
-      name:
-      - nodejs
-      - yarn
-  - name: install bundler
-    shell: gem install bundler:{{ .BUNDLER_VERSION }}
-  install:
-  - name: bundle install
-    shell: bundle config set without 'development test' && bundle install
-    args:
-      chdir: /app
-  - name: webpacker install
-    shell: RAILS_ENV=production rails webpacker:install
-    args:
-      chdir: /app
-  setup:
-  - name: build assets
-    shell: RAILS_ENV=production SECRET_KEY_BASE=fake bundle exec rake assets:precompile
-    args:
-      chdir: /app
+  ____________
+  ____________
+  ____________
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 Теперь, когда артефакт собран, соберём образ с nginx:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
 {% raw %}
 ```yaml
 image: assets
@@ -128,7 +81,7 @@ ansible:
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_2/werf.yaml#21" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
 ```yaml
 import:
 - artifact: build
@@ -145,7 +98,7 @@ import:
 
 При таком подходе изменим Deployment нашего приложения добавив еще один контейнер. Укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е. Обязательно укажем `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="gitlab-rails-files/examples/example_2/.helm/templates/deployment.yaml#L33" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_2/.helm/templates/deployment.yaml#L33" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -174,7 +127,7 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="gitlab-rails-files/examples/example_2/.helm/templates/service.yaml#L9" %}
+{% snippetcut name=".helm/templates/service.yaml" url="template-files/examples/example_2/.helm/templates/service.yaml#L9" %}
 ```yaml
   ports:
   - name: http
@@ -185,7 +138,7 @@ import:
 
 Также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="gitlab-rails-files/examples/example_2/.helm/templates/ingress.yaml" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml" %}
 ```yaml
       paths:
       - path: /
@@ -199,7 +152,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам в объекте Ingress:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="gitlab-rails-files/examples/example_2/.helm/templates/ingress.yaml#L9" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml#L9" %}
 {% raw %}
 ```yaml
       paths:

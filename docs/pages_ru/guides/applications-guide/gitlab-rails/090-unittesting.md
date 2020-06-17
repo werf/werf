@@ -23,6 +23,10 @@ assets_generator_possible:
 assets_generator_chosen: "webpack"
 ---
 
+{% filesused title="Файлы, упомянутые в главе" %}
+- .gitlab-ci.yml
+{% endfilesused %}
+
 В этой главе мы настроим в нашем базовом приложении выполнение тестов/линтеров. Запуск тестов и линтеров - это отдельная стадия в pipelinе Gitlab CI для выполнения которых могут быть нужны определенные условия. Рассмотрим на примере линтера robocop.
 
 Если мы хотим воспользоваться пакетом rubocop-rails нам нужно добавить эту зависимость в наше приложение (в `Gemfile`) и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
