@@ -1,26 +1,8 @@
 ---
 title: Подключение зависимостей
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-rails/030-dependencies.html
-author: alexey.chazov <alexey.chazov@flant.com>
+permalink: documentation/guides/applications-guide/template/030-dependencies.html
 layout: guide
-toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -46,37 +28,32 @@ Werf предлагает использовать для стадий след�
 Одно из основных преимуществ использования стадий в том, что мы можем не перезапускать нашу сборку с нуля, а перезапускать её только с той стадии, которая зависит от изменений в определенных файлах.
 {% endofftopic %}
 
-В Rails в качестве менеджера зависимостей используется bundler. Пропишем его использование в файле `werf.yaml` и затем оптимизируем его использование.
+В ____________ в качестве менеджера зависимостей используется bundler. Пропишем его использование в файле `werf.yaml` и затем оптимизируем его использование.
 
 ## Подключение менеджера зависимостей
 
 Установким `bundle` и пропишем команду `bundle install` в нужные стадии сборки в `werf.yaml`
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
 ```yaml
 ansible:
-  beforeInstall:
-  - name: install bundler
-    shell: gem update --system && gem install bundler:{{ .BUNDLER_VERSION }}
-  install:
-  - name: bundle install
-    shell: bundle config set without 'development test' && bundle install
-    args:
-      chdir: /app
+  ____________
+  ____________
+  ____________
 ```
 {% endsnippetcut %}
 
 Однако, если оставить всё так — стадия `beforeInstall` не будет запускаться при изменении lock-файла `Gemfile`. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L10" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L10" %}
 ```
 git:
 - add: /
   to: /app
   stageDependencies:
     install:
-    - Gemfile
-    - Gemfile.lock
+    ____________
+    ____________
 ```
 {% endsnippetcut %}
 
@@ -85,15 +62,15 @@ git:
 ## Оптимизация сборки
 
 Чтобы каждый раз менеджер зависимостей не скачивал заново один и тот-же пакет, можно кэшировать зависимости.
-По умолчанию они находятся в директории `/usr/local/bundle` и определяются через переменную окружения `GEM_HOME`
+По умолчанию они находятся в директории ____________ и определяются через ____________
 
 Для того, чтобы оптимизировать работу с этим кешом при сборке, мы добавим специальную конструкцию в `werf.yaml`:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L28" %}
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L28" %}
 ```yaml
 mount:
 - from: build_dir
-  to: /usr/local/bundle
+  to: ____________
 ```
 {% endsnippetcut %}
 

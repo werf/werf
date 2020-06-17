@@ -7,7 +7,7 @@ toc: false
 ---
 
 <ul>
-    <li><a href="template.html">Template</a></li>
+    <li><strong><a href="template/000-task.html">Template</a></strong></li>
     <li>
         <strong>GitLab</strong>
         <ul>
