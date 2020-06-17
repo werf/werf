@@ -27,6 +27,9 @@ type DockerRegistry interface {
 	SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
 	DeleteRepoImage(repoImageList ...*image.Info) error
 
+	PutMetadata(reference string, metadata map[string]string) error
+	GetMetadata(reference string) (map[string]string, error)
+
 	ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error)
 	String() string
 }

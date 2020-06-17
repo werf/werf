@@ -128,6 +128,32 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, strategy)
 	}
 
+	if phase.Conveyor.localGitRepo != nil {
+		if err := logboek.Info.LogProcess(fmt.Sprintf("publishing image %s git metadata", img.GetName()), logboek.LevelLogProcessOptions{}, func() error {
+			headCommit, err := phase.Conveyor.localGitRepo.HeadCommit()
+			if err != nil {
+				return err
+			}
+
+			// FIXME: Virtual merge commit?
+
+			if metadata, err := phase.Conveyor.StagesManager.StagesStorage.GetImageMetadataByCommit(phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
+				return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
+			} else if metadata != nil {
+				if metadata.ContentSignature != img.GetContentSignature() {
+					// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
+					// TODO: allowInconsistentPublish: true option for werf.yaml
+					return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+				}
+				return nil
+			} else {
+				return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+			}
+		}); err != nil {
+			return err
+		}
+	}
+
 	var existingTags []string
 	if tags, err := phase.fetchExistingTags(img.GetName()); err != nil {
 		return err
@@ -195,11 +221,10 @@ type publishImageByTagOptions struct {
 
 func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag string, tagStrategy tag_strategy.TagStrategy, opts publishImageByTagOptions) error {
 	imageRepository := phase.ImagesRepo.ImageRepositoryName(img.GetName())
-	lastStageImage := img.GetLastNonEmptyStage().GetImage()
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
 
-	alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(opts.ExistingTagsList, img.GetName(), imageMetaTag, lastStageImage, opts.CheckAlreadyExistingTagByDockerImageID)
+	alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(opts.ExistingTagsList, img.GetName(), imageMetaTag, img.GetLastNonEmptyStage().GetImage(), opts.CheckAlreadyExistingTagByDockerImageID)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
@@ -225,7 +250,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		return nil
 	}
 
-	publishImage := container_runtime.NewWerfImage(phase.Conveyor.GetStageImage(lastStageImage.Name()), imageName, phase.Conveyor.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
+	publishImage := container_runtime.NewWerfImage(phase.Conveyor.GetStageImage(img.GetLastNonEmptyStage().GetImage().Name()), imageName, phase.Conveyor.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
 	publishImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		image.WerfDockerImageName:  imageName,
@@ -268,7 +293,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, lastStageImage, opts.CheckAlreadyExistingTagByDockerImageID)
+		alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, img.GetLastNonEmptyStage().GetImage(), opts.CheckAlreadyExistingTagByDockerImageID)
 		if err != nil {
 			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
@@ -335,7 +360,6 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 		if err != nil {
 			return err
 		}
-
 		repoImageID = repoImage.ID
 		repoImageParentID = repoImage.ParentID
 		return nil

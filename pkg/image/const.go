@@ -1,14 +1,15 @@
 package image
 
 const (
-	WerfLabel               = "werf"
-	WerfVersionLabel        = "werf-version"
-	WerfCacheVersionLabel   = "werf-cache-version"
-	WerfImageLabel          = "werf-image"
-	WerfImageNameLabel      = "werf-image-name"
-	WerfImageTagLabel       = "werf-image-tag"
-	WerfDockerImageName     = "werf-docker-image-name"
-	WerfStageSignatureLabel = "werf-stage-signature"
+	WerfLabel                  = "werf"
+	WerfVersionLabel           = "werf-version"
+	WerfCacheVersionLabel      = "werf-cache-version"
+	WerfImageLabel             = "werf-image"
+	WerfImageNameLabel         = "werf-image-name"
+	WerfImageTagLabel          = "werf-image-tag"
+	WerfDockerImageName        = "werf-docker-image-name"
+	WerfStageSignatureLabel    = "werf-stage-signature"
+	WerfProjectRepoCommitLabel = "werf-project-repo-commit"
 
 	WerfMountTmpDirLabel          = "werf-mount-type-tmp-dir"
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"

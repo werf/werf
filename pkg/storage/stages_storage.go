@@ -32,8 +32,17 @@ type StagesStorage interface {
 	RmManagedImage(projectName, imageName string) error
 	GetManagedImages(projectName string) ([]string, error)
 
+	PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error
+	RmImageCommit(projectName, imageName, commit string) error
+	GetImageCommits(projectName, imageName string) ([]string, error)
+	GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error)
+
 	String() string
 	Address() string
+}
+
+type ImageMetadata struct {
+	ContentSignature string
 }
 
 type StagesStorageOptions struct {

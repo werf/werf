@@ -21,6 +21,9 @@ const (
 
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
+
+	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
+	LocalImageMetadataByCommitRecord_ImageFormat     = "werf-images-metadata-by-commit/%s:%s-%s"
 )
 
 func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
@@ -119,13 +122,13 @@ func (storage *LocalDockerServerStagesStorage) AddManagedImage(projectName, imag
 	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
 	} else if exsts {
 		return nil
 	}
 
 	if err := docker.CreateImage(fullImageName); err != nil {
-		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+		return fmt.Errorf("unable to create image %s: %s", fullImageName, err)
 	}
 	return nil
 }
@@ -163,14 +166,10 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName stri
 	for _, img := range images {
 		for _, repoTag := range img.RepoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
-			tag = strings.ReplaceAll(tag, "__slash__", "/")
-			tag = strings.ReplaceAll(tag, "__plus__", "+")
 
-			if tag == NamelessImageRecordTag {
-				res = append(res, "")
-			} else {
-				res = append(res, tag)
-			}
+			imageName := unslugDockerImageTagAsImageName(tag)
+
+			res = append(res, imageName)
 		}
 	}
 	return res, nil
@@ -200,6 +199,116 @@ func (storage *LocalDockerServerStagesStorage) FetchImage(_ container_runtime.Im
 
 func (storage *LocalDockerServerStagesStorage) StoreImage(img container_runtime.Image) error {
 	return storage.LocalDockerServerRuntime.TagBuiltImageByName(img)
+}
+
+func (storage *LocalDockerServerStagesStorage) PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error {
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
+
+	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
+
+	if exsts, err := docker.ImageExist(fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+	} else if exsts {
+		return nil
+	}
+
+	// FIXME: store metadata
+
+	if err := docker.CreateImage(fullImageName); err != nil {
+		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+	}
+
+	logboek.Info.LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
+
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) RmImageCommit(projectName, imageName, commit string) error {
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
+
+	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
+
+	if exsts, err := docker.ImageExist(fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
+	} else if !exsts {
+		return nil
+	}
+
+	if err := docker.CliRmi("--force", fullImageName); err != nil {
+		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error) {
+	logboek.Debug.LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
+
+	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetImageMetadataByCommit full image name: %s\n", fullImageName)
+
+	/*
+
+		if metadataMap, err := storage.DockerRegistry.GetMetadata(fullImageName); err != nil {
+			return ImageMetadata{}, fmt.Errorf("unable to get metadata by image %q: %s", fullImageName, err)
+		} else if metadataMap != nil {
+			metadata := ImageMetadata{ContentSignature: metadataMap["contentSignature"]}
+			logboek.Info.LogF("Got content-signature from metadata by image name %q: %q\n", fullImageName, metadata.ContentSignature)
+			return metadata, nil
+		} else {
+			logboek.Info.LogF("No metadata found by image name %q\n", fullImageName)
+			return ImageMetadata{}, nil
+		}
+	*/
+
+	// FIXME: inspect, get metadata
+
+	return nil, nil
+}
+
+func (storage *LocalDockerServerStagesStorage) GetImageCommits(projectName, imageName string) ([]string, error) {
+	logboek.Debug.LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
+
+	var res []string
+
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName))
+
+	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	}
+
+	for _, img := range images {
+		for _, repoTag := range img.RepoTags {
+			_, tag := image.ParseRepositoryAndTag(repoTag)
+
+			sluggedImageAndCommit := tag
+
+			sluggedImageAndCommitParts := strings.Split(sluggedImageAndCommit, "-")
+			if len(sluggedImageAndCommitParts) < 2 {
+				// unexpected
+				continue
+			}
+
+			commit := sluggedImageAndCommitParts[len(sluggedImageAndCommitParts)-1]
+			sluggedImage := strings.TrimSuffix(sluggedImageAndCommit, fmt.Sprintf("-%s", commit))
+			iName := unslugDockerImageTagAsImageName(sluggedImage)
+
+			if imageName == iName {
+				logboek.Info.LogF("Found image %q metadata by commit %s\n", imageName, commit)
+				res = append(res, commit)
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit string) string {
+	return fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageFormat, projectName, slugImageNameAsDockerImageTag(imageName), commit)
 }
 
 func (storage *LocalDockerServerStagesStorage) String() string {

@@ -221,11 +221,15 @@ func (s *BaseStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescrip
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *BaseStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
+
+	if err := s.addProjectRepoCommitToLabels(c, image); err != nil {
+		return err
+	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
@@ -239,6 +243,15 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image container_run
 		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
+	return nil
+}
+
+func (s *BaseStage) addProjectRepoCommitToLabels(c Conveyor, image container_runtime.ImageInterface) error {
+	if commit, err := c.GetProjectRepoCommit(); err != nil {
+		return fmt.Errorf("unable to get project repo commit: %s", err)
+	} else if commit != "" {
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: commit})
+	}
 	return nil
 }
 
