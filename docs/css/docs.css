@@ -66,11 +66,15 @@
     text-decoration: none;
 }
 
-.sidebar__item > a:hover {
+.sidebar__item.active > a {
     color: #0066FF;
 }
 
-.sidebar__item.active > a {
+.sidebar__item.secondary > a {
+    color: #939fb1;
+}
+
+.sidebar__item > a:hover {
     color: #0066FF;
 }
 
@@ -98,14 +102,6 @@
     list-style-type: none;
     padding: 5px 0 0 10px;
     margin: 0;
-}
-
-.root-open {
-  position: fixed;
-  overflow: scroll;
-  height: 100%;
-  width: 270px;
-  display: block;
 }
 
 .expand {
