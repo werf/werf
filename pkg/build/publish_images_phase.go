@@ -253,11 +253,12 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	publishImage := container_runtime.NewWerfImage(phase.Conveyor.GetStageImage(img.GetLastNonEmptyStage().GetImage().Name()), imageName, phase.Conveyor.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
 	publishImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		image.WerfDockerImageName:  imageName,
-		image.WerfTagStrategyLabel: string(tagStrategy),
-		image.WerfImageLabel:       "true",
-		image.WerfImageNameLabel:   img.GetName(),
-		image.WerfImageTagLabel:    imageMetaTag,
+		image.WerfDockerImageName:       imageName,
+		image.WerfTagStrategyLabel:      string(tagStrategy),
+		image.WerfImageLabel:            "true",
+		image.WerfImageNameLabel:        img.GetName(),
+		image.WerfImageTagLabel:         imageMetaTag,
+		image.WerfContentSignatureLabel: img.GetContentSignature(), // TODO: add content-signature to the each stage
 	})
 
 	successInfoSectionFunc := func() {
