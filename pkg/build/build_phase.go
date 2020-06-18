@@ -94,11 +94,14 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
 
-	stagesSig, err := calculateSignature("imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
-	if err != nil {
-		return fmt.Errorf("unable to calculate image %s stages-signature: %s", img.GetName(), err)
+	if imgContentSig, err := calculateSignature("imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor); err != nil {
+		return fmt.Errorf("unable to calculate image %s content signature: %s", img.GetName(), err)
+	} else {
+		// TODO: in v1.2 use:
+		// img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
+		// — which is incompatible with current signature
+		img.SetContentSignature(imgContentSig)
 	}
-	img.SetContentSignature(stagesSig)
 
 	if phase.ShouldAddManagedImageRecord {
 		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
@@ -244,9 +247,11 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldB
 
 	stageContentSig, err := calculateSignature(fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
-		return fmt.Errorf("unable to calculate stage %s content-signature: %s", stg.Name(), err)
+		return fmt.Errorf("unable to calculate stage %s content signature: %s", stg.Name(), err)
 	}
 	stg.SetContentSignature(stageContentSig)
+
+	logboek.Info.LogF("Stage %s content signature: %s\n", stg.LogDetailedName(), stageContentSig)
 
 	return nil
 }
@@ -257,12 +262,13 @@ func (phase *BuildPhase) prepareStageInstructions(img *Image, stg stage.Interfac
 	stageImage := stg.GetImage()
 
 	serviceLabels := map[string]string{
-		imagePkg.WerfDockerImageName:     stageImage.Name(),
-		imagePkg.WerfLabel:               phase.Conveyor.projectName(),
-		imagePkg.WerfVersionLabel:        werf.Version,
-		imagePkg.WerfCacheVersionLabel:   imagePkg.BuildCacheVersion,
-		imagePkg.WerfImageLabel:          "false",
-		imagePkg.WerfStageSignatureLabel: stg.GetSignature(),
+		imagePkg.WerfDockerImageName:            stageImage.Name(),
+		imagePkg.WerfLabel:                      phase.Conveyor.projectName(),
+		imagePkg.WerfVersionLabel:               werf.Version,
+		imagePkg.WerfCacheVersionLabel:          imagePkg.BuildCacheVersion,
+		imagePkg.WerfImageLabel:                 "false",
+		imagePkg.WerfStageSignatureLabel:        stg.GetSignature(),
+		imagePkg.WerfStageContentSignatureLabel: stg.GetContentSignature(),
 	}
 
 	switch stg.(type) {
