@@ -2,25 +2,8 @@
 title: Юнит-тесты и Линтеры
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/090-unittesting.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -44,3 +27,7 @@ Rubocop check:
 {% offtopic title="А если нужно больше?" %}
 Если нужен доступ к ресурсам кластера или база данных — это уже не линтер.
 {% endofftopic %}
+
+<div>
+    <a href="110-multipleapps.html" class="nav-btn">Далее: Несколько приложений в одном репозитории</a>
+</div>

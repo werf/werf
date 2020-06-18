@@ -1,25 +1,42 @@
 ---
 title: Базовые настройки
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/020-basic.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/020-basic.html
 layout: guide
+toc: false
 ---
 
-В первой главе мы покажем поэтапную сборку и деплой приложения без задействования внешних ресурсов таких как база данных и сборку ассетов.
+В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
 
-Наше приложение будет состоять из одного docker образа собранного с помощью werf. Его единственной задачей будет вывод сообщения “hello world” по http.
+Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит java, исполняющий собранный jar отдающий hello world по http.. Управлять маршрутизацией запросов к приложению будет управлять Ingress в kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
-В нашем случае будет работать процесс java, исполняющий собранный jar отдающий hello world по http.
+![](/images/applications-guide/gitlab-java-springboot/020-basic-process-overview.png)
 
-Управлять маршрутизацией запросов к приложению будет Ingress в kubernetes кластере.
+<a name="building" />
 
-Мы реализуем два стенда: production и staging. В рамках hello world приложения мы предполагаем, что разработка ведётся локально, на вашем компьютере.
+## Сборка
 
-_В ближайшее время werf реализует удобные инструменты для локальной разработки, следите за обновлениями._
+{% filesused title="Файлы, упомянутые в главе" %}
+- werf.yaml
+{% endfilesused %}
 
-<a href="hello-world-local" />
+В этой главе мы научимся писать конфигурацию сборки, отлаживать её в случае ошибок и загружать полученный образ в Registry.
 
-## Локальная сборка
+{% offtopic title="Локальная разработка или на сервере?" %}
+
+TODO: расписать проблематику где вести разработку: на локальной тачке или на сервере.
+
+На локальной тачке может не быть ресурсов для того, чтобы гонять что билды, что разворачивать кубернетесы потом. Поэтому хочется разворачивать на серваке помощнее. Можно и так, конечно.
+
+Но тащемта похуй
+
+В ближайшее время werf реализует удобные инструменты для локальной разработки, где будет подниматься миникуб.
+
+{% endofftopic %}
+
+Возьмём исходные коды приложения из git:
+
+TODO: вот это может быть коллапс-блоком, но 
 
 Поскольку собирать мы будем spring-фреймворк - для скачивания шаблона приложения перейдем на start.spring.io. Для простоты оставляем все поля как есть, справа добавляем в dependencies только "Spring Web" и нажмем generate. Разархивируем полученный архив - получим готовую структуру папок и нужные нам файлы для того чтобы описать простейшее приложение.
 tree:
@@ -80,46 +97,52 @@ git add .
 git commit -m 'initial commit'
 ```
 
-Для того чтобы werf смогла начать работу с нашим приложением - необходимо в корне нашего репозитория создать файл werf.yaml в которым будут описаны инструкции по сборке. Для начала соберем образ локально не загружая его в registry чтобы разобраться с синтаксисом сборки.
+Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
 
-С помощью werf можно собирать образы с используя Dockerfile или используя синтаксис, описанный в документации werf (мы называем этот синтаксис и движок, который этот синтаксис обрабатывает, stapel). Для лучшего погружения - соберем наш образ с помощью stapel.
+{% offtopic title="Варианты синтаксиса werf.yaml" %}
 
-Итак, начнём с самой главной секции нашего werf.yaml файла, которая должна присутствовать в нём **всегда**. Называется она [meta config section](https://werf.io/documentation/configuration/introduction.html#meta-config-section) и содержит всего два параметра.
+TODO: вариантов синтаксиса несколько вот раз два три подробнее читать там, а мы будем рассматривать Shell
 
+{% endofftopic %}
+
+Начнём werf.yaml с обязательной [**секции мета-информации**]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации):
+
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: spring
+project: example-1
 configVersion: 1
 ```
-[werf.yaml](gitlab-java-springboot-files/00-demo/werf.yaml:1-2)
+{% endsnippetcut %}
 
 **_project_** - поле, задающее имя для проекта, которым мы определяем связь всех docker images собираемых в данном проекте. Данное имя по умолчанию используется в имени helm релиза и имени namespace в которое будет выкатываться наше приложение. Данное имя не рекомендуется изменять (или подходить к таким изменениям с должным уровнем ответственности) так как после изменений уже имеющиеся ресурсы, которые выкачаны в кластер, не будут переименованы.
 
 **_configVersion_** - в данном случае определяет версию синтаксиса используемую в `werf.yaml`.
 
-После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [image config section](https://werf.io/documentation/configuration/introduction.html#image-config-section). И чтобы werf понял что мы к ней перешли разделяем секции с помощью тройной черты.
+После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [**image config section**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%81%D0%B5%D0%BA%D1%86%D0%B8%D1%8F-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0).
 
-
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: spring
+project: example-1
 configVersion: 1
 ---
 image: hello
 from: maven:3-jdk-8
 ```
+{% endsnippetcut %}
 
-[werf.yaml](gitlab-java-springboot-files/00-demo/werf.yaml:1-5)
+В строке `image: hello` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: maven:3-jdk-8` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
 
+{% offtopic title="Что делать, если образов и других констант станет много" %}
 
-**_image_** задает короткое имя собираемого docker-образа. Должно быть уникально в рамках одного werf-файла.
+TODO: кратко написать про шаблоны Go и дать ссылку на https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD%D1%8B-go
 
-**_from _** - аналогичная секция с обычным dockerfile. В примере spring используется `openjdk:8-jdk-alpine, `но он хорош для запуска, мы же воспользуемся образом в котором уже предустановлены все что необходимо maven для сборки - `maven:3-jdk-8.`
+{% endofftopic %}
 
-Теперь встает вопрос о том как нам добавить исходный код приложения внутрь нашего docker image. И для этого мы можем использовать Git! И нам даже не придётся устанавливать его внутрь docker image.
+Добавим исходный код нашего приложения в контейнер с помощью [**директивы git**](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html)
 
-**_git_**, на наш взгляд это самый правильный способ добавления ваших исходников внутрь docker image, хотя существуют и другие. Его преимущество в том что он именно клонирует, и в дальнейшем накатывает коммитами изменения в тот исходный код что мы добавили внутрь нашего docker image, а не просто копирует файлы. Вскоре мы узнаем зачем это нужно.
-
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: spring
+project: example-1
 configVersion: 1
 ---
 image: hello
@@ -128,32 +151,42 @@ git:
 - add: /
   to: /app
 ```
+{% endsnippetcut %}
 
-[werf.yaml](gitlab-java-springboot-files/00-demo/werf.yaml:1-8)
+При использовании директивы `git`, werf использует репозиторий проекта, в котором расположен `werf.yaml`. Добавляемые директории и файлы проекта указываются списком относительно корня репозитория.
 
-Werf подразумевает что ваша сборка будет происходить внутри директории склонированного git репозитория. Потому мы списком можем указывать директории и файлы относительно корня репозитория которые нам нужно добавить внутрь image.
-
-`add: /` - та директория которую мы хотим добавить внутрь docker image, мы указываем, что это весь наш репозиторий
+`add: /` - та директория которую мы хотим добавить внутрь docker image, мы указываем, что это корень, т.е. мы хотим склонировать внутрь docker image весь наш репозиторий.
 
 `to: /app` - то куда мы клонируем наш репозиторий внутри docker image. Важно заметить что директорию назначения werf создаст сам.
 
- Есть возможность даже добавлять внешние репозитории внутрь проекта не прибегая к предварительному клонированию, как это сделать можно узнать [тут](https://werf.io/documentation/configuration/stapel_image/git_directive.html), но мы не рекомендуем такой подход.
+Как такового репозитория в образе не создаётся, директория .git отсутствует. На одном из первых этапов сборки все исходники пакуются в архив (с учётом всех пользовательских параметров) и распаковываются внутри контейнера. При последующих сборках [накладываются патчи с разницей](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html#подробнее-про-gitarchive-gitcache-gitlatestpatch).
 
-Приступим к описанию того как происходит сама сборка.
-Сейчас доступно 2 вида сборщика - shell и ansible. Первый аналогичен директиве RUN в dockerfile. Его удобнее использовать для быстрого получения результата с минимальными затратами времени на изучение. ansible более молодой инструмент и требующий несколько большего времени на изучение, но он позволяет получить более прогнозируемый результат вследствии декларативности. 
-Пользовательские стадии - их всего 4 before install, install, before setup, setup и детально мы к ним вернемся в разделе управления зависимостями. Подробнее о них можно почитать в [документации](https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#usage-of-user-stages)
+{% offtopic title="Можно ли использовать насколько репозиториев?" %}
+
+Директива git также позволяет добавлять исходники из удалённых git-репозиториев, используя параметр `url` (детали и особенности можно почитать в [документации]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html#работа-с-удаленными-репозиториями)).
+
+{% endofftopic %}
+
+{% offtopic title="Реальная практика" %}
+
+TODO: В реальной практике нужно: добавление файлов по маске (include/exclude), изменение владельца (owner/group). Надо пару слов об этом и ссылку.
+
+{% endofftopic %}
+
+Следующим этапом необходимо описать **правила [сборки для приложения](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/assembly_instructions.html)**. Werf позволяет кэшировать сборку образа подобно слоям в docker, но с более явной конфигурацией. Этот механизм называется [стадиями](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/assembly_instructions.html#пользовательские-стадии). Для текущего приложения опишем 2 стадии в которых сначала устанавливаем пакеты, а потом - работаем с исходными кодами приложения.
+
+{% offtopic title="Что нужно знать про стадии" %}
+
+TODO: Стадии — это очень важный инструмент, который резко уменьшает время сборки приложения. Вплотную мы разберёмся с работой со стадиями, когда будем разбирать вопрос зависимостей и ассетов. Пока что — хватит интуитивного понимания происходящего.
+
+{% endofftopic %}
+
+Добавим в `werf.yaml` следующий блок используя shell синтаксис:
 
 Однако, чтобы запускать jar его нужно предварительно собрать. Предлагается сделать это локально, мы же соберем jar так же используя werf и ansible-сборшик. Поскольку все системные зависимости для сборки удовлетворены - мы используем образ с maven и всеми зависимостями- опишем сборку приложения в стадии setup:
 
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: spring
-configVersion: 1
----
-image: hello
-from: maven:3-jdk-8
-git:
-- add: /
-  to: /app
 ansible:
   setup:
   - name: Build jar
@@ -163,477 +196,620 @@ ansible:
       chdir: /app
       executable: /bin/bash
 ```
+{% endsnippetcut %}
 
-Уже сейчас можем запустить сборку и получить docker-образ с лежащим внутри jar.
+{% offtopic title="Shell-синтаксис vs Ansible-синтаксис" %}
+
+TODO: Про то, что есть два варианта шелл или ансибл. Какие-то ссылки на объяснение.
+
+TODO: И то, что вот скрипт выше можно было написать вот так в ансибл синтаксисе.
+
+TODO: какая-то ссылка на поддерживаемые модули
 
 Полный список поддерживаемых модулей ansible в werf можно найти [тут](https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#supported-modules).
 
-Не забыв [установить werf](https://werf.io/documentation/guides/installation.html) локально, запускаем сборку с помощью [werf build](https://werf.io/documentation/cli/main/build.html)!
+{% endofftopic %}
+
+Чтобы при запуске приложения по умолчанию использовалась дириктория `/app` - воспользуемся **[указанием Docker-инструкций](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/docker_directive.html)**:
+
+{% snippetcut name="werf.yaml" url="#" %}
+```yaml
+docker:
+  WORKDIR: /app
+```
+{% endsnippetcut %}
+
+Когда `werf.yaml` готов (или кажется таковым) — пробуем запустить сборку:
 
 ```bash
 $  werf build --stages-storage :local
 ```
 
-![werf build](gitlab-java-springboot-files/images/00-demo-build-1.gif "werf build")
+{% offtopic title="Что за stages-storage?" %}
+Стадии, которые используются для ускорения сборки, должны где-то храниться. Werf подразумевает, что сборка может производиться на нескольких раннерах — а значит кэш сборочных стадий нужно хранить в каком-то едином хранилище.
 
-Вот и всё, наша сборка успешно завершилась. К слову если сборка падает и вы хотите изнутри контейнера её подебажить вручную, то вы можете добавить в команду сборки флаги:
+`stages-storage` [позволяет настраивать](https://ru.werf.io/documentation/reference/stages_and_images.html#%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B5-%D1%81%D1%82%D0%B0%D0%B4%D0%B8%D0%B9), где будет храниться кэш сборочных стадий: на локальном сервере или в registry.   
+{% endofftopic %}
 
-```yaml
---introspect-before-error
+Если всё написано правильно, то наша сборка завершится примерно так:
+
+```
+...
+│ ┌ Building stage ____________
+│ ├ Info
+│ │     repository: werf-stages-storage/example-1
+│ │       image_id: 2743bc56bbf7
+│ │        created: 2020-05-26T22:44:26.0159982Z
+│ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
+│ │           diff: 0 B
+│ │   instructions: WORKDIR /app
+│ └ Building stage ____________ (0.82 seconds)
+└ ⛵ image ____________ (239.56 seconds)
+```
+
+{% offtopic title="Что делать, если что-то пошло не так?" %}
+
+TODO: Werf предоставляет удобные способы отладки. Если сборка падает - есть introspect https://ru.werf.io/v1.1-alpha/documentation/reference/development_and_debug/stage_introspection.html
+
+```bash
+$  werf build --stages-storage :local --introspect-before-error
 ```
 
 или
 
-```yaml
---introspect-error
+```bash
+$  werf build --stages-storage :local --introspect-error
 ```
 
 Которые при падении сборки на одном из шагов автоматически откроют вам shell в контейнер, перед исполнением проблемной инструкции или после.
 
+TODO: и написать или найти в доке верфи вообще сам концепт работы-доработки с проброской в контейнер.
+
+Потому что даже если успешно сборка закончилась — не факт, что всё правильно отработало, интроспект может быть полезен.
+
+{% endofftopic %}
+
 В конце werf отдал информацию о готовом image:
 
-![werf image](gitlab-java-springboot-files/images/00-demo-build-1-result.png "werf_result")
+```
+werf-stages-storage/example-1:7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
+```
 
-Теперь его можно запустить локально используя image_id просто с помощью docker.
-Либо вместо этого использовать [werf run](https://werf.io/documentation/cli/main/run.html):
-
+Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):
 
 ```bash
-werf run --stages-storage :local --docker-options="-d -p 8080:8080 --restart=always" -- java -jar /app/target/demo-1.0.jar
+werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- java -jar /app/target/demo-1.0.jar
 ```
 
-Первая часть команды очень похожа на build, а во второй мы задаем [параметры](https://docs.docker.com/engine/reference/run/) docker и через двойную черту команду с которой хотим запустить наш image.
+Первая часть команды очень похожа на build, а во второй мы задаем [параметры docker](https://docs.docker.com/engine/reference/run/) и через двойную черту команду с которой хотим запустить наш image.
 
-Небольшое пояснение про `--stages-storage :local `который мы использовали и при сборке и при запуске приложения. Данный параметр указывает на то где werf хранить стадии сборки. На момент написания статьи это возможно только локально, но в ближайшее время появится возможность сохранять их в registry.
+Теперь наше приложение доступно локально на порту 3000:
 
-Теперь наше приложение доступно локально на порту 8080:
+![alt_text](/images/applications-guide/gitlab-java-springboot/2.png "image_tooltip")
 
-![app running](gitlab-java-springboot-files/images/00-demo-browser.png "app running")
+Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается [командой `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
 
-На этом часть с локальным использованием werf мы завершаем и переходим к той части для которой werf создавался, использовании его в CI.
+Если мы запускаем Werf вне Gitlab CI — нам нужно:
 
-<a name="hello-world-ci" />
+* Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/)
+* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.com/myproject`)
+* Выполнить сборку и загрузку в Registry: `werf build-and-publish`
 
-## Построение CI-процесса
+Если вы всё правильно сделали — вы увидите собранный образ в registry. При использовании registry от gitlab — собранный образ можно увидеть через веб-интерфейс GitLab.
 
-После того как мы закончили со сборкой, которую можно производить локально, мы приступаем к базовой настройке CI/CD на базе Gitlab.
+<a name="config-iac" />
 
-Начнем с того что добавим нашу сборку в CI с помощью .gitlab-ci.yml, который находится внутри корня проекта. Нюансы настройки CI в Gitlab можно найти [тут](https://docs.gitlab.com/ee/ci/).
+## Конфигурирование инфраструктуры в виде кода
 
-Мы предлагаем простой флоу, который мы называем [fast and furious](https://docs.google.com/document/d/1a8VgQXQ6v7Ht6EJYwV2l4ozyMhy9TaytaQuA9Pt2AbI/edit#). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production согласно методологии GitOps и будут содержать два окружения, production и stage.
+{% filesused title="Файлы, упомянутые в главе" %}
+- .helm/templates/deployment.yaml
+- .helm/templates/ingress.yaml
+- .helm/templates/service.yaml
+- .helm/values.yaml
+- .helm/secret-values.yaml
+{% endfilesused %}
 
-На стадии сборки мы будем собирать образ с помощью werf и загружать образ в registry, а затем на стадии деплоя собрать инструкции для kubernetes, чтобы он скачивал нужные образы и запускал их.
+Для того, чтобы приложение заработало в Kubernetes — необходимо описать инфраструктуру приложения как код, т.е. в нашем случае объекты kubernetes: Pod, Service и Ingress.
 
-<a name="hello-world-ci-build" />
+Конфигурацию для Kubernetes нужно шаблонизировать. Один из популярных инструментов для такой шаблонизации — это Helm, и движок Helm-а встроен в Werf. Помимо этого, werf предоставляет возможности работы с секретными значениями, а также дополнительные Go-шаблоны для интеграции собранных образов.
 
-### Сборка в Gitlab CI
+В этой главе мы научимся описывать helm-шаблоны, используя возможности werf, а также освоим встроенные инструменты отладки. 
 
-Для того, чтобы настроить CI-процесс создадим .gitlab-ci.yaml в корне репозитория.
+<a name="iac-configs-making" />
 
-Инициализируем werf перед запуском основной команды. Это необходимо делать перед каждым использованием werf поэтому мы вынесли в секцию `before_script`
-Такой сложный путь с использованием multiwerf нужен для того, чтобы вам не надо было думать про обновление верфи и установке новых версий — вы просто указываете, что используете, например, use 1.1 stable и пребываете в уверенности, что у вас актуальная версия с закрытыми issues.
-
-```yaml
-before_script:
-  - type multiwerf && source <(multiwerf use 1.1 stable)
-  - type werf && source <(werf ci-env gitlab --verbose)
-```
-
-`werf ci-env gitlab --verbose` - готовит наш werf для работы в Gitlab, выставляя для этого все необходимые переменные.
-Пример переменных автоматически выставляемых этой командой:
-
-```bash
-### DOCKER CONFIG
- export DOCKER_CONFIG="/tmp/werf-docker-config-832705503"
- ### STAGES_STORAGE
- export WERF_STAGES_STORAGE="registry.gitlab-example.com/chat/stages"
- ### IMAGES REPO
- export WERF_IMAGES_REPO="registry.gitlab-example.com/chat"
- export WERF_IMAGES_REPO_IMPLEMENTATION="gitlab"
- ### TAGGING
- export WERF_TAG_BY_STAGES_SIGNATURE="true"
- ### DEPLOY
- # export WERF_ENV=""
- export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.gitlab-example.com/chat"
- export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=61368705db8652555bd96e68aadfd2ac423ba263"
- export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.gitlab-example.com/chat/pipelines/71340"
- export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.gitlab-example.com/chat/-/jobs/184837"
- ### IMAGE CLEANUP POLICIES
- export WERF_GIT_TAG_STRATEGY_LIMIT="10"
- export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"
- export WERF_GIT_COMMIT_STRATEGY_LIMIT="50"
- export WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS="30"
- export WERF_STAGES_SIGNATURE_STRATEGY_LIMIT="-1"
- export WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS="-1"
- ### OTHER
- export WERF_LOG_COLOR_MODE="on"
- export WERF_LOG_PROJECT_DIR="1"
- export WERF_ENABLE_PROCESS_EXTERMINATOR="1"
- export WERF_LOG_TERMINAL_WIDTH="95"
-```
-
-
-Многие из этих переменных интуитивно понятны, и содержат базовую информацию о том где находится проект, где находится его registry, информацию о коммитах. \
-Подробную информацию о конфигурации ci-env можно найти [тут](https://werf.io/documentation/reference/plugging_into_cicd/overview.html). От себя лишь хочется добавить, что если вы используете совместно с Gitlab внешний registry (harbor,Docker Registry,Quay etc.), то в команду билда и пуша нужно добавлять его полный адрес (включая путь внутри registry), как это сделать можно узнать [тут](https://werf.io/documentation/cli/main/build_and_publish.html). И так же не забыть первой командой выполнить [docker login](https://docs.docker.com/engine/reference/commandline/login/).
-
-В рамках статьи нам хватит значений выставляемых по умолчанию.
-
-Переменная [WERF_STAGES_STORAGE](https://ru.werf.io/documentation/reference/stages_and_images.html#%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B5-%D1%81%D1%82%D0%B0%D0%B4%D0%B8%D0%B9) указывает где werf сохраняет свой кэш (стадии сборки) У werf есть опция распределенной сборки, про которую вы можете прочитать в нашей статье, в текущем примере мы сделаем по-простому и сделаем сборку на одном узле в один момент времени.
-
-
-```yaml
-variables:
-    WERF_STAGES_STORAGE: ":local"
-```
-Дело в том что werf хранит стадии сборки раздельно, как раз для того чтобы мы могли не пересобирать весь образ, а только отдельные его части.
-
-Плюс стадий в том, что они имеют собственный тэг, который представляет собой хэш содержимого нашего образа. Тем самым позволяя полностью избегать не нужных пересборок наших образов. Если вы собираете ваше приложение в разных ветках, и исходный код в них различается только конфигами которые используются для генерации статики на последней стадии. То при сборке образа одинаковые стадии пересобираться не будут, будут использованы уже собранные стадии из соседней ветки. Тем самым мы резко снижаем время доставки кода.
-
-Основная команда на текущий момент - это werf build-and-publish, которая запускает сборку и публикацию в registry на gitlab runner с тегом werf для любой ветки. Путь до registry и другие параметры беруться верфью автоматически их переменных окружения gitlab ci.
-
-```yaml
-Build:
-  stage: build
-  script:
-    - werf build-and-publish
-  tags:
-    - werf
-```
-
-Если вы всё правильно сделали и корректно настроен registry и gitlab ci — вы увидите собранный образ в registry. При использовании registry от gitlab — собранный образ можно увидеть через веб-интерфейс гитлаба.
-
-Следующие параметры тем кто работал с гитлаб уже должны быть знакомы.
-
-**_tags_** - нужен для того чтобы выбрать наш раннер, на который мы навесили этот тэг. В данном случае наш gitlab-runner в Gitlab имеет тэг werf
-
-```yaml
-  tags:
-    - werf
-```
-
-Теперь мы можем запушить наши изменения и увидеть что наша стадия успешно выполнилась.
-
-![gitlab build success](gitlab-java-springboot-files/images/00-demo-gitlab-build-succes.png "gitlab build success")
-
-
-Лог в Gitlab будет выглядеть так же как и при локальной сборке, за исключением того что в конце мы увидим как werf пушит наш docker image в registry.
-
-```
-│ ┌ Publishing image hello by stages-signature tag 3a35e5ff158514066abadb0012e2fe0f19551902fa0355064aeb4cf7
-│ ├ Info
-│ │   images-repo: registry.example.com/demo/hello
-│ │         image: registry.example.com/demo/hello:3a35e5ff158514066abadb0012e2fe0f19551902fa0355064aeb4cf7
-│ └ Publishing image hello by stages-signature tag 3a35e5ff158514066abadb0012e2fe0f19551902fa0355064aeb4cf7 (27.23 seconds)
-└ ⛵ image hello (27.32 seconds)
-
-```
-
-<a name="hello-world-ci-deploy" />
-
-### Деплой в Kubernetes
-
-Werf использует встроенный Helm для применения конфигурации в Kubernetes. Для описания объектов Kubernetes werf использует конфигурационные файлы Helm: шаблоны и файлы с параметрами (например, values.yaml). Помимо этого, werf поддерживает дополнительные файлы, такие как файлы c секретами и с секретными значениями (например secret-values.yaml), а также дополнительные Go-шаблоны для интеграции собранных образов.
-
-Werf (по аналогии с helm) берет yaml шаблоны, которые описывают объекты Kubernetes, и генерирует из них общий манифест. Манифест отдается API Kubernetes, который на его основе внесет все необходимые изменения в кластер. Werf отслеживает как Kubernetes вносит изменения и сигнализирует о результатах в реальном времени. Все это благодаря встроенной в werf библиотеке [kubedog](https://github.com/flant/kubedog).
-
-Внутри Werf доступны команды для работы с Helm, например можно проверить как сгенерируется общий манифест в результате работы werf с шаблонами:
-
-```bash
-$ werf helm render
-```
-
-Аналогично, доступны команды [helm list](https://werf.io/documentation/cli/management/helm/list.html) и другие.
-
-#### Общее про хельм-конфиги
+### Составление конфигов инфраструктуры
 
 На сегодняшний день [Helm](https://helm.sh/) один из самых удобных способов которым вы можете описать свой deploy в Kubernetes. Кроме возможности установки готовых чартов с приложениями прямиком из репозитория, где вы можете введя одну команду, развернуть себе готовый Redis, Postgres, Rabbitmq прямиком в Kubernetes, вы также можете использовать Helm для разработки собственных чартов с удобным синтаксисом для шаблонизации выката ваших приложений.
 
 Потому для werf это был очевидный выбор использовать такую технологию.
 
-Мы не будем вдаваться в подробности разработки yaml манифестов с помощью Helm для Kubernetes. Осветим лишь отдельные её части, которые касаются данного приложения и werf в целом. Если у вас есть вопросы о том как именно описываются объекты Kubernetes, советуем посетить страницы документации по Kubernetes с его [концептами](https://kubernetes.io/ru/docs/concepts/) и страницы документации по разработке [шаблонов](https://helm.sh/docs/chart_template_guide/) в Helm.
+{% offtopic title="Что делать, если вы не работали с Helm?" %}
 
-Нам понадобятся следующие файлы со структурой каталогов:
+Мы не будем вдаваться в подробности [разработки yaml манифестов с помощью Helm для Kubernetes](https://habr.com/ru/company/flant/blog/423239/). Осветим лишь отдельные её части, которые касаются данного приложения и werf в целом. Если у вас есть вопросы о том как именно описываются объекты Kubernetes, советуем посетить страницы документации по Kubernetes с его [концептами](https://kubernetes.io/ru/docs/concepts/) и страницы документации по разработке [шаблонов](https://helm.sh/docs/chart_template_guide/) в Helm.
 
+Работа с Helm и конфигурацией для Kubernetes может быть очень сложной первое время из-за нелепых мелочей, таких, как опечатки или пропущенные пробелы. Если вы только начали осваивать эти технологии — постарайтесь найти ментора, который поможет вам преодолеть эти сложности и посмотрит на ваши исходники сторонним взглядом. 
 
-```
-.helm (здесь мы будем описывать деплой)
-├── templates (объекты kubernetes в виде шаблонов)
-│   ├── deployment.yaml (основное приложение)
-│   ├── ingress.yaml (описание для ingress)
-│   └── service.yaml (сервис для приложения)
-├── secret-values.yaml (файл с секретными переменными)
-└── values.yaml (файл с переменными для параметризации шаблонов)
-```
+В случае затруднений, пожалуйста убедитесь, что вы
 
-Подробнее читайте в [нашей статье](https://habr.com/ru/company/flant/blog/423239/) из серии про Helm.
+- Понимаете, как работает indent
+- Понимаете, что такое конструкция tuple
+- Понимаете, как Helm работает с хэш-массивами
+- Очень внимательно следите за пробелами в Yaml
 
-![alt_text](images/-4.png "image_tooltip")
+TODO:  ^^ вот это выше надо причесать, дать ссылки
 
-#### Описание приложения в хельме
+{% endofftopic %}
 
-Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment, Service, завернуть трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему kubernetes пулить собранные образа из registry.
+Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, завернуть трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему kubernetes пулить собранные образа из registry.
 
-##### Запуск контейнера
+#### Создание Pod-а
 
-Для того чтобы запустить наше собранное приложение нужно описать с какой командой будет запускаться контейнер, который мы пушнули в registry. В нашем случае это `java -jar jarfile.jar`. Возможно еще какие то опции java при запуске (debug, лимиты по памяти, к примеру). Так же нужно указать helm-у в каком контейнере все это запускать и где взять образ.
-Так же проблемой является то, что при "пустых" коммитах или нерелевантных коммитах (пустой коммит, к примеру, или мы поправили только README), сборка образа не произойдет (этот момент мы чуть позже разберем, когда будем разбираться как оптимизировать сборку), но при деплое все равно будет произведен перезапуск контейнера, так как поменялся его tag.
-В нашем же случае, werf умеет немного магии.
+{% filesused title="Файлы, упомянутые в главе" %}
+- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
+- [.helm/values.yaml](.helm/values.yaml)
+{% endfilesused %}
 
-Команда запуска в deployment.yaml будет выглядеть так:
+Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `java -jar jarfile.jar`. Укажем, **как этот контейнер будет запускаться**:
 
-```
-       command:
-       - java
-       - -jar
-       - /app/target/demo-1.0.jar $JAVA_OPT
-```
-
-[deployment.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/10-deployment.yaml:19-22)
-
-Решение же остальных вышеозвученных проблем с image взвалим на werf и её механизм content-based-tagging. О том что это и зачем написана отдельная [статья](https://habr.com/ru/company/flant/blog/495112/). 
-Очень вкратце - werf на основании содержимого образа и истории формирования коммита в git делает вывод - поменялся ли image и стоит ли выполнять перезапуск контейнера с ним. А так же проставляет политику скачивания образа в зависимости собирался образ из тега или из бранча. В случае с branch будет проставлен Always, так как имя образа может не поменяться, а вот его содержимое - да.
-Для использования этого функционала воспользуемся следующей конструкцией, которую пропишем в deployment:
-
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml#L17" %}
+{% raw %}
 ```yaml
+      containers:
+      - name: ____________
+        command:
+         - java
+         - -jar
+         - /app/target/demo-1.0.jar $JAVA_OPT
 {{ tuple "hello" . | include "werf_container_image" | indent 8 }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[deployment.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/10-deployment.yaml:18)
+Обратите внимание на [вызов `werf_container_image`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image). Данная функция генерирует ключи `image` и `imagePullPolicy` со значениями, необходимыми для соответствующего контейнера пода и это позволяет гарантировать перевыкат контейнера тогда, когда это нужно.
 
-Стоит так же почитать пулную [документацию](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image) по werf_container_image.
-Не считая еще одной похоже констуркции, о которой пойдет речь в следующей главе, это обычный deployment, описание параметров которого можно найти в официальной документации по kubernetes.
+{% offtopic title="А в чём проблема?" %}
+Kubernetes не знает ничего об изменении контейнера — он действует на основании описания объектов и сам выкачивает образы из Registry. Поэтому Kubernetes-у нужно в явном виде сообщать, что делать.
 
-##### Переменные окружения
+Werf складывает собранные образы в Registry с разными именами, в зависимости от выбранной стратегии тегирования и деплоя — подробнее это мы разберём в главе про CI. И, как следствие, в описание контейнера нужно пробрасывать правильный путь до образа, а также дополнительные аннотации, связанные со стратегией деплоя. 
 
-Самой частой проблемой связанной с запуском приложения в кубернетес является не использование переменных окружения. Зачастую большая часть переменных, которые требуются приложению прописаны в стандатные для фреймворка места (в нашем случае - application.properties) как есть. Из-за этого появляется соблазн делать образ для каждого окружения отдельно. Мы же рекомендуем подход, что должен собираться один образ и для стейдж и для прод окружения. И для того чтобы это работало необходимо использовать в коде переменные окружения. А сейчас нам нужно эти переменные пробрасывать в контейнер. Для Java это могут быть такие переменные как, например, данные о подключении к БД - хосты, пользователи БД, пароли для различных внутренних и внешних сервисов.
+Подробнее - можно посмотреть в [документации](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+{% endofftopic %}
 
-Эти переменные мы параметризируем с помощью файла `values.yaml`.
+Для корректной работы нашего приложения ему нужно узнать **переменные окружения**.
 
-Например вот так мы опишем что в production окружении мы будем использовать домен example.com, а во всех остальных (_default) - stage.example.com. Так же опишем, что в production нужно запускать приложение без опции --debug.
+Для ____________ это, например, `____________` ____________
 
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml#L21" %}
+{% raw %}
 ```yaml
----
-app:
-  java_opt:
-    _default: "--debug"
-    production: ""
-  url:
-    _default: stage.example.com
-    prodiction: example.com
-```
-
-[values.yaml](gitlab-java-springboot-files/00-demo/.helm/values.yaml)
-
-Переменные окружения так же используются для того, чтобы не перевыкатывать контейнеры, которые не менялись.
-
-Werf закрывает ряд вопросов, связанных с перевыкатом контейнеров с помощью конструкции  [werf_container_env](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env). Она возвращает блок с переменной окружения DOCKER_IMAGE_ID контейнера пода. Значение переменной будет установлено только если .Values.global.werf.is_branch=true, т.к. в этом случае Docker-образ для соответствующего имени и тега может быть обновлен, а имя и тег останутся неизменными. Значение переменной DOCKER_IMAGE_ID содержит новый ID Docker-образа, что вынуждает Kubernetes обновить объект.
-
-```yaml
+      env:
+      ____________
+      ____________
+      ____________
 {{ tuple "hello" . | include "werf_container_env" | indent 8 }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[deployment.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/10-deployment.yaml:31)
+Обратите также внимание на [функцию `werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
-Аналогично можно пробросить секретные переменные (пароли и т.п.) и у Верфи есть специальный механизм для этого. Но к этому вопросу мы вернёмся позже.
+<a name="helm-values-yaml" />
 
-##### Логгирование
+{% offtopic title="А как динамически подставлять в переменные окружения нужные значения?" %}
 
-Важно понимать, что все логи какие возможно приложение должно писать в stdout. Запись логов в файл будет как менее удобна в диагностике возможных проблем так и сама по себе может привести к проблеме с заканчивающимся местом на ноде kubernetes. А это уже приведет к автоматической попытке kubernetes расчистить место - под переедет на другую ноду, в результате получим рестарт пода и потерю всех логов.
-Так же из stdout (посредством лога на ноде kubernetes) мы можем забирать централизованно их в аггрегатор логов, например fluent-ом. Это потребует меньше настроек, так как stdout-логи подов лежат в одном месте для всех подов.
-В случае с springboot приложение уже настроено на логирование в stdout по умолчанию, однако можно их донастроить, например переопределив уровень логирования в application.properties. Подробнее - в [документации](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html).
+ Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид 
 
-##### Направление трафика на приложение
-
-Для того чтобы запросы извне попали к нам в приложение нужно 
-* открыть порт у пода
-* привязать к поду сервис 
-* и настроить Ingress, который выступает у нас в качестве балансера.
-
-Если вы мало работали с Kubernetes — эта часть может вызвать у вас много проблем. Большинство тех, кто начинает работать с Kubernetes по невнимательности допускают ошибки при конфигурировании labels и затем занимаются долгой и мучительной отладкой.
-
-Следует внимательно отнестись к соответствию полей labels и selector, так как именно по ним происходит связь внутри кластера kubernetes.
-
-###### Проброс портов
-
-Для того чтобы попадать в наше запущенное приложение нужно сказать kubernetes как найти его. Для этого существует объект [service](https://kubernetes.io/docs/concepts/services-networking/service/).
-
-В service нужно в селекторе указать лейблы подов и порты на которые описываемый сервис должен отправлять трафик.
-
-Связь между service и подом в deployment описана в блоке spec.
-
+{% snippetcut name="deployment.yaml" url="#" %}
+{% raw %}
 ```yaml
+      env:
+      - name: SOME_KEY
+        value: {{ .Values.app.some_key }}
+```
+{% endraw %}
+{% endsnippetcut %}
+
+или даже более сложный, для того, чтобы значение основывалось на текущем окружении
+
+{% snippetcut name="deployment.yaml" url="#" %}
+```yaml
+      env:
+      - name: SOME_KEY
+        value: {% raw %}{{ pluck .Values.global.env .Values.app.some_key | first | default .Values.app.some_key._default }}{% endraw %}
+```
+{% endsnippetcut %}
+
+{% snippetcut name="values.yaml" url="#" %}
+```yaml
+app:
+  some_key:
+    _default: 9eeddad83cebe240f55ae06ccdd95f8e
+    production: 684e5cb73034052dc89e3055691b7ac4
+    testing: 189af8ca60b04e529140ec114175f098
+```
+{% endsnippetcut %}
+
+TODO: вот эти варианты надо оформить и куда-то положить, чтобы была валидная ссылка
+
+{% endofftopic %}
+
+
+При запуске приложения в kubernetes необходимо **логи отправлять в stdout и stderr** - это необходимо для простого сбора логов например через `filebeat`, а так же чтобы не разрастались docker образы запущенных приложений.
+
+Для того чтобы логи приложения отправлялись в stdout нам необходимо переопределить уровень логирования в application.properties. Подробнее - в [документации](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html).
+
+#### Доступность Pod-а
+
+{% filesused title="Файлы, упомянутые в главе" %}
+- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
+- [.helm/templates/service.yaml](.helm/templates/service.yaml)
+- [.helm/values.yaml](.helm/values.yaml)
+{% endfilesused %}
+
+Для того чтобы запросы извне попали к нам в приложение нужно открыть порт у Pod-а, создать объект Service и привязать его к Pod-у и создать объект Ingress.
+
+{% offtopic title="Что за объект Ingress и как он связан с балансером?" %}
+Возможна коллизия терминов:
+
+* Есть Ingress — в смысле [NGINX Ingress Controller](https://github.com/kubernetes/ingress-nginx), который работает в кластере и принимает входящие извне запросы
+* И есть [объект Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/), который фактически описывает настройки для Ingress Controller
+
+В статьях и бытовой речи оба этих термина зачастую называют "Ingress", так что нужно догадываться по контексту.
+{% endofftopic %}
+
+Наше приложение работает на стандартном порту `8080` — **откроем порт Pod-у**:
+
+{% snippetcut name="deployment.yaml" url="#" %}
+```yaml
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+```
+{% endsnippetcut %}
+
+Затем, **пропишем Service**, чтобы к Pod-у могли обращаться другие приложения кластера. 
+
+{% snippetcut name="service.yaml" url="files/examples/example_1/.helm/templates/service.yaml" %}
+{% raw %}
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
 spec:
   selector:
-    app: {{ .Chart.Name | quote }}
+    service: {{ .Chart.Name }}
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[service.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/20-service.yaml:6-8)
+Обратите внимание на поле `selector` у Service: он должен совпадать с аналогичным полем у Deployment и ошибки в этой части — самая частая проблема с настройкой маршрута до приложения.
 
-Selector описывает по каким label нужно искать нужный под (labels описан в deployment выше).
-
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml" %}
+{% raw %}
 ```yaml
- template:
-   metadata:
-     labels:
-       app: {{ .Chart.Name | quote }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[deployment.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/10-deployment.yaml:11-14)
+{% offtopic title="Как убедиться, что выше всё сделано правильно?" %}
+TODO: написать, что надо курлануть с любого пода по имени сервиса или пингануть и вот буквально абзац об этом.
+НО ПРИ НАПИСАНИИ ЭТОГО АБЗАЦА НАДО ОБЯЗАТЕЛЬНО УЧЕСТЬ, что мы в этом повествовании до непосредственно применения конфигов в кубернетес придём сильно позже.
+То есть надо писать что-то типа "мы будем деплоиться в кубы позже. Но если после деплоя не заведётся — вернитесь сюда и проведите проверку такую-то. В случае таких проблем — это вот оно."
+{% endofftopic %}
 
-Объект service позволяет сопоставлять любой входящий port и targetPort, например входящий 80 и порт в контейнере 8080, в нашем случае они одинаковы и указаны оба для прозрачности. Спецификация же позволяет не указывать targetPort если он совпадает с port. Можно так же указать несколько портов, если это требуется приложению. Для простоты оставим один порт.
+После этого можно настраивать **роутинг на Ingress**. Укажем, запросы на какой домен и путь по какому протоколу направлять в какой сервис и на какой порт.
 
-###### Роутинг на Ingress
-
-Мы описали сервис и теперь можем направить внешний (по отношению к кластеру kubernetes) трафик в приложение. Для этого опишем [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) - направим все запросы на корень домена в service описанный выше на порт 8080.
-
-Для этого нужно будет указать набор правил роутинга: с какого домена, с какого пути, в какой сервис и на какой порт надо направлять трафик.
-
-Домен будем задавать так
-                       
+{% snippetcut name="ingress.yaml" url="files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% raw %}
 ```yaml
-  - host: {{ pluck .Values.global.env .Values.app.url | first | default .Values.app.url._default }}
-```
-
-[ingress.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/90-ingress.yaml:10)
-
-Здесь описан выбор в values.yaml url для нашего приложения в зависимости от окружения. Либо будет взят url для явно указанного в values.yaml окружения (например, production), либо будет взять _default значение. Как это выглядит можно посмотреть выше в главе "Переменные окружения".
-
-Для каждого домена могут существовать набор правил для разных путей (location в терминах nginx). В нашем примере
-
-```yaml
+  rules:
+  - host: ____________
+    http:
+      paths:
       - path: /
         backend:
-          serviceName: {{ .Chart.Name | quote }}
+          serviceName: {{ .Chart.Name }}
           servicePort: 8080
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[ingress.yaml](gitlab-java-springboot-files/00-demo/.helm/templates/90-ingress.yaml:13-16)
+#### Разное поведение в разных окружениях
 
-мы направляем все что пришло на корень домена в сервис "spring" (напомню, что это в случае с werf - поле project в werf.yaml) на порт сервиса 8080. Дальше уже с трафиком разбирается service.
+Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.____________, либо ____________ — смотря куда мы задеплоились.
 
-#### Секретные переменные
+В werf есть для этого есть три механики:
 
-Мы уже рассказывали о том как использовать обычные переменные в нашем СI забирая их напрямую из values.yaml. Суть работы с секретными переменными абсолютно та же, единственное что в репозитории они будут храниться в зашифрованном виде.
+1. Подстановка значений из `values.yaml` по аналогии с Helm
+2. Проброска значений через аттрибут `--set` при работе в CLI-режиме, по аналогии с Helm
+3. Подстановка секретных значений из `secret-values.yaml`
 
-Потому для хранения в репозитории паролей, файлов сертификатов и т.п., рекомендуется использовать подсистему работы с секретами werf.
+**Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
 
-Идея заключается в том, что конфиденциальные данные должны храниться в репозитории вместе с приложением в зашифрованном виде, и должны оставаться независимыми от какого-либо конкретного сервера.
+Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=____________"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
-Для того, чтобы начать пользоваться секретными переменными нужно сгенерировать секретный ключ с которым werf сможет его шифровать и расшифровывать во время деплоя.
-Делается это из консоли:
+Этот вариант удобен для проброски, например, имени домена для каждого окружения
+
+{% snippetcut name="ingress.yaml" url="files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% raw %}
+```yaml
+  rules:
+  - host: {{ .Values.global.ci_url }}
+```
+{% endraw %}
+{% endsnippetcut %}
+
+<a name="secret-values-yaml" />Отдельная проблема — **хранение и задание секретных переменных**, например, учётных данных аутентификации для сторонних сервисов, API-ключей и т.п.
+
+Так как Werf рассматривает git как единственный источник правды — корректно хранить секретные переменные там же. Чтобы делать это корректно — мы [храним данные в шифрованном виде](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). Подстановка значений из этого файла происходит при рендере шаблона, который также запускается при деплое.
+
+Чтобы продолжать дальше 
+
+* [Сгенерируйте ключ](https://ru.werf.io/documentation/cli/management/helm/secret/encrypt.html) (`werf helm secret generate-secret-key`)
+* Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
+* Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
+
+![alt_text](/images/applications-guide/gitlab-java-springboot/5.png "image_tooltip")
+
+После этого мы сможем задать секретную переменную `____________`. Зайдите в режим редактирования секретных значений:
 
 ```bash
-$ werf helm secret generate-secret-key
-4710f841e17fabcc85f976e4a665ff9e
+$ werf helm secret values edit .helm/secret-values.yaml
 ```
 
-Чтобы им воспользоваться нужно добавить его либо в свои переменные окружения, либо записать в файл .werf_secret_key. Во втором случае нужно обязательно добавить его в gitignore.
+Откроется консольный текстовый редактор с данными в расшифованном виде:
 
-```bash
-export WERF_SECRET_KEY=4710f841e17fabcc85f976e4a665ff9e
-echo $WERF_SECRET_KEY > .werf_secret_key
-```
-
-Теперь добавим секретную перменную, например, password:
-
-```bash
-werf helm secret values edit .helm/secret-values.yaml
-```
-
-Откроется редактор по умолчанию (согласно перменной EDITOR), куда мы впишем наши парои plain-text в формате аналогичном values.yaml. Например:
-
+{% snippetcut name="secret-values.yaml в расшифрованном виде" url="files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
 app:
   password:
     _default: my-secret-password
     production: my-super-secret-password
 ```
+{% endsnippetcut %}
 
-При просмотре результирующего файла увидим лишь такое:
+После сохранения значения в файле зашифруются и примут примерно такой вид:
 
+{% snippetcut name="secret-values.yaml в зашифрованном виде" url="files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
 app:
   password:
     _default: 10006755d101c5243fc400ababd7358689a921c19ee7e96a95f0ab82d46e4424573ab50ba666fcf5ce5e5dbd2b696c7706cf
     production: 1000bcd51061ebd1b2c2990041d30783be607b3a0aec8890c098f17bc96dc43e93765219651d743c7a37fb7361c10b703c7b
 ```
+{% endsnippetcut %}
 
-[secret-values.yaml](gitlab-java-springboot-files/00-demo/.helm/secret-values.yaml)
+<a name="iac-debug-deploy" />
 
-И в таком виде уже безопасно хранить пароли в git.
-Для того чтобы отредактировать значение нужно снова воспользоваться командой
+### Отладка конфигов инфраструктуры и деплой в Kubernetes
+
+После того, как написана основная часть конфигов — хочется проверить корректность конфигов и задеплоить их в kubernetes. Для того, чтобы отрендерить конфиги инфраструктуры нужны сведения об окружении, на который будет произведён деплой, ключ для расшифровки секретных значений и т.п.
+
+Если мы запускаем Werf вне Gitlab CI — нам нужно сделать несколько операций вручную прежде чем Werf сможет рендерить конфиги и деплоить в Kubernetes.
+
+* Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/) (если ранее это не сделано)
+* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.com/myproject`)
+* Установить переменную окружения `WERF_SECRET_KEY` со значением, [сгенерированным ранее в главе "Разное поведение в разных окружениях"](#secret-values-yaml)
+* Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging` 
+
+Если вы всё правильно сделали, то вы у вас корректно будут отрабатывать команды [`werf helm render`](https://ru.werf.io/documentation/cli/management/helm/render.html) и [`werf deploy`](https://ru.werf.io/documentation/cli/main/deploy.html)
+
+{% offtopic title="Как вообще работает деплой" %}
+
+Werf (по аналогии с helm) берет yaml шаблоны, которые описывают объекты Kubernetes, и генерирует из них общий манифест. Манифест отдается API Kubernetes, который на его основе внесет все необходимые изменения в кластер. Werf отслеживает как Kubernetes вносит изменения и сигнализирует о результатах в реальном времени. Все это благодаря встроенной в werf библиотеке [kubedog](https://github.com/flant/kubedog). Уже сам Kubernetes занимается выкачиванием нужных образов из Registry и запуском их на нужных серверах с указанными настройками.
+
+{% endofftopic %}
+
+Запустите деплой и дождитесь успешного завершения
 
 ```bash
-werf helm secret values edit .helm/secret-values.yaml
+werf deploy --stages-storage :local
 ```
 
-Для дальнейшего его использования - для деплоя приложения - в рамках gitlab нужно ключ WERF_SECRET_KEY положить в gitlab variables для проекта (Settings -> CI/CD -> variables). Оттуда werf при запуске получит эту перменную и сформирует корректный helm-chart с расшифрованным паролем.
+{% offtopic title="Что делать, если что-то пошло не так?" %}
 
-#### Деплой в Gitlab CI
+TODO: написать
+
+{% endofftopic %}
+
+Проверить что приложение задеплоилось в кластер можно с помощью kubectl, вы увидите что-то вида:
+
+```bash
+$ kubectl get namespace
+NAME                          STATUS   AGE
+default                       Active   161d
+example-1-production          Active   4m44s
+example-1-stage               Active   3h2m
+
+$ kubectl -n example-1-stage get po
+NAME                        READY   STATUS    RESTARTS   AGE
+example-1-9f6bd769f-rm8nz   1/1     Running   0          6m12s
+
+$ kubectl -n example-1-stage get ingress
+NAME        HOSTS                                           ADDRESS   PORTS   AGE
+example-1   stage.____________                                       80      6m18s
+```
+
+А также вы должны увидеть ваш сервис через браузер.
+
+TODO: ОБЯЗАТЕЛЬНО нужно показать как оно работает в браузере. "Задеплоено" — это не критерий работы.
+
+<a name="ci" />
+
+## Построение CI-процесса
+
+{% filesused title="Файлы, упомянутые в главе" %}
+- .gitlab-ci.yaml
+{% endfilesused %}
+
+После того, как мы разобрались, как делать сборку и деплой "вручную" — пора автоматизировать процесс.
+
+Мы предлагаем простой флоу, который мы называем [fast and furious](https://docs.google.com/document/d/1a8VgQXQ6v7Ht6EJYwV2l4ozyMhy9TaytaQuA9Pt2AbI/edit#). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production согласно методологии GitOps и будут содержать два окружения, production и stage.
+
+Начнем с того что добавим нашу сборку в CI с помощью `.gitlab-ci.yml`, который находится внутри корня проекта и опишем там заготовки для всех стадий и общий код, обеспечивающий работу werf.
+
+{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+```yaml
+before_script:
+  - type multiwerf && source <(multiwerf use 1.1 stable)
+  - type werf && source <(werf ci-env gitlab --verbose)
+
+Build:
+  stage: build
+  script:
+    - echo "todo build"
+  tags:
+    - werf
+
+Deploy to stage:
+  script:
+    - echo "todo deploy to stage"
+  environment:
+    name: stage
+    url: http://stage.____________
+  only:
+    - merge_requests
+  when: manual
+
+Deploy to production:
+  script:
+    - echo "todo deploy to production"
+  environment:
+    name: production
+    url: http://____________
+  only:
+    - master
+```
+{% endsnippetcut %}
+
+TODO: ^^^ чёто мне кажется это не fast&furious! Надо проверить и пофиксить
+
+{% offtopic title="Зачем используется multiwerf?" %}
+Такой сложный путь с использованием multiwerf нужен для того, чтобы вам не надо было думать про обновление верфи и установке новых версий — вы просто указываете, что используете, например, use 1.1 stable и пребываете в уверенности, что у вас актуальная версия с закрытыми issues.
+{% endofftopic %}
+
+{% offtopic title="Что за werf ci-env gitlab?" %}
+Практически все опции werf можно задавать переменными окружения. Команда ci-env проставляет предопределенные значения опций, которые будут использоваться всеми командами werf в shell-сессии, на основе переменных окружений CI:
+
+```bash
+### DOCKER CONFIG
+export DOCKER_CONFIG="/tmp/werf-docker-config-832705503"
+### STAGES_STORAGE
+export WERF_STAGES_STORAGE="registry.gitlab-example.com/chat/stages"
+### IMAGES REPO
+export WERF_IMAGES_REPO="registry.gitlab-example.com/chat"
+export WERF_IMAGES_REPO_IMPLEMENTATION="gitlab"
+### TAGGING
+export WERF_TAG_BY_STAGES_SIGNATURE="true"
+### DEPLOY
+# export WERF_ENV=""
+export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.gitlab-example.com/chat"
+export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=61368705db8652555bd96e68aadfd2ac423ba263"
+export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.gitlab-example.com/chat/pipelines/71340"
+export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.gitlab-example.com/chat/-/jobs/184837"
+### IMAGE CLEANUP POLICIES
+export WERF_GIT_TAG_STRATEGY_LIMIT="10"
+export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"
+export WERF_GIT_COMMIT_STRATEGY_LIMIT="50"
+export WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS="30"
+export WERF_STAGES_SIGNATURE_STRATEGY_LIMIT="-1"
+export WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS="-1"
+### OTHER
+export WERF_LOG_COLOR_MODE="on"
+export WERF_LOG_PROJECT_DIR="1"
+export WERF_ENABLE_PROCESS_EXTERMINATOR="1"
+export WERF_LOG_TERMINAL_WIDTH="95"
+```
+
+Многие из этих переменных интуитивно понятны, и содержат базовую информацию о том, где находится проект, где находится его registry, информацию о коммитах. В рамках статьи нам хватит значений выставляемых по умолчанию.
+
+Подробную информацию о конфигурации ci-env можно найти [тут](https://werf.io/documentation/reference/plugging_into_cicd/overview.html). Если вы используете GitLab CI/CD совместно с внешним docker registry (harbor, Docker Registry, Quay etc.), то в команду билда и пуша нужно добавлять его полный адрес (включая путь внутри registry), как это сделать можно узнать [тут](https://werf.io/documentation/cli/main/build_and_publish.html). И так же не забыть первой командой выполнить [docker login](https://docs.docker.com/engine/reference/commandline/login/).
+{% endofftopic %}
+
+<a name="ci-building" />
+
+### Сборка в Gitlab CI
+
+Пропишем подробнее в стадии сборки уже знакомую команду сборки:
+
+{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+```yaml
+Build:
+  stage: build
+  script:
+    - werf build-and-publish
+```
+{% endsnippetcut %}
+
+TODO: здесь и в следующих CI-стейджах разобраться с `--stages-storage :local`
+
+Теперь при коммите кода в gitlab будет происходить сборка
+
+![alt_text](/images/applications-guide/gitlab-java-springboot/3.png "image_tooltip")
+
+<a name="ci-deploy" />
+
+### Деплой в Gitlab CI
 
 Опишем деплой приложения в Kubernetes. Деплой будет осуществляться на два стенда: staging и production.
 
-Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды: 
+Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды:
 
+{% snippetcut name=".gitlab-ci.yml" url="files/examples/example_1/.gitlab-ci.yml#L21" %}
 ```yaml
 .base_deploy: &base_deploy
   script:
-    - werf deploy --stages-storage :local
+    - werf deploy
   dependencies:
     - Build
   tags:
     - werf
 ```
+{% endsnippetcut %}
 
-Выкат, например, на Staging, будет выглядеть так: 
- 
+В результате мы можем делать деплой, например, на staging с использованием базового шаблона:
+
+{% snippetcut name=".gitlab-ci.yml" url="files/examples/example_1/.gitlab-ci.yml#L21" %}
  ```yaml
  Deploy to Stage:
    extends: .base_deploy
    stage: deploy
    environment:
      name: stage
-   except:
-     - schedules
-   only:
-     - merge_requests
-   when: manual
 ```
+{% endsnippetcut %}
 
-Нет необходимости пробрасывать переменные окружения, создаваемые GitLab CI — этим занимается Werf. Достаточно только указать название стенда
+TODO: а в нашем случае точно тут должен быть stage? До этого мы называли его staging. Надо разобраться.
 
-```yaml
-environment:
-     name: stage
-```
+Аналогичным образом — настраиваем production окружение.
 
-_Обратите внимание: домены каждого из стендов указываются в helm-шаблонах._
-
-_Остальные настройки подробно описывать не будем, разобраться в них можно с [помощью документации Gitlab](https://docs.gitlab.com/ce/ci/yaml/)_
+TODO: то, что написано ниже надо проверить на соответствие FAST&FURIOUS
 
 После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Stage.
 
-![deploy-1](gitlab-java-springboot-files/images/00-demo-gitlab-deploy-1.png "deploy")
+![alt_text](/images/applications-guide/gitlab-java-springboot/6.png "image_tooltip")
 
 Посмотреть статус выполнения pipeline можно в интерфейсе gitlab **CI / CD - Pipelines**
 
-![deploy-2](gitlab-java-springboot-files/images/00-demo-gitlab-deploy-2.png "deploy")
+![alt_text](/images/applications-guide/gitlab-java-springboot/7.png "image_tooltip")
 
-Список всех окружений - доступен в меню **Operations - Environments**
+TODO: наверное надо написать ещё главу про очистку образов!
 
-![deploy-3](gitlab-java-springboot-files/images/00-demo-gitlab-deploy-3.png "deploy")
-
-Из этого меню - можно так же быстро открыть приложение в браузере.
-
-![deploy-4](gitlab-java-springboot-files/images/00-demo-gitlab-deploy-4.png "deploy")
-
-Здесь будет подставлен домен, который указывается в секции environment рядом с `name:`
-
-```yaml
-   environment:
-     name: stage
-     url: http://stage.example.com
-```
-
-К тому как использовать эту переменную в helm-чарте мы вернемся в самом конце, а пока что для простоты будем использовать .helm/values для объявления доменов.
-
+<div>
+    <a href="030-dependencies.html" class="nav-btn">Далее: Подключение зависимостей</a>
+</div>

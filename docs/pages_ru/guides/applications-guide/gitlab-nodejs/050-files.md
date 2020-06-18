@@ -1,8 +1,9 @@
 ---
 title: Работа с файлами
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/050-files.html
+permalink: documentation/guides/applications-guide/gitlab-nodejs/050-files.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -122,3 +123,6 @@ app:
 
 И всё, этого достаточно!
 
+<div>
+    <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>
+</div>

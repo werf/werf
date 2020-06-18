@@ -1,8 +1,9 @@
 ---
 title: Работа с файлами
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/050-files.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/050-files.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -32,3 +33,6 @@ layout: guide
 
 Если мы будем сохранять файлы какой - либо директории у приложения запущенного в kubernetes - то после перезапуска контейнера все изменения пропадут.
 
+<div>
+    <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>
+</div>

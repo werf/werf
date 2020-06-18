@@ -3,11 +3,12 @@ title: Базовые настройки
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/020-basic.html
 layout: guide
+toc: false
 ---
 
 В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
 
-Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит веб сервер для ruby. Управлять маршрутизацией запросов к приложению будет управлять Ingress в kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
+Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит ____________. Управлять маршрутизацией запросов к приложению будет управлять Ingress в kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
 ![](/images/applications-guide/template/020-basic-process-overview.png)
 
@@ -49,7 +50,7 @@ TODO: вариантов синтаксиса несколько вот раз �
 
 Начнём werf.yaml с обязательной [**секции мета-информации**]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации):
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
@@ -62,7 +63,7 @@ configVersion: 1
 
 После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [**image config section**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%81%D0%B5%D0%BA%D1%86%D0%B8%D1%8F-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0).
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
@@ -82,7 +83,7 @@ TODO: кратко написать про шаблоны Go и дать ссы�
 
 Добавим исходный код нашего приложения в контейнер с помощью [**директивы git**](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html)
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
 project: example-1
 configVersion: 1
@@ -97,7 +98,7 @@ git:
 
 При использовании директивы `git`, werf использует репозиторий проекта, в котором расположен `werf.yaml`. Добавляемые директории и файлы проекта указываются списком относительно корня репозитория.
 
-`add: /` - та директория которую мы хотим добавить внутрь docker image, мы указываем, что это весь наш репозиторий
+`add: /` - та директория которую мы хотим добавить внутрь docker image, мы указываем, что это корень, т.е. мы хотим склонировать внутрь docker image весь наш репозиторий.
 
 `to: /app` - то куда мы клонируем наш репозиторий внутри docker image. Важно заметить что директорию назначения werf создаст сам.
 
@@ -170,7 +171,7 @@ $  werf build --stages-storage :local
 
 ```
 ...
-│ ┌ Building stage rails/dockerInstructions
+│ ┌ Building stage ____________
 │ ├ Info
 │ │     repository: werf-stages-storage/example-1
 │ │       image_id: 2743bc56bbf7
@@ -178,8 +179,8 @@ $  werf build --stages-storage :local
 │ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
 │ │           diff: 0 B
 │ │   instructions: WORKDIR /app
-│ └ Building stage rails/dockerInstructions (0.82 seconds)
-└ ⛵ image rails (239.56 seconds)
+│ └ Building stage ____________ (0.82 seconds)
+└ ⛵ image ____________ (239.56 seconds)
 ```
 
 {% offtopic title="Что делать, если что-то пошло не так?" %}
@@ -286,7 +287,7 @@ TODO:  ^^ вот это выше надо причесать, дать ссыл�
 
 Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `____________`. Укажем, **как этот контейнер будет запускаться**:
 
-{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml#L17" %}
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml#L17" %}
 {% raw %}
 ```yaml
       containers:
@@ -311,34 +312,36 @@ Werf складывает собранные образы в Registry с раз�
 
 Для ____________ это, например, `____________` ____________
 
-{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml#L21" %}
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml#L21" %}
 {% raw %}
 ```yaml
       env:
       ____________
       ____________
       ____________
-{{ tuple "rails" . | include "werf_container_env" | indent 8 }}
+{{ tuple "____________" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 ____________
 ____________
-____________
+Мы задали значение для `____________` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
 
 Обратите также внимание на [функцию `werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
+<a name="helm-values-yaml" />
+
 {% offtopic title="А как динамически подставлять в переменные окружения нужные значения?" %}
 
-<a name="helm-values-yaml" /> Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид 
+Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид 
 
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
       env:
-      - name: RAILS_MASTER_KEY
-        value: {{ .Values.rails.master_key }}
+      - name: SOME_KEY
+        value: {{ .Values.app.some_key }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -348,15 +351,15 @@ ____________
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
       env:
-      - name: RAILS_MASTER_KEY
-        value: {% raw %}{{ pluck .Values.global.env .Values.rails.master_key | first | default .Values.rails.master_key._default }}{% endraw %}
+      - name: SOME_KEY
+        value: {% raw %}{{ pluck .Values.global.env .Values.app.some_key | first | default .Values.app.some_key._default }}{% endraw %}
 ```
 {% endsnippetcut %}
 
 {% snippetcut name="values.yaml" url="#" %}
 ```yaml
-rails:
-  master_key:
+app:
+  some_key:
     _default: 9eeddad83cebe240f55ae06ccdd95f8e
     production: 684e5cb73034052dc89e3055691b7ac4
     testing: 189af8ca60b04e529140ec114175f098
@@ -408,7 +411,7 @@ ____________
 
 Затем, **пропишем Service**, чтобы к Pod-у могли обращаться другие приложения кластера. 
 
-{% snippetcut name="service.yaml" url="template-files/examples/example_1/.helm/templates/service.yaml" %}
+{% snippetcut name="service.yaml" url="files/examples/example_1/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -429,7 +432,7 @@ spec:
 
 Обратите внимание на поле `selector` у Service: он должен совпадать с аналогичным полем у Deployment и ошибки в этой части — самая частая проблема с настройкой маршрута до приложения.
 
-{% snippetcut name="deployment.yaml" url="template-files/examples/example_1/.helm/templates/deployment.yaml" %}
+{% snippetcut name="deployment.yaml" url="files/examples/example_1/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: apps/v1
@@ -452,7 +455,7 @@ TODO: написать, что надо курлануть с любого по�
 
 После этого можно настраивать **роутинг на Ingress**. Укажем, запросы на какой домен и путь по какому протоколу направлять в какой сервис и на какой порт.
 
-{% snippetcut name="ingress.yaml" url="template-files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="files/examples/example_1/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -479,11 +482,11 @@ TODO: написать, что надо курлануть с любого по�
 
 **Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
 
-Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=example.com"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
+Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=____________"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
-{% snippetcut name="ingress.yaml" url="template-files/examples/example_1/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="files/examples/example_1/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -512,7 +515,7 @@ $ werf helm secret values edit .helm/secret-values.yaml
 
 Откроется консольный текстовый редактор с данными в расшифованном виде:
 
-{% snippetcut name="secret-values.yaml в расшифрованном виде" url="template-files/examples/example_1/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml в расшифрованном виде" url="files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
 ____________
 ____________
@@ -521,7 +524,7 @@ ____________
 
 После сохранения значения в файле зашифруются и примут примерно такой вид:
 
-{% snippetcut name="secret-values.yaml в зашифрованном виде" url="template-files/examples/example_1/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml в зашифрованном виде" url="files/examples/example_1/.helm/secret-values.yaml" %}
 ```yaml
 ____________
 ____________
@@ -556,6 +559,8 @@ werf deploy --stages-storage :local
 ```
 
 {% offtopic title="Что делать, если что-то пошло не так?" %}
+
+TODO: написать
 
 {% endofftopic %}
 
@@ -702,7 +707,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 Выкат на два стенда отличается только параметрами, поэтому воспользуемся шаблонами. Опишем базовый деплой, который потом будем кастомизировать под стенды:
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_1/.gitlab-ci.yml#L21" %}
+{% snippetcut name=".gitlab-ci.yml" url="files/examples/example_1/.gitlab-ci.yml#L21" %}
 ```yaml
 .base_deploy: &base_deploy
   script:
@@ -716,7 +721,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 В результате мы можем делать деплой, например, на staging с использованием базового шаблона:
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_1/.gitlab-ci.yml#L21" %}
+{% snippetcut name=".gitlab-ci.yml" url="files/examples/example_1/.gitlab-ci.yml#L21" %}
  ```yaml
  Deploy to Stage:
    extends: .base_deploy
@@ -741,3 +746,7 @@ TODO: то, что написано ниже надо проверить на с
 ![alt_text](/images/applications-guide/template/7.png "image_tooltip")
 
 TODO: наверное надо написать ещё главу про очистку образов!
+
+<div>
+    <a href="030-dependencies.html" class="nav-btn">Далее: Подключение зависимостей</a>
+</div>

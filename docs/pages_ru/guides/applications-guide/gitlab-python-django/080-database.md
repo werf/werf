@@ -1,8 +1,9 @@
 ---
 title: Подключение базы данных
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/080-database.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/080-database.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -163,4 +164,6 @@ spec:
 
 При запуске миграций мы используем тот же самый образ что и в деплойменте. Различие только в запускаемых командах.
 
-
+<div>
+    <a href="090-unittesting.html" class="nav-btn">Далее: Юнит-тесты и Линтеры</a>
+</div>

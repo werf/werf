@@ -1,8 +1,9 @@
 ---
 title: Подключаем redis
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/070-redis.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/070-redis.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -116,4 +117,6 @@ CACHES = {
 
 Более подробно про подключение к редису можно почитать в [документации](https://github.com/jazzband/django-redis)
 
-
+<div>
+    <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
+</div>

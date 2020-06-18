@@ -3,6 +3,7 @@ title: Работа с электронной почтой
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/060-email.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -47,3 +48,7 @@ app:
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать ____________. Мало же просто его установить — надо ещё как-то юзать в коде.
 
+
+<div>
+    <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
+</div>

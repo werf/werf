@@ -3,6 +3,7 @@ title: Работа с файлами
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/050-files.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -56,3 +57,7 @@ app:
 {% endsnippetcut %}
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
+
+<div>
+    <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>
+</div>

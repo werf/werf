@@ -2,25 +2,8 @@
 title: Работа с электронной почтой
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/060-email.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -79,3 +62,7 @@ app:
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем mailgun-ruby. Мало же просто его установить — надо ещё как-то юзать в коде.
 
+
+<div>
+    <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
+</div>
