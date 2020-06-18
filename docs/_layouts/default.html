@@ -5,7 +5,7 @@
   <script>
     $(document).ready(function() {
       // Initialize navgoco with default options
-      $("#mysidebar").navgoco({
+      $("#mysidebar:not(.sidebar_static)").navgoco({
         caretHtml: '',
         accordion: true,
         openClass: 'active', // open
@@ -60,8 +60,8 @@
 
       <!-- Page Content -->
       {{ content }}
-    </div>
-
+      {%- include action-toast.html %}
+    </div>    
     {%- include footer.html %}
   </div>
 
