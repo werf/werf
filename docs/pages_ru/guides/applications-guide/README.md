@@ -6,15 +6,11 @@ author: Igor Tsupko <igor.tsupko@flant.com>
 toc: false
 ---
 
-<ul>
-    <li><strong><a href="template/000-task.html">Template</a></strong></li>
-    <li>
-        <strong>GitLab</strong>
-        <ul>
-            <li><strong><a href="gitlab-rails/000-task.html">Ruby On Rails</a></strong></li>
-            <li><a href="gitlab-nodejs.html">NodeJS</a></li>
-            <li><a href="gitlab-python-django.html">Python: Django</a></li>
-            <li><a href="gitlab-java-springboot.html">Java: Springboot</a></li>
-        </ul>
-    </li>
-</ul>
+<h2>GitLab</h2>
+
+<div class="nav-btn-list">
+    <a href="gitlab-rails/000-task.html" class="nav-btn">Ruby On Rails</a>
+    <a href="gitlab-nodejs.html" class="nav-btn">NodeJS</a>
+    <a href="gitlab-python-django.html" class="nav-btn">Python: Django</a>
+    <a href="gitlab-java-springboot.html" class="nav-btn">Java: Springboot</a>
+</div>

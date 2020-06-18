@@ -269,7 +269,6 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-
   $('h1:contains("Installation")').each(function( index ) {
     var $title = $(this);
     var $btn1 = $title.next('p');
@@ -285,6 +284,29 @@ $(document).ready(function(){
     $btn2.remove();
     $btn3.remove();
     $title.after(new_btns);
+  });
+});
+
+var action_toast_timeout;
+function showActionToast(text) {
+  clearTimeout(action_toast_timeout);
+  var action_toast = $('.action-toast');
+  action_toast.text(text).fadeIn()
+  action_toast_timeout = setTimeout(function(){ action_toast.fadeOut() }, 5000);
+}
+
+$(document).ready(function(){
+  new ClipboardJS('[data-snippetcut-btn-name]', {
+    text: function(trigger) {
+      showActionToast('Имя скопировано')
+      return $(trigger).closest('[data-snippetcut]').find('[data-snippetcut-name]').text();
+    }
+  });
+  new ClipboardJS('[data-snippetcut-btn-text]', {
+    text: function(trigger) {
+      showActionToast('Текст скопирован')
+      return $(trigger).closest('[data-snippetcut]').find('[data-snippetcut-text]').text();
+    }
   });
 });
 
@@ -307,8 +329,8 @@ $(document).ready(function() {
     .to('#presentation-title', {x: '-2000px', opacity: 0}, 0)
     .to('#presentation-bg', {x: '-1500px'}, 0)
     .to('#presentation-scheme', {
-      width: magic_width, 
-      x: '-' + (1160 - magic_width)/2 + 'px',  
+      width: magic_width,
+      x: '-' + (1160 - magic_width)/2 + 'px',
       y: + (45 + ((window.innerHeight - magic_height)/2) - (window.innerHeight > 700 ? ((window.innerHeight - 480)/2) : 130)) + 'px'
     }, 0))
   .addTo(magic);
@@ -354,7 +376,7 @@ $(document).ready(function() {
     .to('#scheme_arrows_wd', {opacity: '1'}, 0)
     .to('#scheme_smart_2', {opacity: '1'}, 0)
   ).addTo(magic);
-  
+
   // Werf -> Docker Registry, sync
   new ScrollMagic.Scene({duration: 500, offset: 1500}).setTween(
     TweenMax
@@ -392,9 +414,9 @@ $(document).ready(function() {
     .duration(2)
   ).addTo(magic);
 
-  // Werf -> Docker Registry, show info  
+  // Werf -> Docker Registry, show info
   new ScrollMagic.Scene({duration: 200, offset: 3100}).setTween(
-    new TimelineMax()    
+    new TimelineMax()
     .to('#scheme_smart_icon_update', {opacity: '0'})
     .to('#scheme_smart_icon_check', {opacity: '1'})
     .to('#scheme_step', {opacity: '1'}, 0)

@@ -36,9 +36,14 @@ module Jekyll
         rendered_content = Jekyll::Converters::Markdown::KramdownParser.new(Jekyll.configuration()).convert(content)
 
         %Q(
-<div class="expand">
-<p><strong>#{@config[:name]}</strong> <a href="#{@config[:url]}">🔗</a></p>
+<div class="snippetcut" data-snippetcut>
+<div class="snippetcut__title">
+<a href="#{@config[:url]}" target="_blank" class="snippetcut__title-name" data-snippetcut-name>#{@config[:name]}</a>
+<a href="javascript:void(0)" class="snippetcut__title-btn" data-snippetcut-btn-name>копировать имя</a>
+<a href="javascript:void(0)" class="snippetcut__title-btn" data-snippetcut-btn-text>копировать текст</a>
+</div>
 #{rendered_content}
+<div class="snippetcut__raw" data-snippetcut-text>#{content}</div>
 </div>
         )
       end
