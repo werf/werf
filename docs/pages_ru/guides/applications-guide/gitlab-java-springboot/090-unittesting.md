@@ -1,8 +1,9 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/090-unittesting.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/090-unittesting.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -28,3 +29,7 @@ test:
 Запускаются тесты при выполнении `mvn package`.
 
 Подробно посмотреть как это работает можно у нас в этом [репозитории](gitlab-java-springboot-files/04-demo-tests/)
+
+<div>
+    <a href="110-multipleapps.html" class="nav-btn">Далее: Несколько приложений в одном репозитории</a>
+</div>

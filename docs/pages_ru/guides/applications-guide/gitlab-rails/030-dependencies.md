@@ -2,25 +2,8 @@
 title: Подключение зависимостей
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/030-dependencies.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -98,3 +81,7 @@ mount:
 {% endsnippetcut %}
 
 При каждом запуске билда, эта директория будет монтироваться с сервера, где запускается билд, и не будет очищаться между билдами. Таким образом кэш будет сохраняться между сборками.
+
+<div>
+    <a href="040-assets.html" class="nav-btn">Далее: Генерируем и раздаем ассеты</a>
+</div>

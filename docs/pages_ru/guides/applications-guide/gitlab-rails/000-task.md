@@ -2,25 +2,8 @@
 title: Как использовать гайд
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/000-task.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 Этот гайд расскажет, как Ruby On Rails разработчику развернуть своё приложение в Kubernetes с помощью утилиты Werf.
@@ -30,5 +13,5 @@ assets_generator_chosen: "webpack"
 В рамках гайда мы будем рассматривать приложение с минимальным функционалом, которое постепенно будем дорабатывать. Исходный код всех вариантов приложения также прилагается.
 
 <div>
-    <a href="#" class="nav-btn">Далее: подготовка к работе</a>
+    <a href="010-preparing.html" class="nav-btn">Далее: Подготовка к работе</a>
 </div>

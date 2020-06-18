@@ -1,8 +1,9 @@
 ---
 title: Подключение базы данных
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/080-database.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/080-database.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -145,3 +146,7 @@ $ curl example.com/demo/all |jq
 
 Аналогично предыдущему пункту про выполнение миграций, накатка фикстур производится фреймворком самостоятельно используя вышеназванные инструменты для миграций. Для накатывания фикстур в зависимости от стенда (dev-выкатываем, production - никогда не накатываем фикстуры) мы опять же можем передавать переменную окружения в приложение. Например, для Flyway это будет SPRING_FLYWAY_LOCATIONS, для Spring Batch Database нужно присвоить Java-переменной spring.batch.initialize-schema значение переменной из environment. В ней мы в зависимости от окружения проставляем либо always либо never. Реализации разные, но подход один - обязательно нужно принимать эту переменную извне. Документация та же что и в предыдущем пункте.
 
+
+<div>
+    <a href="090-unittesting.html" class="nav-btn">Далее: Юнит-тесты и Линтеры</a>
+</div>

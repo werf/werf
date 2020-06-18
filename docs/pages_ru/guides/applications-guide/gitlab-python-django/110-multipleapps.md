@@ -1,8 +1,9 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/110-multipleapps.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/110-multipleapps.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -70,3 +71,7 @@ ansible:
 {{2. Добавляем воркер/консюмер}}
 {{3. Добавляем вторую приложуху на другом языке (например, это может быть webscoket’ы на nodejs; показать организацию helm, организацию werf.yaml, и ссылку на другую статью)}}
 
+
+<div>
+    <a href="120-dynamicenvs.html" class="nav-btn">Далее: Динамические окружения</a>
+</div>

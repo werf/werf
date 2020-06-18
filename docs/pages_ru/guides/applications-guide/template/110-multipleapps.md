@@ -3,6 +3,7 @@ title: Несколько приложений в одном репозитор�
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/110-multipleapps.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -154,3 +155,7 @@ spec:
 ```
 {% endraw %}
 {% endsnippetcut %}
+
+<div>
+    <a href="120-dynamicenvs.html" class="nav-btn">Далее: Динамические окружения</a>
+</div>

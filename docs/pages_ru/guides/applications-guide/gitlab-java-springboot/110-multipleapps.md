@@ -1,8 +1,9 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/110-multipleapps.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/110-multipleapps.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -38,3 +39,6 @@ git:
 
 Такая организация репозитория удобна, если нужно выкатывать приложение целиком, или команда разработки не большая. Мы уже [рассказывали](https://www.youtube.com/watch?v=g9cgppj0gKQ) в каких случаях это правильный путь.
 
+<div>
+    <a href="120-dynamicenvs.html" class="nav-btn">Далее: Динамические окружения</a>
+</div>
