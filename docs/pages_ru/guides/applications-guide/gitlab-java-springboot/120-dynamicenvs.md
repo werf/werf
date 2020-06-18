@@ -1,8 +1,9 @@
 ---
 title: Динамические окружения
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/120-dynamicenvs.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/120-dynamicenvs.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}

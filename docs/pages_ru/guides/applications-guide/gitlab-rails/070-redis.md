@@ -2,25 +2,8 @@
 title: Подключаем redis
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/070-redis.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -125,3 +108,6 @@ production:
 
 Таким образом, для каждого стенда будет прописываться корректное значение `REDIS_URL`, например `redis://example-2-stage-redis-master:6379/1` — для stage окружения.
 
+<div>
+    <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
+</div>

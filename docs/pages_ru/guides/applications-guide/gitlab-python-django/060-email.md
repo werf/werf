@@ -1,8 +1,9 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/060-email.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/060-email.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -41,3 +42,6 @@ MAILGUN_SERVER_NAME = 'SERVER-NAME'
 ```
 
 
+<div>
+    <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
+</div>

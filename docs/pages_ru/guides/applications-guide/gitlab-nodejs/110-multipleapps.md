@@ -1,8 +1,9 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/110-multipleapps.html
+permalink: documentation/guides/applications-guide/gitlab-nodejs/110-multipleapps.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -103,3 +104,7 @@ spec:
 
 К слову, мы рассказывали [https://www.youtube.com/watch?v=g9cgppj0gKQ](https://www.youtube.com/watch?v=g9cgppj0gKQ) о том, почему и в каких ситуациях это — хороший путь для микросервисов.
 
+
+<div>
+    <a href="120-dynamicenvs.html" class="nav-btn">Далее: Динамические окружения</a>
+</div>

@@ -1,8 +1,9 @@
 ---
 title: Подключаем redis
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/070-redis.html
+permalink: documentation/guides/applications-guide/gitlab-nodejs/070-redis.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -145,3 +146,6 @@ app:
 
 В данном случае Redis подключается как хранилище для сессий.
 
+<div>
+    <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
+</div>
