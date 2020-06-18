@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/flant/logboek"
 )
 

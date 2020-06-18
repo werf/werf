@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/werf"
 )
