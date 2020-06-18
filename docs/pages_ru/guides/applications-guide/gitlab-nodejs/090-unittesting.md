@@ -1,8 +1,9 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/090-unittesting.html
+permalink: documentation/guides/applications-guide/gitlab-nodejs/090-unittesting.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -54,3 +55,6 @@ stages:
 
 Полная конфигурация линтера доступна в примерах, тут мы описали лишь концепцию в примерах.
 
+<div>
+    <a href="110-multipleapps.html" class="nav-btn">Далее: Несколько приложений в одном репозитории</a>
+</div>

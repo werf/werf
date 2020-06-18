@@ -2,25 +2,8 @@
 title: Подготовка к работе
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-rails/010-preparing.html
-author: alexey.chazov <alexey.chazov@flant.com>
 layout: guide
 toc: false
-author_team: "bravo"
-author_name: "alexey.chazov"
-ci: "gitlab"
-language: "ruby"
-framework: "rails"
-is_compiled: 0
-package_managers_possible:
- - bundler
-package_managers_chosen: "bundler"
-unit_tests_possible:
- - Rspec
-unit_tests_chosen: "Rspec"
-assets_generator_possible:
- - webpack
- - gulp
-assets_generator_chosen: "webpack"
 ---
 
 В этой главе мы рассмотрим, как подготовить приложение и инфраструктуру для того, чтобы можно было это приложение развернуть в Kubernetes.
@@ -50,3 +33,7 @@ assets_generator_chosen: "webpack"
     *   Для пользователя, которого использует gitlab-runner, установлен kubectl и добавлен конфигурационный файл для подключения к kubernetes.
 *   Ранеры включены и активны для репозитория с нашим приложением.
 *   Для gitlab включен и настроен gitlab registry
+
+<div>
+    <a href="020-basic.html" class="nav-btn">Далее: Базовые настройки</a>
+</div>

@@ -1,8 +1,9 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/090-unittesting.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/090-unittesting.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -25,4 +26,6 @@ Unittests:
 
 Если нам нужно проверить приложение линтером, но данные зависимости не нужны в итоговом образе - нам необходимо собрать отдельный образ. Данный пример будет в репозитории с примерами а тут мы его не будем описывать.
 
-
+<div>
+    <a href="110-multipleapps.html" class="nav-btn">Далее: Несколько приложений в одном репозитории</a>
+</div>

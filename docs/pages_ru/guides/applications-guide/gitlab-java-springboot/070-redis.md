@@ -1,8 +1,9 @@
 ---
 title: Подключаем redis
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/070-redis.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/070-redis.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -125,3 +126,7 @@ spring.redis.port=${REDISPORT}
 Разумеется, требуется и прописать значения для этих переменных в [values.yaml](03-demo-db/.helm/values.yaml).
 
 
+
+<div>
+    <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
+</div>

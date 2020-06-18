@@ -1,7 +1,7 @@
 ---
 title: Как использовать гайд
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/000-task.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/000-task.html
 layout: guide
 toc: false
 ---
@@ -11,3 +11,7 @@ toc: false
 Обязательны к прочтению главы "Подготовка к работе" и "Базовые настройки" — в них будут разобраны вопросы настройки окружения и основы работы с Werf, сборки и деплоя приложения в production. Однако, чтобы построить серьёзное приложение понадобится чуть больше навыков, раскрытых в других главах.
 
 В рамках гайда мы будем рассматривать приложение с минимальным функционалом, которое постепенно будем дорабатывать. Исходный код всех вариантов приложения также прилагается.
+
+<div>
+    <a href="010-preparing.html" class="nav-btn">Далее: Подготовка к работе</a>
+</div>

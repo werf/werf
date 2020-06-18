@@ -1,8 +1,9 @@
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/040-assets.html
+permalink: documentation/guides/applications-guide/gitlab-java-springboot/040-assets.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -11,57 +12,62 @@ layout: guide
 - werf.yaml
 {% endfilesused %}
 
+В какой-то момент в процессе развития вашего базового приложения вам понадобятся ассеты (т.е. картинки, css, js).
 
-В какой-то момент в процессе разработки вам понадобятся ассеты (т.е. картинки, css, js).
+Для того, чтобы обработать ассеты мы воспользуемся webpack - это гибкий в плане реализации ассетов инструмент. Настраивается его поведение в `webpack.config.js` и `package.json`.
 
-Для генерации ассетов мы будем использовать webpack.
-Генерировать ассеты для java-spring-maven можно, конечно, разными способами. Например, в maven есть [плагин](https://github.com/eirslett/frontend-maven-plugin), который позволяет описать сборку ассетов "не выходя" из Java. Но там есть несколько оговорок про use-case этого плагина:
+{% offtopic title="А есть альтернативы webpack?" %}
+Генерировать ассеты для java-spring-maven можно и другими способами. Например, в maven есть [плагин](https://github.com/eirslett/frontend-maven-plugin), который позволяет описать сборку ассетов "не выходя" из Java. Но стоит отметить, что:
 
-*   Не предполагается использовать как замена Node для разработчиков фронтенда. Скорее для того чтобы разработчики бекенда могли быстрее включить JS-код в свою сборку.
-*   Не предполагается использование на production-окружениях.
+*   Плагин не предполагается использовать как замена Node для разработчиков фронтенда. Скорее он нужен для того чтобы backend-разработчики могли быстрее включить JS-код в свою сборку.
+*   Не предполагается использование плагина на production-окружениях.
 
-Потому хорошим и распространенным выбором будет использовать webpack отдельно.
+Webpack более растранён, поэтому будем в этой главе рассматривать его.
+{% endofftopic %}
 
-Интуитивно понятно, что на стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлики с помощью {{Frameworkname}}. Хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарты.
+Интуитивно понятно, что на одной из стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлы с помощью Java — хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарт.
 
-<a name="assets-scenario" />
+Реализовать раздачу сгенерированных ассетов можно сделать двумя способами:
 
-## Сценарий сборки ассетов
+* Добавить в собираемый образ с Java ещё и nginx, а потом этот образ запускать уже двумя разными способами: один раз для раздачи статики, второй — для работы Java-приложения
+* Сделать два отдельных образа: в одном только nginx и сгенерированные ассеты, во втором — Java-приложение 
 
-webpack - гибкий в плане реализации ассетов инструмент. Настраивается его поведение в webpack.config.js и package.json.
-Создадим в этом же проекте папку [assets](gitlab-java-springboot-files/02-demo-with-assets/assets/). В ней следующая структура
+{% offtopic title="Как правильно сделать выбор?" %}
+TODO: дать небольшое рассуждение как правильно делать выбор. Что надо опираться на то, что будет и как часто перекатываться. И может быть постараться разобрать два разных кейса.
+{% endofftopic %}
 
-```
-├── default.conf
-├── dist
-│   └── index.html
-├── package.json
-├── src
-│   └── index.js
-└── webpack.config.js
-```
+Мы сделаем два отдельных образа.
 
-При настройке ассетов есть один нюанс - при подготовке ассетов мы не рекомендуем использовать какие-либо изменяемые переменные _на этапе сборки_. Потому что собранный бинарный образ должен быть независимым от конкретного окружения. А значит во время сборки у нас не может быть, например, указано домена для которого производится сборка, user-generated контента и подобных вещей.
+## Подготовка к внесению изменений
 
-В связи с описанным выше, все ассеты должны быть сгенерированы одинаково для всех окружений. А вот использовать их стоит в зависимости от окружения в котором запущено приложение. Для этого можно подсунуть приложению уже на этапе деплоя конфиг, который будет зависеть от окружения. Реализуется это через [configmap](https://kubernetes.io/docs/concepts/configuration/configmap/). Кстати, он же будет нам полезен, чтобы положить конфиг nginx внутрь alpine-контейнера. Обо всем этом далее.
+Перед тем, как вносить изменения — **необходимо убедиться, что в собранных ассетах нет привязки к конкретному окружению**. То есть в собранных не должно быть логинов, паролей, доменов и тому подобного. В момент сборки Spring не должен подключаться к базе данных, использовать user-generated контент и тому подобное.
 
-<a name="assets-implementation" />
+## Изменения в сборке
 
-## Какие изменения необходимо внести
+Для ассетов мы соберём отдельный образ с nginx и ассетами. Для этого нужно собрать образ с nginx и забросить туда предварительно собранные с помощью [механизма артефактов](https://ru.werf.io/documentation/configuration/stapel_artifact.html) ассеты.
 
-Генерация ассетов происходит в отдельном артефакте в 2-х стадиях - `install` и `setup`. На первой стадии мы выполняем `npm install`, на второй уже `npm build`. Не забываем про кеширование стадий и зависимость сборки от изменения определенных файлов в репозитории.
-Так же нам потребуются изменения в шаблонах helm. Нам нужно будет описать процесс запуска контейнера с ассетами. Мы не будем их класть в контейнер с приложением. Запустим отдельный контейнер с nginx и в нем уже будем раздавать статику. Соответственно нам потребуются изменения в deployment. Так же потребуется добавить configmap и описать в нем файл с переменными для JS и конфиг nginx. Так же, чтобы трафик попадал по нужному адресу - Потребуются правки в ingress и service.
+{% offtopic title="Что за артефакты?" %}
+[Артефакт](https://ru.werf.io/documentation/configuration/stapel_artifact.html) — это специальный образ, используемый в других артефактах или отдельных образах, описанных в конфигурации. Артефакт предназначен преимущественно для отделения ресурсов инструментов сборки от процесса сборки образа приложения. Примерами таких ресурсов могут быть — программное обеспечение или данные, которые необходимы для сборки, но не нужны для запуска приложения, и т.п.
 
-### Изменения в сборке
+TODO: наглядно и просто на простом примере показать, как данные из артефакта забрасываем в образ 
 
-В конфиги сборке (werf.yaml) потребуется описать артефакт для сборки и импорт результатов сборки в контейнер с nginx. Делается это аналогично сборке на Java, разумеется используются команды сборки специфичные для webpack/nodejs. Из интересеного - мы добавляем не весь репозиторий для сборки, а только содержимое assets.
+TODO: кратко рассказать, как отлаживать разработку артефактов: что можно просто переименовать директиву artifact в image и получить образ, который можно уже отладить.
+{% endofftopic %}
 
+Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в отдельном артефакте в 2-х стадиях - `install` и `setup`. На первой стадии мы выполняем `npm install`, на второй уже `npm build`. Важно не забыть про кеширование стадий и зависимость сборки от изменения определенных файлов в репозитории.
+
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% raw %}
 ```yaml
+artifact: build
+from: ____________
+ansible:
+  ____________
+  ____________
+  ____________
 git:
   - add: /assets
     to: /app
-    excludePaths:
-
     stageDependencies:
       install:
       - package.json
@@ -69,13 +75,13 @@ git:
       setup:
       - "**/*"
 ```
-
-[werf.yaml](gitlab-java-springboot-files/02-demo-with-assets/werf.yaml:42-53)
-
-Для артефакта сборки ассетов настроили запуск `npm install` в случае изменения `package.json` и `webpack.config.js`. А так же запуск `npm run build` при любом изменении файла в репозитории.
+{% endraw %}
+{% endsnippetcut %}
 
 Также стоит исключить assets из сборки Java:
 
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% raw %}
 ```yaml
 git:
 - add: /
@@ -83,99 +89,120 @@ git:
   excludePaths:
   - assets
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[werf.yaml](gitlab-java-springboot-files/02-demo-with-assets/werf.yaml:7-10)
+Теперь, когда артефакт собран, соберём образ с nginx:
 
-Получившийся общий werf.yaml можно посмотреть [в репозитории]([werf.yaml](02-demo-with-assets/werf.yaml)).
-
-### Изменения в деплое
-
-Статику логично раздавать nginx-ом. Значит нам нужно запустить nginx в том же поде с приложением но в отдельном контейнере.
-
-В deployment допишем что контейнер будет называться frontend, будет слушать на 80 порту
-
+{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% raw %}
 ```yaml
-      containers:
-      - name: frontend
-{{ tuple "frontend" . | include "werf_container_image" | indent 8 }}
+image: assets
+from: nginx:alpine
+ansible:
+  beforeInstall:
+  - name: Add nginx config
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+```
+{% endraw %}
+{% endsnippetcut %}
+
+И пропишем в нём импорт из артефакта под названием `build`.
+
+{% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
+```yaml
+import:
+- artifact: build
+  add: /app/public
+  to: /www
+  after: setup
+```
+{% endsnippetcut %}
+
+## Изменения в деплое и роутинге
+
+Внутри Deployment сделаем два контейнера: один с `nginx`, который будет раздавать статические файлы, второй — с ____________ приложением. Запросы сперва будут приходить на nginx, а тот будет перенаправлять запрос приложению, если не найдётся статических файлов.
+
+ Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_2/.helm/templates/deployment.yaml#L33" %}
+{% raw %}
+```yaml
+      - name: assets
+{{ tuple "assets" . | include "werf_container_image" | indent 8 }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/usr/sbin/nginx", "-s", "quit"]
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
         ports:
-        - name: http-front
-          containerPort: 80
+        - containerPort: 80
+          name: http
           protocol: TCP
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-[deployment.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:23-29)
+В описании Service так же должен быть указан правильный порт:
 
-Разумеется, нам нужно положить nginx-конфиг для раздачи ассетов внутрь контейнера. Поскольку в нем могут (в итоге, например для доступа к s3) использоваться переменные - добавляем именно configmap, а не подкладываем файл на этапе сборки образа.
-Здесь же добавим js-файл, содердащий переменные, к которым обращается js во время выполнения. Подкладываем его на этапе деплоя именно для того, чтобы иметь гибкость в работе с ассетами в условиях одинаковых исходных образов для разных окружений.
-
+{% snippetcut name=".helm/templates/service.yaml" url="template-files/examples/example_2/.helm/templates/service.yaml#L9" %}
 ```yaml
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d/default.conf
-          subPath: default.conf
-        - name: env-js
-          mountPath: /app/dist/env.js
-          subPath: env.js
-```
-
-[deployment.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:30-36)
-
-Не забываем указать что файлы мы эти берем из определенного конфигмапа:
-
-```yaml
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: {{ .Chart.Name }}-configmap
-      - name: env-js
-        configMap:
-          name: {{ .Chart.Name }}-configmap
-```
-
-[deployment.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:52-58)
-
-
-Здесь мы добавили подключение configmap к deployment. В самом configmap пропишем конфиг nginx - default.conf и файл с переменными для js - env.js. Вот так, например выглядит конфиг с переменной для JS:
-
-```yaml
-...
-  env.js: |
-    module.exports = {
-        url: {{ pluck .Values.global.env .Values.app.url | first | default .Values.app.url._default |quote }},
-        environment: {{ .Values.global.env |quote }}
-    };
-
-```
-
-[Полный файл](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/01-cm.yaml)
-
-Еще раз обращу внимание на env.js - мы присваиваем url значение в зависимости от окружения указанное в values.yaml. Как раз та "изменчивость" js что нам нужна.
-
-Так же, чтобы kubernetes мог направить трафик в nginx с ассетами нужно дописать port 80 в service, а затем мы направим внешний трафик предназначенный для ассетов в этот сервис.
-
-```yaml
-...
-  - name: http-front
+  ports:
+  - name: http
     port: 80
-    targetPort: 80
+    protocol: TCP
 ```
+{% endsnippetcut %}
 
-[service.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/20-service.yaml:10-12)
+Также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-### Изменения в роутинге
-
-В ingress направим все что связано с ассетами на порт 80, чтобы все запросы к, в нашем случае example.com/static/ попали в нужный контейнер на 80-ый порт, где у нас будет отвечать nginx, прописанный выше.
-
+{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml" %}
 ```yaml
-...
-      - path: /static/
+      paths:
+      - path: /
         backend:
-          serviceName: {{ .Chart.Name | quote }}
+          serviceName: {{ .Chart.Name }}
           servicePort: 80
 ```
+{% endsnippetcut %}
 
-[ingress.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/90-ingress.yaml:17-20)
+{% offtopic title="А можно ли разделять трафик на уровне ingress?" %}
 
+В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам в объекте Ingress:
 
+{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml#L9" %}
+{% raw %}
+```yaml
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ .Chart.Name }}
+          servicePort: 3000
+      - path: /assets
+        backend:
+          serviceName: {{ .Chart.Name }}
+          servicePort: 80
+```
+{% endraw %}
+{% endsnippetcut %}
+
+TODO: в идеале — описать, что за случаи такие
+
+{% endofftopic %}
+
+<div>
+    <a href="050-files.html" class="nav-btn">Далее: Работа с файлами</a>
+</div>
 

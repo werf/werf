@@ -3,6 +3,7 @@ title: Юнит-тесты и Линтеры
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/090-unittesting.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -26,3 +27,7 @@ Rubocop check:
 {% offtopic title="А если нужно больше?" %}
 Если нужен доступ к ресурсам кластера или база данных — это уже не линтер.
 {% endofftopic %}
+
+<div>
+    <a href="110-multipleapps.html" class="nav-btn">Далее: Несколько приложений в одном репозитории</a>
+</div>

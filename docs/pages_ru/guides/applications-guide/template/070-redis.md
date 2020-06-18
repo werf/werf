@@ -3,6 +3,7 @@ title: Подключаем redis
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/template/070-redis.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -100,3 +101,6 @@ ____________
 
 Таким образом, для каждого стенда будет прописываться корректное значение `____________`, например `redis://example-2-stage-redis-master:6379/1` — для stage окружения.
 
+<div>
+    <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
+</div>

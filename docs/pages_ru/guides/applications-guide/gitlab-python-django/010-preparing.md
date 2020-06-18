@@ -1,8 +1,9 @@
 ---
 title: Подготовка к работе
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/010-preparing.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/010-preparing.html
 layout: guide
+toc: false
 ---
 
 В этой главе мы рассмотрим, как подготовить приложение и инфраструктуру для того, чтобы можно было это приложение развернуть в Kubernetes.
@@ -32,3 +33,7 @@ layout: guide
     *   Для пользователя, которого использует gitlab-runner, установлен kubectl и добавлен конфигурационный файл для подключения к kubernetes.
 *   Ранеры включены и активны для репозитория с нашим приложением.
 *   Для gitlab включен и настроен gitlab registry
+
+<div>
+    <a href="020-basic.html" class="nav-btn">Далее: Базовые настройки</a>
+</div>
