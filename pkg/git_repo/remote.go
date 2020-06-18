@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 	"github.com/flant/werf/pkg/werf"
 
 	"github.com/flant/werf/pkg/true_git"
