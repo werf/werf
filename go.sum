@@ -237,8 +237,6 @@ github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5Kwzbycv
 github.com/fatih/color v1.9.0 h1:8xPHl4/q1VyqGIPif1F+1V3Y3lSmrq01EabUW3CoW5s=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
 github.com/flant/kubedog v0.3.4/go.mod h1:o9cSuE3Z/kgxKhLCLUGUc9vPOFQgmY0B+7bdOQq++7o=
-github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263 h1:uPA08xQJzABlcaDfxuxSN6VwY284AfgiOmr9/4hy+MY=
-github.com/flant/lockgate v0.0.0-20200423125832-32bcf5a35263/go.mod h1:RBJF6PjUgAZADae/SC3skanE/vD9Jrnbs7F6hqLo7ik=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.3.1 h1:babrJuYuFK9oymzOmdkYtQ37dW6y727RteCe3hjyMAw=
 github.com/flant/logboek v0.3.1/go.mod h1:/vKAVARjAIs2OlxxDRn7SvltNVcWMb1Ifo23kCDJZco=
@@ -801,6 +799,8 @@ github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe h1:O9dUwfwuERY0EN0T
 github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101 h1:tPxINuU4/RjTCwfCW8pPtcGj20Bxc3Hd9aHZJ42Snyg=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
+github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55 h1:/7jQqp5f/gZrnWXSR+2OgXVvDZuumAVKrLOOsXUKv4o=
+github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
 github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009 h1:C9lbmDvP49QsQRZuGgYfmkzcb0+pUo8ucWxXql2GdJY=
 github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009/go.mod h1:z/o88w2pmtW11fFsHnXQFsTNzcPp1H+VCtCj7OUntwU=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
