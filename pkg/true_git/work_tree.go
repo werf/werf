@@ -160,7 +160,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
 		cmd = exec.Command(
 			"git", "-C", repoDir,
-			"worktree", "add", "--force", "--detach", "--no-checkout", workTreeDir,
+			"worktree", "add", "--force", "--detach", workTreeDir, commit,
 		)
 		output = setCommandRecordingLiveOutput(cmd)
 		if debugWorktreeSwitch() {
