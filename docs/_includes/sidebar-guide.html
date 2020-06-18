@@ -1,19 +1,15 @@
 {% assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
-
-<div class="root-open">
-<ul class="sidebar" id="mysidebar">
+<ul id="mysidebar" class="sidebar sidebar_static">
   {%- for folder in sidebar.f %}
     {%- if folder.fi %}
-    <li class="sidebar__item sidebar__item_parent active">
-        <a href="{{ folder.url }}">{{ folder.title }}{{ folder.url }}</a>
-        <ul class="sidebar__submenu open">
+    <li class="sidebar__item sidebar__item_parent {%- if page.url == folder.url %} active{%- endif %}">
+        <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
+        <ul class="sidebar__submenu">
         {%- for folderitem in folder.fi %}
             {%- if folderitem.external_url %}
                 <li class="sidebar__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
             {%- elsif page.url == folderitem.url %}
                 <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-            {%- elsif folderitem.hash %}
-                <li class="sidebar__submenu-item active"><a href="{{ folderitem.hash }}">{{folderitem.title}}</a></li>
             {%- else %}
                 <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
             {%- endif %}
@@ -21,21 +17,19 @@
         </ul>
     </li>
     {% elsif folder.sf %}
-        <li class="sidebar__item sidebar__item_parent active">
-            <a href="{{ folder.url }}">{{ folder.title }}{{ folder.url }}</a>
-            <ul class="sidebar__submenu open">
+        <li class="sidebar__item sidebar__item_parent {%- if page.url == folder.url %} active{%- endif %}">
+            <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
+            <ul class="sidebar__submenu">
             {%- for subfolders in folder.sf %}
             {%- if subfolders.sfi %}
-              <li class="sidebar__submenu-item sidebar__submenu-item_parent active">
-                <a href="{{ subfolders.url }}">{{ subfolders.title }}</a>
-                <ul class="sidebar__submenu open">
+              <li class="sidebar__submenu-item sidebar__submenu-item_parent">
+                <a href="#">{{ subfolders.title }}</a>
+                <ul class="sidebar__submenu">
                   {%- for subfolderitem in subfolders.sfi %}
                   {%- if subfolderitem.external_url %}
                   <li class="sidebar__submenu-item"><a href="{{ subfolderitem.external_url }}" target="_blank">{{subfolderitem.title}}</a></li>
                   {%- elsif page.url == subfolderitem.url %}
                   <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
-                  {%- elsif subfolderitem.hash %}
-                  <li class="sidebar__submenu-item"><a href="{{ subfolderitem.hash }}">{{subfolderitem.title}}</a></li>
                   {%- else %}
                   <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
                   {%- endif %}
@@ -46,8 +40,6 @@
               <li class="sidebar__submenu-item"><a href="{{ subfolders.external_url }}" target="_blank">{{subfolders.title}}</a></li>
             {%- elsif page.url == subfolders.url %}
               <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
-            {%- elsif subfolders.hash %}
-              <li class="sidebar__submenu-item"><a href="{{ subfolders.hash }}">{{subfolders.title}}</a></li>
             {%- else %}
               <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
             {%- endif %}
@@ -58,14 +50,10 @@
         <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
     {%- elsif page.url == folder.url %}
         <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
-    {%- elsif folder.hash %}
-        <li class="sidebar__item"><a href="{{ folder.hash }}">{{folder.title}}</a></li>
+    {%- elsif folder.type == 'secondary' %}
+        <li class="sidebar__item secondary"><a href="{{ folderitem.external_url }}" target="_blank">{{folder.title}}</a></li>
     {%- else %}
         <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
     {%- endif %}
   {%- endfor %}
 </ul>
-</div>
-
-<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
-<script>$("li.active").parents('li').toggleClass("active");</script>

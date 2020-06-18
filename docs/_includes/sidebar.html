@@ -1,9 +1,9 @@
 {% assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
-<ul class="sidebar" id="mysidebar">
+<ul id="mysidebar" class="sidebar">
   {%- for folder in sidebar.f %}
     {%- if folder.fi %}
     <li class="sidebar__item sidebar__item_parent">
-        <a href="#">{{ folder.title }}{{ folder.url }}</a>
+        <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
         <ul class="sidebar__submenu">
         {%- for folderitem in folder.fi %}
             {%- if folderitem.external_url %}
@@ -18,7 +18,7 @@
     </li>
     {% elsif folder.sf %}
         <li class="sidebar__item sidebar__item_parent">
-            <a href="#">{{ folder.title }}{{ folder.url }}</a>
+            <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
             <ul class="sidebar__submenu">
             {%- for subfolders in folder.sf %}
             {%- if subfolders.sfi %}

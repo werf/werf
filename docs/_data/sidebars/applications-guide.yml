@@ -23,6 +23,7 @@ entries:
         url: /documentation/guides/applications-guide/gitlab-rails/010-preparing.html
 
       - title: Базовые настройки
+        url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html"
         sf:
           - title: Сборка
             url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#building"
@@ -47,6 +48,7 @@ entries:
         url: /documentation/guides/applications-guide/gitlab-rails/070-redis.html
 
       - title: Подключаем базу данных
+        url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html"
         sf:
           - title: Конфигурирование БД в Kubernetes
             url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#kubeconfig"
