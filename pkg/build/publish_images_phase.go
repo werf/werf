@@ -258,7 +258,8 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		image.WerfImageLabel:            "true",
 		image.WerfImageNameLabel:        img.GetName(),
 		image.WerfImageTagLabel:         imageMetaTag,
-		image.WerfContentSignatureLabel: img.GetContentSignature(), // TODO: add content-signature to the each stage
+		image.WerfContentSignatureLabel: img.GetContentSignature(),
+		image.WerfImageVersionLabel:     image.WerfImageVersion,
 	})
 
 	successInfoSectionFunc := func() {
