@@ -130,28 +130,18 @@ func (api *api) deleteImageByReference(reference string) error {
 	return nil
 }
 
-func (api *api) PutMetadata(reference string, metadata map[string]string) error {
+func (api *api) SetLabelsIntoImage(reference string, labels map[string]string) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	img := NewManifestOnlyImage(metadata)
+	img := NewManifestOnlyImage(labels)
 
 	if err := remote.Write(ref, img); err != nil {
 		return fmt.Errorf("write to the remote %s have failed: %s", ref.String(), err)
 	}
 	return nil
-}
-
-func (api *api) GetMetadata(reference string) (map[string]string, error) {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
-	if err != nil {
-		return nil, fmt.Errorf("parsing reference %q: %v", reference, err)
-	}
-	_ = ref
-
-	return nil, nil
 }
 
 func (api *api) image(reference string) (v1.Image, name.Reference, error) {
