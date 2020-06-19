@@ -86,7 +86,14 @@ Let us install and configure the GitLab runner on the node where werf will be ru
 1. Install [multiwerf](https://github.com/werf/multiwerf) under the `gitlab-runner` user:
 
    ```shell
+   # switch to gitlab-runner user
    sudo su gitlab-runner
+   
+   # add ~/bin into PATH
+   export PATH=$PATH:$HOME/bin
+   echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+   
+   # install multiwerf into ~/bin directory
    mkdir -p ~/bin
    cd ~/bin
    curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
