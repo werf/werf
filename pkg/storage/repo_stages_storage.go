@@ -297,7 +297,7 @@ func (storage *RepoStagesStorage) PutImageCommit(projectName, imageName, commit 
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
 	logboek.Debug.LogF("-- RepoStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
 
-	if err := storage.DockerRegistry.PutMetadata(fullImageName, map[string]string{"ContentSignature": metadata.ContentSignature}); err != nil {
+	if err := storage.DockerRegistry.SetLabelsIntoImage(fullImageName, map[string]string{"ContentSignature": metadata.ContentSignature}); err != nil {
 		return fmt.Errorf("unable to put metadata into image %s: %s", fullImageName, err)
 	}
 
@@ -329,11 +329,13 @@ func (storage *RepoStagesStorage) GetImageMetadataByCommit(projectName, imageNam
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
 	logboek.Debug.LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit full image name: %s\n", fullImageName)
 
-	if metadataMap, err := storage.DockerRegistry.GetMetadata(fullImageName); err != nil {
-		return nil, fmt.Errorf("unable to get metadata from image %s: %s", fullImageName, err)
-	} else if metadataMap != nil {
-		metadata := &ImageMetadata{ContentSignature: metadataMap["ContentSignature"]}
+	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(fullImageName); err != nil {
+		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+	} else if imgInfo != nil && imgInfo.Labels != nil {
+		metadata := &ImageMetadata{ContentSignature: imgInfo.Labels["ContentSignature"]}
+
 		logboek.Info.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
+
 		return metadata, nil
 	} else {
 		logboek.Info.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
