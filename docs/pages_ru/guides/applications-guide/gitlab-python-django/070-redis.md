@@ -14,26 +14,28 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
-Допустим к нашему приложению нужно подключить простейшую базу данных, например, redis или memcached. Возьмем первый вариант.
+В этой главе мы настроим в нашем базовом приложении работу простейшей in-memory базой данных, например, redis или memcached. Для примера возьмём первый вариант.
 
-В простейшем случае нет необходимости вносить изменения в сборку — всё уже собрано для нас. Надо просто подключить нужный образ, а потом в вашем django приложении корректно обратиться к этому приложению.
+{% offtopic title="А как быть, если база данных должна сохранять данные на диске?" %}
+Этот вопрос мы разберём в следующей главе на примере [PostgreSQL](080-database.html). В рамках текущей главы разберёмся с общими вопросами: как базу данных в принципе завести в кластер, сконфигурировать и подключиться к ней из приложения.
+{% endofftopic %}
 
-Все данные для подключения у нас будут передаваться через переменные окружения.
 
-## Завести Redis в Kubernetes
+В простейшем случае нет необходимости вносить изменения в сборку — уже собранные образы есть на DockerHub. Надо просто выбрать правильный образ, корректно сконфигурировать его в своей инфраструктуре, а потом подключиться к базе данных из Rails приложения.
 
-Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний. Мы рассмотрим второй вариант.
+## Сконфигурировать Redis в Kubernetes
 
-Подключим redis как внешний subchart.
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим redis как внешний subchart.
 
 Для этого нужно:
 
 1. прописать изменения в yaml файлы;
-2. указать редису конфиги
+2. указать Redis конфиги;
 3. подсказать werf, что ему нужно подтягивать subchart.
 
-Добавим в файл `.helm/requirements.yaml` следующие изменения:
+Пропишем helm-зависимости:
 
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_4/.helm/requirements.yaml" %}
 ```yaml
 dependencies:
 - name: redis
@@ -41,9 +43,11 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: redis.enabled
 ```
+{% endsnippetcut %}
 
-Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в `.gitlab-ci`
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.gitlab-ci.yml#L24" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -52,39 +56,47 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endsnippetcut %}
 
-Опишем параметры для redis в файле `.helm/values.yaml`
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_4/.helm/values.yaml#L3" %}
 ```yaml
 redis:
   enabled: true
 ```
+{% endsnippetcut %}
 
 При использовании сабчарта по умолчанию создается master-slave кластер redis.
 
-Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы сервисы:
+Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы объекты Service:
 
 ```yaml
-# Source: example-2/charts/redis/templates/redis-master-svc.yaml
+# Source: example_4/charts/redis/templates/redis-master-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-2-stage-redis-master
+  name: example-4-stage-redis-master
 
-# Source: example-2/charts/redis/templates/redis-slave-svc.yaml
+# Source: example_4/charts/redis/templates/redis-slave-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-2-stage-redis-slave
+  name: example-4-stage-redis-slave
 ```
 
-## Подключение Django приложения к базе redis
+Знание этих Service нужно нам, чтобы потом к ним подключаться.
 
-В нашем приложении - мы будем  подключаться к мастер узлу редиса. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному редису.
+## Подключение Rails приложения к базе Redis
 
-Рассмотрим настройки подключения к redis из нашего приложения.
+В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
-```yaml
+В нашем приложении мы будем использовать Redis как хранилище сессий. Для подключения приложения к Redis необходимо установить дополнительный пакет `pip install django-redis`.
+
+TODO: переделать вот этот код чтобы соответствовало тексту
+
+{% snippetcut name="____________" url="____________" %}
+```python
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -96,26 +108,76 @@ CACHES = {
     }
 }
 ```
+{% endsnippetcut %}
 
-В данном файле мы видим что адрес подключения берется из переменной окружения `REDIS_URL` и если такая переменная не задана - подставляется значение по умолчанию `redis://127.0.0.1:6379/1`
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`, `REDIS_KEY_PREFIX`.  
 
+Будем **конфигурировать хост** через `values.yaml`:
 
-Чтобы добавить redis в качестве кеша, нам необходимо установить пакет ``, и добавить в файл настроек `settings.py` следующие строки:
-
-Для подключения нашего приложения к redis нам необходимо установить дополнительный пакет `pip install django-redis` и указать переменную окружения `REDIS_URL` при деплое нашего приложения в файле с описанием деплоймента.
-
-
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_HOST
+  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
 ```
-- name: REDIS_URL
-  value: "redis://{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master:6379/1"
+{% endsnippetcut %}
+
+{% offtopic title="А зачем такие сложности, может просто прописать значения в шаблоне?" %}
+
+Казалось бы, можно написать примерно так:
+
+```yaml
+- name: REDIS_HOST
+  value: "{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master"
 ```
 
+На практике иногда возникает необходимость переехать в другую базу данных или кастомизировать что-то — и в этих случаях в разы удобнее работать через `values.yaml`. Причём значений для разных окружений мы не прописываем, а ограничиваемся дефолтным значением:
 
-В итоге, при деплое нашего приложения преобразуется например в строку
+```yaml 
+redis:
+   host:
+      _default: redis
+```
 
-`redis://example-2-stage-redis-master:6379/1` для stage окружения
+И под конкретные окружения значения прописываем только если это действительно нужно.
+{% endofftopic %}
 
-Более подробно про подключение к редису можно почитать в [документации](https://github.com/jazzband/django-redis)
+**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_LOGIN
+  value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
+- name: REDIS_PORT
+  value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% snippetcut name="values.yaml" url="____________" %}
+```yaml
+redis:
+   login:
+      _default: ____________
+   port:
+      _default: ____________
+```
+{% endsnippetcut %}
+
+TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_PASSWORD
+  value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% snippetcut name="secret-values.yaml" url="____________" %}
+```yaml
+redis:
+  password:
+    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+```
+{% endsnippetcut %}
 
 <div>
     <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>

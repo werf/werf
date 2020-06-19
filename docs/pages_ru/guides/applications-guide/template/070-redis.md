@@ -14,15 +14,25 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
-TODO: чёт я нихуя не понял, а что с хранением данных?
+В этой главе мы настроим в нашем базовом приложении работу простейшей in-memory базой данных, например, redis или memcached. Для примера возьмём первый вариант.
 
-В этой главе мы настроим в нашем базовом приложении работу простейшей базой данных, например, redis или memcached. Для примера возьмём первый вариант.
+{% offtopic title="А как быть, если база данных должна сохранять данные на диске?" %}
+Этот вопрос мы разберём в следующей главе на примере [PostgreSQL](080-database.html). В рамках текущей главы разберёмся с общими вопросами: как базу данных в принципе завести в кластер, сконфигурировать и подключиться к ней из приложения.
+{% endofftopic %}
+
 
 В простейшем случае нет необходимости вносить изменения в сборку — уже собранные образы есть на DockerHub. Надо просто выбрать правильный образ, корректно сконфигурировать его в своей инфраструктуре, а потом подключиться к базе данных из Rails приложения.
 
 ## Сконфигурировать Redis в Kubernetes
 
 Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим redis как внешний subchart.
+
+Todo
+нам надо
+- Имя сервиса
+- Имя базы
+- Пароль
+- ...
 
 Для этого нужно:
 
@@ -84,22 +94,86 @@ metadata:
 
 Знание этих Service нужно нам, чтобы потом к ним подключаться.
 
-## Подключение Rails приложения к базе redis
+## Подключение Rails приложения к базе Redis
 
-В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis. Рассмотрим настройки подключение к redis из нашего приложения на примере ____________.
+В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
+В нашем приложении мы будем использовать Redis как хранилище сессий.
+
+{% snippetcut name="____________" url="____________" %}
+```____________
 ____________
-
-В данном файле мы видим что адрес подключения берется из переменной окружения ____________ и если такая переменная не задана - подставляется значение по умолчанию ____________. Пробросим в `____________` реальное название Service:
-
-{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_4/.helm/templates/deployment.yaml#L29" %}
-```yaml
-- name: ____________
-  value: "____________"
 ```
 {% endsnippetcut %}
 
-Таким образом, для каждого стенда будет прописываться корректное значение `____________`, например `redis://example-2-stage-redis-master:6379/1` — для stage окружения.
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`.  
+
+Будем **конфигурировать хост** через `values.yaml`:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_HOST
+  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% offtopic title="А зачем такие сложности, может просто прописать значения в шаблоне?" %}
+
+Казалось бы, можно написать примерно так:
+
+```yaml
+- name: REDIS_HOST
+  value: "{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master"
+```
+
+На практике иногда возникает необходимость переехать в другую базу данных или кастомизировать что-то — и в этих случаях в разы удобнее работать через `values.yaml`. Причём значений для разных окружений мы не прописываем, а ограничиваемся дефолтным значением:
+
+```yaml 
+redis:
+   host:
+      _default: redis
+```
+
+И под конкретные окружения значения прописываем только если это действительно нужно.
+{% endofftopic %}
+
+**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_LOGIN
+  value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
+- name: REDIS_PORT
+  value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% snippetcut name="values.yaml" url="____________" %}
+```yaml
+redis:
+   login:
+      _default: ____________
+   port:
+      _default: ____________
+```
+{% endsnippetcut %}
+
+TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_PASSWORD
+  value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% snippetcut name="secret-values.yaml" url="____________" %}
+```yaml
+redis:
+  password:
+    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+```
+{% endsnippetcut %}
 
 <div>
     <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
