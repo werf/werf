@@ -11,7 +11,6 @@ import (
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -174,6 +173,7 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
+	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
 	if _, lock, err := werf.AcquireHostLock(fmt.Sprintf("managed_image.%s-%s", projectName, imageName), lockgate.AcquireOptions{}); err != nil {
 		return err
@@ -190,26 +190,11 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
 
-	switch storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-		if err := docker.CreateImage(fullImageName); err != nil {
-			return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
-		}
-		defer func() {
-			if err := docker.CliRmi("--force", fullImageName); err != nil {
-				// TODO: errored repo state
-				logboek.Error.LogF("unable to remove temporary image %q: %s", fullImageName, err)
-			}
-		}()
-
-		if err := docker.CliPushWithRetries(fullImageName); err != nil {
-			return fmt.Errorf("unable to push image %q: %s", fullImageName, err)
-		}
-
-		return nil
-	default: // TODO: case *container_runtime.LocalHostRuntime:
-		panic("not implemented")
+	if err := storage.DockerRegistry.PushImage(fullImageName, docker_registry.PushImageOptions{}); err != nil {
+		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
+
+	return nil
 }
 
 func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) error {
@@ -289,16 +274,17 @@ func (storage *RepoStagesStorage) ShouldFetchImage(img container_runtime.Image) 
 	}
 }
 
-// FIXME: use metadata image for managed-images-records
-
 func (storage *RepoStagesStorage) PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error {
 	logboek.Debug.LogF("-- RepoStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
 
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
 	logboek.Debug.LogF("-- RepoStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
 
-	if err := storage.DockerRegistry.SetLabelsIntoImage(fullImageName, map[string]string{"ContentSignature": metadata.ContentSignature}); err != nil {
-		return fmt.Errorf("unable to put metadata into image %s: %s", fullImageName, err)
+	opts := docker_registry.PushImageOptions{
+		Labels: map[string]string{"ContentSignature": metadata.ContentSignature},
+	}
+	if err := storage.DockerRegistry.PushImage(fullImageName, opts); err != nil {
+		return fmt.Errorf("unable to push image %s with metadata: %s", fullImageName, err)
 	}
 
 	logboek.Info.LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
@@ -312,13 +298,15 @@ func (storage *RepoStagesStorage) RmImageCommit(projectName, imageName, commit s
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
 	logboek.Debug.LogF("-- RepoStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
 
-	if img, err := storage.DockerRegistry.GetRepoImage(fullImageName); err != nil {
+	if img, err := storage.DockerRegistry.TryGetRepoImage(fullImageName); err != nil {
 		return fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
-	} else if err := storage.DockerRegistry.DeleteRepoImage(img); err != nil {
-		return fmt.Errorf("unable to remove repo image %s: %s", fullImageName, err)
-	}
+	} else if img != nil {
+		if err := storage.DockerRegistry.DeleteRepoImage(img); err != nil {
+			return fmt.Errorf("unable to remove repo image %s: %s", fullImageName, err)
+		}
 
-	logboek.Info.LogF("Removed image %q metadata by commit %s\n", imageName, commit)
+		logboek.Info.LogF("Removed image %q metadata by commit %s\n", imageName, commit)
+	}
 
 	return nil
 }
