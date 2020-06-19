@@ -35,12 +35,12 @@ module Jekyll
 
         rendered_content = Jekyll::Converters::Markdown::KramdownParser.new(Jekyll.configuration()).convert(content)
 
-        <<-HTML.gsub /^\s+/, '' # remove whitespaces from heredocs
-        <div class="filesused">
-            <p><strong>#{@config[:title]}</strong></p>
-            #{rendered_content}
-        </div>
-        HTML
+        %Q(
+<div class="filesused">
+<p><strong>#{@config[:title]}</strong></p>
+#{rendered_content}
+</div>
+        )
       end
     end
   end

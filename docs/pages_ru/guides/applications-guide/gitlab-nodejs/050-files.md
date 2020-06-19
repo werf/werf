@@ -13,8 +13,12 @@ toc: false
 - Gemfile
 {% endfilesused %}
 
-В разработке может встретиться возможность когда требуется сохранять загружаемые пользователями файлы. Встает резонный вопрос о том каким образом их нужно хранить, и как после этого получать.
+В этой главе мы настроим в нашем базовом приложении работу с пользовательскими файлами. Для этого нам нужно персистентное хранилище.
 
+В идеале — добиться, чтобы приложение было stateless, а данные хранились в S3-совместимом хранилище, например minio или aws s3. Это обеспечивает простое масштабирование, работу в HA режиме и высокую доступность.
+
+{% offtopic title="А есть какие-то способы кроме S3?" %}
+TODO: пишем про 
 Первый и более общий способ. Это использовать как volume в подах [NFS](https://kubernetes.io/docs/concepts/storage/volumes/#nfs), [CephFS](https://kubernetes.io/docs/concepts/storage/volumes/#cephfs) или [hostPath](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath), который будет направлен на директорию на ноде, куда будет подключено одно из сетевых хранилищ.
 
 Мы не рекомендуем этот способ, потому что при возникновении неполадок с такими типами volume’ов мы будем влиять на работоспособность всего докера, контейнера и демона docker в целом, тем самым могут пострадать приложения которые даже не имеют отношения к вашему приложению.
@@ -23,24 +27,20 @@ toc: false
 
 Есть cloud решения S3, такие как AWS S3, Google Cloud Storage, Microsoft Blobs Storage и т.д. которые будут самым надежным решением из всех что мы можем использовать.
 
-Но для того чтобы просто посмотреть на то как работать с S3 или построить собственное решение, хватит Minio.
+Если мы будем сохранять файлы какой - либо директории у приложения запущенного в kubernetes - то после перезапуска контейнера все изменения пропадут.
+{% endofftopic %}
 
+Данная настройка производится полностью в рамках приложения, рассмотрим подключение к S3 на примере Minio.
 
-## Подключаем наше приложение к S3 Minio
-
-
-Сначала с помощью npm устанавливает пакет, который так и называется Minio.
-
+Для этого — подключим пакет minio в npm:
 
 ```bash
 $ npm install minio --save
 ```
 
+И настраиваем работу с s3 minio в приложении: 
 
-После в исходники в src/js/index.js мы добавляем следующие строки: 
-
-
-
+{% snippetcut name="src/js/index.js" url="#" %}
 ```js
 const Minio = require("minio");
 const S3_ENDPOINT = process.env.S3_ENDPOINT || "127.0.0.1";
@@ -61,19 +61,24 @@ var s3Client = new Minio.Client({
   secretKey: S3_SECRET_KEY,
 });
 ```
+{% endsnippetcut %}
 
+Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
-И этого вполне хватит для того чтобы вы могли использовать minio S3 в вашем приложении.
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+```yaml
+app:
+  s3:
+    access_key:
+      _default: bNGXXCF1GF
+    secret_key:
+      _default: zpThy4kGeqMNSuF2gyw48cOKJMvZqtrTswAQ
+```
+{% endsnippetcut %}
 
-Полный пример использования можно посмотреть в тут.
+А не секретные значения — храним в `values.yaml`
 
-Важно заметить, что мы не указываем жестко параметры подключения прямо в коде, а производим попытку получения их из переменных. Точно так же как и с генерацией статики тут нельзя допускать фиксированных значений. \
- \
-Остается только настроить наше приложение со стороны Helm.
-
-Добавляем значения в values.yaml
-
-
+{% snippetcut name="values.yaml" url="#" %}
 ```yaml
 app:
   s3:
@@ -86,20 +91,11 @@ app:
     ssl:
       _default: 'false'
 ```
-И в secret-values.yaml
+{% endsnippetcut %}
 
-```yaml
-app:
-  s3:
-    access_key:
-      _default: bNGXXCF1GF
-    secret_key:
-      _default: zpThy4kGeqMNSuF2gyw48cOKJMvZqtrTswAQ
-```
-Далее мы добавляем переменные непосредственно в Deployment с нашим приложением: \
+После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-
-
+{% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
         - name: CDN_PREFIX
           value: {{ printf "%s%s" (pluck .Values.global.env .Values.app.cdn_prefix | first | default .Values.app.cdn_prefix._default) (pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default) | quote }}
@@ -116,12 +112,9 @@ app:
         - name: S3_BUCKET
           value: {{ pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default }}
 ```
-Тот способ которым мы передаем переменные в под, с помощью GO шаблонов означает:
-  1. `{{ pluck .Values.global.env .Values.app.s3.access_key | first` пробуем взять из поля _app.s3.access_key_ значение из поля которое равно environment которое werf берет из текущей стадии в .gitlab-ci.yml.
+{% endsnippetcut %}
 
-  2. `default .Values.app.s3.access_key._default }} `и если такого нет, то мы берём значение из поля _default.
-
-И всё, этого достаточно!
+TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
 
 <div>
     <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>

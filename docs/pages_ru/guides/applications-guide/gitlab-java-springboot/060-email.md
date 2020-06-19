@@ -12,12 +12,18 @@ toc: false
 - TODO название файла
 {% endfilesused %}
 
-На наш взгляд самым правильным способом отправки email-сообщений будет внешнее api - провайдер для почты. Например sendgrid, mailgun, amazon ses и подобные.
+В этой главе мы настроим в нашем базовом приложении работу с почтой.
 
-Рассмотрим на примере sendgrid. spring умеет с ним работать, даже есть [автоконфигуратор](https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/autoconfigure/sendgrid/SendGridAutoConfiguration.html). Для этого нужно использовать [библиотеку sendgrid для java](https://github.com/sendgrid/sendgrid-java)
-Включим библиотеку в pom.xml, согласно документации:
+Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это [mailgun](https://www.mailgun.com/).
+
+{% offtopic title="А почему бы просто не установить sendmail?" %}
+TODO: ответить на этот непростой вопрос
+{% endofftopic %}
+
+Для того, чтобы Java приложение могло работать с mailgun необходимо установить и сконфигурировать зависимость `sendgrid` и начать её использовать. Пропишем зависимости в `pom.xml`, чтобы они устаналивались:
+
+{% snippetcut name="pom.xml" url="#" %}
 ```xml
-...
 dependencies {
   ...
   implementation 'com.sendgrid:sendgrid-java:4.5.0'
@@ -27,18 +33,46 @@ repositories {
   mavenCentral()
 }
 ```
+{% endsnippetcut %}
 
-Доступы к sendgrid, как и в случае с s3 пропишем в .helm/values.yaml, пробросим их в виде переменных окружения в наше приложение через deployment, а в коде (в application.properties) сопоставим [java-переменные](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html) используемые в коде и переменные окружения:
+В коде приложения подключение к API и отправка сообщения может выглядеть так:
 
+{% snippetcut name="____________" url="#" %}
+```____________
+____________
+____________
+____________
 ```
-# SENDGRID (SendGridAutoConfiguration)
-spring.sendgrid.api-key= ${SGAPIKEY}
-spring.sendgrid.username= ${SGUSERNAME}
-spring.sendgrid.password= ${SGPASSWORD}
-spring.sendgrid.proxy.host= ${SGPROXYHOST} #optional
-```
+{% endsnippetcut %}
 
-Теперь можем использовать эти данные в приложении для отправки почты.
+Для работы с mailgun необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
+
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+```yaml
+app:
+  ____________
+  ____________
+```
+{% endsnippetcut %}
+
+А не секретные значения — храним в `values.yaml`
+
+{% snippetcut name="values.yaml" url="#" %}
+  ____________
+  ____________
+  ____________
+{% endsnippetcut %}
+
+После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
+
+{% snippetcut name="deployment.yaml" url="#" %}
+```yaml
+        - name: ____________
+          value: ____________
+```
+{% endsnippetcut %}
+
+TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать ____________. Мало же просто его установить — надо ещё как-то юзать в коде.
 
 
 <div>

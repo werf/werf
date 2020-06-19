@@ -17,30 +17,38 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
+В этой главе мы настроим в нашем базовом приложении продвинутую работу с базой данных, включающую в себя вопросы выполнения миграций. В качестве базы данных возьмём PostgreSQL.
 
+Мы не будем вносить изменения в сборку — будем использовать образы с DockerHub и конфигурировать их и инфраструктуру.
 
-Для текущего примера в приложении должны быть установлены необходимые зависимости. В качестве примера - мы возьмем приложение для работы которого необходима база данных.
+<a name="kubeconfig" />
 
+## Сконфигурировать PostgreSQL в Kubernetes
 
-## Как подключить БД
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим PostgreSQL как внешний subchart.
 
+Для этого нужно:
 
-Подключим postgresql helm сабчартом, для этого внесем изменения в файл `.helm/requirements.yaml`
+1. прописать изменения в yaml файлы;
+2. указать Redis конфиги;
+3. подсказать werf, что ему нужно подтягивать subchart.
 
+Пропишем helm-зависимости:
 
-```
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_3/.helm/requirements.yaml" %}
+```yaml
 dependencies:
 - name: postgresql
   version: 8.0.0
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: postgresql.enabled
 ```
+{% endsnippetcut %}
 
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в .gitlab-ci
-
-
-```
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_3/.gitlab-ci.yml#L24" %}
+```yaml
 .base_deploy:
   stage: deploy
   script:
@@ -48,12 +56,12 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endsnippetcut %}
 
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-Опишем параметры для postgresql в файле `.helm/values.yaml`
-
-
-```
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_3/.helm/values.yaml#L4" %}
+```yaml
 postgresql:
   enabled: true
   postgresqlDatabase: hello_world
@@ -63,18 +71,29 @@ postgresql:
   persistence:
     enabled: true
 ```
+{% endsnippetcut %}
 
+Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
-## Подключение Django приложения к базе postgresql
-
-Для того, чтобы django научился взаимодействовать с postgresql, нужно поставить дополнительный пакет `pip install psycopg2-binary`.
-
-Настройки подключения нашего приложения к базе данных мы будем передавать через переменные окружения. Такой подход позволит нам использовать один и тот же образ в разных окружениях, что должно исключить запуск непроверенного кода в production окружении.
-
-Внесем изменения в файл настроек `settings.py`.
-
-
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="template-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+```yaml
+postgresql:
+  postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
 ```
+{% endsnippetcut %}
+
+После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
+
+<a name="appconnect" />
+
+## Подключение приложения к базе PostgreSQL
+
+Для подключения Django приложения к PostgreSQL необходимо установить зависимость `pip install psycopg2-binary` и сконфигурировать:
+
+TODO: переделать вот этот блок, чтобы там были реальные переменные окружения
+
+{% snippetcut name="settings.py" url="#" %}
+```python
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.sqlite3'),
@@ -86,46 +105,111 @@ DATABASES = {
     }
 }
 ```
+{% endsnippetcut %}
 
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, имя базы данных, логин, пароль. В коде приложения мы используем несколько переменных окружения: `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_DATABASE`, `POSTGRESQL_LOGIN`, `POSTGRESQL_PASSWORD`
 
-Параметры подключения приложения к базе данным мы опишем в файле `.helm/templates/_envs.tpl`
+Настраиваем эти переменные окружения по аналогии с тем, как [настраивали Redis](070-redis.md), но вынесем все переменные в блок `database_envs` в отдельном файле `_envs.tpl`. Это позволит переиспользовать один и тот же блок в Pod-е с базой данных и в Job с миграциями.
 
+{% offtopic title="Как работает вынос части шаблона в блок?" %}
 
-```
+{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% raw %}
+```yaml
 {{- define "database_envs" }}
-- name: SQL_HOST
-  value: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Chart.Name }}-{{ .Values.global.env }}-postgresql:5432"
-- name: SQL_DATABASE
-  value: {{ .Values.postgresql.postgresqlDatabase }}
-- name: SQL_USER
-  value: {{ .Values.postgresql.postgresqlUser }}
-- name: SQL_PASSWORD
-  value: {{ .Values.postgresql.postgresqlPassword }}
-- name: SQL_PORT
-  value: {{ .Values.postgresql.postgresqlPort }}
-- name: SQL_ENGINE
-  value: "django.db.backends.postgresql_psycopg2"
+- name: POSTGRESQL_HOST
+  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
+...
 {{- end }}
 ```
+{% endraw %}
+{% endsnippetcut %}
+
+Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% raw %}
+```yaml
+{{- include "database_envs" . | indent 8 }}
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% endofftopic %}
 
 
-Такой подход позволит нам переиспользовать данное определение переменных окружения для нескольких контейнеров. Имя для сервиса postgresql генерируется из названия нашего приложения, имени окружения и добавлением postgresql
+{% offtopic title="Какие значения прописываем в переменные окружения?" %}
+Будем **конфигурировать хост** через `values.yaml`:
 
-Остальные значения подставляются из файлов values.yaml и secret-values.yaml
+{% snippetcut name=".helm/templates/_envs.tpl" url="____________" %}
+{% raw %}
+```yaml
+- name: POSTGRESQL_HOST
+  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
 
+**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-Пароль от базы данных добавим в `secret-values.yaml`
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% raw %}
+```yaml
+- name: POSTGRESQL_LOGIN
+  value: "{{ pluck .Values.global.env .Values.postgre.login | first | default .Values.postgre.login_default | quote }}"
+- name: POSTGRESQL_PORT
+  value: "{{ pluck .Values.global.env .Values.postgre.port | first | default .Values.postgre.port_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="values.yaml" url="____________" %}
+```yaml
+postgre:
+   login:
+      _default: ____________
+   port:
+      _default: ____________
+```
+{% endsnippetcut %}
+
+TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% raw %}
+```yaml
+- name: POSTGRESQL_PASSWORD
+  value: "{{ pluck .Values.global.env .Values.postgre.password | first | default .Values.postgre.password_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="secret-values.yaml" url="____________" %}
+```yaml
+postgre:
+  password:
+    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+```
+{% endsnippetcut %}
+
+{% endofftopic %}
+
+<a name="migrations" />
 
 ## Выполнение миграций
 
-
-Запуск миграций производится созданием приметива Job в kubernetes. Это единоразовый запуск пода с необходимыми нам контейнерами.
-
-Добавим запуск миграций после каждого деплоя приложения.
+Работа реальных приложений почти немыслима без выполнения миграций. С точки зрения Kubernetes миграции выполняются созданием объекта Job, который разово запускает под с необходимыми контейнерами. Запуск миграций мы пропишем после каждого деплоя приложения.
 
 
+{% offtopic title="Как конфигурируем сам Job?" %}
+
+TODO: разве "после деплоя, но до доступности"????
+
+TODO: надо описать тут концептуальную часть про запуск джоба, вот это про хук и weight и где почитать.
+
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% raw %}
 ```yaml
----
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -133,36 +217,45 @@ metadata:
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/weight": "2"
-spec:
-  activeDeadlineSeconds: 600
-  template:
-    metadata:
-      name: {{ .Chart.Name }}-migrate
-    spec:
-      restartPolicy: Never
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% endofftopic %}
+
+Так как состояние кластера постоянно меняется — мы не можем быть уверены, что на момент запуска миграций база работает и доступна. Поэтому в Job мы добавляем `initContainer`, который не даёт запуститься скрипту миграции, пока не станет доступна база данных.
+
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+TODO: выправить этот скрипт, он должен использовать наши реальные конфиги
+{% raw %}
+```yaml
       initContainers:
       - name: wait-postgres
-        command: ['/bin/sh', '-c', 'while ! getent ahostsv4 {{ pluck .Values.global.env .Values.db.host | first | default .Values.db.host._default }}; do sleep 1; done']
-        image: alpine:3.6
-        env:
-      containers:
-      - name: migration
-        args: ["python manage.py migrate --noinput"]
+        image: postgres:12
         command:
-        - /bin/bash
-        - -c
-        - --
+          - "sh"
+          - "-c"
+          - "until pg_isready -h {{ pluck .Values.global.env .Values.db.host | first | default .Values.db.host._default }} -U {{ .Values.postgresql.postgresqlUsername }}; do sleep 2; done;"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+И, непосредственно запускаем миграции. При запуске миграций мы используем тот же самый образ что и в Deployment приложения.
+
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% raw %}
+```yaml
+      - name: migration
+        command: ["/bin/bash", "-c", "--"]
+        args: ["python manage.py migrate --noinput"]
         workingDir: "/usr/src/app"
 {{ tuple "django" . | include "werf_container_image" | indent 8 }}
         env:
-{{- include "env_app" . | indent 8 }}
+{{- include "database_envs" . | indent 10 }}
 {{ tuple "django" . | include "werf_container_env" | indent 8 }}
 ```
-
-
-Аннотации `"helm.sh/hook": post-install,post-upgrade` указывают условия запуска job а `"helm.sh/hook-weight": "2"` указывают на порядок выполнения (от меньшего к большему)
-
-При запуске миграций мы используем тот же самый образ что и в деплойменте. Различие только в запускаемых командах.
+{% endraw %}
+{% endsnippetcut %}
 
 <div>
     <a href="090-unittesting.html" class="nav-btn">Далее: Юнит-тесты и Линтеры</a>

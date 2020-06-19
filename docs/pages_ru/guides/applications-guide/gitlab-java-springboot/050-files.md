@@ -13,12 +13,28 @@ toc: false
 - Gemfile
 {% endfilesused %}
 
+В этой главе мы настроим в нашем базовом приложении работу с пользовательскими файлами. Для этого нам нужно персистентное хранилище.
 
+В идеале — нужно добиться, чтобы приложение было stateless, а данные хранились в S3-совместимом хранилище, например minio или aws s3. Это обеспечивает простое масштабирование, работу в HA режиме и высокую доступность.
 
-Секция про ассеты подводит нас к другому вопросу - как мы можем сохранять файлы в условиях kubernetes? Нужно учитывать то, что наше приложение в любой момент времени может быть перезапущено kubernetes (и это нормально). Да, kubernetes умеет работать с сетевыми файловыми системами (EFS, NFS, к примеру), которые позволяют подключать общую директорию ко многим подам одновременно. Но правильный путь - использовать s3 для хранения файлов. 
-Тем более, что в нашем случае его подключить достаточно просто.
-Нужно прописать в pom.xml использование aws-java-sdk.
+{% offtopic title="А есть какие-то способы кроме S3?" %}
+TODO: пишем про 
+Первый и более общий способ. Это использовать как volume в подах [NFS](https://kubernetes.io/docs/concepts/storage/volumes/#nfs), [CephFS](https://kubernetes.io/docs/concepts/storage/volumes/#cephfs) или [hostPath](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath), который будет направлен на директорию на ноде, куда будет подключено одно из сетевых хранилищ.
 
+Мы не рекомендуем этот способ, потому что при возникновении неполадок с такими типами volume’ов мы будем влиять на работоспособность всего докера, контейнера и демона docker в целом, тем самым могут пострадать приложения которые даже не имеют отношения к вашему приложению.
+
+Мы рекомендуем пользоваться S3. Такой способ выглядит намного надежнее засчет того что мы используем отдельный сервис, который имеет свойства масштабироваться, работать в HA режиме, и будет иметь высокую доступность.
+
+Есть cloud решения S3, такие как AWS S3, Google Cloud Storage, Microsoft Blobs Storage и т.д. которые будут самым надежным решением из всех что мы можем использовать.
+
+Если мы будем сохранять файлы какой - либо директории у приложения запущенного в kubernetes - то после перезапуска контейнера все изменения пропадут.
+{% endofftopic %}
+
+Данная настройка производится полностью в рамках приложения. Нужно подключить `aws-java-sdk`, сконфигурировать его и начать использовать.
+
+Пропишем использование `aws-java-sdk` как зависимость:
+
+{% snippetcut name="pom.xml" url="gitlab-java-springboot-files/02-demo-with-assets/pom.xml:27-31" %}
 ```xml
 <dependency>
    <groupId>com.amazonaws</groupId>
@@ -26,11 +42,11 @@ toc: false
    <version>1.11.133</version>
 </dependency>
 ```
+{% endsnippetcut %}
 
-[pom.xml](gitlab-java-springboot-files/02-demo-with-assets/pom.xml:27-31)
+И сконфигурируем:
 
-Затем добавить в файл properties приложения - в нашем случае `src/main/resources/application.properties` - сопоставление перменных java с переменными окружения:
-
+{% snippetcut name="src/main/resources/application.properties" url="gitlab-java-springboot-files/02-demo-with-assets/src/main/resources/application.properties" %}
 ```yaml
 amazonProperties:
   endpointUrl: ${S3ENDPOINT}
@@ -38,25 +54,11 @@ amazonProperties:
   secretKey: ${S3SECRET}
   bucketName: ${S3BUCKET}
 ```
+{% endsnippetcut %}
 
-[application.properties](gitlab-java-springboot-files/02-demo-with-assets/src/main/resources/application.properties)
+Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
-Сами доступы нужно записать в values.yaml и secret-values.yaml (используя `werf helm secret values edit .helm/secret-values.yaml` как было описано в главе Секретные переменные). Например:
-
-```yaml
-app:
-  s3:
-    epurl:
-      _default: https://s3.us-east-2.amazonaws.com
-    bucket:
-      _default: mydefaultbucket
-      production: myproductionbucket
-```
-
-[values.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/values.yaml:8-13)
-
-и в secret-values:
-
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/secret-values.yaml" %}
 ```yaml
 app:
   s3:
@@ -66,12 +68,24 @@ app:
     secret:
       _default: mys3keysecretstage
       production: mys3keysecretprod
+{% endsnippetcut %}
+
+А не секретные значения — храним в `values.yaml`
+
+{% snippetcut name="values.yaml" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/values.yaml:8-13" %}
+app:
+  s3:
+    epurl:
+      _default: https://s3.us-east-2.amazonaws.com
+    bucket:
+      _default: mydefaultbucket
+      production: myproductionbucket
 ```
+{% endsnippetcut %}
 
-При звкрытии редактора значения [зашифруются](gitlab-java-springboot-files/02-demo-with-assets/.helm/secret-values.yaml).
+После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-Чтобы пробросить эти переменные в контейнер нужно в разделе env deployment их отдельно объявить. Наприме:
-
+{% snippetcut name="deployment.yaml" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:53-60" %}
 ```yaml
        env:
 {{ tuple "hello" . | include "werf_container_env" | indent 8 }}
@@ -84,11 +98,9 @@ app:
         - name: S3BUCKET
           value: {{ pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default | quote }}
 ```
+{% endsnippetcut %}
 
-[deployment.yaml](gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:53-60)
-
-И мы, в зависимости от используемого окружения, можем подставлять нужные нам значения.
-
+TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
 
 <div>
     <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>
