@@ -14,26 +14,28 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
-Допустим к нашему приложению нужно подключить простейшую базу данных, например, redis или memcached. Возьмем первый вариант.
+В этой главе мы настроим в нашем базовом приложении работу простейшей in-memory базой данных, например, redis или memcached. Для примера возьмём первый вариант.
 
-В простейшем случае нет необходимости вносить изменения в сборку — всё уже собрано для нас. Надо просто подключить нужный образ, а потом в вашем Nodejs приложении корректно обратиться к этому приложению.
+{% offtopic title="А как быть, если база данных должна сохранять данные на диске?" %}
+Этот вопрос мы разберём в следующей главе на примере [PostgreSQL](080-database.html). В рамках текущей главы разберёмся с общими вопросами: как базу данных в принципе завести в кластер, сконфигурировать и подключиться к ней из приложения.
+{% endofftopic %}
 
-<a name="redis-to-kubernetes" />
 
-## Завести Redis в Kubernetes
+В простейшем случае нет необходимости вносить изменения в сборку — уже собранные образы есть на DockerHub. Надо просто выбрать правильный образ, корректно сконфигурировать его в своей инфраструктуре, а потом подключиться к базе данных из Rails приложения.
 
-Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний. Мы рассмотрим второй вариант.
+## Сконфигурировать Redis в Kubernetes
 
-Подключим redis как внешний subchart.
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим redis как внешний subchart.
 
 Для этого нужно:
 
 1. прописать изменения в yaml файлы;
-2. указать редису конфиги
+2. указать Redis конфиги;
 3. подсказать werf, что ему нужно подтягивать subchart.
 
-Добавим в файл `.helm/requirements.yaml` следующие изменения:
+Пропишем helm-зависимости:
 
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_4/.helm/requirements.yaml" %}
 ```yaml
 dependencies:
 - name: redis
@@ -41,9 +43,11 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: redis.enabled
 ```
+{% endsnippetcut %}
 
-Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно добавить команды в `.gitlab-ci`
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.gitlab-ci.yml#L24" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -52,41 +56,46 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endsnippetcut %}
 
-Опишем параметры для redis в файле `.helm/values.yaml`
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_4/.helm/values.yaml#L3" %}
 ```yaml
 redis:
   enabled: true
 ```
+{% endsnippetcut %}
 
 При использовании сабчарта по умолчанию создается master-slave кластер redis.
 
-Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы сервисы:
+Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы объекты Service:
 
 ```yaml
-# Source: example-2/charts/redis/templates/redis-master-svc.yaml
+# Source: example_4/charts/redis/templates/redis-master-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-stage-redis-master
+  name: example-4-stage-redis-master
 
-# Source: example-2/charts/redis/templates/redis-slave-svc.yaml
+# Source: example_4/charts/redis/templates/redis-slave-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-stage-redis-slave
+  name: example-4-stage-redis-slave
 ```
 
-<a name="redis-to-app" />
+Знание этих Service нужно нам, чтобы потом к ним подключаться.
 
-## Подключение приложения к Redis
+## Подключение Rails приложения к базе Redis
 
-В нашем приложении - мы будем  подключаться к мастер узлу редиса. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному редису.
+В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
-В src/js/index.js мы добавляем:
+В нашем приложении мы будем использовать Redis как хранилище сессий.
 
+TODO: выправить, должны использоваться  `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`, `SESSION_TTL`, `COOKIE_SECRET`. 
 
+{% snippetcut name="src/js/index.js" url="____________" %}
 ```js
 const REDIS_URI = process.env.SESSION_REDIS || "redis://127.0.0.1:6379";
 const SESSION_TTL = process.env.SESSION_TTL || 3600;
@@ -106,45 +115,84 @@ var session = expSession({
 var sharedsession = require("express-socket.io-session");
 app.use(session);
 ```
+{% endsnippetcut %}
 
-Добавляем в values.yaml
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`, `SESSION_TTL`, `COOKIE_SECRET`.  
 
-values.yaml
+Будем **конфигурировать хост** через `values.yaml`:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_HOST
+  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
+```
+{% endsnippetcut %}
+
+{% offtopic title="А зачем такие сложности, может просто прописать значения в шаблоне?" %}
+
+Казалось бы, можно написать примерно так:
 
 ```yaml
-app:
-  redis:
-     host:
-       master:
-         stage: chat-stage-redis-master
-       slave:
-         stage: chat-stage-redis-slave
+- name: REDIS_HOST
+  value: "{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master"
 ```
 
+На практике иногда возникает необходимость переехать в другую базу данных или кастомизировать что-то — и в этих случаях в разы удобнее работать через `values.yaml`. Причём значений для разных окружений мы не прописываем, а ограничиваемся дефолтным значением:
 
-secret-values.yaml
+```yaml 
+redis:
+   host:
+      _default: redis
+```
 
+И под конкретные окружения значения прописываем только если это действительно нужно.
+{% endofftopic %}
 
+**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
 ```yaml
-app:
- redis:
-    password:
-      _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+- name: REDIS_LOGIN
+  value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
+- name: REDIS_PORT
+  value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
+- name: SESSION_TTL
+  value: "{{ pluck .Values.global.env .Values.redis.session_ttl | first | default .Values.redis.session_ttl_default | quote }}"
+- name: COOKIE_SECRET
+  value: "{{ pluck .Values.global.env .Values.redis.cookie_secret | first | default .Values.redis.cookie_secret_default | quote }}"
 ```
+{% endsnippetcut %}
 
-
-И наконец добавляем подстановку переменных в сам манифест с нашим приложением: 
-
-
-
+{% snippetcut name="values.yaml" url="____________" %}
 ```yaml
-      - name: SESSION_REDIS
-        value: "redis://root:{{ pluck .Values.global.env .Values.app.redis.password | first | default .Values.app.redis.password._default }}@{{ pluck .Values.global.env .Values.app.redis.host.master | first }}:6379"
+redis:
+   login:
+      _default: ____________
+   port:
+      _default: ____________
+   session_ttl:
+      _default: ____________
+   cookie_secret:
+      _default: ____________
 ```
+{% endsnippetcut %}
 
+TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
 
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+```yaml
+- name: REDIS_PASSWORD
+  value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
+```
+{% endsnippetcut %}
 
-В данном случае Redis подключается как хранилище для сессий.
+{% snippetcut name="secret-values.yaml" url="____________" %}
+```yaml
+redis:
+  password:
+    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+```
+{% endsnippetcut %}
 
 <div>
     <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
