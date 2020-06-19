@@ -26,10 +26,14 @@ type DockerRegistry interface {
 	GetRepoImageList(reference string) ([]*image.Info, error)
 	SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
 	DeleteRepoImage(repoImageList ...*image.Info) error
-	SetLabelsIntoImage(reference string, labels map[string]string) error
+	PushImage(reference string, opts PushImageOptions) error
 
 	ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error)
 	String() string
+}
+
+type PushImageOptions struct {
+	Labels map[string]string
 }
 
 type DockerRegistryOptions struct {

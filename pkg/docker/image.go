@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -14,9 +15,22 @@ import (
 	"golang.org/x/net/context"
 )
 
-func CreateImage(ref string) error {
+func CreateImage(ref string, labels map[string]string) error {
 	ctx := context.Background()
-	_, err := apiClient.ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, types.ImageImportOptions{})
+
+	var opts types.ImageImportOptions
+
+	if len(labels) > 0 {
+		changeOption := "LABEL"
+
+		for k, v := range labels {
+			changeOption += fmt.Sprintf(" %s=%s", k, v)
+		}
+
+		opts.Changes = append(opts.Changes, changeOption)
+	}
+
+	_, err := apiClient.ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, opts)
 	return err
 }
 

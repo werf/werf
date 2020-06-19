@@ -127,7 +127,7 @@ func (storage *LocalDockerServerStagesStorage) AddManagedImage(projectName, imag
 		return nil
 	}
 
-	if err := docker.CreateImage(fullImageName); err != nil {
+	if err := docker.CreateImage(fullImageName, nil); err != nil {
 		return fmt.Errorf("unable to create image %s: %s", fullImageName, err)
 	}
 	return nil
@@ -213,9 +213,7 @@ func (storage *LocalDockerServerStagesStorage) PutImageCommit(projectName, image
 		return nil
 	}
 
-	// FIXME: store metadata
-
-	if err := docker.CreateImage(fullImageName); err != nil {
+	if err := docker.CreateImage(fullImageName, map[string]string{"ContentSignature": metadata.ContentSignature}); err != nil {
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
@@ -240,6 +238,8 @@ func (storage *LocalDockerServerStagesStorage) RmImageCommit(projectName, imageN
 		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
 	}
 
+	logboek.Info.LogF("Removed image %q metadata by commit %s\n", imageName, commit)
+
 	return nil
 }
 
@@ -249,23 +249,18 @@ func (storage *LocalDockerServerStagesStorage) GetImageMetadataByCommit(projectN
 	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
 	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetImageMetadataByCommit full image name: %s\n", fullImageName)
 
-	/*
+	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(fullImageName); err != nil {
+		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
+	} else if inspect != nil && inspect.Config != nil && inspect.Config.Labels != nil {
+		metadata := &ImageMetadata{ContentSignature: inspect.Config.Labels["ContentSignature"]}
 
-		if metadataMap, err := storage.DockerRegistry.GetMetadata(fullImageName); err != nil {
-			return ImageMetadata{}, fmt.Errorf("unable to get metadata by image %q: %s", fullImageName, err)
-		} else if metadataMap != nil {
-			metadata := ImageMetadata{ContentSignature: metadataMap["contentSignature"]}
-			logboek.Info.LogF("Got content-signature from metadata by image name %q: %q\n", fullImageName, metadata.ContentSignature)
-			return metadata, nil
-		} else {
-			logboek.Info.LogF("No metadata found by image name %q\n", fullImageName)
-			return ImageMetadata{}, nil
-		}
-	*/
+		logboek.Info.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
 
-	// FIXME: inspect, get metadata
-
-	return nil, nil
+		return metadata, nil
+	} else {
+		logboek.Info.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
+		return nil, nil
+	}
 }
 
 func (storage *LocalDockerServerStagesStorage) GetImageCommits(projectName, imageName string) ([]string, error) {
