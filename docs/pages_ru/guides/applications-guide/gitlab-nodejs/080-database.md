@@ -17,21 +17,84 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
+В этой главе мы настроим в нашем базовом приложении продвинутую работу с базой данных, включающую в себя вопросы выполнения миграций. В качестве базы данных возьмём PostgreSQL.
 
-Для текущего примера в приложении должны быть установлены необходимые зависимости. В данном случае мы рассмотрим подключение нашего приложения на базе пакета npm `pg`.
+Мы не будем вносить изменения в сборку — будем использовать образы с DockerHub и конфигурировать их и инфраструктуру.
 
-<a name="database-generic" />
+<a name="kubeconfig" />
 
-## Общий подход
+## Сконфигурировать PostgreSQL в Kubernetes
 
-TODO: ....
+TODO: нам сначала надо определиться с именем базы, логином, паролем, портом, МЕСТОМ ХРАНЕНИЯ, а потом уже бросаться вот это всё прописывать в конфигах и выбирать какой чарт подключать
 
-<a name="database-app-connection" />
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим PostgreSQL как внешний subchart.
 
-## Подключение приложения к базе данных
+Для этого нужно:
 
-Внутри кода приложения подключение нашей базы будет выглядеть так:
+1. прописать изменения в yaml файлы;
+2. указать Redis конфиги;
+3. подсказать werf, что ему нужно подтягивать subchart.
 
+Пропишем helm-зависимости:
+
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_3/.helm/requirements.yaml" %}
+```yaml
+dependencies:
+- name: postgresql
+  version: 8.0.0
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  condition: postgresql.enabled
+```
+{% endsnippetcut %}
+
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
+
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_3/.gitlab-ci.yml#L24" %}
+```yaml
+.base_deploy:
+  stage: deploy
+  script:
+    - werf helm repo init
+    - werf helm dependency update
+    - werf deploy
+```
+{% endsnippetcut %}
+
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
+
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_3/.helm/values.yaml#L4" %}
+```yaml
+postgresql:
+  enabled: true
+  postgresqlDatabase: hello_world
+  postgresqlUsername: hello_world_user
+  postgresqlHost: postgres
+  imageTag: "12"
+  persistence:
+    enabled: true
+```
+{% endsnippetcut %}
+
+Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
+
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="template-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+```yaml
+postgresql:
+  postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
+```
+{% endsnippetcut %}
+
+После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
+
+<a name="appconnect" />
+
+## Подключение приложения к базе PostgreSQL
+
+Для подключения NodeJS приложения к PostgreSQL необходимо установить пакет npm `pg` и сконфигурировать:
+
+TODO: выправить использование переменных в этом коде
+
+{% snippetcut name="____________" url="____________" %}
 ```js
 const pgconnectionString =
   process.env.DATABASE_URL || "postgresql://127.0.0.1/postgres";
@@ -45,50 +108,105 @@ pool.on("error", (err, client) => {
   process.exit(-1);
 });
 ```
+{% endsnippetcut %}
 
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, имя базы данных, логин, пароль. В коде приложения мы используем несколько переменных окружения: `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_DATABASE`, `POSTGRESQL_LOGIN`, `POSTGRESQL_PASSWORD`
 
-В данном случае мы также используем сабчарт для деплоя базы из того же репозитория. Этого должно хватить для нашего небольшого приложения. В случае большой высоконагруженной инфраструктуры деплой базы непосредственно в кубернетес не рекомендуется. 
+Настраиваем эти переменные окружения по аналогии с тем, как [настраивали Redis](070-redis.md), но вынесем все переменные в блок `database_envs` в отдельном файле `_envs.tpl`. Это позволит переиспользовать один и тот же блок в Pod-е с базой данных и в Job с миграциями.
 
-Добавляем информацию о подключении в values.yaml
+{% offtopic title="Как работает вынос части шаблона в блок?" %}
 
-
+{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% raw %}
 ```yaml
-app:
- postgresql:
-    host:
-      stage: chat-test-postgresql
-      production: postgres
-    user: chat
-    db: chat
+{{- define "database_envs" }}
+- name: POSTGRESQL_HOST
+  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
+...
+{{- end }}
 ```
+{% endraw %}
+{% endsnippetcut %}
 
+Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`:
 
-И в secret-values.yaml
-
-
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% raw %}
 ```yaml
-app:
-  postgresql:
-    password:
-      stage: 1000acb579eaee19bec317079a014346d6aab66bbf84e4a96b395d4a5e669bc32dd1
-      production: 1000acb5f9eaee19basdc3127sfa79a014346qwr12b66bbf84e4a96b395d4a5e631255ad1
+{{- include "database_envs" . | indent 8 }}
 ```
+{% endraw %}
+{% endsnippetcut %}
+
+{% endofftopic %}
 
 
-Далее привносим подключени внутрь манифеста нашего приложения переменную подключения:
+{% offtopic title="Какие значения прописываем в переменные окружения?" %}
+Будем **конфигурировать хост** через `values.yaml`:
 
-
-
+{% snippetcut name=".helm/templates/_envs.tpl" url="____________" %}
+{% raw %}
 ```yaml
-       - name: DATABASE_URL
-         value: "postgresql://{{ .Values.app.postgresql.user }}:{{ pluck .Values.global.env .Values.app.postgresql.password | first }}@{{ pluck .Values.global.env .Values.app.postgresql.host | first }}:5432/{{ .Values.app.postgresql.db }}"
+- name: POSTGRESQL_HOST
+  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-<a name="database-migrations" />
+**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% raw %}
+```yaml
+- name: POSTGRESQL_LOGIN
+  value: "{{ pluck .Values.global.env .Values.postgre.login | first | default .Values.postgre.login_default | quote }}"
+- name: POSTGRESQL_PORT
+  value: "{{ pluck .Values.global.env .Values.postgre.port | first | default .Values.postgre.port_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="values.yaml" url="____________" %}
+```yaml
+postgre:
+   login:
+      _default: ____________
+   port:
+      _default: ____________
+```
+{% endsnippetcut %}
+
+TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+
+{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% raw %}
+```yaml
+- name: POSTGRESQL_PASSWORD
+  value: "{{ pluck .Values.global.env .Values.postgre.password | first | default .Values.postgre.password_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="secret-values.yaml" url="____________" %}
+```yaml
+postgre:
+  password:
+    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+```
+{% endsnippetcut %}
+
+{% endofftopic %}
+
+<a name="migrations" />
 
 ## Выполнение миграций
 
+Работа реальных приложений почти немыслима без выполнения миграций. С точки зрения Kubernetes миграции выполняются созданием объекта Job, который разово запускает под с необходимыми контейнерами. Запуск миграций мы пропишем после каждого деплоя приложения.
+
 Для выполнения миграций в БД мы используем пакет `node-pg-migrate`, на его примере и будем рассматривать выполнение миграций.
+
+{% offtopic title="Как настраиваем node-pg-migrate?" %}
+TODO: причесать этот текст
 
 Запуск миграции мы помещаем в package.json, чтобы его можно было  вызывать с помощью скрипта в npm: 
 ```json
@@ -104,64 +222,61 @@ node
 ├── package.json
 ...
 ```
+{% endofftopic %}
 
-Далее нам необходимо добавить запуск миграций непосредственно в Kubernetes.
-Запуск миграций производится созданием сущности Job в kubernetes. Это единоразовый запуск пода с необходимыми нам контейнерами.
+{% offtopic title="Как конфигурируем сам Job?" %}
 
-Добавим запуск миграций после каждого деплоя приложения. Потому создадим в нашей директории с манифестами еще один файл - [migrations.yaml](/werf-articles/gitlab-nodejs-files/examples/migrations.yaml)
+TODO: разве "после деплоя, но до доступности"????
 
-<details><summary>migrations.yaml</summary>
-<p>
+TODO: надо описать тут концептуальную часть про запуск джоба, вот это про хук и weight и где почитать.
 
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% raw %}
 ```yaml
----
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Chart.Name }}-migrate-db
+  name: {{ .Chart.Name }}-migrations
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "2"
-spec:
-  backoffLimit: 0
-  template:
-    metadata:
-      name: {{ .Chart.Name }}-migrate-db
-    spec:
+    "helm.sh/weight": "2"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% endofftopic %}
+
+Так как состояние кластера постоянно меняется — мы не можем быть уверены, что на момент запуска миграций база работает и доступна. Поэтому в Job мы добавляем `initContainer`, который не даёт запуститься скрипту миграции, пока не станет доступна база данных.
+
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+TODO: выправить этот скрипт, он должен использовать наши реальные конфиги
+{% raw %}
+```yaml
       initContainers:
       - name: wait-postgres
         image: postgres:12
         command:
           - "sh"
           - "-c"
-          - "until pg_isready -h {{ pluck .Values.global.env .Values.app.postgresql.host | first }} -U {{ .Values.app.postgresql.user }}; do sleep 2; done;"
-      containers:
-      - name: node
-{{ tuple "node" . | include "werf_container_image" | indent 8 }}
-        command: ["npm", "migrate"]
-        env:
-        - name: DATABASE_URL
-          value: "postgresql://{{ .Values.app.postgresql.user }}:{{ pluck .Values.global.env .Values.app.postgresql.password | first }}@{{ pluck .Values.global.env .Values.app.postgresql.host | first }}:5432/{{ .Values.app.postgresql.db }}"
-{{ tuple "node" . | include "werf_container_env" | indent 10 }}
-      restartPolicy: Never
+          - "until pg_isready -h {{ pluck .Values.global.env .Values.db.host | first | default .Values.db.host._default }} -U {{ .Values.postgresql.postgresqlUsername }}; do sleep 2; done;"
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-</p>
-</details>
+И, непосредственно запускаем миграции. При запуске миграций мы используем тот же самый образ что и в Deployment приложения.
 
-Аннотации `"helm.sh/hook": post-install,post-upgrade` указывают условия запуска job а `"helm.sh/hook-weight": "2"` указывают на порядок выполнения (от меньшего к большему)
-`backoffLimit: 0` - запрещает перезапускать наш под с Job, тем самым гарантируя что он выполнится всего один раз при деплойменте.
-
-`initContainers:` - блок описывающий контейнеры которые будут отрабатывать единоразово перед запуском основных контейнеров. Это самый быстрый и удобный способ для подготовки наших приложений к запуску в реальном времени. В данном случае мы взяли официальный образ с postgres, для того чтобы с помощью его инструментов отследить запустилась ли наша база.
+{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% raw %}
 ```yaml
-        command:
-          - "sh"
-          - "-c"
-          - "until pg_isready -h {{ pluck .Values.global.env .Values.app.postgresql.host | first }} -U {{ .Values.app.postgresql.user }}; do sleep 2; done;"
+      - name: node
+        command: ["npm", "migrate"]
+{{ tuple "node" . | include "werf_container_image" | indent 8 }}
+        env:
+{{- include "database_envs" . | indent 10 }}
+{{ tuple "node" . | include "werf_container_env" | indent 10 }}
 ```
-Мы используем цикл, который каждые 2 секунды будет проверять нашу базу на доступность. После того как команда `pg_isready` сможет выполнится успешно, инит контейнер завершит свою работу, а основной запустится и без проблем сразу сможет подключится к базе. 
-
-При запуске миграций мы используем тот же самый образ что и в деплойменте. Различие только в запускаемых командах.
+{% endraw %}
+{% endsnippetcut %}
 
 <a name="database-fixtures" />
 
@@ -172,10 +287,11 @@ spec:
 
 Мы добавляем наши фикстуры в отдельную директорию `fixtures` также как это было с миграциями.
 А их запуск добавляем в `package.json`
+
 ```json
     "fixtures": "node fixtures/01-default-user.js"
-
 ```
+
 И на этом все, далее мы производим те же действия что мы описывали ранее. Готовые пример вы можете найти тут - [fixtures.yaml](/werf-articles/gitlab-nodejs-files/examples/fixtures.yaml)
 
 <div>

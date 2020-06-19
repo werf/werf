@@ -17,54 +17,54 @@ entries:
         url: /documentation/guides/applications-guide/
 
       - title: Как использовать гайд
-        url: /documentation/guides/applications-guide/gitlab-rails/000-task.html
+        url: 000-task.html
 
       - title: Подготовка к работе
-        url: /documentation/guides/applications-guide/gitlab-rails/010-preparing.html
+        url: 010-preparing.html
 
       - title: Базовые настройки
-        url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html"
+        url: "020-basic.html"
         sf:
           - title: Сборка
-            url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#building"
+            url: "020-basic.html#building"
           - title: Конфигурирование инфраструктуры в виде кода
-            url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#config-iac"
+            url: "020-basic.html#config-iac"
           - title: Построение CI-процесса
-            url: "/documentation/guides/applications-guide/gitlab-rails/020-basic.html#ci"
+            url: "020-basic.html#ci"
 
       - title: Подключаем зависимости
-        url: /documentation/guides/applications-guide/gitlab-rails/030-dependencies.html
+        url: 030-dependencies.html
 
       - title: Генерируем и раздаём ассеты
-        url: /documentation/guides/applications-guide/gitlab-rails/040-assets.html
+        url: 040-assets.html
 
       - title: Работа с файлами
-        url: /documentation/guides/applications-guide/gitlab-rails/050-files.html
+        url: 050-files.html
 
       - title: Работа с электронной почтой
-        url: /documentation/guides/applications-guide/gitlab-rails/060-email.html
+        url: 060-email.html
 
       - title: Подключаем Redis
-        url: /documentation/guides/applications-guide/gitlab-rails/070-redis.html
+        url: 070-redis.html
 
       - title: Подключаем базу данных
-        url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html"
+        url: "080-database.html"
         sf:
           - title: Конфигурирование БД в Kubernetes
-            url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#kubeconfig"
+            url: "080-database.html#kubeconfig"
           - title: Подключение приложения к БД
-            url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#appconnect"
+            url: "080-database.html#appconnect"
           - title: Выполнение миграций
-            url: "/documentation/guides/applications-guide/gitlab-rails/080-database.html#migrations"
+            url: "080-database.html#migrations"
 
       - title: Юнит-тесты и Линтеры
-        url: /documentation/guides/applications-guide/gitlab-rails/090-unittesting.html
+        url: 090-unittesting.html
 
       - title: Несколько приложений в одном репозитории
-        url: /documentation/guides/applications-guide/gitlab-rails/110-multipleapps.html
+        url: 110-multipleapps.html
 
       - title: Динамические окружения
-        url: /documentation/guides/applications-guide/gitlab-rails/120-dynamicenvs.html
+        url: 120-dynamicenvs.html
 
 
 

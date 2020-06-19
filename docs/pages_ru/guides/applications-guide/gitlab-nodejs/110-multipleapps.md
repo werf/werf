@@ -14,96 +14,151 @@ toc: false
 - werf.yaml
 {% endfilesused %}
 
+В этой главе мы добавим к нашему базовому приложению ещё одно, находящееся в том же репозитории. Это корректная ситуация:
 
-Если в одном репозитории находятся несколько приложений например для backend и frontend необходимо использовать сборку приложения с несколькими образами.
+* для сложных случаев с двумя приложениями на двух разных языках
+* для ситуации, когда есть более одного запускаемого процесса (например, сервис, отвечающий на http-запросы и worker)
+* для ситуации, когда в одном репозитории находится frontend и backend
 
-Мы рассказывали [https://www.youtube.com/watch?v=g9cgppj0gKQ](https://www.youtube.com/watch?v=g9cgppj0gKQ) о том, почему и в каких ситуациях это — хороший путь для микросервисов.
+Рекомендуем также посмотреть [доклад Дмитрия Столярова](https://www.youtube.com/watch?v=g9cgppj0gKQ) о том, почему и в каких ситуациях это — хороший путь для микросервисов. Также вы можете посмотреть [аналогичную статью](https://ru.werf.io/documentation/guides/advanced_build/multi_images.html) о приложении с несколькими образами.
 
-Покажем это на примере нашего приложения на node которое отправляет в rabbitmq имена тех кто зашёл в наш чат, а приложение на Python будет работать в качестве бота который приветсвует всех зашедших.
+Добавим к нашему приложению Single Page Application-приложением на react которое отображает публичную часть. Наш подход будет очень похож на то, что делалось в главе [Генерируем и раздаем ассеты](040-assets.html), с одним существенным отличием: изменения в коде react сильно отделены от изменений в NodeJS приложении. Как следствие — мы разнесём их в разные папки, а также в различные Pod-ы. 
+
+Мы рассмотрим вопрос организации структуры файлов и папок, соберём два образа: для NodeJS приложения и для react приложения и сконфигурируем запуск этих образов в kubernetes.
+
+## Структура файлов и папок
+
+Структура каталогов будет организована следующим образом:
+
+```
+├── .helm/
+│   ├── templates/
+│   └── values.yaml
+├── backend/
+├── frontend/
+└── werf.yaml
+```
+
+Для одного репозитория рекомендуется использовать один файл `werf.yaml` и одну папку `.helm` с конфигурацией инфраструктуры. Такой подход делает работу над кодом прозрачнее и помогает избегать рассинхронизации в двух частях одного проекта.
+
+{% offtopic title="А если получится слишком много информации в одном месте и станет сложно ориентироваться?" %}
+TODO: напомнить про то, что helm-шаблоны — это множество файлов и можно их там раскидывать как угодно. А также про то, что в werf.yaml можно в инклюды (можно ж?)
+{% endofftopic %}
 
 ## Сборка приложений
 
-Сборка приложения с несколькими образами описана в [статье](https://ru.werf.io/documentation/guides/advanced_build/multi_images.html). На ее основе покажем наш пример для нашего приложения.
+На стадии сборки приложения нам необходимо правильно организовать структуру файла `werf.yaml`, описав в нём сборку двух приложений на разном стеке.
 
-Структура каталогов будет организована следующим образом
+Мы соберём два образа: `backend` c NodeJS-приложением и `frontend` c React-приложением. Для сборки последнего мы воспользуемся механизмом артефактов (и соберём артефакт `frontend-build`) — мы использовали подобное в главе [Генерируем и раздаем ассеты](040-assets.html).
 
-```
-├── .helm
-│   ├── templates
-│   └── values.yaml
-├── node
-├── python
-└── werf.yaml
-```
-Мы должны переместить весь наш исходный код Nodejs в отдельную директорию `node` и
-далее собирать её как обычно, но заменив в `werf.yaml` строки клонирования кода с корня `- add: /` на нашу директорию `- add: /node`.
-Сборка приложения для python структурно практически не отличается от сборки описанной в Hello World, за исключением того что импорт из git будет из директории python.
+{% offtopic title="Как конкретно?" %}
 
-Пример конечного [werf.yaml](/werf-articles/gitlab-nodejs-files/examples/werf_3.yaml)
+Сборка образа `backend` аналогична ранее описанному [базовому приложению](020-basic.html) с [зависимостями](030-dependencies.html), за исключением того, откуда берётся исходный код:
 
-Для запуска подготовленных приложений отдельными деплойментами, необходимо создать еще один файл, который будет описывать запуск бота - [bot-deployment.yaml](/werf-articles/gitlab-nodejs-files/examples/python-deployment.yaml).
-
-<details><summary>bot-deployment.yaml</summary>
-<p>
-
+{% snippetcut name="werf.yaml" url="template-files/examples/example_5/werf.yaml#L12" %}
 ```yaml
-{{ $rmq_user := pluck .Values.global.env .Values.app.rabbitmq.user | first | default .Values.app.rabbitmq.user._default }}
-{{ $rmq_pass := pluck .Values.global.env .Values.app.rabbitmq.password | first | default .Values.app.rabbitmq.password._default }}
-{{ $rmq_host := pluck .Values.global.env .Values.app.rabbitmq.host | first | default .Values.app.rabbitmq.host._default }}
-{{ $rmq_port := pluck .Values.global.env .Values.app.rabbitmq.port | first | default .Values.app.rabbitmq.port._default }}
-{{ $rmq_vhost := pluck .Values.global.env .Values.app.rabbitmq.vhost | first | default .Values.app.rabbitmq.vhost._default }}
-{{ $db_user := pluck .Values.global.env .Values.app.postgresql.user | first | default .Values.app.postgresql.user._default }}
-{{ $db_pass := pluck .Values.global.env .Values.app.postgresql.password | first | default .Values.app.postgresql.password._default }}
-{{ $db_host := pluck .Values.global.env .Values.app.postgresql.host | first | default .Values.app.postgresql.host._default }}
-{{ $db_port := pluck .Values.global.env .Values.app.postgresql.port | first | default .Values.app.postgresql.port._default }}
-{{ $db_name := pluck .Values.global.env .Values.app.postgresql.db | first | default .Values.app.postgresql.db._default }}
+git:
+- add: /backend
+  to: /app
+```
+{% endsnippetcut %}
+
+Мы добавляем в собираемый образ только исходные коды, относящиеся к Rails приложению. Таким образом, пересборка этой части проекта не будет срабатывать, когда изменился только React-код.
+
+Сборка для frontend приложения описана в файле `werf.yaml` как отдельный образ. Поскольку nodejs нужен только для сборки - соберем артефакт:
+
+{% snippetcut name="werf.yaml" url="template-files/examples/example_5/werf.yaml#L30" %}
+{% raw %}
+```yaml
+artifact: frontend-build
+from: node:{{ .NODE_MAJOR }}
+git:
+- add: /frontend
+  to: /app
+```
+{% endraw %}
+{% endsnippetcut %}
+
+И затем импортируем необходимые файлы в образ с nginx:
+
+{% snippetcut name="deployment-frontend.yaml" url="#" %}
+{% raw %}
+```yaml
+---
+image: frontend
+from: nginx:alpine
+import:
+- artifact: frontend-build
+  add: /app/build
+  to: /www
+  after: setup
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% endofftopic %}
+
+## Конфигурация инфраструктуры в Kubernetes
+
+Подготовленные приложения мы будем запускать отдельными объектами Deployment: таким образом в случае изменений только в одной из частей приложения будет перевыкатываться только эта часть. Создадим два отдельных файла для описания объектов: `frontend.yaml` и `backend.yaml`. В условиях, когда в одном сервисе меньше 15-20 объектов — удобно следовать принципу максимальной атомарности в шаблонах.
+
+При деплое нескольких Deployment крайне важно правильно прописать `selector`-ы в Service и Deployment:
+
+{% snippetcut name="service-backend.yaml" url="#" %}
+{% raw %}
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-backend
+spec:
+  selector:
+    app: {{ .Chart.Name }}-backend
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="deployment-backend.yaml" url="#" %}
+{% raw %}
+```yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-email-consumer
+  name: {{ .Chart.Name }}-backend
 spec:
-  revisionHistoryLimit: 3
-  strategy:
-    type: RollingUpdate
-  replicas: 1
   selector:
     matchLabels:
-      app: {{ $.Chart.Name }}-email-consumer
+      app: {{ .Chart.Name }}-backend
   template:
     metadata:
       labels:
-        app: {{ $.Chart.Name }}-email-consumer
-    spec:
-      imagePullSecrets:
-      - name: "registrysecret"
-      containers:
-      - name: {{ $.Chart.Name }}
-{{ tuple "python" . | include "werf_container_image" | indent 8 }}
-        workingDir: /app
-        command: ["python","consumer.py"]
-        ports:
-        - containerPort: 5000
-          protocol: TCP
-        env:
-        - name: AMQP_URI
-          value: {{ printf "amqp://%s:%s@%s:%s/%s" $rmq_user $rmq_pass $rmq_host ($rmq_port|toString) $rmq_vhost }}
-        - name: DATABASE_URL
-          value: {{ printf "postgresql+psycorg2://%s:%s@%s:%s/%s" $db_user $db_pass $db_host ($db_port|toString) $db_name }}
-{{ tuple "python" . | include "werf_container_env" | indent 8 }}
+        app: {{ .Chart.Name }}-backend
 ```
+{% endraw %}
+{% endsnippetcut %}
 
-</p>
-</details>
+Маршрутизация запросов будет осуществляться через Ingress:
 
-Обратите внимание что мы отделили переменные от деплоймента, мы сделали это специально, чтобы строка подключения к базам в переменных манифеста не была огромной. Потому мы выделили переменные и описали их вверху манифеста, а затем просто подставили в нужные нам строки.
-
-Таким образом мы смогли собрать и запустить несколько приложений написанных на разных языках которые находятся в одном репозитории.
-
-Если в вашей команды фуллстэки и/или она не очень большая и хочется видеть и выкатывать приложение целиком, может быть полезно разместить приложения на нескольких языках в одном репозитории.
-
-К слову, мы рассказывали [https://www.youtube.com/watch?v=g9cgppj0gKQ](https://www.youtube.com/watch?v=g9cgppj0gKQ) о том, почему и в каких ситуациях это — хороший путь для микросервисов.
-
+{% snippetcut name="ingress.yaml" url="template-files/examples/example_5/.helm/templates/ingress.yaml" %}
+{% raw %}
+```yaml
+  rules:
+  - host: {{ .Values.global.ci_url }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ .Chart.Name }}-frontend
+          servicePort: 80
+      - path: /api
+        backend:
+          serviceName: {{ .Chart.Name }}-backend
+          servicePort: 3000
+```
+{% endraw %}
+{% endsnippetcut %}
 
 <div>
     <a href="120-dynamicenvs.html" class="nav-btn">Далее: Динамические окружения</a>

@@ -17,20 +17,90 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
+В этой главе мы настроим в нашем базовом приложении продвинутую работу с базой данных, включающую в себя вопросы выполнения миграций. В качестве базы данных возьмём PostgreSQL.
 
-Тут будут единые примеры, которые во всех статьях используются. Ибо для сборки и деплоя как-то не сильно разно получается, и хельм одинаковый.
+Мы не будем вносить изменения в сборку — будем использовать образы с DockerHub и конфигурировать их и инфраструктуру.
 
-<a name="database-app-generic" />
+<a name="kubeconfig" />
 
-## Общий подход
+## Сконфигурировать PostgreSQL в Kubernetes
 
-TODO: куда-то делась
+TODO: нам сначала надо определиться с именем базы, логином, паролем, портом, МЕСТОМ ХРАНЕНИЯ, а потом уже бросаться вот это всё прописывать в конфигах и выбирать какой чарт подключать
 
-<a name="database-app-connection" />
+Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим PostgreSQL как внешний subchart.
 
-## Как подключить БД
+Для этого нужно:
 
-Разумеется, нашему приложению может потребоваться не только подключение к redis, но и к другим БД. Но от предыдущего пункта настройка принципиально не отличается. 
+1. прописать изменения в yaml файлы;
+2. указать Redis конфиги;
+3. подсказать werf, что ему нужно подтягивать subchart.
+
+Пропишем helm-зависимости:
+
+{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_3/.helm/requirements.yaml" %}
+```yaml
+dependencies:
+- name: postgresql
+  version: 8.0.0
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  condition: postgresql.enabled
+```
+{% endsnippetcut %}
+
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
+
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_3/.gitlab-ci.yml#L24" %}
+```yaml
+.base_deploy:
+  stage: deploy
+  script:
+    - werf helm repo init
+    - werf helm dependency update
+    - werf deploy
+```
+{% endsnippetcut %}
+
+Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
+
+{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_3/.helm/values.yaml#L4" %}
+```yaml
+postgresql:
+  enabled: true
+  postgresqlDatabase: hello_world
+  postgresqlUsername: hello_world_user
+  postgresqlHost: postgres
+  imageTag: "12"
+  persistence:
+    enabled: true
+```
+{% endsnippetcut %}
+
+Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
+
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="template-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+```yaml
+postgresql:
+  postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
+```
+{% endsnippetcut %}
+
+После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
+
+<a name="appconnect" />
+
+## Подключение приложения к базе PostgreSQL
+
+Для подключения Spring приложения к PostgreSQL необходимо установить зависимость ____________ и сконфигурировать:
+
+
+
+TODO: вот это всё, что ниже - переделать. Оно написано под MySQL, должно быть — PostgreSQL
+
+
+
+
+
+
 Описываем подключение application.properties, прописывая вместо реальных хостов переменные окружения. Правим helm-чарты, добавляя туда нужные переменные окружения и их значения.
 Сгенерируем скелет приложения в start.spring.io. В зависимости добавим web и mysql. Скачаем, разархивируем. Все как и раньше. Либо можно просто добавить в pom.xml, который использовался для redis:
 
