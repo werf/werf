@@ -84,7 +84,14 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 1. Установим [multiwerf](https://github.com/werf/multiwerf) пользователем `gitlab-runner`:
 
    ```shell
+   # переключение пользователя 
    sudo su gitlab-runner
+
+   # добавление ~/bin в PATH
+   export PATH=$PATH:$HOME/bin
+   echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+   
+   # установка multiwerf в директорию ~/bin
    mkdir -p ~/bin
    cd ~/bin
    curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
