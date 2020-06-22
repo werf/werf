@@ -2,8 +2,13 @@ package true_git
 
 import (
 	"os/exec"
+	"path/filepath"
+	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/go-git/go-git/v5"
+
+	"github.com/werf/werf/pkg/util"
 )
 
 func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, error) {
@@ -42,4 +47,24 @@ func Fetch(gitDir string, options FetchOptions) error {
 	cmd.Stderr = errStream
 
 	return cmd.Run()
+}
+
+func IsShallowClone(gitDir string) (bool, error) {
+	if gitVersion.LessThan(semver.MustParse("2.15.0")) {
+		exist, err := util.FileExists(filepath.Join(gitDir, "shallow"))
+		if err != nil {
+			return false, err
+		}
+
+		return exist, nil
+	}
+
+	cmd := exec.Command("git", "-C", gitDir, "rev-parse", "--is-shallow-repository")
+
+	res, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+
+	return strings.TrimSpace(string(res)) == "true", nil
 }
