@@ -40,6 +40,10 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
 }
 
+func (repo *Local) PlainOpen() (*git.Repository, error) {
+	return git.PlainOpen(repo.Path)
+}
+
 func (repo *Local) Fetch(options true_git.FetchOptions) error {
 	return true_git.Fetch(repo.Path, options)
 }

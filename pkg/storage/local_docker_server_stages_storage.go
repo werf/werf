@@ -254,11 +254,11 @@ func (storage *LocalDockerServerStagesStorage) GetImageMetadataByCommit(projectN
 	} else if inspect != nil && inspect.Config != nil && inspect.Config.Labels != nil {
 		metadata := &ImageMetadata{ContentSignature: inspect.Config.Labels["ContentSignature"]}
 
-		logboek.Info.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
+		logboek.Debug.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 		return metadata, nil
 	} else {
-		logboek.Info.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
+		logboek.Debug.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
 		return nil, nil
 	}
 }
@@ -293,7 +293,7 @@ func (storage *LocalDockerServerStagesStorage) GetImageCommits(projectName, imag
 			iName := unslugDockerImageTagAsImageName(sluggedImage)
 
 			if imageName == iName {
-				logboek.Info.LogF("Found image %q metadata by commit %s\n", imageName, commit)
+				logboek.Debug.LogF("Found image %q metadata by commit %s\n", imageName, commit)
 				res = append(res, commit)
 			}
 		}
