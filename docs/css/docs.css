@@ -336,6 +336,18 @@
     top: 8px;
 }
 
+.docs ul li > p:first-child, .docs ol li > p:first-child {
+    margin-top: 0px;
+}
+
+.docs ul li > p:last-child, .docs ol li > p:last-child {
+    margin-bottom: 0px;
+}
+
+.docs ul li pre, .docs ol li pre {
+    margin: 5px 0 10px 0px;
+}
+
 .docs h1, .docs h2, .docs h3, .docs h4, .docs h5, .docs h6 {
     margin-bottom: 15px;
     margin-top: 30px;

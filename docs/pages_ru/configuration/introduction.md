@@ -459,101 +459,109 @@ shell:
 
 * Функции `.Files.Get` и `.Files.Glob` для работы с файлами проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
- <div class="tabs">
-   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
-   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
- </div>
+  <div class="tabs">
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+  </div>
 
- <div id="ansible" class="tabs__content active" markdown="1">
+  <div id="ansible" class="tabs__content active" markdown="1">
    
-**.Files.Get**
+  **.Files.Get**
 
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
 
-image: app
-from: alpine
-ansible:
- setup:
- - name: "Setup /etc/nginx/nginx.conf"
-   copy:
-     content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-     dest: /etc/nginx/nginx.conf
-```
-{% endraw %}
+  image: app
+  from: alpine
+  ansible:
+   setup:
+   - name: "Setup /etc/nginx/nginx.conf"
+     copy:
+       content: |
+  {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+       dest: /etc/nginx/nginx.conf
+  ```
+  {% endraw %}
 
-**.Files.Glob**
+  **.Files.Glob**
 
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
+  {% raw %}
+    > Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Результаты вызова функции можно объединить со [sprig функцией `merge`](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
 
-image: app
-from: alpine
-ansible:
- install:
- - raw: mkdir /app
- setup:
-{{ range $path, $content := .Files.Glob ".werf/files/*" }}
- - name: "Setup /app/{{ base $path }}"
-   copy:
-     content: |
-{{ $content | indent 8 }}
-     dest: /app/{{ base $path }}
-{{ end }}
-```
-{% endraw %}
-</div>
+  {% endraw %}
+  
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
 
-<div id="shell" class="tabs__content" markdown="1">
+  image: app
+  from: alpine
+  ansible:
+   install:
+   - raw: mkdir /app
+   setup:
+  {{ range $path, $content := .Files.Glob ".werf/files/*" }}
+   - name: "Setup /app/{{ base $path }}"
+     copy:
+       content: |
+  {{ $content | indent 8 }}
+       dest: /app/{{ base $path }}
+  {{ end }}
+  ```
+  {% endraw %}
+  </div>
 
-**.Files.Get**
+  <div id="shell" class="tabs__content" markdown="1">
 
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
+  **.Files.Get**
 
-image: app
-from: alpine
-shell:
- setup:
- - |
-   head -c -1 <<EOF > /etc/nginx/nginx.conf
-{{ .Files.Get ".werf/nginx.conf" | indent 4 }}
-   EOF
-```
-{% endraw %}
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
 
-**.Files.Glob**
+  image: app
+  from: alpine
+  shell:
+   setup:
+   - |
+     head -c -1 <<EOF > /etc/nginx/nginx.conf
+  {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+     EOF
+  ```
+  {% endraw %}
 
-> Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Результаты вызова функции можно объединить со [sprig функцией `merge`](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
+  **.Files.Glob**
 
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
+  {% raw %}
+  > Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) + `**`. Результаты вызова функции можно объединить со [sprig функцией `merge`](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, `{{ $filesDict := merge (.Files.Glob "*/*.txt") (.Files.Glob "app/**/*.txt") }}`)
 
-image: app
-from: alpine
-shell:
- install: mkdir /app
- setup:
-{{ range $path, $content := .Files.Glob ".werf/files/*" }}
- - |
-   head -c -1 <<EOF > /app/{{ base $path }}
-{{ $content | indent 4 }}
-   EOF
-{{ end }}
-```
-{% endraw %}
+  {% endraw %}
 
-</div>
+  {% raw %}
+  ```yaml
+  project: my-project
+  configVersion: 1
+  ---
+
+  image: app
+  from: alpine
+  shell:
+   install: mkdir /app
+   setup:
+  {{ range $path, $content := .Files.Glob ".werf/files/*" }}
+   - |
+     head -c -1 <<EOF > /app/{{ base $path }}
+  {{ $content | indent 4 }}
+     EOF
+  {{ end }}
+  ```
+  {% endraw %}
+
+  </div>
