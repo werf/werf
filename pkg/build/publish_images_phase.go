@@ -169,7 +169,7 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
 			func() error {
 				for _, imageMetaTag := range imageMetaTags {
-					if err := phase.publishImageByTag(img, imageMetaTag, strategy, publishImageByTagOptions{ExistingTagsList: existingTags, CheckAlreadyExistingTagByDockerImageID: true}); err != nil {
+					if err := phase.publishImageByTag(img, imageMetaTag, strategy, publishImageByTagOptions{ExistingTagsList: existingTags, CheckAlreadyExistingTagByContentSignatureLabel: true}); err != nil {
 						return fmt.Errorf("error publishing image %s by tag %s: %s", img.LogName(), imageMetaTag, err)
 					}
 				}
@@ -215,8 +215,8 @@ func (phase *PublishImagesPhase) fetchExistingTags(imageName string) (existingTa
 }
 
 type publishImageByTagOptions struct {
-	CheckAlreadyExistingTagByDockerImageID bool
-	ExistingTagsList                       []string
+	CheckAlreadyExistingTagByContentSignatureLabel bool
+	ExistingTagsList                               []string
 }
 
 func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag string, tagStrategy tag_strategy.TagStrategy, opts publishImageByTagOptions) error {
@@ -224,7 +224,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
 
-	alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(opts.ExistingTagsList, img.GetName(), imageMetaTag, img.GetLastNonEmptyStage().GetImage(), opts.CheckAlreadyExistingTagByDockerImageID)
+	alreadyExists, alreadyExistingDockerImageID, err := phase.checkImageAlreadyExists(opts.ExistingTagsList, img.GetName(), imageMetaTag, img.GetContentSignature(), opts.CheckAlreadyExistingTagByContentSignatureLabel)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
@@ -244,7 +244,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			WerfImageName: img.GetName(),
 			DockerRepo:    imageRepository,
 			DockerTag:     imageActualTag,
-			DockerImageID: alreadyExistingImageID,
+			DockerImageID: alreadyExistingDockerImageID,
 		}
 
 		return nil
@@ -295,7 +295,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, img.GetLastNonEmptyStage().GetImage(), opts.CheckAlreadyExistingTagByDockerImageID)
+		alreadyExists, alreadyExistingImageID, err := phase.checkImageAlreadyExists(existingTags, img.GetName(), imageMetaTag, img.GetContentSignature(), opts.CheckAlreadyExistingTagByContentSignatureLabel)
 		if err != nil {
 			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
@@ -345,33 +345,37 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag string, lastStageImage container_runtime.ImageInterface, checkAlreadyExistingTagByDockerImageID bool) (bool, string, error) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag, imageContentSignature string, checkAlreadyExistingTagByContentSignatureFromLabels bool) (bool, string, error) {
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(werfImageName, imageMetaTag)
 
 	if !util.IsStringsContainValue(existingTags, imageActualTag) {
 		return false, "", nil
-	} else if !checkAlreadyExistingTagByDockerImageID {
+	} else if !checkAlreadyExistingTagByContentSignatureFromLabels {
 		return true, "", nil
 	}
 
-	var repoImageParentID string
-	var repoImageID string
+	var repoImageContentSignature string
+	var repoDockerImageID string
 	var err error
-	getImageParentIDFunc := func() error {
+	getImageContentSignature := func() error {
 		repoImage, err := phase.ImagesRepo.GetRepoImage(werfImageName, imageMetaTag)
 		if err != nil {
 			return err
 		}
-		repoImageID = repoImage.ID
-		repoImageParentID = repoImage.ParentID
+		repoImageContentSignature = repoImage.Labels[image.WerfContentSignatureLabel]
+		repoDockerImageID = repoImage.ID
 		return nil
 	}
 
-	logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", imageActualTag)
-	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageParentIDFunc)
+	logProcessMsg := fmt.Sprintf("Getting existing tag %s manifest", imageActualTag)
+	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageContentSignature)
 	if err != nil {
 		return false, "", fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
-	return lastStageImage.GetStageDescription().Info.ID == repoImageParentID, repoImageID, nil
+	logboek.Debug.LogF("Current image content signature: %s\n", imageContentSignature)
+	logboek.Debug.LogF("Already published image content signature: %s\n", repoImageContentSignature)
+	logboek.Debug.LogF("Already published image docker ID: %s\n", repoDockerImageID)
+
+	return imageContentSignature == repoImageContentSignature, repoDockerImageID, nil
 }
