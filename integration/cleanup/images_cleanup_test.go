@@ -44,6 +44,8 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 			"git",
 			"commit", "-m", "Initial commit",
 		)
+
+		stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
 	})
 
 	for _, werfCommand := range [][]string{
