@@ -74,6 +74,7 @@ type imagesCleanupManager struct {
 
 type GitRepo interface {
 	Fetch(options true_git.FetchOptions) error
+	IsShallowClone() (bool, error)
 	IsCommitExists(commit string) (bool, error)
 	TagsList() ([]string, error)
 	RemoteBranchesList() ([]string, error)
@@ -130,6 +131,21 @@ func (m *imagesCleanupManager) run() error {
 
 		var err error
 		if m.LocalGit != nil {
+			if err := logboek.Default.LogProcessInline("Checking shallow clone", logboek.LevelLogProcessInlineOptions{}, func() error {
+				isShallowClone, err := m.LocalGit.IsShallowClone()
+				if err != nil {
+					return fmt.Errorf("check shallow clone failed: %s", err)
+				}
+
+				if isShallowClone {
+					return fmt.Errorf("git shallow clone is not supported")
+				}
+
+				return nil
+			}); err != nil {
+				return err
+			}
+
 			if !m.SkipGitFetch {
 				if err := logboek.Default.LogProcess("Syncing git branches and tags", logboek.LevelLogProcessOptions{}, func() error {
 					return m.LocalGit.Fetch(true_git.FetchOptions{
