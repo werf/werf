@@ -41,11 +41,11 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 }
 
 func (repo *Local) Fetch(options true_git.FetchOptions) error {
-	return true_git.Fetch(repo.GitDir, options)
+	return true_git.Fetch(repo.Path, options)
 }
 
 func (repo *Local) IsShallowClone() (bool, error) {
-	return true_git.IsShallowClone(repo.GitDir)
+	return true_git.IsShallowClone(repo.Path)
 }
 
 func (repo *Local) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
