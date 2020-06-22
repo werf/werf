@@ -74,7 +74,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -102,7 +102,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		ConveyorOptions: opts,
 	}
 
-	return c
+	return c, c.Init()
 }
 
 func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
@@ -226,6 +226,16 @@ type TagOptions struct {
 
 type ShouldBeBuiltOptions struct {
 	FetchLastStage bool
+}
+
+func (c *Conveyor) Init() error {
+	if localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir); err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
+	} else if localGitRepo != nil {
+		c.SetLocalGitRepo(localGitRepo)
+	}
+
+	return nil
 }
 
 func (c *Conveyor) ShouldBeBuilt(opts ShouldBeBuiltOptions) error {
@@ -786,18 +796,8 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	var gitMappings []*stage.GitMapping
 
 	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo := c.GetLocalGitRepo()
-		if localGitRepo == nil {
-			localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
-			if err != nil {
-				return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
-			}
-
-			if localGitRepo == nil {
-				return nil, errors.New("local git mapping is used but project git repository is not found")
-			}
-
-			c.SetLocalGitRepo(localGitRepo)
+		if c.GetLocalGitRepo() == nil {
+			return nil, errors.New("local git mapping is used but project git repository is not found")
 		}
 	}
 
@@ -1080,18 +1080,6 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(relContextDir, dockerignorePatternMatcher, false)
 
 	localGitRepo := c.GetLocalGitRepo()
-	if localGitRepo == nil {
-		localGitRepo, err = git_repo.OpenLocalRepo("own", c.projectDir)
-		if err != nil {
-			return nil, fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
-		}
-
-		if localGitRepo != nil {
-			c.SetLocalGitRepo(localGitRepo)
-		}
-	}
-
-	localGitRepo = c.GetLocalGitRepo()
 	if localGitRepo != nil {
 		exist, err = localGitRepo.IsHeadReferenceExist()
 		if err != nil {

@@ -42,7 +42,7 @@ func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
 
 func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(f func(c *Conveyor) error) error {
 Retry:
-	newConveyor := NewConveyor(
+	newConveyor, err := NewConveyor(
 		wrapper.WerfConfig,
 		wrapper.ImageNamesToProcess,
 		wrapper.ProjectDir,
@@ -54,6 +54,9 @@ Retry:
 		wrapper.StorageLockManager,
 		wrapper.ConveyorOptions,
 	)
+	if err != nil {
+		return err
+	}
 
 	if shouldRetry, err := func() (bool, error) {
 		defer newConveyor.Terminate()
