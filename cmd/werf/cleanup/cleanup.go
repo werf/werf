@@ -25,7 +25,9 @@ import (
 var commonCmdData common.CmdData
 
 var cmdData struct {
-	SkipGitFetch bool
+	SkipGitFetch              bool
+	GitHistoryBasedCleanup    bool
+	GitHistoryBasedCleanupV12 bool
 }
 
 func NewCmd() *cobra.Command {
@@ -67,6 +69,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.SkipGitFetch, "skip-git-fetch", "", common.GetBoolEnvironmentDefaultFalse("WERF_SKIP_GIT_FETCH"), "Skip fetching and pruning unused git branches and tags (default $WERF_SKIP_GIT_FETCH)")
+	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanup, "git-history-based-cleanup", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP"), "Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)")
+	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanupV12, "git-history-based-cleanup-v1.2", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP_v1_2"), "Use git history based cleanup and delete images tags without related image metadata (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)")
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
@@ -195,6 +199,8 @@ func runCleanup() error {
 			WithoutKube:               *commonCmdData.WithoutKube,
 			Policies:                  policies,
 			SkipGitFetch:              cmdData.SkipGitFetch,
+			GitHistoryBasedCleanup:    cmdData.GitHistoryBasedCleanup,
+			GitHistoryBasedCleanupV12: cmdData.GitHistoryBasedCleanupV12,
 			DryRun:                    *commonCmdData.DryRun,
 		},
 		StagesCleanupOptions: cleaning.StagesCleanupOptions{

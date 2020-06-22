@@ -31,7 +31,7 @@ func Cleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManag
 		return err
 	}
 
-	repoImages := m.imagesCleanupManager.getImagesRepoImages()
+	repoImages := m.imagesCleanupManager.getImageRepoImageList()
 	m.stagesCleanupManager.setImagesRepoImageList(flattenRepoImages(repoImages))
 
 	if err := logboek.Default.LogProcess(
@@ -47,7 +47,7 @@ func Cleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManag
 
 func newCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
-		imagesCleanupManager: newImagesCleanupManager(imagesRepo, options.ImagesCleanupOptions),
+		imagesCleanupManager: newImagesCleanupManager(projectName, imagesRepo, stagesManager, options.ImagesCleanupOptions),
 		stagesCleanupManager: newStagesCleanupManager(projectName, imagesRepo, stagesManager, options.StagesCleanupOptions),
 	}
 }

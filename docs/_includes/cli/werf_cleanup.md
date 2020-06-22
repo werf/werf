@@ -50,6 +50,11 @@ werf cleanup [options]
             Keep max number of images published with the git-commit tagging strategy in the images  
             repo. No limit by default, -1 disables the limit. Value can be specified by the         
             $WERF_GIT_COMMIT_STRATEGY_LIMIT
+      --git-history-based-cleanup=false:
+            Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)
+      --git-history-based-cleanup-v1.2=false:
+            Use git history based cleanup and delete images tags without related image metadata     
+            (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)
       --git-tag-strategy-expiry-days=-1:
             Keep images published with the git-tag tagging strategy in the images repo for the      
             specified maximum days since image published. Republished image will be kept specified  

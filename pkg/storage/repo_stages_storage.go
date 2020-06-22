@@ -357,7 +357,7 @@ func (storage *RepoStagesStorage) GetImageCommits(projectName, imageName string)
 			iName := unslugDockerImageTagAsImageName(sluggedImage)
 
 			if imageName == iName {
-				logboek.Info.LogF("Found image %q metadata by commit %s\n", imageName, commit)
+				logboek.Debug.LogF("Found image %q metadata by commit %s\n", imageName, commit)
 				res = append(res, commit)
 			}
 		}

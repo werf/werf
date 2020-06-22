@@ -54,6 +54,7 @@ require (
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/prashantv/gostub v1.0.0
+	github.com/rodaine/table v1.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0
