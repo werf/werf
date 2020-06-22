@@ -22,9 +22,9 @@ type FetchOptions struct {
 	PruneTags bool
 }
 
-func Fetch(gitDir string, options FetchOptions) error {
+func Fetch(path string, options FetchOptions) error {
 	command := "git"
-	commandArgs := []string{"-C", gitDir, "fetch"}
+	commandArgs := []string{"-C", path, "fetch"}
 
 	if options.All {
 		commandArgs = append(commandArgs, "--all")
@@ -49,9 +49,9 @@ func Fetch(gitDir string, options FetchOptions) error {
 	return cmd.Run()
 }
 
-func IsShallowClone(gitDir string) (bool, error) {
+func IsShallowClone(path string) (bool, error) {
 	if gitVersion.LessThan(semver.MustParse("2.15.0")) {
-		exist, err := util.FileExists(filepath.Join(gitDir, "shallow"))
+		exist, err := util.FileExists(filepath.Join(path, ".git", "shallow"))
 		if err != nil {
 			return false, err
 		}
@@ -59,7 +59,7 @@ func IsShallowClone(gitDir string) (bool, error) {
 		return exist, nil
 	}
 
-	cmd := exec.Command("git", "-C", gitDir, "rev-parse", "--is-shallow-repository")
+	cmd := exec.Command("git", "-C", path, "rev-parse", "--is-shallow-repository")
 
 	res, err := cmd.Output()
 	if err != nil {
