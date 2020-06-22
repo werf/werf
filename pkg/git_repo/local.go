@@ -40,6 +40,10 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
 }
 
+func (repo *Local) Fetch(options true_git.FetchOptions) error {
+	return true_git.Fetch(repo.GitDir, options)
+}
+
 func (repo *Local) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
 	return repo.createDetachedMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
 }

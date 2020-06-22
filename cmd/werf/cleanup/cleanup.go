@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 
@@ -16,7 +12,10 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 
@@ -24,6 +23,10 @@ import (
 )
 
 var commonCmdData common.CmdData
+
+var cmdData struct {
+	SkipGitFetch bool
+}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -63,6 +66,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
 
+	cmd.Flags().BoolVarP(&cmdData.SkipGitFetch, "skip-git-fetch", "", common.GetBoolEnvironmentDefaultFalse("WERF_SKIP_GIT_FETCH"), "Skip fetching and pruning unused git branches and tags (default $WERF_SKIP_GIT_FETCH)")
+
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -79,6 +84,10 @@ It is safe to run this command periodically (daily is enough) by automated clean
 func runCleanup() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+		return err
 	}
 
 	if err := image.Init(); err != nil {
@@ -185,6 +194,7 @@ func runCleanup() error {
 			KubernetesContextsClients: kubernetesContextsClients,
 			WithoutKube:               *commonCmdData.WithoutKube,
 			Policies:                  policies,
+			SkipGitFetch:              cmdData.SkipGitFetch,
 			DryRun:                    *commonCmdData.DryRun,
 		},
 		StagesCleanupOptions: cleaning.StagesCleanupOptions{
