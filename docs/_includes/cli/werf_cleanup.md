@@ -131,6 +131,8 @@ werf cleanup [options]
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --skip-git-fetch=false:
+            Skip fetching and pruning unused git branches and tags (default $WERF_SKIP_GIT_FETCH)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

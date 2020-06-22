@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
-
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/image"
@@ -19,6 +17,8 @@ import (
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type ImagesCleanupOptions struct {
@@ -27,6 +27,7 @@ type ImagesCleanupOptions struct {
 	KubernetesContextsClients map[string]kubernetes.Interface
 	WithoutKube               bool
 	Policies                  ImagesCleanupPolicies
+	SkipGitFetch              bool
 	DryRun                    bool
 }
 
@@ -67,10 +68,12 @@ type imagesCleanupManager struct {
 	KubernetesContextsClients map[string]kubernetes.Interface
 	WithoutKube               bool
 	Policies                  ImagesCleanupPolicies
+	SkipGitFetch              bool
 	DryRun                    bool
 }
 
 type GitRepo interface {
+	Fetch(options true_git.FetchOptions) error
 	IsCommitExists(commit string) (bool, error)
 	TagsList() ([]string, error)
 	RemoteBranchesList() ([]string, error)
@@ -127,6 +130,17 @@ func (m *imagesCleanupManager) run() error {
 
 		var err error
 		if m.LocalGit != nil {
+			if !m.SkipGitFetch {
+				if err := logboek.Default.LogProcess("Syncing git branches and tags", logboek.LevelLogProcessOptions{}, func() error {
+					return m.LocalGit.Fetch(true_git.FetchOptions{
+						PruneTags: true,
+						Prune:     true,
+					})
+				}); err != nil {
+					return err
+				}
+			}
+
 			if !m.WithoutKube {
 				if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
 					repoImagesToCleanup, resultRepoImages, err = exceptRepoImagesByWhitelist(repoImagesToCleanup, m.KubernetesContextsClients)
