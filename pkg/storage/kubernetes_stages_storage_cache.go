@@ -30,7 +30,7 @@ type KubernetesStagesStorageCacheData struct {
 }
 
 func (cache *KubernetesStagesStorageCache) String() string {
-	return fmt.Sprintf("kuberntes ns/%s", cache.Namespace)
+	return fmt.Sprintf("kubernetes ns/%s", cache.Namespace)
 }
 
 func (cache *KubernetesStagesStorageCache) extractCacheData(obj *v1.ConfigMap) (*KubernetesStagesStorageCacheData, error) {

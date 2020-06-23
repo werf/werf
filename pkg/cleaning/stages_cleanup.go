@@ -198,15 +198,6 @@ loop:
 	return updatedRepoImageList
 }
 
-func imagesRepoImageList(imagesRepo storage.ImagesRepo, imageNameList []string) ([]*image.Info, error) {
-	repoImages, err := selectRepoImagesFromImagesRepo(imagesRepo, imageNameList)
-	if err != nil {
-		return nil, err
-	}
-
-	return flattenRepoImages(repoImages), nil
-}
-
 func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*image.Info) {
 	for imageName := range repoImages {
 		repoImageList = append(repoImageList, repoImages[imageName]...)
