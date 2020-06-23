@@ -135,18 +135,24 @@ var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
-						"build-and-publish", "--tag-git-commit", commit,
+						"build-and-publish", "--tag-custom", "test",
 					)
 
 					countAfterFirstBuild := stagesStorageRepoImagesCount()
 					Ω(countAfterFirstBuild).Should(Equal(4))
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"commit", "--allow-empty", "-m", "test",
+					)
 
 					stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
 
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
-						"build-and-publish", "--tag-git-commit", commit,
+						"build-and-publish", "--tag-custom", "test",
 					)
 
 					countAfterSecondBuild := stagesStorageRepoImagesCount()
