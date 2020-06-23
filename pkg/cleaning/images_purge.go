@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
 )
 
@@ -46,12 +47,20 @@ type imagesPurgeManager struct {
 }
 
 func (m *imagesPurgeManager) run() error {
-	repoImageList, err := imagesRepoImageList(m.ImagesRepo, m.ImageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
 
-	return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageList...)
+	for imageName, repoImageList := range repoImages {
+		if err := logboek.Default.LogProcess(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessOptions{}, func() error {
+			return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageList...)
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func selectRepoImagesFromImagesRepo(imagesRepo storage.ImagesRepo, imageNameList []string) (map[string][]*image.Info, error) {
