@@ -138,9 +138,15 @@ func (api *api) PushImage(reference string, opts PushImageOptions) error {
 
 	img := NewManifestOnlyImage(opts.Labels)
 
-	if err := remote.Write(ref, img); err != nil {
+	oldDefaultTransport := http.DefaultTransport
+	http.DefaultTransport = api.getHttpTransport()
+	err = remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	http.DefaultTransport = oldDefaultTransport
+
+	if err != nil {
 		return fmt.Errorf("write to the remote %s have failed: %s", ref.String(), err)
 	}
+
 	return nil
 }
 
