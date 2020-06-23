@@ -304,7 +304,7 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 						exceptedImageList = append(exceptedImageList, repoImage)
 						exceptedRepoImages[imageName] = exceptedImageList
 
-						logboek.Info.LogFDetails("  tag: %s\n", repoImage.Tag)
+						logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
 						continue Loop
 					}
 				}
