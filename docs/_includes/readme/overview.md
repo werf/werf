@@ -6,3 +6,7 @@
 * werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
 werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
+
+<p align="center">
+  <img src="https://github.com/werf/werf/raw/master/docs/images/werf-schema.png" style="max-height:80%;">
+</p>
