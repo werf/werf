@@ -32,7 +32,7 @@ Deploy to Review:
     url: http://${CI_COMMIT_REF_SLUG}.kube.example.com
     on_stop: Stop Review
   only:
-    - feature/*
+    - /^feature-*/
   when: manual
 ```
 {% endraw %}
@@ -54,7 +54,7 @@ Stop Review:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
   only:
-    - feature/*
+    - /^feature-*/
 ```
 {% endraw %}
 {% endsnippetcut %}
