@@ -10,18 +10,42 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
+В этой главе мы настроим в нашем базовом приложении выполнение тестов/линтеров. Запуск тестов и линтеров - это отдельная стадия в pipelinе Gitlab CI для выполнения которых могут быть нужны определенные условия.
 
-Java - компилируемый язык, значит в случае проблем в коде приложение с большой вероятностью просто не соберется. Тем не менее хорошо бы получать информацию о проблеме в коде не дожидаясь пока упадет сборка.
-Чтобы этого избежать пробежимся по коду линтером, а затем запустим unit-тесты.
-Для запуска линта воспользуемся [maven checkstyle plugin](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html). Запускать можно его несколькими способами - либо вынести на отдельную стадию в gitlab-ci - перед сборкой или вызывать только при merge request. Например:
+Java - компилируемый язык, значит в случае проблем в коде приложение с большой вероятностью просто не соберется. Тем не менее хорошо бы получать информацию о проблеме в коде не дожидаясь пока упадет сборка, для чего воспользуемся  [maven checkstyle plugin](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html).
 
-``` yaml
-test: 
+Нам нужно добавить эту зависимость в наше приложение (в файл ____________) и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
+
+{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+```yaml
+test:
+  script:
+    - werf run ____________ -- mvn checkstyle:checkstyle
   stage: test
-  script: mvn checkstyle:checkstyle
-  only:
-  - merge_requests
+  tags:
+    - werf
+  needs: ["Build"]
 ```
+{% endsnippetcut %}
+
+Созданную стадию нужно добавить в список стадий
+
+{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+```yaml
+stages:
+  - build
+  - test
+  - deploy
+```
+{% endsnippetcut %}
+
+Обратите внимание, что процесс будет выполняться на runner-е, внутри собранного контейнера, но без доступа к базе данных и каким-либо ресурсам kubernetes-кластера.
+
+{% offtopic title="А если нужно больше?" %}
+Если нужен доступ к ресурсам кластера или база данных — это уже не линтер: нужно собирать отдельный образ и прописывать сложный сценарий деплоя объектов kubernetes. Эти кейсы выходят за рамки нашего гайда для начинающих.
+{% endofftopic %}
+
+TODO: вот этот текст надо нарезать и встроить в общий шаблон страницы
 
 Так же можно добавить этот плагин в pom.xml в секцию build (подробно описано в [документации](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html) или можно посмотреть на готовый [pom.xml](воттут)) и тогда checkstyle будет выполняться до самой сборки при выполнении `mvn package`. Воспользуемся как раз этим способом для нашего примера. Стоит отметить, что в нашем случае используется [google_checks.xml](https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml) для описания checkstyle и мы запускаем их на стадии validate - до компиляции.
 
