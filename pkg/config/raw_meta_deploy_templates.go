@@ -1,6 +1,6 @@
 package config
 
-type rawDeployTemplates struct {
+type rawMetaDeployTemplates struct {
 	HelmRelease     *string `yaml:"helmRelease,omitempty"`
 	HelmReleaseSlug *bool   `yaml:"helmReleaseSlug,omitempty"`
 	Namespace       *string `yaml:"namespace,omitempty"`
@@ -11,13 +11,13 @@ type rawDeployTemplates struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *rawDeployTemplates) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *rawMetaDeployTemplates) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if parent, ok := parentStack.Peek().(*rawMeta); ok {
 		c.rawMeta = parent
 	}
 
 	parentStack.Push(c)
-	type plain rawDeployTemplates
+	type plain rawMetaDeployTemplates
 	err := unmarshal((*plain)(c))
 	parentStack.Pop()
 	if err != nil {
@@ -39,8 +39,8 @@ func (c *rawDeployTemplates) UnmarshalYAML(unmarshal func(interface{}) error) er
 	return nil
 }
 
-func (c *rawDeployTemplates) toDeployTemplates() DeployTemplates {
-	deployTemplates := DeployTemplates{}
+func (c *rawMetaDeployTemplates) toDeployTemplates() MetaDeployTemplates {
+	deployTemplates := MetaDeployTemplates{}
 
 	if c.HelmRelease != nil {
 		deployTemplates.HelmRelease = *c.HelmRelease

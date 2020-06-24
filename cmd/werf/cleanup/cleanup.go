@@ -175,6 +175,7 @@ func runCleanup() error {
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
 	} else if exist {
+		logboek.LogOptionalLn()
 		localGitRepo, err = git_repo.OpenLocalRepo("own", projectDir, git_repo.OpenLocalRepoOptions{SynchronizeGitHistory: *commonCmdData.GitHistorySynchronization})
 		if err != nil {
 			return fmt.Errorf("get local git repo failed: %s", err)
@@ -193,14 +194,15 @@ func runCleanup() error {
 
 	cleanupOptions := cleaning.CleanupOptions{
 		ImagesCleanupOptions: cleaning.ImagesCleanupOptions{
-			ImageNameList:             imagesNames,
-			LocalGit:                  localGitRepo,
-			KubernetesContextsClients: kubernetesContextsClients,
-			WithoutKube:               *commonCmdData.WithoutKube,
-			Policies:                  policies,
-			GitHistoryBasedCleanup:    cmdData.GitHistoryBasedCleanup,
-			GitHistoryBasedCleanupV12: cmdData.GitHistoryBasedCleanupV12,
-			DryRun:                    *commonCmdData.DryRun,
+			ImageNameList:                 imagesNames,
+			LocalGit:                      localGitRepo,
+			KubernetesContextsClients:     kubernetesContextsClients,
+			WithoutKube:                   *commonCmdData.WithoutKube,
+			Policies:                      policies,
+			GitHistoryBasedCleanup:        cmdData.GitHistoryBasedCleanup,
+			GitHistoryBasedCleanupV12:     cmdData.GitHistoryBasedCleanupV12,
+			GitHistoryBasedCleanupOptions: werfConfig.Meta.Cleanup,
+			DryRun:                        *commonCmdData.DryRun,
 		},
 		StagesCleanupOptions: cleaning.StagesCleanupOptions{
 			ImageNameList: imagesNames,

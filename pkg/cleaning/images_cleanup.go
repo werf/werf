@@ -18,6 +18,7 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
@@ -29,14 +30,15 @@ import (
 )
 
 type ImagesCleanupOptions struct {
-	ImageNameList             []string
-	LocalGit                  GitRepo
-	KubernetesContextsClients map[string]kubernetes.Interface
-	WithoutKube               bool
-	Policies                  ImagesCleanupPolicies
-	GitHistoryBasedCleanup    bool
-	GitHistoryBasedCleanupV12 bool
-	DryRun                    bool
+	ImageNameList                 []string
+	LocalGit                      GitRepo
+	KubernetesContextsClients     map[string]kubernetes.Interface
+	WithoutKube                   bool
+	Policies                      ImagesCleanupPolicies
+	GitHistoryBasedCleanup        bool
+	GitHistoryBasedCleanupV12     bool
+	GitHistoryBasedCleanupOptions config.MetaCleanup
+	DryRun                        bool
 }
 
 func ImagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
@@ -57,17 +59,18 @@ func ImagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesMana
 
 func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options ImagesCleanupOptions) *imagesCleanupManager {
 	return &imagesCleanupManager{
-		ProjectName:               projectName,
-		ImagesRepo:                imagesRepo,
-		StagesManager:             stagesManager,
-		ImageNameList:             options.ImageNameList,
-		DryRun:                    options.DryRun,
-		LocalGit:                  options.LocalGit,
-		KubernetesContextsClients: options.KubernetesContextsClients,
-		WithoutKube:               options.WithoutKube,
-		Policies:                  options.Policies,
-		GitHistoryBasedCleanup:    options.GitHistoryBasedCleanup,
-		GitHistoryBasedCleanupV12: options.GitHistoryBasedCleanupV12,
+		ProjectName:                   projectName,
+		ImagesRepo:                    imagesRepo,
+		StagesManager:                 stagesManager,
+		ImageNameList:                 options.ImageNameList,
+		DryRun:                        options.DryRun,
+		LocalGit:                      options.LocalGit,
+		KubernetesContextsClients:     options.KubernetesContextsClients,
+		WithoutKube:                   options.WithoutKube,
+		Policies:                      options.Policies,
+		GitHistoryBasedCleanup:        options.GitHistoryBasedCleanup,
+		GitHistoryBasedCleanupV12:     options.GitHistoryBasedCleanupV12,
+		GitHistoryBasedCleanupOptions: options.GitHistoryBasedCleanupOptions,
 	}
 }
 
@@ -75,17 +78,18 @@ type imagesCleanupManager struct {
 	imageRepoImageList           *map[string][]*image.Info
 	imageCommitHashImageMetadata *map[string]map[plumbing.Hash]*storage.ImageMetadata
 
-	ProjectName               string
-	ImagesRepo                storage.ImagesRepo
-	StagesManager             *stages_manager.StagesManager
-	ImageNameList             []string
-	LocalGit                  GitRepo
-	KubernetesContextsClients map[string]kubernetes.Interface
-	WithoutKube               bool
-	Policies                  ImagesCleanupPolicies
-	GitHistoryBasedCleanup    bool
-	GitHistoryBasedCleanupV12 bool
-	DryRun                    bool
+	ProjectName                   string
+	ImagesRepo                    storage.ImagesRepo
+	StagesManager                 *stages_manager.StagesManager
+	ImageNameList                 []string
+	LocalGit                      GitRepo
+	KubernetesContextsClients     map[string]kubernetes.Interface
+	WithoutKube                   bool
+	Policies                      ImagesCleanupPolicies
+	GitHistoryBasedCleanup        bool
+	GitHistoryBasedCleanupV12     bool
+	GitHistoryBasedCleanupOptions config.MetaCleanup
+	DryRun                        bool
 }
 
 type GitRepo interface {
@@ -333,24 +337,8 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 	var referencesToScan []*referenceToScan
 	if err := logboek.Info.LogProcess("Preparing references to scan", logboek.LevelLogProcessOptions{}, func() error {
-		referencesToScan, err = getReferencesToScan(gitRepository)
-		if err != nil {
-			return err
-		}
-
-		if logboek.Info.IsAccepted() {
-			tbl := table.New("Reference", "ScanDepthLimit", "ImageDepthToKeep")
-			tbl.WithWriter(logboek.GetOutStream())
-			tbl.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
-
-			for _, referenceToScan := range referencesToScan {
-				tbl.AddRow(referenceToScan.Name().Short(), referenceToScan.referenceScanOptions.scanDepthLimitLogString(), referenceToScan.referenceScanOptions.imageDepthToKeep)
-			}
-
-			tbl.Print()
-		}
-
-		return nil
+		referencesToScan, err = getReferencesToScan(gitRepository, m.GitHistoryBasedCleanupOptions.Policies)
+		return err
 	}); err != nil {
 		return nil, err
 	}
@@ -525,13 +513,14 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 				}
 
 				if len(resultRepoImages[imageName]) != 0 {
-					for _, repoImage := range resultRepoImages[imageName] {
-						_ = logboek.Default.LogBlock("Saved tags", logboek.LevelLogBlockOptions{}, func() error {
+					_ = logboek.Default.LogBlock("Saved tags", logboek.LevelLogBlockOptions{}, func() error {
+						for _, repoImage := range resultRepoImages[imageName] {
 							logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
 							logboek.LogOptionalLn()
-							return nil
-						})
-					}
+						}
+
+						return nil
+					})
 				}
 
 				if err := logboek.Default.LogProcess("Deleting tags", logboek.LevelLogProcessOptions{}, func() error {
