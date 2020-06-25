@@ -2,13 +2,13 @@
 <ul id="mysidebar" class="sidebar sidebar_static">
   {%- for folder in sidebar.f %}
     {%- if folder.fi %}
-    <li class="sidebar__item sidebar__item_parent {%- if page.url == folder.url %} active{%- endif %}">
+    <li class="sidebar__item sidebar__item_parent {%- if page.url contains folder.url %} active{%- endif %}">
         <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
         <ul class="sidebar__submenu">
         {%- for folderitem in folder.fi %}
             {%- if folderitem.external_url %}
                 <li class="sidebar__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-            {%- elsif page.url == folderitem.url %}
+            {%- elsif page.url contains folderitem.url %}
                 <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
             {%- else %}
                 <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
@@ -17,7 +17,7 @@
         </ul>
     </li>
     {% elsif folder.sf %}
-        <li class="sidebar__item sidebar__item_parent {%- if page.url == folder.url %} active{%- endif %}">
+        <li class="sidebar__item sidebar__item_parent {%- if page.url contains folder.url %} active{%- endif %}">
             <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
             <ul class="sidebar__submenu">
             {%- for subfolders in folder.sf %}
@@ -28,7 +28,7 @@
                   {%- for subfolderitem in subfolders.sfi %}
                   {%- if subfolderitem.external_url %}
                   <li class="sidebar__submenu-item"><a href="{{ subfolderitem.external_url }}" target="_blank">{{subfolderitem.title}}</a></li>
-                  {%- elsif page.url == subfolderitem.url %}
+                  {%- elsif page.url contains subfolderitem.url %}
                   <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
                   {%- else %}
                   <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
@@ -38,7 +38,7 @@
               </li>
             {%- elsif subfolders.external_url %}
               <li class="sidebar__submenu-item"><a href="{{ subfolders.external_url }}" target="_blank">{{subfolders.title}}</a></li>
-            {%- elsif page.url == subfolders.url %}
+            {%- elsif page.url contains subfolders.url %}
               <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
             {%- else %}
               <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
@@ -48,12 +48,25 @@
         </li>
     {%- elsif folder.external_url %}
         <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
-    {%- elsif page.url == folder.url %}
-        <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
     {%- elsif folder.type == 'secondary' %}
         <li class="sidebar__item secondary"><a href="{{ folder.url }}">{{folder.title}}</a></li>
+    {%- elsif page.url contains folder.url %}
+        <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
     {%- else %}
-        <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+        <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">
+          {{folder.title}}
+        </a></li>
     {%- endif %}
   {%- endfor %}
 </ul>
+
+<div class="sidebar__btns">
+  <a href="https://t.me/werf_ru" target="_blank" class="sidebar__btn" title="Задать вопрос в Telegram">
+    <span class="sidebar__btn-icon sidebar__btn-icon_telegram"></span>
+    Есть вопрос? Ответим
+  </a>
+  <a href="https://github.com/werf/werf" target="_blank" class="sidebar__btn" title="Поставить звезду на GitHub">
+    <span class="sidebar__btn-icon sidebar__btn-icon_github"></span>
+    Понравилось? Поставь звезду
+  </a>
+</div>
