@@ -167,7 +167,37 @@ redis:
 ```
 {% endsnippetcut %}
 
-TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+TODO: Конфигурируем пароль
+
+При использовании сабчартов мы можем переопределять значения в них исходя из родительского values.yaml. Подробности работы с сабчартами описаны [здесь](https://werf.io/documentation/reference/deploy_process/working_with_chart_dependencies.html). Таким образом, чтобы определить пароль и хост для нашего redis-а нужно прописать в values.yaml:
+
+```yaml
+redis:
+  enabled: true
+  host:
+    _default: redis-master
+  port:
+    _default: 6379
+  fullnameOverride: redis
+  nameOverride: redis
+```
+
+Пароль генерируется любой, любым удобным способом, например
+
+```
+$ makepasswd --chars 30
+LYcj6c09D9M4htgGh64vXLxn95P4Wt
+```
+
+Теперь положим его в secret-values.yaml, используя werf helm secret values edit, как описывалось ранее. 
+
+```yaml
+redis:
+  password: "LYcj6c09D9M4htgGh64vXLxn95P4Wt"
+```
+
+Мы одновременно описываем что передать в subchart (host, password, fullnameOverride, nameOverride) и то что будет использоваться нашим приложением.
+Однако, следует иметь ввиду, что передаваемые внутрь сабчарта параметры зависят именно от реализации сабчарта.
 
 {% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
 ```yaml
