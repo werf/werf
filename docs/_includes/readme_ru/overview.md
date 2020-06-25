@@ -10,3 +10,7 @@
 * Очищает Docker registry от неиспользуемых образов.
 
 werf — не CI/CD-система, а инструмент для построения пайплайнов, который может использоваться в любой CI/CD-системе. Мы считаем инструменты такого рода новым поколением высокоуровневых инструментов CI/CD.
+
+<p align="center">
+  <img src="https://github.com/werf/werf/raw/master/docs/images/werf-schema.png" style="max-height:80%;">
+</p>
