@@ -933,6 +933,8 @@ github.com/vmware/govmomi v0.20.1/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
 github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55 h1:/7jQqp5f/gZrnWXSR+2OgXVvDZuumAVKrLOOsXUKv4o=
 github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
+github.com/werf/lockgate v0.0.0-20200625122100-41c30943229f h1:3nh/f/qUDhQNyVAyOiXmiSko326AZvBKyIxHqx1wWPU=
+github.com/werf/lockgate v0.0.0-20200625122100-41c30943229f/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
 github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009/go.mod h1:z/o88w2pmtW11fFsHnXQFsTNzcPp1H+VCtCj7OUntwU=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
