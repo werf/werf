@@ -64,7 +64,7 @@ require (
 	github.com/tonistiigi/fsutil v0.0.0-20190130224639-b4281fa67095 // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe
-	github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55
+	github.com/werf/lockgate v0.0.0-20200625122100-41c30943229f
 	github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190809123943-df4f5c81cb3b // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
