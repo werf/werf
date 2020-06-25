@@ -121,7 +121,8 @@
 }
 
 #mysidebar {
-  margin-bottom: 250px;
+  /* margin-bottom: 250px; */
+  margin-bottom: 50px
 }
 
 .sidebar__submenu .sidebar__submenu {
@@ -164,6 +165,59 @@
 
 .sidebar__item_submenu-parent.active > a:after {
     transform: rotate(-180deg);
+}
+
+.sidebar__btns.sticky {
+    width: 260px;
+    position: fixed;
+    top: 125px;
+}
+
+.sidebar__btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    border-radius: 10px;
+    text-decoration: none !important;
+    font-size: 12px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    letter-spacing: normal;
+    box-sizing: border-box;
+    margin: 0 0 15px 0;
+    border: 2px solid rgba(0,102,255,0.1);
+    color: #0066ff;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.sidebar__btn:hover {
+    border: 2px solid rgba(0,102,255,0.5);
+}
+
+.sidebar__btn-icon {
+    display: inline-block;
+    margin-right: 5px;
+    width: 16px;
+    height: 16px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.sidebar__btn-icon_github {
+    background-image: url('../images/icons/github.svg');
+}
+
+.sidebar__btn-icon_telegram {
+    background-image: url('../images/icons/telegram.svg');
 }
 
 #toc {
@@ -706,7 +760,7 @@
 
 .docs .nav-btn {
     display: inline-block;
-    padding: 20px 30px;    
+    padding: 10px 15px;
     border-radius: 10px;
     text-decoration: none !important;
     font-size: 14px;

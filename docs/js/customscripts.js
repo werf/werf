@@ -1,6 +1,4 @@
-
 $('#mysidebar').height($(".nav").height());
-
 
 document.addEventListener("DOMContentLoaded", function() {
   /**
@@ -219,9 +217,7 @@ $(document).ready(function () {
     }
   }
 
-  $(window).scroll(function () {
-    updateHeader();
-  });
+  $(window).scroll(_.throttle(updateHeader, 300));
   updateHeader();
 });
 
@@ -287,6 +283,7 @@ $(document).ready(function(){
   });
 });
 
+// Guides clipbord copy
 var action_toast_timeout;
 function showActionToast(text) {
   clearTimeout(action_toast_timeout);
@@ -308,6 +305,20 @@ $(document).ready(function(){
       return $(trigger).closest('[data-snippetcut]').find('[data-snippetcut-text]').text();
     }
   });
+});
+
+// Guide sticky btns
+$(document).ready(function () {
+  var $sidebar_btns = $('.sidebar__btns');
+  if ($sidebar_btns.length > 0) {
+    var sidebar_btns_watcher = scrollMonitor.create($sidebar_btns[0], 125);
+    sidebar_btns_watcher.stateChange(function() {
+			$sidebar_btns.toggleClass('sticky', sidebar_btns_watcher.isAboveViewport);
+		});
+    setTimeout(function() {
+      $sidebar_btns.toggleClass('sticky', sidebar_btns_watcher.isAboveViewport);
+    }, 100); // prevents weird behaiviour when page is refreshed when buttons should be sticky
+  }
 });
 
 // Presentation
