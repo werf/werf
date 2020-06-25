@@ -8,6 +8,8 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/go-git/go-git/v5"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -20,11 +22,17 @@ type FetchOptions struct {
 	TagsOnly  bool
 	Prune     bool
 	PruneTags bool
+	Unshallow bool
+	RefSpecs  map[string]string
 }
 
 func Fetch(path string, options FetchOptions) error {
 	command := "git"
 	commandArgs := []string{"-C", path, "fetch"}
+
+	if options.Unshallow {
+		commandArgs = append(commandArgs, "--unshallow")
+	}
 
 	if options.All {
 		commandArgs = append(commandArgs, "--all")
@@ -41,6 +49,12 @@ func Fetch(path string, options FetchOptions) error {
 			commandArgs = append(commandArgs, "--prune-tags")
 		}
 	}
+
+	for remote, refSpec := range options.RefSpecs {
+		commandArgs = append(commandArgs, remote, refSpec)
+	}
+
+	logboek.Debug.LogLnDetails(command, strings.Join(commandArgs, " "))
 
 	cmd := exec.Command(command, commandArgs...)
 	cmd.Stdout = outStream

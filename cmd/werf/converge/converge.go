@@ -114,6 +114,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
+	common.SetupGitHistorySynchronization(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 

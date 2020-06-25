@@ -69,7 +69,8 @@ type CmdData struct {
 	ImagesRepoMode *string
 	ImagesRepoData *RepoData
 
-	Synchronization *string
+	Synchronization           *string
+	GitHistorySynchronization *bool
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -692,6 +693,11 @@ Also, can be defined with $WERF_SECRET_VALUES* (e.g. $WERF_SECRET_VALUES_ENV=.he
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IgnoreSecretKey = new(bool)
 	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+}
+
+func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GitHistorySynchronization = new(bool)
+	cmd.Flags().BoolVarP(cmdData.GitHistorySynchronization, "git-history-synchronization", "", GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_SYNCHRONIZATION"), "Synchronize git branches and tags with remote origin (default $WERF_GIT_HISTORY_SYNCHRONIZATION)")
 }
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {

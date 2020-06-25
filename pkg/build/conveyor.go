@@ -72,6 +72,7 @@ type Conveyor struct {
 
 type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
+	GitHistorySynchronization       bool
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
@@ -229,7 +230,8 @@ type ShouldBeBuiltOptions struct {
 }
 
 func (c *Conveyor) Init() error {
-	if localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir); err != nil {
+	localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir, git_repo.OpenLocalRepoOptions{SynchronizeGitHistory: c.GitHistorySynchronization})
+	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
 	} else if localGitRepo != nil {
 		c.SetLocalGitRepo(localGitRepo)

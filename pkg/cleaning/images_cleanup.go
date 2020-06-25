@@ -36,7 +36,6 @@ type ImagesCleanupOptions struct {
 	Policies                  ImagesCleanupPolicies
 	GitHistoryBasedCleanup    bool
 	GitHistoryBasedCleanupV12 bool
-	SkipGitFetch              bool
 	DryRun                    bool
 }
 
@@ -69,7 +68,6 @@ func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, 
 		Policies:                  options.Policies,
 		GitHistoryBasedCleanup:    options.GitHistoryBasedCleanup,
 		GitHistoryBasedCleanupV12: options.GitHistoryBasedCleanupV12,
-		SkipGitFetch:              options.SkipGitFetch,
 	}
 }
 
@@ -87,7 +85,6 @@ type imagesCleanupManager struct {
 	Policies                  ImagesCleanupPolicies
 	GitHistoryBasedCleanup    bool
 	GitHistoryBasedCleanupV12 bool
-	SkipGitFetch              bool
 	DryRun                    bool
 }
 
@@ -206,31 +203,6 @@ func (m *imagesCleanupManager) run() error {
 		}
 
 		var err error
-		if err := logboek.Default.LogProcessInline("Checking shallow clone", logboek.LevelLogProcessInlineOptions{}, func() error {
-			isShallowClone, err := m.LocalGit.IsShallowClone()
-			if err != nil {
-				return fmt.Errorf("check shallow clone failed: %s", err)
-			}
-
-			if isShallowClone {
-				return fmt.Errorf("git shallow clone is not supported")
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		if !m.SkipGitFetch {
-			if err := logboek.Default.LogProcess("Syncing git branches and tags", logboek.LevelLogProcessOptions{}, func() error {
-				return m.LocalGit.Fetch(true_git.FetchOptions{
-					PruneTags: true,
-					Prune:     true,
-				})
-			}); err != nil {
-				return err
-			}
-		}
 
 		if !m.WithoutKube {
 			if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {

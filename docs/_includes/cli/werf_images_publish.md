@@ -39,6 +39,9 @@ werf images publish [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified stages     
             storage and push images into images repo
+      --git-history-synchronization=false:
+            Synchronize git branches and tags with remote origin (default                           
+            $WERF_GIT_HISTORY_SYNCHRONIZATION)
   -h, --help=false:
             help for publish
       --home-dir='':
