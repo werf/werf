@@ -285,7 +285,7 @@ Werf uses `--synchronization=kubernetes://werf-synchronization` (kubernetes _sta
 
 User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|kubernetes://NAMESPACE` param (arbitrary namespace may be specified, `werf-synchronization` is the default one).
 
-**NOTE:** Multiple werf processes working with the same project should use the same _stages storage_ and _syncrhonization_.
+**NOTE:** Multiple werf processes working with the same project should use the same _stages storage_ and _synchronization_.
 
 ## Working with stages
 
