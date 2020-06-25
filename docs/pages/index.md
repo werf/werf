@@ -18,7 +18,7 @@ layout: default
                 </ul>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
-                {% include scheme.md %}
+                {% include scheme.svg %}
             </div>
         </div>
     </div>

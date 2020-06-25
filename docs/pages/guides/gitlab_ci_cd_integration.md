@@ -46,7 +46,7 @@ There are various configuration options for deploying to review, staging, and pr
 
 ## Infrastructure
 
-![scheme]({% asset howto_gitlabci_scheme.png @path %})
+![scheme]({% asset guides/howto_gitlabci_scheme.png @path %})
 
 * Kubernetes cluster
 * GitLab with an integrated Docker registry.

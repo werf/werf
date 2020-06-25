@@ -44,7 +44,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 ## Инфраструктура
 
-![scheme]({% asset howto_gitlabci_scheme.png @path %})
+![scheme]({% asset guides/howto_gitlabci_scheme.png @path %})
 
 * Кластер Kubernetes.
 * GitLab со встроенным Docker registry.

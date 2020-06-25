@@ -9,7 +9,7 @@ werf represents the new generation of CI/CD tools that integrates low-level buil
 
 werf plugs into a CI/CD system via the so-called *ci-env command*. Ci-env command gathers all required information from the CI/CD system and defines corresponding werf parameters with environment variables that will be referred to as *ci-env*.
 
-![ci-env]({% asset plugging_into_cicd.svg @path %})
+![ci-env]({% asset reference/plugging_into_cicd.svg @path %})
 
 In the sections below you will learn:
  * [what is ci-env](#what-is-ci-env) — what information werf gathers from the CI/CD system and why;
