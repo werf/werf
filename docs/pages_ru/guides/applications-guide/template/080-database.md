@@ -66,8 +66,8 @@ dependencies:
 ```yaml
 postgresql:
   enabled: true
-  postgresqlDatabase: hello_world
-  postgresqlUsername: hello_world_user
+  postgresqlDatabase: guided-database
+  postgresqlUsername: guide-username
   postgresqlHost: postgres
   imageTag: "12"
   persistence:
@@ -237,12 +237,12 @@ TODO: выправить этот скрипт, он должен использ
 {% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
 {% raw %}
 ```yaml
-      - name: ____________
+      - name: migration
         command: [____________]
-{{ tuple "rails" . | include "werf_container_image" | indent 8 }}
+{{ tuple "basicapp" . | include "werf_container_image" | indent 8 }}
         env:
 {{- include "database_envs" . | indent 10 }}
-{{ tuple "____________" . | include "werf_container_env" | indent 10 }}
+{{ tuple "basicapp" . | include "werf_container_env" | indent 10 }}
 ```
 {% endraw %}
 {% endsnippetcut %}

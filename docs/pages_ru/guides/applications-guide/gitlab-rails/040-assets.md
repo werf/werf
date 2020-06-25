@@ -54,7 +54,7 @@ TODO: кратко рассказать, как отлаживать разра�
 {% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_1/werf.yaml#L21" %}
 {% raw %}
 ```yaml
-artifact: build
+artifact: assets-built
 from: ruby:2.7.1
 ansible:
   beforeInstall:
@@ -114,7 +114,7 @@ ansible:
 {% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_2/werf.yaml#21" %}
 ```yaml
 import:
-- artifact: build
+- artifact: assets-built
   add: /app/public
   to: /www
   after: setup

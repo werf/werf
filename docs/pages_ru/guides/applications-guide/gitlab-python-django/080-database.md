@@ -64,8 +64,8 @@ dependencies:
 ```yaml
 postgresql:
   enabled: true
-  postgresqlDatabase: hello_world
-  postgresqlUsername: hello_world_user
+  postgresqlDatabase: guided-database
+  postgresqlUsername: guide-username
   postgresqlHost: postgres
   imageTag: "12"
   persistence:
@@ -200,7 +200,6 @@ postgre:
 
 Работа реальных приложений почти немыслима без выполнения миграций. С точки зрения Kubernetes миграции выполняются созданием объекта Job, который разово запускает под с необходимыми контейнерами. Запуск миграций мы пропишем после каждого деплоя приложения.
 
-
 {% offtopic title="Как конфигурируем сам Job?" %}
 
 TODO: разве "после деплоя, но до доступности"????
@@ -249,10 +248,10 @@ TODO: выправить этот скрипт, он должен использ
         command: ["/bin/bash", "-c", "--"]
         args: ["python manage.py migrate --noinput"]
         workingDir: "/usr/src/app"
-{{ tuple "django" . | include "werf_container_image" | indent 8 }}
+{{ tuple "basicapp" . | include "werf_container_image" | indent 8 }}
         env:
 {{- include "database_envs" . | indent 10 }}
-{{ tuple "django" . | include "werf_container_env" | indent 8 }}
+{{ tuple "basicapp" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
