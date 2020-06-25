@@ -34,8 +34,6 @@ TODO: дать небольшое рассуждение как правильн
 
 Перед тем, как вносить изменения — **необходимо убедиться, что в собранных ассетах нет привязки к конкретному окружению**. То есть в собранных не должно быть логинов, паролей, доменов и тому подобного. В момент сборки ____________ не должен подключаться к базе данных, использовать user-generated контент и тому подобное.
 
-<a name="assets-implementation" />
-
 ## Изменения в сборке
 
 Для ассетов мы соберём отдельный образ с nginx и ассетами. Для этого нужно собрать образ с nginx и забросить туда предварительно собранные с помощью [механизма артефактов](https://ru.werf.io/documentation/configuration/stapel_artifact.html) ассеты.
@@ -95,7 +93,7 @@ ansible:
 {% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
 ```yaml
 import:
-- artifact: build
+- artifact: assets-built
   add: /app/public
   to: /www
   after: setup
