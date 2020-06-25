@@ -12,7 +12,7 @@ import (
 )
 
 func do(v1FromCommit, v1IntoCommit, v2FromCommit, v2IntoCommit string) error {
-	if gitRepo, err := git_repo.OpenLocalRepo("virtual_merge_commit", "."); err != nil {
+	if gitRepo, err := git_repo.OpenLocalRepo("virtual_merge_commit", ".", git_repo.OpenLocalRepoOptions{}); err != nil {
 		return err
 	} else {
 		if v1Commit, err := gitRepo.CreateVirtualMergeCommit(v1FromCommit, v1IntoCommit); err != nil {

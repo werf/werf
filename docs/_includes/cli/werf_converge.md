@@ -70,6 +70,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             stages storage, to push images into the specified images repo, to pull base images
       --env='':
             Use specified environment (default $WERF_ENV)
+      --git-history-synchronization=false:
+            Synchronize git branches and tags with remote origin (default                           
+            $WERF_GIT_HISTORY_SYNCHRONIZATION)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --helm-release-storage-namespace='kube-system':

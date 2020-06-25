@@ -22,7 +22,11 @@ type Local struct {
 	GitDir string
 }
 
-func OpenLocalRepo(name string, path string) (*Local, error) {
+type OpenLocalRepoOptions struct {
+	SynchronizeGitHistory bool
+}
+
+func OpenLocalRepo(name string, path string, options OpenLocalRepoOptions) (*Local, error) {
 	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
@@ -37,7 +41,46 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}
 
-	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
+	localRepo := &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}
+
+	isShallow, err := localRepo.IsShallowClone()
+	if err != nil {
+		return nil, fmt.Errorf("check shallow clone failed: %s", err)
+	}
+
+	if isShallow && !options.SynchronizeGitHistory {
+		return nil, fmt.Errorf("git shallow repository is not supported")
+	}
+
+	if options.SynchronizeGitHistory {
+		if err := logboek.Default.LogProcess("Syncing git branches and tags", logboek.LevelLogProcessOptions{}, func() error {
+			remoteOriginUrl, err := localRepo.RemoteOriginUrl()
+			if err != nil {
+				return fmt.Errorf("get remote origin failed: %s", err)
+			}
+
+			if remoteOriginUrl == "" {
+				return fmt.Errorf("git remote origin was not detected")
+			}
+
+			fetchOptions := true_git.FetchOptions{
+				Prune:     true,
+				PruneTags: true,
+				Unshallow: isShallow,
+				RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
+			}
+
+			if err := localRepo.Fetch(fetchOptions); err != nil {
+				return fmt.Errorf("fetch failed: %s", err)
+			}
+
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return localRepo, nil
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
