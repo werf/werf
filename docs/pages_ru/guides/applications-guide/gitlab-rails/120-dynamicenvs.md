@@ -29,7 +29,7 @@ Deploy to Review:
   stage: deploy
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
-    url: http://${CI_COMMIT_REF_SLUG}.kube.example.com
+    url: http://${CI_COMMIT_REF_SLUG}.mydomain.io
     on_stop: Stop Review
   only:
     - /^feature-*/

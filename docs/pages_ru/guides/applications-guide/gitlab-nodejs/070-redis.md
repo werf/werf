@@ -76,13 +76,13 @@ redis:
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-4-stage-redis-master
+  name: guided-redis-master
 
 # Source: example_4/charts/redis/templates/redis-slave-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-4-stage-redis-slave
+  name: guided-redis-slave
 ```
 
 Знание этих Service нужно нам, чтобы потом к ним подключаться.
