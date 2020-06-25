@@ -36,66 +36,14 @@ TODO: расписать проблематику где вести разраб
 
 Возьмём исходные коды приложения из git:
 
-TODO: вот это может быть коллапс-блоком, но 
-
-Поскольку собирать мы будем spring-фреймворк - для скачивания шаблона приложения перейдем на start.spring.io. Для простоты оставляем все поля как есть, справа добавляем в dependencies только "Spring Web" и нажмем generate. Разархивируем полученный архив - получим готовую структуру папок и нужные нам файлы для того чтобы описать простейшее приложение.
-tree:
-
-```
-├── HELP.md
-├── mvnw
-├── mvnw.cmd
-├── pom.xml
-└── src
-    ├── main
-    │   ├── java
-    │   │   └── com
-    │   │       └── example
-    │   │           └── demo
-    │   │               └── DemoApplication.java
-    │   └── resources
-    │       └── application.properties
-    └── test
-        └── java
-            └── com
-                └── example
-                    └── demo
-                        └── DemoApplicationTests.java
-
-12 directories, 7 files
-```
-[Можно посмотреть в репозитории](gitlab-java-springboot-files/00-demo/)
-
-
-pom.xml у нас сгенерирован автоматически, в нем правки не нужны.
-application.properties на данном этапе так же оставим пустым.
-А вот в DemoApplication.java чуть допишем код, чтобы приложение по http отвечало Hello World:
-
-```java
-...
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-
-@SpringBootApplication
-@RestController
-public class DemoApplication {
-
-        @RequestMapping("/")
-        public String home() {
-                return "Hello World";
-        }
-...
-```
-[DemoApplication.java](gitlab-java-springboot-files/00-demo/src/main/java/com/example/demo/DemoApplication.java)
-
-И инициализируем здесь git-репозиторий (чуть ниже будет рассказано зачем)
-
 ```bash
-git init
-git add .
-git commit -m 'initial commit'
+git clone ____________
 ```
+
+{% offtopic title="Как мы сделали этот код? %}
+Код сгенерирован автоматически с помощью [start.spring.io](https://start.spring.io).
+{% endofftopic %}
+
 
 Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
 
@@ -109,7 +57,7 @@ TODO: вариантов синтаксиса несколько вот раз �
 
 {% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: example-1
+project: werf-guided-project
 configVersion: 1
 ```
 {% endsnippetcut %}
@@ -122,15 +70,15 @@ configVersion: 1
 
 {% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: example-1
+project: werf-guided-project
 configVersion: 1
 ---
-image: hello
+image: basicapp
 from: maven:3-jdk-8
 ```
 {% endsnippetcut %}
 
-В строке `image: hello` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: maven:3-jdk-8` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
+В строке `image: basicapp` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: maven:3-jdk-8` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
 
 {% offtopic title="Что делать, если образов и других констант станет много" %}
 
@@ -142,10 +90,10 @@ TODO: кратко написать про шаблоны Go и дать ссы�
 
 {% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-project: example-1
+project: werf-guided-project
 configVersion: 1
 ---
-image: hello
+image: basicapp
 from: maven:3-jdk-8
 git:
 - add: /
@@ -183,18 +131,14 @@ TODO: Стадии — это очень важный инструмент, к�
 
 Добавим в `werf.yaml` следующий блок используя shell синтаксис:
 
-Однако, чтобы запускать jar его нужно предварительно собрать. Предлагается сделать это локально, мы же соберем jar так же используя werf и ansible-сборшик. Поскольку все системные зависимости для сборки удовлетворены - мы используем образ с maven и всеми зависимостями- опишем сборку приложения в стадии setup:
-
 {% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
 ```yaml
-ansible:
-  setup:
-  - name: Build jar
-    shell: |
+shell:
+    ____________
+    ____________
       mvn -B -f pom.xml package dependency:resolve
-    args:
-      chdir: /app
-      executable: /bin/bash
+    ____________
+    ____________
 ```
 {% endsnippetcut %}
 
@@ -237,7 +181,7 @@ $  werf build --stages-storage :local
 ...
 │ ┌ Building stage ____________
 │ ├ Info
-│ │     repository: werf-stages-storage/example-1
+│ │     repository: ____________/____________
 │ │       image_id: 2743bc56bbf7
 │ │        created: 2020-05-26T22:44:26.0159982Z
 │ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
@@ -292,7 +236,7 @@ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=alw
 Если мы запускаем Werf вне Gitlab CI — нам нужно:
 
 * Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/)
-* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.com/myproject`)
+* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.io/myproject`)
 * Выполнить сборку и загрузку в Registry: `werf build-and-publish`
 
 Если вы всё правильно сделали — вы увидите собранный образ в registry. При использовании registry от gitlab — собранный образ можно увидеть через веб-интерфейс GitLab.
@@ -355,7 +299,7 @@ TODO:  ^^ вот это выше надо причесать, дать ссыл�
 {% raw %}
 ```yaml
       containers:
-      - name: ____________
+      - name: web-basic
         command:
          - java
          - -jar
@@ -386,10 +330,14 @@ Werf складывает собранные образы в Registry с раз�
       ____________
       ____________
       ____________
-{{ tuple "hello" . | include "werf_container_env" | indent 8 }}
+{{ tuple "web-basic" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
+
+____________
+____________
+Мы задали значение для `____________` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
 
 Обратите также внимание на [функцию `werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
@@ -397,7 +345,7 @@ Werf складывает собранные образы в Registry с раз�
 
 {% offtopic title="А как динамически подставлять в переменные окружения нужные значения?" %}
 
- Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид 
+Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид 
 
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
@@ -457,12 +405,12 @@ TODO: вот эти варианты надо оформить и куда-то 
 В статьях и бытовой речи оба этих термина зачастую называют "Ingress", так что нужно догадываться по контексту.
 {% endofftopic %}
 
-Наше приложение работает на стандартном порту `8080` — **откроем порт Pod-у**:
+Наше приложение работает на стандартном порту `3000` — **откроем порт Pod-у**:
 
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
         ports:
-        - containerPort: 8080
+        - containerPort: 3000
           name: http
           protocol: TCP
 ```
@@ -483,7 +431,7 @@ spec:
     service: {{ .Chart.Name }}
   ports:
   - name: http
-    port: 8080
+    port: 3000
     protocol: TCP
 ```
 {% endraw %}
@@ -518,20 +466,20 @@ TODO: написать, что надо курлануть с любого по�
 {% raw %}
 ```yaml
   rules:
-  - host: ____________
+  - host: mydomain.io
     http:
       paths:
       - path: /
         backend:
           serviceName: {{ .Chart.Name }}
-          servicePort: 8080
+          servicePort: 3000
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 #### Разное поведение в разных окружениях
 
-Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.____________, либо ____________ — смотря куда мы задеплоились.
+Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.mydomain.io, либо mydomain.io — смотря куда мы задеплоились.
 
 В werf есть для этого есть три механики:
 
@@ -603,7 +551,7 @@ app:
 Если мы запускаем Werf вне Gitlab CI — нам нужно сделать несколько операций вручную прежде чем Werf сможет рендерить конфиги и деплоить в Kubernetes.
 
 * Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/) (если ранее это не сделано)
-* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.com/myproject`)
+* Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.io/myproject`)
 * Установить переменную окружения `WERF_SECRET_KEY` со значением, [сгенерированным ранее в главе "Разное поведение в разных окружениях"](#secret-values-yaml)
 * Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging` 
 
@@ -633,16 +581,16 @@ TODO: написать
 $ kubectl get namespace
 NAME                          STATUS   AGE
 default                       Active   161d
-example-1-production          Active   4m44s
-example-1-stage               Active   3h2m
+werf-guided-project-production          Active   4m44s
+werf-guided-project-stage               Active   3h2m
 
 $ kubectl -n example-1-stage get po
 NAME                        READY   STATUS    RESTARTS   AGE
-example-1-9f6bd769f-rm8nz   1/1     Running   0          6m12s
+werf-guided-project-9f6bd769f-rm8nz   1/1     Running   0          6m12s
 
 $ kubectl -n example-1-stage get ingress
 NAME        HOSTS                                           ADDRESS   PORTS   AGE
-example-1   stage.____________                                       80      6m18s
+werf-guided-project   stage.mydomain.io                       80      6m18s
 ```
 
 А также вы должны увидеть ваш сервис через браузер.
@@ -659,7 +607,7 @@ TODO: ОБЯЗАТЕЛЬНО нужно показать как оно рабо�
 
 После того, как мы разобрались, как делать сборку и деплой "вручную" — пора автоматизировать процесс.
 
-Мы предлагаем простой флоу, который мы называем [fast and furious](https://docs.google.com/document/d/1a8VgQXQ6v7Ht6EJYwV2l4ozyMhy9TaytaQuA9Pt2AbI/edit#). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production согласно методологии GitOps и будут содержать два окружения, production и stage.
+Мы предлагаем простой флоу, который мы называем [fast and furious](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production и будут содержать два окружения, production и stage.
 
 Начнем с того что добавим нашу сборку в CI с помощью `.gitlab-ci.yml`, который находится внутри корня проекта и опишем там заготовки для всех стадий и общий код, обеспечивающий работу werf.
 
@@ -681,7 +629,7 @@ Deploy to stage:
     - echo "todo deploy to stage"
   environment:
     name: stage
-    url: http://stage.____________
+    url: http://stage.mydomain.io
   only:
     - merge_requests
   when: manual
@@ -691,7 +639,7 @@ Deploy to production:
     - echo "todo deploy to production"
   environment:
     name: production
-    url: http://____________
+    url: http://mydomain.io
   only:
     - master
 ```
@@ -710,18 +658,18 @@ TODO: ^^^ чёто мне кажется это не fast&furious! Надо пр
 ### DOCKER CONFIG
 export DOCKER_CONFIG="/tmp/werf-docker-config-832705503"
 ### STAGES_STORAGE
-export WERF_STAGES_STORAGE="registry.gitlab-example.com/chat/stages"
+export WERF_STAGES_STORAGE="registry.mydomain.io/chat/stages"
 ### IMAGES REPO
-export WERF_IMAGES_REPO="registry.gitlab-example.com/chat"
+export WERF_IMAGES_REPO="registry.mydomain.io/chat"
 export WERF_IMAGES_REPO_IMPLEMENTATION="gitlab"
 ### TAGGING
 export WERF_TAG_BY_STAGES_SIGNATURE="true"
 ### DEPLOY
 # export WERF_ENV=""
-export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.gitlab-example.com/chat"
+export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.mydomain.io/chat"
 export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=61368705db8652555bd96e68aadfd2ac423ba263"
-export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.gitlab-example.com/chat/pipelines/71340"
-export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.gitlab-example.com/chat/-/jobs/184837"
+export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.mydomain.io/chat/pipelines/71340"
+export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.mydomain.io/chat/-/jobs/184837"
 ### IMAGE CLEANUP POLICIES
 export WERF_GIT_TAG_STRATEGY_LIMIT="10"
 export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"

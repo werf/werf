@@ -55,8 +55,8 @@ TODO: кратко рассказать, как отлаживать разра�
 {% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
 {% raw %}
 ```yaml
-artifact: build
-fromImage: django
+artifact: assets-built
+from: ____________
 ansible:
   install:
   - name: "mkdir"
@@ -94,9 +94,9 @@ ansible:
 {% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
 ```yaml
 import:
-- artifact: build
-  add: /usr/src/app/collect_static
-  to: /app/static
+- artifact: assets-built
+  add: /app/public
+  to: /www
   after: setup
 ```
 {% endsnippetcut %}
