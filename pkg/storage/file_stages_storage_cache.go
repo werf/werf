@@ -8,7 +8,7 @@ import (
 
 	"github.com/flant/logboek"
 
-	"github.com/flant/lockgate"
+	"github.com/werf/lockgate"
 
 	"github.com/flant/werf/pkg/werf"
 
