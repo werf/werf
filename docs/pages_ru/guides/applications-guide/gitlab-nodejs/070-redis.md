@@ -29,9 +29,9 @@ toc: false
 
 Для этого нужно:
 
-1. прописать изменения в yaml файлы;
-2. указать Redis конфиги;
-3. подсказать werf, что ему нужно подтягивать subchart.
+1. Указать Redis как зависимый сабчарт в `requirements.yaml`;
+2. Добавить в `gitlab-ci.yml` инициализацию и скачивание сабчартов с помощью werf;
+3. Добавить в манифест с приложением переменные для подключения к Redis;
 
 Пропишем helm-зависимости:
 
@@ -56,17 +56,6 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
-{% endsnippetcut %}
-
-Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
-
-{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_4/.helm/values.yaml#L3" %}
-```yaml
-redis:
-  enabled: true
-```
-{% endsnippetcut %}
-
 При использовании сабчарта по умолчанию создается master-slave кластер redis.
 
 Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы объекты Service:
@@ -87,17 +76,49 @@ metadata:
 
 Знание этих Service нужно нам, чтобы потом к ним подключаться.
 
-## Подключение Rails приложения к базе Redis
+Однако не редко возникают ситуации когда нам необходима не совсем стандартная конфигурация сабчарта, либо же сильно видоизмененная. Все официальные чарты пользуются файлом `values.yaml` для своей настройки. Но до момента скачивания сабчарта мы не имеем к нему доступа.
+
+Потому в werf существует механизм передачи параметров из нашего основного `values.yaml` непосредственно внутрь используемых нами сабчартов, позволяя нам хранить всю необходимую конфигурацию в одном месте.
+
+Рассмотрим на примере нашего Redis сабчарта. Имена сервисов которые мы получили при рендере выглядят некорректно и длинно, т.к. сабчарт генерирует имена своих объектов на основании имени релиза.
+
+Согласно [документации](https://github.com/bitnami/charts/tree/master/bitnami/redis/#parameters) нашего сабчарта, мы можем изменить генерацию имен по умолчанию добавив параметры `nameOverride` и `fullnameOverride`.
+
+Потому добавляем эти параметры в наш `values.yaml`
+
+{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.helm/values.yaml#L24" %}
+```yaml
+redis:
+  fullnameOverride: redis
+  nameOverride: redis
+```
+Первой строкой мы указали сабчарт в который мы передаем параметры (его имя должно совпадать с именем указанным в `requirements.yaml`), а затем и сами параметры точно так же как бы мы это делали в `values.yaml` самого сабчарта.
+
+Теперь имена сервисов Redis после рендера будут выглядеть так:
+
+```yaml
+# Source: example_4/charts/redis/templates/redis-master-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+
+# Source: example_4/charts/redis/templates/redis-slave-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-slave
+```
+
+## Подключение NodeJS приложения к базе Redis
 
 В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
 В нашем приложении мы будем использовать Redis как хранилище сессий.
 
-TODO: выправить, должны использоваться  `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`, `SESSION_TTL`, `COOKIE_SECRET`. 
-
 {% snippetcut name="src/js/index.js" url="____________" %}
 ```js
-const REDIS_URI = process.env.SESSION_REDIS || "redis://127.0.0.1:6379";
+const REDIS_URI = "redis://"+ process.env.REDIS_HOST+":"+ process.env.REDIS_PORT || "redis://127.0.0.1:6379";
 const SESSION_TTL = process.env.SESSION_TTL || 3600;
 const COOKIE_SECRET = process.env.COOKIE_SECRET || "supersecret";
 // Redis connect
@@ -117,7 +138,7 @@ app.use(session);
 ```
 {% endsnippetcut %}
 
-Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`, `SESSION_TTL`, `COOKIE_SECRET`.  
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `SESSION_TTL`, `COOKIE_SECRET`.  
 
 Будем **конфигурировать хост** через `values.yaml`:
 
@@ -134,26 +155,25 @@ app.use(session);
 
 ```yaml
 - name: REDIS_HOST
-  value: "{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master"
+  value: "redis-master"
 ```
 
 На практике иногда возникает необходимость переехать в другую базу данных или кастомизировать что-то — и в этих случаях в разы удобнее работать через `values.yaml`. Причём значений для разных окружений мы не прописываем, а ограничиваемся дефолтным значением:
 
 ```yaml 
-redis:
-   host:
-      _default: redis
+app:
+  redis:
+    host:
+      _default: redis-master
 ```
 
 И под конкретные окружения значения прописываем только если это действительно нужно.
 {% endofftopic %}
 
-**Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
+**Конфигурируем порт и остальные параметры** через `values.yaml`, просто прописывая значения:
 
 {% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
 ```yaml
-- name: REDIS_LOGIN
-  value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
 - name: REDIS_PORT
   value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
 - name: SESSION_TTL
@@ -165,19 +185,18 @@ redis:
 
 {% snippetcut name="values.yaml" url="____________" %}
 ```yaml
-redis:
-   login:
-      _default: ____________
-   port:
-      _default: ____________
-   session_ttl:
-      _default: ____________
-   cookie_secret:
-      _default: ____________
+app:
+  redis:
+    port:
+        _default: ____________
+    session_ttl:
+        _default: ____________
+    cookie_secret:
+        _default: ____________
 ```
 {% endsnippetcut %}
 
-TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+**Конфигурируем пароль** через `secret-values.yaml`:
 
 {% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
 ```yaml
@@ -194,6 +213,7 @@ redis:
 ```
 {% endsnippetcut %}
 
+В данном случае мы еще и передаем пароль
 <div>
     <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
 </div>
