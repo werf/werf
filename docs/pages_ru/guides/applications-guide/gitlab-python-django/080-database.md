@@ -35,7 +35,7 @@ toc: false
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_3/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="#" %}
 ```yaml
 dependencies:
 - name: postgresql
@@ -47,7 +47,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_3/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -60,7 +60,7 @@ dependencies:
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_3/.helm/values.yaml#L4" %}
+{% snippetcut name=".helm/values.yaml" url="#" %}
 ```yaml
 postgresql:
   enabled: true
@@ -75,7 +75,7 @@ postgresql:
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
-{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="template-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="#" %}
 ```yaml
 postgresql:
   postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
@@ -141,7 +141,7 @@ DATABASES = {
 {% offtopic title="Какие значения прописываем в переменные окружения?" %}
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="____________" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_HOST
@@ -152,7 +152,7 @@ DATABASES = {
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_LOGIN
@@ -163,7 +163,7 @@ DATABASES = {
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="____________" %}
+{% snippetcut name="values.yaml" url="#" %}
 ```yaml
 postgre:
    login:
@@ -173,9 +173,9 @@ postgre:
 ```
 {% endsnippetcut %}
 
-TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+TODO: Конфигурируем пароль НЕ ПОНЯТНО КАК ВООБЩЕ
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_PASSWORD
@@ -184,7 +184,7 @@ TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБ�
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="secret-values.yaml" url="____________" %}
+{% snippetcut name="secret-values.yaml" url="#" %}
 ```yaml
 postgre:
   password:
@@ -206,7 +206,7 @@ TODO: разве "после деплоя, но до доступности"????
 
 TODO: надо описать тут концептуальную часть про запуск джоба, вот это про хук и weight и где почитать.
 
-{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 {% raw %}
 ```yaml
 apiVersion: batch/v1
@@ -224,7 +224,7 @@ metadata:
 
 Так как состояние кластера постоянно меняется — мы не можем быть уверены, что на момент запуска миграций база работает и доступна. Поэтому в Job мы добавляем `initContainer`, который не даёт запуститься скрипту миграции, пока не станет доступна база данных.
 
-{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 TODO: выправить этот скрипт, он должен использовать наши реальные конфиги
 {% raw %}
 ```yaml
@@ -241,7 +241,7 @@ TODO: выправить этот скрипт, он должен использ
 
 И, непосредственно запускаем миграции. При запуске миграций мы используем тот же самый образ что и в Deployment приложения.
 
-{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 {% raw %}
 ```yaml
       - name: migration

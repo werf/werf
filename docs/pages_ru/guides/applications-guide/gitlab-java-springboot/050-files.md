@@ -34,7 +34,7 @@ TODO: пишем про
 
 Пропишем использование `aws-java-sdk` как зависимость:
 
-{% snippetcut name="pom.xml" url="gitlab-java-springboot-files/02-demo-with-assets/pom.xml:27-31" %}
+{% snippetcut name="pom.xml" url="#" %}
 ```xml
 <dependency>
    <groupId>com.amazonaws</groupId>
@@ -46,7 +46,7 @@ TODO: пишем про
 
 И сконфигурируем:
 
-{% snippetcut name="src/main/resources/application.properties" url="gitlab-java-springboot-files/02-demo-with-assets/src/main/resources/application.properties" %}
+{% snippetcut name="src/main/resources/application.properties" url="#" %}
 ```yaml
 amazonProperties:
   endpointUrl: ${S3ENDPOINT}
@@ -58,7 +58,7 @@ amazonProperties:
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 ```yaml
 app:
   s3:
@@ -72,7 +72,7 @@ app:
 
 А не секретные значения — храним в `values.yaml`
 
-{% snippetcut name="values.yaml" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/values.yaml:8-13" %}
+{% snippetcut name="values.yaml" url="#" %}
 app:
   s3:
     epurl:
@@ -85,7 +85,7 @@ app:
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-{% snippetcut name="deployment.yaml" url="gitlab-java-springboot-files/02-demo-with-assets/.helm/templates/10-deployment.yaml:53-60" %}
+{% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
        env:
 {{ tuple "hello" . | include "werf_container_env" | indent 8 }}

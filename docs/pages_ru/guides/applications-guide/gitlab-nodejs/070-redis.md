@@ -35,7 +35,7 @@ toc: false
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_4/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="#" %}
 ```yaml
 dependencies:
 - name: redis
@@ -47,7 +47,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -56,6 +56,7 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endsnippetcut %}
 При использовании сабчарта по умолчанию создается master-slave кластер redis.
 
 Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы объекты Service:
@@ -86,12 +87,14 @@ metadata:
 
 Потому добавляем эти параметры в наш `values.yaml`
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.helm/values.yaml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 ```yaml
 redis:
   fullnameOverride: redis
   nameOverride: redis
 ```
+{% endsnippetcut %}
+
 Первой строкой мы указали сабчарт в который мы передаем параметры (его имя должно совпадать с именем указанным в `requirements.yaml`), а затем и сами параметры точно так же как бы мы это делали в `values.yaml` самого сабчарта.
 
 Теперь имена сервисов Redis после рендера будут выглядеть так:
@@ -116,7 +119,7 @@ metadata:
 
 В нашем приложении мы будем использовать Redis как хранилище сессий.
 
-{% snippetcut name="src/js/index.js" url="____________" %}
+{% snippetcut name="src/js/index.js" url="#" %}
 ```js
 const REDIS_URI = "redis://"+ process.env.REDIS_HOST+":"+ process.env.REDIS_PORT || "redis://127.0.0.1:6379";
 const SESSION_TTL = process.env.SESSION_TTL || 3600;
@@ -154,7 +157,7 @@ app.use(session);
 
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 ```yaml
 - name: REDIS_HOST
   value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
@@ -184,7 +187,7 @@ app:
 
 **Конфигурируем порт и остальные параметры** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 ```yaml
 - name: REDIS_PORT
   value: "{{ pluck .Values.global.env .Values.app.redis.port | first | default .Values.app.redis.port_default | quote }}"
@@ -195,7 +198,7 @@ app:
 ```
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="____________" %}
+{% snippetcut name="values.yaml" url="#" %}
 ```yaml
 app:
   redis:

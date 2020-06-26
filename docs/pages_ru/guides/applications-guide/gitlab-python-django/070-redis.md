@@ -35,7 +35,7 @@ toc: false
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="template-files/examples/example_4/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="#" %}
 ```yaml
 dependencies:
 - name: redis
@@ -47,7 +47,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="template-files/examples/example_4/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -60,7 +60,7 @@ dependencies:
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-{% snippetcut name=".helm/values.yaml" url="template-files/examples/example_4/.helm/values.yaml#L3" %}
+{% snippetcut name=".helm/values.yaml" url="#" %}
 ```yaml
 redis:
   enabled: true
@@ -95,7 +95,7 @@ metadata:
 
 TODO: переделать вот этот код чтобы соответствовало тексту
 
-{% snippetcut name="____________" url="____________" %}
+{% snippetcut name="____________" url="#" %}
 ```python
 CACHES = {
     "default": {
@@ -114,7 +114,7 @@ CACHES = {
 
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 ```yaml
 - name: REDIS_HOST
   value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
@@ -143,7 +143,7 @@ redis:
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 ```yaml
 - name: REDIS_LOGIN
   value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
@@ -152,7 +152,7 @@ redis:
 ```
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="____________" %}
+{% snippetcut name="values.yaml" url="#" %}
 ```yaml
 redis:
    login:
@@ -162,16 +162,16 @@ redis:
 ```
 {% endsnippetcut %}
 
-TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+TODO: Конфигурируем пароль НЕ ПОНЯТНО КАК ВООБЩЕ
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 ```yaml
 - name: REDIS_PASSWORD
   value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
 ```
 {% endsnippetcut %}
 
-{% snippetcut name="secret-values.yaml" url="____________" %}
+{% snippetcut name="secret-values.yaml" url="#" %}
 ```yaml
 redis:
   password:

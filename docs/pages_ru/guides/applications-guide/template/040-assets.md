@@ -49,7 +49,7 @@ TODO: кратко рассказать, как отлаживать разра�
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в артефакте на стадии `setup`.
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
 artifact: assets-built
@@ -64,7 +64,7 @@ ansible:
 
 Теперь, когда артефакт собран, соберём образ с nginx:
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
 image: assets
@@ -82,7 +82,7 @@ ansible:
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
+{% snippetcut name="werf.yaml" url="#" %}
 ```yaml
 import:
 - artifact: assets-built
@@ -98,7 +98,7 @@ import:
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_2/.helm/templates/deployment.yaml#L33" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -127,7 +127,7 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="template-files/examples/example_2/.helm/templates/service.yaml#L9" %}
+{% snippetcut name=".helm/templates/service.yaml" url="#" %}
 ```yaml
   ports:
   - name: http
@@ -138,7 +138,7 @@ import:
 
 Также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
 ```yaml
       paths:
       - path: /
@@ -152,7 +152,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам в объекте Ingress:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml#L9" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
 {% raw %}
 ```yaml
       paths:
