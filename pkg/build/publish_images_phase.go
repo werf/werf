@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"github.com/werf/logboek"
 
@@ -231,7 +230,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	if alreadyExists {
-		logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageActualTag)
+		logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
 
 		_ = logboek.WithIndent(func() error {
 			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
@@ -302,7 +301,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		}
 
 		if alreadyExists {
-			logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", strings.Title(string(tagStrategy)), imageActualTag)
+			logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
 			_ = logboek.WithIndent(func() error {
 				logboek.Info.LogFDetails("discarding newly built image %s\n", publishImage.MustGetBuiltId())
 				logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)

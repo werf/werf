@@ -281,6 +281,7 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 						exceptedRepoImages[imageName] = exceptedImageList
 
 						logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
+						logboek.LogOptionalLn()
 						continue Loop
 					}
 				}
@@ -336,7 +337,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 	}
 
 	var referencesToScan []*referenceToScan
-	if err := logboek.Info.LogProcess("Preparing references to scan", logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Default.LogProcess("Preparing references to scan", logboek.LevelLogProcessOptions{}, func() error {
 		referencesToScan, err = getReferencesToScan(gitRepository, m.GitHistoryBasedCleanupOptions.Policies)
 		return err
 	}); err != nil {
@@ -422,6 +423,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 						_ = logboek.Info.LogBlock(logBlockMessage, logboek.LevelLogBlockOptions{}, func() error {
 							for _, repoImage := range repoImageListToCleanup {
 								logboek.Info.LogFDetails("  tag: %s\n", repoImage.Tag)
+								logboek.LogOptionalLn()
 							}
 
 							return nil
@@ -540,27 +542,27 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 		return nil, err
 	}
 
-	if err := logboek.Info.LogProcess("Deleting unused images metadata", logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Default.LogProcess("Deleting unused images metadata", logboek.LevelLogProcessOptions{}, func() error {
 		imageUnusedCommitHashes, err := m.getImageUnusedCommitHashes(resultRepoImages)
 		if err != nil {
 			return err
 		}
 
 		for imageName, commitHashes := range imageUnusedCommitHashes {
-			logboek.Debug.LogProcessStart(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessStartOptions{})
+			logboek.Default.LogProcessStart(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessStartOptions{})
 
 			for _, commitHash := range commitHashes {
 				if m.DryRun {
-					logboek.Debug.LogLn(commitHash)
+					logboek.Default.LogLn(commitHash)
 				} else {
 					if err := m.StagesManager.StagesStorage.RmImageCommit(m.ProjectName, imageName, commitHash.String()); err != nil {
-						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+						logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
 						return err
 					}
 				}
 			}
 
-			logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+			logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 		}
 
 		return nil
