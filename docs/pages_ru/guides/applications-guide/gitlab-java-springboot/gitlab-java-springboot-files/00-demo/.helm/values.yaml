@@ -1,7 +1,0 @@
-app:
-  java_opt:
-    _default: "--debug"
-    production: ""
-  url:
-    _default: stage.example.com
-    production: example.com
