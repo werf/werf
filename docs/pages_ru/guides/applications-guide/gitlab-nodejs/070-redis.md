@@ -138,7 +138,19 @@ app.use(session);
 ```
 {% endsnippetcut %}
 
-Для подключения к базе данных нам, очевидно, нужно знать: хост, порт. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `SESSION_TTL`, `COOKIE_SECRET`.  
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `SESSION_TTL`, `COOKIE_SECRET`.  
+
+Вы скорее всего заметили что мы не указали переменные для логина и пароля. В данном случае для подключения к редису они нам не требуются.
+
+{% offtopic title="А почему они не требуются?" %}
+
+На это у нас есть несколько причин:
+1. К сожалению данный сабчарт не поддерживает использование отдельного логина.
+2. В этом случае ради примера нам достаточно указать стандартную конфигурацию Redis без аутентификации, т.к. при установке из сабчарта он остается доступным только внутри кластера Кубернетес.
+
+Тем не менее для Redis находящегося за пределами кластера, либо любой другой базы схожего типа (Memcached, Tarantool) вы можете прописать данные для аутентификации как обычные переменные.
+
+{% endofftopic %}
 
 Будем **конфигурировать хост** через `values.yaml`:
 
@@ -175,11 +187,11 @@ app:
 {% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
 ```yaml
 - name: REDIS_PORT
-  value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.app.redis.port | first | default .Values.app.redis.port_default | quote }}"
 - name: SESSION_TTL
-  value: "{{ pluck .Values.global.env .Values.redis.session_ttl | first | default .Values.redis.session_ttl_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.app.redis.session_ttl | first | default .Values.redis.session_ttl_default | quote }}"
 - name: COOKIE_SECRET
-  value: "{{ pluck .Values.global.env .Values.redis.cookie_secret | first | default .Values.redis.cookie_secret_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.app.redis.cookie_secret | first | default .Values.app.redis.cookie_secret_default | quote }}"
 ```
 {% endsnippetcut %}
 
@@ -196,24 +208,6 @@ app:
 ```
 {% endsnippetcut %}
 
-**Конфигурируем пароль** через `secret-values.yaml`:
-
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
-```yaml
-- name: REDIS_PASSWORD
-  value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
-```
-{% endsnippetcut %}
-
-{% snippetcut name="secret-values.yaml" url="____________" %}
-```yaml
-redis:
-  password:
-    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
-```
-{% endsnippetcut %}
-
-В данном случае мы еще и передаем пароль
 <div>
     <a href="080-database.html" class="nav-btn">Далее: Подключение базы данных</a>
 </div>
