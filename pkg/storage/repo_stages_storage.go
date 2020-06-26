@@ -322,7 +322,7 @@ func (storage *RepoStagesStorage) GetImageMetadataByCommit(projectName, imageNam
 	} else if imgInfo != nil && imgInfo.Labels != nil {
 		metadata := &ImageMetadata{ContentSignature: imgInfo.Labels["ContentSignature"]}
 
-		logboek.Info.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
+		logboek.Debug.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 		return metadata, nil
 	} else {

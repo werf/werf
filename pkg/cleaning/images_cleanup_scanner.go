@@ -18,7 +18,7 @@ func scanReferencesHistory(gitRepository *git.Repository, refs []*referenceToSca
 	for i := len(refs) - 1; i >= 0; i-- {
 		ref := refs[i]
 
-		logProcessMessage := fmt.Sprintf("Reference %s (scanDepthLimit: %s, imageDepthToKeep: %d)", ref.Name().Short(), ref.referenceScanOptions.scanDepthLimitLogString(), ref.referenceScanOptions.imageDepthToKeep)
+		logProcessMessage := fmt.Sprintf("Reference %s (imageDepthToKeep: %d)", ref.Name().Short(), ref.referenceScanOptions.imageDepthToKeep)
 		var refReachedContentSignatureList []string
 		var refStopCommitHashes []plumbing.Hash
 		var err error
@@ -70,9 +70,9 @@ type commitHistoryScanner struct {
 
 func (s *commitHistoryScanner) reachedContentSignatureList() []string {
 	var reachedContentSignatureList []string
-	for contentSignarure, commitHashes := range s.reachedContentSignatureCommitHashes {
+	for contentSignature, commitHashes := range s.reachedContentSignatureCommitHashes {
 		if len(commitHashes) != 0 {
-			reachedContentSignatureList = append(reachedContentSignatureList, contentSignarure)
+			reachedContentSignatureList = append(reachedContentSignatureList, contentSignature)
 		}
 	}
 
@@ -216,21 +216,17 @@ outerLoop:
 
 				if !ok {
 					logboek.Info.LogF(
-						"Expected content signature %s was reached on commit %s (scanDepthLimit: %d/%s, imageDepthToKeep: %d/%d)\n",
+						"Expected content signature %s was reached on commit %s (imageDepthToKeep: %d/%d)\n",
 						contentSignature,
 						commitHash.String(),
-						s.scanDepth,
-						s.referenceScanOptions.scanDepthLimitLogString(),
 						len(s.reachedContentSignatureCommitHashes),
 						len(s.expectedContentSignatureCommitHashes),
 					)
 				} else {
 					logboek.Info.LogF(
-						"Expected content signature %s was reached again on another commit %s (scanDepthLimit: %d/%s, imageDepthToKeep: %d/%d)\n",
+						"Expected content signature %s was reached again on another commit %s (imageDepthToKeep: %d/%d)\n",
 						contentSignature,
 						commitHash.String(),
-						s.scanDepth,
-						s.referenceScanOptions.scanDepthLimitLogString(),
 						len(s.reachedContentSignatureCommitHashes),
 						len(s.expectedContentSignatureCommitHashes),
 					)
@@ -243,7 +239,7 @@ outerLoop:
 
 	co, err := s.gitRepository.CommitObject(commitHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("commit hash %s resolve failed: %s", commitHash.String(), err)
 	}
 
 	return co.ParentHashes, nil

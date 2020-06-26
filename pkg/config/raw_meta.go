@@ -8,9 +8,10 @@ import (
 )
 
 type rawMeta struct {
-	ConfigVersion   *int               `yaml:"configVersion,omitempty"`
-	Project         *string            `yaml:"project,omitempty"`
-	DeployTemplates rawDeployTemplates `yaml:"deploy,omitempty"`
+	ConfigVersion   *int                    `yaml:"configVersion,omitempty"`
+	Project         *string                 `yaml:"project,omitempty"`
+	DeployTemplates *rawMetaDeployTemplates `yaml:"deploy,omitempty"`
+	Cleanup         *rawMetaCleanup         `yaml:"cleanup,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -61,7 +62,13 @@ func (c *rawMeta) toMeta() *Meta {
 		}
 	}
 
-	meta.DeployTemplates = c.DeployTemplates.toDeployTemplates()
+	if c.Cleanup != nil {
+		meta.Cleanup = c.Cleanup.toMetaCleanup()
+	}
+
+	if c.DeployTemplates != nil {
+		meta.DeployTemplates = c.DeployTemplates.toDeployTemplates()
+	}
 
 	return meta
 }
