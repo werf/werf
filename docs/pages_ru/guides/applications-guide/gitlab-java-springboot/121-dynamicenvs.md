@@ -4,11 +4,13 @@
 Передадим .helm в .base_deploy это переменную аналогично тому что уже сделано с environment:
 
 
+{% raw %}
 ```
      --set "global.env=${CI_ENVIRONMENT_SLUG}"
      --set "global.ci_url=$(basename ${CI_ENVIRONMENT_URL})"
 
 ```
+{% endraw %}
 
 * CI_ENVIRONMENT_SLUG - встроенная перменная gitlab, "очишенная" от некорректных с точки зрения DNS, URL. В нашем случае позволяет избавиться от символов, которые kubernetes не может воспринять - слеши, подчеркивания. Заменяет на "-".
 * CI_ENVIRONMENT_URL - мы прокидываем переменную которую указали в environment url.

@@ -3,6 +3,7 @@ title: Подключение зависимостей
 sidebar: applications-guide
 permalink: documentation/guides/applications-guide/gitlab-java-springboot/030-dependencies.html
 layout: guide
+toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
@@ -34,16 +35,19 @@ Werf предлагает использовать для стадий след�
 
 Пропишем разрешение зависимостей в нужную стадию сборки в `werf.yaml`
 
-{% snippetcut name="werf.yaml" url="files/examples/example_1/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
     shell: |
       mvn -B -f pom.xml package dependency:resolve
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Однако, если оставить всё так — стадия `beforeInstall` не будет запускаться при изменении `pom.xml` и любого кода в `src/`. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L10" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 git:
 - add: /
@@ -53,6 +57,7 @@ git:
     - pom.xml
     - src
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 При изменении файла `pom.xml` или любого из файлов в `src/` стадия `setup` будет запущена заново.
@@ -66,17 +71,20 @@ git:
 
 Даже в пустом проекте сборщику нужно скачать приличное количество файлов. Cкачивать эти файлы раз за разом выглядит нецелесообразным, поэтому разумно **переиспользовать кэш в `.m2/repository` между сборками**. С помощью директивы `mount` будем хранить кэш на раннере:
 
-{% snippetcut name="werf.yaml" url="gitlab-java-springboot-files/01-demo-optimization/werf.yaml:14-1" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 mount:
 - from: build_dir
   to: /root/.m2/repository
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 **Усовершенствуем использование пользовательских стадий**: отделим resolve зависимостей от сборки jar — таким образом те коммиты, в которых правится исходный код, но не меняются зависимости, будут собираться быстрее.
 
-{% snippetcut name="werf.yaml" url="gitlab-java-springboot-files/01-demo-optimization/werf.yaml:17-31" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 ansible:
   beforeSetup:
@@ -94,6 +102,7 @@ ansible:
       chdir: /app
       executable: /bin/bash
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 

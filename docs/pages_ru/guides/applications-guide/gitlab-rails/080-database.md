@@ -35,7 +35,8 @@ toc: false
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="gitlab-rails-files/examples/example_3/.helm/requirements.yaml" %}
+{% snippetcut name=".helm/requirements.yaml" url="#" %}
+{% raw %}
 ```yaml
 dependencies:
 - name: postgresql
@@ -43,11 +44,13 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: postgresql.enabled
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="gitlab-rails-files/examples/example_3/.gitlab-ci.yml#L24" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% raw %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -56,11 +59,13 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
-{% snippetcut name=".helm/values.yaml" url="gitlab-rails-files/examples/example_3/.helm/values.yaml#L4" %}
+{% snippetcut name=".helm/values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgresql:
   enabled: true
@@ -71,15 +76,18 @@ postgresql:
   persistence:
     enabled: true
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
-{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="gitlab-rails-files/examples/example_3/.helm/secret-values.yaml#L3" %}
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="#" %}
+{% raw %}
 ```yaml
 postgresql:
   postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
@@ -90,7 +98,8 @@ postgresql:
 
 Для подключения ____________ приложения к PostgreSQL необходимо установить нужный gem (`TODO: какой???`) и сконфигурировать:
 
-{% snippetcut name="config/database.yml" url="gitlab-rails-files/examples/example_3/config/database.yml#L17" %}
+{% snippetcut name="config/database.yml" url="#" %}
+{% raw %}
 ```yaml
 default: &default
   adapter: postgresql
@@ -104,6 +113,7 @@ default: &default
 development:
   <<: *default
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, имя базы данных, логин, пароль. В коде приложения мы используем несколько переменных окружения: `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_DATABASE`, `POSTGRESQL_LOGIN`, `POSTGRESQL_PASSWORD`
@@ -126,7 +136,7 @@ development:
 
 Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/deployment.yaml#L24" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 {{- include "database_envs" . | indent 8 }}
@@ -140,7 +150,7 @@ development:
 {% offtopic title="Какие значения прописываем в переменные окружения?" %}
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="gitlab-rails-files/examples/example_3/.helm/templates/_envs.tpl#L10" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_HOST
@@ -151,7 +161,7 @@ development:
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_LOGIN
@@ -162,7 +172,8 @@ development:
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="____________" %}
+{% snippetcut name="values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgre:
    login:
@@ -170,11 +181,12 @@ postgre:
    port:
       _default: ____________
 ```
+{% endraw %}
 {% endsnippetcut %}
 
-TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБЩЕ
+TODO: Конфигурируем пароль НЕ ПОНЯТНО КАК ВООБЩЕ
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="____________" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_PASSWORD
@@ -183,12 +195,14 @@ TODO: Конфигурируем пароль ХУЙ ЗНАЕТ КАК ВООБ�
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="secret-values.yaml" url="____________" %}
+{% snippetcut name="secret-values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgre:
   password:
     _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 {% endofftopic %}
@@ -205,7 +219,7 @@ TODO: разве "после деплоя, но до доступности"????
 
 TODO: надо описать тут концептуальную часть про запуск джоба, вот это про хук и weight и где почитать.
 
-{% snippetcut name=".helm/templates/job.yaml" url="gitlab-rails-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 {% raw %}
 ```yaml
 apiVersion: batch/v1
@@ -223,7 +237,7 @@ metadata:
 
 Так как состояние кластера постоянно меняется — мы не можем быть уверены, что на момент запуска миграций база работает и доступна. Поэтому в Job мы добавляем `initContainer`, который не даёт запуститься скрипту миграции, пока не станет доступна база данных.
 
-{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 TODO: выправить этот скрипт, он должен использовать наши реальные конфиги
 {% raw %}
 ```yaml
@@ -240,7 +254,7 @@ TODO: выправить этот скрипт, он должен использ
 
 И, непосредственно запускаем миграции. При запуске миграций мы используем тот же самый образ что и в Deployment приложения.
 
-{% snippetcut name=".helm/templates/job.yaml" url="template-files/examples/example_3/.helm/templates/job.yaml" %}
+{% snippetcut name=".helm/templates/job.yaml" url="#" %}
 {% raw %}
 ```yaml
       - name: migration

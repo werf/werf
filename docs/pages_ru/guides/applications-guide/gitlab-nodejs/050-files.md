@@ -66,6 +66,7 @@ var s3Client = new Minio.Client({
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% raw %}
 ```yaml
 app:
   s3:
@@ -74,11 +75,13 @@ app:
     secret_key:
       _default: zpThy4kGeqMNSuF2gyw48cOKJMvZqtrTswAQ
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 А не секретные значения — храним в `values.yaml`
 
 {% snippetcut name="values.yaml" url="#" %}
+{% raw %}
 ```yaml
 app:
   s3:
@@ -91,11 +94,13 @@ app:
     ssl:
       _default: 'false'
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
 {% snippetcut name="deployment.yaml" url="#" %}
+{% raw %}
 ```yaml
         - name: CDN_PREFIX
           value: {{ printf "%s%s" (pluck .Values.global.env .Values.app.cdn_prefix | first | default .Values.app.cdn_prefix._default) (pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default) | quote }}
@@ -112,6 +117,7 @@ app:
         - name: S3_BUCKET
           value: {{ pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default }}
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.

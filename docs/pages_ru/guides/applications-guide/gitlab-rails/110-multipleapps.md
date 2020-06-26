@@ -55,19 +55,21 @@ TODO: напомнить про то, что helm-шаблоны — это мн
 
 Сборка образа `backend` аналогична ранее описанному [базовому приложению](020-basic.html) с [зависимостями](030-dependencies.html), за исключением того, откуда берётся исходный код:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_5/werf.yaml#L12" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 git:
 - add: /backend
   to: /app
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Мы добавляем в собираемый образ только исходные коды, относящиеся к Rails приложению. Таким образом, пересборка этой части проекта не будет срабатывать, когда изменился только React-код.
 
 Сборка для frontend приложения описана в файле `werf.yaml` как отдельный образ. Поскольку nodejs нужен только для сборки - соберем артефакт:
 
-{% snippetcut name="werf.yaml" url="gitlab-rails-files/examples/example_5/werf.yaml#L30" %}
+{% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
 artifact: frontend-build
@@ -141,7 +143,7 @@ spec:
 
 Маршрутизация запросов будет осуществляться через Ingress:
 
-{% snippetcut name="ingress.yaml" url="gitlab-rails-files/examples/example_5/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="#" %}
 {% raw %}
 ```yaml
   rules:
