@@ -85,7 +85,7 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 		logboek.Debug.LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
-			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) {
+			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
 				continue
 			}
 

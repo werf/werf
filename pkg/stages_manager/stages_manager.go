@@ -150,17 +150,17 @@ func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) er
 }
 
 func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {
-	// TODO: optimize, get list from coherent stages storage cache
 	if stageIDs, err := m.StagesStorage.GetAllStages(m.ProjectName); err != nil {
 		return nil, err
 	} else {
 		var stages []*image.StageDescription
 
 		for _, stageID := range stageIDs {
-			if stageDesc, err := m.getStageDescription(stageID); err != nil {
+			if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{}); err != nil {
 				return nil, err
 			} else if stageDesc == nil {
-				return nil, fmt.Errorf("invalid stage %s: stage does not exists in the %s", stageID.String(), m.StagesStorage.String())
+				logboek.Warn.LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+				continue
 			} else {
 				stages = append(stages, stageDesc)
 			}
@@ -298,7 +298,7 @@ func (m *StagesManager) getStagesBySignatureFromCache(stageName, stageSig string
 	var stages []*image.StageDescription
 
 	for _, stageID := range cacheStagesIDs {
-		if stageDesc, err := m.getStageDescription(stageID); err != nil {
+		if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{StageShouldExist: true}); err != nil {
 			return false, nil, err
 		} else {
 			stages = append(stages, stageDesc)
@@ -336,8 +336,11 @@ func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(stageName, stag
 
 	var stages []*image.StageDescription
 	for _, stageID := range stageIDs {
-		if stageDesc, err := m.getStageDescription(stageID); err != nil {
+		if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{}); err != nil {
 			return nil, err
+		} else if stageDesc == nil {
+			logboek.Warn.LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+			continue
 		} else {
 			stages = append(stages, stageDesc)
 		}
@@ -359,7 +362,11 @@ func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(stageName, stag
 	return stages, nil
 }
 
-func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.StageDescription, error) {
+type getStageDescriptionOptions struct {
+	StageShouldExist bool
+}
+
+func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStageDescriptionOptions) (*image.StageDescription, error) {
 	stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Signature, stageID.UniqueID)
 
 	logboek.Info.LogF("Getting image %s info from manifest cache...\n", stageImageName)
@@ -382,9 +389,11 @@ func (m *StagesManager) getStageDescription(stageID image.StageID) (*image.Stage
 				return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
 			}
 			return stageDesc, nil
-		} else {
+		} else if opts.StageShouldExist {
 			logboek.ErrF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
 			return nil, ErrShouldResetStagesStorageCache
+		} else {
+			return nil, nil
 		}
 	}
 }
