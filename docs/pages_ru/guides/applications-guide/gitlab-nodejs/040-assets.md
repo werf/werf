@@ -48,10 +48,10 @@ TODO: кратко рассказать, как отлаживать разра�
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в отдельном артефакте в 2-х стадиях - `install` и `setup`. На первой стадии мы выполняем `npm install`, на второй уже `npm build`. Важно не забыть про кеширование стадий и зависимость сборки от изменения определенных файлов в репозитории.
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
-artifact: build
+artifact: assets-built
 from: ____________
 ansible:
   ____________
@@ -72,7 +72,7 @@ git:
 
 Теперь, когда артефакт собран, соберём образ с nginx:
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_1/werf.yaml#L21" %}
+{% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
 image: assets
@@ -90,7 +90,8 @@ ansible:
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="template-files/examples/example_2/werf.yaml#21" %}
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 import:
 - artifact: assets-built
@@ -98,6 +99,7 @@ import:
   to: /www
   after: setup
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 ## Изменения в деплое и роутинге
@@ -106,7 +108,7 @@ import:
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="template-files/examples/example_2/.helm/templates/deployment.yaml#L33" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -135,18 +137,21 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="template-files/examples/example_2/.helm/templates/service.yaml#L9" %}
+{% snippetcut name=".helm/templates/service.yaml" url="#" %}
+{% raw %}
 ```yaml
   ports:
   - name: http
     port: 80
     protocol: TCP
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% raw %}
 ```yaml
       paths:
       - path: /
@@ -154,13 +159,14 @@ import:
           serviceName: {{ .Chart.Name }}
           servicePort: 80
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 {% offtopic title="А можно ли разделять трафик на уровне ingress?" %}
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам в объекте Ingress:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="template-files/examples/example_2/.helm/templates/ingress.yaml#L9" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
 {% raw %}
 ```yaml
       paths:

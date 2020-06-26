@@ -15,6 +15,7 @@ toc: false
 Если мы хотим воспользоваться пакетом rubocop-rails нам нужно добавить эту зависимость в наше приложение (в файл `Gemfile`) и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
 {% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% raw %}
 ```yaml
 Rubocop check:
   script:
@@ -24,17 +25,20 @@ Rubocop check:
     - werf
   needs: ["Build"]
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Созданную стадию нужно добавить в список стадий
 
 {% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% raw %}
 ```yaml
 stages:
   - build
   - test
   - deploy
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Обратите внимание, что процесс будет выполняться на runner-е, внутри собранного контейнера, но без доступа к базе данных и каким-либо ресурсам kubernetes-кластера.

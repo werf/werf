@@ -15,7 +15,7 @@ toc: false
 
 В этой главе мы настроим в нашем базовом приложении работу с пользовательскими файлами. Для этого нам нужно персистентное хранилище.
 
-В идеале — добиться, чтобы приложение было stateless, а данные хранились в S3-совместимом хранилище, например minio или aws s3. Это обеспечивает простое масштабирование, работу в HA режиме и высокую доступность.
+В идеале — нужно добиться, чтобы приложение было stateless, а данные хранились в S3-совместимом хранилище, например minio или aws s3. Это обеспечивает простое масштабирование, работу в HA режиме и высокую доступность.
 
 {% offtopic title="А есть какие-то способы кроме S3?" %}
 TODO: пишем про 
@@ -35,14 +35,17 @@ TODO: пишем про
 Добавим в Gemfile зависимости для работы с s3 aws:
 
 {% snippetcut name="Gemfile" url="#" %}
+{% raw %}
 ```
 gem 'aws-sdk', '~> 2'
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Добавим инициализатор TODO: написать логику, почему это так. Что это за файл?
 
 {% snippetcut name="config/initializers/aws.rb" url="#" %}
+{% raw %}
 ```ruby
 Aws.config.update({
   region: 'us-east-1',
@@ -51,11 +54,13 @@ Aws.config.update({
 
 S3_BUCKET = Aws::S3::Resource.new.bucket(ENV['S3_BUCKET'])
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% raw %}
 ```yaml
 app:
   aws_access_key_id:
@@ -65,11 +70,13 @@ app:
   s3_bucket:
     _default: my-s3-development
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
 {% snippetcut name="deployment.yaml" url="#" %}
+{% raw %}
 ```yaml
         - name: S3_BUCKET
           value: {{ pluck .Values.global.env .Values.app.s3_bucket | first | default .Values.app.s3_bucket._default }}
@@ -78,6 +85,7 @@ app:
         - name: AWS_SECRET_ACCESS_KEY
           value: {{ pluck .Values.global.env .Values.app.aws_secret_access_key | first | default .Values.app.aws_secret_access_key._default }}
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
