@@ -143,7 +143,8 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 				if metadata.ContentSignature != img.GetContentSignature() {
 					// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
 					// TODO: allowInconsistentPublish: true option for werf.yaml
-					return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+					// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+					return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
 				}
 				return nil
 			} else {
