@@ -12,7 +12,7 @@ type StageID struct {
 }
 
 func (id StageID) String() string {
-	return fmt.Sprintf("signature:%s uniqueID:%s", id.Signature, id.UniqueID)
+	return fmt.Sprintf("signature:%s uniqueID:%d", id.Signature, id.UniqueID)
 }
 
 func (id StageID) UniqueIDAsTime() time.Time {
