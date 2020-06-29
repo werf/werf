@@ -95,20 +95,32 @@ func (m *stagesCleanupManager) run() error {
 
 	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
 	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		stages, err := m.StagesManager.GetAllStages()
-		if err != nil {
+		var stagesImageList []*image.Info
+		stagesByImageName := map[string]*image.StageDescription{}
+
+		if err := logboek.Default.LogProcess("Fetching stages", logboek.LevelLogProcessOptions{}, func() error {
+			stages, err := m.StagesManager.GetAllStages()
+			if err != nil {
+				return err
+			}
+
+			for _, stageDesc := range stages {
+				stagesImageList = append(stagesImageList, stageDesc.Info)
+				stagesByImageName[stageDesc.Info.Name] = stageDesc
+			}
+
+			return nil
+		}); err != nil {
 			return err
 		}
 
-		var stagesImageList []*image.Info
-		stagesByImageName := map[string]*image.StageDescription{}
-		for _, stageDesc := range stages {
-			stagesImageList = append(stagesImageList, stageDesc.Info)
-			stagesByImageName[stageDesc.Info.Name] = stageDesc
-		}
+		var repoImageList []*image.Info
+		var err error
 
-		repoImageList, err := m.getOrInitImagesRepoImageList()
-		if err != nil {
+		if err := logboek.Default.LogProcess("Fetching repo images", logboek.LevelLogProcessOptions{}, func() error {
+			repoImageList, err = m.getOrInitImagesRepoImageList()
+			return err
+		}); err != nil {
 			return err
 		}
 
@@ -135,11 +147,9 @@ func (m *stagesCleanupManager) run() error {
 			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
 		}
 
-		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...); err != nil {
-			return err
-		}
-
-		return nil
+		return logboek.Default.LogProcess("Deleting stages tags", logboek.LevelLogProcessOptions{}, func() error {
+			return deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
+		})
 	})
 }
 

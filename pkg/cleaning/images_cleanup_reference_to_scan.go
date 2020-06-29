@@ -141,9 +141,9 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 			resultTagsRefs = mergeReferences(resultTagsRefs, policyRefs)
 		}
 
-		_ = logboek.Info.LogBlock(policy.String(), logboek.LevelLogBlockOptions{}, func() error {
+		_ = logboek.Default.LogBlock(policy.String(), logboek.LevelLogBlockOptions{}, func() error {
 			for _, ref := range policyRefs {
-				logboek.Info.LogLnDetails(ref.Name().Short())
+				logboek.Default.LogLnDetails(ref.Name().Short())
 			}
 
 			return nil
