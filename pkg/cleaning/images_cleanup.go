@@ -460,6 +460,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 					logboek.LogOptionalLn()
 				}
 
+				resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImages...)
 				repoImagesToCleanup[imageName] = exceptRepoImageList(repoImagesToCleanup[imageName], repoImages...)
 			}
 
@@ -475,6 +476,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 		Style: logboek.HighlightStyle(),
 	}, func() error {
 		for imageName, repoImageListToCleanup := range repoImagesToCleanup {
+			var repoImageListToSave []*image.Info
 			if err := logboek.LogProcess(logging.ImageLogProcessName(imageName, false), logboek.LogProcessOptions{}, func() error {
 				if err := logboek.Default.LogProcess("Scanning git references history", logboek.LevelLogProcessOptions{}, func() error {
 					contentSignatureCommitHashes := map[string][]plumbing.Hash{}
@@ -503,7 +505,9 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 							repoImageListToKeep = append(repoImageListToKeep, contentSignatureRepoImageListToCleanup...)
 						}
-						resultRepoImages[imageName] = repoImageListToKeep
+
+						repoImageListToSave = append(repoImageListToSave, repoImageListToKeep...)
+						resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImageListToKeep...)
 						repoImageListToCleanup = exceptRepoImageList(repoImageListToCleanup, repoImageListToKeep...)
 					} else {
 						logboek.LogLn("Scanning stopped due to nothing to seek")
@@ -514,9 +518,9 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 					return err
 				}
 
-				if len(resultRepoImages[imageName]) != 0 {
+				if len(repoImageListToSave) != 0 {
 					_ = logboek.Default.LogBlock("Saved tags", logboek.LevelLogBlockOptions{}, func() error {
-						for _, repoImage := range resultRepoImages[imageName] {
+						for _, repoImage := range repoImageListToSave {
 							logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
 							logboek.LogOptionalLn()
 						}
