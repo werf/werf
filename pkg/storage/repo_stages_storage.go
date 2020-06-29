@@ -91,7 +91,7 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 
 			if signature, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
-					logboek.Debug.LogLn(strings.Title(err.Error()))
+					logboek.Debug.LogLn(err.Error())
 					continue
 				}
 				return nil, err
@@ -136,7 +136,7 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 			}
 			if _, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
-					logboek.Debug.LogLn(strings.Title(err.Error()))
+					logboek.Debug.LogLn(err.Error())
 					continue
 				}
 				return nil, err
