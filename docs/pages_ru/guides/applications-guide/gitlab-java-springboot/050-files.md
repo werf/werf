@@ -47,6 +47,7 @@ TODO: пишем про
 И сконфигурируем:
 
 {% snippetcut name="src/main/resources/application.properties" url="#" %}
+{% raw %}
 ```yaml
 amazonProperties:
   endpointUrl: ${S3ENDPOINT}
@@ -54,11 +55,13 @@ amazonProperties:
   secretKey: ${S3SECRET}
   bucketName: ${S3BUCKET}
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% raw %}
 ```yaml
 app:
   s3:
@@ -68,11 +71,15 @@ app:
     secret:
       _default: mys3keysecretstage
       production: mys3keysecretprod
+```
+{% endraw %}
 {% endsnippetcut %}
 
 А не секретные значения — храним в `values.yaml`
 
 {% snippetcut name="values.yaml" url="#" %}
+{% raw %}
+```yaml
 app:
   s3:
     epurl:
@@ -81,11 +88,13 @@ app:
       _default: mydefaultbucket
       production: myproductionbucket
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
 {% snippetcut name="deployment.yaml" url="#" %}
+{% raw %}
 ```yaml
        env:
 {{ tuple "hello" . | include "werf_container_env" | indent 8 }}
@@ -98,6 +107,7 @@ app:
         - name: S3BUCKET
           value: {{ pluck .Values.global.env .Values.app.s3.bucket | first | default .Values.app.s3.bucket._default | quote }}
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.

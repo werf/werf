@@ -83,6 +83,7 @@ ansible:
 И пропишем в нём импорт из артефакта под названием `build`.
 
 {% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
 ```yaml
 import:
 - artifact: assets-built
@@ -90,6 +91,7 @@ import:
   to: /www
   after: setup
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 ## Изменения в деплое и роутинге
@@ -128,17 +130,20 @@ import:
 В описании Service так же должен быть указан правильный порт:
 
 {% snippetcut name=".helm/templates/service.yaml" url="#" %}
+{% raw %}
 ```yaml
   ports:
   - name: http
     port: 80
     protocol: TCP
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
 {% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% raw %}
 ```yaml
       paths:
       - path: /
@@ -146,6 +151,7 @@ import:
           serviceName: {{ .Chart.Name }}
           servicePort: 80
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 {% offtopic title="А можно ли разделять трафик на уровне ingress?" %}

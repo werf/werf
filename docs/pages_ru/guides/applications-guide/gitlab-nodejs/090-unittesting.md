@@ -15,6 +15,7 @@ toc: false
 Нам нужно добавить эту зависимость в наше `package.json`, создать к нему конфигурационный файл `.eslintrc.json` и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
 {% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% raw %}
 ```yaml
 Run_Tests:
   script:
@@ -24,17 +25,20 @@ Run_Tests:
     - werf
   needs: ["Build"]
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Созданную стадию нужно добавить в список стадий
 
 {% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% raw %}
 ```yaml
 stages:
   - build
   - test
   - deploy
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Обратите внимание, что процесс будет выполняться на runner-е, внутри собранного контейнера, но без доступа к базе данных и каким-либо ресурсам kubernetes-кластера.

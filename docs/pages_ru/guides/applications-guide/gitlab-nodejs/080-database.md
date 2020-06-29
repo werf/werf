@@ -38,6 +38,7 @@ TODO: нам сначала надо определиться с именем б
 Пропишем helm-зависимости:
 
 {% snippetcut name=".helm/requirements.yaml" url="#" %}
+{% raw %}
 ```yaml
 dependencies:
 - name: postgresql
@@ -45,11 +46,13 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: postgresql.enabled
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
 {% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% raw %}
 ```yaml
 .base_deploy:
   stage: deploy
@@ -58,11 +61,13 @@ dependencies:
     - werf helm dependency update
     - werf deploy
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
 
 {% snippetcut name=".helm/values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgresql:
   enabled: true
@@ -73,15 +78,18 @@ postgresql:
   persistence:
     enabled: true
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*.
 
 {% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="#" %}
+{% raw %}
 ```yaml
 postgresql:
   postgresqlPassword: 1000b925471a9491456633bf605d7d3f74c3d5028f2b1e605b9cf39ba33962a4374c51f78637b20ce7f7cd27ccae2a3b5bcf
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 После описанных изменений деплой в любое из окружений должно привести к созданию PostgreSQL.
@@ -95,6 +103,7 @@ postgresql:
 TODO: выправить использование переменных в этом коде
 
 {% snippetcut name="____________" url="#" %}
+{% raw %}
 ```js
 const pgconnectionString =
   process.env.DATABASE_URL || "postgresql://127.0.0.1/postgres";
@@ -108,6 +117,7 @@ pool.on("error", (err, client) => {
   process.exit(-1);
 });
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, имя базы данных, логин, пароль. В коде приложения мы используем несколько переменных окружения: `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_DATABASE`, `POSTGRESQL_LOGIN`, `POSTGRESQL_PASSWORD`
@@ -167,6 +177,7 @@ pool.on("error", (err, client) => {
 {% endsnippetcut %}
 
 {% snippetcut name="values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgre:
    login:
@@ -174,6 +185,7 @@ postgre:
    port:
       _default: ____________
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 TODO: Конфигурируем пароль НЕ ПОНЯТНО КАК ВООБЩЕ
@@ -188,11 +200,13 @@ TODO: Конфигурируем пароль НЕ ПОНЯТНО КАК ВОО�
 {% endsnippetcut %}
 
 {% snippetcut name="secret-values.yaml" url="#" %}
+{% raw %}
 ```yaml
 postgre:
   password:
     _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
 ```
+{% endraw %}
 {% endsnippetcut %}
 
 {% endofftopic %}
