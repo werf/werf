@@ -54,7 +54,7 @@ $(function() {
 });
 
 // Load versions and append them to topnavbar
-/*
+
 $(document).ready(function () {
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
   var releasesInfo = window.releasesInfo;
@@ -154,7 +154,7 @@ $(document).ready(function () {
 
 });
 
-*/
+
 $(document).ready(function () {
   $('.expand-content').hide();
 
