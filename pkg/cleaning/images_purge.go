@@ -75,22 +75,31 @@ func selectRepoImagesFromImagesRepo(imagesRepo storage.ImagesRepo, imageNameList
 }
 
 func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, repoImageList ...*image.Info) error {
-	if err := deleteRepoImage(imagesRepo.DeleteRepoImage, storage.DeleteImageOptions{}, dryRun, repoImageList...); err != nil {
-		switch err.(type) {
-		case docker_registry.DockerHubUnauthorizedError:
-			return fmt.Errorf(`%s
+	for _, repoImage := range repoImageList {
+		if !dryRun {
+			if err := imagesRepo.DeleteRepoImage(storage.DeleteImageOptions{}, repoImage); err != nil {
+				switch err.(type) {
+				case docker_registry.DockerHubUnauthorizedError:
+					return fmt.Errorf(`%s
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token/username/password --images-repo-docker-hub-token/username/password options.
 Be aware that access to the resource is forbidden with personal access token.
 Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
-		case docker_registry.GitHubPackagesUnauthorizedError:
-			return fmt.Errorf(`%s
+				case docker_registry.GitHubPackagesUnauthorizedError:
+					return fmt.Errorf(`%s
 You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
 Check --repo-github-token and --images-repo-github-token options.
 Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
-		default:
-			return err
+				default:
+					logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", repoImage.Name, err)
+					logboek.LogOptionalLn()
+					return nil
+				}
+			}
 		}
+
+		logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
+		logboek.LogOptionalLn()
 	}
 
 	return nil
