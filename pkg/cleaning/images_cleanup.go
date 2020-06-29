@@ -560,8 +560,11 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 					logboek.Default.LogLn(commitHash)
 				} else {
 					if err := m.StagesManager.StagesStorage.RmImageCommit(m.ProjectName, imageName, commitHash.String()); err != nil {
-						logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
-						return err
+						logboek.Warn.LogF(
+							"WARNING: Metadata image deletion (image %s, commit: %s) failed: %s\n",
+							logging.ImageLogName(imageName, false), commitHash.String(), err,
+						)
+						logboek.LogOptionalLn()
 					}
 				}
 			}

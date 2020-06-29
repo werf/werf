@@ -217,51 +217,30 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 }
 
 func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
-	if err := deleteStage(stagesManager.DeleteStages, options, dryRun, stages...); err != nil {
-		switch err.(type) {
-		case docker_registry.DockerHubUnauthorizedError:
-			return fmt.Errorf(`%s
+	for _, stageDesc := range stages {
+		if !dryRun {
+			if err := stagesManager.DeleteStages(options, stageDesc); err != nil {
+				switch err.(type) {
+				case docker_registry.DockerHubUnauthorizedError:
+					return fmt.Errorf(`%s
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
 Be aware that access to the resource is forbidden with personal access token.
 Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
-		case docker_registry.GitHubPackagesUnauthorizedError:
-			return fmt.Errorf(`%s
+				case docker_registry.GitHubPackagesUnauthorizedError:
+					return fmt.Errorf(`%s
 You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
 Check --repo-github-token and --stages-storage-repo-github-token options.
 Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
-		default:
-			return err
-		}
-	}
-
-	return nil
-}
-
-func deleteStage(f func(options storage.DeleteImageOptions, stages ...*image.StageDescription) error, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
-	for _, stageDesc := range stages {
-		if !dryRun {
-			if err := f(options, stageDesc); err != nil {
-				return err
+				default:
+					logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", stageDesc.Info.Name, err)
+					logboek.LogOptionalLn()
+					return nil
+				}
 			}
 		}
 
 		logboek.Default.LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
-		logboek.LogOptionalLn()
-	}
-
-	return nil
-}
-
-func deleteRepoImage(f func(options storage.DeleteImageOptions, repoImageList ...*image.Info) error, options storage.DeleteImageOptions, dryRun bool, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if !dryRun {
-			if err := f(options, repoImage); err != nil {
-				return err
-			}
-		}
-
-		logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
 		logboek.LogOptionalLn()
 	}
 
