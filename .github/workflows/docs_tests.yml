@@ -70,4 +70,5 @@ jobs:
             --check_html \
             --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/,/twitter.com/" \
             --url_swap  "https\://ru.werf.io:,https\://werf.io:" \
+            --file_ignore "/documentation\/guides\/applications-guide\//" \
             ./_site/
