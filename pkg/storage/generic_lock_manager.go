@@ -17,10 +17,6 @@ type GenericLockManager struct {
 	Locker lockgate.Locker
 }
 
-type LockStagesAndImagesOptions struct {
-	GetOrCreateImagesOnly bool
-}
-
 func (manager *GenericLockManager) LockStage(projectName, signature string) (LockHandle, error) {
 	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
@@ -49,7 +45,7 @@ func (manager *GenericLockManager) LockDeployProcess(projectName string, release
 func (manager *GenericLockManager) Unlock(lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
-		logboek.ErrF("ERROR: unable to release lock for %q: %s", lock.LockgateHandle.LockName, err)
+		logboek.ErrF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
 	}
 	return err
 }

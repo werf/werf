@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/cmd/werf/publish"
 	"github.com/werf/werf/cmd/werf/purge"
 	"github.com/werf/werf/cmd/werf/run"
+	"github.com/werf/werf/cmd/werf/synchronization"
 
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/cmd/werf/helm/secret/encrypt"
@@ -115,6 +116,7 @@ Find more information at https://werf.io`),
 				dismiss.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),
+				synchronization.NewCmd(),
 			},
 		},
 		{

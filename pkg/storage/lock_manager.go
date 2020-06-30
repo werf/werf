@@ -8,10 +8,14 @@ type LockManager interface {
 	LockImage(projectName, imageName string) (LockHandle, error)
 	LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) (LockHandle, error)
 	LockDeployProcess(projectName string, releaseName string, kubeContextName string) (LockHandle, error)
-	Unlock(lock LockHandle) error
+	Unlock(lockHandle LockHandle) error
 }
 
 type LockHandle struct {
-	ProjectName    string
-	LockgateHandle lockgate.LockHandle
+	ProjectName    string              `json:"projectName"`
+	LockgateHandle lockgate.LockHandle `json:"lockgateHandle"`
+}
+
+type LockStagesAndImagesOptions struct {
+	GetOrCreateImagesOnly bool `json:"getOrCreateImagesOnly"`
 }
