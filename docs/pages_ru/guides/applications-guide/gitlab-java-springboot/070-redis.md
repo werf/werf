@@ -14,27 +14,26 @@ toc: false
 - .gitlab-ci.yml
 {% endfilesused %}
 
-В этой главе мы настроим в нашем базовом приложении работу простейшей in-memory базой данных, например, redis или memcached. Для примера возьмём первый вариант.
+В этой главе мы настроим в нашем базовом приложении работу простейшей in-memory базой данных, например, redis или memcached. Для примера возьмём первый вариант — это означает, что база данных будет stateless.
 
 {% offtopic title="А как быть, если база данных должна сохранять данные на диске?" %}
 Этот вопрос мы разберём в следующей главе на примере [PostgreSQL](080-database.html). В рамках текущей главы разберёмся с общими вопросами: как базу данных в принципе завести в кластер, сконфигурировать и подключиться к ней из приложения.
 {% endofftopic %}
 
-
 В простейшем случае нет необходимости вносить изменения в сборку — уже собранные образы есть на DockerHub. Надо просто выбрать правильный образ, корректно сконфигурировать его в своей инфраструктуре, а потом подключиться к базе данных из Rails приложения.
 
 ## Сконфигурировать Redis в Kubernetes
 
-Есть два способа подключить: прописать helm-чарт самостоятельно или подключить внешний чарт. Мы рассмотрим второй вариант, подключим redis как внешний subchart.
+Для того, чтобы сконфигурировать Redis в кластере — необходимо прописать объекты с помощью Helm. Мы можем сделать это самостоятельно, но рассмотрим вариант с подключением внешнего чарта. В любом случае, нам нужно будет указать: имя сервиса, порт, логин и пароль — и разобраться, как эти параметры пробросить в подключённый внешний чарт. 
 
+Нам необходимо будет:
 
-Для этого нужно:
+1. Указать Redis как зависимый сабчарт в `requirements.yaml`;
+2. Сконфигурировать в werf работу с зависимостями;
+3. Сконфигурировать подключённый сабчарт;
+4. Убедиться, что создаётся master-slave кластер Redis.
 
-1. прописать изменения в yaml файлы;
-2. указать Redis конфиги;
-3. подсказать werf, что ему нужно подтягивать subchart.
-
-Пропишем helm-зависимости:
+Пропишем сабчарт с Redis:
 
 {% snippetcut name=".helm/requirements.yaml" url="#" %}
 {% raw %}
@@ -48,7 +47,7 @@ dependencies:
 {% endraw %}
 {% endsnippetcut %}
 
-Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
+Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями:
 
 {% snippetcut name=".gitlab-ci.yml" url="#" %}
 {% raw %}
@@ -74,7 +73,47 @@ redis:
 {% endraw %}
 {% endsnippetcut %}
 
-При использовании сабчарта по умолчанию создается master-slave кластер redis.
+А также сконфигурировать имя сервиса, порт, логин и пароль, согласно [документации](https://github.com/bitnami/charts/tree/master/bitnami/redis/#parameters) нашего сабчарта:
+
+{% snippetcut name=".helm/values.yaml" url="#" %}
+{% raw %}
+```yaml
+redis:
+  fullnameOverride: guided-redis
+  nameOverride: guided-redis
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% raw %}
+```yaml
+redis:
+  password: "LYcj6c09D9M4htgGh64vXLxn95P4Wt"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+Сконфигурировать логин и порт для подключения у этого сабчарта невозможно, но если изучить исходный код — можно найти использующиеся в сабчарте значения. Пропишем нужные значения с понятными нам ключами — они понадобятся нам позже, когда мы будем конфигурировать приложение.
+
+{% snippetcut name=".helm/values.yaml" url="#" %}
+{% raw %}
+```yaml
+redis:
+   login:
+      _default: ____________
+   port:
+      _default: 6379
+```
+{% endraw %}
+{% endsnippetcut %}
+
+
+{% offtopic title="Как быть, если найти параметры не получается?" %}
+
+Некоторые сервисы вообще не требуют аутентификации, в частности, Redis зачастую используется без неё.
+
+{% endofftopic %}
 
 Если посмотреть на рендер (`werf helm render`) нашего приложения с включенным сабчартом для redis, то можем увидеть какие будут созданы объекты Service:
 
@@ -92,13 +131,11 @@ metadata:
   name: guided-redis-slave
 ```
 
-Знание этих Service нужно нам, чтобы потом к ним подключаться.
-
 ## Подключение Rails приложения к базе Redis
 
 В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
-В нашем приложении мы будем использовать Redis как хранилище сессий, указываем в `pom.xml` нужные dependency:
+В нашем приложении мы будем использовать Redis как хранилище сессий, указываем нужные dependency:
 
 {% snippetcut name="pom.xml" url="#" %}
 {% raw %}
@@ -125,7 +162,7 @@ spring.redis.port=${REDISPORT}
 {% endraw %}
 {% endsnippetcut %}
 
-Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`.  
+Для подключения к базе данных нам, очевидно, нужно знать: хост, порт, логин, пароль. В коде приложения мы используем несколько переменных окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_LOGIN`, `REDIS_PASSWORD`. Мы уже сконфигурировали часть значений в `values.yaml` для подключаемого сабчарта. Можно воспользоваться теми же значениями и дополнить их.
 
 Будем **конфигурировать хост** через `values.yaml`:
 
@@ -134,6 +171,16 @@ spring.redis.port=${REDISPORT}
 ```yaml
 - name: REDIS_HOST
   value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name=".helm/values.yaml" url="#" %}
+{% raw %}
+```yaml
+redis:
+  host:
+    _default: guided-redis-master
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -179,67 +226,13 @@ redis:
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="#" %}
-{% raw %}
-```yaml
-redis:
-   login:
-      _default: ____________
-   port:
-      _default: ____________
-```
-{% endraw %}
-{% endsnippetcut %}
-
-TODO: Конфигурируем пароль
-
-При использовании сабчартов мы можем переопределять значения в них исходя из родительского values.yaml. Подробности работы с сабчартами описаны [здесь](https://werf.io/documentation/reference/deploy_process/working_with_chart_dependencies.html). Таким образом, чтобы определить пароль и хост для нашего redis-а нужно прописать в values.yaml:
-
-{% raw %}
-```yaml
-redis:
-  enabled: true
-  host:
-    _default: redis-master
-  port:
-    _default: 6379
-  fullnameOverride: redis
-  nameOverride: redis
-```
-{% endraw %}
-
-Пароль генерируется любой, любым удобным способом, например
-
-```
-$ makepasswd --chars 30
-LYcj6c09D9M4htgGh64vXLxn95P4Wt
-```
-
-Теперь положим его в secret-values.yaml, используя werf helm secret values edit, как описывалось ранее. 
-
-```yaml
-redis:
-  password: "LYcj6c09D9M4htgGh64vXLxn95P4Wt"
-```
-
-Мы одновременно описываем что передать в subchart (host, password, fullnameOverride, nameOverride) и то что будет использоваться нашим приложением.
-Однако, следует иметь ввиду, что передаваемые внутрь сабчарта параметры зависят именно от реализации сабчарта.
+Мы уже **сконфигурировали пароль** — используем прописанное ранее значение:
 
 {% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
 - name: REDIS_PASSWORD
-  value: "{{ pluck .Values.global.env .Values.redis.password | first | default .Values.redis.password_default | quote }}"
-```
-{% endraw %}
-{% endsnippetcut %}
-
-{% snippetcut name="secret-values.yaml" url="#" %}
-{% raw %}
-```yaml
-redis:
-  password:
-    _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
+  value: "{{ .Values.redis.password | quote }}"
 ```
 {% endraw %}
 {% endsnippetcut %}
