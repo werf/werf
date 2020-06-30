@@ -209,18 +209,13 @@ postgre:
 
 {% offtopic title="Как конфигурируем сам Job?" %}
 
-TODO: разве "после деплоя, но до доступности"????
+Подробнее о конфигурировании объекта Job можно почитать [в документации Kubernetes](https://kubernetes.io/docs/concepts/workloads/controllers/job/).
 
-TODO: надо описать тут концептуальную часть про запуск джоба, вот это про хук и weight и где почитать.
+Также мы воспользуемся аннотациями Helm [`helm.sh/hook` и `helm.sh/weight`](https://helm.sh/docs/topics/charts_hooks/), чтобы Job выполнялся после того, как применится новая конфигурация.
 
 {% snippetcut name=".helm/templates/job.yaml" url="#" %}
 {% raw %}
 ```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {{ .Chart.Name }}-migrations
-  annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/weight": "2"
 ```
