@@ -62,17 +62,6 @@ dependencies:
 {% endraw %}
 {% endsnippetcut %}
 
-Для того, чтобы подключённые сабчарты заработали — нужно указать настройки в `values.yaml`:
-
-{% snippetcut name=".helm/values.yaml" url="#" %}
-{% raw %}
-```yaml
-redis:
-  enabled: true
-```
-{% endraw %}
-{% endsnippetcut %}
-
 А также сконфигурировать имя сервиса, порт, логин и пароль, согласно [документации](https://github.com/bitnami/charts/tree/master/bitnami/redis/#parameters) нашего сабчарта:
 
 {% snippetcut name=".helm/values.yaml" url="#" %}
@@ -85,6 +74,10 @@ redis:
 {% endraw %}
 {% endsnippetcut %}
 
+
+{% offtopic title="А ключ redis он откуда такой?" %}
+Этот ключ должен совпадать с именем сабчарта-зависимости в файле `requirements.yaml` — тогда настройки будут пробрасываться в сабчарт.
+{% endofftopic %}
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 {% raw %}
 ```yaml
@@ -100,13 +93,19 @@ redis:
 {% raw %}
 ```yaml
 redis:
-   login:
-      _default: ____________
-   port:
+   _login:
+      _default: guided-redis
+   _port:
       _default: 6379
 ```
 {% endraw %}
 {% endsnippetcut %}
+
+{% offtopic title="Почему мы пишем эти ключи со знака _ и вообще легально ли это?" %}
+Когда мы пишем дополнительные ключи по соседству с ключами, пробрасывающимися в сабчарт, мы рискуем случайно "зацепить" лишнее. Поэтому нужно быть внимательным, сверяться с [документацией сабчарта](https://github.com/bitnami/charts/tree/master/bitnami/redis/#parameters) и не использовать пересекающиеся ключи.
+
+Для надёжности — введём соглашение на использование знака подчёркивания `_` в начале таких ключей.
+{% endofftopic %}
 
 
 {% offtopic title="Как быть, если найти параметры не получается?" %}
@@ -130,6 +129,8 @@ kind: Service
 metadata:
   name: guided-redis-slave
 ```
+
+Знание этих Service нужно нам, чтобы потом к ним подключаться.
 
 ## Подключение NodeJS приложения к базе Redis
 
@@ -169,7 +170,7 @@ app.use(session);
 {% raw %}
 ```yaml
 - name: REDIS_HOST
-  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host._default | quote }}"
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -218,9 +219,9 @@ redis:
 {% raw %}
 ```yaml
 - name: REDIS_LOGIN
-  value: "{{ pluck .Values.global.env .Values.redis.login | first | default .Values.redis.login_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.redis._login | first | default .Values.redis._login._default | quote }}"
 - name: REDIS_PORT
-  value: "{{ pluck .Values.global.env .Values.redis.port | first | default .Values.redis.port_default | quote }}"
+  value: "{{ pluck .Values.global.env .Values.redis._port | first | default .Values.redis._port._default | quote }}"
 ```
 {% endraw %}
 {% endsnippetcut %}

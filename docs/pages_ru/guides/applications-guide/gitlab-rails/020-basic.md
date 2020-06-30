@@ -10,7 +10,7 @@ toc: false
 
 Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит веб сервер для ruby. Управлять маршрутизацией запросов к приложению будет управлять Ingress в kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
-![](/images/applications-guide/gitlab-rails/020-basic-process-overview.png)
+<!-- TODO: тут в идеале нужно вставить картинку отображающую стадию: сборка, возможно публикация, а потом деплой в два места: тест и прод -->
 
 <a name="building" />
 
@@ -223,7 +223,7 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 
 Теперь наше приложение доступно локально на порту 3000:
 
-![alt_text](/images/applications-guide/gitlab-rails/2.png "image_tooltip")
+![](/images/applications-guide/images/020-hello-world-in-browser.png)
 
 Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается [командой `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
 
@@ -509,7 +509,7 @@ TODO: написать, что надо курлануть с любого по�
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
-![alt_text](/images/applications-guide/gitlab-rails/5.png "image_tooltip")
+![](/images/applications-guide/images/020-werf-secret-key-in-gitlab.png)
 
 После этого мы сможем задать секретную переменную `RAILS_MASTER_KEY`. Зайдите в режим редактирования секретных значений:
 
@@ -699,7 +699,7 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 Теперь при коммите кода в gitlab будет происходить сборка
 
-![alt_text](/images/applications-guide/gitlab-rails/3.png "image_tooltip")
+![](/images/applications-guide/images/020-gitlab-pipeline.png)
 
 <a name="ci-deploy" />
 
@@ -741,11 +741,11 @@ TODO: то, что написано ниже надо проверить на с
 
 После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Stage.
 
-![alt_text](/images/applications-guide/gitlab-rails/6.png "image_tooltip")
+![](/images/applications-guide/images/020-gitlab-mr-details.png)
 
 Посмотреть статус выполнения pipeline можно в интерфейсе gitlab **CI / CD - Pipelines**
 
-![alt_text](/images/applications-guide/gitlab-rails/7.png "image_tooltip")
+![](/images/applications-guide/images/020-pipelines-list.png)
 
 TODO: наверное надо написать ещё главу про очистку образов!
 
