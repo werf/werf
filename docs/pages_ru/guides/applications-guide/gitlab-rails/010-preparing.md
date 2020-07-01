@@ -29,7 +29,7 @@ toc: false
     *   У раннера есть сетевая доступность до мастер ноды Kubernetes
     *   На данном сервере установлен gitlab-runner.
     *   Gitlab-runner подключен к нашему Gitlab с тегом `werf` в режиме shell executor. 
-    *   Для пользователя, которого использует gitlab-runner, [установлен multiwerf](https://ru.werf.io/documentation/guides/installation.html#installing-multiwerf)(А что это такое?)
+    *   Для пользователя, которого использует gitlab-runner, [установлен multiwerf](https://ru.werf.io/documentation/guides/installation.html#installing-multiwerf)
     *   Для пользователя, которого использует gitlab-runner, установлен kubectl и добавлен конфигурационный файл для подключения к kubernetes.
 *   Ранеры включены и активны для репозитория с нашим приложением.
 *   Для gitlab включен и настроен gitlab registry
