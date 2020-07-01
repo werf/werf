@@ -379,8 +379,6 @@ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=alw
 - Понимаете, как Helm работает с хэш-массивами
 - Очень внимательно следите за пробелами в Yaml
 
-TODO:  ^^ вот это выше надо причесать, дать ссылки
-
 {% endofftopic %}
 
 Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, направить трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему kubernetes скачивать собранные образа из registry.
@@ -473,8 +471,6 @@ app:
     testing: 189af8ca60b04e529140ec114175f098
 ```
 {% endsnippetcut %}
-
-TODO: вот эти варианты надо оформить и куда-то положить, чтобы была валидная ссылка
 
 {% endofftopic %}
 
@@ -719,20 +715,18 @@ $ kubectl get namespace
 NAME                          STATUS   AGE
 default                       Active   161d
 werf-guided-project-production          Active   4m44s
-werf-guided-project-stage               Active   3h2m
+werf-guided-project-staging               Active   3h2m
 
-$ kubectl -n example-1-stage get po
+$ kubectl -n example-1-staging get po
 NAME                        READY   STATUS    RESTARTS   AGE
 werf-guided-project-9f6bd769f-rm8nz   1/1     Running   0          6m12s
 
-$ kubectl -n example-1-stage get ingress
+$ kubectl -n example-1-staging get ingress
 NAME        HOSTS                                           ADDRESS   PORTS   AGE
-werf-guided-project   stage.mydomain.io                       80      6m18s
+werf-guided-project   staging.mydomain.io                       80      6m18s
 ```
 
 А также вы должны увидеть ваш сервис через браузер.
-
-TODO: ОБЯЗАТЕЛЬНО нужно показать как оно работает в браузере. "Задеплоено" — это не критерий работы.
 
 <a name="ci" />
 
@@ -744,7 +738,7 @@ TODO: ОБЯЗАТЕЛЬНО нужно показать как оно рабо�
 
 После того, как мы разобрались, как делать сборку и деплой "вручную" — пора автоматизировать процесс.
 
-Мы предлагаем простой флоу, который мы называем [fast and furious](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production и будут содержать два окружения, production и stage.
+Мы предлагаем простой флоу, который мы называем [fast and furious](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious). Такой флоу позволит вам осуществлять быструю доставку ваших изменений в production и будут содержать два окружения, production и staging.
 
 Начнем с того что добавим нашу сборку в CI с помощью `.gitlab-ci.yml`, который находится в корне проекта и опишем там заготовки для всех стадий и общий код, обеспечивающий работу werf.
 
@@ -761,12 +755,12 @@ Build:
   tags:
     - werf
 
-Deploy to stage:
+Deploy to staging:
   script:
-    - echo "todo deploy to stage"
+    - echo "todo deploy to staging"
   environment:
-    name: stage
-    url: http://stage.mydomain.io
+    name: staging
+    url: http://staging.mydomain.io
   only:
     - merge_requests
   when: manual
@@ -841,8 +835,6 @@ Build:
 ```
 {% endsnippetcut %}
 
-TODO: здесь и в следующих CI-стейджах разобраться с `--stages-storage :local`
-
 Теперь при коммите кода в gitlab будет происходить сборка
 
 ![](/images/applications-guide/images/020-gitlab-pipeline.png)
@@ -871,21 +863,19 @@ TODO: здесь и в следующих CI-стейджах разобрать
 
 {% snippetcut name=".gitlab-ci.yml" url="#" %}
  ```yaml
- Deploy to Stage:
+ Deploy to Staging:
    extends: .base_deploy
    stage: deploy
    environment:
-     name: stage
+     name: staging
 ```
 {% endsnippetcut %}
-
-TODO: а в нашем случае точно тут должен быть stage? До этого мы называли его staging. Надо разобраться.
 
 Аналогичным образом — настраиваем production окружение.
 
 TODO: то, что написано ниже надо проверить на соответствие FAST&FURIOUS
 
-После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Stage.
+После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Staging.
 
 ![](/images/applications-guide/images/020-gitlab-mr-details.png)
 
