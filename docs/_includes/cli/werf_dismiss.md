@@ -145,8 +145,9 @@ werf dismiss [options]
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --with-hooks=true:
-            Delete Helm Release hooks getting from existing revisions
+            Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or  
+            true)
       --with-namespace=false:
-            Delete Kubernetes Namespace after purging Helm Release
+            Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)
 ```
 
