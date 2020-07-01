@@ -1,4 +1,3 @@
-
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications-guide
