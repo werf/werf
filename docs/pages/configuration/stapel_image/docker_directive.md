@@ -55,4 +55,4 @@ Thus, instructions do not affect other stages, ones just will be applied to a bu
 
 If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) with these variables.
 
-> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html#what-is-user-stages) instructions
+> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html#what-are-user-stages) instructions

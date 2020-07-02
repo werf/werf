@@ -56,56 +56,36 @@ summary: |
   </a>
 ---
 
-## What is user stages?
+## What are user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/reference/stages_and_images.html) with _assembly instructions_ from config.
-Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf
-defines 4 _user stages_ and executes them in this order: _beforeInstall_, _install_,
-_beforeSetup_ and _setup_. Assembly instructions from one stage are executed to
-create one docker layer.
+***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/reference/stages_and_images.html) containing _assembly instructions_ from config.
+Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
 
 ### Opinionated build structure
 
-_User stages pattern_ is based on analysis of real applications building
-instructions. It turns out that group assembly instructions into 4 _user stages_
-are enough for most applications. Instructions grouping decrease layers sizes
-and speed up image building.
+The _user stages pattern_ is based on analysis of instructions for building real-life applications. It turns out that the categorization of assembly instructions into four _user stages_ is perfectly enough for most applications. Grouping decreases the size of layers and speeds up the image building process.
 
 ### Framework for a build process
 
-_User stages pattern_ defines a structure for building process and thus set
-boundaries for a developer. This is a high speed up over unstructured
-instructions in Dockerfile because developer knows what kind of instructions
-should be on each _stage_.
+The _user stages pattern_ defines the structure of a building process, and thus, sets boundaries for a developer. It distinguishes favorably from Dockerfile’s unstructured instructions since the developer has a good understanding of what instructions have to be included in each _stage_.
 
-### Run assembly instruction on git changes
+### Run an assembly instruction on git changes
 
-_User stage_ execution can depend on changes of files in a git repository. werf
-supports local and remote git repositories. User stage can be
-dependent on changes in several repositories. Different changes in one
-repository can cause a rebuild of different _user stages_.
+The execution of a _user stage_ can depend on changes of files in a git repository. werf supports local and remote git repositories. The user stage can be dependent on changes in several repositories. Various changes in the repository can lead to a rebuild of different _user stages_.
 
 ### More build tools: shell, ansible, ...
 
-_Shell_ is a familiar and well-known build tool. Ansible is a newer tool and it
-needs some time for learning.
+_Shell_ is a familiar and well-known build tool. Ansible is newer, and you have to spend some time studying it.
 
-If you need prototype as soon as possible then _the shell_ is enough — it works
-like a `RUN` instruction in Dockerfile. Ansible configuration is declarative and
-mostly idempotent which is good for long-term maintenance.
+If you need a prototype as soon as possible, then _the shell_ is your choice — it works like a `RUN` instruction in Dockerfile. The configuration of Ansible is declarative, mostly idempotent, and well suited for long-term maintenance.
 
-Stage execution is isolated in code, so implementing support for another tool
-is not so difficult.
+The stage execution is isolated in code, so implementing support for another tool is not so difficult.
 
-## Usage of user stages
+## Using user stages
 
-werf provides 4 _user stages_ where assembly instructions can be defined. Assembly
-instructions are not limited by werf. You can define whatever you define for `RUN`
-instruction in Dockerfile. However, assembly instructions grouping arises from
-experience with real-life applications. So the vast majority of application builds
-need these actions:
+werf provides four _user stages_ where assembly instructions can be defined. werf does not impose any restrictions on assembly instructions. You can specify the same variety of instructions as for the `RUN` instruction in Dockerfile. At the same time, the categorization of assembly instructions is based on our experience with real applications. So, the following actions are enough for building the vast majority of applications:
 
 - install system packages
 - install system dependencies
@@ -113,75 +93,53 @@ need these actions:
 - setup system applications
 - setup application
 
-What is the best strategy to execute them? First thought is to execute them one
-by one to cache interim results. The other thought is not to mix instructions
-for these actions because of different file dependencies. _User stages pattern_
-suggests this strategy:
+What is the best strategy to execute them? You might think the best way is to execute them one by one while caching interim results. On the other side, it is better not to mix instructions for these actions because of different file dependencies. The _user stages pattern_ suggests the following strategy:
 
-- use _beforeInstall_ user stage for installing system packages
-- use _install_ user stage to install system dependencies and application dependencies
-- use _beforeSetup_ user stage to setup system settings and install an application
-- use _setup_ user stage to setup application settings
+- use the _beforeInstall_ user stage for installing system packages
+- use the _install_ user stage to install system and application dependencies
+- use the _beforeSetup_ user stage to configure system parameters and install an application
+- use the _setup_ user stage to configure an application
 
 ### beforeInstall
 
-A stage that executes instructions before install an application. This stage
-is for system applications that rarely changes but time consuming to install.
-Also, long-lived system settings can be done here like setting locale, setting
-time zone, adding groups and users, etc. Installation of enormous language
-distributions and build tools like PHP and composer, java and gradle, etc. are good candidates to execute at this stage.
+This stage executes various instructions before installing an application. It is best suited for system applications that rarely change. At the same time, their installation process is very time-consuming. Also, at this stage, you can configure some system parameters that rarely change, such as setting a locale or a timezone, adding groups and users, etc. For example, you can install language distributions and build tools like PHP and composer, java and gradle, and so on, at this stage.
 
-In practice, these components are rarely changes, and _beforeInstall_ stage caches
+In practice, all these components rarely change, and the _beforeInstall_ stage caches
 them for an extended period.
 
 ### install
 
-A stage to install an application. This stage is for installation of
-application dependencies and setup some standard settings.
+This stage is for installing an application. It is best suited for installing application dependencies and configuring some basic settings.
 
-Instructions on this stage have access to application source codes, so
-application dependencies can be installed with build tools (like composer,
-gradle, npm, etc.) that require some manifest file (i.e., pom.xml,
-Gruntfile). Best practice is to make this stage dependent on changes in that
-manifest file.
+Instructions on this stage have access to application source codes, so you can install application dependencies using build tools (like composer, gradle, npm, etc.) that require a manifest file (e.g., pom.xml, Gruntfile) to work. A best practice is to make this stage dependent on changes in that manifest file.
 
 ### beforeSetup
 
-This stage is for prepare application before setup some settings. Every kind
-of compilation can be done here: creating jars, creating executable files and
-dynamic libraries, creating web assets, uglification and encryption. This stage
-often makes to be dependent on changes in source codes.
+At this stage, you can prepare an application for tuning some parameters. It supports all kinds of compiling tasks: creating jars, creating executable files and dynamic libraries, creating web assets, uglification, and encryption. This stage is often made dependent on changes in the source code.
 
 ### setup
 
-This stage is to setup application settings. The usual actions here are copying
-some profiles into `/etc`, copying configuration files into well-known
-locations, creating a file with the application version. These actions should not be
-time-consuming as they execute on every commit.
+This stage is intended for configuring application settings. The corresponding set of actions includes copying some profiles into `/etc`, copying configuration files to already-known locations, creating a file containing the application version. These actions should not be time-consuming since they will likely be executed on every commit.
 
 ### custom strategy
 
-Again, there are no limitations for assembly instructions. The previous
-definitions of _user stages_ are just suggestions arise from experience with real
-applications. You can even use only one _user stage_ or define your strategy
-of grouping assembly instructions and get benefits from caching and git
-dependencies.
+Once again, no limitations are imposed on assembly instructions. The previous definitions of _user stages_ are just suggestions arising from our experience with real-world applications. You can even use merely a single _user stage_ or define your strategy for grouping assembly instructions and benefit from caching and git dependencies.
 
 ## Syntax
 
-There are two ***builder directives*** for assembly instructions on top level: `shell` and `ansible`. These builder directives are mutually exclusive. You can build an image with ***shell assembly instructions*** or with ***ansible assembly instructions***.
+There are two top-level ***builder directives*** for assembly instructions that are mutually exclusive: `shell` and `ansible`. You can build an image either via ***shell instructions*** or via their ***ansible counterparts***.
 
-_Builder directive_ has four directives which define assembly instructions for each _user stage_:
+The _builder directive_ includes four directives that define assembly instructions for each _user stage_:
 - `beforeInstall`
 - `install`
 - `beforeSetup`
 - `setup`
 
-Builder directives also contain ***cacheVersion  directives*** that are user-defined parts of _user stages signatures_. More details in a [CacheVersion](#dependency-on-cacheversion-values) section.
+Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage signatures_. The detailed information is available in the [CacheVersion](#dependency-on-the-cacheversion-value) section.
 
 ## Shell
 
-Syntax for _user stages_ with _shell assembly instructions_:
+Here is the syntax for _user stages_ containing _shell assembly instructions_:
 
 ```yaml
 shell:
@@ -206,9 +164,9 @@ shell:
   setupCacheVersion: <version>
 ```
 
-_Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus werf creates one layer for one _user stage_.
+_Shell assembly instructions_ are made up of arrays. Each array consists of bash commands for the related _user stage_. Commands for each stage are executed as a single `RUN` instruction in Dockerfile. Thus, werf creates one layer for each _user stage_.
 
-werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). 
+werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). 
 
 ```yaml
 beforeInstall:
@@ -217,7 +175,7 @@ beforeInstall:
 ```
 
 werf performs _user stage_ commands as follows:
-- generates temporary script on host machine
+- generate the temporary script on host machine
 
     ```shell
     #!/.werf/stapel/embedded/bin/bash -e
@@ -226,14 +184,14 @@ werf performs _user stage_ commands as follows:
     apt-get install -y build-essential g++ libcurl4
     ```
 
-- mounts to corresponding _user stage assembly container_ as `/.werf/shell/script.sh`, and
-- runs the script.
+- mount it to the corresponding _user stage assembly container_ as `/.werf/shell/script.sh`, and
+- run the script.
 
-> `bash` binary is stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same)
+> The `bash` binary is stored in a _stapel volume_. You can find additional information about the concept in the [blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` was later renamed to `stapel`; nevertheless, the principle is the same)
 
 ## Ansible
 
-Syntax for _user stages_ with _ansible assembly instructions_:
+Here is the syntax for _user stages_ containing _ansible assembly instructions_:
 
 ```yaml
 ansible:
@@ -261,8 +219,7 @@ ansible:
 ### Ansible config and stage playbook
 
 _Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To run
-this tasks with `ansible-playbook` command werf mounts this directory structure
-into the _user stage assembly container_:
+this tasks via `ansible-playbook` command, werf mounts the directory structure presented below into the _user stage assembly container_:
 
 ```shell
 /.werf/ansible-workdir
@@ -272,16 +229,14 @@ into the _user stage assembly container_:
 ```
 
 `ansible.cfg` contains settings for ansible:
-- use local transport
-- werf stdout_callback for better logging
-- turn on force_color
-- use sudo for privilege escalation (no need to use `become` in tasks)
+- use local transport (transport = local)
+- werf's stdout_callback method for better logging (stdout_callback = werf)
+- turn on the force_color mode (force_color = 1)
+- use sudo for privilege escalation (to avoid using `become` in ansible tasks)
 
-`hosts` is an inventory file and contains the only localhost. Also, there are some
-ansible_* settings, i.e., the path to python in stapel.
+`hosts` is an inventory file that contains the localhost as well as some ansible_* settings, e.g., the path to python in stapel.
 
-`playbook.yml` is a playbook with all tasks from one _user stage_. For example,
-`werf.yaml` with _install_ stage like this:
+`playbook.yml` is a playbook with all tasks from the specific _user stage_. Here is an example of `werf.yaml` that includes the _install_ stage:
 
 ```yaml
 ansible:
@@ -297,7 +252,7 @@ ansible:
   ...
 ```
 
-werf produces this `playbook.yml` for _install_ stage:
+werf would generate the following `playbook.yml` for the _install_ stage:
 ```yaml
 - hosts: all
   gather_facts: 'no'
@@ -313,7 +268,7 @@ werf produces this `playbook.yml` for _install_ stage:
   ...
 ```
 
-werf plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
+werf plays the playbook of the _user stage_ in the _user stage assembly container_ via the `playbook-ansible`
 command:
 
 ```shell
@@ -321,15 +276,11 @@ $ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
 $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
 
-`ansible` and `python` binaries and libraries are stored in a _stapel volume_. Details about the concept can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (referred `dappdeps` has been renamed to `stapel` but the principle is the same).
+`ansible` and `python` binaries/libraries are stored in a _stapel volume_. You can find more information about this concept in [this blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` was later renamed to `stapel`; nevertheless, the principle is the same).
 
 ### Supported modules
 
-One of the ideas behind werf is idempotent builds. If nothing changed — werf
-should create the same image. This task accomplished by _signature_ calculation
-for _stages_. Ansible has non-idempotent modules — they are giving different
-results if executed twice and werf cannot correctly calculate _signature_ to
-rebuild _stages_. For now, there is a list of supported modules:
+One of the ideas at the core of werf is idempotent builds. werf must generate the very same image every time if there are no changes. We solve this task by calculating a _signature_ for _stages_. However, ansible’s modules are non-idempotent, meaning they produce different results even if the input parameters are the same. Thus, werf is unable to correctly calculate a _signature_ in order to determine the need to rebuild _stages_. Because of that, werf currently supports a limited list of modules:
 
 - [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
 - [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate, and other.
@@ -340,16 +291,13 @@ rebuild _stages_. For now, there is a list of supported modules:
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-_werf config_ with the module not from this list gives an error and stops a build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
+An attempt to do a _werf config_ with the module not in this list will lead to an error and a failed build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
 
-### Copy files
+### Copying files
 
-The preferred way of copying files into an image is [_git mappings_]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html). werf cannot calculate changes of files referred in `copy` module. The only way to
-copy some external file into an image, for now, is to use the go-templating method
-`.Files.Get`. This method returns file content as a string. So content of the file becomes a part of _user stage signature_, and file changes lead to _user stage_
-rebuild.
+[Git mappings]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
 
-For example, copy `nginx.conf` into an image:
+Here is an example of copying `nginx.conf` into an image:
 
 {% raw %}
 ```yaml
@@ -362,7 +310,7 @@ ansible:
 ```
 {% endraw %}
 
-werf renders that snippet as go template and then transforms it into this `playbook.yml`:
+werf renders that snippet as a go template and then transforms it into the following `playbook.yml`:
 
 ```yaml
 - hosts: all
@@ -378,14 +326,11 @@ werf renders that snippet as go template and then transforms it into this `playb
             ...
 ```
 
-### Jinja templating
+### Jinja templates
 
-Ansible supports [Jinja templating](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_templating.html) of playbooks. However, Go templates and Jinja
-templates has the same delimiters: {% raw %}`{{` and `}}`{% endraw %}. Jinja templates should be escaped
- to work. There are two possible variants: escape only {% raw %}`{{`{% endraw %} or escape
-the whole Jinja expression.
+Ansible supports [Jinja templates](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_templating.html) in playbooks. However, Go templates and Jinja templates have the same delimiters: {% raw %}{{ and }}{% endraw %}. Thus, you have to escape Jinja templates to use them. There are two possible solutions: you can escape {% raw %}{{{% endraw %} delimiters only or escape the whole Jinja expression.
 
-For example, you have this ansible task:
+Let’s take a look at the example. Say, you have the following ansible task:
 
 {% raw %}
 ```yaml
@@ -399,7 +344,7 @@ For example, you have this ansible task:
 {% endraw %}
 
 {% raw %}
-So, Jinja expression `{{item}}` should be escaped:
+In this case, the Jinja expression `{{item}}` must be escaped:
 {% endraw %}
 
 {% raw %}
@@ -414,34 +359,27 @@ src: {{`{{item}}`}}
 ```
 {% endraw %}
 
-### Ansible problems
+### Ansible complications
 
-- Live stdout implemented for raw and command modules. Other modules display stdout and stderr content after execution.
-- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/werf/werf/issues/645)).
+- Only raw and command modules support Live stdout output. Other modules display contents of stdout and stderr streams after execution.
+- The `apt` module hangs the build process in some debian and ubuntu versions. The derived images are affected as well ([issue #645](https://github.com/werf/werf/issues/645)).
 
-## User stages dependencies
+## Dependencies of user stages
 
-One of the werf features is an ability to define dependencies for _stage_ rebuild.
-As described in [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and each _stage_ has
-a calculated _stage signature_. _Signatures_ have various dependencies. When
-dependencies are changed, the _stage signature_ is changed, and werf rebuild this _stage_ and
-all following _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
-These dependencies can be used for defining rebuild for the
-_user stages_. _User stages signatures_ and so rebuilding of the _user stages_
-depends on:
+You can use these dependencies to shape the rebuilding process of _user stages_. _Signatures_ of user stages  (and, therefore, the rebuilding process) depend on:
+
 - changes in assembly instructions
 - changes of _cacheVersion directives_
-- git repository changes
-- changes in files that imports from an [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)
+- changes in the git repository
+- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)
 
-First three dependencies are described further.
+The first three dependencies are described below in more detail.
 
-## Dependency on assembly instructions changes
+## Dependency on changes in assembly instructions
 
-_User stage signature_ depends on rendered assembly instructions text. Changes in
-assembly instructions for _user stage_ lead to the rebuilding of this _stage_. E.g., you
-use the following _shell assembly instructions_:
+The _signature_ of the user stage depends on the rendered text of assembly instructions. Changes in assembly instructions for the _user stage_ lead to the rebuilding of this _stage_. Say, you have the following _shell-based assembly instructions_:
 
 ```yaml
 shell:
@@ -455,11 +393,9 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-First, build of this image execute all four _user stages_. There is no _git mapping_ in
-this _config_, so next builds never execute assembly instructions because _user
-stages signatures_ not changed and build cache remains valid.
+On the first build of this image, instructions for all four user stages will be executed. There is no _git mapping_ in this _config_, so assembly instructions will never be executed on subsequent builds since _signatures_ of user stages will be the same, and the build cache will remain valid.
 
-Changing assembly instructions for _install_ user stage:
+Let us change assembly instructions for the _install_ user stage:
 
 ```yaml
 shell:
@@ -474,11 +410,9 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-Now `werf build` executes _install assembly instructions_ and instructions from
-following _stages_.
+The signature of the install stage has changed, so `werf build` executes assembly instructions in the _install_ stage and instructions defined in subsequent _stages_, i.e., _beforeSetup_ and _setup_.
 
-Go-templating and using environment variables can changes assembly instructions
-and lead to unforeseen rebuilds. For example:
+The stage signature may also change due to the use of environment variables and Go templates and that can lead to unforeseen rebuilds. For example:
 
 {% raw %}
 ```yaml
@@ -491,37 +425,38 @@ shell:
 ```
 {% endraw %}
 
-First build renders _beforeInstall command_ into:
+The first build will calculate the _signature_ of the _beforeInstall_ stage:
+
 ```shell
 echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
 ```
 
-Build for the next commit renders _beforeInstall command_ into:
+The _signature_ of the _beforeInstall_ stage will change with each subsequent commit:
 
 ```shell
 echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
 ```
 
-Using `CI_COMMIT_SHA` assembly instructions text changes every commit.
-So this configuration rebuilds _beforeInstall_ user stage on every commit.
+In other words, the contents of assembly instructions will change with each subsequent commit because of the `CI_COMMIT_SHA` variable. Thus, such a configuration leads to the rebuild of the _beforeInstall_ user stage on every commit.
 
-## Dependency on git repo changes
+## Dependency on changes in the git repo
 
 <a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
     <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
   </a>
 
-As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
+The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
 
-_install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
+_install_, _beforeSetup_, and _setup_ user stages also depend on changes in the git repository. In this case, a git patch is applied at the beginning of the _user stage_, and assembly instructions are executed using the latest version of the source code.
 
-> During image build process source codes are updated **only within one stage**, subsequent stages are based on this stage and use actualized files. First build adds sources on _gitArchive_ stage. Any other build updates sources on _gitCache_, _gitLatestPatch_ or on one of the following user stages: _install_, _beforeSetup_ and _setup_.
+> During the process of building an image, the source code is updated **only at one of the stages**; all subsequent stages are based on this stage and thus use the actualized files. The source files contained in the git repository are added with the first build during the _gitArchive_ stage. All subsequent builds update source files during _gitCache_, _gitLatestPatch_ stages, or during one of the following user stages: _install_, _beforeSetup_, _setup_.
+
 <br />
 <br />
-This stage is shown in _Calculation signature phase_
+This stage is pictured on the _Calculation signature phase_
 ![git files actualized on specific stage]({{ site.baseurl }}/images/build/git_mapping_updated_on_stage.png)
 
-_User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
+You can specify the dependency of the _user stage_ on changes in the git repository via the `git.stageDependencies` parameter. It has the following syntax:
 
 ```yaml
 git:
@@ -538,39 +473,39 @@ git:
     - <mask>
 ```
 
-`git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup` and `setup`. Each key defines an array of masks for one user stage. User stage is rebuilt if a git repository has changes in files that match with one of the masks defined for _user stage_.
+The `git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup` and `setup`. Each key defines an array of masks for a single user stage. The _user stage_ will be rebuilt if there are changes in the git repository that match one of the masks defined for the _user stage_.
 
-For each _user stage_ werf creates a list of matched files and calculates a checksum over each file attributes and content. This checksum is a part of _stage signature_. So signature is changed with every change in a repository: getting new attributes for the file, changing file's content, adding a new matched file, deleting a matched file, etc.
+For each _user stage_, werf creates a list of matching files and calculates a checksum over attributes and contents of each file. This checksum is a part of the _stage signature_. Thus, the signature changes in response to any changes in the repository, such as getting new attributes for the file, changing its contents, adding new matching file, deleting a matching file, etc.
 
-`git.stageDependencies` masks work together with `git.includePaths` and `git.excludePaths` masks. werf considers only files matched with `includePaths` filter and `stageDependencies` masks. Likewise, werf considers only files not matched with `excludePaths` filter and matched with `stageDependencies` masks.
+`git.stageDependencies` masks work jointly with `git.includePaths` and `git.excludePaths` masks. Only files that match the `includePaths` filter and `stageDependencies` masks are considered suitable. Similarly, only files that do not match the `excludePaths` filter and `stageDependencies` masks are considered suitable by werf.
 
-`stageDependencies` masks works like `includePaths` and `excludePaths` filters. Masks are matched with files paths and may contain the following glob patterns:
+`stageDependencies` masks work similarly to `includePaths` and `excludePaths` filters. The mask defines a template for files and paths and may contain the following glob patterns:
 
 - `*` — matches any file. This pattern includes `.` and excludes `/`
 - `**` — matches directories recursively or files expansively
-- `?` — matches any one character. Equivalent to /.{1}/ in regexp
-- `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
+- `?` — matches any single character. It is equivalent to /.{1}/ in regexp
+- `[set]` — matches any character within the set. It behaves exactly like character sets in regexp, including set negation ([^a-z])
 - `\` — escapes the next metacharacter
 
-Mask that starts with `*` is treated as anchor name by yaml parser. So mask with `*` or `**` patterns at the beginning should be quoted:
+Mask that starts with `*` is treated as an anchor name by the yaml parser. Thus, masks starting with `*` or `**` patterns at the beginning must be surrounded by quotation marks:
 
 ```yaml
-# * at the beginning of mask, so use double quotes
+# * at the beginning of mask, so use double quotation marks
 - "*.rb"
-# single quotes also work
+# single quotation marks also work
 - '**/*'
-# no star at the beginning, no quoting needed
+# no star at the beginning, no quotation marks are needed
 - src/**/*.js
 ```
 
-werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
+werf finds out whether files have been changed in the git repository by calculating checksums. It applies the following algorithm for the _user stage_ and for each mask:
 
-- werf creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters:
-- each file path from the list compared to the mask with the use of glob patterns;
-- if mask matches a directory then this directory content is matched recursively;
-- werf calculates checksum of attributes and content of all matched files.
+- create a list of all files at the `add` path and apply the `excludePaths` and `includePaths` filters:
+- compare path of each file in the list to the mask using of glob patterns;
+- if some directory matches a mask, then all contents of this directory are considered matching recursively;
+- calculate the checksum of attributes and contents of all matching files.
 
-These checksums are calculated in the beginning of the build process before any stage container is ran.
+These checksums are calculated at the beginning of the build process before any stage container is being run.
 
 Example:
 
@@ -591,22 +526,22 @@ shell:
   - echo "setup stage"
 ```
 
-This `werf.yaml` has a _git mapping_ configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, werf will apply git patch, rebuild all existing stages since _beforeSetup_: _beforeSetup_ and _setup_. werf will apply patch on the _beforeSetup_ stage itself.
+The _git mapping configuration_ in the above `werf.yaml` requires werf to transfer the contents of the `/src` directory of the local git repository to the `/app` directory of the image. During the first build, files are cached at the _gitArchive_ stage, and assembly instructions for _install_ and _beforeSetup_ are executed. During the builds triggered by the subsequent commits that do not change he contents of the `/src` directory, werf does not execute assembly instructions. If there were changes in the `/src` directory because of some commit, then checksums of files matching the mask would change. As a result, werf would apply the git patch and rebuild all the existing stages beginning with _beforeSetup_, namely _beforeSetup_ and _setup_. The git patch will be applied once during the _beforeSetup_ stage.
 
-## Dependency on CacheVersion values
+## Dependency on the CacheVersion value
 
-There are situations when a user wants to rebuild all or one of _user stages_. This
+There are situations when a user wants to rebuild all or just one _user stage_. This
 can be accomplished by changing `cacheVersion` or `<user stage name>CacheVersion` values.
 
-Signature of the _install_ user stage depends on the value of the
+The signature of the _install_ user stage depends on the value of the
 `installCacheVersion` parameter. To rebuild the _install_ user stage (and
 subsequent stages), you need to change the value of the `installCacheVersion` parameter.
 
-> Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. When these values are changed, then the _beforeInstall_ stage and subsequent stages rebuilt.
+> Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. Changing them triggers the rebuild of the _beforeInstall_ stage and all subsequent stages.
 
-### Example: common image for multiple applications
+### Example. Universal image for multiple applications
 
-You can define an image with common packages in separated `werf.yaml`. `cacheVersion` value can be used to rebuild this image to refresh packages versions.
+An image containing shared system packages can be defined in a separate `werf.yaml` file. You can use the `cacheVersion` value for rebuilding this image to refresh packages’ versions.
 
 ```yaml
 image: ~
@@ -618,11 +553,11 @@ shell:
   - apt install ...
 ```
 
-This image can be used as base image for multiple applications if images from hub.docker.com doesn't suite your needs.
+You can use this image as a base for multiple applications if images from hub.docker.com do not quite suit your needs.
 
-### External dependency example
+### Example of using external dependencies
 
-_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates) to define _user stage_ dependency on files, not in the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml
@@ -636,4 +571,4 @@ shell:
 ```
 {% endraw %}
 
-Build script can be used to download `some-library-latest.tar.gz` archive and then execute `werf build` command. If the file is changed then werf rebuilds _install user stage_ and subsequent stages.
+The build script can be used to download `some-library-latest.tar.gz` archive and then execute the `werf build` command. Any changes to the file trigger the rebuild of the _install user stage_ and all the subsequent stages.

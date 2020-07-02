@@ -133,7 +133,7 @@ en:
         - name: "Running assembly instructions"
           link: "/documentation/configuration/stapel_image/assembly_instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
@@ -182,7 +182,7 @@ en:
         - name: "Running assembly instructions"
           link: "/documentation/configuration/stapel_image/assembly_instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
@@ -231,7 +231,7 @@ en:
         - name: "Running assembly instructions"
           link: "/documentation/configuration/stapel_image/assembly_instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+          link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
