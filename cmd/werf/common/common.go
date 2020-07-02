@@ -758,6 +758,15 @@ func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	}
 }
 
+func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
+	switch os.Getenv(environmentName) {
+	case "0", "false", "no":
+		return false
+	default:
+		return true
+	}
+}
+
 func ConvertInt32Value(v string) (int32, error) {
 	res, err := ConvertIntValue(v, 32)
 	if err != nil {
