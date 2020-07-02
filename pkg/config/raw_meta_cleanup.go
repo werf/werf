@@ -111,14 +111,18 @@ func (c *rawMetaCleanupPolicy) UnmarshalYAML(unmarshal func(interface{}) error) 
 	return nil
 }
 
-func (c *rawMetaCleanupPolicy) processRegexpString(name, value string) (*regexp.Regexp, error) {
-	if strings.HasPrefix(value, "/") && strings.HasSuffix(value, "/") {
-		value = strings.TrimPrefix(value, "/")
+func (c *rawMetaCleanupPolicy) processRegexpString(name, configValue string) (*regexp.Regexp, error) {
+	var value string
+	if strings.HasPrefix(configValue, "/") && strings.HasSuffix(configValue, "/") {
+		value = strings.TrimPrefix(configValue, "/")
+		value = strings.TrimSuffix(value, "/")
+	} else {
+		value = fmt.Sprintf("^%s$", regexp.QuoteMeta(configValue))
 	}
 
-	regex, err := regexp.Compile(c.Tag)
+	regex, err := regexp.Compile(value)
 	if err != nil {
-		return nil, newDetailedConfigError(fmt.Sprintf("invalid value '%s' for `%s: string|REGEX`!", value, name), c, c.rawMetaCleanup.rawMeta.doc)
+		return nil, newDetailedConfigError(fmt.Sprintf("invalid value '%s' for `%s: string|REGEX`!", configValue, name), c, c.rawMetaCleanup.rawMeta.doc)
 	}
 
 	return regex, nil
