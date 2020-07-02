@@ -42,10 +42,12 @@ OTHER_FIELDS
 Секция мета-информации, **обязательная** секция конфигурации, содержащая ключи `project: PROJECT_NAME` и `configVersion: CONFIG_VERSION`. 
 В каждом файле конфигурации `werf.yaml` должна быть только одна секция мета-информации.
 
+Директивы `deploy` и `cleanup` вынесены в отдельные статьи, [развертывание в Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html) и [политики очистки]({{ site.baseurl }}/documentation/configuration/cleanup.html). 
+
 #### Имя проекта
 
 Ключ `project` определяет уникальное имя проекта вашего приложения. 
-Имя проекта влияет на имена образов в _stages storage_, namespace в Kubernetes, имя Helm-релиза и зависящие от него имена (смотри подробнее про [развертывание в Kubernetes]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)). 
+Имя проекта влияет на имена образов в _stages storage_, namespace в Kubernetes, имя Helm-релиза и зависящие от него имена (смотри подробнее про [развертывание в Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html)). 
 Ключ `project` — единственное обязательное поле секции мета-информации.
 
 Имя проекта должно быть уникальным в пределах группы проектов, собираемых на одном сборочном узле и развертываемых на один и тот же кластер Kubernetes (например, уникальным в пределах всех групп одного GitLab).
