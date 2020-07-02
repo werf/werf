@@ -1053,10 +1053,10 @@ func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (string, 
 	} else {
 		if *cmdData.Synchronization == storage.LocalStorageAddress {
 			return *cmdData.Synchronization, nil
-		} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") {
+		} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") || strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
 			return *cmdData.Synchronization, nil
 		} else {
-			return "", fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
+			return "", fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 		}
 	}
 }
