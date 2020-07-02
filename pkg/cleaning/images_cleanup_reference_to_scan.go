@@ -122,7 +122,7 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 
 		mainBranchImageDepthToKeepDefault := 10
 		policies = append(policies, &config.MetaCleanupPolicy{
-			BranchRegexp:     regexp.MustCompile("master|production"),
+			BranchRegexp:     regexp.MustCompile("^master|staging|production$"),
 			ImageDepthToKeep: &mainBranchImageDepthToKeepDefault,
 		})
 	}
