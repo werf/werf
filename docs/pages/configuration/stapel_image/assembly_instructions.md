@@ -135,7 +135,7 @@ The _builder directive_ includes four directives that define assembly instructio
 - `beforeSetup`
 - `setup`
 
-Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage signatures_. The detailed information is available in the [CacheVersion](#dependency-on-cacheversion-values) section.
+Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage signatures_. The detailed information is available in the [CacheVersion](#dependency-on-the-cacheversion-value) section.
 
 ## Shell
 
