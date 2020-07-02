@@ -245,20 +245,9 @@ func (m *imagesCleanupManager) run() error {
 }
 
 func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, map[string][]*image.Info, error) {
-	var deployedDockerImagesNames []string
-	for contextName, kubernetesClient := range kubernetesContextsClients {
-		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
-			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
-			if err != nil {
-				return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
-			}
-
-			deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
-
-			return nil
-		}); err != nil {
-			return nil, nil, err
-		}
+	deployedDockerImagesNames, err := getDeployedDockerImagesNames(kubernetesContextsClients)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	exceptedRepoImages := map[string][]*image.Info{}
@@ -296,6 +285,26 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 	}
 
 	return repoImages, exceptedRepoImages, nil
+}
+
+func getDeployedDockerImagesNames(kubernetesContextsClients map[string]kubernetes.Interface) ([]string, error) {
+	var deployedDockerImagesNames []string
+	for contextName, kubernetesClient := range kubernetesContextsClients {
+		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
+			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
+			if err != nil {
+				return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
+			}
+
+			deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
+
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return deployedDockerImagesNames, nil
 }
 
 func (m *imagesCleanupManager) repoImagesCleanup(repoImagesToCleanup map[string][]*image.Info) (map[string][]*image.Info, error) {
@@ -591,11 +600,12 @@ func (m *imagesCleanupManager) getImageContentSignatureRepoImageListToCleanup(re
 		imageContentSignatureRepoImageListToCleanup[imageName] = map[string][]*image.Info{}
 
 		for _, imageMetadata := range imageCommitHashImageMetadata[imageName] {
-			repoImageListToCleanupBySignature, ok := imageContentSignatureRepoImageListToCleanup[imageName][imageMetadata.ContentSignature]
-			if !ok {
-				repoImageListToCleanupBySignature = []*image.Info{}
+			_, ok := imageContentSignatureRepoImageListToCleanup[imageName][imageMetadata.ContentSignature]
+			if ok {
+				continue
 			}
 
+			var repoImageListToCleanupBySignature []*image.Info
 			for _, repoImage := range repoImageListToCleanup {
 				if repoImage.Labels[image.WerfContentSignatureLabel] == imageMetadata.ContentSignature {
 					repoImageListToCleanupBySignature = append(repoImageListToCleanupBySignature, repoImage)

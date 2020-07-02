@@ -18,6 +18,7 @@ import (
 
 type referenceToScan struct {
 	*plumbing.Reference
+	ModifiedAt time.Time
 	HeadCommit *object.Commit
 	referenceScanOptions
 }
@@ -47,32 +48,49 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 			return nil
 		}
 
-		refHash := reference.Hash()
-		if n.IsTag() {
+		var scanDepthLimit int
+		var modifiedAt time.Time
+		var refCommit *object.Commit
+		if !n.IsTag() {
+			scanDepthLimit = -1 // unlimited
+
+			refHash := reference.Hash()
+			if refHash == plumbing.ZeroHash {
+				return nil
+			}
+
+			refCommit, err = gitRepository.CommitObject(refHash)
+			if err != nil {
+				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), refHash.String(), err)
+			}
+
+			modifiedAt = refCommit.Committer.When
+		} else {
+			scanDepthLimit = 1
+
 			revHash, err := gitRepository.ResolveRevision(plumbing.Revision(n.Short()))
 			if err != nil {
 				return fmt.Errorf("resolve revision %s failed: %s", n.Short(), err)
 			}
 
-			refHash = *revHash
-		}
+			refCommit, err = gitRepository.CommitObject(*revHash)
+			if err != nil {
+				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), revHash.String(), err)
+			}
 
-		scanDepthLimit := -1
-		if n.IsTag() {
-			scanDepthLimit = 1
-		}
-
-		if refHash == plumbing.ZeroHash {
-			return nil
-		}
-
-		refCommit, err := gitRepository.CommitObject(refHash)
-		if err != nil {
-			return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), refHash.String(), err)
+			tagObject, err := gitRepository.TagObject(reference.Hash())
+			if err == nil {
+				modifiedAt = tagObject.Tagger.When
+			} else if err == plumbing.ErrObjectNotFound { // lightweight tag
+				modifiedAt = refCommit.Committer.When
+			} else {
+				return fmt.Errorf("tag object %s failed: %s", reference.Hash(), err)
+			}
 		}
 
 		refs = append(refs, &referenceToScan{
 			Reference:  reference,
+			ModifiedAt: modifiedAt,
 			HeadCommit: refCommit,
 			referenceScanOptions: referenceScanOptions{
 				scanDepthLimit: scanDepthLimit,
@@ -122,7 +140,7 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 
 		mainBranchImageDepthToKeepDefault := 10
 		policies = append(policies, &config.MetaCleanupPolicy{
-			BranchRegexp:     regexp.MustCompile("master|production"),
+			BranchRegexp:     regexp.MustCompile("^master|staging|production$"),
 			ImageDepthToKeep: &mainBranchImageDepthToKeepDefault,
 		})
 	}
@@ -150,12 +168,12 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 		})
 	}
 
-	// Sort by Committer When
+	// Sort by ModifiedAt
 	sort.Slice(resultBranchesRefs, func(i, j int) bool {
-		return resultBranchesRefs[i].HeadCommit.Committer.When.After(resultBranchesRefs[j].HeadCommit.Committer.When)
+		return resultBranchesRefs[i].ModifiedAt.After(resultBranchesRefs[j].ModifiedAt)
 	})
 	sort.Slice(resultTagsRefs, func(i, j int) bool {
-		return resultTagsRefs[i].HeadCommit.Committer.When.After(resultTagsRefs[j].HeadCommit.Committer.When)
+		return resultTagsRefs[i].ModifiedAt.After(resultTagsRefs[j].ModifiedAt)
 	})
 
 	// Unite tags and branches references
@@ -252,7 +270,7 @@ outerLoop:
 
 func filterReferencesByModifiedIn(refs []*referenceToScan, modifiedIn time.Duration) (result []*referenceToScan) {
 	for _, ref := range refs {
-		if ref.HeadCommit.Committer.When.Before(time.Now().Add(-modifiedIn)) {
+		if ref.ModifiedAt.Before(time.Now().Add(-modifiedIn)) {
 			continue
 		}
 
@@ -263,9 +281,8 @@ func filterReferencesByModifiedIn(refs []*referenceToScan, modifiedIn time.Durat
 }
 
 func filterReferencesByLast(refs []*referenceToScan, last int) []*referenceToScan {
-	// Sort by Committer When
 	sort.Slice(refs, func(i, j int) bool {
-		return refs[i].HeadCommit.Committer.When.After(refs[j].HeadCommit.Committer.When)
+		return refs[i].ModifiedAt.After(refs[j].ModifiedAt)
 	})
 
 	if len(refs) < last {
