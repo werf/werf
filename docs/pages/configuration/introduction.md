@@ -41,9 +41,11 @@ OTHER_FIELDS
 
 Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_VERSION` is the meta config section. This is required section. There should be only one meta config section in a single `werf.yaml` configuration.
 
+There are other directives, `deploy` and `cleanup`, described in separate articles: [deploy to Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html) and [cleanup policies]({{ site.baseurl }}/documentation/configuration/cleanup.html).
+
 #### Project name
 
-`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)). This is single required field of meta configuration.
+`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html)). This is single required field of meta configuration.
 
 Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab).
 

@@ -48,6 +48,9 @@ entries:
           - title: Deploy into Kubernetes
             url: /documentation/configuration/deploy_into_kubernetes.html
 
+          - title: Cleanup
+            url: /documentation/configuration/cleanup.html
+
       - title: Reference
         sf:
 
@@ -400,6 +403,9 @@ entries:
 
           - title: Деплой в Kubernetes
             url: /documentation/configuration/deploy_into_kubernetes.html
+
+          - title: Очистка
+            url: /documentation/configuration/cleanup.html
 
       - title: Справочник
         sf:
