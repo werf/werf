@@ -18,6 +18,7 @@ werf completion [options]
   $ source <(werf completion)
 
   # Load zsh completion
+  $ autoload -Uz compinit && compinit -C
   $ source <(werf completion --shell=zsh)
 ```
 

@@ -13,6 +13,8 @@ var cmdData struct {
 	Shell string
 }
 
+const zshCompdef = "compdef _werf werf\n"
+
 func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "completion",
@@ -22,13 +24,20 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
   $ source <(%[1]s completion)
 
   # Load zsh completion
+  $ autoload -Uz compinit && compinit -C
   $ source <(%[1]s completion --shell=zsh)`, rootCmd.Name()),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch cmdData.Shell {
 			case "bash":
 				return rootCmd.GenBashCompletion(os.Stdout)
 			case "zsh":
-				return rootCmd.GenZshCompletion(os.Stdout)
+				if err := rootCmd.GenZshCompletion(os.Stdout); err != nil {
+					return err
+				}
+
+				_, _ = os.Stdout.WriteString(zshCompdef)
+
+				return nil
 			default:
 				common.PrintHelp(cmd)
 				return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
