@@ -6,7 +6,7 @@ layout: guide
 toc: false
 ---
 
-В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
+В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в Kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
 
 Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс который запустит веб сервер для ruby. Управлять маршрутизацией запросов к приложению будет Ingress в Kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
@@ -126,7 +126,7 @@ from: ruby:2.7.1
 
 {% offtopic title="Что делать, если образов и других констант станет много" %}
 
-Werf поддерживает `Go templates`, так что вы с легкостью можете заводить переменные и выписывать в них константы и часто использующиеся образы.
+Werf поддерживает [**Go templates**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD%D1%8B-go), так что вы с легкостью можете заводить переменные и выписывать в них константы и часто использующиеся образы.
 
 Сделаем 2 образа, используя один базовый образ `golang:1.11-alpine`
 
@@ -148,7 +148,6 @@ from: {{ $base_image }}
 ```
 {% endraw %}
 
-Подробнее почитать про Go шаблоны в werf можно тут: [**werf go templates**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD%D1%8B-go).
 
 {% endofftopic %}
 
@@ -316,11 +315,11 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 
 ![](/images/applications-guide/images/020-hello-world-in-browser.png)
 
-Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается [командой `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
+Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается командой [ `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
 
 Если мы запускаем Werf вне Gitlab CI — нам нужно:
 
-* Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/)
+* Вручную подключиться к gitlab registry с помощью [`docker login`](https://docs.docker.com/engine/reference/commandline/login/)
 * Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.io/myproject`)
 * Выполнить сборку и загрузку в Registry: `werf build-and-publish`
 
@@ -338,7 +337,7 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 - .helm/secret-values.yaml
 {% endfilesused %}
 
-Для того, чтобы приложение заработало в Kubernetes — необходимо описать инфраструктуру приложения как код, т.е. в нашем случае объекты kubernetes: Pod, Service и Ingress.
+Для того, чтобы приложение заработало в Kubernetes — необходимо описать инфраструктуру приложения как код, т.е. в нашем случае объекты Kubernetes: Pod, Service и Ingress.
 
 Конфигурацию для Kubernetes нужно шаблонизировать. Один из популярных инструментов для такой шаблонизации — это Helm, и движок Helm-а встроен в Werf. Помимо этого, werf предоставляет возможности работы с секретными значениями, а также дополнительные Go-шаблоны для интеграции собранных образов.
 
@@ -367,13 +366,13 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 
 {% endofftopic %}
 
-Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, направить трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему kubernetes скачивать собранные образа из registry.
+Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, направить трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему Kubernetes скачивать собранные образа из registry.
 
 #### Создание Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
-- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
-- [.helm/values.yaml](.helm/values.yaml)
+- .helm/templates/deployment.yaml
+- .helm/values.yaml
 {% endfilesused %}
 
 Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `web-basic`. Укажем, **как этот контейнер будет запускаться**:
@@ -459,7 +458,7 @@ app:
 {% endofftopic %}
 
 
-При запуске приложения в kubernetes **логи необходимо отправлять в stdout и stderr** - это нужно для простого сбора логов например через `filebeat`, а так же чтобы не разрастались docker образы запущенных приложений.
+При запуске приложения в Kubernetes **логи необходимо отправлять в stdout и stderr** - это нужно для простого сбора логов например через `filebeat`, а так же чтобы не разрастались docker образы запущенных приложений.
 
 Для того чтобы логи приложения отправлялись в stdout нам необходимо будет добавить переменную окружения `RAILS_LOG_TO_STDOUT="true"` согласно [изменениям](https://github.com/rails/rails/pull/23734) в rails framework.
 
@@ -473,9 +472,9 @@ app:
 #### Доступность Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
-- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
-- [.helm/templates/service.yaml](.helm/templates/service.yaml)
-- [.helm/values.yaml](.helm/values.yaml)
+- .helm/templates/deployment.yaml
+- .helm/templates/service.yaml
+- .helm/values.yaml
 {% endfilesused %}
 
 Для того чтобы запросы извне попали к нам в приложение нужно открыть порт у Pod-а, создать объект Service и привязать его к Pod-у, и создать объект Ingress.
@@ -581,7 +580,7 @@ spec:
 2. Проброс значений через аттрибут `--set` при работе в CLI-режиме, по аналогии с Helm
 3. Подстановка секретных значений из `secret-values.yaml`
 
-**Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
+**Вариант с `values.yaml`** рассматривался ранее в главе ["Создание Pod-а"](#helm-values-yaml).
 
 Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=____________"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
@@ -602,7 +601,7 @@ spec:
 
 Чтобы продолжать дальше 
 
-* [Сгенерируйте ключ](https://ru.werf.io/documentation/cli/management/helm/secret/encrypt.html) (`werf helm secret generate-secret-key`)
+* [Сгенерируйте ключ](https://ru.werf.io/documentation/cli/management/helm/secret/generate_secret_key.html) (`werf helm secret generate-secret-key`)
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
@@ -636,11 +635,11 @@ app:
 
 ### Отладка конфигов инфраструктуры и деплой в Kubernetes
 
-После того, как написана основная часть конфигов — хочется проверить корректность конфигов и задеплоить их в kubernetes. Для того, чтобы отрендерить конфиги инфраструктуры нужны сведения об окружении, на которое будет произведён деплой, ключ для расшифровки секретных значений и т.п.
+После того, как написана основная часть конфигов — хочется проверить корректность конфигов и задеплоить их в Kubernetes. Для того, чтобы отрендерить конфиги инфраструктуры нужны сведения об окружении, на которое будет произведён деплой, ключ для расшифровки секретных значений и т.п.
 
 Если мы запускаем Werf вне Gitlab CI — нам нужно сделать несколько операций вручную прежде чем Werf сможет рендерить конфиги и деплоить в Kubernetes.
 
-* Вручную подключиться к gitlab registry [с помощью `docker login`](https://docs.docker.com/engine/reference/commandline/login/) (если ранее это не сделано)
+* Вручную подключиться к gitlab registry с помощью [`docker login`](https://docs.docker.com/engine/reference/commandline/login/) (если ранее это не сделано)
 * Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.io/myproject`)
 * Установить переменную окружения `WERF_SECRET_KEY` со значением, [сгенерированным ранее в главе "Разное поведение в разных окружениях"](#secret-values-yaml)
 * Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging` 
@@ -663,18 +662,22 @@ werf deploy --stages-storage :local
 
 ```bash
 $ kubectl get namespace
-NAME                          STATUS   AGE
-default                       Active   161d
-werf-guided-project-production          Active   4m44s
-werf-guided-project-staging               Active   3h2m
+NAME                                 STATUS               AGE
+default                              Active               161d
+werf-guided-project-production       Active               4m44s
+werf-guided-project-staging          Active               3h2m
+```
 
+```bash
 $ kubectl -n example-1-staging get po
-NAME                        READY   STATUS    RESTARTS   AGE
-werf-guided-project-9f6bd769f-rm8nz   1/1     Running   0          6m12s
+NAME                                 READY                STATUS   RESTARTS  AGE
+werf-guided-project-9f6bd769f-rm8nz  1/1                  Running  0         6m12s
+```
 
+```bash
 $ kubectl -n example-1-staging get ingress
-NAME        HOSTS                                           ADDRESS   PORTS   AGE
-werf-guided-project   staging.mydomain.io                       80      6m18s
+NAME                                 HOSTS                ADDRESS  PORTS     AGE
+werf-guided-project                  staging.mydomain.io           80        6m18s
 ```
 
 А также вы должны увидеть ваш сервис через браузер.
@@ -726,8 +729,6 @@ Deploy to production:
     - master
 ```
 {% endsnippetcut %}
-
-TODO: ^^^ чёто мне кажется это не fast&furious! Надо проверить и пофиксить
 
 {% offtopic title="Зачем используется multiwerf?" %}
 Такой сложный путь с использованием multiwerf нужен для того, чтобы вам не надо было думать про обновление werf и об установке новых версий — вы просто указываете, что используете, например, use 1.1 stable и пребываете в уверенности, что у вас актуальная версия.
@@ -803,6 +804,7 @@ Build:
 .base_deploy: &base_deploy
   script:
     - werf deploy
+  stage: deploy
   dependencies:
     - Build
   tags:
@@ -814,11 +816,14 @@ Build:
 
 {% snippetcut name=".gitlab-ci.yml" url="#" %}
  ```yaml
- Deploy to Staging:
-   extends: .base_deploy
-   stage: deploy
-   environment:
-     name: staging
+Deploy to staging:
+  extends: .base_deploy
+  environment:
+    name: staging
+    url: http://staging.mydomain.io
+  only:
+    - merge_requests
+  when: manual
 ```
 {% endsnippetcut %}
 
