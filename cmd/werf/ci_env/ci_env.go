@@ -320,23 +320,19 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}
 
-		projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
-		multirepo := projectRepo
-		monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
-
 		if werfConfig != nil {
+			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
+			multirepo := projectRepo
+			monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+
 			if werfConfig.HasNamelessImage() {
 				imagesRepo = monorepo
 			} else {
 				imagesRepo = multirepo
 			}
-		} else {
-			imagesRepo = monorepo
-		}
 
-		stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
-	} else if os.Getenv("IMAGES_REPO") != "" && os.Getenv("STAGES_STORAGE") == "" {
-		stagesStorageRepo = fmt.Sprintf("%s/stages", os.Getenv("IMAGES_REPO"))
+			stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
+		}
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
