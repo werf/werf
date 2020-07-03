@@ -204,6 +204,10 @@ func detectImplementation(accountOrRepositoryAddress string) (string, error) {
 			patterns: gitHubPackagesPatterns,
 		},
 		{
+			name:     GitLabRegistryImplementationName,
+			patterns: gitlabPatterns,
+		},
+		{
 			name:     HarborImplementationName,
 			patterns: harborPatterns,
 		},
