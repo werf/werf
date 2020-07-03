@@ -242,9 +242,7 @@ func applyRefsToKeepImagesInPolicy(policyTagsRefs []*referenceToScan, refsToKeep
 
 func applyImageDepthToKeepPolicy(policyBranchesRefs []*referenceToScan, imageDepthToKeep int) {
 	for _, ref := range policyBranchesRefs {
-		if ref.imageDepthToKeep < imageDepthToKeep {
-			ref.imageDepthToKeep = imageDepthToKeep
-		}
+		ref.imageDepthToKeep = imageDepthToKeep
 	}
 }
 
