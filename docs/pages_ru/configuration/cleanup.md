@@ -73,7 +73,7 @@ cleanup:
       modifiedIn: 168h
       operator: And
     imageDepthToKeep: 2
-  - branch: /^master|staging|production$/
+  - branch: /^(master|staging|production)$/
     imageDepthToKeep: 10
 ``` 
 
