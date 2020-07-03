@@ -16,6 +16,8 @@ import (
 
 const GitLabRegistryImplementationName = "gitlab"
 
+var gitlabPatterns = []string{`^gitlab\.com`}
+
 type gitLabRegistry struct {
 	*defaultImplementation
 }
