@@ -45,7 +45,7 @@ func Fetch(path string, options FetchOptions) error {
 	if options.Prune || options.PruneTags {
 		commandArgs = append(commandArgs, "--prune")
 
-		if options.PruneTags {
+		if options.PruneTags && !gitVersion.LessThan(semver.MustParse("2.17.0")) {
 			commandArgs = append(commandArgs, "--prune-tags")
 		}
 	}
