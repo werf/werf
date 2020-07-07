@@ -111,7 +111,7 @@ func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (*Synchro
 		synchronizationKubeConfig = *cmdData.KubeConfig
 	}
 
-	synchronizationKubeContext := *cmdData.KubeContext
+	synchronizationKubeContext := *cmdData.SynchronizationKubeContext
 	if synchronizationKubeContext == "" {
 		synchronizationKubeContext = *cmdData.KubeContext
 	}
