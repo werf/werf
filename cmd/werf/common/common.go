@@ -69,8 +69,10 @@ type CmdData struct {
 	ImagesRepoMode *string
 	ImagesRepoData *RepoData
 
-	Synchronization           *string
-	GitHistorySynchronization *bool
+	Synchronization            *string
+	SynchronizationKubeConfig  *string
+	SynchronizationKubeContext *string
+	GitHistorySynchronization  *bool
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -351,14 +353,6 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), fmt.Sprintf("Docker Repo to store stages or %[1]s for non-distributed build (only %[1]s is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html", storage.LocalStorageAddress))
-}
-
-func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Synchronization = new(string)
-
-	defaultValue := os.Getenv("WERF_SYNCHRONIZATION")
-
-	cmd.Flags().StringVarP(cmdData.Synchronization, "synchronization", "S", defaultValue, fmt.Sprintf("Address of synchronizer for multiple werf processes to work with a single stages storage (default :local if --stages-storage=:local or %s if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same address should be specified for all werf processes that work with a single stages storage. :local address allows execution of werf processes from a single host only.", storage.DefaultKubernetesStorageAddress))
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -1041,24 +1035,6 @@ func GetStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdDa
 			},
 		},
 	)
-}
-
-func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (string, error) {
-	if *cmdData.Synchronization == "" {
-		if stagesStorageAddress == storage.LocalStorageAddress {
-			return storage.LocalStorageAddress, nil
-		} else {
-			return storage.DefaultKubernetesStorageAddress, nil
-		}
-	} else {
-		if *cmdData.Synchronization == storage.LocalStorageAddress {
-			return *cmdData.Synchronization, nil
-		} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") || strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
-			return *cmdData.Synchronization, nil
-		} else {
-			return "", fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
-		}
-	}
 }
 
 func getImagesRepoAddressOrStub(projectName string, cmdData *CmdData) (string, error) {

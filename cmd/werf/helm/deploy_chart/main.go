@@ -46,6 +46,8 @@ func NewCmd() *cobra.Command {
 `,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
 				return err
 			}
@@ -137,7 +139,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

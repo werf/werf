@@ -60,10 +60,10 @@ var _ = Describe("Helm hooks deleter", func() {
 			Expect(werfDeploy("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{})).Should(Succeed())
 
 		GetAndUpdate:
-			hookObj, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(hookName, metav1.GetOptions{})
+			hookObj, err := kube.Client.BatchV1().Jobs(namespace).Get(hookName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			delete(hookObj.Annotations, "service.werf.io/owner-release")
-			newHookObj, err := kube.Kubernetes.BatchV1().Jobs(namespace).Update(hookObj)
+			newHookObj, err := kube.Client.BatchV1().Jobs(namespace).Update(hookObj)
 			if errors.IsConflict(err) {
 				goto GetAndUpdate
 			}
@@ -85,7 +85,7 @@ var _ = Describe("Helm hooks deleter", func() {
 			})).Should(Succeed())
 			Expect(gotDeletingHookLine).Should(BeTrue())
 
-			newHookObj, err = kube.Kubernetes.BatchV1().Jobs(namespace).Get(hookName, metav1.GetOptions{})
+			newHookObj, err = kube.Client.BatchV1().Jobs(namespace).Get(hookName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newHookObj.UID).NotTo(Equal(hookObj.UID))
 		})

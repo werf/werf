@@ -2,9 +2,7 @@ package cmd_factory
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/werf/werf/pkg/stages_manager"
@@ -38,6 +36,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		DisableFlagsInUseLine: true,
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			return common.LogRunningTime(func() error {
 				if err := common.ProcessLogOptions(commonCmdData); err != nil {
 					common.PrintHelp(cmd)
@@ -70,6 +70,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupLogProjectDir(commonCmdData, cmd)
 
 	common.SetupSynchronization(commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(commonCmdData, cmd)
 	common.SetupKubeConfig(commonCmdData, cmd)
 	common.SetupKubeContext(commonCmdData, cmd)
 
@@ -143,11 +145,6 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	synchronization, err := common.GetSynchronization(commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
-	}
-	if strings.HasPrefix(synchronization, "kubernetes://") {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
-		}
 	}
 	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 	if err != nil {

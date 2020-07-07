@@ -232,7 +232,6 @@ github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwo
 github.com/fatih/color v1.6.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0 h1:8xPHl4/q1VyqGIPif1F+1V3Y3lSmrq01EabUW3CoW5s=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
-github.com/flant/kubedog v0.3.4/go.mod h1:o9cSuE3Z/kgxKhLCLUGUc9vPOFQgmY0B+7bdOQq++7o=
 github.com/flant/logboek v0.2.6-0.20190726104558-c32b60bb4a37/go.mod h1:eEQXX0UOWpyC8iaA9QOvzx8drZ64u0SRESiwQKnxF+I=
 github.com/flant/logboek v0.3.1 h1:babrJuYuFK9oymzOmdkYtQ37dW6y727RteCe3hjyMAw=
 github.com/flant/logboek v0.3.1/go.mod h1:/vKAVARjAIs2OlxxDRn7SvltNVcWMb1Ifo23kCDJZco=
@@ -783,8 +782,9 @@ github.com/vishvananda/netns v0.0.0-20171111001504-be1fbeda1936/go.mod h1:ZjcWmF
 github.com/vmware/govmomi v0.20.1/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
 github.com/werf/helm v0.0.0-20200506171044-5fb767b2db6c h1:Ew/xqh7yfDn3+b1yJeFdzxv+Kain/liLSStE8X+eprQ=
 github.com/werf/helm v0.0.0-20200506171044-5fb767b2db6c/go.mod h1:rBQrZQK7AGqzCP1Ve/pE1irL0A9WGQySaDXhpZ6AIJM=
-github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe h1:O9dUwfwuERY0EN0T+KedoyDjNK9uT5hu9IQgWAaQtbw=
 github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
+github.com/werf/kubedog v0.3.5-0.20200707154239-8015c267710f h1:NS/Z0YYmSFI7wf7TmI5vOd1F8Q6LhcnDlKr8ZmyJObM=
+github.com/werf/kubedog v0.3.5-0.20200707154239-8015c267710f/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101 h1:tPxINuU4/RjTCwfCW8pPtcGj20Bxc3Hd9aHZJ42Snyg=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
 github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55 h1:/7jQqp5f/gZrnWXSR+2OgXVvDZuumAVKrLOOsXUKv4o=
