@@ -2,13 +2,17 @@ package cleaning
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/config"
 )
 
 func scanReferencesHistory(gitRepository *git.Repository, refs []*referenceToScan, expectedContentSignatureCommitHashes map[string][]plumbing.Hash) ([]string, error) {
@@ -18,15 +22,21 @@ func scanReferencesHistory(gitRepository *git.Repository, refs []*referenceToSca
 	for i := len(refs) - 1; i >= 0; i-- {
 		ref := refs[i]
 
-		logProcessMessage := fmt.Sprintf("Reference %s (imageDepthToKeep: %d)", ref.Name().Short(), ref.referenceScanOptions.imageDepthToKeep)
 		var refReachedContentSignatureList []string
 		var refStopCommitHashes []plumbing.Hash
 		var err error
 
+		var logProcessMessage string
+		if ref.Reference.Name().IsTag() {
+			logProcessMessage = "Tag " + ref.String()
+		} else {
+			logProcessMessage = "Reference " + ref.String()
+		}
+
 		if err := logboek.Info.LogProcess(logProcessMessage, logboek.LevelLogProcessOptions{}, func() error {
 			refReachedContentSignatureList, refStopCommitHashes, err = scanReferenceHistory(gitRepository, ref, expectedContentSignatureCommitHashes, stopCommitHashes)
 			if err != nil {
-				return fmt.Errorf("scan reference %s history failed: %s", ref.Name().Short(), err)
+				return fmt.Errorf("scan reference history failed: %s", err)
 			}
 
 			stopCommitHashes = append(stopCommitHashes, refStopCommitHashes...)
@@ -56,6 +66,33 @@ func scanReferencesHistory(gitRepository *git.Repository, refs []*referenceToSca
 	return reachedContentSignatureList, nil
 }
 
+func applyImagesCleanupPublishedInPolicy(gitRepository *git.Repository, contentSignatureCommitHashes map[string][]plumbing.Hash, publishedIn *time.Duration) map[string][]plumbing.Hash {
+	if publishedIn == nil {
+		return contentSignatureCommitHashes
+	}
+
+	policyContentSignatureCommitHashes := map[string][]plumbing.Hash{}
+	for contentSignature, commitHashList := range contentSignatureCommitHashes {
+		var resultCommitHashList []plumbing.Hash
+		for _, commitHash := range commitHashList {
+			commit, err := gitRepository.CommitObject(commitHash)
+			if err != nil {
+				panic("unexpected condition")
+			}
+
+			if commit.Committer.When.After(time.Now().Add(-*publishedIn)) {
+				resultCommitHashList = append(resultCommitHashList, commitHash)
+			}
+		}
+
+		if len(resultCommitHashList) != 0 {
+			policyContentSignatureCommitHashes[contentSignature] = resultCommitHashList
+		}
+	}
+
+	return policyContentSignatureCommitHashes
+}
+
 type commitHistoryScanner struct {
 	gitRepository                        *git.Repository
 	expectedContentSignatureCommitHashes map[string][]plumbing.Hash
@@ -80,9 +117,23 @@ func (s *commitHistoryScanner) reachedContentSignatureList() []string {
 }
 
 func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, expectedContentSignatureCommitHashes map[string][]plumbing.Hash, stopCommitHashes []plumbing.Hash) ([]string, []plumbing.Hash, error) {
+	filteredExpectedContentSignatureCommitHashes := applyImagesCleanupPublishedInPolicy(gitRepository, expectedContentSignatureCommitHashes, ref.imagesCleanupKeepPolicy.PublishedIn)
+
+	var refExpectedContentSignatureCommitHashes map[string][]plumbing.Hash
+	if ref.imagesCleanupKeepPolicy.Last == nil || (ref.imagesCleanupKeepPolicy.Operator != nil && *ref.imagesCleanupKeepPolicy.Operator == config.AndOperator) {
+		refExpectedContentSignatureCommitHashes = filteredExpectedContentSignatureCommitHashes
+	} else {
+		refExpectedContentSignatureCommitHashes = expectedContentSignatureCommitHashes
+	}
+
+	if len(refExpectedContentSignatureCommitHashes) == 0 {
+		logboek.Info.LogLn("Skip reference due to nothing to seek")
+		return []string{}, stopCommitHashes, nil
+	}
+
 	s := &commitHistoryScanner{
 		gitRepository:                        gitRepository,
-		expectedContentSignatureCommitHashes: expectedContentSignatureCommitHashes,
+		expectedContentSignatureCommitHashes: refExpectedContentSignatureCommitHashes,
 		reachedContentSignatureCommitHashes:  map[string][]plumbing.Hash{},
 		stopCommitHashes:                     stopCommitHashes,
 
@@ -94,11 +145,11 @@ func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, e
 		return nil, nil, fmt.Errorf("scan commit %s history failed: %s", ref.HeadCommit.Hash.String(), err)
 	}
 
-	if s.referenceScanOptions.imageDepthToKeep != 0 {
-		if len(s.reachedContentSignatureList()) == s.referenceScanOptions.imageDepthToKeep {
+	if s.referenceScanOptions.imagesCleanupKeepPolicy.Last != nil && *s.referenceScanOptions.imagesCleanupKeepPolicy.Last != -1 {
+		if len(s.reachedContentSignatureList()) == *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			return s.reachedContentSignatureList(), s.stopCommitHashes, nil
-		} else if len(s.reachedContentSignatureList()) > s.referenceScanOptions.imageDepthToKeep {
-			logboek.Info.LogLn("Reached more commit hashes than expected %d/%d", len(s.reachedContentSignatureList()), s.referenceScanOptions.imageDepthToKeep)
+		} else if len(s.reachedContentSignatureList()) > *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+			logboek.Info.LogF("Reached more content signatures than expected by last (%d/%d)\n", len(s.reachedContentSignatureList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
 
 			latestCommitContentSignature := s.latestCommitContentSignature()
 			var latestCommitList []*object.Commit
@@ -110,28 +161,22 @@ func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, e
 				return latestCommitList[i].Committer.When.After(latestCommitList[j].Committer.When)
 			})
 
-			var reachedContentSignatureList []string
-			var skippedContentSignatureList []string
-			for ind, latestCommit := range latestCommitList {
-				contentSignature := latestCommitContentSignature[latestCommit]
-				if ind < s.referenceScanOptions.imageDepthToKeep {
-					reachedContentSignatureList = append(reachedContentSignatureList, contentSignature)
-				} else {
-					skippedContentSignatureList = append(skippedContentSignatureList, contentSignature)
-				}
+			if s.referenceScanOptions.imagesCleanupKeepPolicy.PublishedIn == nil {
+				return s.handleExtraContentSignaturesByLast(latestCommitContentSignature, latestCommitList)
+			} else {
+				return s.handleExtraContentSignaturesByLastWithPublishedIn(latestCommitContentSignature, latestCommitList)
 			}
-
-			_ = logboek.Info.LogBlock("Skipped oldest content signatures by associated commits", logboek.LevelLogBlockOptions{}, func() error {
-				for _, contentSignature := range skippedContentSignatureList {
-					logboek.Info.LogLn(contentSignature)
-				}
-				return nil
-			})
-
-			return reachedContentSignatureList, s.stopCommitHashes, nil
 		}
 	}
 
+	if !reflect.DeepEqual(expectedContentSignatureCommitHashes, refExpectedContentSignatureCommitHashes) {
+		return s.reachedContentSignatureList(), s.stopCommitHashes, nil
+	}
+
+	return s.handleStopCommitHashes(ref)
+}
+
+func (s *commitHistoryScanner) handleStopCommitHashes(ref *referenceToScan) ([]string, []plumbing.Hash, error) {
 	if s.referenceScanOptions.scanDepthLimit != 0 {
 		if len(s.reachedContentSignatureList()) == len(s.expectedContentSignatureCommitHashes) {
 			s.stopCommitHashes = append(s.stopCommitHashes, s.reachedCommitHashes[len(s.reachedCommitHashes)-1])
@@ -146,6 +191,95 @@ func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, e
 	logboek.Debug.LogF("Stop commit %s added\n", s.stopCommitHashes[len(s.stopCommitHashes)-1].String())
 
 	return s.reachedContentSignatureList(), s.stopCommitHashes, nil
+}
+
+func (s *commitHistoryScanner) handleExtraContentSignaturesByLastWithPublishedIn(latestCommitContentSignature map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []plumbing.Hash, error) {
+	var latestCommitListByLast []*object.Commit
+	var latestCommitListByPublishedIn []*object.Commit
+
+	for ind, latestCommit := range latestCommitList {
+		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+			latestCommitListByLast = append(latestCommitListByLast, latestCommit)
+		}
+
+		if latestCommit.Committer.When.After(time.Now().Add(-*s.referenceScanOptions.imagesCleanupKeepPolicy.PublishedIn)) {
+			latestCommitListByPublishedIn = append(latestCommitListByPublishedIn, latestCommit)
+		}
+	}
+
+	var resultLatestCommitList []*object.Commit
+	if s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == nil || *s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == config.AndOperator {
+		for _, commitByLast := range latestCommitListByLast {
+			for _, commitByPublishedIn := range latestCommitListByPublishedIn {
+				if commitByLast == commitByPublishedIn {
+					resultLatestCommitList = append(resultLatestCommitList, commitByLast)
+				}
+			}
+		}
+	} else {
+		resultLatestCommitList = latestCommitListByPublishedIn[:]
+	latestCommitListByLastLoop:
+		for _, commitByLast := range latestCommitListByLast {
+			for _, commitByPublishedIn := range latestCommitListByPublishedIn {
+				if commitByLast == commitByPublishedIn {
+					continue latestCommitListByLastLoop
+				}
+			}
+
+			resultLatestCommitList = append(resultLatestCommitList, commitByLast)
+		}
+	}
+
+	var reachedContentSignatureList []string
+	for _, latestCommit := range resultLatestCommitList {
+		contentSignature := latestCommitContentSignature[latestCommit]
+		reachedContentSignatureList = append(reachedContentSignatureList, contentSignature)
+	}
+
+	var skippedContentSignatureList []string
+latestCommitContentSignatureLoop:
+	for _, contentSignature := range latestCommitContentSignature {
+		for _, reachedContentSignature := range reachedContentSignatureList {
+			if contentSignature == reachedContentSignature {
+				continue latestCommitContentSignatureLoop
+			}
+		}
+
+		skippedContentSignatureList = append(skippedContentSignatureList, contentSignature)
+	}
+
+	if len(skippedContentSignatureList) != 0 {
+		_ = logboek.Info.LogBlock(fmt.Sprintf("Skipped content signatures by keep policy (%s)", s.imagesCleanupKeepPolicy.String()), logboek.LevelLogBlockOptions{}, func() error {
+			for _, contentSignature := range skippedContentSignatureList {
+				logboek.Info.LogLn(contentSignature)
+			}
+			return nil
+		})
+	}
+
+	return reachedContentSignatureList, s.stopCommitHashes, nil
+}
+
+func (s *commitHistoryScanner) handleExtraContentSignaturesByLast(latestCommitContentSignature map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []plumbing.Hash, error) {
+	var reachedContentSignatureList []string
+	var skippedContentSignatureList []string
+	for ind, latestCommit := range latestCommitList {
+		contentSignature := latestCommitContentSignature[latestCommit]
+		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+			reachedContentSignatureList = append(reachedContentSignatureList, contentSignature)
+		} else {
+			skippedContentSignatureList = append(skippedContentSignatureList, contentSignature)
+		}
+	}
+
+	_ = logboek.Info.LogBlock(fmt.Sprintf("Skipped content signatures by keep policy (%s)", s.imagesCleanupKeepPolicy.String()), logboek.LevelLogBlockOptions{}, func() error {
+		for _, contentSignature := range skippedContentSignatureList {
+			logboek.Info.LogLn(contentSignature)
+		}
+		return nil
+	})
+
+	return reachedContentSignatureList, s.stopCommitHashes, nil
 }
 
 func (s *commitHistoryScanner) scanCommitHistory(commitHash plumbing.Hash) error {
@@ -205,6 +339,20 @@ outerLoop:
 						break outerLoop
 					}
 				}
+
+				if s.imagesCleanupKeepPolicy.PublishedIn != nil {
+					commit, err := s.gitRepository.CommitObject(commitHash)
+					if err != nil {
+						panic("unexpected condition")
+					}
+
+					if s.imagesCleanupKeepPolicy.Last == nil || s.imagesCleanupKeepPolicy.Operator == nil || *s.imagesCleanupKeepPolicy.Operator == config.AndOperator {
+						if commit.Committer.When.Before(time.Now().Add(-*s.imagesCleanupKeepPolicy.PublishedIn)) {
+							break outerLoop
+						}
+					}
+				}
+
 				s.reachedCommitHashes = append(s.reachedCommitHashes, c)
 
 				reachedCommitHashes, ok := s.reachedContentSignatureCommitHashes[contentSignature]
@@ -216,19 +364,15 @@ outerLoop:
 
 				if !ok {
 					logboek.Info.LogF(
-						"Expected content signature %s was reached on commit %s (imageDepthToKeep: %d/%d)\n",
+						"Expected content signature %s was reached on commit %s\n",
 						contentSignature,
 						commitHash.String(),
-						len(s.reachedContentSignatureCommitHashes),
-						len(s.expectedContentSignatureCommitHashes),
 					)
 				} else {
 					logboek.Info.LogF(
-						"Expected content signature %s was reached again on another commit %s (imageDepthToKeep: %d/%d)\n",
+						"Expected content signature %s was reached again on another commit %s\n",
 						contentSignature,
 						commitHash.String(),
-						len(s.reachedContentSignatureCommitHashes),
-						len(s.expectedContentSignatureCommitHashes),
 					)
 				}
 

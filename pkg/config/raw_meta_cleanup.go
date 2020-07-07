@@ -8,29 +8,48 @@ import (
 )
 
 type rawMetaCleanup struct {
-	Policies []*rawMetaCleanupPolicy `yaml:"policies,omitempty"`
+	KeepPolicies []*rawMetaCleanupKeepPolicy `yaml:"keepPolicies,omitempty"`
 
 	rawMeta               *rawMeta
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-type rawMetaCleanupPolicy struct {
-	Tag                string                 `yaml:"tag,omitempty"`
-	Branch             string                 `yaml:"branch,omitempty"`
-	RefsToKeepImagesIn *rawRefsToKeepImagesIn `yaml:"refsToKeepImagesIn,omitempty"`
-	ImageDepthToKeep   int                    `yaml:"imageDepthToKeep,omitempty"`
-
-	TagRegexp    *regexp.Regexp
-	BranchRegexp *regexp.Regexp
+type rawMetaCleanupKeepPolicy struct {
+	References         *rawMetaCleanupKeepPolicyReferences         `yaml:"references,omitempty"`
+	ImagesPerReference *rawMetaCleanupKeepPolicyImagesPerReference `yaml:"imagesPerReference,omitempty"`
 
 	rawMetaCleanup        *rawMetaCleanup
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-type rawRefsToKeepImagesIn struct {
-	Last       int           `yaml:"last,omitempty"`
-	ModifiedIn time.Duration `yaml:"modifiedIn,omitempty"`
-	Operator   string        `yaml:"operator,omitempty"`
+type rawMetaCleanupKeepPolicyReferences struct {
+	Tag    string                                   `yaml:"tag,omitempty"`
+	Branch string                                   `yaml:"branch,omitempty"`
+	Limit  *rawMetaCleanupKeepPolicyReferencesLimit `yaml:"limit,omitempty"`
+
+	TagRegexp    *regexp.Regexp `yaml:"-"`
+	BranchRegexp *regexp.Regexp `yaml:"-"`
+
+	rawMetaCleanup        *rawMetaCleanup
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type rawMetaCleanupKeepPolicyImagesPerReference struct {
+	Last        *int           `yaml:"last,omitempty"`
+	PublishedIn *time.Duration `yaml:"publishedIn,omitempty"`
+	Operator    *string        `yaml:"operator,omitempty"`
+
+	rawMetaCleanup        *rawMetaCleanup
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type rawMetaCleanupKeepPolicyReferencesLimit struct {
+	Last      *int           `yaml:"last,omitempty"`
+	CreatedIn *time.Duration `yaml:"createdIn,omitempty"`
+	Operator  *string        `yaml:"operator,omitempty"`
+
+	rawMetaCleanup        *rawMetaCleanup
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *rawMetaCleanup) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -53,13 +72,37 @@ func (c *rawMetaCleanup) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	return nil
 }
 
-func (c *rawMetaCleanupPolicy) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *rawMetaCleanupKeepPolicy) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if parent, ok := parentStack.Peek().(*rawMetaCleanup); ok {
 		c.rawMetaCleanup = parent
 	}
 
 	parentStack.Push(c)
-	type plain rawMetaCleanupPolicy
+	type plain rawMetaCleanupKeepPolicy
+	err := unmarshal((*plain)(c))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMetaCleanup.rawMeta.doc); err != nil {
+		return err
+	}
+
+	if c.References == nil {
+		return newDetailedConfigError("cleanup keep policy must have references section!", c, c.rawMetaCleanup.rawMeta.doc)
+	}
+
+	return nil
+}
+
+func (c *rawMetaCleanupKeepPolicyReferences) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawMetaCleanupKeepPolicy); ok {
+		c.rawMetaCleanup = parent.rawMetaCleanup
+	}
+
+	parentStack.Push(c)
+	type plain rawMetaCleanupKeepPolicyReferences
 	err := unmarshal((*plain)(c))
 	parentStack.Pop()
 	if err != nil {
@@ -71,9 +114,9 @@ func (c *rawMetaCleanupPolicy) UnmarshalYAML(unmarshal func(interface{}) error) 
 	}
 
 	if c.Tag == "" && c.Branch == "" {
-		return newDetailedConfigError("tag `tag: string|REGEX` or branch `branch: string|REGEX` required for cleanup policy!", c, c.rawMetaCleanup.rawMeta.doc)
+		return newDetailedConfigError("tag `tag: string|REGEX` or branch `branch: string|REGEX` required for cleanup keep policy!", c, c.rawMetaCleanup.rawMeta.doc)
 	} else if c.Tag != "" && c.Branch != "" {
-		return newDetailedConfigError("specify only tag `tag: string|REGEX` or branch `branch: string|REGEX` for cleanup policy!", c, c.rawMetaCleanup.rawMeta.doc)
+		return newDetailedConfigError("specify only tag `tag: string|REGEX` or branch `branch: string|REGEX` for cleanup keep policy!", c, c.rawMetaCleanup.rawMeta.doc)
 	}
 
 	if c.Branch != "" {
@@ -92,26 +135,68 @@ func (c *rawMetaCleanupPolicy) UnmarshalYAML(unmarshal func(interface{}) error) 
 		c.TagRegexp = regex
 	}
 
-	if c.Tag != "" && c.ImageDepthToKeep != 0 {
-		return newDetailedConfigError("imageDepthToKeep cannot be defined for tag reference!", c, c.rawMetaCleanup.rawMeta.doc)
-	} else {
-		c.ImageDepthToKeep = 1
+	return nil
+}
+
+func (c *rawMetaCleanupKeepPolicyReferencesLimit) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawMetaCleanupKeepPolicyReferences); ok {
+		c.rawMetaCleanup = parent.rawMetaCleanup
 	}
 
-	if c.RefsToKeepImagesIn != nil {
-		if c.RefsToKeepImagesIn.Operator != "" {
-			if c.RefsToKeepImagesIn.Operator != "Or" && c.RefsToKeepImagesIn.Operator != "And" {
-				return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for operator `operator: Or|And`!", c.RefsToKeepImagesIn.Operator), c, c.rawMetaCleanup.rawMeta.doc)
-			}
-		} else {
-			c.RefsToKeepImagesIn.Operator = "Or"
+	parentStack.Push(c)
+	type plain rawMetaCleanupKeepPolicyReferencesLimit
+	err := unmarshal((*plain)(c))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMetaCleanup.rawMeta.doc); err != nil {
+		return err
+	}
+
+	if c.Operator != nil {
+		if *c.Operator != "Or" && *c.Operator != "And" {
+			return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
 		}
+	} else if c.CreatedIn != nil && c.Last != nil {
+		defaultOperator := "And"
+		c.Operator = &defaultOperator
 	}
 
 	return nil
 }
 
-func (c *rawMetaCleanupPolicy) processRegexpString(name, configValue string) (*regexp.Regexp, error) {
+func (c *rawMetaCleanupKeepPolicyImagesPerReference) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawMetaCleanupKeepPolicy); ok {
+		c.rawMetaCleanup = parent.rawMetaCleanup
+	}
+
+	parentStack.Push(c)
+	type plain rawMetaCleanupKeepPolicyImagesPerReference
+	err := unmarshal((*plain)(c))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMetaCleanup.rawMeta.doc); err != nil {
+		return err
+	}
+
+	if c.Operator != nil {
+		if *c.Operator != "Or" && *c.Operator != "And" {
+			return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
+		}
+	} else if c.PublishedIn != nil && c.Last != nil {
+		defaultOperator := "And"
+		c.Operator = &defaultOperator
+	}
+
+	return nil
+}
+
+func (c *rawMetaCleanupKeepPolicyReferences) processRegexpString(name, configValue string) (*regexp.Regexp, error) {
 	var value string
 	if strings.HasPrefix(configValue, "/") && strings.HasSuffix(configValue, "/") {
 		value = strings.TrimPrefix(configValue, "/")
@@ -131,40 +216,67 @@ func (c *rawMetaCleanupPolicy) processRegexpString(name, configValue string) (*r
 func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 	metaCleanup := MetaCleanup{}
 
-	for _, policy := range c.Policies {
-		metaCleanup.Policies = append(metaCleanup.Policies, policy.toMetaCleanupPolicy())
+	for _, policy := range c.KeepPolicies {
+		metaCleanup.KeepPolicies = append(metaCleanup.KeepPolicies, policy.toMetaCleanupKeepPolicy())
 	}
 
 	return metaCleanup
 }
 
-func (c *rawMetaCleanupPolicy) toMetaCleanupPolicy() *MetaCleanupPolicy {
-	metaCleanupPolicy := &MetaCleanupPolicy{}
+func (c *rawMetaCleanupKeepPolicy) toMetaCleanupKeepPolicy() *MetaCleanupKeepPolicy {
+	policy := &MetaCleanupKeepPolicy{}
 
-	metaCleanupPolicy.BranchRegexp = c.BranchRegexp
-	metaCleanupPolicy.TagRegexp = c.TagRegexp
-
-	if c.RefsToKeepImagesIn != nil {
-		metaCleanupPolicy.RefsToKeepImagesIn = c.RefsToKeepImagesIn.toRefsToKeepImagesIn()
+	if c.References != nil {
+		policy.References = c.References.toMetaCleanupKeepPolicyReferences()
 	}
 
-	metaCleanupPolicy.ImageDepthToKeep = &c.ImageDepthToKeep
+	if c.ImagesPerReference != nil {
+		policy.ImagesPerReference = c.ImagesPerReference.toMetaCleanupKeepPolicyImagesPerReference()
+	}
 
-	return metaCleanupPolicy
+	return policy
 }
 
-func (c *rawRefsToKeepImagesIn) toRefsToKeepImagesIn() *RefsToKeepImagesIn {
-	refsToKeepImagesIn := &RefsToKeepImagesIn{}
+func (c *rawMetaCleanupKeepPolicyReferences) toMetaCleanupKeepPolicyReferences() MetaCleanupKeepPolicyReferences {
+	references := MetaCleanupKeepPolicyReferences{}
+	references.BranchRegexp = c.BranchRegexp
+	references.TagRegexp = c.TagRegexp
 
-	refsToKeepImagesIn.Last = &c.Last
-
-	if c.Operator == "Or" {
-		refsToKeepImagesIn.Operator = OrOperator
-	} else if c.Operator == "And" {
-		refsToKeepImagesIn.Operator = AndOperator
+	if c.Limit != nil {
+		references.Limit = c.Limit.toMetaCleanupKeepPolicyLimit()
 	}
 
-	refsToKeepImagesIn.ModifiedIn = &c.ModifiedIn
+	return references
+}
 
-	return refsToKeepImagesIn
+func (c *rawMetaCleanupKeepPolicyReferencesLimit) toMetaCleanupKeepPolicyLimit() *MetaCleanupKeepPolicyLimit {
+	limit := &MetaCleanupKeepPolicyLimit{}
+	limit.Last = c.Last
+	limit.CreatedIn = c.CreatedIn
+
+	if c.Operator != nil {
+		if *c.Operator == "And" {
+			limit.Operator = &AndOperator
+		} else if *c.Operator == "Or" {
+			limit.Operator = &OrOperator
+		}
+	}
+
+	return limit
+}
+
+func (c *rawMetaCleanupKeepPolicyImagesPerReference) toMetaCleanupKeepPolicyImagesPerReference() MetaCleanupKeepPolicyImagesPerReference {
+	limit := MetaCleanupKeepPolicyImagesPerReference{}
+	limit.Last = c.Last
+	limit.PublishedIn = c.PublishedIn
+
+	if c.Operator != nil {
+		if *c.Operator == "And" {
+			limit.Operator = &AndOperator
+		} else if *c.Operator == "Or" {
+			limit.Operator = &OrOperator
+		}
+	}
+
+	return limit
 }

@@ -18,17 +18,26 @@ import (
 
 type referenceToScan struct {
 	*plumbing.Reference
-	ModifiedAt time.Time
+	CreatedAt  time.Time
 	HeadCommit *object.Commit
 	referenceScanOptions
 }
 
 type referenceScanOptions struct {
-	scanDepthLimit   int
-	imageDepthToKeep int
+	scanDepthLimit          int
+	imagesCleanupKeepPolicy config.MetaCleanupKeepPolicyImagesPerReference
 }
 
-func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaCleanupPolicy) ([]*referenceToScan, error) {
+func (r *referenceToScan) String() string {
+	imagesCleanupKeepPolicy := r.imagesCleanupKeepPolicy.String()
+	if imagesCleanupKeepPolicy != "" {
+		imagesCleanupKeepPolicy = fmt.Sprintf(" (%s)", imagesCleanupKeepPolicy)
+	}
+
+	return fmt.Sprintf("%s%s", r.Name().Short(), imagesCleanupKeepPolicy)
+}
+
+func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*referenceToScan, error) {
 	rs, err := gitRepository.References()
 	if err != nil {
 		return nil, fmt.Errorf("get repository references failed: %s", err)
@@ -90,7 +99,7 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 
 		refs = append(refs, &referenceToScan{
 			Reference:  reference,
-			ModifiedAt: modifiedAt,
+			CreatedAt:  modifiedAt,
 			HeadCommit: refCommit,
 			referenceScanOptions: referenceScanOptions{
 				scanDepthLimit: scanDepthLimit,
@@ -113,49 +122,60 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 	}
 
 	// Apply user or default policies
-	if len(policies) == 0 {
-		tagLastDefault := 10
-		tagImageDepthToKeep := 1
-		policies = append(policies, &config.MetaCleanupPolicy{
-			TagRegexp: regexp.MustCompile(".*"),
-			RefsToKeepImagesIn: &config.RefsToKeepImagesIn{
-				Last:     &tagLastDefault,
-				Operator: config.OrOperator,
+	if len(keepPolicies) == 0 {
+		tagLast := 10
+		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
+			References: config.MetaCleanupKeepPolicyReferences{
+				TagRegexp: regexp.MustCompile(".*"),
+				Limit: &config.MetaCleanupKeepPolicyLimit{
+					Last: &tagLast,
+				},
 			},
-			ImageDepthToKeep: &tagImageDepthToKeep,
 		})
 
-		branchLastDefault := 10
-		branchModifiedInDefault := time.Hour * 24 * 7
-		branchImageDepthToKeepDefault := 2
-		policies = append(policies, &config.MetaCleanupPolicy{
-			BranchRegexp: regexp.MustCompile(".*"),
-			RefsToKeepImagesIn: &config.RefsToKeepImagesIn{
-				Last:       &branchLastDefault,
-				ModifiedIn: &branchModifiedInDefault,
-				Operator:   config.AndOperator,
+		branchLast := 10
+		branchImagesPerReferenceLast := 2
+		branchImagesPerReferencePublishedIn := time.Hour * 24 * 7
+		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
+			References: config.MetaCleanupKeepPolicyReferences{
+				BranchRegexp: regexp.MustCompile(".*"),
+				Limit: &config.MetaCleanupKeepPolicyLimit{
+					Last: &branchLast,
+				},
 			},
-			ImageDepthToKeep: &branchImageDepthToKeepDefault,
+			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
+				Last:        &branchImagesPerReferenceLast,
+				PublishedIn: &branchImagesPerReferencePublishedIn,
+				Operator:    &config.AndOperator,
+			},
 		})
 
-		mainBranchImageDepthToKeepDefault := 10
-		policies = append(policies, &config.MetaCleanupPolicy{
-			BranchRegexp:     regexp.MustCompile("^(master|staging|production)$"),
-			ImageDepthToKeep: &mainBranchImageDepthToKeepDefault,
+		mainBranchReferenceLimitLast := -1
+		mainBranchImagesPerReferenceLast := 10
+		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
+			References: config.MetaCleanupKeepPolicyReferences{
+				BranchRegexp: regexp.MustCompile("^(master|staging|production)$"),
+				Limit: &config.MetaCleanupKeepPolicyLimit{
+					Last: &mainBranchReferenceLimitLast,
+				},
+			},
+			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
+				Last: &mainBranchImagesPerReferenceLast,
+			},
 		})
 	}
 
 	var resultTagsRefs, resultBranchesRefs []*referenceToScan
-	for _, policy := range policies {
+	for _, policy := range keepPolicies {
 		var policyRefs []*referenceToScan
 
-		if policy.BranchRegexp != nil {
-			policyRefs = selectBranchReferencesByRegexp(branchesRefs, policy.BranchRegexp)
-			policyRefs = applyCleanupPolicy(policyRefs, policy)
+		if policy.References.BranchRegexp != nil {
+			policyRefs = selectBranchReferencesByRegexp(branchesRefs, policy.References.BranchRegexp)
+			policyRefs = applyCleanupKeepPolicy(policyRefs, policy)
 			resultBranchesRefs = mergeReferences(resultBranchesRefs, policyRefs)
-		} else if policy.TagRegexp != nil {
-			policyRefs = selectTagReferencesByRegexp(tagsRefs, policy.TagRegexp)
-			policyRefs = applyCleanupPolicy(policyRefs, policy)
+		} else if policy.References.TagRegexp != nil {
+			policyRefs = selectTagReferencesByRegexp(tagsRefs, policy.References.TagRegexp)
+			policyRefs = applyCleanupKeepPolicy(policyRefs, policy)
 			resultTagsRefs = mergeReferences(resultTagsRefs, policyRefs)
 		}
 
@@ -170,10 +190,10 @@ func getReferencesToScan(gitRepository *git.Repository, policies []*config.MetaC
 
 	// Sort by ModifiedAt
 	sort.Slice(resultBranchesRefs, func(i, j int) bool {
-		return resultBranchesRefs[i].ModifiedAt.After(resultBranchesRefs[j].ModifiedAt)
+		return resultBranchesRefs[i].CreatedAt.After(resultBranchesRefs[j].CreatedAt)
 	})
 	sort.Slice(resultTagsRefs, func(i, j int) bool {
-		return resultTagsRefs[i].ModifiedAt.After(resultTagsRefs[j].ModifiedAt)
+		return resultTagsRefs[i].CreatedAt.After(resultTagsRefs[j].CreatedAt)
 	})
 
 	// Unite tags and branches references
@@ -207,42 +227,47 @@ func selectTagReferencesByRegexp(tagsRefs []*referenceToScan, regexp *regexp.Reg
 	return result
 }
 
-func applyCleanupPolicy(refs []*referenceToScan, policy *config.MetaCleanupPolicy) []*referenceToScan {
-	if policy.RefsToKeepImagesIn != nil {
-		refs = applyRefsToKeepImagesInPolicy(refs, policy.RefsToKeepImagesIn)
-	}
-
-	if policy.ImageDepthToKeep != nil {
-		applyImageDepthToKeepPolicy(refs, *policy.ImageDepthToKeep)
-	}
+func applyCleanupKeepPolicy(refs []*referenceToScan, policy *config.MetaCleanupKeepPolicy) []*referenceToScan {
+	refs = applyReferencesLimit(refs, policy.References.Limit)
+	applyImagesPerReference(refs, policy.ImagesPerReference)
 
 	return refs
 }
 
-func applyRefsToKeepImagesInPolicy(policyTagsRefs []*referenceToScan, refsToKeepImagesIn *config.RefsToKeepImagesIn) []*referenceToScan {
-	var policyModifiedInRefs []*referenceToScan
-	if refsToKeepImagesIn.ModifiedIn != nil {
-		policyModifiedInRefs = filterReferencesByModifiedIn(policyTagsRefs, *refsToKeepImagesIn.ModifiedIn)
+func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeepPolicyLimit) []*referenceToScan {
+	if limit == nil {
+		return refs
+	}
+
+	var policyCreatedInRefs []*referenceToScan
+	if limit.CreatedIn != nil {
+		policyCreatedInRefs = filterReferencesByCreatedIn(refs, *limit.CreatedIn)
 	}
 
 	var policyLastRefs []*referenceToScan
-	if refsToKeepImagesIn.Last != nil {
-		policyLastRefs = filterReferencesByLast(policyTagsRefs, *refsToKeepImagesIn.Last)
+	if limit.Last != nil {
+		policyLastRefs = filterReferencesByLast(refs, *limit.Last)
+	}
+
+	if limit.CreatedIn == nil {
+		return policyLastRefs
+	} else if limit.Last == nil {
+		return policyCreatedInRefs
 	}
 
 	var policyRefs []*referenceToScan
-	if refsToKeepImagesIn.Operator == config.AndOperator {
-		policyRefs = referencesAnd(policyModifiedInRefs, policyLastRefs)
+	if limit.Operator != nil && *limit.Operator == config.OrOperator {
+		policyRefs = referencesOr(policyCreatedInRefs, policyLastRefs)
 	} else {
-		policyRefs = referencesOr(policyModifiedInRefs, policyLastRefs)
+		policyRefs = referencesAnd(policyCreatedInRefs, policyLastRefs)
 	}
 
 	return policyRefs
 }
 
-func applyImageDepthToKeepPolicy(policyBranchesRefs []*referenceToScan, imageDepthToKeep int) {
+func applyImagesPerReference(policyBranchesRefs []*referenceToScan, imagesPerReference config.MetaCleanupKeepPolicyImagesPerReference) {
 	for _, ref := range policyBranchesRefs {
-		ref.imageDepthToKeep = imageDepthToKeep
+		ref.imagesCleanupKeepPolicy = imagesPerReference
 	}
 }
 
@@ -266,21 +291,23 @@ outerLoop:
 	return result
 }
 
-func filterReferencesByModifiedIn(refs []*referenceToScan, modifiedIn time.Duration) (result []*referenceToScan) {
+func filterReferencesByCreatedIn(refs []*referenceToScan, createdIn time.Duration) (result []*referenceToScan) {
 	for _, ref := range refs {
-		if ref.ModifiedAt.Before(time.Now().Add(-modifiedIn)) {
-			continue
+		if ref.CreatedAt.After(time.Now().Add(-createdIn)) {
+			result = append(result, ref)
 		}
-
-		result = append(result, ref)
 	}
 
 	return
 }
 
 func filterReferencesByLast(refs []*referenceToScan, last int) []*referenceToScan {
+	if last == -1 {
+		return refs
+	}
+
 	sort.Slice(refs, func(i, j int) bool {
-		return refs[i].ModifiedAt.After(refs[j].ModifiedAt)
+		return refs[i].CreatedAt.After(refs[j].CreatedAt)
 	})
 
 	if len(refs) < last {
