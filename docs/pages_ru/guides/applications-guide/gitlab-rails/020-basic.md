@@ -371,8 +371,8 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 #### Создание Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
-- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
-- [.helm/values.yaml](.helm/values.yaml)
+- .helm/templates/deployment.yaml
+- .helm/values.yaml
 {% endfilesused %}
 
 Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `web-basic`. Укажем, **как этот контейнер будет запускаться**:
@@ -472,9 +472,9 @@ app:
 #### Доступность Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
-- [.helm/templates/deployment.yaml](.helm/templates/deployment.yaml)
-- [.helm/templates/service.yaml](.helm/templates/service.yaml)
-- [.helm/values.yaml](.helm/values.yaml)
+- .helm/templates/deployment.yaml
+- .helm/templates/service.yaml
+- .helm/values.yaml
 {% endfilesused %}
 
 Для того чтобы запросы извне попали к нам в приложение нужно открыть порт у Pod-а, создать объект Service и привязать его к Pod-у, и создать объект Ingress.
@@ -666,11 +666,15 @@ NAME                                 STATUS               AGE
 default                              Active               161d
 werf-guided-project-production       Active               4m44s
 werf-guided-project-staging          Active               3h2m
+```
 
+```bash
 $ kubectl -n example-1-staging get po
 NAME                                 READY                STATUS   RESTARTS  AGE
 werf-guided-project-9f6bd769f-rm8nz  1/1                  Running  0         6m12s
+```
 
+```bash
 $ kubectl -n example-1-staging get ingress
 NAME                                 HOSTS                ADDRESS  PORTS     AGE
 werf-guided-project                  staging.mydomain.io           80        6m18s

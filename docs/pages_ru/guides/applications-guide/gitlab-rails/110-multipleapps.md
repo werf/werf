@@ -42,7 +42,53 @@ toc: false
 Для одного репозитория рекомендуется использовать один файл `werf.yaml` и одну папку `.helm` с конфигурацией инфраструктуры. Такой подход делает работу над кодом прозрачнее и помогает избегать рассинхронизации в двух частях одного проекта.
 
 {% offtopic title="А если получится слишком много информации в одном месте и станет сложно ориентироваться?" %}
-TODO: напомнить про то, что helm-шаблоны — это множество файлов и можно их там раскидывать как угодно. А также про то, что в werf.yaml можно в инклюды (можно ж?)
+В папке `.helm/templates` вы можете создавать другие вложенные папки, и разделять ваши приложения как угодно.
+Так-же werf поддежривает инклюды, а это значит что мы можем разделить описание нескольких образов на разные файлы.
+
+{% snippetcut name="werf.yaml" url="#" %}
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+{{ include "artifact/back.tmpl" . }}
+---
+{{ include "artifact/front.tmpl" . }}
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% snippetcut name=".werf/artifact/back.tmpl" url="#" %}
+{% raw %}
+```yaml
+artifact: back
+from: ubuntu
+git:
+- add: '/app'
+  to: '/app'
+shell:
+  install:
+  - echo "install back"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+
+{% snippetcut name=".werf/artifact/front.tmpl" url="#" %}
+{% raw %}
+```yaml
+artifact: front
+from: ubuntu
+git:
+- add: '/app'
+  to: '/app'
+shell:
+  install:
+  - echo "install front"
+```
+{% endraw %}
+{% endsnippetcut %}
+
 {% endofftopic %}
 
 ## Сборка приложений
