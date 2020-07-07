@@ -79,7 +79,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 			changeResourcesManually := func() {
 			GetAndUpdateMydeploy1:
-				mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+				mydeploy1, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 
 				for _, c := range mydeploy1.Spec.Template.Spec.Containers {
@@ -87,14 +87,14 @@ var _ = Describe("Three way merge patches creator", func() {
 				}
 				mydeploy1.Spec.Replicas = new(int32)
 				*mydeploy1.Spec.Replicas = 2
-				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy1)
+				_, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy1)
 				if errors.IsConflict(err) {
 					goto GetAndUpdateMydeploy1
 				}
 				Expect(err).NotTo(HaveOccurred())
 
 			GetAndUpdateMycm1:
-				mycm1, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
+				mycm1, err := kube.Client.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				delete(mycm1.Data, "moloko")
 				mycm1.Data["aloe"] = "cactus"
@@ -102,7 +102,7 @@ var _ = Describe("Three way merge patches creator", func() {
 				mycm1.Annotations["extraKey"] = "value"
 				mycm1.Labels = make(map[string]string)
 				mycm1.Labels["extraKey"] = "value"
-				_, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Update(mycm1)
+				_, err = kube.Client.CoreV1().ConfigMaps(namespace).Update(mycm1)
 				if errors.IsConflict(err) {
 					goto GetAndUpdateMycm1
 				}
@@ -117,14 +117,14 @@ var _ = Describe("Three way merge patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
 			})).To(Succeed())
 
-			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(1)))
 			Expect(len(mydeploy1.Spec.Template.Spec.Containers)).To(Equal(1))
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Image).To(Equal("ubuntu:18.04"))
 
-			mycm1, err := kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
+			mycm1, err := kube.Client.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(mycm1.Annotations["extraKey"]).To(Equal("value"))
@@ -143,7 +143,7 @@ var _ = Describe("Three way merge patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
 			})).To(Succeed())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(3)))
@@ -151,7 +151,7 @@ var _ = Describe("Three way merge patches creator", func() {
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Name).To(Equal("main2"))
 			Expect(mydeploy1.Spec.Template.Spec.Containers[0].Image).To(Equal("ubuntu:19.04"))
 
-			mycm1, err = kube.Kubernetes.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
+			mycm1, err = kube.Client.CoreV1().ConfigMaps(namespace).Get("mycm1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(mycm1.Annotations["extraKey"]).To(Equal("value"))
@@ -192,7 +192,7 @@ var _ = Describe("Three way merge patches creator", func() {
 			By("chaning resources and replicas manually")
 
 			changeResourcesManually := func() {
-				mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+				mydeploy1, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 
 				mydeploy1.Spec.Replicas = new(int32)
@@ -219,10 +219,10 @@ var _ = Describe("Three way merge patches creator", func() {
 					},
 				}
 
-				_, err = kube.Kubernetes.AppsV1().Deployments(namespace).Update(mydeploy1)
+				_, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy1)
 				Expect(err).NotTo(HaveOccurred())
 
-				mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+				mydeploy1, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
@@ -240,7 +240,7 @@ var _ = Describe("Three way merge patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
 			})).To(Succeed())
 
-			mydeploy1, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(1)))
@@ -259,7 +259,7 @@ var _ = Describe("Three way merge patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
 			})).To(Succeed())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
@@ -274,7 +274,7 @@ var _ = Describe("Three way merge patches creator", func() {
 				Env: map[string]string{"WERF_THREE_WAY_MERGE_MODE": "enabled"},
 			})).To(Succeed())
 
-			mydeploy1, err = kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(*mydeploy1.Spec.Replicas).To(Equal(int32(2)))
@@ -312,7 +312,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 			By("checking that new failed resource have been created and exists after failed upgrade")
 
-			mydeploy1AfterFailedUpgrade, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1AfterFailedUpgrade, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			By("deploying a chart with the new resource with fixed runtime error")
@@ -323,7 +323,7 @@ var _ = Describe("Three way merge patches creator", func() {
 
 			By("checking that repaired resource exists and have not been recreated during last redeploy")
 
-			mydeploy1AfterSuccessfulUpgrade, err := kube.Kubernetes.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			mydeploy1AfterSuccessfulUpgrade, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(mydeploy1AfterFailedUpgrade.UID).To(Equal(mydeploy1AfterSuccessfulUpgrade.UID))

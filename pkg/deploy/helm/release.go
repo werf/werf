@@ -535,7 +535,7 @@ func removeReleaseNamespacedResource(template Template, releaseNamespace string)
 func removeResource(name, kind, namespace string) error {
 	isNamespacedResource := namespace != ""
 
-	groupVersionResource, err := kube.GroupVersionResourceByKind(kind)
+	groupVersionResource, err := kube.GroupVersionResourceByKind(kube.Client, kind)
 	if err != nil {
 		return err
 	}

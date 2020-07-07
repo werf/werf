@@ -2,9 +2,6 @@ package cleanup
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/werf/werf/pkg/image"
 
@@ -31,6 +28,8 @@ func NewCmd() *cobra.Command {
 		Short:                 "Cleanup project stages from stages storage",
 		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -63,6 +62,8 @@ func NewCmd() *cobra.Command {
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
@@ -118,11 +119,6 @@ func runSync() error {
 	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
-	}
-	if strings.HasPrefix(synchronization, "kubernetes://") {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
-		}
 	}
 	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 	if err != nil {

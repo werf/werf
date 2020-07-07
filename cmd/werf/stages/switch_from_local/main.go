@@ -2,11 +2,9 @@ package switch_from_local
 
 import (
 	"fmt"
-	"strings"
 
 	stages_common "github.com/werf/werf/cmd/werf/stages/common"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/storage"
 
 	"github.com/spf13/cobra"
@@ -29,6 +27,8 @@ func NewCmd() *cobra.Command {
 		Short:                 "Switch current project stages storage from :local to repo",
 		Long:                  common.GetLongCommandDescription("Switch current project stages storage to another"),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -59,6 +59,8 @@ func NewCmd() *cobra.Command {
 	stages_common.SetupToStagesStorage(&commonCmdData, &cmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
@@ -111,11 +113,6 @@ func runSwitch() error {
 	synchronization, err := common.GetSynchronization(&commonCmdData, fromStagesStorage.Address())
 	if err != nil {
 		return err
-	}
-	if strings.HasPrefix(synchronization, "kubernetes://") {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
-		}
 	}
 	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 	if err != nil {

@@ -2,9 +2,7 @@ package add
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -54,6 +52,8 @@ func NewCmd() *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
@@ -112,11 +112,6 @@ func run(imageName string) error {
 	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
-	}
-	if strings.HasPrefix(synchronization, "kubernetes://") {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
-		}
 	}
 	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 	if err != nil {

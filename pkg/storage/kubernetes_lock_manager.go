@@ -4,26 +4,32 @@ import (
 	"fmt"
 	"sync"
 
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/werf/werf/pkg/werf/locker_with_retry"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/werf"
 )
 
-func NewKubernetesLockManager(namespace string) *KuberntesLockManager {
+func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface) *KuberntesLockManager {
 	return &KuberntesLockManager{
-		Namespace:        namespace,
-		LockerPerProject: make(map[string]lockgate.Locker),
+		KubeClient:        kubeClient,
+		KubeDynamicClient: kubeDynamicClient,
+		Namespace:         namespace,
+		LockerPerProject:  make(map[string]lockgate.Locker),
 	}
 }
 
 type KuberntesLockManager struct {
-	Namespace        string
-	LockerPerProject map[string]lockgate.Locker
+	KubeClient        kubernetes.Interface
+	KubeDynamicClient dynamic.Interface
+	Namespace         string
+	LockerPerProject  map[string]lockgate.Locker
 
 	mux sync.Mutex
 }
@@ -37,12 +43,12 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 	}
 
 	name := configMapName(projectName)
-	if _, err := getOrCreateConfigMapWithNamespaceIfNotExists(manager.Namespace, name); err != nil {
+	if _, err := getOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
 		return nil, err
 	}
 
 	locker := lockgate.NewKubernetesLocker(
-		kube.DynamicClient, schema.GroupVersionResource{
+		manager.KubeDynamicClient, schema.GroupVersionResource{
 			Group:    "",
 			Version:  "v1",
 			Resource: "configmaps",

@@ -60,6 +60,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -99,6 +101,9 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
+
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -171,7 +176,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

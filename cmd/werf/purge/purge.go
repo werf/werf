@@ -2,9 +2,7 @@ package purge
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -36,6 +34,8 @@ First step is 'werf images purge', which will delete all project images from ima
 
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -65,6 +65,8 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
@@ -117,11 +119,6 @@ func runPurge() error {
 	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
 	if err != nil {
 		return err
-	}
-	if strings.HasPrefix(synchronization, "kubernetes://") {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
-		}
 	}
 	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
 	if err != nil {

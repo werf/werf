@@ -93,7 +93,7 @@ func runSynchronization() error {
 	var stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)
 
 	if cmdData.Kubernetes {
-		if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+		if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
 			return fmt.Errorf("cannot initialize kube: %s", err)
 		}
 
@@ -107,11 +107,11 @@ func runSynchronization() error {
 		}
 
 		lockManagerFactoryFunc = func(clientID string) (storage.LockManager, error) {
-			return storage.NewKubernetesLockManager(fmt.Sprintf("%s%s", prefix, clientID)), nil
+			return storage.NewKubernetesLockManager(fmt.Sprintf("%s%s", prefix, clientID), kube.Client, kube.DynamicClient), nil
 		}
 
 		stagesStorageCacheFactoryFunc = func(clientID string) (storage.StagesStorageCache, error) {
-			return storage.NewKubernetesStagesStorageCache(fmt.Sprintf("%s%s", prefix, clientID)), nil
+			return storage.NewKubernetesStagesStorageCache(fmt.Sprintf("%s%s", prefix, clientID), kube.Client), nil
 		}
 	} else {
 		lockManagerBaseDir := cmdData.LocalLockManagerBaseDir

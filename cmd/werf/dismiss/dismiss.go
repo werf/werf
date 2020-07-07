@@ -47,6 +47,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -67,6 +69,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd)
@@ -137,7 +141,7 @@ func runDismiss() error {
 
 	projectName := werfConfig.Meta.Project
 
-	err = kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig})
+	err = kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}

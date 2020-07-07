@@ -41,6 +41,8 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
 		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer werf.PrintGlobalWarnings()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -78,6 +80,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
+	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
@@ -106,7 +110,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
