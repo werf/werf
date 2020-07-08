@@ -2,52 +2,16 @@ package cleanup_test
 
 import (
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/docker_registry"
-
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
 var _ = forEachDockerRegistryImplementation("cleaning images", func() {
-	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), testDirPath)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			"git",
-			"init", "--bare", "remote.git",
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			"git",
-			"init",
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			"git",
-			"remote", "add", "origin", "remote.git",
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			"git",
-			"add", "werf.yaml",
-		)
-
-		utils.RunSucceedCommand(
-			testDirPath,
-			"git",
-			"commit", "-m", "Initial commit",
-		)
-
-		stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
-	})
-
 	for _, werfCommand := range [][]string{
 		{"images", "cleanup"},
 		{"cleanup"},
@@ -59,6 +23,11 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 			Context("when deployed images in kubernetes are not taken into account", func() {
 				BeforeEach(func() {
 					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
+				})
+
+				BeforeEach(func() {
+					utils.CopyIn(utils.FixturePath("default"), testDirPath)
+					imagesCleanupBeforeEachBase()
 				})
 
 				It("should work properly with non-existent/empty images repo", func() {
@@ -368,6 +337,426 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 					})
 				})
 			})
+
+			Context("git history based cleanup", func() {
+				BeforeEach(func() {
+					stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "1")
+				})
+
+				BeforeEach(func() {
+					utils.CopyIn(utils.FixturePath("git_history_based_cleanup"), testDirPath)
+					imagesCleanupBeforeEachBase()
+				})
+
+				It("should work only with remote references", func() {
+					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"checkout", "-b", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 1)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "origin", "--delete", "test",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 0)
+				})
+
+				It("should remove image from untracked branch", func() {
+					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"checkout", "-b", "some_branch",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "some_branch",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 0)
+				})
+
+				It("should remove image by imagesPerReference.last", func() {
+					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"checkout", "-b", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 0)
+				})
+
+				It("should remove image by imagesPerReference.publishedIn", func() {
+					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
+
+					setLastCommitCommitterWhen(time.Now().Add(-(25 * time.Hour)).String())
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"checkout", "-b", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 0)
+
+					setLastCommitCommitterWhen(time.Now().Add(-(23 * time.Hour)).String())
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--force",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 1)
+				})
+
+				It("should remove image by references.limit.createdIn", func() {
+					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
+
+					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"checkout", "-b", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "test",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 0)
+
+					setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "--force",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build-and-publish", "--tag-by-stages-signature",
+					)
+
+					imagesCleanupCheck(werfCommand, 1, 1)
+				})
+
+				Context("references.limit.*", func() {
+					const (
+						tag1 = "test1"
+						tag2 = "test2"
+						tag3 = "test3"
+					)
+
+					BeforeEach(func() {
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"checkout", "-b", tag1,
+						)
+
+						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", tag1,
+						)
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "1")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag1,
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"checkout", "-b", tag2,
+						)
+
+						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", tag2,
+						)
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "2")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag2,
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"checkout", "-b", tag3,
+						)
+
+						setLastCommitCommitterWhen(time.Now().String())
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "3")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag3,
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", tag3,
+						)
+					})
+
+					It("should remove image by references.limit.createdIn OR references.limit.last", func() {
+						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
+						imagesCleanupCheck(
+							werfCommand,
+							3,
+							2,
+							func(tags []string) {
+								Ω(tags).Should(ContainElement(tag2))
+								Ω(tags).Should(ContainElement(tag3))
+							},
+						)
+					})
+
+					It("should remove image by references.limit.createdIn AND references.limit.last", func() {
+						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
+						imagesCleanupCheck(
+							werfCommand,
+							3,
+							1,
+							func(tags []string) {
+								Ω(tags).Should(ContainElement(tag3))
+							},
+						)
+					})
+				})
+
+				Context("imagesPerReference.*", func() {
+					const (
+						tag1 = "test1"
+						tag2 = "test2"
+						tag3 = "test3"
+					)
+
+					BeforeEach(func() {
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"checkout", "-b", "test",
+						)
+
+						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "1")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag1,
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"commit", "--allow-empty", "-m", "+",
+						)
+
+						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "2")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag2,
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"commit", "--allow-empty", "-m", "+",
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", "test",
+						)
+
+						stubs.SetEnv("FROM_CACHE_VERSION", "3")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build-and-publish", "--tag-custom", tag3,
+						)
+					})
+
+					It("should remove image by imagesPerReference.publishedIn OR imagesPerReference.last", func() {
+						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
+						imagesCleanupCheck(
+							werfCommand,
+							3,
+							2,
+							func(tags []string) {
+								Ω(tags).Should(ContainElement(tag2))
+								Ω(tags).Should(ContainElement(tag3))
+							},
+						)
+					})
+
+					It("should remove image by imagesPerReference.publishedIn AND imagesPerReference.last", func() {
+						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
+						imagesCleanupCheck(
+							werfCommand,
+							3,
+							1,
+							func(tags []string) {
+								Ω(tags).Should(ContainElement(tag3))
+							},
+						)
+					})
+				})
+			})
 		})
 	}
 })
+
+func imagesCleanupBeforeEachBase() {
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"init", "--bare", "remote.git",
+	)
+
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"init",
+	)
+
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"remote", "add", "origin", "remote.git",
+	)
+
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"add", "werf.yaml",
+	)
+
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"commit", "-m", "Initial commit",
+	)
+
+	stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
+}
+
+func imagesCleanupCheck(cleanupArgs []string, expectedNumberOfTagsBefore, expectedNumberOfTagsAfter int, resultTagsChecks ...func([]string)) {
+	tags := imagesRepoAllImageRepoTags("image")
+	Ω(tags).Should(HaveLen(expectedNumberOfTagsBefore))
+
+	utils.RunSucceedCommand(
+		testDirPath,
+		werfBinPath,
+		cleanupArgs...,
+	)
+
+	tags = imagesRepoAllImageRepoTags("image")
+	Ω(tags).Should(HaveLen(expectedNumberOfTagsAfter))
+
+	if resultTagsChecks != nil {
+		for _, check := range resultTagsChecks {
+			check(tags)
+		}
+	}
+}
+
+func setLastCommitCommitterWhen(newDate string) {
+	stubs.SetEnv("GIT_COMMITTER_DATE", newDate)
+	utils.RunSucceedCommand(
+		testDirPath,
+		"git",
+		"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate,
+	)
+}
