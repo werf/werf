@@ -220,22 +220,8 @@ func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, opt
 	for _, stageDesc := range stages {
 		if !dryRun {
 			if err := stagesManager.DeleteStages(options, stageDesc); err != nil {
-				switch err.(type) {
-				case docker_registry.DockerHubUnauthorizedError:
-					return fmt.Errorf(`%s
-You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
-Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
-Be aware that access to the resource is forbidden with personal access token.
-Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
-				case docker_registry.GitHubPackagesUnauthorizedError:
-					return fmt.Errorf(`%s
-You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
-Check --repo-github-token and --stages-storage-repo-github-token options.
-Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
-				default:
-					logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", stageDesc.Info.Name, err)
-					logboek.LogOptionalLn()
-					return nil
+				if err := handleDeleteStageOrImageError(err, stageDesc.Info.Name); err != nil {
+					return err
 				}
 			}
 		}
@@ -245,4 +231,28 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 	}
 
 	return nil
+}
+
+func handleDeleteStageOrImageError(err error, imageName string) error {
+	switch err.(type) {
+	case docker_registry.DockerHubUnauthorizedError:
+		return fmt.Errorf(`%s
+You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
+Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
+Be aware that access to the resource is forbidden with personal access token.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
+	case docker_registry.GitHubPackagesUnauthorizedError:
+		return fmt.Errorf(`%s
+You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
+Check --repo-github-token and --stages-storage-repo-github-token options.
+Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
+	default:
+		if storage.IsImageDeletionFailedDueToUsingByContainerError(err) {
+			return err
+		}
+
+		logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
+		logboek.LogOptionalLn()
+		return nil
+	}
 }
