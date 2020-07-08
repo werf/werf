@@ -63,14 +63,19 @@ type SynchronizationParams struct {
 func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 	var doPrintWarn bool
 
-	if *cmdData.KubeConfig != "" && *cmdData.SynchronizationKubeConfig == "" {
+	specifiedKubeConfig := *cmdData.KubeConfig
+	if kubeConfigEnv := os.Getenv("KUBECONFIG"); kubeConfigEnv != "" {
+		specifiedKubeConfig = kubeConfigEnv
+	}
+
+	if specifiedKubeConfig != "" && *cmdData.SynchronizationKubeConfig == "" {
 		if !doPrintWarn {
 			werf.GlobalWarningLn(`##########################################################################################################################`)
 		}
 		doPrintWarn = true
 
 		werf.GlobalWarningLn(`##  Required --synchronization-kube-config (or WERF_SYNCHRONIZATION_KUBE_CONFIG env var) param to be specified explicitly,`)
-		werf.GlobalWarningLn(fmt.Sprintf(`##  because --kube-config (or WERF_KUBE_CONFIG env var) = %s has been specified explicitly.`, *cmdData.KubeConfig))
+		werf.GlobalWarningLn(fmt.Sprintf(`##  because --kube-config (or WERF_KUBE_CONFIG or KUBECONFIG env var) = %s has been specified explicitly.`, *cmdData.KubeConfig))
 	}
 
 	if *cmdData.KubeContext != "" && *cmdData.SynchronizationKubeContext == "" {
