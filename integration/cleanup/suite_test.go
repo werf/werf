@@ -244,7 +244,10 @@ environLoop:
 	if len(list) != 0 {
 		return list
 	} else {
-		return []string{":local", ":local_with_stages_storage_repo"}
+		return []string{
+			":local",
+			//":local_with_stages_storage_repo"
+		}
 	}
 }
 
