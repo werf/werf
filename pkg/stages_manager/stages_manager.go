@@ -371,11 +371,11 @@ func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStage
 	stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Signature, stageID.UniqueID)
 
 	if opts.WithManifestCache {
-		logboek.Info.LogF("Getting image %s info from manifest cache...\n", stageImageName)
+		logboek.Debug.LogF("Getting image %s info from manifest cache...\n", stageImageName)
 		if imgInfo, err := image.CommonManifestCache.GetImageInfo(stageImageName); err != nil {
 			return nil, fmt.Errorf("error getting image %s info from manifest cache: %s", stageImageName, err)
 		} else if imgInfo != nil {
-			logboek.Info.LogF("Got image %s info from manifest cache (CACHE HIT)\n", stageImageName)
+			logboek.Debug.LogF("Got image %s info from manifest cache (CACHE HIT)\n", stageImageName)
 			return &image.StageDescription{
 				StageID: &image.StageID{Signature: stageID.Signature, UniqueID: stageID.UniqueID},
 				Info:    imgInfo,
@@ -385,12 +385,12 @@ func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStage
 		}
 	}
 
-	logboek.Info.LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
+	logboek.Debug.LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
 	if stageDesc, err := m.StagesStorage.GetStageDescription(m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
 		return nil, fmt.Errorf("error getting signature %q uniqueID %d stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 	} else if stageDesc != nil {
 		if opts.WithManifestCache {
-			logboek.Info.LogF("Storing image %s info into manifest cache\n", stageImageName)
+			logboek.Debug.LogF("Storing image %s info into manifest cache\n", stageImageName)
 			if err := image.CommonManifestCache.StoreImageInfo(stageDesc.Info); err != nil {
 				return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
 			}
@@ -398,7 +398,7 @@ func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStage
 
 		return stageDesc, nil
 	} else if opts.StageShouldExist {
-		logboek.ErrF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
+		logboek.Warn.LogF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
 		return nil, ErrShouldResetStagesStorageCache
 	} else {
 		return nil, nil

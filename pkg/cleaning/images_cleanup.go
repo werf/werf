@@ -347,7 +347,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 	var referencesToScan []*referenceToScan
 	if err := logboek.Default.LogProcess("Preparing references to scan", logboek.LevelLogProcessOptions{}, func() error {
-		referencesToScan, err = getReferencesToScan(gitRepository, m.GitHistoryBasedCleanupOptions.Policies)
+		referencesToScan, err = getReferencesToScan(gitRepository, m.GitHistoryBasedCleanupOptions.KeepPolicies)
 		return err
 	}); err != nil {
 		return nil, err
