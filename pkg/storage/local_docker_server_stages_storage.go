@@ -26,6 +26,12 @@ const (
 	LocalImageMetadataByCommitRecord_ImageFormat     = "werf-images-metadata-by-commit/%s:%s-%s"
 )
 
+const ImageDeletionFailedDueToUsedByContainerErrorTip = "Use --force option to remove all containers that are based on deleting werf docker images"
+
+func IsImageDeletionFailedDueToUsingByContainerError(err error) bool {
+	return strings.HasSuffix(err.Error(), ImageDeletionFailedDueToUsingByContainerErrorTip)
+}
+
 func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
@@ -342,7 +348,7 @@ func processRelatedContainers(imageInfoList []*image.Info, options processRelate
 				} else if options.rmContainersThatUseImage {
 					containerListToRemove = append(containerListToRemove, container)
 				} else {
-					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imgInfo), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
+					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imgInfo), logContainerName(container), ImageDeletionFailedDueToUsedByContainerErrorTip)
 				}
 			}
 		}
