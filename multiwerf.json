@@ -43,8 +43,7 @@
         },
         {
           "name": "stable",
-	  "_candidate": "v1.1.19+fix8",
-          "version": "v1.1.16+fix10"
+	  "version": "v1.1.19+fix8"
         },
         {
           "name": "rock-solid",
