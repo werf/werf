@@ -71,9 +71,8 @@ func NewCmd() *cobra.Command {
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)

@@ -69,14 +69,13 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
@@ -141,7 +140,11 @@ func runDismiss() error {
 
 	projectName := werfConfig.Meta.Project
 
-	err = kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}})
+	err = kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
