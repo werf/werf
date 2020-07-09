@@ -56,7 +56,8 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
       --keyring='$HOME/.gnupg/pubring.gpg':
             keyring containing public keys (if using CHART as a chart reference)
       --kube-config='':
-            Kubernetes config file path (default $WERF_KUBE_CONFIG)
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
