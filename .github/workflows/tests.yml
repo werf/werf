@@ -146,6 +146,13 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v2
+      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+
+    - name: Checkout code (git history as fixtures for tests)
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -162,9 +169,6 @@ jobs:
     - name: Prepare environment
       run: |
         ./scripts/ci/git.sh
-
-        # fixtures
-        git fetch origin +refs/tags/v1.0.10:refs/tags/v1.0.10
 
         go build github.com/onsi/ginkgo/ginkgo
 
