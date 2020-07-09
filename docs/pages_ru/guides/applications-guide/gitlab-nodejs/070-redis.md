@@ -256,9 +256,9 @@ redis:
 ```yaml
   redis:
     session_ttl:
-        _default: ____________
+        _default: "3600"
     cookie_secret:
-        _default: ____________
+        _default: "supersecret"
 ```
 {% endraw %}
 {% endsnippetcut %}

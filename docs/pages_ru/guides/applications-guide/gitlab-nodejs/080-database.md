@@ -133,7 +133,7 @@ postgresql:
 
 В нашем случае для корректного развертывания БД нам осталось указать только одну сущность - [PersitentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="postgres-pv.yaml" url="#" %}
 {% raw %}
 ```yaml
 apiVersion: v1
@@ -224,9 +224,7 @@ spec:
 
 Для подключения NodeJS приложения к PostgreSQL необходимо установить пакет npm `pg` и сконфигурировать:
 
-TODO: выправить использование переменных в этом коде
-
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="server.js" url="#" %}
 {% raw %}
 ```js
 const pgconnectionString =
@@ -304,9 +302,9 @@ pool.on("error", (err, client) => {
 ```yaml
 postgresql:
    login:
-      _default: ____________
+      _default: chat
    port:
-      _default: ____________
+      _default: 5432
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -352,7 +350,6 @@ postgresql:
 Для выполнения миграций в БД мы используем пакет `node-pg-migrate`, на его примере и будем рассматривать выполнение миграций.
 
 {% offtopic title="Как настраиваем node-pg-migrate?" %}
-TODO: причесать этот текст
 
 Запуск миграции мы помещаем в package.json, чтобы его можно было  вызывать с помощью скрипта в npm: 
 ```json
