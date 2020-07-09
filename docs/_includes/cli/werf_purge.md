@@ -67,7 +67,11 @@ werf purge [options]
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
-            Kubernetes config file path (default $WERF_KUBE_CONFIG)
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
+      --kube-config-base64='':
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
