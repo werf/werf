@@ -91,10 +91,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmChartDir(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
@@ -252,7 +251,11 @@ func runConverge() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

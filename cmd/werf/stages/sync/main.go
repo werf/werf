@@ -60,9 +60,8 @@ func NewCmd() *cobra.Command {
 	stages_common.SetupCleanupLocalCache(&cmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	return cmd

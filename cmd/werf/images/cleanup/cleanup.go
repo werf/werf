@@ -74,9 +74,8 @@ func NewCmd() *cobra.Command {
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 
@@ -104,7 +103,11 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

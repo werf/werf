@@ -783,8 +783,8 @@ github.com/vmware/govmomi v0.20.1/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/werf/helm v0.0.0-20200506171044-5fb767b2db6c h1:Ew/xqh7yfDn3+b1yJeFdzxv+Kain/liLSStE8X+eprQ=
 github.com/werf/helm v0.0.0-20200506171044-5fb767b2db6c/go.mod h1:rBQrZQK7AGqzCP1Ve/pE1irL0A9WGQySaDXhpZ6AIJM=
 github.com/werf/kubedog v0.3.5-0.20200610123340-3e909edb5afe/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
-github.com/werf/kubedog v0.3.5-0.20200707154239-8015c267710f h1:NS/Z0YYmSFI7wf7TmI5vOd1F8Q6LhcnDlKr8ZmyJObM=
-github.com/werf/kubedog v0.3.5-0.20200707154239-8015c267710f/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
+github.com/werf/kubedog v0.3.5-0.20200709122502-d4a85f7484cf h1:x5lYB238N7AqRvZ2+nRMlB/gIBbnEZuOqHwvCw2Oe5g=
+github.com/werf/kubedog v0.3.5-0.20200709122502-d4a85f7484cf/go.mod h1:mSm773JaDFwmgzrOl6LRFDrlUjwk0yKS6WYBbC6E144=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101 h1:tPxINuU4/RjTCwfCW8pPtcGj20Bxc3Hd9aHZJ42Snyg=
 github.com/werf/lockgate v0.0.0-20200610124531-3e56c66ed101/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
 github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55 h1:/7jQqp5f/gZrnWXSR+2OgXVvDZuumAVKrLOOsXUKv4o=

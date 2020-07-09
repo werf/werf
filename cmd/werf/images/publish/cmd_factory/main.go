@@ -70,9 +70,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupLogProjectDir(commonCmdData, cmd)
 
 	common.SetupSynchronization(commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(commonCmdData, cmd)
 	common.SetupKubeConfig(commonCmdData, cmd)
+	common.SetupKubeConfigBase64(commonCmdData, cmd)
 	common.SetupKubeContext(commonCmdData, cmd)
 
 	common.SetupPublishReportPath(commonCmdData, cmd)

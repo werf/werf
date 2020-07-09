@@ -48,6 +48,7 @@ type CmdData struct {
 	AddLabels                        *[]string
 	KubeContext                      *string
 	KubeConfig                       *string
+	KubeConfigBase64                 *string
 	HelmReleaseStorageNamespace      *string
 	HelmReleaseStorageType           *string
 	StatusProgressPeriodSeconds      *int64
@@ -69,10 +70,8 @@ type CmdData struct {
 	ImagesRepoMode *string
 	ImagesRepoData *RepoData
 
-	Synchronization            *string
-	SynchronizationKubeConfig  *string
-	SynchronizationKubeContext *string
-	GitHistorySynchronization  *bool
+	Synchronization           *string
+	GitHistorySynchronization *bool
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -196,7 +195,7 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
-	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_KUBE_CONTEXT)")
+	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -280,7 +279,22 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfig = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", os.Getenv("WERF_KUBE_CONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG)")
+	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or $KUBECONFIG)")
+}
+
+func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeConfigBase64 = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+}
+
+func getFirstExistingEnvVarAsString(envNames ...string) string {
+	for _, envName := range envNames {
+		if v := os.Getenv(envName); v != "" {
+			return v
+		}
+	}
+
+	return ""
 }
 
 func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {

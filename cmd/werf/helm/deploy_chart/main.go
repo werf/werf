@@ -139,7 +139,11 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

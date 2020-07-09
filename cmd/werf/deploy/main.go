@@ -90,6 +90,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupHelmChartDir(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
@@ -101,8 +102,6 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeConfig(&commonCmdData, cmd)
-	common.SetupSynchronizationKubeContext(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -176,7 +175,11 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{KubeContext: *commonCmdData.KubeContext, KubeConfig: *commonCmdData.KubeConfig}}); err != nil {
+	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
