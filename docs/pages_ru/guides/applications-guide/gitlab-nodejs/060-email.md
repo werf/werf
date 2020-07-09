@@ -9,7 +9,8 @@ toc: false
 {% filesused title="Файлы, упомянутые в главе" %}
 - .helm/templates/deployment.yaml
 - .helm/secret-values.yaml
-- ____________
+- package.json
+- consumer.js
 {% endfilesused %}
 
 В этой главе мы настроим в нашем базовом приложении работу с почтой.
@@ -19,24 +20,23 @@ toc: false
 Для того, чтобы NodeJS приложение могло работать с mailgun необходимо установить и сконфигурировать зависимость и начать её использовать. Установим через `npm` зависимость:
 
 ```bash
-____________
+npm install mailgun-js
 ```
 
-И [сконфигурируем согласно документации](____________) пакета
+И [сконфигурируем согласно документации](mailgun-js) пакета
 
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="consumer.js" url="#" %}
 {% raw %}
-```____________
-____________
-____________
-____________
+const mailgun = require("mailgun-js");
+...
+const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAILGUN_DOMAIN, host: "api.eu.mailgun.net"});
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 В коде приложения подключение к API и отправка сообщения может выглядеть так:
 
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="consumer.js" url="#" %}
 {% raw %}
 ```js
 function sendMessage(message) {
@@ -82,9 +82,6 @@ app:
 ```
 {% endraw %}
 {% endsnippetcut %}
-
-TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать ____________. Мало же просто его установить — надо ещё как-то юзать в коде.
-
 
 <div>
     <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
