@@ -23,7 +23,7 @@ import (
 
 func GetEnvironmentOrStub(environmentOption string) string {
 	if environmentOption == "" {
-		return "ENV"
+		return "env"
 	}
 	return environmentOption
 }
