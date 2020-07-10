@@ -60,6 +60,7 @@ func NewCmd() *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Local, "local", "", common.GetBoolEnvironmentDefaultTrue("WERF_LOCAL"), "Use file lock-manager and file stages-storage-cache (true by default or $WERF_LOCAL)")
