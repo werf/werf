@@ -49,6 +49,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
 	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
@@ -79,6 +80,7 @@ func runHistory(releaseName string) error {
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
 			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
 			KubeContext:                 *commonCmdData.KubeContext,
 			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,

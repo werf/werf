@@ -88,6 +88,7 @@ func loadChartfile(chartPath string) (*chart.Chart, error) {
 
 type InitOptions struct {
 	KubeConfig                  string
+	KubeConfigBase64            string
 	KubeContext                 string
 	HelmReleaseStorageNamespace string
 	HelmReleaseStorageType      string
@@ -122,12 +123,23 @@ func Init(options InitOptions) error {
 	HelmReleaseStorageNamespace = options.HelmReleaseStorageNamespace
 	HelmReleaseStorageType = options.HelmReleaseStorageType
 
-	configFlags := genericclioptions.NewConfigFlags(true)
-	configFlags.Context = &HelmSettings.KubeContext
-	configFlags.KubeConfig = &HelmSettings.KubeConfig
-	configFlags.Namespace = &options.HelmReleaseStorageNamespace
+	var configGetter genericclioptions.RESTClientGetter
 
-	kubeClient := kube.New(configFlags)
+	if options.KubeConfigBase64 != "" {
+		if getter, err := NewClientGetterFromConfigData(options.KubeContext, options.KubeConfigBase64); err != nil {
+			return fmt.Errorf("unable to create kube client getter (context=%q, config-data-base64=%q): %s", options.KubeContext, options.KubeConfigBase64, err)
+		} else {
+			configGetter = getter
+		}
+	} else {
+		configFlags := genericclioptions.NewConfigFlags(true)
+		configFlags.Context = &HelmSettings.KubeContext
+		configFlags.KubeConfig = &HelmSettings.KubeConfig
+		configFlags.Namespace = &options.HelmReleaseStorageNamespace
+		configGetter = configFlags
+	}
+
+	kubeClient := kube.New(configGetter)
 	kubeClient.Log = func(f string, args ...interface{}) {
 		msg := fmt.Sprintf(fmt.Sprintf("Kube client: %s", f), args...)
 		releaseLogMessages = append(releaseLogMessages, msg)

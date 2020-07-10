@@ -109,6 +109,7 @@ func runDismiss() error {
 	deployInitOptions := deploy.InitOptions{
 		HelmInitOptions: helm.InitOptions{
 			KubeConfig:                  *commonCmdData.KubeConfig,
+			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
 			KubeContext:                 *commonCmdData.KubeContext,
 			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
 			HelmReleaseStorageType:      helmReleaseStorageType,
