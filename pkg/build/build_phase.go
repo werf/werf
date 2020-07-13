@@ -132,6 +132,10 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 		return nil
 	}
 
+	if err := stg.FetchDependencies(phase.Conveyor, phase.Conveyor.ContainerRuntime); err != nil {
+		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
+	}
+
 	if phase.ShouldBeBuiltMode {
 		return phase.calculateStage(img, stg, true)
 	} else {

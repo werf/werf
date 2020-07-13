@@ -18,6 +18,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/status"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -66,9 +67,10 @@ type DockerRunArgs struct {
 
 func NewDockerStages(dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int) *DockerStages {
 	return &DockerStages{
-		dockerStages:           dockerStages,
-		dockerTargetStageIndex: dockerTargetStageIndex,
-		dockerArgsHash:         dockerArgsHash,
+		dockerStages:             dockerStages,
+		dockerTargetStageIndex:   dockerTargetStageIndex,
+		dockerArgsHash:           dockerArgsHash,
+		imageOnBuildInstructions: map[string][]string{},
 	}
 }
 
@@ -76,6 +78,8 @@ type DockerStages struct {
 	dockerStages           []instructions.Stage
 	dockerArgsHash         map[string]string
 	dockerTargetStageIndex int
+
+	imageOnBuildInstructions map[string][]string
 }
 
 func NewContextChecksum(projectPath string, dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher, localGitRepo *git_repo.Local) *ContextChecksum {
@@ -98,6 +102,57 @@ type ContextChecksum struct {
 type dockerfileInstructionInterface interface {
 	String() string
 	Name() string
+}
+
+func (s *DockerfileStage) FetchDependencies(_ Conveyor, cr container_runtime.ContainerRuntime) error {
+	containerRuntime := cr.(*container_runtime.LocalDockerServerRuntime)
+
+	var dockerMetaArgsString []string
+	for key, value := range s.dockerArgsHash {
+		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	shlex := shell.NewLex(parser.DefaultEscapeToken)
+
+outerLoop:
+	for ind, stage := range s.dockerStages {
+		for relatedStageIndex, relatedStage := range s.dockerStages {
+			if ind == relatedStageIndex {
+				continue
+			}
+
+			if stage.BaseName == relatedStage.Name {
+				continue outerLoop
+			}
+		}
+
+		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, dockerMetaArgsString)
+		if err != nil {
+			return err
+		}
+
+		_, ok := s.imageOnBuildInstructions[resolvedBaseName]
+		if ok {
+			continue
+		}
+
+		inspect, err := containerRuntime.GetImageInspect(resolvedBaseName)
+		if err != nil {
+			return err
+		} else if inspect != nil {
+			s.imageOnBuildInstructions[resolvedBaseName] = inspect.Config.OnBuild
+			continue
+		}
+
+		configFile, err := docker_registry.API().GetRepoImageConfigFile(resolvedBaseName)
+		if err != nil {
+			return fmt.Errorf("get repo image %s config file failed: %s", resolvedBaseName, err)
+		} else {
+			s.imageOnBuildInstructions[resolvedBaseName] = configFile.Config.OnBuild
+		}
+	}
+
+	return nil
 }
 
 func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
@@ -123,6 +178,18 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 		}
 
 		dependencies = append(dependencies, resolvedBaseName)
+
+		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
+		if ok {
+			for _, instruction := range onBuildInstructions {
+				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(instruction)
+				if err != nil {
+					return "", err
+				}
+
+				dependencies = append(dependencies, iOnBuildDependencies...)
+			}
+		}
 
 		for _, cmd := range stage.Commands {
 			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(cmd)
@@ -194,28 +261,13 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]
 			dependencies = append(dependencies, checksum)
 		}
 	case *instructions.OnbuildCommand:
-		p, err := parser.Parse(bytes.NewReader([]byte(c.Expression)))
+		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(c.Expression)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		if len(p.AST.Children) != 1 {
-			panic(fmt.Sprintf("unexpected condition: %s (%d children)", c.String(), len(p.AST.Children)))
-		}
-
-		instruction := p.AST.Children[0]
-		cmd, err := instructions.ParseInstruction(instruction)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		cDependencies, _, err := s.dockerfileInstructionDependencies(cmd)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		dependencies = append(dependencies, c.String())
-		onBuildDependencies = append(onBuildDependencies, cDependencies...)
+		dependencies = append(dependencies, cDependencies...)
+		onBuildDependencies = append(onBuildDependencies, cOnBuildDependencies...)
 	case dockerfileInstructionInterface:
 		dependencies = append(dependencies, c.String())
 	default:
@@ -223,6 +275,30 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]
 	}
 
 	return dependencies, onBuildDependencies, nil
+}
+
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(expression string) ([]string, []string, error) {
+	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(p.AST.Children) != 1 {
+		panic(fmt.Sprintf("unexpected condition: %s (%d children)", expression, len(p.AST.Children)))
+	}
+
+	instruction := p.AST.Children[0]
+	cmd, err := instructions.ParseInstruction(instruction)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(cmd)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return []string{expression}, onBuildDependencies, nil
 }
 
 func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img container_runtime.ImageInterface) error {

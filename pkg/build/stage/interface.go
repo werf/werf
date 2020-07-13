@@ -11,6 +11,7 @@ type Interface interface {
 
 	IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error)
 
+	FetchDependencies(c Conveyor, cr container_runtime.ContainerRuntime) error
 	GetDependencies(c Conveyor, prevImage container_runtime.ImageInterface, prevBuiltImage container_runtime.ImageInterface) (string, error)
 	GetNextStageDependencies(c Conveyor) (string, error)
 
