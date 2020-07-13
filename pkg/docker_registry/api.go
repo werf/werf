@@ -62,6 +62,15 @@ func (api *api) TryGetRepoImage(reference string) (*image.Info, error) {
 	}
 }
 
+func (api *api) GetRepoImageConfigFile(reference string) (*v1.ConfigFile, error) {
+	imageInfo, _, err := api.image(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	return imageInfo.ConfigFile()
+}
+
 func (api *api) GetRepoImage(reference string) (*image.Info, error) {
 	imageInfo, _, err := api.image(reference)
 	if err != nil {
