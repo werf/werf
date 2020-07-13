@@ -96,7 +96,6 @@ The *docker tag* is taken from `--tag-*` params:
 | `--tag-git-branch BRANCH`    | Use git-branch tagging strategy and tag by the specified git branch             |
 | `--tag-git-commit COMMIT`    | Use git-commit tagging strategy and tag by the specified git commit hash        |
 | `--tag-custom TAG`           | Use custom tagging strategy and tag by the specified arbitrary tag              |
-| `--tag-custom TAG`           | Use custom tagging strategy and tag by the specified arbitrary tag              |
 | `--tag-by-stages-signature`  | Tag each image by image _stages signature_                                      |
 
 All the specified tag params will be validated for the conformity with the tagging rules for docker images. User may explicitly apply the slug algorithm to the tag value using `werf slugify` command, learn [more about the slug]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
