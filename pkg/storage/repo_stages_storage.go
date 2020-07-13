@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/lockgate"
-
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -174,12 +170,6 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
-
-	if _, lock, err := werf.AcquireHostLock(fmt.Sprintf("managed_image.%s-%s", projectName, imageName), lockgate.AcquireOptions{}); err != nil {
-		return err
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
 
 	if isExists, err := storage.DockerRegistry.IsRepoImageExists(fullImageName); err != nil {
 		return err

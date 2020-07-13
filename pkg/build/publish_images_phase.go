@@ -134,8 +134,6 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 				return err
 			}
 
-			// FIXME: Virtual merge commit?
-
 			if metadata, err := phase.Conveyor.StagesManager.StagesStorage.GetImageMetadataByCommit(phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
 				return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
 			} else if metadata != nil {
