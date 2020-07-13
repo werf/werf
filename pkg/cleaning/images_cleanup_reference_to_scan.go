@@ -134,13 +134,16 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 		})
 
 		branchLast := 10
+		branchCreatedIn := time.Hour * 24 * 7
 		branchImagesPerReferenceLast := 2
 		branchImagesPerReferencePublishedIn := time.Hour * 24 * 7
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile(".*"),
 				Limit: &config.MetaCleanupKeepPolicyLimit{
-					Last: &branchLast,
+					Last:      &branchLast,
+					CreatedIn: &branchCreatedIn,
+					Operator:  &config.AndOperator,
 				},
 			},
 			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
@@ -150,14 +153,10 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 			},
 		})
 
-		mainBranchReferenceLimitLast := -1
 		mainBranchImagesPerReferenceLast := 10
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile("^(master|staging|production)$"),
-				Limit: &config.MetaCleanupKeepPolicyLimit{
-					Last: &mainBranchReferenceLimitLast,
-				},
 			},
 			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
 				Last: &mainBranchImagesPerReferenceLast,
