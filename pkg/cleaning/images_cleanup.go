@@ -126,8 +126,10 @@ func (m *imagesCleanupManager) initRepoImagesData() error {
 		return err
 	}
 
-	if err := logboek.Info.LogProcess("Fetching images metadata", logboek.LevelLogProcessOptions{}, m.initImageCommitHashImageMetadata); err != nil {
-		return err
+	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
+		if err := logboek.Info.LogProcess("Fetching images metadata", logboek.LevelLogProcessOptions{}, m.initImageCommitHashImageMetadata); err != nil {
+			return err
+		}
 	}
 
 	return nil
