@@ -109,6 +109,10 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
+func (s *BaseStage) FetchDependencies(_ Conveyor, _ container_runtime.ContainerRuntime) error {
+	return nil
+}
+
 func (s *BaseStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
