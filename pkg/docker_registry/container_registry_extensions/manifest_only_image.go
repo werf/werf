@@ -1,4 +1,4 @@
-package docker_registry
+package container_registry_extensions
 
 import (
 	"fmt"
@@ -37,12 +37,12 @@ func (i manifestOnlyImage) ConfigFile() (*v1.ConfigFile, error) {
 			Labels: i.Labels,
 		},
 		RootFS: v1.RootFS{
-			// Some clients check this.
-			Type: "layers",
+			Type:    "layers",
+			DiffIDs: []v1.Hash{EmptyUncompressedLayer.diffID},
 		},
 	}, nil
 }
 
 func (i manifestOnlyImage) LayerByDiffID(h v1.Hash) (partial.UncompressedLayer, error) {
-	return nil, fmt.Errorf("LayerByDiffID(%s): empty image", h)
+	return EmptyUncompressedLayer, nil
 }

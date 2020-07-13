@@ -11,6 +11,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
+	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -136,7 +137,7 @@ func (api *api) PushImage(reference string, opts PushImageOptions) error {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	img := NewManifestOnlyImage(opts.Labels)
+	img := container_registry_extensions.NewManifestOnlyImage(opts.Labels)
 
 	oldDefaultTransport := http.DefaultTransport
 	http.DefaultTransport = api.getHttpTransport()
