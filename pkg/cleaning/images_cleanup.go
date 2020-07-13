@@ -126,8 +126,10 @@ func (m *imagesCleanupManager) initRepoImagesData() error {
 		return err
 	}
 
-	if err := logboek.Info.LogProcess("Fetching images metadata", logboek.LevelLogProcessOptions{}, m.initImageCommitHashImageMetadata); err != nil {
-		return err
+	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
+		if err := logboek.Info.LogProcess("Fetching images metadata", logboek.LevelLogProcessOptions{}, m.initImageCommitHashImageMetadata); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -388,17 +390,24 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 						}
 					}
 
+					shortify := func(column string) string {
+						if len(column) > 15 {
+							return column[:15]
+						} else {
+							return column
+						}
+					}
+
 					for ind := 0; ind < maxInd; ind++ {
 						var columns []interface{}
-
 						if ind == 0 {
-							columns = append(columns, contentSignature)
+							columns = append(columns, shortify(contentSignature))
 						} else {
 							columns = append(columns, "")
 						}
 
 						if len(commitHashes) > ind {
-							columns = append(columns, commitHashes[ind].String())
+							columns = append(columns, shortify(commitHashes[ind].String()))
 						} else {
 							columns = append(columns, "")
 						}
