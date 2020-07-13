@@ -431,7 +431,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 				It("should remove image by imagesPerReference.publishedIn", func() {
 					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
 
-					setLastCommitCommitterWhen(time.Now().Add(-(25 * time.Hour)).String())
+					setLastCommitCommitterWhen(time.Now().Add(-(25 * time.Hour)))
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -453,7 +453,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 
 					imagesCleanupCheck(werfCommand, 1, 0)
 
-					setLastCommitCommitterWhen(time.Now().Add(-(23 * time.Hour)).String())
+					setLastCommitCommitterWhen(time.Now().Add(-(23 * time.Hour)))
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -473,7 +473,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 				It("should remove image by references.limit.createdIn", func() {
 					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
 
-					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -495,7 +495,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 
 					imagesCleanupCheck(werfCommand, 1, 0)
 
-					setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+					setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -526,7 +526,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							"checkout", "-b", tag1,
 						)
 
-						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -547,7 +547,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							"checkout", "-b", tag2,
 						)
 
-						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -568,7 +568,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							"checkout", "-b", tag3,
 						)
 
-						setLastCommitCommitterWhen(time.Now().String())
+						setLastCommitCommitterWhen(time.Now())
 
 						stubs.SetEnv("FROM_CACHE_VERSION", "3")
 						utils.RunSucceedCommand(
@@ -624,7 +624,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							"checkout", "-b", "test",
 						)
 
-						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)).String())
+						setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
 						stubs.SetEnv("FROM_CACHE_VERSION", "1")
 						utils.RunSucceedCommand(
@@ -639,7 +639,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							"commit", "--allow-empty", "-m", "+",
 						)
 
-						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)).String())
+						setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
 						stubs.SetEnv("FROM_CACHE_VERSION", "2")
 						utils.RunSucceedCommand(
@@ -752,11 +752,11 @@ func imagesCleanupCheck(cleanupArgs []string, expectedNumberOfTagsBefore, expect
 	}
 }
 
-func setLastCommitCommitterWhen(newDate string) {
-	stubs.SetEnv("GIT_COMMITTER_DATE", newDate)
+func setLastCommitCommitterWhen(newDate time.Time) {
+	stubs.SetEnv("GIT_COMMITTER_DATE", newDate.Format(time.RFC3339))
 	utils.RunSucceedCommand(
 		testDirPath,
 		"git",
-		"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate,
+		"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate.Format(time.RFC3339),
 	)
 }
