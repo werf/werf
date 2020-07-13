@@ -310,7 +310,7 @@ func (s *commitHistoryScanner) scanCommitHistory(commitHash plumbing.Hash) error
 			}
 
 			if len(s.expectedContentSignatureCommitHashes) == len(s.reachedContentSignatureCommitHashes) {
-				logboek.Debug.LogF("Stop scanning due to all expected content signatures reached\n", commitHash.String())
+				logboek.Debug.LogLn("Stop scanning due to all expected content signatures reached")
 				break
 			}
 
