@@ -2,7 +2,6 @@ package cleanup
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -11,12 +10,10 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/spf13/cobra"
@@ -70,6 +67,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
 
 	common.SetupGitHistorySynchronization(&commonCmdData, cmd)
+	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanup, "git-history-based-cleanup", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP"), "Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)")
 	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanupV12, "git-history-based-cleanup-v1.2", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP_v1_2"), "Use git history based cleanup and delete images tags without related image metadata (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)")
@@ -177,16 +175,9 @@ func runCleanup() error {
 	}
 	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
 
-	var localGitRepo cleaning.GitRepo
-	gitDir := filepath.Join(projectDir, ".git")
-	if exist, err := util.DirExists(gitDir); err != nil {
+	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
+	if err != nil {
 		return err
-	} else if exist {
-		logboek.LogOptionalLn()
-		localGitRepo, err = git_repo.OpenLocalRepo("own", projectDir, git_repo.OpenLocalRepoOptions{SynchronizeGitHistory: *commonCmdData.GitHistorySynchronization})
-		if err != nil {
-			return fmt.Errorf("get local git repo failed: %s", err)
-		}
 	}
 
 	policies, err := common.GetImagesCleanupPolicies(&commonCmdData)

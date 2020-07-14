@@ -25,7 +25,6 @@ import (
 	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tag_strategy"
-	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -93,8 +92,6 @@ type imagesCleanupManager struct {
 }
 
 type GitRepo interface {
-	Fetch(options true_git.FetchOptions) error
-	IsShallowClone() (bool, error)
 	PlainOpen() (*git.Repository, error)
 	IsCommitExists(commit string) (bool, error)
 	TagsList() ([]string, error)
