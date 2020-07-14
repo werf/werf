@@ -14,11 +14,13 @@ import (
 
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/cleaning"
 	cleanup "github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
@@ -71,6 +73,7 @@ type CmdData struct {
 
 	Synchronization           *string
 	GitHistorySynchronization *bool
+	AllowGitShallowClone      *bool
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -693,6 +696,11 @@ Also, can be defined with $WERF_SECRET_VALUES* (e.g. $WERF_SECRET_VALUES_ENV=.he
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IgnoreSecretKey = new(bool)
 	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+}
+
+func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AllowGitShallowClone = new(bool)
+	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "--allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
 }
 
 func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
@@ -1413,4 +1421,41 @@ func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
 func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMergeIntoCommit = new(string)
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
+}
+
+func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (cleaning.GitRepo, error) {
+	gitDir := filepath.Join(projectDir, ".git")
+	if exist, err := util.DirExists(gitDir); err != nil {
+		return nil, err
+	} else if exist {
+		logboek.LogOptionalLn()
+		localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+		if err != nil {
+			return nil, fmt.Errorf("get local git repo failed: %s", err)
+		}
+
+		if !*cmdData.AllowGitShallowClone && !*cmdData.GitHistorySynchronization {
+			isShallow, err := localGitRepo.IsShallowClone()
+			if err != nil {
+				return nil, fmt.Errorf("check shallow clone failed: %s", err)
+			}
+
+			if isShallow {
+				logboek.Warn.LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
+				logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+
+				return nil, fmt.Errorf("git shallow clone is not allowed")
+			}
+		}
+
+		if *cmdData.GitHistorySynchronization {
+			if err := localGitRepo.SyncWithOrigin(); err != nil {
+				return nil, fmt.Errorf("synchronization failed: %s", err)
+			}
+		}
+
+		return localGitRepo, nil
+	} else {
+		return nil, nil
+	}
 }
