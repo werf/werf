@@ -103,7 +103,7 @@ func (phase *BuildPhase) AfterImageStages(img *Image) error {
 		img.SetContentSignature(imgContentSig)
 	}
 
-	if phase.ShouldAddManagedImageRecord {
+	if phase.ShouldAddManagedImageRecord && !img.isArtifact {
 		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
 		}
