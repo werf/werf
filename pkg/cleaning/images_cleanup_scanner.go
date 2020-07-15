@@ -66,8 +66,8 @@ func scanReferencesHistory(gitRepository *git.Repository, refs []*referenceToSca
 	return reachedContentSignatureList, nil
 }
 
-func applyImagesCleanupPublishedInPolicy(gitRepository *git.Repository, contentSignatureCommitHashes map[string][]plumbing.Hash, publishedIn *time.Duration) map[string][]plumbing.Hash {
-	if publishedIn == nil {
+func applyImagesCleanupInPolicy(gitRepository *git.Repository, contentSignatureCommitHashes map[string][]plumbing.Hash, in *time.Duration) map[string][]plumbing.Hash {
+	if in == nil {
 		return contentSignatureCommitHashes
 	}
 
@@ -80,7 +80,7 @@ func applyImagesCleanupPublishedInPolicy(gitRepository *git.Repository, contentS
 				panic("unexpected condition")
 			}
 
-			if commit.Committer.When.After(time.Now().Add(-*publishedIn)) {
+			if commit.Committer.When.After(time.Now().Add(-*in)) {
 				resultCommitHashList = append(resultCommitHashList, commitHash)
 			}
 		}
@@ -117,7 +117,7 @@ func (s *commitHistoryScanner) reachedContentSignatureList() []string {
 }
 
 func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, expectedContentSignatureCommitHashes map[string][]plumbing.Hash, stopCommitHashes []plumbing.Hash) ([]string, []plumbing.Hash, error) {
-	filteredExpectedContentSignatureCommitHashes := applyImagesCleanupPublishedInPolicy(gitRepository, expectedContentSignatureCommitHashes, ref.imagesCleanupKeepPolicy.PublishedIn)
+	filteredExpectedContentSignatureCommitHashes := applyImagesCleanupInPolicy(gitRepository, expectedContentSignatureCommitHashes, ref.imagesCleanupKeepPolicy.In)
 
 	var refExpectedContentSignatureCommitHashes map[string][]plumbing.Hash
 	if ref.imagesCleanupKeepPolicy.Last == nil || (ref.imagesCleanupKeepPolicy.Operator != nil && *ref.imagesCleanupKeepPolicy.Operator == config.AndOperator) {
@@ -161,10 +161,10 @@ func scanReferenceHistory(gitRepository *git.Repository, ref *referenceToScan, e
 				return latestCommitList[i].Committer.When.After(latestCommitList[j].Committer.When)
 			})
 
-			if s.referenceScanOptions.imagesCleanupKeepPolicy.PublishedIn == nil {
+			if s.referenceScanOptions.imagesCleanupKeepPolicy.In == nil {
 				return s.handleExtraContentSignaturesByLast(latestCommitContentSignature, latestCommitList)
 			} else {
-				return s.handleExtraContentSignaturesByLastWithPublishedIn(latestCommitContentSignature, latestCommitList)
+				return s.handleExtraContentSignaturesByLastWithIn(latestCommitContentSignature, latestCommitList)
 			}
 		}
 	}
@@ -193,35 +193,35 @@ func (s *commitHistoryScanner) handleStopCommitHashes(ref *referenceToScan) ([]s
 	return s.reachedContentSignatureList(), s.stopCommitHashes, nil
 }
 
-func (s *commitHistoryScanner) handleExtraContentSignaturesByLastWithPublishedIn(latestCommitContentSignature map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []plumbing.Hash, error) {
+func (s *commitHistoryScanner) handleExtraContentSignaturesByLastWithIn(latestCommitContentSignature map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []plumbing.Hash, error) {
 	var latestCommitListByLast []*object.Commit
-	var latestCommitListByPublishedIn []*object.Commit
+	var latestCommitListByIn []*object.Commit
 
 	for ind, latestCommit := range latestCommitList {
 		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			latestCommitListByLast = append(latestCommitListByLast, latestCommit)
 		}
 
-		if latestCommit.Committer.When.After(time.Now().Add(-*s.referenceScanOptions.imagesCleanupKeepPolicy.PublishedIn)) {
-			latestCommitListByPublishedIn = append(latestCommitListByPublishedIn, latestCommit)
+		if latestCommit.Committer.When.After(time.Now().Add(-*s.referenceScanOptions.imagesCleanupKeepPolicy.In)) {
+			latestCommitListByIn = append(latestCommitListByIn, latestCommit)
 		}
 	}
 
 	var resultLatestCommitList []*object.Commit
 	if s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == nil || *s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == config.AndOperator {
 		for _, commitByLast := range latestCommitListByLast {
-			for _, commitByPublishedIn := range latestCommitListByPublishedIn {
-				if commitByLast == commitByPublishedIn {
+			for _, commitByIn := range latestCommitListByIn {
+				if commitByLast == commitByIn {
 					resultLatestCommitList = append(resultLatestCommitList, commitByLast)
 				}
 			}
 		}
 	} else {
-		resultLatestCommitList = latestCommitListByPublishedIn[:]
+		resultLatestCommitList = latestCommitListByIn[:]
 	latestCommitListByLastLoop:
 		for _, commitByLast := range latestCommitListByLast {
-			for _, commitByPublishedIn := range latestCommitListByPublishedIn {
-				if commitByLast == commitByPublishedIn {
+			for _, commitByIn := range latestCommitListByIn {
+				if commitByLast == commitByIn {
 					continue latestCommitListByLastLoop
 				}
 			}
@@ -340,14 +340,14 @@ outerLoop:
 					}
 				}
 
-				if s.imagesCleanupKeepPolicy.PublishedIn != nil {
+				if s.imagesCleanupKeepPolicy.In != nil {
 					commit, err := s.gitRepository.CommitObject(commitHash)
 					if err != nil {
 						panic("unexpected condition")
 					}
 
 					if s.imagesCleanupKeepPolicy.Last == nil || s.imagesCleanupKeepPolicy.Operator == nil || *s.imagesCleanupKeepPolicy.Operator == config.AndOperator {
-						if commit.Committer.When.Before(time.Now().Add(-*s.imagesCleanupKeepPolicy.PublishedIn)) {
+						if commit.Committer.When.Before(time.Now().Add(-*s.imagesCleanupKeepPolicy.In)) {
 							break outerLoop
 						}
 					}

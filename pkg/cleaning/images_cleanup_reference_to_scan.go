@@ -134,22 +134,24 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 		})
 
 		branchLast := 10
-		branchCreatedIn := time.Hour * 24 * 7
+		branchIn := time.Hour * 24 * 7
 		branchImagesPerReferenceLast := 2
-		branchImagesPerReferencePublishedIn := time.Hour * 24 * 7
+		branchImagesPerReferenceIn := time.Hour * 24 * 7
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile(".*"),
 				Limit: &config.MetaCleanupKeepPolicyLimit{
-					Last:      &branchLast,
-					CreatedIn: &branchCreatedIn,
-					Operator:  &config.AndOperator,
+					Last:     &branchLast,
+					In:       &branchIn,
+					Operator: &config.AndOperator,
 				},
 			},
 			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
-				Last:        &branchImagesPerReferenceLast,
-				PublishedIn: &branchImagesPerReferencePublishedIn,
-				Operator:    &config.AndOperator,
+				MetaCleanupKeepPolicyLimit: config.MetaCleanupKeepPolicyLimit{
+					Last:     &branchImagesPerReferenceLast,
+					In:       &branchImagesPerReferenceIn,
+					Operator: &config.AndOperator,
+				},
 			},
 		})
 
@@ -159,7 +161,9 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 				BranchRegexp: regexp.MustCompile("^(master|staging|production)$"),
 			},
 			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
-				Last: &mainBranchImagesPerReferenceLast,
+				MetaCleanupKeepPolicyLimit: config.MetaCleanupKeepPolicyLimit{
+					Last: &mainBranchImagesPerReferenceLast,
+				},
 			},
 		})
 	}
@@ -238,9 +242,9 @@ func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeep
 		return refs
 	}
 
-	var policyCreatedInRefs []*referenceToScan
-	if limit.CreatedIn != nil {
-		policyCreatedInRefs = filterReferencesByCreatedIn(refs, *limit.CreatedIn)
+	var policyInRefs []*referenceToScan
+	if limit.In != nil {
+		policyInRefs = filterReferencesByIn(refs, *limit.In)
 	}
 
 	var policyLastRefs []*referenceToScan
@@ -248,17 +252,17 @@ func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeep
 		policyLastRefs = filterReferencesByLast(refs, *limit.Last)
 	}
 
-	if limit.CreatedIn == nil {
+	if limit.In == nil {
 		return policyLastRefs
 	} else if limit.Last == nil {
-		return policyCreatedInRefs
+		return policyInRefs
 	}
 
 	var policyRefs []*referenceToScan
 	if limit.Operator != nil && *limit.Operator == config.OrOperator {
-		policyRefs = referencesOr(policyCreatedInRefs, policyLastRefs)
+		policyRefs = referencesOr(policyInRefs, policyLastRefs)
 	} else {
-		policyRefs = referencesAnd(policyCreatedInRefs, policyLastRefs)
+		policyRefs = referencesAnd(policyInRefs, policyLastRefs)
 	}
 
 	return policyRefs
@@ -290,9 +294,9 @@ outerLoop:
 	return result
 }
 
-func filterReferencesByCreatedIn(refs []*referenceToScan, createdIn time.Duration) (result []*referenceToScan) {
+func filterReferencesByIn(refs []*referenceToScan, in time.Duration) (result []*referenceToScan) {
 	for _, ref := range refs {
-		if ref.CreatedAt.After(time.Now().Add(-createdIn)) {
+		if ref.CreatedAt.After(time.Now().Add(-in)) {
 			result = append(result, ref)
 		}
 	}
