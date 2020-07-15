@@ -14,6 +14,9 @@ werf images cleanup [options]
 {{ header }} Options
 
 ```shell
+      ----allow-git-shallow-clone=false:
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config='':
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir='':
