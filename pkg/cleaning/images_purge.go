@@ -81,6 +81,8 @@ func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, rep
 				if err := handleDeleteStageOrImageError(err, repoImage.Name); err != nil {
 					return err
 				}
+
+				continue
 			}
 		}
 
