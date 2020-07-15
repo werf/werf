@@ -11,11 +11,11 @@ summary: |
         <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;string|/REGEXP/&gt;</span>
         <span class="na">limit</span><span class="pi">:</span>
           <span class="na">last</span><span class="pi">:</span> <span class="s">&lt;int&gt;</span>
-          <span class="na">createdIn</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
+          <span class="na">in</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
           <span class="na">operator</span><span class="pi">:</span> <span class="s">&lt;And|Or&gt;</span>
       <span class="na">imagesPerReference</span><span class="pi">:</span>
         <span class="na">last</span><span class="pi">:</span> <span class="s">&lt;int&gt;</span>
-        <span class="na">publishedIn</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
+        <span class="na">in</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
         <span class="na">operator</span><span class="pi">:</span> <span class="s">&lt;And|Or&gt;</span>
   </code></pre></div></div>  
 ---
@@ -46,14 +46,14 @@ branch: /^(master|production)$/
     branch: /^features\/.*/
     limit:
       last: 10
-      createdIn: 168h
+      in: 168h
       operator: And
 ``` 
 
 В примере описывается выборка из не более чем 10 последних веток с префиксом `features/` в имени, в которых была какая-либо активность за последнюю неделю.
 
 - Параметр `last: <int>` позволяет выбирать последние `n` references из определённого в `branch`/`tag` множества.
-- Параметр `createdIn: <duration string>` (синтаксис доступен в [документации](https://golang.org/pkg/time/#ParseDuration)) позволяет выбирать git-теги, которые были созданы в указанный период, или git-ветки с активностью в рамках периода. Также для определённого множества `branch`/`tag`.
+- Параметр `in: <duration string>` (синтаксис доступен в [документации](https://golang.org/pkg/time/#ParseDuration)) позволяет выбирать git-теги, которые были созданы в указанный период, или git-ветки с активностью в рамках периода. Также для определённого множества `branch`/`tag`.
 - Параметр `operator: <And|Or>` определяет какие references будут результатом политики, те которые удовлетворяют оба условия или любое из них (`And` по умолчанию).
 
 По умолчанию при сканировании reference количество искомых образов не ограничено, но поведение может настраиваться группой параметров `imagesPerReference`:
@@ -61,12 +61,12 @@ branch: /^(master|production)$/
 ```yaml
 imagesPerReference:
   last: <int>
-  publishedIn: <duration string>
+  in: <duration string>
   operator: <And|Or>
 ```
 
 - Параметр `last: <int>` определяет количество искомых образов для каждого reference. По умолчанию количество не ограничено (`-1`).
-- Параметр `publishedIn: <duration string>` (синтаксис доступен в [документации](https://golang.org/pkg/time/#ParseDuration)) определяет период, в рамках которого необходимо выполнять поиск образов.
+- Параметр `in: <duration string>` (синтаксис доступен в [документации](https://golang.org/pkg/time/#ParseDuration)) определяет период, в рамках которого необходимо выполнять поиск образов.
 - Параметр `operator: <And|Or>` определяет какие образы сохранятся после применения политики, те которые удовлетворяют оба условия или любое из них (`And` по умолчанию)
 
 > Для git-тегов проверяется только HEAD-коммит и значение `last` >1 не имеет никакого смысла, является невалидным
@@ -101,11 +101,11 @@ cleanup:
       branch: /.*/
       limit:
         last: 10
-        createdIn: 168h
+        in: 168h
         operator: And
     imagesPerReference:
       last: 2
-      publishedIn: 168h
+      in: 168h
       operator: And
   - references:  
       branch: /^(master|staging|production)$/
