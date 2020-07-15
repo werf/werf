@@ -223,6 +223,8 @@ func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, opt
 				if err := handleDeleteStageOrImageError(err, stageDesc.Info.Name); err != nil {
 					return err
 				}
+
+				continue
 			}
 		}
 
@@ -249,10 +251,11 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerError(err) {
 			return err
+		} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
+			return err
 		}
 
 		logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
-		logboek.LogOptionalLn()
 		return nil
 	}
 }
