@@ -591,8 +591,8 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							3,
 							2,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag2))
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag2)))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
@@ -604,7 +604,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							3,
 							1,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
@@ -675,8 +675,8 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							3,
 							2,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag2))
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag2)))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
@@ -688,7 +688,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 							3,
 							1,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
