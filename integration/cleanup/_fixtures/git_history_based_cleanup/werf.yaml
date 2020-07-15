@@ -24,7 +24,7 @@ cleanup:
     - references:
         branch: test
       imagesPerReference:
-        publishedIn: 24h
+        in: 24h
   {{ end }}
   {{ with (eq $policySetNumber "4") }}
 cleanup:
@@ -32,7 +32,7 @@ cleanup:
     - references:
         branch: test
         limit:
-          createdIn: 12h
+          in: 12h
   {{ end }}
   {{ with (eq $policySetNumber "5") }}
 cleanup:
@@ -40,7 +40,7 @@ cleanup:
     - references:
         branch: /.*/
         limit:
-          createdIn: 12h
+          in: 12h
           last: 1
           operator: Or
   {{ end }}
@@ -50,7 +50,7 @@ cleanup:
     - references:
         branch: /.*/
         limit:
-          createdIn: 12h
+          in: 12h
           last: 1
           operator: And
   {{ end }}
@@ -60,7 +60,7 @@ cleanup:
     - references:
         branch: test
       imagesPerReference:
-        publishedIn: 12h
+        in: 12h
         last: 1
         operator: Or
   {{ end }}
@@ -70,7 +70,7 @@ cleanup:
     - references:
         branch: test
       imagesPerReference:
-        publishedIn: 12h
+        in: 12h
         last: 1
         operator: And
   {{ end }}
