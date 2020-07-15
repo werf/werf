@@ -34,19 +34,12 @@ type rawMetaCleanupKeepPolicyReferences struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-type rawMetaCleanupKeepPolicyImagesPerReference struct {
-	Last        *int           `yaml:"last,omitempty"`
-	PublishedIn *time.Duration `yaml:"publishedIn,omitempty"`
-	Operator    *string        `yaml:"operator,omitempty"`
-
-	rawMetaCleanup        *rawMetaCleanup
-	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
-}
+type rawMetaCleanupKeepPolicyImagesPerReference rawMetaCleanupKeepPolicyReferencesLimit
 
 type rawMetaCleanupKeepPolicyReferencesLimit struct {
-	Last      *int           `yaml:"last,omitempty"`
-	CreatedIn *time.Duration `yaml:"createdIn,omitempty"`
-	Operator  *string        `yaml:"operator,omitempty"`
+	Last     *int           `yaml:"last,omitempty"`
+	In       *time.Duration `yaml:"in,omitempty"`
+	Operator *string        `yaml:"operator,omitempty"`
 
 	rawMetaCleanup        *rawMetaCleanup
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -159,36 +152,7 @@ func (c *rawMetaCleanupKeepPolicyReferencesLimit) UnmarshalYAML(unmarshal func(i
 		if *c.Operator != "Or" && *c.Operator != "And" {
 			return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
 		}
-	} else if c.CreatedIn != nil && c.Last != nil {
-		defaultOperator := "And"
-		c.Operator = &defaultOperator
-	}
-
-	return nil
-}
-
-func (c *rawMetaCleanupKeepPolicyImagesPerReference) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawMetaCleanupKeepPolicy); ok {
-		c.rawMetaCleanup = parent.rawMetaCleanup
-	}
-
-	parentStack.Push(c)
-	type plain rawMetaCleanupKeepPolicyImagesPerReference
-	err := unmarshal((*plain)(c))
-	parentStack.Pop()
-	if err != nil {
-		return err
-	}
-
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMetaCleanup.rawMeta.doc); err != nil {
-		return err
-	}
-
-	if c.Operator != nil {
-		if *c.Operator != "Or" && *c.Operator != "And" {
-			return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
-		}
-	} else if c.PublishedIn != nil && c.Last != nil {
+	} else if c.In != nil && c.Last != nil {
 		defaultOperator := "And"
 		c.Operator = &defaultOperator
 	}
@@ -252,7 +216,7 @@ func (c *rawMetaCleanupKeepPolicyReferences) toMetaCleanupKeepPolicyReferences()
 func (c *rawMetaCleanupKeepPolicyReferencesLimit) toMetaCleanupKeepPolicyLimit() *MetaCleanupKeepPolicyLimit {
 	limit := &MetaCleanupKeepPolicyLimit{}
 	limit.Last = c.Last
-	limit.CreatedIn = c.CreatedIn
+	limit.In = c.In
 
 	if c.Operator != nil {
 		if *c.Operator == "And" {
@@ -268,7 +232,7 @@ func (c *rawMetaCleanupKeepPolicyReferencesLimit) toMetaCleanupKeepPolicyLimit()
 func (c *rawMetaCleanupKeepPolicyImagesPerReference) toMetaCleanupKeepPolicyImagesPerReference() MetaCleanupKeepPolicyImagesPerReference {
 	limit := MetaCleanupKeepPolicyImagesPerReference{}
 	limit.Last = c.Last
-	limit.PublishedIn = c.PublishedIn
+	limit.In = c.In
 
 	if c.Operator != nil {
 		if *c.Operator == "And" {

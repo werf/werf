@@ -19,7 +19,11 @@ type MetaCleanupKeepPolicy struct {
 func (p *MetaCleanupKeepPolicy) String() string {
 	var parts []string
 	parts = append(parts, fmt.Sprintf("references={%s}", p.References.String()))
-	parts = append(parts, fmt.Sprintf("imagesPerReference={%s}", p.ImagesPerReference.String()))
+
+	imagesPerReferencePart := p.ImagesPerReference.String()
+	if imagesPerReferencePart != "" {
+		parts = append(parts, fmt.Sprintf("imagesPerReference={%s}", imagesPerReferencePart))
+	}
 
 	return strings.Join(parts, " ")
 }
@@ -47,40 +51,20 @@ func (c *MetaCleanupKeepPolicyReferences) String() string {
 }
 
 type MetaCleanupKeepPolicyImagesPerReference struct {
-	Last        *int
-	PublishedIn *time.Duration
-	Operator    *Operator
-}
-
-func (c *MetaCleanupKeepPolicyImagesPerReference) String() string {
-	var parts []string
-
-	if c.PublishedIn != nil {
-		parts = append(parts, fmt.Sprintf("publshedIn=%s", c.PublishedIn.String()))
-	}
-
-	if c.Last != nil {
-		parts = append(parts, fmt.Sprintf("last=%d", *c.Last))
-	}
-
-	if c.Operator != nil {
-		parts = append(parts, fmt.Sprintf("operator=%s", *c.Operator))
-	}
-
-	return strings.Join(parts, " ")
+	MetaCleanupKeepPolicyLimit
 }
 
 type MetaCleanupKeepPolicyLimit struct {
-	Last      *int
-	CreatedIn *time.Duration
-	Operator  *Operator
+	Last     *int
+	In       *time.Duration
+	Operator *Operator
 }
 
 func (c *MetaCleanupKeepPolicyLimit) String() string {
 	var parts []string
 
-	if c.CreatedIn != nil {
-		parts = append(parts, fmt.Sprintf("createdIn=%s", c.CreatedIn.String()))
+	if c.In != nil {
+		parts = append(parts, fmt.Sprintf("in=%s", c.In.String()))
 	}
 
 	if c.Last != nil {
