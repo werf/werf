@@ -13,5 +13,6 @@ func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
 			VirtualMergeIntoCommit: *commonCmdData.VirtualMergeIntoCommit,
 		},
 		GitHistorySynchronization: *commonCmdData.GitHistorySynchronization,
+		AllowGitShallowClone:      *commonCmdData.AllowGitShallowClone,
 	}
 }

@@ -80,7 +80,9 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupVirtualMerge(commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(commonCmdData, cmd)
+
 	common.SetupGitHistorySynchronization(commonCmdData, cmd)
+	common.SetupAllowGitShallowClone(commonCmdData, cmd)
 
 	return cmd
 }

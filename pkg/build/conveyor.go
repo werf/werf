@@ -73,6 +73,7 @@ type Conveyor struct {
 type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	GitHistorySynchronization       bool
+	AllowGitShallowClone            bool
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
@@ -230,7 +231,7 @@ type ShouldBeBuiltOptions struct {
 }
 
 func (c *Conveyor) Init() error {
-	localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir, git_repo.OpenLocalRepoOptions{SynchronizeGitHistory: c.GitHistorySynchronization})
+	localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
 	} else if localGitRepo != nil {
@@ -798,13 +799,34 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	var gitMappings []*stage.GitMapping
 
 	if len(imageBaseConfig.Git.Local) != 0 {
-		if c.GetLocalGitRepo() == nil {
+		localGitRepo := c.GetLocalGitRepo()
+		if localGitRepo == nil {
 			return nil, errors.New("local git mapping is used but project git repository is not found")
 		}
-	}
 
-	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
-		gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, c.GetLocalGitRepo(), imageBaseConfig.Name, c))
+		if !c.AllowGitShallowClone && !c.GitHistorySynchronization {
+			isShallowClone, err := localGitRepo.IsShallowClone()
+			if err != nil {
+				return nil, fmt.Errorf("check shallow clone failed: %s", err)
+			}
+
+			if isShallowClone {
+				logboek.Warn.LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
+				logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+
+				return nil, fmt.Errorf("shallow git clone is not allowed")
+			}
+		}
+
+		if c.GitHistorySynchronization {
+			if err := localGitRepo.FetchOrigin(); err != nil {
+				return nil, err
+			}
+		}
+
+		for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
+			gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, localGitRepo, imageBaseConfig.Name, c))
+		}
 	}
 
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
