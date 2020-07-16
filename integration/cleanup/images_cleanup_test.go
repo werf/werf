@@ -428,7 +428,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 					imagesCleanupCheck(werfCommand, 1, 0)
 				})
 
-				It("should remove image by imagesPerReference.publishedIn", func() {
+				It("should remove image by imagesPerReference.in", func() {
 					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
 
 					setLastCommitCommitterWhen(time.Now().Add(-(25 * time.Hour)))
@@ -470,7 +470,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 					imagesCleanupCheck(werfCommand, 1, 1)
 				})
 
-				It("should remove image by references.limit.createdIn", func() {
+				It("should remove image by references.limit.in", func() {
 					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
 
 					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
@@ -584,27 +584,27 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 						)
 					})
 
-					It("should remove image by references.limit.createdIn OR references.limit.last", func() {
+					It("should remove image by references.limit.in OR references.limit.last", func() {
 						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
 						imagesCleanupCheck(
 							werfCommand,
 							3,
 							2,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag2))
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag2)))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
 
-					It("should remove image by references.limit.createdIn AND references.limit.last", func() {
+					It("should remove image by references.limit.in AND references.limit.last", func() {
 						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
 						imagesCleanupCheck(
 							werfCommand,
 							3,
 							1,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
@@ -668,27 +668,27 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 						)
 					})
 
-					It("should remove image by imagesPerReference.publishedIn OR imagesPerReference.last", func() {
+					It("should remove image by imagesPerReference.in OR imagesPerReference.last", func() {
 						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
 						imagesCleanupCheck(
 							werfCommand,
 							3,
 							2,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag2))
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag2)))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
 
-					It("should remove image by imagesPerReference.publishedIn AND imagesPerReference.last", func() {
+					It("should remove image by imagesPerReference.in AND imagesPerReference.last", func() {
 						stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
 						imagesCleanupCheck(
 							werfCommand,
 							3,
 							1,
 							func(tags []string) {
-								Ω(tags).Should(ContainElement(tag3))
+								Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("image", tag3)))
 							},
 						)
 					})
