@@ -9,8 +9,8 @@ toc: false
 {% filesused title="Файлы, упомянутые в главе" %}
 - .helm/templates/deployment.yaml
 - .helm/secret-values.yaml
-- config/initializers/aws.rb
-- Gemfile
+- pom.xml
+- src/main/resources/application.properties
 {% endfilesused %}
 
 В этой главе мы настроим в нашем базовом приложении работу с пользовательскими файлами. Для этого нам нужно персистентное хранилище.
@@ -55,7 +55,7 @@ amazonProperties:
 {% endraw %}
 {% endsnippetcut %}
 
-ДДля работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
+Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 {% raw %}
@@ -94,7 +94,7 @@ app:
 {% raw %}
 ```yaml
        env:
-{{ tuple "hello" . | include "werf_container_env" | indent 8 }}
+{{ tuple "basicapp" . | include "werf_container_env" | indent 8 }}
         - name: S3ENDPOINT
           value: {{ pluck .Values.global.env .Values.app.s3.epurl | first | default .Values.app.s3.epurl._default | quote }}
         - name: S3KEY
@@ -107,7 +107,7 @@ app:
 {% endraw %}
 {% endsnippetcut %}
 
-TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
+Об особенностях использования aws-java-sdk можно подробно почитать в [документации](https://cloud.spring.io/spring-cloud-aws/spring-cloud-aws.html)
 
 <div>
     <a href="060-email.html" class="nav-btn">Далее: Работа с электронной почтой</a>
