@@ -7,7 +7,7 @@ TODO: вот это куда-то надо ставить, хрен знает �
 
 ```yaml
 ---
-image: hello
+image: basicapp
 from: openjdk:8-jdk-alpine
 import:
 - artifact: build

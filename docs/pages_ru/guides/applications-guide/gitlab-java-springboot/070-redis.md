@@ -153,6 +153,7 @@ metadata:
 Как и в случае с работой с файлами выше пропишем в application.properties:
 
 TODO: вот это не правда, надо испльзовать те переименные, что прописаны в стсатье
+WAT? почему неправда то?
 
 {% snippetcut name="application.properties" url="#" %}
 {% raw %}

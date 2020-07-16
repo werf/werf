@@ -127,7 +127,7 @@ from: maven:3-jdk-8
 ```
 {% endsnippetcut %}
 
-В строке `image: basicapp` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: maven:3-jdk-8` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией ruby.
+В строке `image: basicapp` дано название для образа, который соберёт werf. Это имя мы впоследствии будем указывать при запуске контейнера. Строка `from: maven:3-jdk-8` определяет, что будет взято за основу, мы берем официальный публичный образ с нужной нам версией maven.
 
 {% offtopic title="Что делать, если образов и других констант станет много" %}
 
@@ -284,16 +284,18 @@ $  werf build --stages-storage :local
 
 ```
 ...
-│ ┌ Building stage ____________
+│ ┌ Building stage basicapp/dockerInstructions
+│ │ ┌ Store into stages storage
+│ │ └ Store into stages storage (0.01 seconds)
 │ ├ Info
-│ │     repository: ____________/____________
-│ │       image_id: 2743bc56bbf7
-│ │        created: 2020-05-26T22:44:26.0159982Z
-│ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
+│ │     repository: werf-stages-storage/werf-guided-project
+│ │       image_id: d35519f6cbf1
+│ │        created: 2020-07-16 18:01:20.764846579 +0300 MSK
+│ │            tag: 981ece3acc63d57d5ab07f45fd0c0c477088649523822c2bff033df4-1594911680806
 │ │           diff: 0 B
 │ │   instructions: WORKDIR /app
-│ └ Building stage ____________ (0.82 seconds)
-└ ⛵ image ____________ (239.56 seconds)
+│ └ Building stage basicapp/dockerInstructions (1.14 seconds)
+└ ⛵ image basicapp (342.30 seconds)
 ```
 
 {% offtopic title="Что делать, если что-то пошло не так?" %}
@@ -305,20 +307,22 @@ Werf предоставляет удобные способы отладки.
 {% endofftopic %}
 
 В конце werf отдал информацию о готовом image:
+Данихуя он с ходу не отдал. Склеить надо.
+В конце werf отдал информацию о готовом repository и о tag для этого образа для дальнейшего использования. 
 
 ```
-werf-stages-storage/example-1:7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
+werf-stages-storage/werf-guided-project:981ece3acc63d57d5ab07f45fd0c0c477088649523822c2bff033df4-1594911680806
 ```
 
 Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):
 
 ```bash
-werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- java -jar /app/target/demo-1.0.jar
+werf run --stages-storage :local --docker-options="-d -p 8080:8080 --restart=always" -- java -jar /app/target/demo-1.0.jar
 ```
 
 Первая часть команды очень похожа на build, а во второй мы задаем [параметры docker](https://docs.docker.com/engine/reference/run/) и через двойную черту команду с которой хотим запустить наш image.
 
-Теперь наше приложение доступно локально на порту 3000:
+Теперь наше приложение доступно локально на порту 8080:
 
 ![](/images/applications-guide/images/020-hello-world-in-browser.png)
 
@@ -367,10 +371,10 @@ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=alw
 В случае затруднений, пожалуйста убедитесь, что вы:
 
 - Понимаете, как работает [indent](https://helm.sh/docs/chart_template_guide/function_list/#indent)
-- Понимаете, что такое конструкция tuple
-- Понимаете, как Helm работает с хэш-массивами
+- Понимаете, что такое конструкция [tuple](https://helm.sh/docs/chart_template_guide/control_structures/)
+- Понимаете, как Helm работает с хэш-массивами [WAT? Какие хеш-массивы? Загуглил "как Helm работает с хэш-массивами" - НИ ЧЕ ГО]
 - Очень внимательно следите за пробелами в Yaml
-
+ работает с хэш-массивами" - НИ ЧЕ ГО
 {% endofftopic %}
 
 Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, направить трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему kubernetes скачивать собранные образа из registry.
@@ -393,7 +397,7 @@ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=alw
          - java
          - -jar
          - /app/target/demo-1.0.jar $JAVA_OPT
-{{ tuple "web-basic" . | include "werf_container_image" | indent 8 }}
+{{ tuple "basicapp" . | include "werf_container_image" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -410,23 +414,25 @@ Werf складывает собранные образы в Registry с раз�
 
 Для корректной работы нашего приложения ему нужно узнать **переменные окружения**.
 
-Для ____________ это, например, `____________` ____________
+Для JAVA это, например, JAVA_OPT - различные опции с которыми будет запускаться java. И, к примеру, пароль к бд (сейчас не используется, просто пример) - DBPASS
 
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
       env:
-      ____________
-      ____________
-      ____________
-{{ tuple "web-basic" . | include "werf_container_env" | indent 8 }}
+        - name: JAVA_OPT
+          value: "--debug"
+        - DBPASS
+          value: "mysuperdbpassword"
+{{ tuple "basicapp" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-____________
-____________
-Мы задали значение для `____________` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
+
+WAT? DBPASS Высасываю из пальца на данном этапе. Зачем усложнение?
+
+Мы задали значение для `DBPASS` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
 
 Обратите также внимание на функцию [`werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
@@ -440,8 +446,8 @@ Helm — шаблонизатор, и он поддерживает множес
 {% raw %}
 ```yaml
       env:
-      - name: ____________
-        value: {{ .Values.app.____________ }}
+      - name: JAVA_OPT
+        value: {{ .Values.app.java_opt}}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -451,18 +457,17 @@ Helm — шаблонизатор, и он поддерживает множес
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
       env:
-      - name: ____________
-        value: {% raw %}{{ pluck .Values.global.env .Values.app.____________ | first | default .Values.app.some_key._default }}{% endraw %}
+      - name: JAVA_OPT
+        value: {% raw %}{{ pluck .Values.global.env .Values.app.java_opt | first | default .Values.app.java_opt._default }}{% endraw %}
 ```
 {% endsnippetcut %}
-
+WAT? Это secret-values уже жи? Поставлю здесь debug в зависимости от стенда. 
 {% snippetcut name="values.yaml" url="#" %}
 ```yaml
 app:
-  ____________:
-    _default: 9eeddad83cebe240f55ae06ccdd95f8e
-    production: 684e5cb73034052dc89e3055691b7ac4
-    testing: 189af8ca60b04e529140ec114175f098
+  java_opt:
+    _default: "--debug"
+    production: ""
 ```
 {% endsnippetcut %}
 
@@ -472,6 +477,8 @@ app:
 При запуске приложения в kubernetes **логи необходимо отправлять в stdout и stderr** - это нужно для простого сбора логов например через `filebeat`, а так же чтобы не разрастались docker образы запущенных приложений.
 
 Для того чтобы логи приложения отправлялись в stdout нам необходимо переопределить уровень логирования в application.properties. Подробнее - в [документации](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html).
+WAT? Ни ху а. Все там уже есть. Мы так можем изменить уровень логирования. 
+Spring-framework уже автоматически предоставляет логи в stdout. Однако мы можем переопределить уровень логирования в application.properties при необходимости. Подробнее - в [документации](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html).
 
 #### Доступность Pod-а
 
@@ -492,12 +499,12 @@ app:
 В статьях и бытовой речи оба этих термина зачастую называют "Ingress", так что нужно догадываться по контексту.
 {% endofftopic %}
 
-Наше приложение работает на стандартном порту `3000` — **откроем порт Pod-у**:
+Наше приложение работает на стандартном порту `8080` — **откроем порт Pod-у**:
 
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
         ports:
-        - containerPort: 3000
+        - containerPort: 8080
           name: http
           protocol: TCP
 ```
@@ -518,7 +525,7 @@ spec:
     app: {{ .Chart.Name }}
   ports:
   - name: http
-    port: 3000
+    port: 8080
     protocol: TCP
 ```
 {% endraw %}
@@ -569,7 +576,7 @@ spec:
       - path: /
         backend:
           serviceName: {{ .Chart.Name }}
-          servicePort: 3000
+          servicePort: 8080
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -586,7 +593,7 @@ spec:
 
 **Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
 
-Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=____________"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
+Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=mydomain.io"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
@@ -606,12 +613,12 @@ spec:
 Чтобы продолжать дальше 
 
 * [Сгенерируйте ключ](https://ru.werf.io/documentation/cli/management/helm/secret/encrypt.html) (`werf helm secret generate-secret-key`)
-* Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
+* Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`).
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
 ![](/images/applications-guide/images/020-werf-secret-key-in-gitlab.png)
 
-После этого мы сможем задать секретную переменную `____________`. Зайдите в режим редактирования секретных значений:
+После этого мы сможем задать секретную переменную, например DBPASS. Зайдите в режим редактирования секретных значений:
 
 ```bash
 $ werf helm secret values edit .helm/secret-values.yaml
@@ -652,7 +659,7 @@ app:
 * Установить переменную окружения `WERF_SECRET_KEY` со значением, [сгенерированным ранее в главе "Разное поведение в разных окружениях"](#secret-values-yaml)
 * Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging` 
 
-Если вы всё правильно сделали, то вы у вас корректно будут отрабатывать команды [`werf helm render`](https://ru.werf.io/documentation/cli/management/helm/render.html) и [`werf deploy`](https://ru.werf.io/documentation/cli/main/deploy.html)
+Если вы всё правильно сделали, то у вас корректно будут отрабатывать команды [`werf helm render`](https://ru.werf.io/documentation/cli/management/helm/render.html) и [`werf deploy`](https://ru.werf.io/documentation/cli/main/deploy.html)
 
 {% offtopic title="Как вообще работает деплой" %}
 
@@ -675,11 +682,11 @@ default                       Active   161d
 werf-guided-project-production          Active   4m44s
 werf-guided-project-staging               Active   3h2m
 
-$ kubectl -n example-1-staging get po
+$ kubectl -n werf-guided-project-staging get po
 NAME                        READY   STATUS    RESTARTS   AGE
 werf-guided-project-9f6bd769f-rm8nz   1/1     Running   0          6m12s
 
-$ kubectl -n example-1-staging get ingress
+$ kubectl -n werf-guided-project-staging get ingress
 NAME        HOSTS                                           ADDRESS   PORTS   AGE
 werf-guided-project   staging.mydomain.io                       80      6m18s
 ```
@@ -734,7 +741,7 @@ Deploy to production:
 ```
 {% endsnippetcut %}
 
-TODO: ^^^ чёто мне кажется это не fast&furious! Надо проверить и пофиксить
+TODO: ^^^ чёто мне кажется это не fast&furious! Надо проверить и пофиксить. Оно самое https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html
 
 {% offtopic title="Зачем используется multiwerf?" %}
 Такой сложный путь с использованием multiwerf нужен для того, чтобы вам не надо было думать про обновление werf и об установке новых версий — вы просто указываете, что используете, например, use 1.1 stable и пребываете в уверенности, что у вас актуальная версия.
@@ -747,18 +754,18 @@ TODO: ^^^ чёто мне кажется это не fast&furious! Надо пр
 ### DOCKER CONFIG
 export DOCKER_CONFIG="/tmp/werf-docker-config-832705503"
 ### STAGES_STORAGE
-export WERF_STAGES_STORAGE="registry.mydomain.io/chat/stages"
+export WERF_STAGES_STORAGE="registry.mydomain.io/werf-guided-project/stages"
 ### IMAGES REPO
-export WERF_IMAGES_REPO="registry.mydomain.io/chat"
+export WERF_IMAGES_REPO="registry.mydomain.io/werf-guided-project"
 export WERF_IMAGES_REPO_IMPLEMENTATION="gitlab"
 ### TAGGING
 export WERF_TAG_BY_STAGES_SIGNATURE="true"
 ### DEPLOY
 # export WERF_ENV=""
-export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.mydomain.io/chat"
+export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://lab.mydomain.io/werf-guided-project"
 export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=61368705db8652555bd96e68aadfd2ac423ba263"
-export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.mydomain.io/chat/pipelines/71340"
-export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.mydomain.io/chat/-/jobs/184837"
+export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://lab.mydomain.io/werf-guided-project/pipelines/71340"
+export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://lab.mydomain.io/werf-guided-project/-/jobs/184837"
 ### IMAGE CLEANUP POLICIES
 export WERF_GIT_TAG_STRATEGY_LIMIT="10"
 export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"
@@ -831,8 +838,6 @@ Build:
 
 Аналогичным образом — настраиваем production окружение.
 
-TODO: то, что написано ниже надо проверить на соответствие FAST&FURIOUS
-
 После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Staging.
 
 ![](/images/applications-guide/images/020-gitlab-mr-details.png)
@@ -891,7 +896,7 @@ Cleanup:
 
 ![](https://puu.sh/G0lRx/75cda37bd7.png)
 
-В нстройках указываем необходимое нам время запуска и ветку.
+В нстройках указываем необходимое нам время запуска и ветку. Например, 4 утра.
 
 ![](https://puu.sh/G0lUR/7e3269e724.png)
 

@@ -9,14 +9,15 @@ toc: false
 {% filesused title="Файлы, упомянутые в главе" %}
 - .helm/templates/deployment.yaml
 - .helm/secret-values.yaml
-- TODO название файла
+- src/main/java/com/example/demo/SendGridClient.java
+- src/main/resources/application.properties
 {% endfilesused %}
 
 В этой главе мы настроим в нашем базовом приложении работу с почтой.
 
-Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это [mailgun](https://www.mailgun.com/).
+Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это [sendgrid](https://sendgrid.com/).
 
-Для того, чтобы Java приложение могло работать с mailgun необходимо установить и сконфигурировать зависимость `sendgrid` и начать её использовать. Пропишем зависимости в `pom.xml`, чтобы они устаналивались:
+Для того, чтобы Java приложение могло работать с sendgrid необходимо установить и сконфигурировать зависимость `sendgrid` и начать её использовать. Пропишем зависимости в `pom.xml`, чтобы они устаналивались:
 
 {% snippetcut name="pom.xml" url="#" %}
 {% raw %}
@@ -34,24 +35,61 @@ repositories {
 {% endsnippetcut %}
 
 В коде приложения подключение к API и отправка сообщения может выглядеть так:
+WAT? Да как угодно. Ну вот так например. Эту java-портянку правда сюда надо? Разработчик лучше знает как ему написать класс. Если нет, гайдов море и без нас. Вся суть сводится к прописыванию кредов. Которые в этой портянке никак не используются  ¯\_(ツ)_/¯
 
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="SendGridClient.java" url="#" %}
 {% raw %}
-```____________
-____________
-____________
-____________
+```java
+@Service
+public class SendGridEmailService implements EmailService {
+    private SendGrid sendGridClient;
+    @Autowired
+    public SendGridEmailService(SendGrid sendGridClient) {
+        this.sendGridClient = sendGridClient;
+    }
+    @Override
+    public void sendText(String from, String to, String subject, String body) {
+        Response response = sendEmail(from, to, subject, new Content("text/plain", body));
+        System.out.println("Status Code: " + response.getStatusCode() + ", Body: " + response.getBody() + ", Headers: "
+                + response.getHeaders());
+    }
+    @Override
+    public void sendHTML(String from, String to, String subject, String body) {
+        Response response = sendEmail(from, to, subject, new Content("text/html", body));
+        System.out.println("Status Code: " + response.getStatusCode() + ", Body: " + response.getBody() + ", Headers: "
+                + response.getHeaders());
+    }
+    private Response sendEmail(String from, String to, String subject, Content content) {
+        Mail mail = new Mail(new Email(from), subject, new Email(to), content);
+        mail.setReplyTo(new Email("abc@gmail.com"));
+        Request request = new Request();
+        Response response = null;
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            this.sendGridClient.api(request);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return response;
+    }
+}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-Для работы с mailgun необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
+Для работы с sendgrid необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
 {% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 {% raw %}
 ```yaml
 app:
-  ____________
+  sendgrid:
+    apikey: 
+      _default: sendgridapikey
+    password:
+      _default: sendgridpassword
   ____________
 ```
 {% endraw %}
@@ -62,9 +100,10 @@ app:
 {% snippetcut name="values.yaml" url="#" %}
 {% raw %}
 ```yaml
-  ____________
-  ____________
-  ____________
+app:
+  sendgrid:
+    username:
+      _default: sendgridusername
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -74,14 +113,17 @@ app:
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
-        - name: ____________
-          value: ____________
+        - name: SGAPIKEY
+          value: {{ pluck .Values.global.env .Values.app.sendgrid.apikey | first | default .Values.app.sendgrid.apikey._default | quote }} 
+        - name: SGUSERNAME
+          value: {{ pluck .Values.global.env .Values.app.sendgrid.username | first | default .Values.app.sendgrid.username._default | quote }}
+        - name: SGPASSWORD
+          value: {{ pluck .Values.global.env .Values.app.sendgrid.password | first | default .Values.app.sendgrid.password._default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать ____________. Мало же просто его установить — надо ещё как-то юзать в коде.
-
+В интернете можно найти много разных примеров настройки почты через sendgrid используя spring. Имплементация может отличаться, но нам важно понять, что нужно параметризировать application.properties, чтобы java узнавала о значения из переменных окружения уже во время выполнения в кластере, а не на этапе сборки.
 
 <div>
     <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
