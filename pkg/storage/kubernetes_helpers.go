@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func createNamespaceIfNotExists(client kubernetes.Interface, namespace string) error {
+func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) error {
 	if _, err := client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); errors.IsNotFound(err) {
 		ns := &v1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{Name: namespace},
@@ -43,9 +43,9 @@ func createNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 //	return nil
 //}
 
-func getOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string) (*v1.ConfigMap, error) {
+func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string) (*v1.ConfigMap, error) {
 	if obj, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
-		if err := createNamespaceIfNotExists(client, namespace); err != nil {
+		if err := CreateNamespaceIfNotExists(client, namespace); err != nil {
 			return nil, err
 		}
 
@@ -69,8 +69,4 @@ func getOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, n
 	} else {
 		return obj, nil
 	}
-}
-
-func configMapName(projectName string) string {
-	return fmt.Sprintf("werf-%s", projectName)
 }

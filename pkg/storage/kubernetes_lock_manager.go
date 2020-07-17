@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/werf/pkg/werf/locker_with_retry"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,20 +17,22 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface) *KuberntesLockManager {
+func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KuberntesLockManager {
 	return &KuberntesLockManager{
-		KubeClient:        kubeClient,
-		KubeDynamicClient: kubeDynamicClient,
-		Namespace:         namespace,
-		LockerPerProject:  make(map[string]lockgate.Locker),
+		KubeClient:           kubeClient,
+		KubeDynamicClient:    kubeDynamicClient,
+		Namespace:            namespace,
+		LockerPerProject:     make(map[string]lockgate.Locker),
+		GetConfigMapNameFunc: getConfigMapNameFunc,
 	}
 }
 
 type KuberntesLockManager struct {
-	KubeClient        kubernetes.Interface
-	KubeDynamicClient dynamic.Interface
-	Namespace         string
-	LockerPerProject  map[string]lockgate.Locker
+	KubeClient           kubernetes.Interface
+	KubeDynamicClient    dynamic.Interface
+	Namespace            string
+	LockerPerProject     map[string]lockgate.Locker
+	GetConfigMapNameFunc func(projectName string) string
 
 	mux sync.Mutex
 }
@@ -42,12 +45,12 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 		return locker, nil
 	}
 
-	name := configMapName(projectName)
-	if _, err := getOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
+	name := manager.GetConfigMapNameFunc(projectName)
+	if _, err := GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
 		return nil, err
 	}
 
-	locker := lockgate.NewKubernetesLocker(
+	locker := distributed_locker.NewKubernetesLocker(
 		manager.KubeDynamicClient, schema.GroupVersionResource{
 			Group:    "",
 			Version:  "v1",
@@ -119,6 +122,7 @@ func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
 	}
 }
 
+// FIXME: v1.2 use the same locks names as generic lock manager (include project name into lock name)
 func kubernetesStageLockName(_, signature string) string {
 	return fmt.Sprintf("stage/%s", signature)
 }

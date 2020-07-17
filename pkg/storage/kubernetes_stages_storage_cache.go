@@ -18,13 +18,18 @@ const (
 	StagesStorageCacheConfigMapKey = "stagesStorageCache"
 )
 
-func NewKubernetesStagesStorageCache(namespace string, kubeClient kubernetes.Interface) *KubernetesStagesStorageCache {
-	return &KubernetesStagesStorageCache{KubeClient: kubeClient, Namespace: namespace}
+type KubernetesStagesStorageCacheOptions struct {
+	GetConfigMapNameFunc func(projectName string) string
+}
+
+func NewKubernetesStagesStorageCache(namespace string, kubeClient kubernetes.Interface, getConfigMapNameFunc func(projectName string) string) *KubernetesStagesStorageCache {
+	return &KubernetesStagesStorageCache{KubeClient: kubeClient, Namespace: namespace, GetConfigMapNameFunc: getConfigMapNameFunc}
 }
 
 type KubernetesStagesStorageCache struct {
-	KubeClient kubernetes.Interface
-	Namespace  string
+	KubeClient           kubernetes.Interface
+	Namespace            string
+	GetConfigMapNameFunc func(projectName string) string
 }
 
 type KubernetesStagesStorageCacheData struct {
@@ -67,8 +72,16 @@ func (cache *KubernetesStagesStorageCache) setCacheData(obj *v1.ConfigMap, cache
 	}
 }
 
+func (cache *KubernetesStagesStorageCache) getConfigMapName(projectName string) string {
+	if cache.GetConfigMapNameFunc != nil {
+		return cache.GetConfigMapNameFunc(projectName)
+	} else {
+		return fmt.Sprintf("werf-%s", projectName)
+	}
+}
+
 func (cache *KubernetesStagesStorageCache) GetAllStages(projectName string) (bool, []image.StageID, error) {
-	if obj, err := getOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, configMapName(projectName)); err != nil {
+	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return false, nil, err
@@ -90,7 +103,7 @@ func (cache *KubernetesStagesStorageCache) DeleteAllStages(projectName string) e
 }
 
 func (cache *KubernetesStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
-	if obj, err := getOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, configMapName(projectName)); err != nil {
+	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return false, nil, err
@@ -129,7 +142,7 @@ func (cache *KubernetesStagesStorageCache) DeleteStagesBySignature(projectName, 
 func (cache *KubernetesStagesStorageCache) changeCacheData(projectName string, changeFunc func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error) error {
 RETRY_CHANGE:
 
-	if obj, err := getOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, configMapName(projectName)); err != nil {
+	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return err

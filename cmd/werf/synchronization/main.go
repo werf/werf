@@ -5,9 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/kubedog/pkg/kube"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/werf/lockgate"
+	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
+
+	"github.com/werf/lockgate/pkg/distributed_locker"
+
+	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/synchronization_server"
@@ -90,7 +94,7 @@ func runSynchronization() error {
 		port = "55581"
 	}
 
-	var lockManagerFactoryFunc func(clientID string) (storage.LockManager, error)
+	var distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
 	var stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)
 
 	if cmdData.Kubernetes {
@@ -106,35 +110,40 @@ func runSynchronization() error {
 			return fmt.Errorf("cannot init kubedog: %s", err)
 		}
 
-		prefix := cmdData.KubernetesNamespacePrefix
-		if prefix == "" {
-			prefix = "werf-synchronization-"
-		}
+		distributedLockerBackendFactoryFunc = func(clientID string) (distributed_locker.DistributedLockerBackend, error) {
+			namespace := "werf-synchronization"
+			configMapName := fmt.Sprintf("werf-%s", clientID)
 
-		lockManagerFactoryFunc = func(clientID string) (storage.LockManager, error) {
-			return storage.NewKubernetesLockManager(fmt.Sprintf("%s%s", prefix, clientID), kube.Client, kube.DynamicClient), nil
+			if _, err := storage.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
+				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %s", configMapName, namespace, err)
+			}
+
+			fmt.Printf("THE FUCK?\n")
+
+			store := optimistic_locking_store.NewKubernetesResourceAnnotationsStore(
+				kube.DynamicClient, schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
+					Resource: "configmaps",
+				}, fmt.Sprintf("werf-%s", clientID), "werf-synchronization",
+			)
+			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
 
 		stagesStorageCacheFactoryFunc = func(clientID string) (storage.StagesStorageCache, error) {
-			return storage.NewKubernetesStagesStorageCache(fmt.Sprintf("%s%s", prefix, clientID), kube.Client), nil
+			return storage.NewKubernetesStagesStorageCache("werf-synchronization", kube.Client, func(projectName string) string {
+				return fmt.Sprintf("werf-%s", clientID)
+			}), nil
 		}
 	} else {
-		lockManagerBaseDir := cmdData.LocalLockManagerBaseDir
-		if lockManagerBaseDir == "" {
-			lockManagerBaseDir = filepath.Join(werf.GetHomeDir(), "synchronization_server", "lock_manager")
-		}
-
 		stagesStorageCacheBaseDir := cmdData.LocalStagesStorageCacheBaseDir
 		if stagesStorageCacheBaseDir == "" {
 			stagesStorageCacheBaseDir = filepath.Join(werf.GetHomeDir(), "synchronization_server", "stages_storage_cache")
 		}
 
-		lockManagerFactoryFunc = func(clientID string) (storage.LockManager, error) {
-			if locker, err := lockgate.NewFileLocker(filepath.Join(lockManagerBaseDir, clientID)); err != nil {
-				return nil, err
-			} else {
-				return storage.NewGenericLockManager(locker), nil
-			}
+		distributedLockerBackendFactoryFunc = func(clientID string) (distributed_locker.DistributedLockerBackend, error) {
+			store := optimistic_locking_store.NewInMemoryStore()
+			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
 
 		stagesStorageCacheFactoryFunc = func(clientID string) (storage.StagesStorageCache, error) {
@@ -142,5 +151,5 @@ func runSynchronization() error {
 		}
 	}
 
-	return synchronization_server.RunSynchronizationServer(host, port, lockManagerFactoryFunc, stagesStorageCacheFactoryFunc)
+	return synchronization_server.RunSynchronizationServer(host, port, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
 }
