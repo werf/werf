@@ -125,21 +125,20 @@ git:
 {% endraw %}
 {% endsnippetcut %}
 
-Теперь, когда артефакт собран, соберём образ с nginx:
+Теперь, когда артефакт собран, соберём образ с nginx. Стоит иметь ввиду, что сейчас мы кладем nginx.conf на этапе сборки образа. Это не правильно, так как это конфиг и он должен лежать в configmap, чтобы не вызывать пересборку приложения. Как это делается мы покажем позже, а пока что, для выполнения целей этой главы добавим его средствами сборки.   
 
 {% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
 image: assets
 from: nginx:alpine
-WAT? Зачем? Мы же показываем best-practice и тут же кладем изменяемый в общем случае nginx.conf в сборку
 ansible:
   beforeInstall:
   - name: Add nginx config
     copy:
       content: |
-{{ .Files.Get ".werf/default.conf" | indent 8 }}
-      dest: /etc/nginx/conf.d/default.conf
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
 ```
 {% endraw %}
 {% endsnippetcut %}
