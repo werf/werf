@@ -1,7 +1,7 @@
 ---
 title: Работа с файлами
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-python-django/050-files.html
+permalink: documentation/guides/applications-guide/template/050-files.html
 layout: guide
 toc: false
 ---

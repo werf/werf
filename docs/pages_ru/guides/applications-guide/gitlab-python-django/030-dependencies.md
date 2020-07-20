@@ -1,7 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-python-django/030-dependencies.html
+permalink: documentation/guides/applications-guide/template/030-dependencies.html
 layout: guide
 toc: false
 ---
@@ -33,22 +33,19 @@ Werf предлагает использовать для стадий след�
 
 ## Подключение менеджера зависимостей
 
-Пропишем команду `pip install` в нужные стадии сборки в `werf.yaml`
+Пропишем команду pip install в нужные стадии сборки в werf.yaml
+
 
 {% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
-  install:
-  - name: Install python requirements
-    pip:
-      requirements: /usr/src/app/requirements.txt
-      executable: pip3.6
-
+shell:
+  pip3.6 install -r /usr/src/app/requirements.txt
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-Однако, если оставить всё так — стадия `install` не будет запускаться при изменении файла со списком пакетов. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
+Однако, если оставить всё так — стадия `beforeInstall` не будет запускаться при изменении requirements.txt. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
 
 {% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
@@ -58,7 +55,7 @@ git:
   to: /app
   stageDependencies:
     install:
-    - requirements.txt
+    requirements.txt
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -68,7 +65,7 @@ git:
 ## Оптимизация сборки
 
 Чтобы каждый раз менеджер зависимостей не скачивал заново один и тот же пакет, можно кэшировать зависимости.
-По умолчанию у pip они находятся в директории `~/.cache/pip/`
+По умолчанию они находятся в директории `~/.cache/pip/`.
 
 Для того, чтобы оптимизировать работу с этим кешом при сборке, мы добавим специальную конструкцию в `werf.yaml`:
 

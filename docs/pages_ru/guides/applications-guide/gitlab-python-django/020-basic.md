@@ -1,14 +1,14 @@
 ---
 title: Базовые настройки
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-python-django/020-basic.html
+permalink: documentation/guides/applications-guide/template/020-basic.html
 layout: guide
 toc: false
 ---
 
 В этой главе мы возьмём приложение, которое будет выводить сообщение "hello world" по http и опубликуем его в kubernetes с помощью Werf. Сперва мы разберёмся со сборкой и добьёмся того, чтобы образ оказался в Registry, затем — разберёмся с деплоем собранного приложения в Kubernetes, и, наконец, организуем CI/CD-процесс силами Gitlab CI. 
 
-Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс, который запустит gunicorn, который запустит приложение через wsgi. Управлять маршрутизацией запросов к приложению будет Ingress в Kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
+Наше приложение будет состоять из одного docker образа собранного с помощью werf. В этом образе будет работать один основной процесс, который запустит gunicorn. Управлять маршрутизацией запросов к приложению будет Ingress в Kubernetes кластере. Мы реализуем два стенда: [production](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#production) и [staging](https://ru.werf.io/documentation/reference/ci_cd_workflows_overview.html#staging).
 
 <!-- TODO: тут в идеале нужно вставить картинку отображающую стадию: сборка, возможно публикация, а потом деплой в два места: тест и прод -->
 
@@ -245,25 +245,10 @@ git:
 
 {% snippetcut name="werf.yaml" url="#" %}
 ```yaml
-ansible:
-  install:
-  - name: Install requirements
-    apt:
-      name:
-      - locales
-      update_cache: yes
-  - name: Set timezone
-    timezone:
-      name: "Etc/UTC"
-  - name: Generate locale
-    locale_gen:
-      name: en_US.UTF-8
-      state: present
-  setup:
-  - name: Install python requirements
-    pip:
-      requirements: /usr/src/app/requirements.txt
-      executable: pip3.6
+shell:
+  beforeInstall:
+  - apt update
+  - apt install -y tzdata locales
 ```
 {% endsnippetcut %}
 
@@ -321,7 +306,7 @@ werf-stages-storage/example-1:7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96
 Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):
 
 ```bash
-werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- python manage.py runserver
+$ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- bash -c "basicapp"
 ```
 
 Первая часть команды очень похожа на build, а во второй мы задаем [параметры docker](https://docs.docker.com/engine/reference/run/) и через двойную черту команду с которой хотим запустить наш image.
@@ -397,7 +382,7 @@ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=alw
 ```yaml
       containers:
       - name: web-basic
-        command: ['gunicorn', 'tools.wsgi:application', '--bind', '0.0.0.0:80', '--access-logfile', '-', '--log-level', 'debug']
+        command: ['gunicorn', 'django_example.wsgi:application', '--bind', '0.0.0.0:8001', '--access-logfile', '-', '--log-level', 'debug']
 {{ tuple "web-basic" . | include "werf_container_image" | indent 8 }}
 ```
 {% endraw %}
@@ -430,9 +415,8 @@ Werf складывает собранные образы в Registry с раз�
 {% endraw %}
 {% endsnippetcut %}
 
-____________
-____________
-Мы задали значение для `____________` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
+
+Мы задали значение для `SECRET_KEY` в явном виде — и это абсолютно не безопасный путь для хранения таких критичных данных. Мы разберём более правильный путь ниже, в главе "Разное поведение в разных окружениях".
 
 Обратите также внимание на функцию [`werf_container_env`](https://ru.werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env) — с помощью неё Werf вставляет в описание объекта служебные переменые окружения.
 
@@ -446,8 +430,8 @@ Helm — шаблонизатор, и он поддерживает множес
 {% raw %}
 ```yaml
       env:
-      - name: ____________
-        value: {{ .Values.app.____________ }}
+      - name: SECRET_KEY
+        value: {{ .Values.app.secret_key }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -457,15 +441,15 @@ Helm — шаблонизатор, и он поддерживает множес
 {% snippetcut name="deployment.yaml" url="#" %}
 ```yaml
       env:
-      - name: ____________
-        value: {% raw %}{{ pluck .Values.global.env .Values.app.____________ | first | default .Values.app.some_key._default }}{% endraw %}
+      - name: SECRET_KEY
+        value: {% raw %}{{ pluck .Values.global.env .Values.app.secret_key | first | default .Values.app.secret_key._default }}{% endraw %}
 ```
 {% endsnippetcut %}
 
 {% snippetcut name="values.yaml" url="#" %}
 ```yaml
 app:
-  ____________:
+  secret_key:
     _default: 9eeddad83cebe240f55ae06ccdd95f8e
     production: 684e5cb73034052dc89e3055691b7ac4
     testing: 189af8ca60b04e529140ec114175f098
@@ -479,8 +463,7 @@ app:
 
 Для того чтобы логи приложения отправлялись в stdout нам необходимо сконфигурировать это в коде приложения. Добавьте в файл настроек словарь:
 
-
-```yaml
+```javascript
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -497,19 +480,6 @@ LOGGING = {
 ```
 
 [Подбробно про логирование](https://docs.djangoproject.com/en/3.0/topics/logging/)
-
-2. Ограничить их количество в stdout с помощью настройки для Docker в /etc/docker/daemon.json
-
-```json
-{
-        "log-driver": "json-file",
-        "log-opts": {
-                "max-file": "5",
-                "max-size": "10m"
-        }
-}
-```
-В общей сложности конструкция выше понятна, но если вы хотите разобрать её подробнее вы можете обратиться к официальной [документации](https://docs.docker.com/config/containers/logging/configure/).
 
 #### Доступность Pod-а
 
@@ -624,7 +594,7 @@ spec:
 
 **Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
 
-Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=____________"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
+Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=mydomain.ru"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
@@ -649,7 +619,7 @@ spec:
 
 ![](/images/applications-guide/images/020-werf-secret-key-in-gitlab.png)
 
-После этого мы сможем задать секретную переменную `____________`. Зайдите в режим редактирования секретных значений:
+После этого мы сможем задать секретную переменную `secret_key`. Зайдите в режим редактирования секретных значений:
 
 ```bash
 $ werf helm secret values edit .helm/secret-values.yaml
@@ -675,9 +645,9 @@ app:
 app:
   s3:
     access_key:
-      _default: ____________
+      _default: 100063ead9354e0259b4cd224821cc4c57adfbd63f9d10cb1e828207f294a958d0e9
     secret_key:
-      _default: ____________
+      _default: 1000307fe833d63f467597d10e00ef7b321badd5d02b2f9823b0babfa7265c03e0967e434c1a496274825885e6d3645764fe097e3f463cbde27b4552b9376a78ba5f
 ```
 {% endsnippetcut %}
 
@@ -776,7 +746,6 @@ Deploy to production:
 ```
 {% endsnippetcut %}
 
-TODO: ^^^ чёто мне кажется это не fast&furious! Надо проверить и пофиксить
 
 {% offtopic title="Зачем используется multiwerf?" %}
 Такой сложный путь с использованием multiwerf нужен для того, чтобы вам не надо было думать про обновление werf и об установке новых версий — вы просто указываете, что используете, например, use 1.1 stable и пребываете в уверенности, что у вас актуальная версия.
@@ -872,8 +841,6 @@ Build:
 {% endsnippetcut %}
 
 Аналогичным образом — настраиваем production окружение.
-
-TODO: то, что написано ниже надо проверить на соответствие FAST&FURIOUS
 
 После описания стадий выката при создании Merge Request и будет доступна кнопка Deploy to Staging.
 
