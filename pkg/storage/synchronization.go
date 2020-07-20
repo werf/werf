@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrBadKubernetesSyncrhonizationAddress = errors.New("bad kubernetes syncrhonization address")
+	ErrBadKubernetesSyncrhonizationAddress = errors.New("bad kubernetes synchronization address")
 )
 
 type KubernetesSynchronizationParams struct {

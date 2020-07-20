@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/werf/lockgate/pkg/file_lock"
+	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
 
 	"github.com/werf/lockgate"
@@ -147,7 +148,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	file_lock.LegacyHashFunction = true
 
-	if locker, err := lockgate.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
+	if locker, err := file_locker.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %s", err)
 	} else {
 		hostLocker = locker

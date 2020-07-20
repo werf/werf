@@ -793,6 +793,10 @@ github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55 h1:/7jQqp5f/gZrnWXSR
 github.com/werf/lockgate v0.0.0-20200618124604-b12f696bdd55/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
 github.com/werf/lockgate v0.0.0-20200625122100-41c30943229f h1:3nh/f/qUDhQNyVAyOiXmiSko326AZvBKyIxHqx1wWPU=
 github.com/werf/lockgate v0.0.0-20200625122100-41c30943229f/go.mod h1:sChblfYDpXj4QW5SxdD7tUVlNzPKFzwOiNZAyh1BAKQ=
+github.com/werf/lockgate v0.0.0-20200717103928-5170075ed02b h1:B6NfOaCudXDANS2T3jWXsKqywawM2XpAR4OevFxghZA=
+github.com/werf/lockgate v0.0.0-20200717103928-5170075ed02b/go.mod h1:ICExTi5utKSNpC9GFukaM787OnOjZSIQAZjcrpoRM6s=
+github.com/werf/lockgate v0.0.0-20200720103312-9669eda267da h1:UeWuY/u0947DtMcbm41tMWm8y863bHpQkNXydfdUfpg=
+github.com/werf/lockgate v0.0.0-20200720103312-9669eda267da/go.mod h1:ICExTi5utKSNpC9GFukaM787OnOjZSIQAZjcrpoRM6s=
 github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009 h1:C9lbmDvP49QsQRZuGgYfmkzcb0+pUo8ucWxXql2GdJY=
 github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009/go.mod h1:z/o88w2pmtW11fFsHnXQFsTNzcPp1H+VCtCj7OUntwU=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=

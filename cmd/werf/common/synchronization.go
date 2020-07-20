@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/werf/lockgate/pkg/distributed_locker"
+
 	"github.com/spf13/cobra"
 
 	"k8s.io/client-go/dynamic"
@@ -153,7 +155,9 @@ func GetStagesStorageCache(synchronization *SynchronizationParams) (storage.Stag
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
 			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %s", err)
 		} else {
-			return storage.NewKubernetesStagesStorageCache(synchronization.KubeParams.Namespace, client), nil
+			return storage.NewKubernetesStagesStorageCache(synchronization.KubeParams.Namespace, client, func(projectName string) string {
+				return fmt.Sprintf("werf-%s", projectName)
+			}), nil
 		}
 	case HttpSynchronization:
 		return synchronization_server.NewStagesStorageCacheHttpClient(fmt.Sprintf("%s/stages-storage-cache", synchronization.Address)), nil
@@ -178,10 +182,13 @@ func GetStorageLockManager(synchronization *SynchronizationParams) (storage.Lock
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
 			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %s", err)
 		} else {
-			return storage.NewKubernetesLockManager(synchronization.KubeParams.Namespace, client, dynamicClient), nil
+			return storage.NewKubernetesLockManager(synchronization.KubeParams.Namespace, client, dynamicClient, func(projectName string) string {
+				return fmt.Sprintf("werf-%s", projectName)
+			}), nil
 		}
 	case HttpSynchronization:
-		return synchronization_server.NewLockManagerHttpClient(fmt.Sprintf("%s/lock-manager", synchronization.Address)), nil
+		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
+		return storage.NewGenericLockManager(locker), nil
 	default:
 		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))
 	}
