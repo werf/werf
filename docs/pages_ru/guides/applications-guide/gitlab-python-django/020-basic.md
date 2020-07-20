@@ -1,7 +1,7 @@
 ---
 title: Базовые настройки
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/template/020-basic.html
+permalink: documentation/guides/applications-guide/gitlab-python-django/020-basic.html
 layout: guide
 toc: false
 ---
@@ -33,7 +33,7 @@ toc: false
 
 Основной плюс этого метода - скорость разработки и проверки изменений. В зависимости от используемого языка программирования, результат правок можно увидеть уже через несколько секунд.
 
-К минусам можно онести необходимость в более мощном железе, чтобы мы могли запускать приложение, а также то, что локальное окружение будет значительно отличаться от production.
+К минусам можно отнести необходимость в более мощном железе, чтобы мы могли запускать приложение, а также то, что локальное окружение будет значительно отличаться от production.
 
 _В скором времени werf предоставит разработчикам запускать локальное окружение, идентичное production._
 
@@ -47,7 +47,7 @@ _В скором времени werf предоставит разработчи
 Возьмём исходный код приложения из git:
 
 ```bash
-git clone git@____________
+git clone git@github.com:werf/demos.git
 ```
 
 Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
@@ -88,7 +88,7 @@ shell:
   - apt-get install -y curl
 ```
 {% endraw %}
-Для простоты и удобства, мы будет рассматривать Shell, но для своего проекта, вы можете выбрать любой из предложенных вариантов.
+Для простоты и удобства, мы будем рассматривать Shell, но для своего проекта, вы можете выбрать любой из предложенных вариантов.
 
 Прочитать подробнее про виды синтаксисов вы можете тут:
 [**syntax section**](https://ru.werf.io/documentation/guides/advanced_build/first_application.html#%D1%88%D0%B0%D0%B3-1-%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F-werfyaml).
@@ -234,10 +234,10 @@ git:
 
 {% offtopic title="Что нужно знать про стадии" %}
 
-Стадии — это очень важный, и в тоже время непростой инструмент, который резко уменьшает время сборки приложения. Вплотную мы разберёмся с работой со стадиями, когда будем разбирать вопрос зависимостей и ассетов.
+Стадии — это очень важный, и в то же время непростой инструмент, который резко уменьшает время сборки приложения. Вплотную мы разберёмся с работой со стадиями, когда будем разбирать вопрос зависимостей и ассетов.
 
 Пока нам нужно знать несколько вещей:
-При правильном использовании стадий мы сильно уменьшаем время сборки приложения, на стадии `install` мы устанавливаем системные пакеты, неодходимое для работы программы, а на стадии `setup` мы работает с исходным кодом приложения.
+При правильном использовании стадий мы сильно уменьшаем время сборки приложения, на стадии `install` мы устанавливаем системные пакеты, неодходимое для работы программы, а на стадии `setup` мы работаем с исходным кодом приложения.
 
 {% endofftopic %}
 
@@ -277,16 +277,16 @@ $  werf build --stages-storage :local
 
 ```
 ...
-│ ┌ Building stage ____________
+│ ┌ Building stage basicapp/beforeInstall
 │ ├ Info
-│ │     repository: ____________/____________
+│ │     repository: werf-stages-storage/werf-guided-project
 │ │       image_id: 2743bc56bbf7
 │ │        created: 2020-05-26T22:44:26.0159982Z
 │ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
 │ │           diff: 0 B
 │ │   instructions: WORKDIR /app
-│ └ Building stage ____________ (0.82 seconds)
-└ ⛵ image ____________ (239.56 seconds)
+│ └ Building stage basicapp/beforeInstall (0.82 seconds)
+└ ⛵ image basicapp (239.56 seconds)
 ```
 
 {% offtopic title="Что делать, если что-то пошло не так?" %}
@@ -306,12 +306,12 @@ werf-stages-storage/example-1:7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96
 Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):
 
 ```bash
-$ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- bash -c "basicapp"
+$ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=always" -- bash -c "gunicorn django_example.wsgi:application --bind 0.0.0.0:8001 --access-logfile - --log-level debug"
 ```
 
 Первая часть команды очень похожа на build, а во второй мы задаем [параметры docker](https://docs.docker.com/engine/reference/run/) и через двойную черту команду с которой хотим запустить наш image.
 
-Теперь наше приложение доступно локально на порту 3000:
+Теперь наше приложение доступно локально на порту 8001:
 
 ![](/images/applications-guide/images/020-hello-world-in-browser.png)
 
@@ -594,7 +594,7 @@ spec:
 
 **Вариант с `values.yaml`** рассматривался ранее [в главе "Создание Pod-а"](#helm-values-yaml).
 
-Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=mydomain.ru"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
+Второй вариант подразумевает **задание переменных через CLI** `werf deploy --set "global.ci_url=mydomain.io"`, которое затем будет доступно в yaml-ах в виде {% raw %}`{{ .Values.global.ci_url }}`{% endraw %}.
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 

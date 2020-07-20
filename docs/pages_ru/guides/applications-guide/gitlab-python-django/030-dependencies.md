@@ -40,7 +40,7 @@ Werf предлагает использовать для стадий след�
 {% raw %}
 ```yaml
 shell:
-  pip3.6 install -r /usr/src/app/requirements.txt
+  - pip3.6 install -r /usr/src/app/requirements.txt
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -55,7 +55,7 @@ git:
   to: /app
   stageDependencies:
     install:
-    requirements.txt
+    - requirements.txt
 ```
 {% endraw %}
 {% endsnippetcut %}

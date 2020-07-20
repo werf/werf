@@ -35,11 +35,11 @@ INSTALLED_APPS = [
 
 ANYMAIL = {
     "MAILGUN_API_KEY": "192edaae18f13aaf120a66a4fefd5c4d-7fsaaa4e-kk5d08a5",
-    "MAILGUN_SENDER_DOMAIN": 'https://api.mailgun.net/v3/your-domain.com',
+    "MAILGUN_SENDER_DOMAIN": 'https://api.mailgun.net/v3/domain.io',
 }
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
-DEFAULT_FROM_EMAIL = "you@example.com"
-SERVER_EMAIL = "your-server@example.com"
+DEFAULT_FROM_EMAIL = "you@domain.io"
+SERVER_EMAIL = "your-server@domain.io"
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -52,7 +52,7 @@ SERVER_EMAIL = "your-server@example.com"
 from django.core.mail import send_mail
 
 send_mail("It works!", "This will get sent through Mailgun",
-          "Anymail Sender <from@example.com>", ["to@example.com"])
+          "Anymail Sender <from@domain.io", ["to@domain.io"])
 ```
 {% endraw %}
 {% endsnippetcut %}
