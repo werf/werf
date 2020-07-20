@@ -29,12 +29,17 @@ toc: false
 
 Данная настройка производится полностью в рамках приложения, а нам остается только передать необходимые переменные окружения при запуске приложения.
 
-____________
-____________
-____________
-____________
-____________
-____________
+Добавим в `requirements.txt` зависимости для работы с s3 aws:
+
+{% snippetcut name="requirements.txt" url="#" %}
+{% raw %}
+```
+django-storages==1.9.1
+```
+{% endraw %}
+{% endsnippetcut %}
+
+Далее необходимо задать параметры для работы с s3 в файле настроек, подробнее про это можно прочитать в [документации пакета](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html).
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020-basic.html#secret-values-yaml)*
 
@@ -42,21 +47,12 @@ ____________
 {% raw %}
 ```yaml
 app:
-  ____________
-  ____________
-  ____________
-```
-{% endraw %}
-{% endsnippetcut %}
-
-А не секретные значения — храним в `values.yaml`
-
-{% snippetcut name="values.yaml" url="#" %}
-{% raw %}
-```yaml
-  ____________
-  ____________
-  ____________
+  aws_access_key_id:
+    _default: EXAMPLEKVFOOOWWPYA
+  aws_secret_access_key:
+    _default: exampleBARZHS3sRew8xw5hiGLfroD/b21p2l
+  s3_bucket:
+    _default: my-s3-development
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -66,13 +62,17 @@ app:
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
-        ____________
-        ____________
-        ____________
+        - name: S3_BUCKET
+          value: {{ pluck .Values.global.env .Values.app.s3_bucket | first | default .Values.app.s3_bucket._default }}
+        - name: AWS_ACCESS_KEY_ID
+          value: {{ pluck .Values.global.env .Values.app.aws_access_key_id | first | default .Values.app.aws_access_key_id._default }}
+        - name: AWS_SECRET_ACCESS_KEY
+          value: {{ pluck .Values.global.env .Values.app.aws_secret_access_key | first | default .Values.app.aws_secret_access_key._default }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
+Примеры использования пакеты `django-storages` можно посмотреть в [документации](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html), либо в [отдельной статье](https://simpleisbetterthancomplex.com/tutorial/2017/08/01/how-to-setup-amazon-s3-in-a-django-project.html).
 TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать гем aws-sdk. Мало же просто его установить — надо ещё как-то юзать в коде.
 
 <div>
