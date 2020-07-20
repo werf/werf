@@ -83,21 +83,11 @@ from: ubuntu:latest
 ```yaml
 artifact: assets-built
 from: node:latest
-ansible:
+shell:
   install:
-  - name: npm install
-    shell: |
-      npm install
-    args:
-      chdir: /app
-      executable: /bin/bash
+  - cd /app && npm install
   setup:
-  - name: npm build
-    shell: |
-      npm run build
-    args:
-      chdir: /app
-      executable: /bin/bash
+  - cd /app && npm run build
 git:
   - add: /assets
     to: /app
@@ -150,7 +140,7 @@ ansible:
 ```yaml
 import:
 - artifact: assets-built
-  add: /app
+  add: /app/public
   to: /app
   after: setup
 ```
@@ -159,7 +149,7 @@ import:
 
 ## Изменения в деплое и роутинге
 
-Внутри Deployment сделаем два контейнера: один с `nginx`, который будет раздавать статические файлы, второй — с ____________ приложением. Запросы сперва будут приходить на nginx, а тот будет перенаправлять запрос приложению, если не найдётся статических файлов.
+Внутри Deployment сделаем два контейнера: один с `nginx`, который будет раздавать статические файлы, второй — с Java-приложением. Запросы сперва будут приходить на nginx, а тот будет перенаправлять запрос приложению, если не найдётся статических файлов.
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 

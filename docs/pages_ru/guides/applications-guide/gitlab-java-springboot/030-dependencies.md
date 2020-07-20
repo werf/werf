@@ -86,21 +86,11 @@ mount:
 {% snippetcut name="werf.yaml" url="#" %}
 {% raw %}
 ```yaml
-ansible:
+shell:
   beforeSetup:
-  - name: dependency resolve
-    shell: |
-      mvn -B -f pom.xml dependency:resolve
-    args:
-      chdir: /app
-      executable: /bin/bash
+  - cd /app && mvn -B -f pom.xml dependency:resolve
   setup:
-  - name: Build jar
-    shell: |
-      mvn -B -f pom.xml package
-    args:
-      chdir: /app
-      executable: /bin/bash
+  - cd /app && mvn -B -f pom.xml package
 ```
 {% endraw %}
 {% endsnippetcut %}

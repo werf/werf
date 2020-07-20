@@ -89,7 +89,6 @@ app:
       _default: sendgridapikey
     password:
       _default: sendgridpassword
-  ____________
 ```
 {% endraw %}
 {% endsnippetcut %}
