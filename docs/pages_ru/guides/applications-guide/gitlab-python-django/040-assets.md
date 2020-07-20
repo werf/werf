@@ -1,7 +1,7 @@
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications-guide
-permalink: documentation/guides/applications-guide/gitlab-python-django/040-assets.html
+permalink: documentation/guides/applications-guide/template/040-assets.html
 layout: guide
 toc: false
 ---
@@ -14,13 +14,11 @@ toc: false
 
 В какой-то момент в процессе развития вашего базового приложения вам понадобятся ассеты (т.е. картинки, css, js).
 
-Для того, чтобы обработать ассеты мы воспользуемся встроенным механизмом Django, collectstatic.
+Для того, чтобы обработать ассеты мы воспользуемся встроенным механизмом Django, `collectstatic`.
 
-Для генерации ассетов мы будем использовать команду `python manage.py collectstatic --noinput`. 
+Для генерации ассетов мы будем использовать команду `collectstatic`.
 
-Команда `python manage.py collectstatic --noinput` прекомпилирует файлы в директорию, которая задается параметром `STATIC_ROOT`, практически в любом проекте она одинакова, и в итоге файлы сгенерируются в папке `<PROJECT_DIR>/static`.
-
-ИИнтуитивно понятно, что на одной из стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлы с помощью Django — хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарт.
+Интуитивно понятно, что на одной из стадии сборки нам надо будет вызвать скрипт, который генерирует файлы, т.е. что-то надо будет дописать в `werf.yaml`. Однако, не только там — ведь какое-то приложение в production должно непосредственно отдавать статические файлы. Мы не будем отдавать файлы с помощью gunicorn — хочется, чтобы статику раздавал nginx. А значит надо будет внести какие-то изменения и в helm чарт.
 
 Реализовать раздачу сгенерированных ассетов можно сделать двумя способами:
 
@@ -77,17 +75,12 @@ from: ubuntu:latest
 {% raw %}
 ```yaml
 artifact: assets-built
-from: ____________
-ansible:
-  install:
-  - name: "mkdir"
-    file:
-      path: /usr/src/app/static
-      state: directory
-  - name: "Build static"
-    command: "python manage.py collectstatic --noinput"
-    args:
-      chdir: /usr/src/app
+fromImage: django
+shell:
+  setup:
+  - mkdir -p /usr/src/app/static
+  - cd /usr/src/app
+  - python manage.py collectstatic --noinput
 ```
 {% endraw %}
 {% endsnippetcut %}

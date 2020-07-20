@@ -131,7 +131,7 @@ postgresql:
 `accessModes` - настройка которая определят тип доступа к нашему хранилищу. `ReadWriteOnce` - сообщает о том что к нашему хранилищу единовременно может обращаться только один под.
 
 
-В нашем случае для корректного развертывания БД нам осталось указать только одну сущность - [PersitentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+В нашем случае для корректного развертывания БД нам осталось указать только одну сущностwь - [PersitentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
 {% snippetcut name="____________" url="#" %}
 {% raw %}

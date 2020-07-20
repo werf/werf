@@ -325,7 +325,7 @@ postgresql:
 {% snippetcut name="secret-values.yaml" url="#" %}
 {% raw %}
 ```yaml
-postgre:
+postgresql:
   password:
     _default: 100067e35229a23c5070ad5407b7406a7d58d4e54ecfa7b58a1072bc6c34cd5d443e
 ```
