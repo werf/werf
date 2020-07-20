@@ -136,17 +136,19 @@ metadata:
 
 В нашем приложении - мы будем подключаться к master узлу Redis. Нам нужно, чтобы при выкате в любое окружение приложение подключалось к правильному Redis.
 
-В нашем приложении мы будем использовать Redis как хранилище сессий. Для подключения приложения к Redis необходимо установить дополнительный пакет `pip install django-redis`.
+В нашем приложении мы будем использовать Redis как хранилище сессий.
 
-TODO: переделать вот этот код чтобы соответствовало тексту
+Для подключения приложения к Redis необходимо установить дополнительный пакет `pip install django-redis`.
 
-{% snippetcut name="____________" url="#" %}
+
+{% snippetcut name="settings.py" url="#" %}
 {% raw %}
 ```python
+REDIS_HOST = os.environ.get('REDIS_HOST', default="127.0.0.1")
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get('REDIS_URL', default="redis://127.0.0.1:6379/1"),
+        "LOCATION": "redis://{}:6379/1".format(REDIS_HOST),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient"
         },

@@ -16,34 +16,43 @@ toc: false
 
 Для того чтобы использовать почту мы предлагаем лишь один вариант - использовать внешнее API. В нашем примере это [mailgun](https://www.mailgun.com/).
 
-Для того, чтобы Python приложение могло работать с mailgun необходимо установить и сконфигурировать зависимость и начать её использовать. Установим через `pip` зависимость:
+Для того, чтобы Django приложение могло работать с mailgun необходимо установить и сконфигурировать зависимость и начать её использовать. Установим через `pip` зависимость:
 
 ```bash
-pip install django-mailgun
+pip install django-anymail
 ```
 
-И [сконфигурируем согласно документации](https://pypi.org/project/django-mailgun/) пакета
+И [сконфигурируем согласно документации](https://github.com/anymail/django-anymail) пакета
 
 {% snippetcut name="settings.py" url="#" %}
 {% raw %}
 ```python
-EMAIL_BACKEND = 'django_mailgun.MailgunBackend'
-MAILGUN_ACCESS_KEY = 'ACCESS-KEY'
-MAILGUN_SERVER_NAME = 'SERVER-NAME'
+INSTALLED_APPS = [
+    # ...
+    "anymail",
+    # ...
+]
+
+ANYMAIL = {
+    "MAILGUN_API_KEY": "192edaae18f13aaf120a66a4fefd5c4d-7fsaaa4e-kk5d08a5",
+    "MAILGUN_SENDER_DOMAIN": 'https://api.mailgun.net/v3/domain.io',
+}
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = "you@domain.io"
+SERVER_EMAIL = "your-server@domain.io"
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-TODO: ^^^^^ выглядит как какая-то чушь. Нужно вписать реальные значения в конфигурирование.
-
 В коде приложения подключение к API и отправка сообщения может выглядеть так:
 
-{% snippetcut name="____________" url="#" %}
+{% snippetcut name="mail_example.py" url="#" %}
 {% raw %}
-```____________
-____________
-____________
-____________
+```python
+from django.core.mail import send_mail
+
+send_mail("It works!", "This will get sent through Mailgun",
+          "Anymail Sender <from@domain.io", ["to@domain.io"])
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -75,8 +84,7 @@ app:
 {% endraw %}
 {% endsnippetcut %}
 
-TODO: надо дать отсылку на какой-то гайд, где описано, как конкретно использовать ____________. Мало же просто его установить — надо ещё как-то юзать в коде.
-
+Как использовать данный пакет для отправки почты более подробно можно почитать в [статье](https://medium.com/@9cv9official/sending-html-email-in-django-with-anymail-7163dc332113).
 
 <div>
     <a href="070-redis.html" class="nav-btn">Далее: Подключаем redis</a>
