@@ -11,8 +11,9 @@ sidebar: documentation
 - [Установка]({{ site.baseurl }}/documentation/guides/installation.html) содержит зависимости и возможные варианты установки.
 - [Первые шаги]({{ site.baseurl }}/documentation/guides/getting_started.html) помогает начать использовать werf с существующим Dockerfile. Вы можете легко запустить werf в вашем проекте прямо сейчас.
 - [Деплой в Kubernetes]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html) — краткий пример развертывания приложения в кластере Kubernetes.
-- [Интеграция с GitLab CI/CD]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) расскажет всё об интеграции с GitLab: про сборку, публикацию, деплой и очистку Docker registry.
-- [Интеграция с неподдерживаемыми системами CI/CD]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html) расскажет о том, как интегрировать werf в любую CI/CD-систему, которая пока еще [официально не поддерживается]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
+- [Интеграция с CI/CD-системами]({{ site.baseurl }}/documentation/guides/generic_ci_cd_integration.html) — общий подход к интеграции werf с любой CI/CD-системой.
+- [Интеграция с GitLab CI]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) расскажет всё об интеграции с GitLab CI: про сборку, публикацию, деплой и очистку Docker registry.
+- [Интеграция с GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) расскажет всё об интеграции с GitHub Actions: про сборку, публикацию, деплой и очистку образов.
 - В разделе расширенной сборки рассказывается о нашем синтаксисе описания сборки образов. Синтаксис позволяет использовать werf сборщик, который учитывает особенности инкрементальной сборки и предоставляет дополнительные возможности (к примеру, описание сборочных инструкций Ansible-задачами). Рекомендуем начать знакомство с создания [первого приложения]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).
 
 Следующий раздел — [**Конфигурация**]({{ site.baseurl }}/documentation/configuration/introduction.html).

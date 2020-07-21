@@ -131,14 +131,14 @@ entries:
           - title: Deploy into Kubernetes
             url: /documentation/guides/deploy_into_kubernetes.html
 
-          - title: GitLab CI/CD integration
+          - title: Generic CI/CD integration
+            url: /documentation/guides/generic_ci_cd_integration.html
+
+          - title: GitLab CI integration
             url: /documentation/guides/gitlab_ci_cd_integration.html
 
-          - title: GitHub CI/CD integration
+          - title: GitHub Actions integration
             url: /documentation/guides/github_ci_cd_integration.html
-
-          - title: Unsupported CI/CD integration
-            url: /documentation/guides/unsupported_ci_cd_integration.html
 
           - title: Switch to distributed mode
             url: /documentation/guides/switch_to_distributed_mode.html
@@ -484,14 +484,14 @@ entries:
           - title: Деплой в Kubernetes
             url: /documentation/guides/deploy_into_kubernetes.html
 
-          - title: Интеграция с GitLab CI/CD
+          - title: Интеграция с CI/CD-системами
+            url: /documentation/guides/generic_ci_cd_integration.html
+
+          - title: Интеграция с GitLab CI
             url: /documentation/guides/gitlab_ci_cd_integration.html
 
           - title: Интеграция с GitHub Actions
             url: /documentation/guides/github_ci_cd_integration.html
-
-          - title: Интеграция с неподдерживаемыми системами CI/CD
-            url: /documentation/guides/unsupported_ci_cd_integration.html
 
           - title: Переключение на распределённый режим
             url: /documentation/guides/switch_to_distributed_mode.html

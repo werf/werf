@@ -11,8 +11,9 @@ We recommend starting with our **Guides** section:
 - [Installation]({{ site.baseurl }}/documentation/guides/installation.html) describes werf dependencies and various installation methods.
 - [Getting started]({{ site.baseurl }}/documentation/guides/getting_started.html) describes how to use werf with regular Dockerfiles. Learn how to integrate werf into your project smoothly and effortlessly.
 - [Deploying to Kubernetes]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html) is a basic example of deploying an application.
-- [Gitlab CI/CD integration]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) has all the necessary information about werf integration with GitLab: build, publish, deploy, and schedule Docker registry cleanup.
-- [Unsupported CI/CD integration]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html) is about how to use werf with the CI/CD system that is not [officially supported]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
+- [Generic CI/CD integration]({{ site.baseurl }}/documentation/guides/generic_ci_cd_integration.html) is a generalized howto on using werf with any CI/CD system.
+- [GitLab CI integration]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html) has all the necessary information about werf integration with GitLab CI: build, publish, deploy, and schedule Docker registry cleanup.
+- [GitHub Actions integration]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html) has all the necessary information about werf integration with GitHub Actions: build, publish, deploy, and clean up.
 - In the Advanced build section, you can learn more about our image description syntax to take advantage of incremental rebuilds based on git history, as well as about other carefully crafted tools. We recommend starting with the [First application guide]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).
 
 The next step is the **Configuration** section.
