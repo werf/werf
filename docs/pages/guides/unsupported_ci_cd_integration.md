@@ -5,11 +5,15 @@ permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-werf for now only supports [GitLab CI system]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html). Support for top-10 popular CI systems [coming soon](https://github.com/werf/werf/issues/1682).
+Currently, the following CI systems are officialy supported and tested in werf:
+ * [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html);
+ * [GitHub Actions]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/github_ci.html).
 
-To use werf with any CI/CD system that does not supported yet user should perform procedures described in the [what is ci-env]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env) by own script.
+This list will be extended with other widely used CI systems. If you are particularly interested in any of them, please let us know via [this issue](https://github.com/werf/werf/issues/1617).
 
-The behaviour of `werf ci-env` command should be resembled (without actual using of this command) prior running any werf command in the begin of CI/CD job. This is accomplished by some actions and defining environment variables from [the list of environment variables]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#a-complete-list-of-ci-env-parameters).
+To use werf with other CI/CD systems, you will need to make a script following the guidelines from "[What is ci-env?]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env)".
+
+The behaviour of `werf ci-env` command should be resembled (without actual using of this command) prior running any werf command in the beginning of CI/CD job. This is accomplished by some actions and defining environment variables from [the list of environment variables]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#a-complete-list-of-ci-env-parameters).
 
 ## Ci-env procedures
 
