@@ -1,5 +1,5 @@
 ---
-title: GitHub CI/CD integration
+title: GitHub Actions integration
 sidebar: documentation
 permalink: documentation/guides/github_ci_cd_integration.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
@@ -19,9 +19,9 @@ Jobs are based on comprehensive GitHub Actions, [werf/actions](https://github.co
 
 The specific set of tiers in the Kubernetes cluster depends on many various factors. In this article, we will examine various options for setting up environments for the following tiers:
 
-[The production tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
-[The staging tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
-[The review tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
+* [The production tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
+* [The staging tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
+* [The review tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
 
 The detailed description of various jobs and different options for their implementation are available below. We will start with general terms and then move on to the particularities. You may find the [complete set of various configurations for ready-made workflows](#complete-set-of-configurations-for-ready-made-workflows) at the end of this article.
 
