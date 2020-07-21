@@ -286,4 +286,4 @@ Within the [configure modes of operation in CI/CD systems](#configure-modes-of-o
 ## Further reading
 
  * [How does an integration with GitLab CI work?]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
- * [How to use werf with an unsupported CI/CD system]({{ site.baseurl }}/documentation/guides/unsupported_ci_cd_integration.html).
+ * [Generalized guide on using werf with any CI/CD system]({{ site.baseurl }}/documentation/guides/generic_ci_cd_integration.html).
