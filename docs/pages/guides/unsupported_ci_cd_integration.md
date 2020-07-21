@@ -1,19 +1,19 @@
 ---
-title: Unsupported CI/CD integration
+title: Other CI/CD systems integration
 sidebar: documentation
 permalink: documentation/guides/unsupported_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 Currently, the following CI systems are officialy supported and tested in werf:
- * [GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html);
- * [GitHub Actions]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/github_ci.html).
+ * [GitLab CI]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
+ * [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
 
 This list will be extended with other widely used CI systems. If you are particularly interested in any of them, please let us know via [this issue](https://github.com/werf/werf/issues/1617).
 
-To use werf with other CI/CD systems, you will need to make a script following the guidelines from "[What is ci-env?]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env)".
+However it doesn't mean you can't integrate werf with other CI/CD systems. To make it possible, you will need to prepare a script following the guidelines from "[What is ci-env?]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#what-is-ci-env)". This script will be used instead of `werf ci-env` command. It should be executed in the beginning of your CI/CD job, prior to running any werf commands.
 
-The behaviour of `werf ci-env` command should be resembled (without actual using of this command) prior running any werf command in the beginning of CI/CD job. This is accomplished by some actions and defining environment variables from [the list of environment variables]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#a-complete-list-of-ci-env-parameters).
+Below, we will outline the most important things to consider while you're creating such a script to integrate with your CI system.
 
 ## Ci-env procedures
 
@@ -88,8 +88,7 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 export WERF_LOG_TERMINAL_WIDTH=95
 ```
 
-This script needs to be customized to your CI/CD system: change `WERF_*` environment variables values to the real ones. Consult with the following pages to get an idea and examples of how to retrieve real values for werf variables:
- * [GitLab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)
+> This script needs to be customized to your CI/CD system: change `WERF_*` environment variables values to the real ones. To get an idea and examples of how you can get these real values, please have a look at our "[GitLab CI integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html)" reference article.
 
 Copy following script and place into `werf-ci-env-cleanup.sh`:
 
