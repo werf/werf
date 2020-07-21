@@ -2,7 +2,10 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/golang/example/stringutil"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -24,6 +27,9 @@ const (
 
 	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
 	LocalImageMetadataByCommitRecord_ImageFormat     = "werf-images-metadata-by-commit/%s:%s-%s"
+
+	LocalClientIDRecord_ImageNameFormat = "werf-client-id/%s"
+	LocalClientIDRecord_ImageFormat     = "werf-client-id/%s:%s-%d"
 )
 
 const ImageDeletionFailedDueToUsedByContainerErrorTip = "Use --force option to remove all containers that are based on deleting werf docker images"
@@ -318,6 +324,66 @@ func (storage *LocalDockerServerStagesStorage) String() string {
 
 func (storage *LocalDockerServerStagesStorage) Address() string {
 	return LocalStorageAddress
+}
+
+func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(projectName string) ([]*ClientIDRecord, error) {
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetClientID for project %s\n", projectName)
+
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", fmt.Sprintf(LocalClientIDRecord_ImageNameFormat, projectName))
+
+	images, err := docker.Images(types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	}
+
+	var res []*ClientIDRecord
+	for _, img := range images {
+		for _, repoTag := range img.RepoTags {
+			_, tag := image.ParseRepositoryAndTag(repoTag)
+
+			tagParts := strings.SplitN(stringutil.Reverse(tag), "-", 2)
+			if len(tagParts) != 2 {
+				continue
+			}
+
+			clientID, timestampMillisecStr := stringutil.Reverse(tagParts[1]), stringutil.Reverse(tagParts[0])
+
+			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
+			res = append(res, rec)
+
+			logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetClientID got clientID record: %s\n", rec)
+		}
+	}
+
+	return res, nil
+}
+
+func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(projectName string, rec *ClientIDRecord) error {
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
+
+	fullImageName := fmt.Sprintf(LocalClientIDRecord_ImageFormat, projectName, rec.ClientID, rec.TimestampMillisec)
+
+	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
+
+	if exsts, err := docker.ImageExist(fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+	} else if exsts {
+		return nil
+	}
+
+	if err := docker.CreateImage(fullImageName, map[string]string{}); err != nil {
+		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+	}
+
+	logboek.Info.LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
+
+	return nil
 }
 
 type processRelatedContainersOptions struct {

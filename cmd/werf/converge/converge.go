@@ -174,7 +174,7 @@ func runConverge() error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
+	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
 	}

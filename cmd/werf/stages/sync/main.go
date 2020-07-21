@@ -112,7 +112,7 @@ func runSync() error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData, fromStagesStorage.Address())
+	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, fromStagesStorage)
 	if err != nil {
 		return err
 	}

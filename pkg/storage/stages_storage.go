@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 )
@@ -37,8 +39,20 @@ type StagesStorage interface {
 	GetImageCommits(projectName, imageName string) ([]string, error)
 	GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error)
 
+	GetClientIDRecords(projectName string) ([]*ClientIDRecord, error)
+	PostClientIDRecord(projectName string, rec *ClientIDRecord) error
+
 	String() string
 	Address() string
+}
+
+type ClientIDRecord struct {
+	ClientID          string
+	TimestampMillisec int64
+}
+
+func (rec *ClientIDRecord) String() string {
+	return fmt.Sprintf("clientID:%s tsMillisec:%d", rec.ClientID, rec.TimestampMillisec)
 }
 
 type ImageMetadata struct {

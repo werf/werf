@@ -228,7 +228,7 @@ func runDeploy() error {
 		if err != nil {
 			return err
 		}
-		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
+		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
 		}
@@ -284,11 +284,13 @@ func runDeploy() error {
 			return err
 		}
 	} else {
-		stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-		if stagesStorageAddress == "" {
-			stagesStorageAddress = storage.LocalStorageAddress
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+		// FIXME: stages-storage required
+		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+		if err != nil {
+			return err
 		}
-		synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorageAddress)
+		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
 		}
