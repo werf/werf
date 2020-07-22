@@ -2,6 +2,7 @@ package container_registry_extensions
 
 import (
 	"fmt"
+	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
@@ -9,11 +10,15 @@ import (
 )
 
 type manifestOnlyImage struct {
-	Labels map[string]string
+	CreatedAt time.Time
+	Labels    map[string]string
 }
 
 func NewManifestOnlyImage(labels map[string]string) v1.Image {
-	if img, err := partial.UncompressedToImage(manifestOnlyImage{Labels: labels}); err != nil {
+	if img, err := partial.UncompressedToImage(manifestOnlyImage{
+		CreatedAt: time.Now(),
+		Labels:    labels,
+	}); err != nil {
 		panic(fmt.Sprintf("unable to create new ManifestOnlyImage: %s", err))
 	} else {
 		return img
@@ -33,6 +38,7 @@ func (i manifestOnlyImage) RawConfigFile() ([]byte, error) {
 // ConfigFile implements v1.Image.
 func (i manifestOnlyImage) ConfigFile() (*v1.ConfigFile, error) {
 	return &v1.ConfigFile{
+		Created: v1.Time{i.CreatedAt},
 		Config: v1.Config{
 			Labels: i.Labels,
 		},
