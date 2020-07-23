@@ -271,19 +271,22 @@ Synchronization is a group of service components of the werf to coordinate multi
 
 All commands that requires stages storage (`--stages-storage`) and images repo (`--images-repo`) params also use _synchronization service components_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
 
-There are 2 types of sycnhronization components:
+There are 3 types of sycnhronization components:
  1. Local. Selected by `--synchronization=:local` param.
    - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE` files by default, each file contains a mapping of images existing in stages storage by some signature.
    - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.
- 2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE` param.
+ 2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` param.
   - Kubernetes _stages storage cache_ is stored in the specified `NAMESPACE` in ConfigMap named by project `cm/PROJECT_NAME`.
   - Kubernetes _lock manager_  uses ConfigMap named by project `cm/PROJECT_NAME` (the same as stages storage cache) to store distributed locks in the annotations. [Lockgate library](https://github.com/werf/lockgate) is used as implementation of distributed locks using kubernetes resource annotations.
+ 3. Http. Selected by `--synchronization=http[s]://DOMAIN` param.
+  - There is a public instance of synchronization server available at domain `https://synchronization.werf.io`.
+  - Custom http synchronization server can be run with `werf synchronization` command.
 
 Werf uses `--synchronization=:local` (local _stages storage cache_ and local _lock manager_) by default when _local stages storage_ is used (`--stages-storage=:local`).
 
-Werf uses `--synchronization=kubernetes://werf-synchronization` (kubernetes _stages storage cache_ and kubernetes _lock manager_) by default when docker-registry is used as _stages storage_. Stages storage cache and locks for each project is stored in the `cm/PROJECT_NAME` in the common namespace `werf-synchronization`.
+Werf uses `--synchronization=https://synchronization.werf.io` (http _stages storage cache_ and http _lock manager_) by default when docker-registry is used as _stages storage_.
 
-User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|kubernetes://NAMESPACE` param (arbitrary namespace may be specified, `werf-synchronization` is the default one).
+User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)` param.
 
 **NOTE:** Multiple werf processes working with the same project should use the same _stages storage_ and _synchronization_.
 
