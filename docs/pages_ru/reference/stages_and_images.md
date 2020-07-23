@@ -267,15 +267,18 @@ werf создает _образы_ используя _хранилище ста
  1. Локальный. Включается опцией `--synchronization=:local`.
    - Локальный _кеш хранилища стадий_ располагается по умолчанию в файлах `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE`, каждый из которых хранит соответствие существующих в хранилище стадий по некоторой сигнатуре.
    - Локальный _менеджер блокировок_ использует файловые блокировки, предоставляемые операционной системой.
- 2. Kubernetes. включается опцией `--synchronization=kubernetes://NAMESPACE`.
+ 2. Kubernetes. Включается опцией `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]`.
   - _Кеш хранилища стадий_ в Kubernetes использует для каждого проекта отдельный ConfigMap `cm/PROJECT_NAME`, который создается в указанном `NAMESPACE`.
   - _Менеджер блокировок_ в Kubernetes использует ConfigMap по имени проекта `cm/PROJECT_NAME` (тот же самый что и для кеша хранилища стадий) для хранения распределённых блокировок в аннотациях этого ConfigMap. Werf использует [библиотека lockgate](https://github.com/werf/lockgate), которая реализует распределённые блокировки с помощью обновления аннотаций в ресурсах Kubernetes.
+ 3. Http. Включается опцией `--synchronization=http[s]://DOMAIN`.
+  - Есть публичный сервер синхронизации доступный по домену `https://synchronization.werf.io`.
+  - Собственный http сервер синхронизации может быть запущен командой `werf synchronization`. 
 
 Werf использует `--synchronization=:local` (локальный _кеш хранилища стадий_ и локальный _менеджер блокировок_) по умолчанию, если используется локальное хранилище стадий (`--stages-storage=:local`).
 
-Werf использует `--synchronization=kubernetes://werf-synchronization` (_кеш хранилища стадий в kubernetes_ и _менеджер блокировок в kubernetes_) по умолчанию, если используется удалённое хранилище стадий (`--stages-storage=DOCKER_REPO_ADDRESS`). Блокировки и кеш каждого проекта будут хранится в ConfigMap по имени проекта `cm/PROJECT_NAME` в общем namespace `werf-synchronization`.
+Werf использует `--synchronization=https://synchronization.werf.io` по умолчанию, если используется удалённое хранилище стадий (`--stages-storage=DOCKER_REPO_ADDRESS`).
 
-Пользователь может принудительно указать произвольный адрес компонентов для синхронизации, если это необходимо, с помощью явного указания опции `--synchronization=:local|kubernetes://NAMESPACE` (может быть указан любой namespace, `werf-synchronization` — это namespace по умолчанию).
+Пользователь может принудительно указать произвольный адрес компонентов для синхронизации, если это необходимо, с помощью явного указания опции `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)`.
 
 **ЗАМЕЧАНИЕ:** Множество процессов werf, работающих с одним и тем же проектом обязаны использовать одинаковое хранилище стадий и адрес набора компонентов синхронизации.
 
