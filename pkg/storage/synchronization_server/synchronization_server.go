@@ -39,10 +39,31 @@ func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(cl
 		SyncrhonizationServerByClientID:     make(map[string]*SynchronizationServerHandlerByClientID),
 	}
 
+	srv.HandleFunc("/health", srv.handleHealth)
 	srv.HandleFunc("/new-client-id", srv.handleNewClientID)
 	srv.HandleFunc("/", srv.handleRequestByClientID)
 
 	return srv
+}
+
+type HealthRequest struct {
+	Echo string `json:"echo"`
+}
+type HealthResponse struct {
+	Err    util.SerializableError `json:"err"`
+	Echo   string                 `json:"echo"`
+	Status string                 `json:"status"`
+}
+
+func (server *SynchronizationServerHandler) handleHealth(w http.ResponseWriter, r *http.Request) {
+	var request HealthRequest
+	var response HealthResponse
+	HandleRequest(w, r, &request, &response, func() {
+		logboek.Debug.LogF("SynchronizationServerHandler -- Health request %#v\n", request)
+		response.Echo = request.Echo
+		response.Status = "OK"
+		logboek.Debug.LogF("SynchronizationServerHandler -- Health response %#v\n", response)
+	})
 }
 
 type NewClientIDRequest struct{}

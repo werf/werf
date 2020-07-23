@@ -39,9 +39,11 @@ func PerformPost(client *http.Client, url string, request, response interface{})
 }
 
 func HandleRequest(w http.ResponseWriter, r *http.Request, request, response interface{}, actionFunc func()) {
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, fmt.Sprintf("unable to unmarshal request json: %s", err), http.StatusBadRequest)
-		return
+	if r.Method == "POST" {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			http.Error(w, fmt.Sprintf("unable to unmarshal request json: %s", err), http.StatusBadRequest)
+			return
+		}
 	}
 
 	actionFunc()
