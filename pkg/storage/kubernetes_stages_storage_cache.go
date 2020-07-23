@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/werf/werf/pkg/kubeutils"
+
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/logboek"
@@ -81,7 +83,7 @@ func (cache *KubernetesStagesStorageCache) getConfigMapName(projectName string) 
 }
 
 func (cache *KubernetesStagesStorageCache) GetAllStages(projectName string) (bool, []image.StageID, error) {
-	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return false, nil, err
@@ -103,7 +105,7 @@ func (cache *KubernetesStagesStorageCache) DeleteAllStages(projectName string) e
 }
 
 func (cache *KubernetesStagesStorageCache) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
-	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return false, nil, err
@@ -142,7 +144,7 @@ func (cache *KubernetesStagesStorageCache) DeleteStagesBySignature(projectName, 
 func (cache *KubernetesStagesStorageCache) changeCacheData(projectName string, changeFunc func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error) error {
 RETRY_CHANGE:
 
-	if obj, err := GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
 		return err
 	} else if cacheData, err := cache.extractCacheData(obj); err != nil {
 		return err

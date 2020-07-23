@@ -12,7 +12,6 @@ import (
 	"github.com/werf/lockgate"
 
 	"github.com/werf/werf/pkg/image"
-
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/logboek"

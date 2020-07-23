@@ -2,7 +2,10 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/golang/example/stringutil"
 
 	"github.com/werf/werf/pkg/image"
 
@@ -20,6 +23,9 @@ const (
 
 	RepoImageMetadataByCommitRecord_ImageTagPrefix  = "image-metadata-by-commit-"
 	RepoImageMetadataByCommitRecord_ImageNameFormat = "%s:image-metadata-by-commit-%s-%s"
+
+	RepoClientIDRecrod_ImageTagPrefix  = "client-id-"
+	RepoClientIDRecrod_ImageNameFormat = "%s:client-id-%s-%d"
 
 	UnexpectedTagFormatErrorPrefix = "unexpected tag format"
 )
@@ -394,4 +400,63 @@ func unslugDockerImageTagAsImageName(tag string) string {
 	}
 
 	return res
+}
+
+func (storage *RepoStagesStorage) GetClientIDRecords(projectName string) ([]*ClientIDRecord, error) {
+	logboek.Debug.LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
+
+	var res []*ClientIDRecord
+
+	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
+		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+	} else {
+		for _, tag := range tags {
+			if !strings.HasPrefix(tag, RepoClientIDRecrod_ImageTagPrefix) {
+				continue
+			}
+
+			tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecrod_ImageTagPrefix)
+			dataParts := strings.SplitN(stringutil.Reverse(tagWithoutPrefix), "-", 2)
+			if len(dataParts) != 2 {
+				continue
+			}
+
+			clientID, timestampMillisecStr := stringutil.Reverse(dataParts[1]), stringutil.Reverse(dataParts[0])
+
+			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
+			res = append(res, rec)
+
+			logboek.Debug.LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
+		}
+	}
+
+	return res, nil
+}
+
+func (storage *RepoStagesStorage) PostClientIDRecord(projectName string, rec *ClientIDRecord) error {
+	logboek.Debug.LogF("-- RepoStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
+
+	fullImageName := fmt.Sprintf(RepoClientIDRecrod_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
+
+	logboek.Debug.LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
+
+	if isExists, err := storage.DockerRegistry.IsRepoImageExists(fullImageName); err != nil {
+		return err
+	} else if isExists {
+		logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
+		return nil
+	}
+
+	if err := storage.DockerRegistry.PushImage(fullImageName, docker_registry.PushImageOptions{}); err != nil {
+		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+	}
+
+	logboek.Info.LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
+
+	return nil
 }

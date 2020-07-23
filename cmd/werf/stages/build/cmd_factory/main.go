@@ -161,7 +161,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(commonCmdData, stagesStorage.Address())
+	synchronization, err := common.GetSynchronization(commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
 	}

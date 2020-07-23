@@ -6,6 +6,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
+
+	"github.com/werf/werf/pkg/util"
+
 	"github.com/werf/lockgate/pkg/distributed_locker"
 
 	"github.com/werf/logboek"
@@ -18,6 +22,8 @@ func RunSynchronizationServer(ip, port string, distributedLockerBackendFactoryFu
 }
 
 type SynchronizationServerHandler struct {
+	*http.ServeMux
+
 	DistributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
 	StagesStorageCacheFactoryFunc       func(clientID string) (storage.StagesStorageCache, error)
 
@@ -26,14 +32,36 @@ type SynchronizationServerHandler struct {
 }
 
 func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (storage.StagesStorageCache, error)) *SynchronizationServerHandler {
-	return &SynchronizationServerHandler{
+	srv := &SynchronizationServerHandler{
+		ServeMux:                            http.NewServeMux(),
 		DistributedLockerBackendFactoryFunc: distributedLockerBackendFactoryFunc,
 		StagesStorageCacheFactoryFunc:       stagesStorageCacheFactoryFunc,
 		SyncrhonizationServerByClientID:     make(map[string]*SynchronizationServerHandlerByClientID),
 	}
+
+	srv.HandleFunc("/new-client-id", srv.handleNewClientID)
+	srv.HandleFunc("/", srv.handleRequestByClientID)
+
+	return srv
 }
 
-func (server *SynchronizationServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+type NewClientIDRequest struct{}
+type NewClientIDResponse struct {
+	Err      util.SerializableError `json:"err"`
+	ClientID string                 `json:"clientID"`
+}
+
+func (server *SynchronizationServerHandler) handleNewClientID(w http.ResponseWriter, r *http.Request) {
+	var request NewClientIDRequest
+	var response NewClientIDResponse
+	HandleRequest(w, r, &request, &response, func() {
+		logboek.Debug.LogF("SynchronizationServerHandler -- NewClientID request %#v\n", request)
+		response.ClientID = uuid.New().String()
+		logboek.Debug.LogF("SynchronizationServerHandler -- NewClientID response %#v\n", response)
+	})
+}
+
+func (server *SynchronizationServerHandler) handleRequestByClientID(w http.ResponseWriter, r *http.Request) {
 	logboek.Debug.LogF("SynchronizationServerHandler -- ServeHTTP url path = %q\n", r.URL.Path)
 
 	clientID := strings.SplitN(strings.TrimPrefix(r.URL.Path, "/"), "/", 2)[0]

@@ -143,7 +143,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(commonCmdData, stagesStorage.Address())
+	synchronization, err := common.GetSynchronization(commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
 	}

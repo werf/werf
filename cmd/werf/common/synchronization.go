@@ -5,7 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/werf/werf/pkg/werf/locker_with_retry"
+
 	"github.com/werf/lockgate/pkg/distributed_locker"
+	"github.com/werf/logboek"
 
 	"github.com/spf13/cobra"
 
@@ -93,7 +96,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 	}
 }
 
-func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (*SynchronizationParams, error) {
+func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 	var defaultKubernetesSynchronization string
 	if *cmdData.Synchronization == "" {
 		defaultKubernetesSynchronization = storage.DefaultKubernetesStorageAddress
@@ -123,7 +126,7 @@ func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (*Synchro
 	}
 
 	if *cmdData.Synchronization == "" {
-		if stagesStorageAddress == storage.LocalStorageAddress {
+		if stagesStorage.Address() == storage.LocalStorageAddress {
 			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
 		} else {
 			checkSynchronizationKubernetesParamsForWarnings(cmdData)
@@ -135,7 +138,20 @@ func GetSynchronization(cmdData *CmdData, stagesStorageAddress string) (*Synchro
 		checkSynchronizationKubernetesParamsForWarnings(cmdData)
 		return getKubeParamsFunc(*cmdData.Synchronization)
 	} else if strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
-		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: HttpSynchronization}, nil
+		var address string
+		if err := logboek.Default.LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server"), logboek.LevelLogProcessOptions{}, func() error {
+			if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(*cmdData.Synchronization), stagesStorage); err != nil {
+				return fmt.Errorf("unable to get synchronization client id: %s", err)
+			} else {
+				address = fmt.Sprintf("%s/%s", *cmdData.Synchronization, clientID)
+				logboek.Default.LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
+				return nil
+			}
+		}); err != nil {
+			return nil, err
+		}
+
+		return &SynchronizationParams{Address: address, SynchronizationType: HttpSynchronization}, nil
 	} else {
 		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 	}
@@ -188,7 +204,8 @@ func GetStorageLockManager(synchronization *SynchronizationParams) (storage.Lock
 		}
 	case HttpSynchronization:
 		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
-		return storage.NewGenericLockManager(locker), nil
+		lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+		return storage.NewGenericLockManager(lockerWithRetry), nil
 	default:
 		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))
 	}

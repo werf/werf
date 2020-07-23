@@ -89,22 +89,22 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData, stagesStorage.Address())
-	if err != nil {
-		return err
-	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(synchronization)
-	if err != nil {
-		return err
-	}
-
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
+		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(synchronization)
+		if err != nil {
+			return err
+		}
+
 		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
 			return err

@@ -109,7 +109,7 @@ func runSwitch() error {
 		return fmt.Errorf("cannot switch from non-local stages storage, omit --from param or specify --from=%s", storage.LocalStorageAddress)
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData, fromStagesStorage.Address())
+	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, fromStagesStorage)
 	if err != nil {
 		return err
 	}

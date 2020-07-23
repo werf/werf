@@ -37,11 +37,6 @@ func (manager *GenericLockManager) LockStagesAndImages(projectName string, opts 
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockDeployProcess(projectName string, releaseName string, kubeContextName string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericDeployReleaseLockName(projectName, releaseName, kubeContextName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
-	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-}
-
 func (manager *GenericLockManager) Unlock(lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
@@ -64,8 +59,4 @@ func genericImageLockName(imageName string) string {
 
 func genericStagesAndImagesLockName(projectName string) string {
 	return fmt.Sprintf("%s.stages_and_images", projectName)
-}
-
-func genericDeployReleaseLockName(projectName string, releaseName string, kubeContextName string) string {
-	return fmt.Sprintf("project/%s;release/%s;kube_context/%s", projectName, releaseName, kubeContextName)
 }

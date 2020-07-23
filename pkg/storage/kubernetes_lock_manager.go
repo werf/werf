@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/lockgate/pkg/distributed_locker"
+	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/werf/locker_with_retry"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -46,7 +47,7 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 	}
 
 	name := manager.GetConfigMapNameFunc(projectName)
-	if _, err := GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
+	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +58,6 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 			Resource: "configmaps",
 		}, name, manager.Namespace,
 	)
-
 	lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	manager.LockerPerProject[projectName] = lockerWithRetry
@@ -101,15 +101,6 @@ func (manager *KuberntesLockManager) LockStagesAndImages(projectName string, opt
 	}
 }
 
-func (manager *KuberntesLockManager) LockDeployProcess(projectName string, releaseName string, kubeContextName string) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(projectName); err != nil {
-		return LockHandle{}, err
-	} else {
-		_, lock, err := locker.Acquire(kubernetesDeployReleaseLockName(projectName, releaseName, kubeContextName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
-		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-	}
-}
-
 func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
 	if locker, err := manager.getLockerForProject(lock.ProjectName); err != nil {
 		return err
@@ -137,8 +128,4 @@ func kuberntesImageLockName(_, imageName string) string {
 
 func kuberntesStagesAndImagesLockName(_ string) string {
 	return fmt.Sprintf("stages_and_images")
-}
-
-func kubernetesDeployReleaseLockName(_ string, releaseName string, kubeContextName string) string {
-	return fmt.Sprintf("release/%s;kube-context/%s", releaseName, kubeContextName)
 }
