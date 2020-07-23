@@ -41,7 +41,7 @@ These policies determine which _images_ will be deleted while leaving all others
 
 #### Tagging scheme-based cleanup algorithm
 
-> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git history-based cleanup algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
+> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
 
 #### Cleanup policies
 
