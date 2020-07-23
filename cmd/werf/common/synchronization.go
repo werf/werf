@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/werf/werf/pkg/werf/locker_with_retry"
+
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
 
@@ -124,7 +126,7 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 	}
 
 	if *cmdData.Synchronization == "" {
-		if stagesStorage.String() == storage.LocalStorageAddress {
+		if stagesStorage.Address() == storage.LocalStorageAddress {
 			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
 		} else {
 			checkSynchronizationKubernetesParamsForWarnings(cmdData)
@@ -202,7 +204,8 @@ func GetStorageLockManager(synchronization *SynchronizationParams) (storage.Lock
 		}
 	case HttpSynchronization:
 		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
-		return storage.NewGenericLockManager(locker), nil
+		lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+		return storage.NewGenericLockManager(lockerWithRetry), nil
 	default:
 		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))
 	}

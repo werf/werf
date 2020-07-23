@@ -1,10 +1,8 @@
 package deploy
 
 import (
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/storage"
 )
 
 type DismissOptions struct {
@@ -12,11 +10,16 @@ type DismissOptions struct {
 	WithHooks     bool
 }
 
-func RunDismiss(projectName, release, namespace, _ string, storageLockManager storage.LockManager, opts DismissOptions) error {
-	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
+func RunDismiss(projectName, release, namespace, _ string, opts DismissOptions) error {
+	lockManager, err := NewLockManager(namespace)
+	if err != nil {
+		return err
+	}
+
+	if lock, err := lockManager.LockRelease(release); err != nil {
 		return err
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer lockManager.Unlock(lock)
 	}
 
 	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {

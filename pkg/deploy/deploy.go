@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/werf/pkg/storage"
-
 	"github.com/ghodss/yaml"
 
 	"k8s.io/helm/pkg/chartutil"
@@ -37,15 +35,21 @@ type DeployOptions struct {
 	DryRun               bool
 }
 
-func Deploy(projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, storageLockManager storage.LockManager, opts DeployOptions) error {
+func Deploy(projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	if opts.DryRun {
 		fmt.Printf("Deploy DryRun\n")
 		return nil
 	}
-	if lock, err := storageLockManager.LockDeployProcess(projectName, release, kube.Context); err != nil {
+
+	lockManager, err := NewLockManager(namespace)
+	if err != nil {
+		return err
+	}
+
+	if lock, err := lockManager.LockRelease(release); err != nil {
 		return err
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer lockManager.Unlock(lock)
 	}
 
 	var werfChart *werf_chart.WerfChart
@@ -98,7 +102,7 @@ func Deploy(projectName, projectDir, helmChartDir string, imagesRepository strin
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)
 
-	err := helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
+	err = helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
 		return werfChart.Deploy(release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,
 			ChartValuesOptions: helm.ChartValuesOptions{

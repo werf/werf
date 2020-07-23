@@ -3,8 +3,6 @@ package dismiss
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/container_runtime"
-
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -164,22 +162,7 @@ func runDismiss() error {
 		return err
 	}
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-	// FIXME: stages-storage required
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(synchronization)
-	if err != nil {
-		return err
-	}
-
-	return deploy.RunDismiss(projectName, release, namespace, *commonCmdData.KubeContext, storageLockManager, deploy.DismissOptions{
+	return deploy.RunDismiss(projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: cmdData.WithNamespace,
 		WithHooks:     cmdData.WithHooks,
 	})

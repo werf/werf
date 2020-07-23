@@ -290,7 +290,7 @@ func runDiff() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
+	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

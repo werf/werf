@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/werf/werf/pkg/stages_manager"
+
 	"github.com/werf/werf/pkg/tag_strategy"
 
 	"github.com/werf/werf/pkg/images_manager"
@@ -13,8 +15,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
 
 	"github.com/spf13/cobra"
 
@@ -167,36 +167,6 @@ func runConverge() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
-	if err != nil {
-		return err
-	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(synchronization)
-	if err != nil {
-		return err
-	}
-
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
-		return err
-	}
-
-	imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -277,25 +247,58 @@ func runConverge() error {
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
-	defer conveyorWithRetry.Terminate()
-
 	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesRepository string
 
-	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
-		if err := c.BuildAndPublish(opts); err != nil {
+	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(synchronization)
+		if err != nil {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, "", tag_strategy.StagesSignature, false)
+		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
+		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+			return err
+		}
 
-		return nil
-	}); err != nil {
-		return err
+		imagesRepo, err := common.GetImagesRepo(projectName, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		imagesRepository = imagesRepo.String()
+
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+		defer conveyorWithRetry.Terminate()
+
+		if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
+			if err := c.BuildAndPublish(opts); err != nil {
+				return err
+			}
+
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, "", tag_strategy.StagesSignature, false)
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		logboek.LogOptionalLn()
 	}
 
-	logboek.LogOptionalLn()
-	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
+	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/werf/werf/pkg/storage"
-
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/werf/werf/pkg/stages_manager"
@@ -217,7 +215,6 @@ func runDeploy() error {
 	var tag string
 	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
-	var storageLockManager storage.LockManager
 
 	projectName := werfConfig.Meta.Project
 
@@ -232,7 +229,7 @@ func runDeploy() error {
 		if err != nil {
 			return err
 		}
-		storageLockManager, err = common.GetStorageLockManager(synchronization)
+		storageLockManager, err := common.GetStorageLockManager(synchronization)
 		if err != nil {
 			return err
 		}
@@ -283,21 +280,6 @@ func runDeploy() error {
 		}); err != nil {
 			return err
 		}
-	} else {
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-		// FIXME: stages-storage required
-		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
-		if err != nil {
-			return err
-		}
-		storageLockManager, err = common.GetStorageLockManager(synchronization)
-		if err != nil {
-			return err
-		}
 	}
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
@@ -321,7 +303,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, storageLockManager, deploy.DeployOptions{
+	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

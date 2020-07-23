@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 
+	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/synchronization_server"
 
@@ -114,7 +115,7 @@ func runSynchronization() error {
 			namespace := "werf-synchronization"
 			configMapName := fmt.Sprintf("werf-%s", clientID)
 
-			if _, err := storage.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
+			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
 				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %s", configMapName, namespace, err)
 			}
 
