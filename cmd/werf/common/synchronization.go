@@ -125,25 +125,13 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 		}
 	}
 
-	if *cmdData.Synchronization == "" {
-		if stagesStorage.Address() == storage.LocalStorageAddress {
-			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
-		} else {
-			checkSynchronizationKubernetesParamsForWarnings(cmdData)
-			return getKubeParamsFunc(defaultKubernetesSynchronization)
-		}
-	} else if *cmdData.Synchronization == storage.LocalStorageAddress {
-		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: LocalSynchronization}, nil
-	} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") {
-		checkSynchronizationKubernetesParamsForWarnings(cmdData)
-		return getKubeParamsFunc(*cmdData.Synchronization)
-	} else if strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
+	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 		var address string
 		if err := logboek.Default.LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server"), logboek.LevelLogProcessOptions{}, func() error {
-			if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(*cmdData.Synchronization), stagesStorage); err != nil {
+			if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
 				return fmt.Errorf("unable to get synchronization client id: %s", err)
 			} else {
-				address = fmt.Sprintf("%s/%s", *cmdData.Synchronization, clientID)
+				address = fmt.Sprintf("%s/%s", synchronization, clientID)
 				logboek.Default.LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
 				return nil
 			}
@@ -152,6 +140,21 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 		}
 
 		return &SynchronizationParams{Address: address, SynchronizationType: HttpSynchronization}, nil
+	}
+
+	if *cmdData.Synchronization == "" {
+		if stagesStorage.Address() == storage.LocalStorageAddress {
+			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
+		} else {
+			return getHttpParamsFunc("https://synchronization.werf.io", stagesStorage)
+		}
+	} else if *cmdData.Synchronization == storage.LocalStorageAddress {
+		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: LocalSynchronization}, nil
+	} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") {
+		checkSynchronizationKubernetesParamsForWarnings(cmdData)
+		return getKubeParamsFunc(*cmdData.Synchronization)
+	} else if strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
+		return getHttpParamsFunc(*cmdData.Synchronization, stagesStorage)
 	} else {
 		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 	}
