@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/werf"
 
@@ -33,6 +34,9 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 }
 
 func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
+	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.GetImageInfo %s", imageName), logboek.LevelLogProcessStartOptions{})
+	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
 	if lock, err := cache.lock(imageName); err != nil {
 		return nil, err
 	} else {
@@ -55,6 +59,9 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 }
 
 func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
+	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.StoreImageInfo %s", imgInfo.Name), logboek.LevelLogProcessStartOptions{})
+	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
 	if lock, err := cache.lock(imgInfo.Name); err != nil {
 		return err
 	} else {
