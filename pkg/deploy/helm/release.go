@@ -7,14 +7,10 @@ import (
 	"strings"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
-
 	helm_kube "k8s.io/helm/pkg/kube"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -56,7 +52,7 @@ var (
 	}
 )
 
-func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bool) error {
+func PurgeHelmRelease(releaseName, namespace string, withHooks bool) error {
 	if err := logboek.Info.LogProcess("Checking release existence", logboek.LevelLogProcessOptions{}, func() error {
 		_, err := releaseStatus(releaseName, releaseStatusOptions{})
 		if err != nil {
@@ -137,13 +133,6 @@ func PurgeHelmRelease(releaseName, namespace string, withNamespace, withHooks bo
 		return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
 	}); err != nil {
 		return fmt.Errorf("release delete failed: %s", err)
-	}
-
-	if withNamespace {
-		if err := removeResource(namespace, "Namespace", ""); err != nil {
-			return fmt.Errorf("delete namespace %s failed: %s", namespace, err)
-		}
-		logboek.LogOptionalLn()
 	}
 
 	return nil
@@ -528,79 +517,7 @@ func validateHelmReleaseNamespace(releaseName, namespace string) error {
 func removeReleaseNamespacedResource(template Template, releaseNamespace string) error {
 	resourceName := template.Metadata.Name
 	resourceKing := template.Kind
-	return removeResource(resourceName, resourceKing, template.Namespace(releaseNamespace))
-}
-
-// Not namespaced resource specifies without namespace
-func removeResource(name, kind, namespace string) error {
-	isNamespacedResource := namespace != ""
-
-	groupVersionResource, err := kube.GroupVersionResourceByKind(kube.Client, kind)
-	if err != nil {
-		return err
-	}
-
-	var res dynamic.ResourceInterface
-	if isNamespacedResource {
-		res = kube.DynamicClient.Resource(groupVersionResource).Namespace(namespace)
-	} else {
-		res = kube.DynamicClient.Resource(groupVersionResource)
-	}
-
-	isExist := func() (bool, error) {
-		_, err := res.Get(name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return false, nil
-			}
-
-			return true, err
-		}
-
-		return true, nil
-	}
-
-	exist, err := isExist()
-	if err != nil {
-		return err
-	} else if !exist {
-		return nil
-	}
-
-	var logProcessMsg string
-	if isNamespacedResource {
-		logProcessMsg = fmt.Sprintf("Deleting %s/%s from namespace %q", groupVersionResource.Resource, name, namespace)
-	} else {
-		logProcessMsg = fmt.Sprintf("Deleting %s/%s", groupVersionResource.Resource, name)
-	}
-
-	return logboek.LogProcessInline(logProcessMsg,
-		logboek.LogProcessInlineOptions{
-			LevelLogProcessInlineOptions: logboek.LevelLogProcessInlineOptions{Style: logboek.DetailsStyle()},
-		},
-		func() error {
-			deletePropagation := metav1.DeletePropagationForeground
-			deleteOptions := &metav1.DeleteOptions{
-				PropagationPolicy: &deletePropagation,
-			}
-			err = res.Delete(name, deleteOptions)
-			if err != nil {
-				return err
-			}
-
-			for {
-				exist, err := isExist()
-				if err != nil {
-					return err
-				} else if !exist {
-					break
-				}
-
-				time.Sleep(500 * time.Millisecond)
-			}
-
-			return nil
-		})
+	return kubeutils.RemoveResourceAndWaitUntilRemoved(resourceName, resourceKing, template.Namespace(releaseNamespace))
 }
 
 func createAutoPurgeTriggerFilePath(releaseName string) error {
