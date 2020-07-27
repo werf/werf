@@ -18,7 +18,18 @@ import (
 
 const GitLabRegistryImplementationName = "gitlab"
 
-var gitlabPatterns = []string{`^gitlab\.com`}
+var (
+	gitlabPatterns = []string{`^gitlab\.com`}
+
+	fullScopeFunc = func(ref name.Reference) []string {
+		completeScopeFunc := []string{ref.Scope("push"), ref.Scope("pull"), ref.Scope("delete")}
+		return completeScopeFunc
+	}
+
+	universalScopeFunc = func(ref name.Reference) []string {
+		return []string{ref.Scope("*")}
+	}
+)
 
 type gitLabRegistry struct {
 	*defaultImplementation
@@ -57,7 +68,9 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 	} else {
 		var err error
 		for _, deleteFunc := range []func(repoImage *image.Info) error{
-			r.deleteRepoImageWithAllScopes,
+			r.deleteRepoImageTagWithFullScope,
+			r.deleteRepoImageTagWithUniversalScope,
+			r.deleteRepoImageWithFullScope,
 			r.deleteRepoImageWithUniversalScope,
 			r.defaultImplementation.deleteRepoImage,
 		} {
@@ -83,22 +96,33 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 	return nil
 }
 
-// TODO https://gitlab.com/gitlab-org/gitlab-ce/issues/48968
+func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(repoImage *image.Info) error {
+	return r.deleteRepoImageTagWithCustomScope(repoImage, universalScopeFunc)
+}
+
+func (r *gitLabRegistry) deleteRepoImageTagWithFullScope(repoImage *image.Info) error {
+	return r.deleteRepoImageTagWithCustomScope(repoImage, fullScopeFunc)
+}
+
 func (r *gitLabRegistry) deleteRepoImageWithUniversalScope(repoImage *image.Info) error {
-	return r.deleteRepoImageWithSpecificScopes(repoImage, func(ref name.Reference) []string {
-		return []string{ref.Scope("*")}
-	})
+	return r.deleteRepoImageWithCustomScope(repoImage, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithAllScopes(repoImage *image.Info) error {
-	return r.deleteRepoImageWithSpecificScopes(repoImage, func(ref name.Reference) []string {
-		return []string{ref.Scope("push"), ref.Scope("pull"), ref.Scope("delete")}
-	})
+func (r *gitLabRegistry) deleteRepoImageWithFullScope(repoImage *image.Info) error {
+	return r.deleteRepoImageWithCustomScope(repoImage, fullScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithSpecificScopes(repoImage *image.Info, scopesFunc func(ref name.Reference) []string) error {
+func (r *gitLabRegistry) deleteRepoImageTagWithCustomScope(repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
+	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+	return r.customDeleteRepoImage("/v2/%s/tags/reference/%s", reference, scopeFunc)
+}
+
+func (r *gitLabRegistry) deleteRepoImageWithCustomScope(repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
+	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, scopeFunc)
+}
 
+func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string, scopeFunc func(ref name.Reference) []string) error {
 	ref, err := name.ParseReference(reference, r.api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
@@ -109,8 +133,8 @@ func (r *gitLabRegistry) deleteRepoImageWithSpecificScopes(repoImage *image.Info
 		return fmt.Errorf("getting creds for %q: %v", ref, authErr)
 	}
 
-	scopes := scopesFunc(ref)
-	tr, err := transport.New(ref.Context().Registry, auth, r.api.getHttpTransport(), scopes)
+	scope := scopeFunc(ref)
+	tr, err := transport.New(ref.Context().Registry, auth, r.api.getHttpTransport(), scope)
 	if err != nil {
 		return err
 	}
@@ -119,7 +143,7 @@ func (r *gitLabRegistry) deleteRepoImageWithSpecificScopes(repoImage *image.Info
 	u := url.URL{
 		Scheme: ref.Context().Registry.Scheme(),
 		Host:   ref.Context().RegistryStr(),
-		Path:   fmt.Sprintf("/v2/%s/manifests/%s", ref.Context().RepositoryStr(), ref.Identifier()),
+		Path:   fmt.Sprintf(endpointFormat, ref.Context().RepositoryStr(), ref.Identifier()),
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
