@@ -35,11 +35,13 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Installing Dependencies](#installing-dependencies)
+  - [Installing dependencies](#installing-dependencies)
   - [Installing werf](#installing-werf)
-- [Getting Started](#getting-started)
-- [Backward Compatibility Promise](#backward-compatibility-promise)
-- [Documentation and Support](#documentation-and-support)
+- [Getting started](#getting-started)
+- [Documentation and support](#documentation-and-support)
+- [Production ready](#production-ready)
+  - [Stability channels](#stability-channels)
+  - [Backward compatibility promise](#backward-compatibility-promise)
 - [License](#license)
 
 # Features
@@ -54,7 +56,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
 - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
-## Coming Soon
+## Coming soon
 
 - ~3-way-merge~ [#1616](https://github.com/werf/werf/issues/1616).
 - Developing applications locally with werf [#1940](https://github.com/werf/werf/issues/1940).
@@ -66,7 +68,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Support for Helm 3 [#1606](https://github.com/werf/werf/issues/1606).
 - (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/werf/werf/issues/1618).
 
-## Complete List of Features
+## Complete list of features
 
 ### Building
 
@@ -120,7 +122,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 # Installation
 
-## Installing Dependencies
+## Installing dependencies
 
 <!-- WERF DOCS PARTIAL BEGIN: Installing Dependencies -->
 
@@ -238,7 +240,7 @@ FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Getting Started
+# Getting started
 
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
@@ -254,45 +256,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 
 <!-- WERF DOCS PARTIAL END -->
 
-# Backward Compatibility Promise
-
-<!-- WERF DOCS PARTIAL BEGIN: Backward Compatibility Promise -->
-
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions or to dapp releases
-
-werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_
-require to do a full re-deploy of applications or to perform other non-scriptable actions.
-
-Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
-In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
-
-Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
-In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
-
-All changes go through all stability channels:
-
-- `alpha` channel can bring new features but can be unstable.
-  We do **not guarantee** backward compatibility between `alpha` releases.
-- `beta` channel is for more broad testing of new features to catch regressions.
-  We do **not guarantee** backward compatibility between `beta` releases.
-- `ea` channel is mostly safe and can be used in non-critical environments or for local development.
-  We do **not guarantee** backward compatibility between `ea` releases.
-- `stable` channel is mostly safe and we encourage you to use this version everywhere.
-  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests.
-  We **guarantee** backward compatibility between `stable` releases within the minor branch (1.1.x).
-- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
-  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
-  We **guarantee** backward compatibility between `rock-solid` releases within the minor branch (1.1.x).
-
-The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
-
-> When using release channels, you do not specify a version, because the version is managed automatically within the channel
-  
-Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.
-
-<!-- WERF DOCS PARTIAL END -->
-
-# Documentation and Support
+# Documentation and support
 
 <!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
@@ -303,6 +267,65 @@ We are always in contact with the community through [Twitter](https://twitter.co
 > Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues)
+
+<!-- WERF DOCS PARTIAL END -->
+
+# Production ready
+
+<!-- WERF DOCS PARTIAL BEGIN: Production ready -->
+
+werf is a mature, reliable tool you can trust:
+
+- [5 stability levels](#stability-channels) are available, from _alpha_ to _stable_ & _rock-solid_. All changes in werf go through each of them, and transitions to the most stable channels require specific periods of preliminary testing. This all guarantees certain levels of stability from which users can choose.
+- Most of werf code is covered with automatic (e2e and unit) tests.
+- In [Flant](https://flant.com/), werf is being used in production since 2016 for building and since 2017 for deploying hundreds of applications. These apps are extremely diverse in sizes, designs, and technology stacks being used. We know at least dozens of other businesses using werf for years.
+- If there are any concerns on using werf, please welcome to our online communities ([Slack](https://cloud-native.slack.com/messages/CHY2THYUU), [Twitter](https://twitter.com/werf_io)) and feel free to ask the questions you might have — we are happy to help!
+
+<!-- WERF DOCS PARTIAL END -->
+
+## Stability channels
+
+<!-- WERF DOCS PARTIAL BEGIN: Stability channels -->
+
+All changes in werf go through all stability channels:
+
+- `alpha` channel can bring new features but can be unstable;
+- `beta` channel is for more broad testing of new features to catch regressions;
+- `ea` channel is mostly safe and can be used in non-critical environments or for local development;
+- `stable` channel is mostly safe and we encourage you to use this version everywhere.
+  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests;
+- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
+  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
+
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
+
+> When using release channels, you do not specify a version, because the version is managed automatically within the channel
+  
+Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.
+
+<!-- WERF DOCS PARTIAL END -->
+
+## Backward compatibility promise
+
+<!-- WERF DOCS PARTIAL BEGIN: Backward compatibility promise -->
+
+> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions.
+
+werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_ require to do a full re-deploy of applications or to perform other non-scriptable actions.
+
+Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
+In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
+
+Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
+In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
+
+- We do **not guarantee** backward compatibility between:
+  - `alpha` releases;
+  - `beta` releases;
+  - `ea` releases.
+- We **guarantee** backward compatibility between:
+  - `stable` releases within the minor branch (1.1.x);
+  - `rock-solid` releases within the minor branch (1.1.x).
 
 <!-- WERF DOCS PARTIAL END -->
 
