@@ -124,7 +124,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 ## Installing dependencies
 
-<!-- WERF DOCS PARTIAL BEGIN: Installing Dependencies -->
+<!-- WERF DOCS PARTIAL BEGIN: Installing dependencies -->
 
 ### Docker
 
@@ -150,7 +150,7 @@ sudo usermod -aG docker $USER
 
 There are a lot of ways to install werf, but using [multiwerf](https://github.com/werf/multiwerf) is a recommended practice both for local development and CI usage. 
 
-> The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html)
+> The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html).
 
 <!-- WERF DOCS PARTIAL BEGIN: Installing with multiwerf -->
 
@@ -169,7 +169,7 @@ cd ~/bin
 curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
-##### Add werf alias to the current shell session
+##### Adding werf alias to the current shell session
 
 ```shell
 . $(multiwerf use 1.1 stable --as-file)
@@ -211,7 +211,7 @@ Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-win
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 ```
 
-###### Add werf alias to the current shell session
+###### Adding werf alias to the current shell session
 
 ```shell
 Invoke-Expression -Command "multiwerf use 1.1 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
@@ -231,7 +231,7 @@ setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 # after that open new cmd.exe session and start using multiwerf
 ```
 
-###### Add werf alias to the current shell session
+###### Adding werf alias to the current shell session
 
 ```shell
 FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
@@ -248,8 +248,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 - [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with an existing Dockerfile.
 - [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with werf builder.
 - [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy an application to the Kubernetes cluster using werf built images.
-- [GitLab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
-- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate werf with any CI/CD system.
+- CI/CD systems integration: [generic](https://werf.io/documentation/guides/generic_ci_cd_integration.html), [GitLab CI](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html), [GitHub Actions](https://werf.io/documentation/guides/github_ci_cd_integration.html).
 - [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
 - [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).
 - [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — reduce image size with artifacts (Go/Revel).
@@ -264,9 +263,9 @@ Following guides demonstrate the key features of werf and help you to start usin
 
 We are always in contact with the community through [Twitter](https://twitter.com/werf_io) and [Slack](https://cloud-native.slack.com/messages/CHY2THYUU). Join us!
 
-> Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
+> Russian-speaking users can also reach us in [Telegram Chat](https://t.me/werf_ru).
 
-Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues)
+Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues).
 
 <!-- WERF DOCS PARTIAL END -->
 
@@ -333,4 +332,6 @@ In the case of werf, this means that an update to the next patch release should 
 
 <!-- WERF DOCS PARTIAL BEGIN: License -->
 
-Apache License 2.0, see [LICENSE](LICENSE)
+Apache License 2.0, see [LICENSE](LICENSE).
+
+<!-- WERF DOCS PARTIAL END -->
