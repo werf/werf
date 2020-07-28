@@ -98,7 +98,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupVirtualMergeFromCommit(commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(commonCmdData, cmd)
 
-	common.SetupGitHistorySynchronization(commonCmdData, cmd)
+	common.SetupGitUnshallow(commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")

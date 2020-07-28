@@ -74,6 +74,7 @@ type CmdData struct {
 
 	Synchronization           *string
 	GitHistorySynchronization *bool
+	GitUnshallow              *bool
 	AllowGitShallowClone      *bool
 
 	DockerConfig          *string
@@ -709,6 +710,11 @@ func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AllowGitShallowClone = new(bool)
 	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "--allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
+}
+
+func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GitUnshallow = new(bool)
+	cmd.Flags().BoolVarP(cmdData.GitUnshallow, "git-unshallow", "", GetBoolEnvironmentDefaultFalse("WERF_GIT_UNSHALLOW"), "Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)")
 }
 
 func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
