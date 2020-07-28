@@ -251,7 +251,7 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerError(err) {
 			return err
-		} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
+		} else if strings.Contains(err.Error(), "UNAUTHORIZED") || strings.Contains(err.Error(), "UNSUPPORTED") {
 			return err
 		}
 
