@@ -25,21 +25,21 @@
 /documentation/guides:
   title: Руководства
   url: /documentation/guides/installation.html
-/documentation/guides/applications-guide:
+/documentation/guides/applications_guide:
   title: Гайды для различных языков и CI-систем
-  url: /documentation/guides/applications-guide/index.html
-/documentation/guides/applications-guide/gitlab-java-springboot:
+  url: /documentation/guides/applications_guide/index.html
+/documentation/guides/applications_guide/gitlab_java_springboot:
   title: Gitlab CI + Springboot
-  url: /documentation/guides/applications-guide//gitlab-java-springboot/000-task.html
-/documentation/guides/applications-guide/gitlab-nodejs:
+  url: /documentation/guides/applications_guide/gitlab_java_springboot/000_task.html
+/documentation/guides/applications_guide/gitlab_nodejs:
   title: Gitlab CI + NodeJS
-  url: /documentation/guides/applications-guide/gitlab-nodejs/000-task.html
-/documentation/guides/applications-guide/gitlab-python-django:
+  url: /documentation/guides/applications_guide/gitlab_nodejs/000_task.html
+/documentation/guides/applications_guide/gitlab_python_django:
   title: Gitlab CI + Django
-  url: /documentation/guides/applications-guide/gitlab-python-django/000-task.html
-/documentation/guides/applications-guide/gitlab-rails:
+  url: /documentation/guides/applications_guide/gitlab_python_django/000_task.html
+/documentation/guides/applications_guide/gitlab_rails:
   title: Gitlab CI + Ruby On Rails
-  url: /documentation/guides/applications-guide/gitlab-rails/000-task.html
+  url: /documentation/guides/applications_guide/gitlab_rails/000_task.html
 
 /documentation/guides/advanced_build:
   title: Расширенная сборка
