@@ -74,9 +74,8 @@ werf deploy [options]
             storage and images repo
       --env='':
             Use specified environment (default $WERF_ENV)
-      --git-history-synchronization=false:
-            Synchronize git branches and tags with remote origin (default                           
-            $WERF_GIT_HISTORY_SYNCHRONIZATION)
+      --git-unshallow=false:
+            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --helm-release-storage-namespace='kube-system':

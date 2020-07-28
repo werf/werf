@@ -4,21 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/spf13/cobra"
 
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -108,7 +106,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
-	common.SetupGitHistorySynchronization(&commonCmdData, cmd)
+
+	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")

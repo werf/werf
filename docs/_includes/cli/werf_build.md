@@ -55,9 +55,8 @@ werf build [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             stages storage, to pull base images
-      --git-history-synchronization=false:
-            Synchronize git branches and tags with remote origin (default                           
-            $WERF_GIT_HISTORY_SYNCHRONIZATION)
+      --git-unshallow=false:
+            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
   -h, --help=false:
             help for build
       --home-dir='':

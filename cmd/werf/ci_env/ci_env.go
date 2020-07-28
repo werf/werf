@@ -282,6 +282,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 
 	writeEnv(w, "WERF_GIT_HISTORY_SYNCHRONIZATION", "1", false)
+	writeEnv(w, "WERF_GIT_UNSHALLOW", "1", false)
 	writeEnv(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
