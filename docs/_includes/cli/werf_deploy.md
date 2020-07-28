@@ -49,9 +49,6 @@ werf deploy [options]
 {{ header }} Options
 
 ```shell
-      ----allow-git-shallow-clone=false:
-            Sign the intention of using shallow clone despite restrictions (default                 
-            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --add-annotation=[]:
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
@@ -63,6 +60,9 @@ werf deploy [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+      --allow-git-shallow-clone=false:
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config='':
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir='':

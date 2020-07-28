@@ -14,7 +14,7 @@ werf images cleanup [options]
 {{ header }} Options
 
 ```shell
-      ----allow-git-shallow-clone=false:
+      --allow-git-shallow-clone=false:
             Sign the intention of using shallow clone despite restrictions (default                 
             $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config='':
