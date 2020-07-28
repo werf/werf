@@ -4,6 +4,6 @@
 
 We are always in contact with the community through [Twitter](https://twitter.com/werf_io) and [Slack](https://cloud-native.slack.com/messages/CHY2THYUU). Join us!
 
-> Russian-speaking users can reach us in [Telegram Chat](https://t.me/werf_ru)
+> Russian-speaking users can also reach us in [Telegram Chat](https://t.me/werf_ru).
 
-Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues)
+Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues).
