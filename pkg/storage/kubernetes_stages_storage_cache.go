@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/werf/pkg/kubeutils"
 
@@ -153,7 +156,7 @@ RETRY_CHANGE:
 			return err
 		}
 
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(obj); errors.IsConflict(err) {
+		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
 			goto RETRY_CHANGE
 		} else if err != nil {
 			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
@@ -163,7 +166,7 @@ RETRY_CHANGE:
 			return err
 		}
 
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(obj); errors.IsConflict(err) {
+		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
 			goto RETRY_CHANGE
 		} else if err != nil {
 			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)

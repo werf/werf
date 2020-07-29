@@ -1,6 +1,7 @@
 package kubeutils
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -29,7 +30,7 @@ func RemoveResourceAndWaitUntilRemoved(name, kind, namespace string) error {
 	}
 
 	isExist := func() (bool, error) {
-		_, err := res.Get(name, metav1.GetOptions{})
+		_, err := res.Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -61,10 +62,10 @@ func RemoveResourceAndWaitUntilRemoved(name, kind, namespace string) error {
 		},
 		func() error {
 			deletePropagation := metav1.DeletePropagationForeground
-			deleteOptions := &metav1.DeleteOptions{
+			deleteOptions := metav1.DeleteOptions{
 				PropagationPolicy: &deletePropagation,
 			}
-			err = res.Delete(name, deleteOptions)
+			err = res.Delete(context.Background(), name, deleteOptions)
 			if err != nil {
 				return err
 			}
