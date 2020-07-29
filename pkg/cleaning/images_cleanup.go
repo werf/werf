@@ -1,6 +1,7 @@
 package cleaning
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/lockgate"
@@ -1012,7 +1013,7 @@ func deployedDockerImages(kubernetesClient kubernetes.Interface) ([]string, erro
 
 func getPodsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.CoreV1().Pods("").List(v1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1028,7 +1029,7 @@ func getPodsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 
 func getReplicationControllersImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.CoreV1().ReplicationControllers("").List(v1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().ReplicationControllers("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1044,7 +1045,7 @@ func getReplicationControllersImages(kubernetesClient kubernetes.Interface) ([]s
 
 func getDeploymentsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1().Deployments("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().Deployments("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1060,7 +1061,7 @@ func getDeploymentsImages(kubernetesClient kubernetes.Interface) ([]string, erro
 
 func getStatefulSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1().StatefulSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().StatefulSets("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1076,7 +1077,7 @@ func getStatefulSetsImages(kubernetesClient kubernetes.Interface) ([]string, err
 
 func getDaemonSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1().DaemonSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().DaemonSets("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1092,7 +1093,7 @@ func getDaemonSetsImages(kubernetesClient kubernetes.Interface) ([]string, error
 
 func getReplicaSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.AppsV1().ReplicaSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().ReplicaSets("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1108,7 +1109,7 @@ func getReplicaSetsImages(kubernetesClient kubernetes.Interface) ([]string, erro
 
 func getCronJobsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.BatchV1beta1().CronJobs("").List(v1.ListOptions{})
+	list, err := kubernetesClient.BatchV1beta1().CronJobs("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1124,7 +1125,7 @@ func getCronJobsImages(kubernetesClient kubernetes.Interface) ([]string, error) 
 
 func getJobsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.BatchV1().Jobs("").List(v1.ListOptions{})
+	list, err := kubernetesClient.BatchV1().Jobs("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

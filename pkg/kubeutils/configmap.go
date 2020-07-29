@@ -1,6 +1,7 @@
 package kubeutils
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,12 +12,12 @@ import (
 )
 
 func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) error {
-	if _, err := client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); errors.IsNotFound(err) {
+	if _, err := client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{}); errors.IsNotFound(err) {
 		ns := &v1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{Name: namespace},
 		}
 
-		if _, err := client.CoreV1().Namespaces().Create(ns); errors.IsAlreadyExists(err) {
+		if _, err := client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{}); errors.IsAlreadyExists(err) {
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("create Namespace %s error: %s", namespace, err)
@@ -45,7 +46,7 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 //}
 
 func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string) (*v1.ConfigMap, error) {
-	if obj, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
+	if obj, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
 		if err := CreateNamespaceIfNotExists(client, namespace); err != nil {
 			return nil, err
 		}
@@ -54,8 +55,8 @@ func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, n
 			ObjectMeta: metav1.ObjectMeta{Name: configMapName},
 		}
 
-		if obj, err := client.CoreV1().ConfigMaps(namespace).Create(cm); errors.IsAlreadyExists(err) {
-			if obj, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); err != nil {
+		if obj, err := client.CoreV1().ConfigMaps(namespace).Create(context.Background(), cm, metav1.CreateOptions{}); errors.IsAlreadyExists(err) {
+			if obj, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{}); err != nil {
 				return nil, fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
 			} else {
 				return obj, err
