@@ -15,7 +15,7 @@ cd ~/bin
 curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
-##### Add werf alias to the current shell session
+##### Adding werf alias to the current shell session
 
 ```shell
 . $(multiwerf use 1.1 stable --as-file)
@@ -57,7 +57,7 @@ Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-win
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 ```
 
-###### Add werf alias to the current shell session
+###### Adding werf alias to the current shell session
 
 ```shell
 Invoke-Expression -Command "multiwerf use 1.1 stable --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
@@ -77,7 +77,7 @@ setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 # after that open new cmd.exe session and start using multiwerf
 ```
 
-###### Add werf alias to the current shell session
+###### Adding werf alias to the current shell session
 
 ```shell
 FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
