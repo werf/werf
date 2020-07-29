@@ -390,7 +390,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 					shortify := func(column string) string {
 						if len(column) > 15 {
-							return column[:15]
+							return fmt.Sprintf("%s..%s", column[:10], column[len(column)-3:])
 						} else {
 							return column
 						}
@@ -411,7 +411,11 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 						}
 
 						if len(repoImageListToCleanup) > ind {
-							columns = append(columns, repoImageListToCleanup[ind].Tag)
+							column := repoImageListToCleanup[ind].Tag
+							if logboek.ContentWidth() < 100 {
+								column = shortify(column)
+							}
+							columns = append(columns, column)
 						} else {
 							columns = append(columns, "")
 						}
