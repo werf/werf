@@ -4,8 +4,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 - [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with an existing Dockerfile.
 - [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with werf builder.
 - [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy an application to the Kubernetes cluster using werf built images.
-- [GitLab CI/CD integration](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html) — configure build, deploy, dismiss and cleanup jobs for GitLab CI.
-- [Integration with Unsupported CI/CD systems](https://werf.io/documentation/guides/unsupported_ci_cd_integration.html) — integrate werf with any CI/CD system.
+- CI/CD systems integration: [generic](https://werf.io/documentation/guides/generic_ci_cd_integration.html), [GitLab CI](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html), [GitHub Actions](https://werf.io/documentation/guides/github_ci_cd_integration.html).
 - [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
 - [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).
 - [Artifacts](https://werf.io/documentation/guides/advanced_build/artifacts.html) — reduce image size with artifacts (Go/Revel).
