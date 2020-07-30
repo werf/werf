@@ -23,7 +23,7 @@ toc: false
 Реализовать раздачу сгенерированных ассетов можно сделать двумя способами:
 
 * Добавить в собираемый образ с NodeJs ещё и nginx, а потом этот образ запускать уже двумя разными способами: один раз для раздачи статики, второй — для работы NodeJs-приложения
-* Сделать два отдельных образа: в одном только nginx и сгенерированные ассеты, во втором — nodeJS-приложение 
+* Сделать два отдельных образа: в одном только nginx и сгенерированные ассеты, во втором — nodeJS-приложение
 
 {% offtopic title="Как правильно сделать выбор?" %}
 Чтобы сделать выбор, нужно учитывать:
@@ -71,7 +71,7 @@ from: ubuntu:latest
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в артефакте на стадии `setup`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
 artifact: assets-built
@@ -99,31 +99,27 @@ git:
 
 Теперь, когда артефакт собран, соберём образ с nginx.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
-image: assets
-from: nginx:alpine
-ansible:
-  beforeInstall:
-  - name: Add nginx config
-    copy:
-      content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
+---
+image: node_assets
+from: nginx:stable-alpine
+docker:
+  EXPOSE: '80'
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
 import:
 - artifact: assets-built
   add: /app/dist
-  to: /www
+  to: /usr/share/nginx/html/assets
   after: setup
 ```
 {% endraw %}
@@ -135,7 +131,7 @@ import:
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -164,7 +160,7 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="#" %}
+{% snippetcut name=".helm/templates/service.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
   ports:
@@ -177,7 +173,7 @@ import:
 
 В Ingress также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
       paths:
@@ -193,7 +189,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
       paths:

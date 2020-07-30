@@ -35,9 +35,9 @@ toc: false
 $ npm install minio --save
 ```
 
-И настраиваем работу с s3 minio в приложении: 
+И настраиваем работу с s3 minio в приложении:
 
-{% snippetcut name="src/js/index.js" url="#" %}
+{% snippetcut name="src/server/server.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/050-files/src/server/server.js" %}
 ```js
 const Minio = require("minio");
 const S3_ENDPOINT = process.env.S3_ENDPOINT || "127.0.0.1";
@@ -62,7 +62,7 @@ var s3Client = new Minio.Client({
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*
 
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/050-files/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 app:
@@ -77,7 +77,7 @@ app:
 
 А не секретные значения — храним в `values.yaml`
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/050-files/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 app:
@@ -96,7 +96,7 @@ app:
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/050-files/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
         - name: CDN_PREFIX
