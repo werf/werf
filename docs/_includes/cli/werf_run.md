@@ -31,6 +31,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
+      ----allow-git-shallow-clone=false:
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --bash=false:
             Use predefined docker options and command for debug
       --config='':

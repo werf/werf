@@ -49,6 +49,9 @@ werf deploy [options]
 {{ header }} Options
 
 ```shell
+      ----allow-git-shallow-clone=false:
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --add-annotation=[]:
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
