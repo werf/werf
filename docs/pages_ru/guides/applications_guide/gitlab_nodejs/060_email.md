@@ -24,7 +24,7 @@ npm install mailgun-js
 
 И [сконфигурируем согласно документации](https://github.com/mailgun/mailgun-js#documentation) пакета
 
-{% snippetcut name="consumer.js" url="#" %}
+{% snippetcut name="consumer.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/consumer/consumer.js" %}
 {% raw %}
 const mailgun = require("mailgun-js");
 ...
@@ -35,7 +35,7 @@ const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAIL
 
 В коде приложения подключение к API и отправка сообщения может выглядеть так:
 
-{% snippetcut name="consumer.js" url="#" %}
+{% snippetcut name="consumer.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/consumer/consumer.js" %}
 {% raw %}
 ```js
 function sendMessage(message) {
@@ -57,7 +57,7 @@ function sendMessage(message) {
 
 Для работы с mailgun необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*
 
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 app:
@@ -71,7 +71,7 @@ app:
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
         - name: MAILGUN_APIKEY

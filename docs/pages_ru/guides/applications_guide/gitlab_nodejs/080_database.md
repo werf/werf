@@ -47,7 +47,7 @@ Kubernetes автоматически разворачивает приложе�
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="#" %}
+{% snippetcut name=".helm/requirements.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/requirements.yaml" %}
 {% raw %}
 ```yaml
 dependencies:
@@ -61,7 +61,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
 .base_deploy:
@@ -78,7 +78,7 @@ dependencies:
 
 Изучив [документацию](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#parameters) к нашему сабчарту мы можем увидеть, что задать название основной базы данных, пользователя, хоста и пароля и даже версии postgres мы можем через следующие переменные:
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -93,7 +93,7 @@ postgresql:
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*.
 
-{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="#" %}
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -114,7 +114,7 @@ postgresql:
 
 Далее мы указываем настройки `persistence`, с помощью которых мы настроим хранилище для нашей БД.
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -134,7 +134,7 @@ postgresql:
 
 В нашем случае для корректного развертывания БД нам осталось указать только одну сущность - [PersitentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
-{% snippetcut name="postgres-pv.yaml" url="#" %}
+{% snippetcut name="postgres-pv.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/postgres-pv.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: v1
@@ -235,7 +235,7 @@ spec:
 
 Для подключения NodeJS приложения к PostgreSQL необходимо установить пакет npm `pg` и сконфигурировать:
 
-{% snippetcut name="server.js" url="#" %}
+{% snippetcut name="server.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/backend/src/server/server.js" %}
 {% raw %}
 ```js
 const pgconnectionString =
@@ -258,7 +258,7 @@ pool.on("error", (err, client) => {
 
 {% offtopic title="Как работает вынос части шаблона в блок?" %}
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 {{- define "database_envs" }}
@@ -272,7 +272,7 @@ pool.on("error", (err, client) => {
 
 Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 {{- include "database_envs" . | indent 8 }}
@@ -286,7 +286,7 @@ pool.on("error", (err, client) => {
 {% offtopic title="Какие значения прописываем в переменные окружения?" %}
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_HOST
@@ -297,7 +297,7 @@ pool.on("error", (err, client) => {
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_LOGIN
@@ -308,7 +308,7 @@ pool.on("error", (err, client) => {
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -322,7 +322,7 @@ postgresql:
 
 **Конфигурируем пароль** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_PASSWORD
@@ -331,7 +331,7 @@ postgresql:
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="secret-values.yaml" url="#" %}
+{% snippetcut name="secret-values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -362,7 +362,7 @@ postgresql:
 
 {% offtopic title="Как настраиваем node-pg-migrate?" %}
 
-Запуск миграции мы помещаем в package.json, чтобы его можно было  вызывать с помощью скрипта в npm: 
+Запуск миграции мы помещаем в package.json, чтобы его можно было  вызывать с помощью скрипта в npm:
 ```json
    "migrate": "node-pg-migrate"
 ```
@@ -387,7 +387,7 @@ node
 
 Также мы воспользуемся аннотациями Helm [`helm.sh/hook` и `helm.sh/weight`](https://helm.sh/docs/topics/charts_hooks/), чтобы Job выполнялся после того, как применится новая конфигурация.
 
-{% snippetcut name=".helm/templates/job.yaml" url="#" %}
+{% snippetcut name=".helm/templates/job.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/job.yaml" %}
 {% raw %}
 ```yaml
     "helm.sh/hook": post-install,post-upgrade
@@ -406,7 +406,7 @@ node
 
 Так как состояние кластера постоянно меняется — мы не можем быть уверены, что на момент запуска миграций база работает и доступна. Поэтому в Job мы добавляем `initContainer`, который не даёт запуститься скрипту миграции, пока не станет доступна база данных.
 
-{% snippetcut name=".helm/templates/job.yaml" url="#" %}
+{% snippetcut name=".helm/templates/job.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/job.yaml" %}
 {% raw %}
 ```yaml
       initContainers:
@@ -422,7 +422,7 @@ node
 
 И, непосредственно запускаем миграции. При запуске миграций мы используем тот же самый образ что и в Deployment приложения.
 
-{% snippetcut name=".helm/templates/job.yaml" url="#" %}
+{% snippetcut name=".helm/templates/job.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/080-database/.helm/templates/job.yaml" %}
 {% raw %}
 ```yaml
       - name: migration
@@ -440,7 +440,7 @@ node
 ## Накатка фикстур
 
 При первом деплое вашего приложения, вам может понадобится раскатить фикстуры. В нашем случае это дефолтный пользователь нашего чата.
-Мы не будем расписывать подробного этот шаг, потому что он практически не отличается от предыдущего. 
+Мы не будем расписывать подробного этот шаг, потому что он практически не отличается от предыдущего.
 
 Мы добавляем наши фикстуры в отдельную директорию `fixtures` также как это было с миграциями.
 А их запуск добавляем в `package.json`

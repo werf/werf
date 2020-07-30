@@ -25,7 +25,7 @@ toc: false
 
 ## Сконфигурировать Redis в Kubernetes
 
-Для того, чтобы сконфигурировать Redis в кластере — необходимо прописать объекты с помощью Helm. Мы можем сделать это самостоятельно, но рассмотрим вариант с подключением внешнего чарта. В любом случае, нам нужно будет указать: имя сервиса, порт, логин и пароль — и разобраться, как эти параметры пробросить в подключённый внешний чарт. 
+Для того, чтобы сконфигурировать Redis в кластере — необходимо прописать объекты с помощью Helm. Мы можем сделать это самостоятельно, но рассмотрим вариант с подключением внешнего чарта. В любом случае, нам нужно будет указать: имя сервиса, порт, логин и пароль — и разобраться, как эти параметры пробросить в подключённый внешний чарт.
 
 Нам необходимо будет:
 
@@ -36,7 +36,7 @@ toc: false
 
 Пропишем сабчарт с Redis:
 
-{% snippetcut name=".helm/requirements.yaml" url="#" %}
+{% snippetcut name=".helm/requirements.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/requirements.yaml" %}
 {% raw %}
 ```yaml
 dependencies:
@@ -50,7 +50,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями:
 
-{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
 .base_deploy:
@@ -65,7 +65,7 @@ dependencies:
 
 А также сконфигурировать имя сервиса, порт, логин и пароль, согласно [документации](https://github.com/bitnami/charts/tree/master/bitnami/redis/#parameters) нашего сабчарта:
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 redis:
@@ -79,7 +79,7 @@ redis:
 {% offtopic title="А ключ redis он откуда такой?" %}
 Этот ключ должен совпадать с именем сабчарта-зависимости в файле `requirements.yaml` — тогда настройки будут пробрасываться в сабчарт.
 {% endofftopic %}
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 redis:
@@ -90,7 +90,7 @@ redis:
 
 Сконфигурировать логин и порт для подключения у этого сабчарта невозможно, но если изучить исходный код — можно найти использующиеся в сабчарте значения. Пропишем нужные значения с понятными нам ключами — они понадобятся нам позже, когда мы будем конфигурировать приложение.
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 redis:
@@ -139,7 +139,7 @@ metadata:
 
 В нашем приложении мы будем использовать Redis как хранилище сессий.
 
-{% snippetcut name="src/js/index.js" url="#" %}
+{% snippetcut name="backend/src/server/server.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/backend/src/server/server.js" %}
 {% raw %}
 ```js
 const REDIS_URI = "redis://"+ process.env.REDIS_HOST+":"+ process.env.REDIS_PORT || "redis://127.0.0.1:6379";
@@ -167,7 +167,7 @@ app.use(session);
 
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: REDIS_HOST
@@ -176,7 +176,7 @@ app.use(session);
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 redis:
@@ -190,7 +190,7 @@ redis:
 
 Казалось бы, можно написать примерно так:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: REDIS_HOST
@@ -201,9 +201,9 @@ redis:
 
 На практике иногда возникает необходимость переехать в другую базу данных или кастомизировать что-то — и в этих случаях в разы удобнее работать через `values.yaml`. Причём значений для разных окружений мы не прописываем, а ограничиваемся дефолтным значением:
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/values.yaml" %}
 {% raw %}
-```yaml 
+```yaml
 redis:
    host:
       _default: guided-redis-master
@@ -216,11 +216,9 @@ redis:
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: REDIS_LOGIN
-  value: "{{ pluck .Values.global.env .Values.redis._login | first | default .Values.redis._login._default | quote }}"
 - name: REDIS_PORT
   value: "{{ pluck .Values.global.env .Values.redis._port | first | default .Values.redis._port._default | quote }}"
 ```
@@ -229,7 +227,7 @@ redis:
 
 Мы уже **сконфигурировали пароль** — используем прописанное ранее значение:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: REDIS_PASSWORD
@@ -240,7 +238,7 @@ redis:
 
 Также нам нужно **сконфигурировать переменные, необходимые приложению** для работы с Redis:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 - name: SESSION_TTL
@@ -252,7 +250,7 @@ redis:
 {% endsnippetcut %}
 
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/values.yaml" %}
 {% raw %}
 ```yaml
   redis:
