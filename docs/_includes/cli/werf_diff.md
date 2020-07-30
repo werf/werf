@@ -35,9 +35,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 {{ header }} Options
 
 ```shell
-      ----allow-git-shallow-clone=false:
-            Sign the intention of using shallow clone despite restrictions (default                 
-            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --add-annotation=[]:
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
@@ -49,6 +46,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+      --allow-git-shallow-clone=false:
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config='':
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir='':
@@ -63,9 +63,8 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             stages storage, to push images into the specified images repo, to pull base images
       --env='':
             Use specified environment (default $WERF_ENV)
-      --git-history-synchronization=false:
-            Synchronize git branches and tags with remote origin (default                           
-            $WERF_GIT_HISTORY_SYNCHRONIZATION)
+      --git-unshallow=false:
+            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --helm-release-storage-namespace='kube-system':

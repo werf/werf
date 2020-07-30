@@ -72,7 +72,7 @@ type Conveyor struct {
 
 type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
-	GitHistorySynchronization       bool
+	GitUnshallow                    bool
 	AllowGitShallowClone            bool
 }
 
@@ -804,21 +804,23 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 			return nil, errors.New("local git mapping is used but project git repository is not found")
 		}
 
-		isShallowClone, err := localGitRepo.IsShallowClone()
-		if err != nil {
-			return nil, fmt.Errorf("check shallow clone failed: %s", err)
-		}
+		if !c.AllowGitShallowClone {
+			isShallowClone, err := localGitRepo.IsShallowClone()
+			if err != nil {
+				return nil, fmt.Errorf("check shallow clone failed: %s", err)
+			}
 
-		if isShallowClone {
-			if c.GitHistorySynchronization {
-				if err := localGitRepo.FetchOrigin(); err != nil {
-					return nil, err
+			if isShallowClone {
+				if c.GitUnshallow {
+					if err := localGitRepo.FetchOrigin(); err != nil {
+						return nil, err
+					}
+				} else {
+					logboek.Warn.LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
+					logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+
+					return nil, fmt.Errorf("shallow git clone is not allowed")
 				}
-			} else if !c.AllowGitShallowClone {
-				logboek.Warn.LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-				logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
-
-				return nil, fmt.Errorf("shallow git clone is not allowed")
 			}
 		}
 
