@@ -8,7 +8,7 @@
 - werf is a CLI tool written in Go. It can be embedded into any existing CI/CD system to implement CI/CD for your application.
 - Cross-platform development: Linux-based containers can be run on Linux, macOS, and Windows.
 
-## Coming Soon
+## Coming soon
 
 - ~3-way-merge~ [#1616](https://github.com/werf/werf/issues/1616).
 - Developing applications locally with werf [#1940](https://github.com/werf/werf/issues/1940).
@@ -20,7 +20,7 @@
 - Support for Helm 3 [#1606](https://github.com/werf/werf/issues/1606).
 - (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/werf/werf/issues/1618).
 
-## Complete List of Features
+## Complete list of features
 
 ### Building
 
