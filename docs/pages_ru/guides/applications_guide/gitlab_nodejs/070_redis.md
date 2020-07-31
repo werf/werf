@@ -94,8 +94,6 @@ redis:
 {% raw %}
 ```yaml
 redis:
-   _login:
-      _default: guided-redis
    _port:
       _default: 6379
 ```
