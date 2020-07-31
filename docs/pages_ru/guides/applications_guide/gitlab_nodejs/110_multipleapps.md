@@ -21,7 +21,7 @@ toc: false
 
 Рекомендуем также посмотреть [доклад Дмитрия Столярова](https://www.youtube.com/watch?v=g9cgppj0gKQ) о том, почему и в каких ситуациях это — хороший путь для микросервисов. Также вы можете посмотреть [аналогичную статью](https://ru.werf.io/documentation/guides/advanced_build/multi_images.html) о приложении с несколькими образами.
 
-Добавим к нашему приложению, Python-приложение с ботом, который приветствует всех кто заходит в наш чат. Наш подход будет очень похож на то, что делалось в главе [Генерируем и раздаем ассеты](040_assets.html), с одним существенным отличием: изменения в коде Python сильно отделены от изменений в NodeJS приложении. Как следствие — мы разнесём их в разные папки, а также в различные Pod-ы. 
+Добавим к нашему приложению, Python-приложение с ботом, который приветствует всех кто заходит в наш чат. Наш подход будет очень похож на то, что делалось в главе [Генерируем и раздаем ассеты](040_assets.html), с одним существенным отличием: изменения в коде Python сильно отделены от изменений в NodeJS приложении. Как следствие — мы разнесём их в разные папки, а также в различные Pod-ы.
 
 Мы рассмотрим вопрос организации структуры файлов и папок, соберём два образа: для NodeJS приложения и для Python приложения и сконфигурируем запуск этих образов в Kubernetes.
 
@@ -33,8 +33,8 @@ toc: false
 ├── .helm/
 │   ├── templates/
 │   └── values.yaml
-├── node/
-├── python/
+├── backend/
+├── bot/
 └── werf.yaml
 ```
 
@@ -56,7 +56,7 @@ Helm обрабатывает все файлы, которые находятс
 
 Сборка образа `node` аналогична ранее описанному [базовому приложению](020_basic.html) с [зависимостями](030_dependencies.html), за исключением того, откуда берётся исходный код:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/werf.yaml" %}
 {% raw %}
 ```yaml
 git:
@@ -68,13 +68,13 @@ git:
 
 Мы добавляем в собираемый образ только исходные коды, относящиеся к Python приложению. Таким образом, пересборка этой части проекта не будет срабатывать, когда изменился только NodeJs-код.
 
-Сборка для python приложения описана в файле `werf.yaml` как отдельный образ. 
+Сборка для python приложения описана в файле `werf.yaml` как отдельный образ.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/werf.yaml" %}
 {% raw %}
 ```yaml
 image: bot
-from: node:{{ .NODE_MAJOR }}
+from: python:3.8-slim
 git:
 - add: /python
   to: /app
@@ -90,7 +90,7 @@ git:
 
 При деплое нескольких Deployment крайне важно правильно прописать `selector`-ы в Service и Deployment:
 
-{% snippetcut name="service-app.yaml" url="#" %}
+{% snippetcut name="service-app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -105,7 +105,7 @@ spec:
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="app.yaml" url="#" %}
+{% snippetcut name="app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -127,7 +127,7 @@ spec:
 
 Маршрутизация запросов будет осуществляться через Ingress:
 
-{% snippetcut name="ingress.yaml" url="#" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:

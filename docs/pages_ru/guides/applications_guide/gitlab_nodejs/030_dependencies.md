@@ -35,18 +35,19 @@ Werf предлагает использовать для стадий след�
 
 Пропишем команду `npm ci` в нужные стадии сборки в `werf.yaml`
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic/werf.yaml" %}
 {% raw %}
 ```yaml
 shell:
+  install:
   - cd /app && npm сi
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-Однако, если оставить всё так — стадия `beforeInstall` не будет запускаться при изменении lock-файла `package.json`. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
+Однако, если оставить всё так — стадия `install` не будет запускаться при изменении lock-файла `package.json`. Подобная зависимость пользовательской стадии от изменений [указывается с помощью параметра git.stageDependencies](https://ru.werf.io/documentation/configuration/stapel_image/assembly_instructions.html#%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BE%D1%82-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9-%D0%B2-git-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B8):
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/030-deps/werf.yaml" %}
 {% raw %}
 ```yaml
 git:
@@ -67,7 +68,7 @@ git:
 
 Для того, чтобы оптимизировать работу с этим кешом при сборке, мы добавим специальную конструкцию в `werf.yaml`:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/030-deps/werf.yaml" %}
 {% raw %}
 ```yaml
 mount:
