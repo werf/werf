@@ -610,7 +610,7 @@ spec:
 Чтобы продолжать дальше
 
 * [Сгенерируйте ключ](https://ru.werf.io/documentation/cli/management/helm/secret/generate_secret_key.html) (`werf helm secret generate-secret-key`)
-* Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
+* Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=634f76ead513e5959d0e03a992372b8e`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
 ![](/images/applications_guide/images/020-werf-secret-key-in-gitlab.png)
@@ -641,9 +641,9 @@ app:
 app:
   s3:
     access_key:
-      _default: 100063ead9354e0259b4cd224821cc4c57adfbd63f9d10cb1e828207f294a958d0e9
+      _default: 1000f82ff86a5d766b9895b276032928c7e4ff2eeb20cab05f013e5fe61d21301427
     secret_key:
-      _default: 1000307fe833d63f467597d10e00ef7b321badd5d02b2f9823b0babfa7265c03e0967e434c1a496274825885e6d3645764fe097e3f463cbde27b4552b9376a78ba5f
+      _default: 1000bee1b42b57e39a9cfaca7ea047de03043c45e39901b8974c5a1f275b98fd0ac2c72efbc62b06cad653ebc4195b680370dc9c04e88a8182a874db286d8360def6
 ```
 {% endsnippetcut %}
 

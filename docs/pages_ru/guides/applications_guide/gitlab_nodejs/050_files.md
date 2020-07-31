@@ -83,7 +83,7 @@ app:
 app:
   s3:
     host:
-      _default: chat-test-minio
+      _default: minio
     port:
       _default: 9000
     bucket:

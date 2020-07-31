@@ -82,7 +82,6 @@ dependencies:
 {% raw %}
 ```yaml
 postgresql:
-  enabled: true
   postgresqlDatabase: guided-database
   postgresqlUsername: guide-username
   postgresqlHost: postgres
@@ -263,7 +262,7 @@ pool.on("error", (err, client) => {
 ```yaml
 {{- define "database_envs" }}
 - name: POSTGRESQL_HOST
-  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.host | first | default .Values.postgresql.host._default | quote }}
 ...
 {{- end }}
 ```
