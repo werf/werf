@@ -15,7 +15,7 @@ type RollbackOptions struct {
 	Timeout       int64
 }
 
-func Rollback(releaseName string, revision int32, opts RollbackOptions) error {
+func Rollback(ctx context.Context, releaseName string, revision int32, opts RollbackOptions) error {
 	_, err := tillerReleaseServer.RollbackRelease(context.Background(), &services.RollbackReleaseRequest{
 		Name:              releaseName,
 		Version:           revision,

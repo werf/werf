@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -49,7 +50,7 @@ type RenderOptions struct {
 	ShowNotes bool
 }
 
-func Render(out io.Writer, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, opts RenderOptions) error {
+func Render(ctx context.Context, out io.Writer, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, opts RenderOptions) error {
 	// get combined values and create config
 	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {

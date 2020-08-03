@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -22,22 +23,22 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
+func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
 	logboek.Debug.LogF("Lint options: %#v\n", opts)
 
-	m, err := GetSafeSecretManager(projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
+	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
 		return err
 	}
 
 	namespace := "NAMESPACE"
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := PrepareWerfChart(werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
+	werfChart, err := PrepareWerfChart(ctx, werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}
@@ -47,6 +48,7 @@ func RunLint(projectDir, helmChartDir string, werfConfig *config.WerfConfig, ima
 	patchLoadChartfile(werfChart.Name)
 
 	if err := helm.Lint(
+		ctx,
 		os.Stdout,
 		werfChart.ChartDir,
 		namespace,

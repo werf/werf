@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -52,9 +53,9 @@ var (
 	}
 )
 
-func PurgeHelmRelease(releaseName, namespace string, withHooks bool) error {
+func PurgeHelmRelease(ctx context.Context, releaseName, namespace string, withHooks bool) error {
 	if err := logboek.Info.LogProcess("Checking release existence", logboek.LevelLogProcessOptions{}, func() error {
-		_, err := releaseStatus(releaseName, releaseStatusOptions{})
+		_, err := releaseStatus(ctx, releaseName, releaseStatusOptions{})
 		if err != nil {
 			if isReleaseNotFoundError(err) {
 				return fmt.Errorf("release %s was not found", releaseName)
@@ -130,7 +131,7 @@ func PurgeHelmRelease(releaseName, namespace string, withHooks bool) error {
 	}
 
 	if err := logboek.LogProcess("Deleting release", logboek.LogProcessOptions{}, func() error {
-		return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
+		return releaseDelete(ctx, releaseName, releaseDeleteOptions{Purge: true})
 	}); err != nil {
 		return fmt.Errorf("release delete failed: %s", err)
 	}
@@ -155,7 +156,7 @@ type ChartOptions struct {
 	ChartValuesOptions
 }
 
-func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions) (err error) {
+func DeployHelmChart(ctx context.Context, chartPath, releaseName, namespace string, opts ChartOptions) (err error) {
 	var isReleaseExists bool
 
 	preDeployFunc := func() error {
@@ -214,7 +215,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 			switch latestReleaseRevisionStatus {
 			case "":
 				isReleaseExists = false
-				if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+				if err := createAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 					return fmt.Errorf("create auto purge trigger file failed: %s", err)
 				}
 			case "FAILED", "PENDING_INSTALL", "PENDING_UPGRADE", "DELETING":
@@ -245,7 +246,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 					logboek.LogWarnF("* the latest release revision (%s) should not be deleted.\n", latestReleaseRevisionStatus)
 					logboek.LogLn()
 
-					if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+					if err := deleteAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 						return fmt.Errorf("delete auto purge trigger file failed: %s", err)
 					}
 				}
@@ -260,12 +261,12 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 
 		if releaseShouldBeDeleted {
 			if err := logboek.LogProcess("Deleting release", logboek.LogProcessOptions{}, func() error {
-				return releaseDelete(releaseName, releaseDeleteOptions{Purge: true})
+				return releaseDelete(ctx, releaseName, releaseDeleteOptions{Purge: true})
 			}); err != nil {
 				return fmt.Errorf("release delete failed: %s", err)
 			}
 
-			if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+			if err := deleteAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 				return err
 			}
 
@@ -356,7 +357,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 					panic("unexpected")
 				}
 
-				return runDeployProcess(releaseName, namespace, opts, templatesFromRevision, rollbackFunc)
+				return runDeployProcess(ctx, releaseName, namespace, opts, templatesFromRevision, rollbackFunc)
 			}); err != nil {
 				return err
 			}
@@ -387,6 +388,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 			}
 
 			if err := ReleaseUpdate(
+				ctx,
 				chartPath,
 				releaseName,
 				opts.Values,
@@ -399,7 +401,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 				if strings.HasSuffix(err.Error(), "has no deployed releases") {
 					logboek.LogWarnF("WARNING: Release is in improper state: %s\n", err.Error())
 
-					if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+					if err := createAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 						return err
 					}
 
@@ -409,7 +411,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 				return fmt.Errorf("release upgrade failed: %s", err)
 			}
 
-			if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+			if err := deleteAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 				return err
 			}
 
@@ -429,6 +431,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 			}
 
 			if err := ReleaseInstall(
+				ctx,
 				chartPath,
 				releaseName,
 				namespace,
@@ -439,7 +442,7 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 				opts.ThreeWayMergeMode,
 				releaseInstallOpts,
 			); err != nil {
-				if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+				if err := createAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 					return err
 				}
 
@@ -453,13 +456,13 @@ func DeployHelmChart(chartPath, releaseName, namespace string, opts ChartOptions
 	var templatesFromChart ChartTemplates
 
 	if err := logboek.Info.LogProcessInline("Getting chart templates", logboek.LevelLogProcessInlineOptions{}, func() error {
-		templatesFromChart, err = GetTemplatesFromChart(chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
+		templatesFromChart, err = GetTemplatesFromChart(ctx, chartPath, releaseName, namespace, opts.Values, opts.SecretValues, opts.Set, opts.SetString)
 		return err
 	}); err != nil {
 		return err
 	}
 
-	return runDeployProcess(releaseName, namespace, opts, templatesFromChart, deployFunc)
+	return runDeployProcess(ctx, releaseName, namespace, opts, templatesFromChart, deployFunc)
 }
 
 func latestSuccessfullyDeployedReleaseRevision(releaseName string) (int32, error) {
@@ -477,7 +480,7 @@ func latestSuccessfullyDeployedReleaseRevision(releaseName string) (int32, error
 	return 0, ErrNoSuccessfullyDeployedReleaseRevisionFound
 }
 
-func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates ChartTemplates, deployFunc func() error) error {
+func runDeployProcess(ctx context.Context, releaseName, namespace string, _ ChartOptions, templates ChartTemplates, deployFunc func() error) error {
 	oldLogsFromTime := resourcesWaiter.LogsFromTime
 	resourcesWaiter.LogsFromTime = time.Now()
 	defer func() {
@@ -488,7 +491,7 @@ func runDeployProcess(releaseName, namespace string, _ ChartOptions, templates C
 		return err
 	}
 
-	if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+	if err := deleteAutoPurgeTriggerFilePath(ctx, releaseName); err != nil {
 		return err
 	}
 
@@ -520,7 +523,7 @@ func removeReleaseNamespacedResource(template Template, releaseNamespace string)
 	return kubeutils.RemoveResourceAndWaitUntilRemoved(resourceName, resourceKing, template.Namespace(releaseNamespace))
 }
 
-func createAutoPurgeTriggerFilePath(releaseName string) error {
+func createAutoPurgeTriggerFilePath(ctx context.Context, releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
 	dirPath := filepath.Dir(filePath)
 
@@ -545,7 +548,7 @@ func createAutoPurgeTriggerFilePath(releaseName string) error {
 	return nil
 }
 
-func deleteAutoPurgeTriggerFilePath(releaseName string) error {
+func deleteAutoPurgeTriggerFilePath(ctx context.Context, releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
 	if fileExist, err := util.FileExists(filePath); err != nil {
 		return err

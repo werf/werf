@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,7 +29,7 @@ type LsOptions struct {
 	OutputFormat string
 }
 
-func Ls(out io.Writer, filter string, opts LsOptions) error {
+func Ls(ctx context.Context, out io.Writer, filter string, opts LsOptions) error {
 	sortBy := services.ListSort_LAST_RELEASED
 	sortOrder := services.ListSort_DESC
 	if opts.Reverse {

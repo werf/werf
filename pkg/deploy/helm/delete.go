@@ -12,7 +12,7 @@ type DeleteOptions struct {
 	Timeout      int64
 }
 
-func Delete(releaseName string, opts DeleteOptions) error {
+func Delete(ctx context.Context, releaseName string, opts DeleteOptions) error {
 	_, err := tillerReleaseServer.UninstallRelease(context.Background(), &services.UninstallReleaseRequest{
 		Name:         releaseName,
 		DisableHooks: opts.DisableHooks,

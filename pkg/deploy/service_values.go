@@ -1,6 +1,8 @@
 package deploy
 
 import (
+	"context"
+
 	"github.com/ghodss/yaml"
 
 	"github.com/werf/logboek"
@@ -17,7 +19,7 @@ type ServiceValuesOptions struct {
 	Env string
 }
 
-func GetServiceValues(projectName string, imagesRepository, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(ctx context.Context, projectName string, imagesRepository, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, images []images_manager.ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{

@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 )
 
-func GetSafeSecretManager(projectDir, helmChartDir string, secretValues []string, ignoreSecretKey bool) (secret.Manager, error) {
+func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
 	if _, err := os.Stat(filepath.Join(helmChartDir, werf_chart.SecretDirName)); !os.IsNotExist(err) {
 		isSecretsExists = true

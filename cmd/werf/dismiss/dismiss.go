@@ -1,6 +1,7 @@
 package dismiss
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/image"
@@ -162,7 +163,7 @@ func runDismiss() error {
 		return err
 	}
 
-	return deploy.RunDismiss(projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
+	return deploy.RunDismiss(context.Background(), projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: cmdData.WithNamespace,
 		WithHooks:     cmdData.WithHooks,
 	})

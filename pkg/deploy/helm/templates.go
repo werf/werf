@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -98,8 +99,8 @@ func GetTemplatesFromReleaseRevision(releaseName string, revision int32) (ChartT
 	return chartTemplates, nil
 }
 
-func GetTemplatesFromChart(chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) (ChartTemplates, error) {
-	rawTemplates, err := getRawTemplatesFromChart(chartPath, releaseName, namespace, values, secretValues, set, setString)
+func GetTemplatesFromChart(ctx context.Context, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) (ChartTemplates, error) {
+	rawTemplates, err := getRawTemplatesFromChart(ctx, chartPath, releaseName, namespace, values, secretValues, set, setString)
 	if err != nil {
 		return nil, err
 	}
@@ -112,14 +113,14 @@ func GetTemplatesFromChart(chartPath, releaseName, namespace string, values []st
 	return chartTemplates, nil
 }
 
-func getRawTemplatesFromChart(chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) (string, error) {
+func getRawTemplatesFromChart(ctx context.Context, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string) (string, error) {
 	out := &bytes.Buffer{}
 
 	renderOptions := RenderOptions{
 		ShowNotes: false,
 	}
 
-	if err := Render(out, chartPath, releaseName, namespace, values, secretValues, set, setString, renderOptions); err != nil {
+	if err := Render(ctx, out, chartPath, releaseName, namespace, values, secretValues, set, setString, renderOptions); err != nil {
 		return "", err
 	}
 
