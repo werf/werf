@@ -1,6 +1,7 @@
 package history
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -91,7 +92,7 @@ func runHistory(releaseName string) error {
 		return err
 	}
 
-	if err := helm.History(os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
+	if err := helm.History(context.Background(), os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
 		return err
 	}
 

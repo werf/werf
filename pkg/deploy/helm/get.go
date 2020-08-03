@@ -12,7 +12,7 @@ type GetOptions struct {
 	Template string
 }
 
-func Get(out io.Writer, releaseName string, opts GetOptions) error {
+func Get(ctx context.Context, out io.Writer, releaseName string, opts GetOptions) error {
 	res, err := tillerReleaseServer.GetReleaseContent(context.Background(), &services.GetReleaseContentRequest{
 		Name:    releaseName,
 		Version: opts.Revision,

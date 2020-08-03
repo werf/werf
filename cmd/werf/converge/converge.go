@@ -1,6 +1,7 @@
 package converge
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -298,7 +299,7 @@ func runConverge() error {
 		logboek.LogOptionalLn()
 	}
 
-	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(context.Background(), projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,
@@ -310,6 +311,4 @@ func runConverge() error {
 		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
 		ThreeWayMergeMode:    helm.ThreeWayMergeEnabled,
 	})
-
-	return nil
 }

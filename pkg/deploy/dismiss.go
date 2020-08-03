@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/logboek"
@@ -13,7 +14,7 @@ type DismissOptions struct {
 	WithHooks     bool
 }
 
-func RunDismiss(projectName, release, namespace, _ string, opts DismissOptions) error {
+func RunDismiss(ctx context.Context, projectName, release, namespace, _ string, opts DismissOptions) error {
 	lockManager, err := NewLockManager(namespace)
 	if err != nil {
 		return err
@@ -39,7 +40,7 @@ func RunDismiss(projectName, release, namespace, _ string, opts DismissOptions) 
 
 		logboek.Debug.LogF("Dismiss options: %#v\n", opts)
 		logboek.Debug.LogF("Namespace: %s\n", namespace)
-		return helm.PurgeHelmRelease(release, namespace, opts.WithHooks)
+		return helm.PurgeHelmRelease(ctx, release, namespace, opts.WithHooks)
 	}(); err != nil {
 		return err
 	}

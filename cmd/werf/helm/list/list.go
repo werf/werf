@@ -1,6 +1,7 @@
 package ls
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -102,7 +103,7 @@ func runLs(filter string) error {
 		return err
 	}
 
-	if err := helm.Ls(os.Stdout, filter, CmdData.LsOptions); err != nil {
+	if err := helm.Ls(context.Background(), os.Stdout, filter, CmdData.LsOptions); err != nil {
 		return err
 	}
 

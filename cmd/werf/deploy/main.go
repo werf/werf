@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -303,7 +304,7 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(context.Background(), projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, tag, tagStrategy, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

@@ -147,6 +147,7 @@ func Init(options InitOptions) error {
 	}
 
 	resourcesWaiter = &ResourcesWaiter{
+		Ctx:                       context.Background(),
 		Client:                    kubeClient,
 		StatusProgressPeriod:      options.StatusProgressPeriod,
 		HooksStatusProgressPeriod: options.HooksStatusProgressPeriod,
@@ -253,11 +254,10 @@ type releaseStatusOptions struct {
 	Version int32
 }
 
-func releaseStatus(releaseName string, opts releaseStatusOptions) (*services.GetReleaseStatusResponse, error) {
+func releaseStatus(ctx context.Context, releaseName string, opts releaseStatusOptions) (*services.GetReleaseStatusResponse, error) {
 	releaseLogMessages = nil
 	defer func() { releaseLogMessages = nil }()
 
-	ctx := helm.NewContext()
 	req := &services.GetReleaseStatusRequest{
 		Name:    releaseName,
 		Version: opts.Version,
@@ -277,7 +277,7 @@ type releaseDeleteOptions struct {
 	Timeout int64
 }
 
-func releaseDelete(releaseName string, opts releaseDeleteOptions) error {
+func releaseDelete(ctx context.Context, releaseName string, opts releaseDeleteOptions) error {
 	releaseLogMessages = nil
 	defer func() { releaseLogMessages = nil }()
 
@@ -286,7 +286,6 @@ func releaseDelete(releaseName string, opts releaseDeleteOptions) error {
 		timeout = defaultTimeout
 	}
 
-	ctx := helm.NewContext()
 	req := &services.UninstallReleaseRequest{
 		Name:    releaseName,
 		Purge:   opts.Purge,
@@ -314,7 +313,7 @@ type ReleaseInstallOptions struct {
 	Debug bool
 }
 
-func ReleaseInstall(chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseInstallOptions) error {
+func ReleaseInstall(ctx context.Context, chartPath, releaseName, namespace string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseInstallOptions) error {
 	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
@@ -341,13 +340,13 @@ func ReleaseInstall(chartPath, releaseName, namespace string, values []string, s
 		return fmt.Errorf("cannot load requirements: %v", err)
 	}
 
-	_, err = releaseInstall(loadedChart, releaseName, namespace, &chart.Config{Raw: string(rawVals)}, threeWayMergeMode, opts.releaseInstallOptions)
+	_, err = releaseInstall(ctx, loadedChart, releaseName, namespace, &chart.Config{Raw: string(rawVals)}, threeWayMergeMode, opts.releaseInstallOptions)
 	if err != nil {
 		return err
 	}
 
 	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
-		return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+		return fprintReleaseStatus(ctx, logboek.GetOutStream(), releaseName)
 	})
 }
 
@@ -357,7 +356,7 @@ type ReleaseUpdateOptions struct {
 	Debug bool
 }
 
-func ReleaseUpdate(chartPath, releaseName string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseUpdateOptions) error {
+func ReleaseUpdate(ctx context.Context, chartPath, releaseName string, values []string, secretValues []map[string]interface{}, set, setString []string, threeWayMergeMode ThreeWayMergeModeType, opts ReleaseUpdateOptions) error {
 	rawVals, err := vals(values, secretValues, set, setString, []string{}, "", "", "")
 	if err != nil {
 		return err
@@ -377,13 +376,13 @@ func ReleaseUpdate(chartPath, releaseName string, values []string, secretValues 
 		return err
 	}
 
-	_, err = releaseUpdate(loadedChart, releaseName, &chart.Config{Raw: string(rawVals)}, threeWayMergeMode, opts.releaseUpdateOptions)
+	_, err = releaseUpdate(ctx, loadedChart, releaseName, &chart.Config{Raw: string(rawVals)}, threeWayMergeMode, opts.releaseUpdateOptions)
 	if err != nil {
 		return err
 	}
 
 	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
-		return fprintReleaseStatus(logboek.GetOutStream(), releaseName)
+		return fprintReleaseStatus(ctx, logboek.GetOutStream(), releaseName)
 	})
 }
 
@@ -405,7 +404,7 @@ type releaseInstallOptions struct {
 	DryRun  bool
 }
 
-func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *chart.Config, userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, opts releaseInstallOptions) (*services.InstallReleaseResponse, error) {
+func releaseInstall(ctx context.Context, chart *chart.Chart, releaseName, namespace string, values *chart.Config, userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, opts releaseInstallOptions) (*services.InstallReleaseResponse, error) {
 	releaseLogMessages = nil
 	defer func() { releaseLogMessages = nil }()
 
@@ -424,7 +423,6 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 		return nil, err
 	}
 
-	ctx := helm.NewContext()
 	req := &services.InstallReleaseRequest{
 		Chart:             chart,
 		Name:              releaseName,
@@ -440,13 +438,13 @@ func releaseInstall(chart *chart.Chart, releaseName, namespace string, values *c
 
 	resp, err := tillerReleaseServer.InstallRelease(ctx, req)
 	if err != nil {
-		displayReleaseLogMessages()
+		displayReleaseLogMessages(ctx)
 		if resp != nil {
-			displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+			displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 		}
 		return nil, err
 	}
-	displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+	displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 
 	return resp, nil
 }
@@ -458,7 +456,7 @@ type releaseUpdateOptions struct {
 	DryRun        bool
 }
 
-func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config, userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, opts releaseUpdateOptions) (*services.UpdateReleaseResponse, error) {
+func releaseUpdate(ctx context.Context, chart *chart.Chart, releaseName string, values *chart.Config, userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, opts releaseUpdateOptions) (*services.UpdateReleaseResponse, error) {
 	releaseLogMessages = nil
 	defer func() { releaseLogMessages = nil }()
 
@@ -477,7 +475,6 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 		return nil, err
 	}
 
-	ctx := helm.NewContext()
 	req := &services.UpdateReleaseRequest{
 		Chart:             chart,
 		Name:              releaseName,
@@ -493,13 +490,13 @@ func releaseUpdate(chart *chart.Chart, releaseName string, values *chart.Config,
 
 	resp, err := tillerReleaseServer.UpdateRelease(ctx, req)
 	if err != nil {
-		displayReleaseLogMessages()
+		displayReleaseLogMessages(ctx)
 		if resp != nil {
-			displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+			displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 		}
 		return nil, err
 	}
-	displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+	displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 
 	return resp, nil
 }
@@ -535,18 +532,18 @@ func releaseRollback(releaseName string, revision int32, userSpecifiedThreeWayMe
 
 	resp, err := tillerReleaseServer.RollbackRelease(ctx, req)
 	if err != nil {
-		displayReleaseLogMessages()
+		displayReleaseLogMessages(ctx)
 		if resp != nil {
-			displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+			displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 		}
 		return nil, err
 	}
-	displayWarnings(userSpecifiedThreeWayMergeMode, resp.Release)
+	displayWarnings(ctx, userSpecifiedThreeWayMergeMode, resp.Release)
 
 	return resp, nil
 }
 
-func displayReleaseLogMessages() {
+func displayReleaseLogMessages(ctx context.Context) {
 	logboek.LogOptionalLn()
 	_ = logboek.Default.LogBlock("Debug info", logboek.LevelLogBlockOptions{}, func() error {
 		for _, msg := range releaseLogMessages {
@@ -557,8 +554,7 @@ func displayReleaseLogMessages() {
 	})
 }
 
-func fprintReleaseStatus(out io.Writer, releaseName string) error {
-	ctx := helm.NewContext()
+func fprintReleaseStatus(ctx context.Context, out io.Writer, releaseName string) error {
 	req := &services.GetReleaseStatusRequest{Name: releaseName}
 
 	status, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
@@ -643,7 +639,7 @@ func getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode ThreeWayMergeMode
 	}
 }
 
-func displayWarnings(userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRelease *release.Release) {
+func displayWarnings(ctx context.Context, userSpecifiedThreeWayMergeMode ThreeWayMergeModeType, newRelease *release.Release) {
 	threeWayMergeMode := getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode)
 	enabledDescExtra := ""
 	disabledDescExtra := ""

@@ -1,6 +1,7 @@
 package deploy_chart
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -195,7 +196,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 
 	logboek.LogOptionalLn()
 	werfChart := &werf_chart.WerfChart{ChartDir: chartDir}
-	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
+	if err := werfChart.Deploy(context.Background(), releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(cmdData.Timeout) * time.Second,
 		ChartValuesOptions: helm.ChartValuesOptions{
 			Set:       *commonCmdData.Set,

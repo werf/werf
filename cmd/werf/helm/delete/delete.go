@@ -1,6 +1,7 @@
 package delete
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -38,7 +39,7 @@ func NewCmd() *cobra.Command {
 			if err := common.ValidateMinimumNArgs(1, args, cmd); err != nil {
 				return err
 			}
-			return runDelete(args)
+			return runDelete(context.Background(), args)
 		},
 	}
 
@@ -60,7 +61,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runDelete(releaseNames []string) error {
+func runDelete(ctx context.Context, releaseNames []string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -90,7 +91,7 @@ func runDelete(releaseNames []string) error {
 
 	errors := []string{}
 	for _, releaseName := range releaseNames {
-		if err := helm.Delete(releaseName, cmdData.DeleteOptions); err != nil {
+		if err := helm.Delete(ctx, releaseName, cmdData.DeleteOptions); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}

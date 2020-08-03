@@ -1,6 +1,7 @@
 package rollback
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -114,7 +115,7 @@ func runRollback(releaseName string, revision int32) error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	if err := helm.Rollback(releaseName, revision, cmdData.RollbackOptions); err != nil {
+	if err := helm.Rollback(context.Background(), releaseName, revision, cmdData.RollbackOptions); err != nil {
 		return err
 	}
 

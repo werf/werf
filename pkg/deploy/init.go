@@ -1,6 +1,8 @@
 package deploy
 
-import "github.com/werf/werf/pkg/deploy/helm"
+import (
+	"github.com/werf/werf/pkg/deploy/helm"
+)
 
 type InitOptions struct {
 	HelmInitOptions helm.InitOptions

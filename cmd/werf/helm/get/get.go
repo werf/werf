@@ -1,6 +1,7 @@
 package get
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -87,7 +88,7 @@ func runGet(releaseName string) error {
 		return err
 	}
 
-	if err := helm.Get(os.Stdout, releaseName, cmdData.GetOptions); err != nil {
+	if err := helm.Get(context.Background(), os.Stdout, releaseName, cmdData.GetOptions); err != nil {
 		return err
 	}
 

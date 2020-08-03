@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ type DeployOptions struct {
 	DryRun               bool
 }
 
-func Deploy(projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	if opts.DryRun {
 		fmt.Printf("Deploy DryRun\n")
 		return nil
@@ -63,12 +64,12 @@ func Deploy(projectName, projectDir, helmChartDir string, imagesRepository strin
 		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
 		logboek.LogF("Helm release name: %s\n", release)
 
-		m, err := GetSafeSecretManager(projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
+		m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
 			return err
 		}
 
-		serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
 			return fmt.Errorf("error creating service values: %s", err)
 		}
@@ -80,7 +81,7 @@ func Deploy(projectName, projectDir, helmChartDir string, imagesRepository strin
 			return nil
 		})
 
-		werfChart, err = PrepareWerfChart(werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
+		werfChart, err = PrepareWerfChart(ctx, werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
 		if err != nil {
 			return err
 		}
@@ -88,8 +89,8 @@ func Deploy(projectName, projectDir, helmChartDir string, imagesRepository strin
 
 		werfChart.MergeExtraAnnotations(opts.UserExtraAnnotations)
 		werfChart.MergeExtraLabels(opts.UserExtraLabels)
-		werfChart.LogExtraAnnotations()
-		werfChart.LogExtraLabels()
+		werfChart.LogExtraAnnotations(ctx)
+		werfChart.LogExtraLabels(ctx)
 
 		return nil
 	}); err != nil {
@@ -103,7 +104,7 @@ func Deploy(projectName, projectDir, helmChartDir string, imagesRepository strin
 	patchLoadChartfile(werfChart.Name)
 
 	err = helm.WerfTemplateEngineWithExtraAnnotationsAndLabels(werfChart.ExtraAnnotations, werfChart.ExtraLabels, func() error {
-		return werfChart.Deploy(release, namespace, helm.ChartOptions{
+		return werfChart.Deploy(ctx, release, namespace, helm.ChartOptions{
 			Timeout: opts.Timeout,
 			ChartValuesOptions: helm.ChartValuesOptions{
 				Set:       opts.Set,

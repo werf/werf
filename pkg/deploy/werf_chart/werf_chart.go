@@ -1,6 +1,7 @@
 package werf_chart
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -68,13 +69,13 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	return nil
 }
 
-func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.ChartOptions) error {
+func (chart *WerfChart) Deploy(ctx context.Context, releaseName string, namespace string, opts helm.ChartOptions) error {
 	opts.SecretValues = append(chart.SecretValues, opts.SecretValues...)
 	opts.Set = append(chart.Set, opts.Set...)
 	opts.SetString = append(chart.SetString, opts.SetString...)
 	opts.Values = append(chart.Values, opts.Values...)
 
-	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, opts)
+	return helm.DeployHelmChart(ctx, chart.ChartDir, releaseName, namespace, opts)
 }
 
 func (chart *WerfChart) MergeExtraAnnotations(extraAnnotations map[string]string) {
@@ -89,7 +90,7 @@ func (chart *WerfChart) MergeExtraLabels(extraLabels map[string]string) {
 	}
 }
 
-func (chart *WerfChart) LogExtraAnnotations() {
+func (chart *WerfChart) LogExtraAnnotations(ctx context.Context) {
 	if len(chart.ExtraAnnotations) == 0 {
 		return
 	}
@@ -103,7 +104,7 @@ func (chart *WerfChart) LogExtraAnnotations() {
 	})
 }
 
-func (chart *WerfChart) LogExtraLabels() {
+func (chart *WerfChart) LogExtraLabels(ctx context.Context) {
 	if len(chart.ExtraLabels) == 0 {
 		return
 	}
@@ -121,7 +122,7 @@ type ChartConfig struct {
 	Name string `json:"name"`
 }
 
-func InitWerfChart(projectName, chartDir string, env string, m secret.Manager) (*WerfChart, error) {
+func InitWerfChart(ctx context.Context, projectName, chartDir string, env string, m secret.Manager) (*WerfChart, error) {
 	werfChart := &WerfChart{}
 	werfChart.Name = projectName
 	werfChart.ChartDir = chartDir
