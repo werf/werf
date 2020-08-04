@@ -178,7 +178,7 @@ func (r *Result) Checksum() (string, error) {
 			default:
 				panic(fmt.Sprintf("unexpected condition (path %s worktree %s, staging %s)", fileStatusAbsFilepath, fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)]))
 			}
-		case git.Added:
+		case git.Added, git.Modified:
 			switch fileStatus.Worktree {
 			case git.Unmodified, git.Modified:
 				modeAndFileDataShouldBeAdded = true
