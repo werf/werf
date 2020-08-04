@@ -38,7 +38,7 @@ toc: false
 
 - Понимаете, как работает [indent](https://helm.sh/docs/chart_template_guide/function_list/#indent)
 - Понимаете, что такое конструкция [tuple](https://helm.sh/docs/chart_template_guide/control_structures/)
-- Понимаете, как Helm работает с хэш-массивами
+- Понимаете, как Helm работает с хэш-массивами 
 - Очень внимательно следите за пробелами в Yaml
 {% endofftopic %}
 
@@ -281,7 +281,7 @@ spec:
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=634f76ead513e5959d0e03a992372b8e`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
-![](/images/applications_guide/images/020-werf-secret-key-in-gitlab.png)
+![](/documentation/guides/applications_guide/images/020-werf-secret-key-in-gitlab.png)
 
 После этого мы сможем задать секретные переменные `access_key` и `secret_key`, например для работы с S3. Зайдите в режим редактирования секретных значений:
 
@@ -326,9 +326,9 @@ app:
 * Вручную подключиться к gitlab registry с помощью [`docker login`](https://docs.docker.com/engine/reference/commandline/login/) (если ранее это не сделано)
 * Установить переменную окружения `WERF_IMAGES_REPO` с путём до Registry (вида `registry.mydomain.io/myproject`)
 * Установить переменную окружения `WERF_SECRET_KEY` со значением, [сгенерированным ранее в главе "Разное поведение в разных окружениях"](#secret-values-yaml)
-* Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging`
+* Установить переменную окружения `WERF_ENV` с названием окружения, в которое будет осуществляться деплой. Вопроса разных окружений мы коснёмся подробнее, когда будем строить CI-процесс, сейчас — просто установим значение `staging`. **Важно удалить эту переменную в финальном варианте деплоя** — иначе деплой всегда будет идти в один и тот же namespace.
 
-Если вы всё правильно сделали, то вы у вас корректно будут отрабатывать команды [`werf helm render`](https://ru.werf.io/documentation/cli/management/helm/render.html) и [`werf deploy`](https://ru.werf.io/documentation/cli/main/deploy.html)
+Если вы всё правильно сделали, то вы у вас корректно будут отрабатывать команды [`werf helm render`](https://ru.werf.io/documentation/cli/management/helm/render.html) и [`werf deploy`](https://ru.werf.io/documentation/cli/main/deploy.html). _Примечание: при локальном запуске эти команды могут жаловаться на нехватку данных, которые в ином случае были бы проброшены из CI. Например, на данные о теге собранного образа. Это нормально._
 
 {% offtopic title="Как вообще работает деплой" %}
 
@@ -351,6 +351,13 @@ default                              Active               161d
 werf-guided-project-production       Active               4m44s
 werf-guided-project-staging          Active               3h2m
 ```
+
+{% offtopic title="Как формируется имя namespace-а?" %}
+
+По шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — имя проекта, а `[[ env ]]` — имя окружения. Подробнее можно почитать [в документации](https://ru.werf.io/documentation/configuration/deploy_into_kubernetes.html#namespace-%D0%B2-kubernetes)
+
+При необходимости namespace можно переназначить.
+{% endofftopic %}
 
 ```bash
 $ kubectl -n example-1-staging get po

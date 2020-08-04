@@ -15,7 +15,7 @@ toc: false
 
 Если мы хотим воспользоваться пакетом rubocop-rails нам нужно добавить эту зависимость в наше приложение (в файл `Gemfile`) и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
-{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 {% raw %}
 ```yaml
 Rubocop check:
@@ -31,7 +31,7 @@ Rubocop check:
 
 Созданную стадию нужно добавить в список стадий
 
-{% snippetcut name=".gitlab-ci.yaml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="#" %}
 {% raw %}
 ```yaml
 stages:
