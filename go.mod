@@ -12,9 +12,9 @@ require (
 	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.20.0+incompatible
-	github.com/Masterminds/vcs v1.11.1 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
-	github.com/Microsoft/hcsshim v0.8.6 // indirect
+	github.com/Masterminds/sprig/v3 v3.1.0 // indirect
+	github.com/Masterminds/squirrel v1.2.0 // indirect
+	github.com/Masterminds/vcs v1.13.1 // indirect
 	github.com/Rican7/retry v0.1.0 // indirect
 	github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -33,37 +33,32 @@ require (
 	github.com/cespare/prettybench v0.0.0-20150116022406-03b8cfe5406c // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/checkpoint-restore/go-criu v0.0.0-20181120144056-17b0214f6c48 // indirect
-	github.com/cilium/ebpf v0.0.0-20191025125908-95b36a581eed // indirect
 	github.com/clusterhq/flocker-go v0.0.0-20160920122132-2b8b7259d313 // indirect
 	github.com/codegangsta/negroni v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.2.0 // indirect
-	github.com/containerd/cgroups v0.0.0-20181219155423-39b18af02c41 // indirect
-	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50 // indirect
-	github.com/containerd/containerd v1.3.0 // indirect
-	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6 // indirect
-	github.com/containerd/cri v1.11.1 // indirect
 	github.com/containerd/fifo v0.0.0-20200410184934-f15a3290365b // indirect
+	github.com/containerd/go-cni v1.0.0 // indirect
+	github.com/containerd/imgcrypt v1.0.3 // indirect
 	github.com/containerd/typeurl v1.0.1 // indirect
 	github.com/containernetworking/cni v0.7.1 // indirect
+	github.com/containernetworking/plugins v0.8.6 // indirect
 	github.com/coredns/corefile-migration v1.0.6 // indirect
 	github.com/coreos/go-oidc v2.1.0+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20160507010035-511bcaf42ccd // indirect
+	github.com/deislabs/oras v0.8.0 // indirect
 	github.com/dnaeon/go-vcr v1.0.1 // indirect
-	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
+	github.com/docker/cli v0.0.0-20200803101120-f4f962292d47
 	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
-	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.4.2-0.20190924003213-a8608b5b67c7
-	github.com/docker/docker-credential-helpers v0.6.3 // indirect
+	github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
-	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
-	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 // indirect
+	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0
-	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/emicklei/go-restful v2.13.0+incompatible // indirect
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible // indirect
+	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.9.0
@@ -77,7 +72,6 @@ require (
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible // indirect
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/example v0.0.0-20170904185048-46695d81d1fa
@@ -89,7 +83,8 @@ require (
 	github.com/google/shlex v0.0.0-20150127133951-6f45313302b9 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.2.2 // indirect
-	github.com/gosuri/uitable v0.0.0-20160404203958-36ee7e946282
+	github.com/gosuri/uitable v0.0.4
+	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-version v1.2.0
@@ -103,6 +98,7 @@ require (
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/lib/pq v1.3.0 // indirect
 	github.com/libopenstorage/openstorage v1.0.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lpabon/godbc v0.1.1 // indirect
@@ -116,7 +112,10 @@ require (
 	github.com/mindprince/gonvml v0.0.0-20190828220739-9ebdce4bb989 // indirect
 	github.com/mistifyio/go-zfs v2.1.1+incompatible // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
-	github.com/moby/buildkit v0.3.3
+	github.com/moby/buildkit v0.7.1-0.20200615045306-df35e9818d1f
+	github.com/moby/sys/mount v0.1.0 // indirect
+	github.com/moby/sys/mountinfo v0.1.3 // indirect
+	github.com/moby/term v0.0.0-20200611042045-63b9a826fb74 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170603005431-491d3605edfb // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618 // indirect
@@ -125,9 +124,9 @@ require (
 	github.com/oleiade/reflections v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
-	github.com/opencontainers/runc v1.0.0-rc10 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
-	github.com/opencontainers/selinux v1.3.1-0.20190929122143-5215b1806f52 // indirect
+	github.com/opencontainers/runtime-tools v0.0.0-20181011054405-1d69bd0f9c39 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
@@ -148,22 +147,22 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/storageos/go-api v0.0.0-20180912212459-343b3eff91fc // indirect
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
+	github.com/tchap/go-patricia v2.3.0+incompatible // indirect
 	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245 // indirect
 	github.com/thecodeteam/goscaleio v0.1.0 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
-	github.com/tonistiigi/fsutil v0.0.0-20190130224639-b4281fa67095 // indirect
+	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
+	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/urfave/negroni v1.0.0 // indirect
 	github.com/vektah/gqlparser v1.1.2 // indirect
-	github.com/vishvananda/netlink v1.0.0 // indirect
-	github.com/vishvananda/netns v0.0.0-20171111001504-be1fbeda1936 // indirect
 	github.com/vmware/govmomi v0.20.3 // indirect
 	github.com/werf/kubedog v0.3.5-0.20200729112351-cb49a986a194
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009
-	github.com/xeipuuv/gojsonpointer v0.0.0-20190809123943-df4f5c81cb3b // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
-	github.com/xeipuuv/gojsonschema v0.0.0-20170512152554-8a8cc2c7e54a // indirect
+	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
@@ -182,6 +181,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71 // indirect
 	gotest.tools/gotestsum v0.3.5 // indirect
 	k8s.io/api v0.18.6
+	k8s.io/apiextensions-apiserver v0.18.6 // indirect
 	k8s.io/apimachinery v0.18.6
 	k8s.io/cli-runtime v0.18.6
 	k8s.io/client-go v0.18.6
@@ -192,9 +192,11 @@ require (
 	k8s.io/heapster v1.2.0-beta.1 // indirect
 	k8s.io/helm v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.3.0 // indirect
 	k8s.io/kube-controller-manager v0.0.0 // indirect
 	k8s.io/kube-proxy v0.0.0 // indirect
 	k8s.io/kube-scheduler v0.0.0 // indirect
+	k8s.io/kubectl v0.18.6 // indirect
 	k8s.io/kubelet v0.0.0 // indirect
 	k8s.io/kubernetes v1.18.6 // indirect
 	k8s.io/metrics v0.18.6 // indirect
@@ -255,14 +257,12 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.18.6
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.2.3
+replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
-replace github.com/docker/docker => github.com/docker/docker v1.4.2-0.20190319215453-e7b5f7dbe98c
+replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
-replace github.com/docker/cli => github.com/docker/cli v0.0.0-20190321234815-f40f9c240ab0
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
 
-replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
 go 1.14
-
-replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
