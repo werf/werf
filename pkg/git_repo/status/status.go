@@ -39,9 +39,9 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 		return nil, err
 	}
 
-	submoduleList := map[string]*git.Submodule{}
+	submoduleByPath := map[string]*git.Submodule{}
 	for _, submodule := range submodules {
-		submoduleList[submodule.Config().Path] = submodule
+		submoduleByPath[submodule.Config().Path] = submodule
 	}
 
 	result := &Result{
@@ -65,7 +65,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 	sort.Strings(worktreeStatusPaths)
 
 	for _, fileStatusPath := range worktreeStatusPaths {
-		if _, ok := submoduleList[fileStatusPath]; ok {
+		if _, ok := submoduleByPath[fileStatusPath]; ok {
 			continue
 		}
 
@@ -87,7 +87,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 		}
 	}
 
-	for submodulePath, submodule := range submoduleList {
+	for submodulePath, submodule := range submoduleByPath {
 		submoduleFilepath := filepath.FromSlash(submodulePath)
 		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleFilepath)
 		submoduleRepositoryAbsFilepath := filepath.Join(repositoryAbsFilepath, submoduleFilepath)
