@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -101,7 +102,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
 		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
@@ -181,9 +182,14 @@ func runCleanup() error {
 		return err
 	}
 
-	kubernetesContextsClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *commonCmdData.KubeConfig})
-	if err != nil {
-		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
+	kubernetesContextsClients := map[string]kubernetes.Interface{}
+	if *commonCmdData.KubeContext != "" {
+		kubernetesContextsClients[*commonCmdData.KubeContext] = kube.Client
+	} else {
+		kubernetesContextsClients, err = kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *commonCmdData.KubeConfig})
+		if err != nil {
+			return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
+		}
 	}
 
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
