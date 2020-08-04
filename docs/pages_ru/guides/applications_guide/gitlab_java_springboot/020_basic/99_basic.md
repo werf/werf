@@ -16,5 +16,4 @@ import:
 
 [werf.yaml](gitlab-java-springboot-files/01-demo-optimization/werf.yaml:32-39)
 
-Для импорта между `image` и `artifact` служит директива `import`. Из `/app/target` в сборочном артефакте импортируем собранный jar-файл в папку /app в image spring. Единственное что следует еще поправить - это версию собираемого jar в [pom.xml](01-demo-optimization/pom.xml:14). Пропишем её 1.0, чтобы имя итогового jar-файла получось предсказуемым - demo-1.0.jar. 
-
+Для импорта между `image` и `artifact` служит директива `import`. Из `/app/target` в сборочном артефакте импортируем собранный jar-файл в папку /app в image spring. Единственное что следует еще поправить - это версию собираемого jar в [pom.xml](01-demo-optimization/pom.xml:14). Пропишем её 1.0, чтобы имя итогового jar-файла получось предсказуемым - demo-1.0.jar.

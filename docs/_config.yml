@@ -77,6 +77,10 @@ defaults:
     values:
       multilang: false
       sitemap_include: false
+  - scope:
+      path: "pages_ru/guides/applications_guide/images"
+    values:
+      image: true
 
 
 sidebars:
