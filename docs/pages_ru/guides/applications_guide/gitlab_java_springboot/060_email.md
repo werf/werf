@@ -1,6 +1,7 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/060_email.html
 layout: guide
 toc: false

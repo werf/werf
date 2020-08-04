@@ -1,6 +1,7 @@
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/040_assets.html
 layout: guide
 toc: false

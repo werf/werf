@@ -1,6 +1,7 @@
 ---
 title: Подключение базы данных
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/080_database.html
 layout: guide
 toc: false

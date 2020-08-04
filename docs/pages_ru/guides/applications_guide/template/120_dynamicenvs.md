@@ -1,6 +1,7 @@
 ---
 title: Динамические окружения
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/120_dynamicenvs.html
 layout: guide
 toc: false

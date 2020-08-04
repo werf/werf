@@ -1,6 +1,7 @@
 ---
 title: Динамические окружения
 sidebar: applications_guide
+guide_code: gitlab_python_django
 permalink: documentation/guides/applications_guide/gitlab_python_django/120_dynamicenvs.html
 layout: guide
 toc: false

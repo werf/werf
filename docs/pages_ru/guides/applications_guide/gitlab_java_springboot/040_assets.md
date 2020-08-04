@@ -1,6 +1,7 @@
 ---
 title: Генерируем и раздаем ассеты
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/040_assets.html
 layout: guide
 toc: false

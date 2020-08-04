@@ -1,6 +1,7 @@
 ---
 title: Как использовать гайд
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/000_task.html
 layout: guide
 toc: false

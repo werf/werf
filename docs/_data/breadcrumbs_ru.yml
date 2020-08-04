@@ -26,21 +26,32 @@
   title: Руководства
   url: /documentation/guides/installation.html
 /documentation/guides/applications_guide:
-  title: Гайды для различных языков и CI-систем
+  title: Введение в Kubernetes и Werf
   url: /documentation/guides/applications_guide/index.html
 /documentation/guides/applications_guide/gitlab_java_springboot:
   title: Gitlab CI + Springboot
   url: /documentation/guides/applications_guide/gitlab_java_springboot/000_task.html
+/documentation/guides/applications_guide/gitlab_java_springboot/020_basic:
+  title: Базовые настройки
+  url: /documentation/guides/applications_guide/gitlab_java_springboot/020_basic.html
 /documentation/guides/applications_guide/gitlab_nodejs:
   title: Gitlab CI + NodeJS
   url: /documentation/guides/applications_guide/gitlab_nodejs/000_task.html
+/documentation/guides/applications_guide/gitlab_nodejs/020_basic:
+  title: Базовые настройки
+  url: /documentation/guides/applications_guide/gitlab_nodejs/020_basic.html
 /documentation/guides/applications_guide/gitlab_python_django:
   title: Gitlab CI + Django
   url: /documentation/guides/applications_guide/gitlab_python_django/000_task.html
+/documentation/guides/applications_guide/gitlab_python_django/020_basic:
+  title: Базовые настройки
+  url: /documentation/guides/applications_guide/gitlab_python_django/020_basic.html
 /documentation/guides/applications_guide/gitlab_rails:
   title: Gitlab CI + Ruby On Rails
   url: /documentation/guides/applications_guide/gitlab_rails/000_task.html
-
+/documentation/guides/applications_guide/gitlab_rails/020_basic:
+  title: Базовые настройки
+  url: /documentation/guides/applications_guide/gitlab_rails/020_basic.html
 /documentation/guides/advanced_build:
   title: Расширенная сборка
   url: /documentation/guides/advanced_build/first_application.html

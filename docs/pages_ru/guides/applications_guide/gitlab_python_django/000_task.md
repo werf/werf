@@ -1,6 +1,7 @@
 ---
 title: Как использовать гайд
 sidebar: applications_guide
+guide_code: gitlab_python_django
 permalink: documentation/guides/applications_guide/gitlab_python_django/000_task.html
 layout: guide
 toc: false

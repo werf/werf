@@ -1,6 +1,7 @@
 ---
 title: Подключаем redis
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/070_redis.html
 layout: guide
 toc: false

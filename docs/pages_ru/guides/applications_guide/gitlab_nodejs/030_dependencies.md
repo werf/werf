@@ -1,6 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/030_dependencies.html
 layout: guide
 toc: false

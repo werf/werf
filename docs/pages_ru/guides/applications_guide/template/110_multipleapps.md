@@ -1,6 +1,7 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/110_multipleapps.html
 layout: guide
 toc: false

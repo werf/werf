@@ -1,6 +1,7 @@
 ---
 title: Работа с файлами
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/050_files.html
 layout: guide
 toc: false

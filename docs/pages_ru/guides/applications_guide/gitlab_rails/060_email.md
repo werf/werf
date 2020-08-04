@@ -1,6 +1,7 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications_guide
+guide_code: gitlab_rails
 permalink: documentation/guides/applications_guide/gitlab_rails/060_email.html
 layout: guide
 toc: false

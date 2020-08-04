@@ -1,6 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/030_dependencies.html
 layout: guide
 toc: false

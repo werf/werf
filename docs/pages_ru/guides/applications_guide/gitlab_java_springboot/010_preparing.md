@@ -1,6 +1,7 @@
 ---
 title: Подготовка к работе
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/010_preparing.html
 layout: guide
 toc: false

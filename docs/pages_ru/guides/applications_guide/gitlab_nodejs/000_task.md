@@ -1,6 +1,7 @@
 ---
 title: Как использовать гайд
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/000_task.html
 layout: guide
 toc: false
@@ -15,6 +16,8 @@ toc: false
 ## Работа с исходными кодами
 
 Для прохождения гайда предоставляется много исходного кода: как самого приложения, которое будет переносится в Kubernetes, так и кода инфраструктуры, связанного с каждой главой.
+
+В тексте будут контрольные точки, где вы можете сверить состояние своих исходников с образцом.
 
 ## Условные обозначения
 

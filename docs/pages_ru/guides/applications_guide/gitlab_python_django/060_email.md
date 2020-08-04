@@ -1,6 +1,7 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications_guide
+guide_code: gitlab_python_django
 permalink: documentation/guides/applications_guide/gitlab_python_django/060_email.html
 layout: guide
 toc: false

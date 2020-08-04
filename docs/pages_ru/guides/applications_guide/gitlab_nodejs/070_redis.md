@@ -1,6 +1,7 @@
 ---
 title: Подключаем redis
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/070_redis.html
 layout: guide
 toc: false

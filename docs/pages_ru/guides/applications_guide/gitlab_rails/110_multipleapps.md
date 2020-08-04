@@ -1,6 +1,7 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications_guide
+guide_code: gitlab_rails
 permalink: documentation/guides/applications_guide/gitlab_rails/110_multipleapps.html
 layout: guide
 toc: false

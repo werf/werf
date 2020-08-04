@@ -1,6 +1,7 @@
 ---
 title: Подключение базы данных
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/080_database.html
 layout: guide
 toc: false

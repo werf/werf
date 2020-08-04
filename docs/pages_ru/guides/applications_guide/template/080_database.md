@@ -1,6 +1,7 @@
 ---
 title: Подключение базы данных
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/080_database.html
 layout: guide
 toc: false
