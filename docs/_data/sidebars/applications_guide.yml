@@ -1,5 +1,3 @@
-# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
-
 entries:
   en:
     f:
@@ -15,57 +13,6 @@ entries:
       - title: К выбору языка и CI-системы
         type: secondary
         url: /documentation/guides/applications_guide/
-
-      - title: Как использовать гайд
-        url: 000_task.html
-
-      - title: Подготовка к работе
-        url: 010_preparing.html
-
-      - title: Базовые настройки
-        url: "020_basic.html"
-        sf:
-          - title: Сборка
-            url: "020_basic.html#building"
-          - title: Конфигурирование инфраструктуры в виде кода
-            url: "020_basic.html#config-iac"
-          - title: Построение CI-процесса
-            url: "020_basic.html#ci"
-
-      - title: Подключаем зависимости
-        url: 030_dependencies.html
-
-      - title: Генерируем и раздаём ассеты
-        url: 040_assets.html
-
-      - title: Работа с файлами
-        url: 050_files.html
-
-      - title: Работа с электронной почтой
-        url: 060_email.html
-
-      - title: Подключаем Redis
-        url: 070_redis.html
-
-      - title: Подключаем базу данных
-        url: "080_database.html"
-        sf:
-          - title: Конфигурирование БД в Kubernetes
-            url: "080_database.html#kubeconfig"
-          - title: Подключение приложения к БД
-            url: "080_database.html#appconnect"
-          - title: Выполнение миграций
-            url: "080_database.html#migrations"
-
-      - title: Юнит-тесты и Линтеры
-        url: 090_unittesting.html
-
-      - title: Несколько приложений в одном репозитории
-        url: 110_multipleapps.html
-
-      - title: Динамические окружения
-        url: 120_dynamicenvs.html
-
 
 
 

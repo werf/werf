@@ -1,6 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/030_dependencies.html
 layout: guide
 toc: false

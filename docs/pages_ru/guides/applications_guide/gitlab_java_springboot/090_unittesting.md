@@ -1,6 +1,7 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/090_unittesting.html
 layout: guide
 toc: false

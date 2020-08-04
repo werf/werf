@@ -1,6 +1,7 @@
 ---
 title: Работа с файлами
 sidebar: applications_guide
+guide_code: gitlab_rails
 permalink: documentation/guides/applications_guide/gitlab_rails/050_files.html
 layout: guide
 toc: false

@@ -1,6 +1,7 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/060_email.html
 layout: guide
 toc: false

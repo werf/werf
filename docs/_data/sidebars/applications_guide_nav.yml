@@ -1,0 +1,49 @@
+entries:
+  ru:
+    f:
+      - title: Как использовать гайд
+        url: 000_task.html
+
+      - title: Подготовка к работе
+        url: 010_preparing.html
+
+      - title: Базовые настройки
+        url: "020_basic.html"
+        sf:
+          - title: Сборка
+            url: "020_basic/10_build.html"
+          - title: Конфигурирование инфраструктуры в виде кода
+            url: "020_basic/20_iac.html"
+          - title: Построение CI-процесса
+            url: "020_basic/30_ci.html"
+
+      - title: Подключаем зависимости
+        url: 030_dependencies.html
+
+      - title: Генерируем и раздаём ассеты
+        url: 040_assets.html
+
+      - title: Работа с файлами
+        url: 050_files.html
+
+      - title: Работа с электронной почтой
+        url: 060_email.html
+
+      - title: Подключаем Redis
+        url: 070_redis.html
+
+      - title: Подключаем базу данных
+        url: "080_database.html"
+
+      - title: Юнит-тесты и Линтеры
+        url: 090_unittesting.html
+
+      - title: Несколько приложений в одном репозитории
+        url: 110_multipleapps.html
+
+      - title: Динамические окружения
+        url: 120_dynamicenvs.html
+
+
+
+

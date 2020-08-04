@@ -1,6 +1,7 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/090_unittesting.html
 layout: guide
 toc: false

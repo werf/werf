@@ -1,6 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications_guide
+guide_code: gitlab_rails
 permalink: documentation/guides/applications_guide/gitlab_rails/030_dependencies.html
 layout: guide
 toc: false

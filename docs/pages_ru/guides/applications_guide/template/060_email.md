@@ -1,6 +1,7 @@
 ---
 title: Работа с электронной почтой
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/060_email.html
 layout: guide
 toc: false

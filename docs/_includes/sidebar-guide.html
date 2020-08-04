@@ -1,63 +1,43 @@
-{% assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
+{% assign general_nav = site.data.sidebars[page.sidebar].entries[page.lang] %}
+{% assign sidebar = site.data.sidebars["applications_guide_nav"].entries[page.lang] %}
 <ul id="mysidebar" class="sidebar sidebar_static">
-  {%- for folder in sidebar.f %}
-    {%- if folder.fi %}
-    <li class="sidebar__item sidebar__item_parent {%- if page.url contains folder.url %} active{%- endif %}">
-        <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
-        <ul class="sidebar__submenu">
-        {%- for folderitem in folder.fi %}
-            {%- if folderitem.external_url %}
-                <li class="sidebar__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-            {%- elsif page.url contains folderitem.url %}
-                <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-            {%- else %}
-                <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
-            {%- endif %}
-        {%- endfor %}
-        </ul>
-    </li>
-    {% elsif folder.sf %}
-        <li class="sidebar__item sidebar__item_parent {%- if page.url contains folder.url %} active{%- endif %}">
-            <a href="{%- if folder.url %}{{ folder.url }}{%- else %}#{%- endif %}">{{ folder.title }}</a>
-            <ul class="sidebar__submenu">
-            {%- for subfolders in folder.sf %}
-            {%- if subfolders.sfi %}
-              <li class="sidebar__submenu-item sidebar__submenu-item_parent">
-                <a href="#">{{ subfolders.title }}</a>
-                <ul class="sidebar__submenu">
-                  {%- for subfolderitem in subfolders.sfi %}
-                  {%- if subfolderitem.external_url %}
-                  <li class="sidebar__submenu-item"><a href="{{ subfolderitem.external_url }}" target="_blank">{{subfolderitem.title}}</a></li>
-                  {%- elsif page.url contains subfolderitem.url %}
-                  <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
-                  {%- else %}
-                  <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
-                  {%- endif %}
-                  {%- endfor %}
-                </ul>
-              </li>
-            {%- elsif subfolders.external_url %}
-              <li class="sidebar__submenu-item"><a href="{{ subfolders.external_url }}" target="_blank">{{subfolders.title}}</a></li>
-            {%- elsif page.url contains subfolders.url %}
-              <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
-            {%- else %}
-              <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
-            {%- endif %}
-            {%- endfor %}
-            </ul>
-        </li>
-    {%- elsif folder.external_url %}
-        <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
-    {%- elsif folder.type == 'secondary' %}
-        <li class="sidebar__item secondary"><a href="{{ folder.url }}">{{folder.title}}</a></li>
-    {%- elsif page.url contains folder.url %}
-        <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+  {%- for folder in general_nav.f %}
+    {%- if page.url contains folder.url %}
+        <li class="sidebar__item secondary active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
     {%- else %}
-        <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">
+        <li class="sidebar__item secondary "><a href="{{ site.baseurl }}{{ folder.url }}">
           {{folder.title}}
         </a></li>
     {%- endif %}
   {%- endfor %}
+
+  {%- for folder in sidebar.f %}
+  {% if folder.sf %}
+  <li class="sidebar__item sidebar__item_parent {%- if page.url contains folder.url %} active{%- endif %}">
+    <a href="{{ site.baseurl }}/documentation/guides/applications_guide/{{ page.guide_code }}/{{ folder.url }}">{{ folder.title }}</a>
+    <ul class="sidebar__submenu">
+      {%- for subfolders in folder.sf %}
+        {%- if subfolders.external_url %}
+        <li class="sidebar__submenu-item"><a href="{{ subfolders.external_url }}" target="_blank">{{subfolders.title}}</a></li>
+        {%- elsif page.url contains subfolders.url %}
+        <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}/documentation/guides/applications_guide/{{ page.guide_code }}/{{ subfolders.url }}">{{subfolders.title}}</a></li>
+        {%- else %}
+        <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}/documentation/guides/applications_guide/{{ page.guide_code }}/{{ subfolders.url }}">{{subfolders.title}}</a></li>
+        {%- endif %}
+      {%- endfor %}
+    </ul>
+  </li>
+  {%- elsif folder.external_url %}
+  <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
+  {%- elsif page.url contains folder.url %}
+  <li class="sidebar__item active"><a href="{{ site.baseurl }}/documentation/guides/applications_guide/{{ page.guide_code }}/{{ folder.url }}">{{folder.title}}</a></li>
+  {%- else %}
+  <li class="sidebar__item"><a href="{{ site.baseurl }}/documentation/guides/applications_guide/{{ page.guide_code }}/{{ folder.url }}">
+    {{folder.title}}
+  </a></li>
+  {%- endif %}
+  {%- endfor %}
+
 </ul>
 
 <div class="sidebar__btns">

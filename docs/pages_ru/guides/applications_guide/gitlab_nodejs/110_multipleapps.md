@@ -1,6 +1,7 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/110_multipleapps.html
 layout: guide
 toc: false

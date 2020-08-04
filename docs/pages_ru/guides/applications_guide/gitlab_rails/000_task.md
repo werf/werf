@@ -1,6 +1,7 @@
 ---
 title: Как использовать гайд
 sidebar: applications_guide
+guide_code: gitlab_rails
 permalink: documentation/guides/applications_guide/gitlab_rails/000_task.html
 layout: guide
 toc: false

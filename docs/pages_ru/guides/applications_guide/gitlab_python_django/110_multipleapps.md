@@ -1,6 +1,7 @@
 ---
 title: Несколько приложений в одном репозитории
 sidebar: applications_guide
+guide_code: gitlab_python_django
 permalink: documentation/guides/applications_guide/gitlab_python_django/110_multipleapps.html
 layout: guide
 toc: false

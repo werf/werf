@@ -1,6 +1,7 @@
 ---
 title: Юнит-тесты и Линтеры
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/090_unittesting.html
 layout: guide
 toc: false

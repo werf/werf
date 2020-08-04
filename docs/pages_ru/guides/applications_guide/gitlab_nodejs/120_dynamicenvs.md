@@ -1,6 +1,7 @@
 ---
 title: Динамические окружения
 sidebar: applications_guide
+guide_code: gitlab_nodejs
 permalink: documentation/guides/applications_guide/gitlab_nodejs/120_dynamicenvs.html
 layout: guide
 toc: false

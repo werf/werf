@@ -1,6 +1,7 @@
 ---
 title: Подключение зависимостей
 sidebar: applications_guide
+guide_code: gitlab_python_django
 permalink: documentation/guides/applications_guide/gitlab_python_django/030_dependencies.html
 layout: guide
 toc: false

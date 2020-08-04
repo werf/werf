@@ -1,6 +1,7 @@
 ---
 title: Подготовка к работе
 sidebar: applications_guide
+guide_code: ____________
 permalink: documentation/guides/applications_guide/____________/010_preparing.html
 layout: guide
 toc: false

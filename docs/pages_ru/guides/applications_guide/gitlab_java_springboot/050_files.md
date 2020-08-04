@@ -1,6 +1,7 @@
 ---
 title: Работа с файлами
 sidebar: applications_guide
+guide_code: gitlab_java_springboot
 permalink: documentation/guides/applications_guide/gitlab_java_springboot/050_files.html
 layout: guide
 toc: false
