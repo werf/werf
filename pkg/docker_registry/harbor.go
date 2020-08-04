@@ -2,8 +2,11 @@ package docker_registry
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+
+	"github.com/werf/werf/pkg/image"
 )
 
 const HarborImplementationName = "harbor"
@@ -43,6 +46,27 @@ func newHarbor(options harborOptions) (*harbor, error) {
 	return harbor, nil
 }
 
+func (r *harbor) Tags(reference string) ([]string, error) {
+	tags, err := r.defaultImplementation.Tags(reference)
+	if err != nil {
+		if IsNotFoundError(err) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+
+	return tags, nil
+}
+
+func (r *harbor) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+	tags, err := r.Tags(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.selectRepoImageListByTags(reference, tags, f)
+}
+
 func (r *harbor) DeleteRepo(reference string) error {
 	return r.deleteRepo(reference)
 }
@@ -78,4 +102,8 @@ func (r *harbor) parseReference(reference string) (string, string, error) {
 	}
 
 	return parsedReference.RegistryStr(), parsedReference.RepositoryStr(), nil
+}
+
+func IsNotFoundError(err error) bool {
+	return strings.Contains(err.Error(), "NOT_FOUND")
 }
