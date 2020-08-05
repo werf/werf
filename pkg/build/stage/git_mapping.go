@@ -327,6 +327,10 @@ func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInt
 			gm.VirtualMergeFromCommitLabel(): commitInfo.VirtualMergeFromCommit,
 			gm.VirtualMergeIntoCommitLabel(): commitInfo.VirtualMergeIntoCommit,
 		})
+	} else {
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+			gm.VirtualMergeLabel(): "false",
+		})
 	}
 }
 
