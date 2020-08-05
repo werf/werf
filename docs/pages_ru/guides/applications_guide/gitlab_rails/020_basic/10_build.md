@@ -314,7 +314,7 @@ $ werf run --stages-storage :local --docker-options="-d -p 3000:3000 --restart=a
 
 Теперь наше приложение доступно локально на порту 3000:
 
-![](/documentation/guides/applications_guide/images/020-hello-world-in-browser.png)
+![](/images/applications-guide/020-hello-world-in-browser.png)
 
 Как только мы убедились в том, что всё корректно — мы должны **загрузить образ в Registry**. Сборка с последующей загрузкой в Registry делается [командой `build-and-publish`](https://ru.werf.io/documentation/cli/main/build_and_publish.html). Когда werf запускается внутри CI-процесса — werf узнаёт реквизиты для доступа к Registry [из переменных окружения](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html).
 
