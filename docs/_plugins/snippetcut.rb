@@ -3,7 +3,8 @@ module Jekyll
     class SnippetCutTag < Liquid::Block
       @@DEFAULTS = {
           :name => 'myfile.yaml',
-          :url => '/asdasda/myfile.yaml'
+          :url => '/asdasda/myfile.yaml',
+          :limited => false
       }
 
       def self.DEFAULTS
@@ -36,7 +37,7 @@ module Jekyll
         rendered_content = Jekyll::Converters::Markdown::KramdownParser.new(Jekyll.configuration()).convert(content)
 
         %Q(
-<div class="snippetcut" data-snippetcut>
+<div class="snippetcut#{@config[:limited] ? ' snippetcut_limited' : ''}" data-snippetcut>
 <div class="snippetcut__title">
 <a href="#{@config[:url]}" target="_blank" class="snippetcut__title-name" data-snippetcut-name>#{@config[:name]}</a>
 <a href="javascript:void(0)" class="snippetcut__title-btn" data-snippetcut-btn-name>копировать имя</a>
