@@ -278,7 +278,7 @@ spec:
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=504a1a2b17042311681b1551aa0b8931z`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
-![](/documentation/guides/applications_guide/images/020-werf-secret-key-in-gitlab.png)
+![](/images/applications-guide/020-werf-secret-key-in-gitlab.png)
 
 После этого мы сможем задать секретную переменную, например DBPASS. Зайдите в режим редактирования секретных значений:
 

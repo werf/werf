@@ -281,7 +281,7 @@ spec:
 * Задайте ключ в переменных приложения, в текущей сессии консоли (например, `export WERF_SECRET_KEY=634f76ead513e5959d0e03a992372b8e`)
 * Пропишите полученный ключ в Variables для вашего репозитория в Gitlab (раздел `Settings` - `CI/CD`), название переменной `WERF_SECRET_KEY`
 
-![](/documentation/guides/applications_guide/images/020-werf-secret-key-in-gitlab.png)
+![](/images/applications-guide/020-werf-secret-key-in-gitlab.png)
 
 После этого мы сможем задать секретные переменные `access_key` и `secret_key`, например для работы с S3. Зайдите в режим редактирования секретных значений:
 
