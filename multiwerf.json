@@ -42,10 +42,11 @@
         },
         {
           "name": "stable",
-	  "version": "v1.1.19+fix11"
+	  "version": "v1.1.20+fix19"
         },
         {
           "name": "rock-solid",
+	  "_candidate": "v1.1.19+fix11",
           "version": "v1.1.14+fix1"
         }
       ]
