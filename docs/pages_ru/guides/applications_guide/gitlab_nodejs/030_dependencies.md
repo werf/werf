@@ -36,10 +36,11 @@ Werf предлагает использовать для стадий след�
 
 Пропишем команду `npm ci` в нужные стадии сборки в `werf.yaml`
 
-{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/030-deps/werf.yaml" %}
 {% raw %}
 ```yaml
 shell:
+<...>
   install:
   - cd /app && npm сi
 ```

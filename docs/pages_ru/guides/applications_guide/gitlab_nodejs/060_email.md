@@ -39,15 +39,17 @@ const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAIL
 {% snippetcut name="consumer.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/consumer/consumer.js" %}
 {% raw %}
 ```js
-function sendMessage(message) {
+const sendEmail = async (email) => {
   try {
-    const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAILGUN_DOMAIN});
-    const email = JSON.parse(message.content.toString());
-    email.from = "Mailgun Sandbox <postmaster@sandbox"+process.env.MAILGUN_FROM+">",
-    email.subject = "Welcome to Chat!"
-    mg.messages().send(email, function (error, body) {
-      console.log(body);
-    });
+    const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAILGUN_DOMAIN, host: "api.eu.mailgun.net"});
+    if (email != null) {
+      email.from = "Mailgun Sandbox <postmaster@" + process.env.MAILGUN_DOMAIN + ">"
+      email.subject = "Welcome to Chat!"
+      email.html = "<p>" + email.text + "</p>"
+      console.log("Email: " + JSON.stringify(email));
+    }
+    const sent = await mg.messages().send(email);
+    return sent;
   } catch (error) {
     console.error(error)
   }
@@ -58,7 +60,7 @@ function sendMessage(message) {
 
 Для работы с mailgun необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*
 
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 {% raw %}
 ```yaml
 app:
@@ -72,7 +74,7 @@ app:
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/.helm/templates/deployment.yaml" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/.helm/templates/consumer.yaml" %}
 {% raw %}
 ```yaml
         - name: MAILGUN_APIKEY
