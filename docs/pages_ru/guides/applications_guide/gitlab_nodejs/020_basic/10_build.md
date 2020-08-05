@@ -35,20 +35,20 @@ _В скором времени werf предоставит разработчи
 Один из минусов это отзывчивость. На процесс от пуша кода до появления результата может потребоваться несколько минут.
 {% endofftopic %}
 
-Возьмём исходный код приложения из git:
+Возьмиите исходный код приложения [из репозитория на github](https://github.com/werf/demos/tree/master/applications-guide/gitlab-nodejs/examples/000-app): 
 
 ```bash
-git clone git@github.com:werf/demos.git
+git clone git@github.com:werf/demos.git demos
+cd demos/applications-guide/gitlab-nodejs/000-app
 ```
 
-Примеры из данного гайда находятся в папке `/applications-guide/gitlab-nodejs`, начнём с примера `020-basic`.
+И скопируйте его в свой проект в GitLab. Далее мы будем работать с исходным кодом проекта в GitLab.
 
 Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
 
 {% offtopic title="Варианты синтаксиса werf.yaml" %}
 
 Существует 2 варианта синтаксиса при использовании werf: Ansible и Shell.
-
 
 **Ansible**
 
@@ -58,7 +58,7 @@ Werf поддерживает почти все модули из ansible, по�
 {% raw %}
 ```yaml
 - name: "Install additional packages"
-apt:
+  apt:
     state: present
     update_cache: yes
     pkg:
@@ -66,7 +66,6 @@ apt:
 ```
 {% endraw %}
 Полный список поддерживаемых модулей ansible в werf можно найти [тут](https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#supported-modules).
-
 
 **Shell**
 
@@ -85,7 +84,6 @@ shell:
 
 Прочитать подробнее про виды синтаксисов вы можете тут:
 [**syntax section**](https://ru.werf.io/documentation/guides/advanced_build/first_application.html#%D1%88%D0%B0%D0%B3-1-%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F-werfyaml).
-
 
 {% endofftopic %}
 
@@ -107,8 +105,6 @@ configVersion: 1
 
 {% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic/werf.yaml" %}
 ```yaml
-project: werf-guided-project
-configVersion: 1
 ---
 image: basicapp
 from: node:14-stretch
@@ -124,8 +120,8 @@ Werf поддерживает [**Go templates**](https://ru.werf.io/v1.1-alpha/d
 Сделаем 2 образа, используя один базовый образ `golang:1.11-alpine`
 
 Пример:
-{% raw %}
 
+{% raw %}
 ```yaml
 {{ $base_image := "golang:1.11-alpine" }}
 
@@ -150,11 +146,6 @@ from: {{ $base_image }}
 {% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic/werf.yaml" %}
 {% raw %}
 ```yaml
-project: werf-guided-project
-configVersion: 1
----
-image: basicapp
-from: node:14-stretch
 git:
 - add: /
   to: /app
@@ -220,7 +211,6 @@ git:
 
 Подробнее о всех опциях директивы git можно прочитать в  [документации]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html#Изменение-владельца).
 
-
 {% endofftopic %}
 
 Следующим этапом необходимо описать **правила [сборки для приложения](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/assembly_instructions.html)**. Werf позволяет кэшировать сборку образа подобно слоям в docker, но с более явной конфигурацией. Этот механизм называется [стадиями](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/assembly_instructions.html#пользовательские-стадии). Для текущего приложения опишем 2 стадии в которых сначала устанавливаем пакеты, а потом - работаем с исходными кодами приложения.
@@ -243,7 +233,7 @@ shell:
   - apt update
   - apt install -y tzdata locales
   install:
-  - cd /app && npm сi
+  - cd /app && npm ci
 ```
 {% endsnippetcut %}
 
@@ -256,11 +246,18 @@ docker:
 ```
 {% endsnippetcut %}
 
+Также мы должны прописать связь файла `package.json` со стадией `install`, внутри блока git:
+
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic/werf.yaml" %}
 ```yaml
+git:
+  <...>
   stageDependencies:
     install:
     - package.json
 ```
+{% endsnippetcut %}
+
 Данная конструкция отвечает за отслеживание изменений в файле `package.json` и пересборки стадии `install` в случае нахождения таковых.
 
 Когда `werf.yaml` готов (или кажется таковым) — пробуем запустить сборку:

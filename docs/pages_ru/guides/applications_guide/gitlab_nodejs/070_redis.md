@@ -41,6 +41,7 @@ toc: false
 {% raw %}
 ```yaml
 dependencies:
+<...>
 - name: redis
   version: 9.3.2
   repository: https://kubernetes-charts.storage.googleapis.com/

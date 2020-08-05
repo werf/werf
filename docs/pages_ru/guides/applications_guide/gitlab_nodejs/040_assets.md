@@ -76,7 +76,7 @@ from: ubuntu:latest
 {% raw %}
 ```yaml
 artifact: assets-built
-fromImage: node:14-stretch
+from: node:14-stretch
 shell:
   beforeInstall:
   - apt update
@@ -91,7 +91,7 @@ git:
     stageDependencies:
       install:
       - package.json
-      - webpack.config.js
+      - webpack-*
       setup:
       - "**/*"
 ```
@@ -120,7 +120,7 @@ docker:
 import:
 - artifact: assets-built
   add: /app/dist
-  to: /usr/share/nginx/html/assets
+  to: /www
   after: setup
 ```
 {% endraw %}
@@ -165,7 +165,8 @@ import:
 {% raw %}
 ```yaml
   ports:
-  - name: http
+<...>
+  - name: http-nginx
     port: 80
     protocol: TCP
 ```
@@ -190,7 +191,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/ingress.yaml" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
 {% raw %}
 ```yaml
       paths:
