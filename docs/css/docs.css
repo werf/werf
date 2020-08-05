@@ -636,6 +636,10 @@
     display: none;
 }
 
+.docs .snippetcut {
+    margin-top: 10px;
+}
+
 .docs .snippetcut .snippetcut__title {
     margin-bottom: 5px;
     display: flex;
@@ -665,7 +669,7 @@
     box-sizing: border-box;
     border: 2px solid rgba(0,102,255,0.1);
     color: #939fb1;
-  
+
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -678,6 +682,11 @@
     border: 2px solid #939fb1;
     background-color: #939fb1;
     color: white;
+}
+
+.docs .snippetcut_limited pre.highlight {
+    max-height: 200px;
+    display: block;
 }
 
 .docs .anchorjs-link:hover {
