@@ -65,34 +65,55 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 	deleteRepoImageFunc := r.deleteRepoImageFunc
 	if deleteRepoImageFunc != nil {
 		return deleteRepoImageFunc(repoImage)
-	} else {
-		var err error
-		for _, deleteFunc := range []func(repoImage *image.Info) error{
-			r.deleteRepoImageTagWithFullScope,
-			r.deleteRepoImageTagWithUniversalScope,
-			r.deleteRepoImageWithFullScope,
-			r.deleteRepoImageWithUniversalScope,
-			r.defaultImplementation.deleteRepoImage,
-		} {
-			if err = deleteFunc(repoImage); err != nil {
-				if strings.Contains(err.Error(), "UNAUTHORIZED") {
-					reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-					logboek.Debug.LogF("DEBUG: Tag %s deletion failed: %s", reference, err)
-					continue
-				}
-
-				return err
-			}
-
-			r.deleteRepoImageFunc = deleteFunc
-			break
-		}
-
-		if err != nil {
-			return err
-		}
 	}
 
+	// DELETE /v2/<name>/tags/reference/<reference> method is available since the v2.8.0-gitlab
+	var err error
+	for _, deleteFunc := range []func(repoImage *image.Info) error{
+		r.deleteRepoImageTagWithFullScope,
+		r.deleteRepoImageTagWithUniversalScope,
+	} {
+		if err := deleteFunc(repoImage); err != nil {
+			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+			if strings.Contains(err.Error(), "404 Not Found; 404 page not found") {
+				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				break
+			} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
+				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				continue
+			}
+
+			return err
+		}
+
+		r.deleteRepoImageFunc = deleteRepoImageFunc
+		return nil
+	}
+
+	for _, deleteFunc := range []func(repoImage *image.Info) error{
+		r.deleteRepoImageWithFullScope,
+		r.deleteRepoImageWithUniversalScope,
+	} {
+		if err := deleteFunc(repoImage); err != nil {
+			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+			if strings.Contains(err.Error(), "UNAUTHORIZED") {
+				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				continue
+			}
+
+			return err
+		}
+
+		r.deleteRepoImageFunc = deleteRepoImageFunc
+		return nil
+	}
+
+	err = r.defaultImplementation.deleteRepoImage(repoImage)
+	if err != nil {
+		return err
+	}
+
+	r.deleteRepoImageFunc = r.defaultImplementation.deleteRepoImage
 	return nil
 }
 
