@@ -41,24 +41,9 @@ func (c *rawMetaDeployTemplates) UnmarshalYAML(unmarshal func(interface{}) error
 
 func (c *rawMetaDeployTemplates) toDeployTemplates() MetaDeployTemplates {
 	deployTemplates := MetaDeployTemplates{}
-
-	if c.HelmRelease != nil {
-		deployTemplates.HelmRelease = *c.HelmRelease
-	}
-
-	deployTemplates.HelmReleaseSlug = true
-	if c.HelmReleaseSlug != nil {
-		deployTemplates.HelmReleaseSlug = *c.HelmReleaseSlug
-	}
-
-	if c.Namespace != nil {
-		deployTemplates.Namespace = *c.Namespace
-	}
-
-	deployTemplates.NamespaceSlug = true
-	if c.NamespaceSlug != nil {
-		deployTemplates.NamespaceSlug = *c.NamespaceSlug
-	}
-
+	deployTemplates.HelmRelease = c.HelmRelease
+	deployTemplates.HelmReleaseSlug = c.HelmReleaseSlug
+	deployTemplates.Namespace = c.Namespace
+	deployTemplates.NamespaceSlug = c.NamespaceSlug
 	return deployTemplates
 }
