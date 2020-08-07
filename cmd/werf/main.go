@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/werf/werf/cmd/werf/helm_v3"
+
 	"github.com/werf/werf/cmd/werf/diff"
 
 	"github.com/werf/werf/cmd/werf/converge"
@@ -134,6 +136,7 @@ Find more information at https://werf.io`),
 				imagesCmd(),
 				managedImagesCmd(),
 				helmCmd(),
+				helm_v3.NewCmd(),
 				hostCmd(),
 			},
 		},

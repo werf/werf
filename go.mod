@@ -48,6 +48,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8.0.20190926000215-3e425f80a8c9 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect
@@ -139,6 +140,8 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200807164411-27919fc0c010
+
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
@@ -146,3 +149,4 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
 go 1.14
+
