@@ -1,6 +1,7 @@
 package releaseserver_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -42,7 +43,7 @@ var _ = Describe("Resources adopter", func() {
 
 			By("creating mydeploy2 and mydeploy4 using API in the cluster")
 
-			mydeploy2Original, err := kube.Client.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
+			mydeploy2Original, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -66,10 +67,10 @@ spec:
       - name: mycontainer2
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
         image: ubuntu:18.04
-`))
+`), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			mydeploy4Original, err := kube.Client.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
+			mydeploy4Original, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -99,7 +100,7 @@ spec:
           value: anotherValue
         - name: MYVAR2
           value: "123"
-`))
+`), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			By("redeploying release with added mydeploy2 and mydeploy4")
@@ -118,11 +119,11 @@ spec:
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
 
-			mydeploy2AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterDeploy.UID).To(Equal(mydeploy2Original.UID))
 
-			mydeploy4AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterDeploy.UID).To(Equal(mydeploy4Original.UID))
 
@@ -133,22 +134,22 @@ spec:
 			By("redeploying release with adoption annotations set to wrong release name")
 
 		GetAndUpdateMydeploy2AfterRedeploy:
-			mydeploy2AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
 			mydeploy2AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy2AfterRedeploy)
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy2AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy2AfterRedeploy
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy4AfterRedeploy:
-			mydeploy4AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
 			mydeploy4AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy4AfterRedeploy)
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy4AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy4AfterRedeploy
 			}
@@ -171,22 +172,22 @@ spec:
 			By("redeploying release with adoption annotations set to the right release name")
 
 		GetAndUpdateMydeploy2AfterRedeploy2:
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
 			mydeploy2AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = releaseName
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy2AfterRedeploy)
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy2AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy2AfterRedeploy2
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy4AfterRedeploy2:
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
 			mydeploy4AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = releaseName
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy4AfterRedeploy)
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy4AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy4AfterRedeploy2
 			}
@@ -201,11 +202,11 @@ spec:
 				},
 			})).To(Succeed())
 
-			mydeploy2AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterAdoption.UID).To(Equal(mydeploy2Original.UID))
 
-			mydeploy4AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterAdoption.UID).To(Equal(mydeploy4Original.UID))
 
@@ -243,7 +244,7 @@ spec:
 
 			By("creating mydeploy5 in the cluster using API")
 
-			mydeploy5Initial, err := kube.Client.AppsV1().Deployments(namespace).Create(resourcesfactory.NewDeployment(`
+			mydeploy5Initial, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -264,7 +265,7 @@ spec:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
         image: ubuntu:18.04
-`))
+`), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			By("updating release with a new resource added to the chart that already exists in the cluster")
@@ -280,11 +281,11 @@ spec:
 			Expect(gotMydeploy5AlreadyExists).To(BeTrue())
 
 		GetAndUpdateMydeploy5AfterUpdate:
-			mydeploy5AfterUpdate, err := kube.Client.AppsV1().Deployments(namespace).Get("mydeploy5", metav1.GetOptions{})
+			mydeploy5AfterUpdate, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy5AfterUpdate.UID).To(Equal(mydeploy5Initial.UID))
 			mydeploy5AfterUpdate.Annotations["werf.io/allow-adoption-by-release"] = releaseName
-			mydeploy5AfterUpdate, err = kube.Client.AppsV1().Deployments(namespace).Update(mydeploy5AfterUpdate)
+			mydeploy5AfterUpdate, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy5AfterUpdate, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy5AfterUpdate
 			}
@@ -300,22 +301,22 @@ spec:
 
 			Expect(werfDismiss("resources_adopter_app1-003", liveexec.ExecCommandOptions{})).To(Succeed())
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy1", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy2", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy2 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy3", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy3", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy3 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy4", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy4 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get("mydeploy5", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy5 should return not found error, got %v", err))
 
-			_, err = kube.Client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+			_, err = kube.Client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
 		})
 	})
