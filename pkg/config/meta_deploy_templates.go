@@ -1,8 +1,8 @@
 package config
 
 type MetaDeployTemplates struct {
-	HelmRelease     string
-	HelmReleaseSlug bool
-	Namespace       string
-	NamespaceSlug   bool
+	HelmRelease     *string
+	HelmReleaseSlug *bool
+	Namespace       *string
+	NamespaceSlug   *bool
 }
