@@ -23,8 +23,10 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 		return releaseOption, nil
 	}
 
-	releaseTemplate := werfConfig.Meta.DeployTemplates.HelmRelease
-	if releaseTemplate == "" {
+	var releaseTemplate string
+	if werfConfig.Meta.DeployTemplates.HelmRelease != nil {
+		releaseTemplate = *werfConfig.Meta.DeployTemplates.HelmRelease
+	} else {
 		releaseTemplate = "[[ project ]]-[[ env ]]"
 	}
 
@@ -37,7 +39,14 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 		return "", fmt.Errorf("Helm release rendered by template '%s' is empty: release name cannot be empty", releaseTemplate)
 	}
 
-	if werfConfig.Meta.DeployTemplates.HelmReleaseSlug {
+	var helmReleaseSlug bool
+	if werfConfig.Meta.DeployTemplates.HelmReleaseSlug != nil {
+		helmReleaseSlug = *werfConfig.Meta.DeployTemplates.HelmReleaseSlug
+	} else {
+		helmReleaseSlug = true
+	}
+
+	if helmReleaseSlug {
 		return slug.HelmRelease(renderedRelease), nil
 	}
 
@@ -58,8 +67,10 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 		return namespaceOption, nil
 	}
 
-	namespaceTemplate := werfConfig.Meta.DeployTemplates.Namespace
-	if namespaceTemplate == "" {
+	var namespaceTemplate string
+	if werfConfig.Meta.DeployTemplates.Namespace != nil {
+		namespaceTemplate = *werfConfig.Meta.DeployTemplates.Namespace
+	} else {
 		namespaceTemplate = "[[ project ]]-[[ env ]]"
 	}
 
@@ -72,7 +83,14 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 		return "", fmt.Errorf("Kubernetes namespace rendered by template '%s' is empty: namespace cannot be empty", namespaceTemplate)
 	}
 
-	if werfConfig.Meta.DeployTemplates.NamespaceSlug {
+	var namespaceSlug bool
+	if werfConfig.Meta.DeployTemplates.NamespaceSlug != nil {
+		namespaceSlug = *werfConfig.Meta.DeployTemplates.NamespaceSlug
+	} else {
+		namespaceSlug = true
+	}
+
+	if namespaceSlug {
 		return slug.KubernetesNamespace(renderedNamespace), nil
 	}
 
