@@ -1,6 +1,7 @@
 package releaseserver_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -63,7 +64,7 @@ var _ = Describe("Helm releases manager", func() {
 })
 
 func getReleasesHistory(releaseName string) []*corev1.ConfigMap {
-	cmList, err := kube.Kubernetes.CoreV1().ConfigMaps("kube-system").List(metav1.ListOptions{})
+	cmList, err := kube.Kubernetes.CoreV1().ConfigMaps("kube-system").List(context.Background(), metav1.ListOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	var releases []*corev1.ConfigMap
