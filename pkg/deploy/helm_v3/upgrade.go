@@ -24,13 +24,16 @@ type UpgradeOptions struct {
 	Install         bool
 	Atomic          bool
 	Timeout         time.Duration
+
+	StatusProgressPeriod      time.Duration
+	HooksStatusProgressPeriod time.Duration
 }
 
 func Upgrade(ctx context.Context, chart, releaseName string, opts UpgradeOptions) error {
 	outfmt := output.Table
 
 	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings)
+	cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 	client := action.NewUpgrade(cfg)
 
 	client.Namespace = opts.Namespace

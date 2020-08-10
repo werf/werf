@@ -21,7 +21,7 @@ type StatusOptions struct {
 
 func Status(releaseName string, opts StatusOptions) (*release.Release, error) {
 	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings)
+	cfg := NewActionConfig(envSettings, InitActionConfigOptions{})
 	client := action.NewStatus(cfg)
 	client.Version = opts.Version
 	return client.Run(releaseName)

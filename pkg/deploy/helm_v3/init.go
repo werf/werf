@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/werf/logboek"
 
+	helm_kube "helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 
 	"gopkg.in/yaml.v2"
@@ -38,7 +40,7 @@ func withEnvs(envsMap map[string]string, do func()) {
 	for k, v := range envsMap {
 		oldV := os.Getenv(k)
 		os.Setenv(k, v)
-		defer func() { os.Setenv(k, oldV) }()
+		defer func(resetValue string) { os.Setenv(k, resetValue) }(oldV)
 	}
 	do()
 }
@@ -63,11 +65,18 @@ func NewEnvSettings(namespace string) (res *cli.EnvSettings) {
 	return
 }
 
-func NewActionConfig(envSettings *cli.EnvSettings) *action.Configuration {
+type InitActionConfigOptions struct {
+	StatusProgressPeriod      time.Duration
+	HooksStatusProgressPeriod time.Duration
+}
+
+func NewActionConfig(envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
 	actionConfig := &action.Configuration{}
+	InitActionConfig(envSettings, actionConfig, opts)
+	return actionConfig
+}
 
-	// new cmd init
-
+func InitActionConfig(envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) {
 	helmDriver := os.Getenv("HELM_DRIVER")
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Debug.LogF); err != nil {
 		log.Fatal(err)
@@ -76,7 +85,8 @@ func NewActionConfig(envSettings *cli.EnvSettings) *action.Configuration {
 		loadReleasesInMemory(envSettings, actionConfig)
 	}
 
-	return actionConfig
+	kubeClient := actionConfig.KubeClient.(*helm_kube.Client)
+	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 }
 
 // This function loads releases into the memory storage if the
