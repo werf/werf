@@ -54,7 +54,7 @@ func Fetch(path string, options FetchOptions) error {
 		commandArgs = append(commandArgs, remote, refSpec)
 	}
 
-	logboek.Debug.LogLnDetails(command, strings.Join(commandArgs, " "))
+	logboek.Debug().LogLnDetails(command, strings.Join(commandArgs, " "))
 
 	cmd := exec.Command(command, commandArgs...)
 	cmd.Stdout = outStream

@@ -90,7 +90,7 @@ func GetServiceValues(ctx context.Context, projectName string, imagesRepository,
 				} else {
 					imageData[key] = value
 				}
-				logboek.Debug.LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
+				logboek.Debug().LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
 			}
 
 			imageID, err := image.GetImageID()
@@ -110,7 +110,7 @@ func GetServiceValues(ctx context.Context, projectName string, imagesRepository,
 	}
 
 	data, err := yaml.Marshal(res)
-	logboek.Debug.LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
+	logboek.Debug().LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
 
 	return res, nil
 }

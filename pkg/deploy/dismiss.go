@@ -27,7 +27,7 @@ func RunDismiss(ctx context.Context, projectName, release, namespace, _ string, 
 			defer lockManager.Unlock(lock)
 		}
 
-		if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
+		if err := logboek.Default().LogBlock("Deploy options").DoError(func() error {
 			logboek.LogF("Kubernetes namespace: %s\n", namespace)
 			logboek.LogF("Helm release storage namespace: %s\n", helm.HelmReleaseStorageNamespace)
 			logboek.LogF("Helm release storage type: %s\n", helm.HelmReleaseStorageType)
@@ -38,8 +38,8 @@ func RunDismiss(ctx context.Context, projectName, release, namespace, _ string, 
 			return err
 		}
 
-		logboek.Debug.LogF("Dismiss options: %#v\n", opts)
-		logboek.Debug.LogF("Namespace: %s\n", namespace)
+		logboek.Debug().LogF("Dismiss options: %#v\n", opts)
+		logboek.Debug().LogF("Namespace: %s\n", namespace)
 		return helm.PurgeHelmRelease(ctx, release, namespace, opts.WithHooks)
 	}(); err != nil {
 		return err

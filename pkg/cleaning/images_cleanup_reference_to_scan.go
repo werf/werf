@@ -182,12 +182,10 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 			resultTagsRefs = mergeReferences(resultTagsRefs, policyRefs)
 		}
 
-		_ = logboek.Default.LogBlock(policy.String(), logboek.LevelLogBlockOptions{}, func() error {
+		logboek.Default().LogBlock(policy.String()).Do(func() {
 			for _, ref := range policyRefs {
-				logboek.Default.LogLnDetails(ref.Name().Short())
+				logboek.Default().LogLnDetails(ref.Name().Short())
 			}
-
-			return nil
 		})
 	}
 

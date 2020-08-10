@@ -67,7 +67,8 @@ These values includes project name, docker images ids and other`),
 }
 
 func runGetServiceValues() error {
-	logboek.MuteOut()
+	logboek.Streams().Mute()
+	defer logboek.Streams().Unmute()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -81,7 +82,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.ProxyOutStream(), Err: logboek.ProxyErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -138,7 +139,7 @@ func runGetServiceValues() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

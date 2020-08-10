@@ -86,7 +86,7 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.ProxyOutStream(), Err: logboek.ProxyErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -170,7 +170,7 @@ func runCleanup() error {
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
+	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
 	if err != nil {

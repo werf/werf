@@ -57,7 +57,7 @@ func (d *ImageInfo) GetImageID() (string, error) {
 
 	repoImage, err := d.getOrCreateInfo()
 	if err != nil {
-		logboek.LogWarnF("WARNING: Getting image %s id failed: %s\n", d.GetImageName(), err)
+		logboek.Warn().LogF("WARNING: Getting image %s id failed: %s\n", d.GetImageName(), err)
 		return "", nil
 	}
 
@@ -71,7 +71,7 @@ func (d *ImageInfo) GetImageDigest() (string, error) {
 
 	repoImage, err := d.getOrCreateInfo()
 	if err != nil {
-		logboek.LogWarnF("WARNING: Getting image %s digest failed: %s\n", d.GetImageName(), err)
+		logboek.Warn().LogF("WARNING: Getting image %s digest failed: %s\n", d.GetImageName(), err)
 		return "", nil
 	}
 

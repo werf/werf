@@ -20,5 +20,5 @@ func GlobalWarningLn(line string) {
 }
 
 func printGlobalWarningLn(line string) {
-	logboek.Error.LogF("WARNING: %s\n", line)
+	logboek.Error().LogF("WARNING: %s\n", line)
 }

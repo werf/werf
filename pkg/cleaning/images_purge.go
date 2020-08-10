@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
@@ -25,11 +27,11 @@ func ImagesPurge(projectName string, imagesRepo storage.ImagesRepo, storageLockM
 		defer storageLockManager.Unlock(lock)
 	}
 
-	return logboek.Default.LogProcess(
-		"Running images purge",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.run,
-	)
+	return logboek.Default().LogProcess("Running images purge").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(m.run)
 }
 
 func newImagesPurgeManager(imagesRepo storage.ImagesRepo, options ImagesPurgeOptions) *imagesPurgeManager {
@@ -53,7 +55,7 @@ func (m *imagesPurgeManager) run() error {
 	}
 
 	for imageName, repoImageList := range repoImages {
-		if err := logboek.Default.LogProcess(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Default().LogProcess(logging.ImageLogProcessName(imageName, false)).DoError(func() error {
 			return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageList...)
 		}); err != nil {
 			return err
@@ -66,7 +68,7 @@ func (m *imagesPurgeManager) run() error {
 func selectRepoImagesFromImagesRepo(imagesRepo storage.ImagesRepo, imageNameList []string) (map[string][]*image.Info, error) {
 	return imagesRepo.SelectRepoImages(imageNameList, func(reference string, info *image.Info, err error) (bool, error) {
 		if err != nil && docker_registry.IsManifestUnknownError(err) {
-			logboek.Warn.LogF("Skip image %s: %s\n", reference, err)
+			logboek.Warn().LogF("Skip image %s: %s\n", reference, err)
 			return false, nil
 		}
 
@@ -86,7 +88,7 @@ func deleteRepoImageInImagesRepo(imagesRepo storage.ImagesRepo, dryRun bool, rep
 			}
 		}
 
-		logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
+		logboek.Default().LogFDetails("  tag: %s\n", repoImage.Tag)
 		logboek.LogOptionalLn()
 	}
 

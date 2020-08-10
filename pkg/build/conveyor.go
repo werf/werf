@@ -12,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -21,6 +19,8 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
@@ -30,6 +30,7 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util"
@@ -122,40 +123,41 @@ func (c *Conveyor) GetImportServer(imageName, stageName string) (import_server.I
 
 	var srv *import_server.RsyncServer
 
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName), logboek.LevelLogProcessOptions{}, func() error {
-		var tmpDir string
-		if stageName == "" {
-			tmpDir = filepath.Join(c.tmpDir, "import-server", imageName)
-		} else {
-			tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName))
-		}
+	if err := logboek.Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
+		DoError(func() error {
+			var tmpDir string
+			if stageName == "" {
+				tmpDir = filepath.Join(c.tmpDir, "import-server", imageName)
+			} else {
+				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName))
+			}
 
-		if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
-			return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
-		}
+			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
+				return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
+			}
 
-		var dockerImageName string
-		if stageName == "" {
-			dockerImageName = c.GetImageNameForLastImageStage(imageName)
-		} else {
-			dockerImageName = c.GetImageNameForImageStage(imageName, stageName)
-		}
+			var dockerImageName string
+			if stageName == "" {
+				dockerImageName = c.GetImageNameForLastImageStage(imageName)
+			} else {
+				dockerImageName = c.GetImageNameForImageStage(imageName, stageName)
+			}
 
-		var err error
-		srv, err = import_server.RunRsyncServer(dockerImageName, tmpDir)
-		if srv != nil {
-			c.AppendOnTerminateFunc(func() error {
-				if err := srv.Shutdown(); err != nil {
-					return fmt.Errorf("unable to shutdown import server %s: %s", srv.DockerContainerName, err)
-				}
-				return nil
-			})
-		}
-		if err != nil {
-			return fmt.Errorf("unable to run rsync import server: %s", err)
-		}
-		return nil
-	}); err != nil {
+			var err error
+			srv, err = import_server.RunRsyncServer(dockerImageName, tmpDir)
+			if srv != nil {
+				c.AppendOnTerminateFunc(func() error {
+					if err := srv.Shutdown(); err != nil {
+						return fmt.Errorf("unable to shutdown import server %s: %s", srv.DockerContainerName, err)
+					}
+					return nil
+				})
+			}
+			if err != nil {
+				return fmt.Errorf("unable to run rsync import server: %s", err)
+			}
+			return nil
+		}); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +193,7 @@ func (c *Conveyor) Terminate() error {
 
 		// NOTE: Errors printed here because conveyor termination should occur in defer,
 		// NOTE: and errors in the defer will be silenced otherwise.
-		logboek.LogErrorF("%s", errMsg)
+		logboek.Warn().LogF("%s", errMsg)
 
 		return errors.New(errMsg)
 	}
@@ -364,13 +366,11 @@ func (c *Conveyor) BuildAndPublish(opts BuildAndPublishOptions) error {
 }
 
 func (c *Conveyor) determineStages() error {
-	return logboek.Info.LogProcess(
-		"Determining of stages",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			return c.doDetermineStages()
-		},
-	)
+	return logboek.Info().LogProcess("Determining of stages").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(c.doDetermineStages)
 }
 
 func (c *Conveyor) doDetermineStages() error {
@@ -378,7 +378,7 @@ func (c *Conveyor) doDetermineStages() error {
 	for _, imageInterfaceConfig := range imagesInterfaces {
 		var img *Image
 		var imageLogName string
-		var style *logboek.Style
+		var style *style.Style
 
 		switch imageConfig := imageInterfaceConfig.(type) {
 		case config.StapelImageInterface:
@@ -389,24 +389,28 @@ func (c *Conveyor) doDetermineStages() error {
 			style = ImageLogProcessStyle(false)
 		}
 
-		err := logboek.Info.LogProcess(imageLogName, logboek.LevelLogProcessOptions{Style: style}, func() error {
-			var err error
+		err := logboek.Info().LogProcess(imageLogName).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style)
+			}).
+			DoError(func() error {
+				var err error
 
-			switch imageConfig := imageInterfaceConfig.(type) {
-			case config.StapelImageInterface:
-				img, err = prepareImageBasedOnStapelImageConfig(imageConfig, c)
-			case *config.ImageFromDockerfile:
-				img, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
-			}
+				switch imageConfig := imageInterfaceConfig.(type) {
+				case config.StapelImageInterface:
+					img, err = prepareImageBasedOnStapelImageConfig(imageConfig, c)
+				case *config.ImageFromDockerfile:
+					img, err = prepareImageBasedOnImageFromDockerfile(imageConfig, c)
+				}
 
-			if err != nil {
-				return err
-			}
+				if err != nil {
+					return err
+				}
 
-			c.imagesInOrder = append(c.imagesInOrder, img)
+				c.imagesInOrder = append(c.imagesInOrder, img)
 
-			return nil
-		})
+				return nil
+			})
 
 		if err != nil {
 			return err
@@ -450,76 +454,81 @@ func (c *Conveyor) runPhases(phases []Phase, logImages bool) error {
 		})
 	}
 
-	var imagesLogger logboek.Level
+	var imagesLogger types.ManagerInterface
 	if logImages {
-		imagesLogger = logboek.Default
+		imagesLogger = logboek.Default()
 	} else {
-		imagesLogger = logboek.Info
+		imagesLogger = logboek.Info()
 	}
 
 	for _, phase := range phases {
-		logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImages()", phase.Name())
-		logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+		logProcess := logboek.Debug().LogProcess("Phase %s -- BeforeImages()", phase.Name())
+		logProcess.Start()
 		if err := phase.BeforeImages(); err != nil {
-			logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return fmt.Errorf("phase %s before images handler failed: %s", phase.Name(), err)
 		}
-		logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+		logProcess.End()
 	}
 
 	for _, img := range c.imagesInOrder {
-		if err := imagesLogger.LogProcess(img.LogDetailedName(), logboek.LevelLogProcessOptions{Style: img.LogProcessStyle()}, func() error {
-			for _, phase := range phases {
-				logProcessMsg := fmt.Sprintf("Phase %s -- BeforeImageStages()", phase.Name())
-				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				if err := phase.BeforeImageStages(img); err != nil {
-					logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
-					return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
-				}
-				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
-
-				logProcessMsg = fmt.Sprintf("Phase %s -- OnImageStage()", phase.Name())
-				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				for _, stg := range img.GetStages() {
-					logboek.Debug.LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
-					if err := phase.OnImageStage(img, stg); err != nil {
-						logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
-						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
+		if err := imagesLogger.LogProcess(img.LogDetailedName()).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(img.LogProcessStyle())
+			}).
+			DoError(func() error {
+				for _, phase := range phases {
+					logProcess := logboek.Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name())
+					logProcess.Start()
+					if err := phase.BeforeImageStages(img); err != nil {
+						logProcess.Fail()
+						return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
 					}
-				}
-				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+					logProcess.End()
 
-				logProcessMsg = fmt.Sprintf("Phase %s -- AfterImageStages()", phase.Name())
-				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				if err := phase.AfterImageStages(img); err != nil {
-					logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
-					return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
-				}
-				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+					logProcess = logboek.Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
+					logProcess.Start()
+					for _, stg := range img.GetStages() {
+						logboek.Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
+						if err := phase.OnImageStage(img, stg); err != nil {
+							logProcess.Fail()
+							return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
+						}
+					}
+					logProcess.End()
 
-				logProcessMsg = fmt.Sprintf("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name())
-				logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
-				if phase.ImageProcessingShouldBeStopped(img) {
-					logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
-					return nil
-				}
-				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
-			}
+					logProcess = logboek.Debug().LogProcess("Phase %s -- AfterImageStages()", phase.Name())
+					logProcess.Start()
+					if err := phase.AfterImageStages(img); err != nil {
+						logProcess.Fail()
+						return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+					}
+					logProcess.End()
 
-			return nil
-		}); err != nil {
+					logProcess = logboek.Debug().LogProcess("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name())
+					logProcess.Start()
+					if phase.ImageProcessingShouldBeStopped(img) {
+						logProcess.End()
+						return nil
+					}
+					logProcess.End()
+				}
+
+				return nil
+			}); err != nil {
 			return err
 		}
 	}
 
 	for _, phase := range phases {
-		if err := logboek.Debug.LogProcess(fmt.Sprintf("Phase %s -- AfterImages()", phase.Name()), logboek.LevelLogProcessOptions{}, func() error {
-			if err := phase.AfterImages(); err != nil {
-				return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
-			}
+		if err := logboek.Debug().LogProcess(fmt.Sprintf("Phase %s -- AfterImages()", phase.Name())).
+			DoError(func() error {
+				if err := phase.AfterImages(); err != nil {
+					return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
+				}
 
-			return nil
-		}); err != nil {
+				return nil
+			}); err != nil {
 			return err
 		}
 	}
@@ -700,7 +709,7 @@ func getImageConfigsToProcess(c *Conveyor) []config.ImageInterface {
 			}
 
 			if imageToProcess == nil {
-				logboek.LogWarnF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
+				logboek.Warn().LogF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
 			} else {
 				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
@@ -783,7 +792,7 @@ func initStages(image *Image, imageInterfaceConfig config.StapelImageInterface, 
 	}
 
 	if len(gitMappings) != 0 {
-		logboek.Info.LogLnDetails("Using git stages")
+		logboek.Info().LogLnDetails("Using git stages")
 
 		for _, s := range stages {
 			s.SetGitMappings(gitMappings)
@@ -816,8 +825,8 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 						return nil, err
 					}
 				} else {
-					logboek.Warn.LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+					logboek.Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
+					logboek.Warn().LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
 
 					return nil, fmt.Errorf("shallow git clone is not allowed")
 				}
@@ -838,9 +847,8 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %s", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
 			}
 
-			if err := logboek.Info.LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LevelLogProcessOptions{}, func() error {
-				return remoteGitRepo.CloneAndFetch()
-			}); err != nil {
+			if err := logboek.Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
+				DoError(remoteGitRepo.CloneAndFetch); err != nil {
 				return nil, err
 			}
 
@@ -853,7 +861,7 @@ func generateGitMappings(imageBaseConfig *config.StapelImageBase, c *Conveyor) (
 	var res []*stage.GitMapping
 
 	if len(gitMappings) != 0 {
-		err := logboek.Info.LogProcess(fmt.Sprintf("Initializing git mappings"), logboek.LevelLogProcessOptions{}, func() error {
+		err := logboek.Info().LogProcess(fmt.Sprintf("Initializing git mappings")).DoError(func() error {
 			resGitMappings, err := filterAndLogGitMappings(c, gitMappings)
 			if err != nil {
 				return err
@@ -876,64 +884,64 @@ func filterAndLogGitMappings(c *Conveyor, gitMappings []*stage.GitMapping) ([]*s
 	var res []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
-		if err := logboek.Info.LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Info().LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name)).DoError(func() error {
 			withTripleIndent := func(f func()) {
-				if logboek.Info.IsAccepted() {
-					logboek.IndentUp()
-					logboek.IndentUp()
-					logboek.IndentUp()
+				if logboek.Info().IsAccepted() {
+					logboek.Streams().IncreaseIndent()
+					logboek.Streams().IncreaseIndent()
+					logboek.Streams().IncreaseIndent()
 				}
 
 				f()
 
-				if logboek.Info.IsAccepted() {
-					logboek.IndentDown()
-					logboek.IndentDown()
-					logboek.IndentDown()
+				if logboek.Info().IsAccepted() {
+					logboek.Streams().DecreaseIndent()
+					logboek.Streams().DecreaseIndent()
+					logboek.Streams().DecreaseIndent()
 				}
 			}
 
 			withTripleIndent(func() {
-				logboek.Info.LogFDetails("add: %s\n", gitMapping.Add)
-				logboek.Info.LogFDetails("to: %s\n", gitMapping.To)
+				logboek.Info().LogFDetails("add: %s\n", gitMapping.Add)
+				logboek.Info().LogFDetails("to: %s\n", gitMapping.To)
 
 				if len(gitMapping.IncludePaths) != 0 {
-					logboek.Info.LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
+					logboek.Info().LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
 				}
 
 				if len(gitMapping.ExcludePaths) != 0 {
-					logboek.Info.LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
+					logboek.Info().LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
 				}
 
 				if gitMapping.Commit != "" {
-					logboek.Info.LogFDetails("commit: %s\n", gitMapping.Commit)
+					logboek.Info().LogFDetails("commit: %s\n", gitMapping.Commit)
 				}
 
 				if gitMapping.Branch != "" {
-					logboek.Info.LogFDetails("branch: %s\n", gitMapping.Branch)
+					logboek.Info().LogFDetails("branch: %s\n", gitMapping.Branch)
 				}
 
 				if gitMapping.Owner != "" {
-					logboek.Info.LogFDetails("owner: %s\n", gitMapping.Owner)
+					logboek.Info().LogFDetails("owner: %s\n", gitMapping.Owner)
 				}
 
 				if gitMapping.Group != "" {
-					logboek.Info.LogFDetails("group: %s\n", gitMapping.Group)
+					logboek.Info().LogFDetails("group: %s\n", gitMapping.Group)
 				}
 
 				if len(gitMapping.StagesDependencies) != 0 {
-					logboek.Info.LogLnDetails("stageDependencies:")
+					logboek.Info().LogLnDetails("stageDependencies:")
 
 					for s, values := range gitMapping.StagesDependencies {
 						if len(values) != 0 {
-							logboek.Info.LogFDetails("  %s: %v\n", s, values)
+							logboek.Info().LogFDetails("  %s: %v\n", s, values)
 						}
 					}
 
 				}
 			})
 
-			logboek.Info.LogLn()
+			logboek.Info().LogLn()
 
 			commitInfo, err := gitMapping.GetLatestCommitInfo(c)
 			if err != nil {
@@ -941,9 +949,9 @@ func filterAndLogGitMappings(c *Conveyor, gitMappings []*stage.GitMapping) ([]*s
 			}
 
 			if commitInfo.VirtualMerge {
-				logboek.Info.LogFDetails("Commit %s will be used (virtual merge of %s into %s)\n", commitInfo.Commit, commitInfo.VirtualMergeFromCommit, commitInfo.VirtualMergeIntoCommit)
+				logboek.Info().LogFDetails("Commit %s will be used (virtual merge of %s into %s)\n", commitInfo.Commit, commitInfo.VirtualMergeFromCommit, commitInfo.VirtualMergeIntoCommit)
 			} else {
-				logboek.Info.LogFDetails("Commit %s will be used\n", commitInfo.Commit)
+				logboek.Info().LogFDetails("Commit %s will be used\n", commitInfo.Commit)
 			}
 
 			res = append(res, gitMapping)
@@ -1049,7 +1057,7 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logboek.Info.LogFDetails("Using stage %s\n", stage.Name())
+		logboek.Info().LogFDetails("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 
@@ -1111,8 +1119,8 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 		}
 
 		if !exist {
-			logboek.Debug.LogLnWithCustomStyle(
-				logboek.StyleByName(logboek.FailStyleName),
+			logboek.Debug().LogLnWithCustomStyle(
+				style.Get(style.FailName),
 				"git repository reference is not found",
 			)
 			localGitRepo = nil
@@ -1188,7 +1196,7 @@ func prepareImageBasedOnImageFromDockerfile(imageFromDockerfileConfig *config.Im
 
 	img.stages = append(img.stages, dockerfileStage)
 
-	logboek.Info.LogFDetails("Using stage %s\n", dockerfileStage.Name())
+	logboek.Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
 }

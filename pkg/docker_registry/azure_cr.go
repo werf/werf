@@ -114,11 +114,11 @@ func (r *azureCr) azRun(args ...string) error {
 	}
 
 	command := strings.Join(append([]string{"az"}, args...), " ")
-	logboek.Debug.LogLn(command)
+	logboek.Debug().LogLn(command)
 	c := exec.Command("az", args...)
 
 	output, err := c.CombinedOutput()
-	logboek.Debug.LogLn("output:", string(output))
+	logboek.Debug().LogLn("output:", string(output))
 
 	if err != nil {
 		return fmt.Errorf(

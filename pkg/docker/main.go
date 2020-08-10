@@ -47,7 +47,7 @@ func Init(dockerConfigDir string, verbose, debug bool) error {
 		return err
 	}
 
-	logrus.StandardLogger().SetOutput(logboek.GetOutStream())
+	logrus.StandardLogger().SetOutput(logboek.ProxyOutStream())
 
 	isDebug = debug
 	isVerbose = verbose
@@ -87,8 +87,8 @@ func newDockerCli(opts []command.DockerCliOption) (*command.DockerCli, error) {
 
 func setDockerClient() error {
 	if c, err := newDockerCli([]command.DockerCliOption{
-		command.WithOutputStream(logboek.GetOutStream()),
-		command.WithErrorStream(logboek.GetErrStream()),
+		command.WithOutputStream(logboek.ProxyOutStream()),
+		command.WithErrorStream(logboek.ProxyErrStream()),
 		command.WithContentTrust(false),
 	}); err != nil {
 		return fmt.Errorf("unable to create live output docker cli: %s", err)
@@ -154,7 +154,7 @@ func callCliWithAutoOutput(commandCaller func(c *command.DockerCli) error) error
 			return commandCaller(c)
 		})
 		if err != nil {
-			logboek.LogErrorF("%s", output)
+			logboek.Warn().LogF("%s", output)
 		}
 		return err
 	}

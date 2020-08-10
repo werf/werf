@@ -116,31 +116,31 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		desc.Type = DirectoryArchive
 
 		if debugArchive() {
-			logboek.Debug.LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
+			logboek.Debug().LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
 		}
 	} else {
 		desc.Type = FileArchive
 
 		if debugArchive() {
-			logboek.Debug.LogF("Found BasePath %s file: file archive\n", absBasePath)
+			logboek.Debug().LogF("Found BasePath %s file: file archive\n", absBasePath)
 		}
 	}
 
 	tw := tar.NewWriter(out)
 
-	logProcessMsg := fmt.Sprintf("ls-tree (%s)", opts.PathMatcher.String())
-	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+	logProcess := logboek.Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
+	logProcess.Start()
 	result, err := ls_tree.LsTree(repository, opts.Commit, opts.PathMatcher, true)
 	if err != nil {
-		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		logProcess.Fail()
 		return nil, err
 	}
-	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+	logProcess.End()
 
-	logProcessMsg = fmt.Sprintf("ls-tree result walk (%s)", opts.PathMatcher.String())
-	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+	logProcess = logboek.Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
+	logProcess.Start()
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
-		logboek.Debug.LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
+		logboek.Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
 
 		desc.IsEmpty = false
 
@@ -184,7 +184,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			}
 
 			if debugArchive() {
-				logboek.Debug.LogF("Added archive file '%s'\n", relToBasePathFilepath)
+				logboek.Debug().LogF("Added archive file '%s'\n", relToBasePathFilepath)
 			}
 		case filemode.Symlink:
 			isSymlink := info.Mode()&os.ModeSymlink != 0
@@ -220,7 +220,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			}
 
 			if debugArchive() {
-				logboek.Debug.LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
+				logboek.Debug().LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
 			}
 
 			return nil
@@ -230,10 +230,10 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 
 		return nil
 	}); err != nil {
-		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		logProcess.Fail()
 		return nil, err
 	}
-	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+	logProcess.End()
 
 	err = tw.Close()
 	if err != nil {

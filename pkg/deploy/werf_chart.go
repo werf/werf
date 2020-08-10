@@ -27,7 +27,7 @@ func PrepareWerfChart(ctx context.Context, projectName, helmChartDir, env string
 		}
 	}
 
-	logboek.Debug.LogF("werf chart: %#v\n", werfChart)
+	logboek.Debug().LogF("werf chart: %#v\n", werfChart)
 
 	return werfChart, nil
 }

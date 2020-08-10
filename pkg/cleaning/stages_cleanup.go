@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -34,11 +34,11 @@ func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesMana
 		defer storageLockManager.Unlock(lock)
 	}
 
-	return logboek.Default.LogProcess(
-		"Running stages cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.run,
-	)
+	return logboek.Default().LogProcess("Running stages cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(m.run)
 }
 
 func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) *stagesCleanupManager {
@@ -98,7 +98,7 @@ func (m *stagesCleanupManager) run() error {
 		var stagesImageList []*image.Info
 		stagesByImageName := map[string]*image.StageDescription{}
 
-		if err := logboek.Default.LogProcess("Fetching stages", logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Default().LogProcess("Fetching stages").DoError(func() error {
 			stages, err := m.StagesManager.GetAllStages()
 			if err != nil {
 				return err
@@ -117,7 +117,7 @@ func (m *stagesCleanupManager) run() error {
 		var repoImageList []*image.Info
 		var err error
 
-		if err := logboek.Default.LogProcess("Fetching repo images", logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Default().LogProcess("Fetching repo images").DoError(func() error {
 			repoImageList, err = m.getOrInitImagesRepoImageList()
 			return err
 		}); err != nil {
@@ -147,7 +147,7 @@ func (m *stagesCleanupManager) run() error {
 			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
 		}
 
-		return logboek.Default.LogProcess("Deleting stages tags", logboek.LevelLogProcessOptions{}, func() error {
+		return logboek.Default().LogProcess("Deleting stages tags").DoError(func() error {
 			return deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
 		})
 	})
@@ -228,7 +228,7 @@ func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, opt
 			}
 		}
 
-		logboek.Default.LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
 		logboek.LogOptionalLn()
 	}
 
@@ -255,7 +255,7 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 			return err
 		}
 
-		logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
+		logboek.Warn().LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
 		return nil
 	}
 }

@@ -59,10 +59,10 @@ func (server *SynchronizationServerHandler) handleHealth(w http.ResponseWriter, 
 	var request HealthRequest
 	var response HealthResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("SynchronizationServerHandler -- Health request %#v\n", request)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Health request %#v\n", request)
 		response.Echo = request.Echo
 		response.Status = "OK"
-		logboek.Debug.LogF("SynchronizationServerHandler -- Health response %#v\n", response)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Health response %#v\n", response)
 	})
 }
 
@@ -76,9 +76,9 @@ func (server *SynchronizationServerHandler) handleNewClientID(w http.ResponseWri
 	var request NewClientIDRequest
 	var response NewClientIDResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("SynchronizationServerHandler -- NewClientID request %#v\n", request)
+		logboek.Debug().LogF("SynchronizationServerHandler -- NewClientID request %#v\n", request)
 		response.ClientID = uuid.New().String()
-		logboek.Debug.LogF("SynchronizationServerHandler -- NewClientID response %#v\n", response)
+		logboek.Debug().LogF("SynchronizationServerHandler -- NewClientID response %#v\n", response)
 	})
 }
 
@@ -104,7 +104,7 @@ func (server *SynchronizationServerHandler) handleLanding(w http.ResponseWriter,
 }
 
 func (server *SynchronizationServerHandler) handleRequestByClientID(w http.ResponseWriter, r *http.Request) {
-	logboek.Debug.LogF("SynchronizationServerHandler -- ServeHTTP url path = %q\n", r.URL.Path)
+	logboek.Debug().LogF("SynchronizationServerHandler -- ServeHTTP url path = %q\n", r.URL.Path)
 
 	if r.URL.Path == "/" {
 		server.handleLanding(w, r)
@@ -112,7 +112,7 @@ func (server *SynchronizationServerHandler) handleRequestByClientID(w http.Respo
 	}
 
 	clientID := strings.SplitN(strings.TrimPrefix(r.URL.Path, "/"), "/", 2)[0]
-	logboek.Debug.LogF("SynchronizationServerHandler -- ServeHTTP clientID = %q\n", clientID)
+	logboek.Debug().LogF("SynchronizationServerHandler -- ServeHTTP clientID = %q\n", clientID)
 
 	if clientID == "" {
 		http.Error(w, fmt.Sprintf("Bad request: cannot get clientID from URL path %q", r.URL.Path), http.StatusBadRequest)
@@ -147,7 +147,7 @@ func (server *SynchronizationServerHandler) getOrCreateHandlerByClientID(clientI
 		handler := NewSynchronizationServerHandlerByClientID(clientID, distributedLockerBackend, stagesStorageCache)
 		server.SyncrhonizationServerByClientID[clientID] = handler
 
-		logboek.Debug.LogF("SynchronizationServerHandler -- Created new synchronization server handler by clientID %q: %v\n", clientID, handler)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Created new synchronization server handler by clientID %q: %v\n", clientID, handler)
 		return handler, nil
 	}
 }

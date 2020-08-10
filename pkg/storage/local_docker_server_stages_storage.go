@@ -129,7 +129,7 @@ func (storage *LocalDockerServerStagesStorage) GetStageDescription(projectName, 
 }
 
 func (storage *LocalDockerServerStagesStorage) AddManagedImage(projectName, imageName string) error {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
 	if validateImageName(imageName) != nil {
 		return nil
@@ -150,7 +150,7 @@ func (storage *LocalDockerServerStagesStorage) AddManagedImage(projectName, imag
 }
 
 func (storage *LocalDockerServerStagesStorage) RmManagedImage(projectName, imageName string) error {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
 
 	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
 
@@ -168,7 +168,7 @@ func (storage *LocalDockerServerStagesStorage) RmManagedImage(projectName, image
 }
 
 func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName string) ([]string, error) {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetManagedImages %s\n", projectName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.GetManagedImages %s\n", projectName)
 
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalManagedImageRecord_ImageNameFormat, projectName))
@@ -222,10 +222,10 @@ func (storage *LocalDockerServerStagesStorage) StoreImage(img container_runtime.
 }
 
 func (storage *LocalDockerServerStagesStorage) PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
 
 	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -237,16 +237,16 @@ func (storage *LocalDockerServerStagesStorage) PutImageCommit(projectName, image
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
-	logboek.Info.LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
+	logboek.Info().LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 	return nil
 }
 
 func (storage *LocalDockerServerStagesStorage) RmImageCommit(projectName, imageName, commit string) error {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
 
 	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
@@ -258,33 +258,33 @@ func (storage *LocalDockerServerStagesStorage) RmImageCommit(projectName, imageN
 		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
 	}
 
-	logboek.Info.LogF("Removed image %q metadata by commit %s\n", imageName, commit)
+	logboek.Info().LogF("Removed image %q metadata by commit %s\n", imageName, commit)
 
 	return nil
 }
 
 func (storage *LocalDockerServerStagesStorage) GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
 
 	fullImageName := makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit)
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetImageMetadataByCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.GetImageMetadataByCommit full image name: %s\n", fullImageName)
 
 	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(fullImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
 	} else if inspect != nil && inspect.Config != nil && inspect.Config.Labels != nil {
 		metadata := &ImageMetadata{ContentSignature: inspect.Config.Labels["ContentSignature"]}
 
-		logboek.Debug.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
+		logboek.Debug().LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 		return metadata, nil
 	} else {
-		logboek.Debug.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
+		logboek.Debug().LogF("No metadata found for image %q by commit %s\n", imageName, commit)
 		return nil, nil
 	}
 }
 
 func (storage *LocalDockerServerStagesStorage) GetImageCommits(projectName, imageName string) ([]string, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
 
 	var res []string
 
@@ -313,7 +313,7 @@ func (storage *LocalDockerServerStagesStorage) GetImageCommits(projectName, imag
 			iName := unslugDockerImageTagAsImageName(sluggedImage)
 
 			if imageName == iName {
-				logboek.Debug.LogF("Found image %q metadata by commit %s\n", imageName, commit)
+				logboek.Debug().LogF("Found image %q metadata by commit %s\n", imageName, commit)
 				res = append(res, commit)
 			}
 		}
@@ -335,7 +335,7 @@ func (storage *LocalDockerServerStagesStorage) Address() string {
 }
 
 func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(projectName string) ([]*ClientIDRecord, error) {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetClientID for project %s\n", projectName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.GetClientID for project %s\n", projectName)
 
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalClientIDRecord_ImageNameFormat, projectName))
@@ -365,7 +365,7 @@ func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(projectName st
 			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
 			res = append(res, rec)
 
-			logboek.Debug.LogF("-- LocalDockerServerStagesStorage.GetClientID got clientID record: %s\n", rec)
+			logboek.Debug().LogF("-- LocalDockerServerStagesStorage.GetClientID got clientID record: %s\n", rec)
 		}
 	}
 
@@ -373,11 +373,11 @@ func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(projectName st
 }
 
 func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(projectName string, rec *ClientIDRecord) error {
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
 
 	fullImageName := fmt.Sprintf(LocalClientIDRecord_ImageFormat, projectName, rec.ClientID, rec.TimestampMillisec)
 
-	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- LocalDockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -389,7 +389,7 @@ func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(projectName st
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
-	logboek.Info.LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
+	logboek.Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
 
 	return nil
 }
@@ -417,7 +417,7 @@ func processRelatedContainers(imageInfoList []*image.Info, options processRelate
 		for _, imgInfo := range imageInfoList {
 			if imgInfo.ID == container.ImageID {
 				if options.skipUsedImages {
-					logboek.Default.LogFDetails("Skip image %s (used by container %s)\n", logImageName(imgInfo), logContainerName(container))
+					logboek.Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(imgInfo), logContainerName(container))
 					imageInfoListToExcept = append(imageInfoListToExcept, imgInfo)
 				} else if options.rmContainersThatUseImage {
 					containerListToRemove = append(containerListToRemove, container)

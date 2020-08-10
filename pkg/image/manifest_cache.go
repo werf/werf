@@ -34,8 +34,9 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 }
 
 func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.GetImageInfo %s", imageName), logboek.LevelLogProcessStartOptions{})
-	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+	logProcess := logboek.Debug().LogProcess("-- ManifestCache.GetImageInfo %s", imageName)
+	logProcess.Start()
+	defer logProcess.End()
 
 	if lock, err := cache.lock(imageName); err != nil {
 		return nil, err
@@ -59,8 +60,9 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 }
 
 func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.StoreImageInfo %s", imgInfo.Name), logboek.LevelLogProcessStartOptions{})
-	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+	logProcess := logboek.Debug().LogProcess("-- ManifestCache.StoreImageInfo %s", imgInfo.Name)
+	logProcess.Start()
+	defer logProcess.End()
 
 	if lock, err := cache.lock(imgInfo.Name); err != nil {
 		return err

@@ -15,7 +15,7 @@ import (
 )
 
 func Purge(dryRun bool) error {
-	return logboek.LogProcess("Running purge for tmp data", logboek.LogProcessOptions{}, func() error { return purge(dryRun) })
+	return logboek.LogProcess("Running purge for tmp data").DoError(func() error { return purge(dryRun) })
 }
 
 func purge(dryRun bool) error {

@@ -40,9 +40,9 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 	client.CreateNamespace = opts.CreateNamespace
 	client.ReleaseName = releaseName
 
-	logboek.Debug.LogF("Original chart version: %q", client.Version)
+	logboek.Debug().LogF("Original chart version: %q", client.Version)
 	if client.Version == "" && client.Devel {
-		logboek.Debug.LogF("setting version to >0.0.0-0")
+		logboek.Debug().LogF("setting version to >0.0.0-0")
 		client.Version = ">0.0.0-0"
 	}
 
@@ -51,7 +51,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		return err
 	}
 
-	logboek.Debug.LogF("CHART PATH: %s\n", cp)
+	logboek.Debug().LogF("CHART PATH: %s\n", cp)
 
 	p := getter.All(envSettings)
 	vals, err := opts.ValuesOptions.MergeValues(p)
@@ -77,7 +77,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		if err := action.CheckDependencies(chartRequested, req); err != nil {
 			if client.DependencyUpdate {
 				man := &downloader.Manager{
-					Out:              logboek.GetOutStream(),
+					Out:              logboek.ProxyOutStream(),
 					ChartPath:        cp,
 					Keyring:          client.ChartPathOptions.Keyring,
 					SkipUpdate:       false,
@@ -104,7 +104,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		return errors.Wrap(err, "INSTALL FAILED")
 	}
 
-	return outfmt.Write(logboek.GetOutStream(), &statusPrinter{rel, envSettings.Debug})
+	return outfmt.Write(logboek.ProxyOutStream(), &statusPrinter{rel, envSettings.Debug})
 }
 
 // isChartInstallable validates if a chart can be installed

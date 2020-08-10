@@ -40,7 +40,7 @@ func (manager *GenericLockManager) LockStagesAndImages(projectName string, opts 
 func (manager *GenericLockManager) Unlock(lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
-		logboek.ErrF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
+		logboek.Error().LogF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
 	}
 	return err
 }

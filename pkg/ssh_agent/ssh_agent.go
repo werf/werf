@@ -45,7 +45,7 @@ func Init(keys []string) error {
 	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
 	if systemAgentSock != "" && systemAgentSockExists {
 		SSHAuthSock = systemAgentSock
-		logboek.Info.LogF("Using system ssh-agent: %s\n", systemAgentSock)
+		logboek.Info().LogF("Using system ssh-agent: %s\n", systemAgentSock)
 		return nil
 	}
 
@@ -64,12 +64,12 @@ func Init(keys []string) error {
 		for _, key := range defaultKeys {
 			keyData, err := ioutil.ReadFile(key)
 			if err != nil {
-				logboek.Warn.LogF("WARNING: cannot read default key %s: %s\n", key, err)
+				logboek.Warn().LogF("WARNING: cannot read default key %s: %s\n", key, err)
 				continue
 			}
 			_, err = ssh.ParseRawPrivateKey(keyData)
 			if err != nil {
-				logboek.Warn.LogF("WARNING: default key %s validation error: %s\n", key, err)
+				logboek.Warn().LogF("WARNING: default key %s validation error: %s\n", key, err)
 				continue
 			}
 
@@ -129,7 +129,7 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	logboek.Info.LogF("Running ssh agent on unix sock: %s\n", sockPath)
+	logboek.Info().LogF("Running ssh agent on unix sock: %s\n", sockPath)
 
 	go func() {
 		agnt := agent.NewKeyring()
@@ -137,7 +137,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				logboek.LogWarnF("WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logboek.Warn().LogF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -146,13 +146,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					logboek.LogWarnF("WARNING: ssh-agent server error: %s\n", err)
+					logboek.Warn().LogF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					logboek.LogWarnF("WARNING: ssh-agent server connection close error: %s\n", err)
+					logboek.Warn().LogF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()
@@ -186,7 +186,7 @@ func addSSHKey(authSock string, key string) error {
 		return err
 	}
 
-	logboek.Info.LogF("Added private key %s to ssh agent %s\n", key, authSock)
+	logboek.Info().LogF("Added private key %s to ssh agent %s\n", key, authSock)
 
 	return nil
 }

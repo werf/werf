@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 )
@@ -76,7 +77,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath("")
 	if isTreeMatched {
 		if debugProcess() {
-			logboek.Debug.LogLn("Root tree was added")
+			logboek.Debug().LogLn("Root tree was added")
 		}
 
 		rootTreeEntry := &LsTreeEntry{
@@ -91,7 +92,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 		res.lsTreeEntries = append(res.lsTreeEntries, rootTreeEntry)
 	} else if shouldWalkThrough {
 		if debugProcess() {
-			logboek.Debug.LogLn("Root tree was checking")
+			logboek.Debug().LogLn("Root tree was checking")
 		}
 
 		lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(repository, tree, "", "", pathMatcher)
@@ -103,7 +104,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 		res.submodulesResults = submodulesLsTreeEntries
 	} else {
 		if debugProcess() {
-			logboek.Debug.LogLn("Root tree was skipped")
+			logboek.Debug().LogLn("Root tree was skipped")
 		}
 	}
 
@@ -133,8 +134,8 @@ func processSpecificEntryFilepath(repository *git.Repository, tree *object.Tree,
 		if err != nil {
 			if err == git.ErrSubmoduleNotInitialized {
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						submoduleFullFilepath,
 					)
@@ -218,12 +219,12 @@ func lsTreeDirEntryMatch(repository *git.Repository, tree *object.Tree, reposito
 	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
 	if isTreeMatched {
 		if debugProcess() {
-			logboek.Debug.LogLn("Dir entry was added:         ", lsTreeEntry.FullFilepath)
+			logboek.Debug().LogLn("Dir entry was added:         ", lsTreeEntry.FullFilepath)
 		}
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 	} else if shouldWalkThrough {
 		if debugProcess() {
-			logboek.Debug.LogLn("Dir entry was checking:      ", lsTreeEntry.FullFilepath)
+			logboek.Debug().LogLn("Dir entry was checking:      ", lsTreeEntry.FullFilepath)
 		}
 		entryTree, err := treeTree(tree, treeFullFilepath, lsTreeEntry.FullFilepath)
 		if err != nil {
@@ -240,12 +241,12 @@ func lsTreeSubmoduleEntryMatch(repository *git.Repository, repositoryFullFilepat
 	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
 	if isTreeMatched {
 		if debugProcess() {
-			logboek.Debug.LogLn("Submodule entry was added:   ", lsTreeEntry.FullFilepath)
+			logboek.Debug().LogLn("Submodule entry was added:   ", lsTreeEntry.FullFilepath)
 		}
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 	} else if shouldWalkThrough {
 		if debugProcess() {
-			logboek.Debug.LogLn("Submodule entry was checking:", lsTreeEntry.FullFilepath)
+			logboek.Debug().LogLn("Submodule entry was checking:", lsTreeEntry.FullFilepath)
 		}
 
 		submoduleFilepath, err := filepath.Rel(repositoryFullFilepath, lsTreeEntry.FullFilepath)
@@ -258,8 +259,8 @@ func lsTreeSubmoduleEntryMatch(repository *git.Repository, repositoryFullFilepat
 		if err != nil {
 			if err == git.ErrSubmoduleNotInitialized {
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						lsTreeEntry.FullFilepath,
 					)
@@ -300,7 +301,7 @@ func lsTreeSubmoduleEntryMatch(repository *git.Repository, repositoryFullFilepat
 func lsTreeFileEntryMatch(lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	if pathMatcher.MatchPath(lsTreeEntry.FullFilepath) {
 		if debugProcess() {
-			logboek.Debug.LogLn("File entry was added:        ", lsTreeEntry.FullFilepath)
+			logboek.Debug().LogLn("File entry was added:        ", lsTreeEntry.FullFilepath)
 		}
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 	}
@@ -359,8 +360,8 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 					resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepath)
 
 					if debugProcess() {
-						logboek.Debug.LogFWithCustomStyle(
-							logboek.StyleByName(logboek.FailStyleName),
+						logboek.Debug().LogFWithCustomStyle(
+							style.Get(style.FailName),
 							"Submodule is not initialized: path %s will be added to checksum\n",
 							submoduleFullFilepath,
 						)
@@ -419,8 +420,8 @@ func submoduleRepositoryAndTree(repository *git.Repository, submodulePath string
 
 	if debugProcess() {
 		if !submoduleStatus.IsClean() {
-			logboek.Debug.LogFWithCustomStyle(
-				logboek.StyleByName(logboek.FailStyleName),
+			logboek.Debug().LogFWithCustomStyle(
+				style.Get(style.FailName),
 				"Submodule is not clean (current commit %s), expected commit %s will be checked\n",
 				submoduleStatus.Current,
 				submoduleStatus.Expected,

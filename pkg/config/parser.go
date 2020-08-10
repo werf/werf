@@ -316,7 +316,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logboek.LogWarnF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logboek.Warn().LogF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
@@ -375,12 +375,12 @@ func (f files) Glob(pattern string) map[string]interface{} {
 	})
 
 	if err != nil {
-		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
+		logboek.Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
 		return nil
 	}
 
 	if len(result) == 0 {
-		logboek.LogWarnF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
+		logboek.Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
 		return nil
 	}
 

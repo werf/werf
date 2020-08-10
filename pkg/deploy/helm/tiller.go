@@ -10,8 +10,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/werf/werf/pkg/util/secretvalues"
-
 	"github.com/gosuri/uitable"
 	"github.com/gosuri/uitable/util/strutil"
 	"k8s.io/helm/pkg/proto/hapi/release"
@@ -35,6 +33,9 @@ import (
 	"k8s.io/helm/pkg/timeconv"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+
+	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
 type ThreeWayMergeModeType string
@@ -169,7 +170,7 @@ func Init(options InitOptions) error {
 					return fmt.Errorf("unable to create helm release storage namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 				}
 
-				logboek.Default.LogFDetails("Created helm release storage namespace '%s'\n", options.HelmReleaseStorageNamespace)
+				logboek.Default().LogFDetails("Created helm release storage namespace '%s'\n", options.HelmReleaseStorageNamespace)
 			} else {
 				return fmt.Errorf("unable to initialize helm release storage in namespace '%s': %s", options.HelmReleaseStorageNamespace, err)
 			}
@@ -266,7 +267,7 @@ func releaseStatus(ctx context.Context, releaseName string, opts releaseStatusOp
 	res, err := tillerReleaseServer.GetReleaseStatus(ctx, req)
 	if err != nil {
 		for _, msg := range releaseLogMessages {
-			logboek.Default.LogFDetails("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
+			logboek.Default().LogFDetails("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
 		}
 	}
 	return res, err
@@ -295,7 +296,7 @@ func releaseDelete(ctx context.Context, releaseName string, opts releaseDeleteOp
 	_, err := tillerReleaseServer.UninstallRelease(ctx, req)
 	if err != nil {
 		for _, msg := range releaseLogMessages {
-			logboek.Default.LogFDetails("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
+			logboek.Default().LogFDetails("%s\n", secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg))
 		}
 		return err
 	}
@@ -345,8 +346,8 @@ func ReleaseInstall(ctx context.Context, chartPath, releaseName, namespace strin
 		return err
 	}
 
-	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
-		return fprintReleaseStatus(ctx, logboek.GetOutStream(), releaseName)
+	return logboek.LogBlock("Deployed release info").DoError(func() error {
+		return fprintReleaseStatus(ctx, logboek.ProxyOutStream(), releaseName)
 	})
 }
 
@@ -381,8 +382,8 @@ func ReleaseUpdate(ctx context.Context, chartPath, releaseName string, values []
 		return err
 	}
 
-	return logboek.LogBlock(fmt.Sprintf("Deployed release info"), logboek.LogBlockOptions{}, func() error {
-		return fprintReleaseStatus(ctx, logboek.GetOutStream(), releaseName)
+	return logboek.LogBlock("Deployed release info").DoError(func() error {
+		return fprintReleaseStatus(ctx, logboek.ProxyOutStream(), releaseName)
 	})
 }
 
@@ -434,7 +435,7 @@ func releaseInstall(ctx context.Context, chart *chart.Chart, releaseName, namesp
 		ThreeWayMergeMode: convertThreeWayMergeModeForHelm(getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode)),
 	}
 
-	logboek.Default.LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
+	logboek.Default().LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
 
 	resp, err := tillerReleaseServer.InstallRelease(ctx, req)
 	if err != nil {
@@ -486,7 +487,7 @@ func releaseUpdate(ctx context.Context, chart *chart.Chart, releaseName string, 
 		ThreeWayMergeMode: convertThreeWayMergeModeForHelm(getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode)),
 	}
 
-	logboek.Default.LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
+	logboek.Default().LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
 
 	resp, err := tillerReleaseServer.UpdateRelease(ctx, req)
 	if err != nil {
@@ -528,7 +529,7 @@ func releaseRollback(releaseName string, revision int32, userSpecifiedThreeWayMe
 		ThreeWayMergeMode: convertThreeWayMergeModeForHelm(getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode)),
 	}
 
-	logboek.Default.LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
+	logboek.Default().LogFHighlight("Using three-way-merge mode \"%s\"\n", getActualThreeWayMergeMode(userSpecifiedThreeWayMergeMode))
 
 	resp, err := tillerReleaseServer.RollbackRelease(ctx, req)
 	if err != nil {
@@ -545,12 +546,10 @@ func releaseRollback(releaseName string, revision int32, userSpecifiedThreeWayMe
 
 func displayReleaseLogMessages(ctx context.Context) {
 	logboek.LogOptionalLn()
-	_ = logboek.Default.LogBlock("Debug info", logboek.LevelLogBlockOptions{}, func() error {
+	logboek.Default().LogBlock("Debug info").Do(func() {
 		for _, msg := range releaseLogMessages {
-			_, _ = logboek.OutF("%s\n", logboek.DetailsStyle().Colorize(secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg)))
+			logboek.LogF("%s\n", style.Details().Colorize(secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg)))
 		}
-
-		return nil
 	})
 }
 
@@ -659,24 +658,24 @@ func displayWarnings(ctx context.Context, userSpecifiedThreeWayMergeMode ThreeWa
 
 	if currentDate.After(noDisableThreeWayMergeDeadline) {
 		if userSpecifiedThreeWayMergeMode != "" && userSpecifiedThreeWayMergeMode != ThreeWayMergeEnabled {
-			logboek.LogWarnF("WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore, starting with %s!\n", userSpecifiedThreeWayMergeMode, noDisableThreeWayMergeDeadline)
-			logboek.LogWarnF("WARNING werf will always use \"enabled\" three-way-merge-mode.")
+			logboek.Warn().LogF("WARNING Specified three-way-merge-mode \"%s\" cannot be activated anymore, starting with %s!\n", userSpecifiedThreeWayMergeMode, noDisableThreeWayMergeDeadline)
+			logboek.Warn().LogF("WARNING werf will always use \"enabled\" three-way-merge-mode.")
 		}
 	} else if userSpecifiedThreeWayMergeMode != ThreeWayMergeEnabled {
-		logboek.Default.LogFHighlight("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)
+		logboek.Default().LogFHighlight("ATTENTION Current three-way-merge-mode for updates is \"%s\".\n", threeWayMergeMode)
 
 		if newRelease.ThreeWayMergeEnabled {
-			logboek.Default.LogFHighlight("ATTENTION Three way merge is ENABLED for the release %q.\n", newRelease.Name)
+			logboek.Default().LogFHighlight("ATTENTION Three way merge is ENABLED for the release %q.\n", newRelease.Name)
 		} else {
-			logboek.Default.LogFHighlight("ATTENTION Three way merge is DISABLED for the release %q.\n", newRelease.Name)
+			logboek.Default().LogFHighlight("ATTENTION Three way merge is DISABLED for the release %q.\n", newRelease.Name)
 		}
 
-		logboek.Default.LogLnHighlight(
+		logboek.Default().LogLnHighlight(
 			"ATTENTION\n" +
 				"ATTENTION Note that three-way-merge-mode does not affect resources adoption,\n" +
 				"ATTENTION resources adoption will always use three-way-merge patches.")
 
-		logboek.Default.LogLnHighlight(
+		logboek.Default().LogLnHighlight(
 			"ATTENTION\n" +
 				"ATTENTION To force werf to use specific three-way-merge mode\n" +
 				"ATTENTION and prevent auto selecting of three-way-merge-mode\n" +
@@ -693,7 +692,7 @@ func displayWarnings(ctx context.Context, userSpecifiedThreeWayMergeMode ThreeWa
 				"ATTENTION")
 
 		if currentDate.Before(threeWayMergeOnlyNewReleasesEnabledDeadline) {
-			logboek.Default.LogLnHighlight(
+			logboek.Default().LogLnHighlight(
 				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeOnlyNewReleasesEnabledDeadline) +
 					"ATTENTION werf will select \"onlyNewReleases\" three-way-merge-mode by default!\n" +
 					"ATTENTION\n" +
@@ -702,39 +701,39 @@ func displayWarnings(ctx context.Context, userSpecifiedThreeWayMergeMode ThreeWa
 					fmt.Sprintf("ATTENTION because starting with %s\n", threeWayMergeEnabledDeadline) +
 					"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!")
 		} else if currentDate.Before(threeWayMergeEnabledDeadline) {
-			logboek.Default.LogLnHighlight(
+			logboek.Default().LogLnHighlight(
 				fmt.Sprintf("ATTENTION Starting with %s\n", threeWayMergeEnabledDeadline) +
 					"ATTENTION werf will select \"enabled\" three-way-merge-mode by default!")
 
 			if userSpecifiedThreeWayMergeMode == ThreeWayMergeDisabled {
-				logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"disabled\" and\n")
-				logboek.LogWarnF("WARNING should be switched to \"onlyNewReleases\" or \"enabled\"\n")
-				logboek.LogWarnF("WARNING as soon as possible, because two-way-merge will be DEPRECATED soon!\n")
+				logboek.Warn().LogF("WARNING Three-way-merge-mode is set to \"disabled\" and\n")
+				logboek.Warn().LogF("WARNING should be switched to \"onlyNewReleases\" or \"enabled\"\n")
+				logboek.Warn().LogF("WARNING as soon as possible, because two-way-merge will be DEPRECATED soon!\n")
 			} else if userSpecifiedThreeWayMergeMode == ThreeWayMergeOnlyNewReleases {
 				if !newRelease.ThreeWayMergeEnabled {
-					logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"onlyNewReleases\" and current release\n")
-					logboek.LogWarnF("WARNING %q is old and does not use three way merge.\n", newRelease.GetName())
-					logboek.LogWarnF("WARNING Manually add annotation \"%s\": \"true\" to the %s\n", driver.ThreeWayMergeEnabledAnnotation, releaseResourceName)
-					logboek.LogWarnF("WARNING to enable three-way-merge for this release as soon as possible,\n")
-					logboek.LogWarnF("WARNING because two-way-merge will be DEPRECATED soon!\n")
+					logboek.Warn().LogF("WARNING Three-way-merge-mode is set to \"onlyNewReleases\" and current release\n")
+					logboek.Warn().LogF("WARNING %q is old and does not use three way merge.\n", newRelease.GetName())
+					logboek.Warn().LogF("WARNING Manually add annotation \"%s\": \"true\" to the %s\n", driver.ThreeWayMergeEnabledAnnotation, releaseResourceName)
+					logboek.Warn().LogF("WARNING to enable three-way-merge for this release as soon as possible,\n")
+					logboek.Warn().LogF("WARNING because two-way-merge will be DEPRECATED soon!\n")
 				}
 			}
 		} else {
 			if userSpecifiedThreeWayMergeMode != "" {
-				logboek.LogWarnF("WARNING Three-way-merge-mode is set to \"%s\" and\n", userSpecifiedThreeWayMergeMode)
-				logboek.LogWarnF("WARNING should be switched to \"enabled\" as soon as possible,\n")
-				logboek.LogWarnF("WARNING because two-way-merge will be DEPRECATED soon!\n")
+				logboek.Warn().LogF("WARNING Three-way-merge-mode is set to \"%s\" and\n", userSpecifiedThreeWayMergeMode)
+				logboek.Warn().LogF("WARNING should be switched to \"enabled\" as soon as possible,\n")
+				logboek.Warn().LogF("WARNING because two-way-merge will be DEPRECATED soon!\n")
 			}
 		}
 	}
 
 	if len(kube.LastClientWarnings) > 0 {
-		logboek.LogWarnF("WARNING ### Following problems detected during deploy process ###\n")
+		logboek.Warn().LogF("WARNING ### Following problems detected during deploy process ###\n")
 
 		for _, msg := range kube.LastClientWarnings {
-			logboek.LogWarnF("WARNING %s\n", msg)
+			logboek.Warn().LogF("WARNING %s\n", msg)
 		}
 	}
 
-	logboek.Warn.LogOptionalLn()
+	logboek.Warn().LogOptionalLn()
 }

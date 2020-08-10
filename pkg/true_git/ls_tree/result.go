@@ -51,12 +51,12 @@ func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 			isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
 			if isTreeMatched {
 				if debugProcess() {
-					logboek.Debug.LogLn("Root tree was added")
+					logboek.Debug().LogLn("Root tree was added")
 				}
 				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
 			} else if shouldWalkThrough {
 				if debugProcess() {
-					logboek.Debug.LogLn("Root tree was checking")
+					logboek.Debug().LogLn("Root tree was checking")
 				}
 
 				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
@@ -126,7 +126,7 @@ func (r *Result) Checksum() string {
 			logFilepath = "."
 		}
 
-		logboek.Debug.LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+		logboek.Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
 
 		return nil
 	})
@@ -135,7 +135,7 @@ func (r *Result) Checksum() string {
 	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepaths {
 		checksumArg := fmt.Sprintf("-%s", filepath.ToSlash(submoduleFullFilepath))
 		h.Write([]byte(checksumArg))
-		logboek.Debug.LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
+		logboek.Debug().LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
 	}
 
 	sort.Slice(r.submodulesResults, func(i, j int) bool {
@@ -145,13 +145,12 @@ func (r *Result) Checksum() string {
 	for _, submoduleResult := range r.submodulesResults {
 		var submoduleChecksum string
 		if !submoduleResult.IsEmpty() {
-			logboek.Debug.LogOptionalLn()
+			logboek.Debug().LogOptionalLn()
 			blockMsg := fmt.Sprintf("submodule %s", submoduleResult.repositoryFullFilepath)
-			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+			logboek.Debug().LogBlock(blockMsg).Do(func() {
 				submoduleChecksum = submoduleResult.Checksum()
-				logboek.Debug.LogLn()
-				logboek.Debug.LogLn(submoduleChecksum)
-				return nil
+				logboek.Debug().LogLn()
+				logboek.Debug().LogLn(submoduleChecksum)
 			})
 		}
 

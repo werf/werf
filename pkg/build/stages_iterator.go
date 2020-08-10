@@ -44,7 +44,7 @@ func (iterator *StagesIterator) OnImageStage(img *Image, stg stage.Interface, on
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
-	logboek.Debug.LogF("%s stage is empty: %v\n", stg.LogDetailedName(), isEmpty)
+	logboek.Debug().LogF("%s stage is empty: %v\n", stg.LogDetailedName(), isEmpty)
 
 	if stg.Name() != "from" && stg.Name() != "dockerfile" {
 		if iterator.PrevStage == nil {
@@ -57,20 +57,20 @@ func (iterator *StagesIterator) OnImageStage(img *Image, stg stage.Interface, on
 	}
 
 	iterator.PrevStage = stg
-	logboek.Debug.LogF("Set prev stage = %q %s\n", iterator.PrevStage.Name(), iterator.PrevStage.GetSignature())
+	logboek.Debug().LogF("Set prev stage = %q %s\n", iterator.PrevStage.Name(), iterator.PrevStage.GetSignature())
 
 	if !isEmpty {
 		iterator.PrevNonEmptyStage = stg
-		logboek.Debug.LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
+		logboek.Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
 
 		if iterator.PrevNonEmptyStage.GetImage().GetStageDescription() != nil {
 			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetImage().GetStageDescription().Info.Size
-			logboek.Debug.LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
+			logboek.Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
 		}
 
 		if stg.GetImage().GetStageDescription() != nil {
 			iterator.PrevBuiltStage = stg
-			logboek.Debug.LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetImage().Name())
+			logboek.Debug().LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetImage().Name())
 		}
 	}
 

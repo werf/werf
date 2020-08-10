@@ -100,7 +100,7 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	}
 
 	if isWorkTreeDirExist && !isWorkTreeRegistered {
-		logboek.Info.LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+		logboek.Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
 
 		if err := os.RemoveAll(currentCommitPath); err != nil {
 			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
@@ -130,11 +130,11 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
 	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
-	if err := logboek.Info.LogProcess(logProcessMsg, logboek.LevelLogProcessOptions{}, func() error {
-		logboek.Info.LogFDetails("Work tree dir: %s\n", workTreeDir)
-		logboek.Info.LogFDetails("Commit: %s\n", commit)
+	if err := logboek.Info().LogProcess(logProcessMsg).DoError(func() error {
+		logboek.Info().LogFDetails("Work tree dir: %s\n", workTreeDir)
+		logboek.Info().LogFDetails("Commit: %s\n", commit)
 		if currentCommit != "" {
-			logboek.Info.LogFDetails("Current commit: %s\n", currentCommit)
+			logboek.Info().LogFDetails("Current commit: %s\n", currentCommit)
 		}
 		return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {

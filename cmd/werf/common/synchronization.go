@@ -127,15 +127,16 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 		var address string
-		if err := logboek.Default.LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server"), logboek.LevelLogProcessOptions{}, func() error {
-			if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
-				return fmt.Errorf("unable to get synchronization client id: %s", err)
-			} else {
-				address = fmt.Sprintf("%s/%s", synchronization, clientID)
-				logboek.Default.LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
-				return nil
-			}
-		}); err != nil {
+		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server")).
+			DoError(func() error {
+				if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
+					return fmt.Errorf("unable to get synchronization client id: %s", err)
+				} else {
+					address = fmt.Sprintf("%s/%s", synchronization, clientID)
+					logboek.Default().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
+					return nil
+				}
+			}); err != nil {
 			return nil, err
 		}
 

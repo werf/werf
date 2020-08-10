@@ -84,7 +84,7 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Debug.LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+		logboek.Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
 			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
@@ -93,14 +93,14 @@ func (storage *RepoStagesStorage) GetAllStages(projectName string) ([]image.Stag
 
 			if signature, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
-					logboek.Debug.LogLn(err.Error())
+					logboek.Debug().LogLn(err.Error())
 					continue
 				}
 				return nil, err
 			} else {
 				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
 
-				logboek.Debug.LogF("Selected stage by signature %q uniqueID %d\n", signature, uniqueID)
+				logboek.Debug().LogF("Selected stage by signature %q uniqueID %d\n", signature, uniqueID)
 			}
 		}
 
@@ -130,26 +130,26 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 	if tags, err := storage.DockerRegistry.Tags(storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Debug.LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+		logboek.Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 		for _, tag := range tags {
 			if !strings.HasPrefix(tag, signature) {
-				logboek.Debug.LogF("Discard tag %q: should have prefix %q\n", tag, signature)
+				logboek.Debug().LogF("Discard tag %q: should have prefix %q\n", tag, signature)
 				continue
 			}
 			if _, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
-					logboek.Debug.LogLn(err.Error())
+					logboek.Debug().LogLn(err.Error())
 					continue
 				}
 				return nil, err
 			} else {
-				logboek.Debug.LogF("Tag %q is suitable for signature %q\n", tag, signature)
+				logboek.Debug().LogF("Tag %q is suitable for signature %q\n", tag, signature)
 				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
 			}
 		}
 	}
 
-	logboek.Debug.LogF("-- RepoStagesStorage.GetRepoImagesBySignature result for %q: %#v\n", storage.RepoAddress, res)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature result for %q: %#v\n", storage.RepoAddress, res)
 
 	return res, nil
 }
@@ -157,8 +157,8 @@ func (storage *RepoStagesStorage) GetStagesBySignature(projectName, signature st
 func (storage *RepoStagesStorage) GetStageDescription(projectName, signature string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
 
-	logboek.Debug.LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, signature, uniqueID)
-	logboek.Debug.LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, signature, uniqueID)
+	logboek.Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(stageImageName); err != nil {
 		return nil, err
@@ -172,23 +172,23 @@ func (storage *RepoStagesStorage) GetStageDescription(projectName, signature str
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string) error {
-	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
 	if validateImageName(imageName) != nil {
 		return nil
 	}
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
-	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
 	if isExists, err := storage.DockerRegistry.IsRepoImageExists(fullImageName); err != nil {
 		return err
 	} else if isExists {
-		logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
+		logboek.Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
 		return nil
 	}
 
-	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
 
 	if err := storage.DockerRegistry.PushImage(fullImageName, docker_registry.PushImageOptions{}); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
@@ -198,14 +198,14 @@ func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string)
 }
 
 func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) error {
-	logboek.Debug.LogF("-- RepoStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(fullImageName); err != nil {
 		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
 	} else if imgInfo == nil {
-		logboek.Debug.LogF("-- RepoStagesStorage.RmManagedImage record %q does not exist => exiting\n", fullImageName)
+		logboek.Debug().LogF("-- RepoStagesStorage.RmManagedImage record %q does not exist => exiting\n", fullImageName)
 		return nil
 	} else {
 		if err := storage.DockerRegistry.DeleteRepoImage(imgInfo); err != nil {
@@ -217,7 +217,7 @@ func (storage *RepoStagesStorage) RmManagedImage(projectName, imageName string) 
 }
 
 func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
 	var res []string
 
@@ -280,10 +280,10 @@ func (storage *RepoStagesStorage) ShouldFetchImage(img container_runtime.Image) 
 }
 
 func (storage *RepoStagesStorage) PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error {
-	logboek.Debug.LogF("-- RepoStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
+	logboek.Debug().LogF("-- RepoStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
 
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Debug.LogF("-- RepoStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
 
 	opts := docker_registry.PushImageOptions{
 		Labels: map[string]string{"ContentSignature": metadata.ContentSignature},
@@ -292,16 +292,16 @@ func (storage *RepoStagesStorage) PutImageCommit(projectName, imageName, commit 
 		return fmt.Errorf("unable to push image %s with metadata: %s", fullImageName, err)
 	}
 
-	logboek.Info.LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
+	logboek.Info().LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 	return nil
 }
 
 func (storage *RepoStagesStorage) RmImageCommit(projectName, imageName, commit string) error {
-	logboek.Debug.LogF("-- RepoStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
+	logboek.Debug().LogF("-- RepoStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
 
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Debug.LogF("-- RepoStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
 
 	if img, err := storage.DockerRegistry.TryGetRepoImage(fullImageName); err != nil {
 		return fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
@@ -310,24 +310,24 @@ func (storage *RepoStagesStorage) RmImageCommit(projectName, imageName, commit s
 			return fmt.Errorf("unable to remove repo image %s: %s", fullImageName, err)
 		}
 
-		logboek.Info.LogF("Removed image %q metadata by commit %s\n", imageName, commit)
+		logboek.Info().LogF("Removed image %q metadata by commit %s\n", imageName, commit)
 	}
 
 	return nil
 }
 
 func (storage *RepoStagesStorage) GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
 
 	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Debug.LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit full image name: %s\n", fullImageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(fullImageName); err != nil {
 		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
 	} else if imgInfo != nil && imgInfo.Labels != nil {
 		metadata := &ImageMetadata{ContentSignature: imgInfo.Labels["ContentSignature"]}
 
-		logboek.Debug.LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
+		logboek.Debug().LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
 
 		return metadata, nil
 	} else {
@@ -336,13 +336,13 @@ func (storage *RepoStagesStorage) GetImageMetadataByCommit(projectName, imageNam
 			logboek.Debug.LogF("imgInfo.Labels = %v\n", imgInfo.Labels)
 		}
 
-		logboek.Info.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
+		logboek.Info().LogF("No metadata found for image %q by commit %s\n", imageName, commit)
 		return nil, nil
 	}
 }
 
 func (storage *RepoStagesStorage) GetImageCommits(projectName, imageName string) ([]string, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
 
 	var res []string
 
@@ -367,7 +367,7 @@ func (storage *RepoStagesStorage) GetImageCommits(projectName, imageName string)
 			iName := unslugDockerImageTagAsImageName(sluggedImage)
 
 			if imageName == iName {
-				logboek.Debug.LogF("Found image %q metadata by commit %s, full image name: %s:%s\n", imageName, commit, storage.RepoAddress, tag)
+				logboek.Debug().LogF("Found image %q metadata by commit %s, full image name: %s:%s\n", imageName, commit, storage.RepoAddress, tag)
 				res = append(res, commit)
 			}
 		}
@@ -424,7 +424,7 @@ func validateImageName(name string) error {
 }
 
 func (storage *RepoStagesStorage) GetClientIDRecords(projectName string) ([]*ClientIDRecord, error) {
-	logboek.Debug.LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
+	logboek.Debug().LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
 
 	var res []*ClientIDRecord
 
@@ -452,7 +452,7 @@ func (storage *RepoStagesStorage) GetClientIDRecords(projectName string) ([]*Cli
 			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
 			res = append(res, rec)
 
-			logboek.Debug.LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
+			logboek.Debug().LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
 		}
 	}
 
@@ -460,16 +460,16 @@ func (storage *RepoStagesStorage) GetClientIDRecords(projectName string) ([]*Cli
 }
 
 func (storage *RepoStagesStorage) PostClientIDRecord(projectName string, rec *ClientIDRecord) error {
-	logboek.Debug.LogF("-- RepoStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
+	logboek.Debug().LogF("-- RepoStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
 
 	fullImageName := fmt.Sprintf(RepoClientIDRecrod_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
 
-	logboek.Debug.LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
+	logboek.Debug().LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
 	if isExists, err := storage.DockerRegistry.IsRepoImageExists(fullImageName); err != nil {
 		return err
 	} else if isExists {
-		logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
+		logboek.Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
 		return nil
 	}
 
@@ -477,7 +477,7 @@ func (storage *RepoStagesStorage) PostClientIDRecord(projectName string, rec *Cl
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 
-	logboek.Info.LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
+	logboek.Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
 
 	return nil
 }

@@ -61,7 +61,7 @@ func (repo *Local) SyncWithOrigin() error {
 		return fmt.Errorf("git remote origin was not detected")
 	}
 
-	return logboek.Default.LogProcess("Syncing origin branches and tags", logboek.LevelLogProcessOptions{}, func() error {
+	return logboek.Default().LogProcess("Syncing origin branches and tags").DoError(func() error {
 		fetchOptions := true_git.FetchOptions{
 			Prune:     true,
 			PruneTags: true,
@@ -92,7 +92,7 @@ func (repo *Local) FetchOrigin() error {
 		return fmt.Errorf("git remote origin was not detected")
 	}
 
-	return logboek.Default.LogProcess("Fetching origin", logboek.LevelLogProcessOptions{}, func() error {
+	return logboek.Default().LogProcess("Fetching origin").DoError(func() error {
 		fetchOptions := true_git.FetchOptions{
 			Unshallow: isShallow,
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
@@ -199,16 +199,11 @@ func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
 }
 
 func (repo *Local) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	_ = logboek.Debug.LogProcess(
-		"Calculating checksum",
-		logboek.LevelLogProcessOptions{},
-		func() error {
-			checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
-			return nil
-		},
-	)
+	logboek.Debug().LogProcess("Calculating checksum").Do(func() {
+		checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+	})
 
-	return
+	return checksum, err
 }
 
 func (repo *Local) IsCommitExists(commit string) (bool, error) {

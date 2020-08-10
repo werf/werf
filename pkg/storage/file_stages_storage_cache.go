@@ -57,11 +57,11 @@ func (cache *FileStagesStorageCache) invalidateIfOldCacheExists(projectName stri
 		return fmt.Errorf("error accessing %s: %s", oldProjectCacheDir, err)
 	} else {
 		// remove old cache and new cache as well
-		logboek.Default.LogF("Removing current stages storage project cache dir: %s\n", currentProjectCacheDir)
+		logboek.Default().LogF("Removing current stages storage project cache dir: %s\n", currentProjectCacheDir)
 		if err := os.RemoveAll(currentProjectCacheDir); err != nil {
 			return fmt.Errorf("error removing %s: %s", currentProjectCacheDir, err)
 		}
-		logboek.Default.LogF("Removing old stages storage project cache dir: %s\n", oldProjectCacheDir)
+		logboek.Default().LogF("Removing old stages storage project cache dir: %s\n", oldProjectCacheDir)
 		if err := os.RemoveAll(oldProjectCacheDir); err != nil {
 			return fmt.Errorf("error removing %s: %s", oldProjectCacheDir, err)
 		}
@@ -118,19 +118,19 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(projectName, signature
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
 		return false, nil, nil
 	} else if err != nil {
-		logboek.ErrF("Error accessing file %s: %s: will ignore cache\n", sigFile, err)
+		logboek.Error().LogF("Error accessing file %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 
 	dataBytes, err := ioutil.ReadFile(sigFile)
 	if err != nil {
-		logboek.ErrF("Error reading file %s: %s: will ignore cache\n", sigFile, err)
+		logboek.Error().LogF("Error reading file %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 
 	res := &StagesStorageCacheRecord{}
 	if err := json.Unmarshal(dataBytes, res); err != nil {
-		logboek.ErrF("Error unmarshalling json from %s: %s: will ignore cache\n", sigFile, err)
+		logboek.Error().LogF("Error unmarshalling json from %s: %s: will ignore cache\n", sigFile, err)
 		return false, nil, nil
 	}
 

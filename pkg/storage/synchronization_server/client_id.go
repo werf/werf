@@ -13,7 +13,7 @@ func GetOrCreateClientID(projectName string, synchronizationClient *Synchronizat
 		return "", err
 	} else if len(clientIDRecords) > 0 {
 		res := selectOldestClientIDRecord(clientIDRecords)
-		logboek.Debug.LogF("GetOrCreateClientID %s selected clientID: %s\n", projectName, res.String())
+		logboek.Debug().LogF("GetOrCreateClientID %s selected clientID: %s\n", projectName, res.String())
 		return res.ClientID, nil
 	} else {
 		newClientID, err := synchronizationClient.NewClientID()
@@ -36,7 +36,7 @@ func GetOrCreateClientID(projectName string, synchronizationClient *Synchronizat
 			return "", err
 		} else if len(clientIDRecords) > 0 {
 			res := selectOldestClientIDRecord(clientIDRecords)
-			logboek.Debug.LogF("GetOrCreateClientID %s selected clientID: %s\n", projectName, res.String())
+			logboek.Debug().LogF("GetOrCreateClientID %s selected clientID: %s\n", projectName, res.String())
 			return res.ClientID, nil
 		} else {
 			return "", fmt.Errorf("could not find clientID in stages storage %s after successful creation", stagesStorage.String())

@@ -41,7 +41,7 @@ func (c *container) CreateIfNotExist() error {
 
 	if !exist {
 		err := werf.WithHostLock(fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-			return logboek.LogProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logboek.LogProcessOptions{}, func() error {
+			return logboek.LogProcess("Creating container %s from image %s", c.Name, c.ImageName).DoError(func() error {
 				exist, err := docker.ContainerExist(c.Name)
 				if err != nil {
 					return err

@@ -29,7 +29,7 @@ type RsyncServer struct {
 }
 
 func RunRsyncServer(dockerImageName string, tmpDir string) (*RsyncServer, error) {
-	logboek.Debug.LogF("RunRsyncServer for docker image %q\n", dockerImageName)
+	logboek.Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{
 		Port:                rsyncServerPort,
@@ -84,13 +84,13 @@ strict modes = false
 		"--no-detach",
 		"--config=/.werf/rsyncd.conf",
 	}
-	logboek.Debug.LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
+	logboek.Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 	if output, err := docker.CliRun_RecordedOutput(runArgs...); err != nil {
-		logboek.LogErrorF("%s", output)
+		logboek.Error().LogF("%s", output)
 		return nil, err
 	}
 
-	logboek.Debug.LogF("Inspect container %s\n", srv.DockerContainerName)
+	logboek.Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
 
 	if inspect, err := docker.ContainerInspect(srv.DockerContainerName); err != nil {
 		return nil, fmt.Errorf("unable to inspect import server container %s: %s", srv.DockerContainerName, err)
@@ -106,7 +106,7 @@ strict modes = false
 
 func (srv *RsyncServer) Shutdown() error {
 	if output, err := docker.CliRm_RecordedOutput("--force", srv.DockerContainerName); err != nil {
-		logboek.LogErrorF("%s", output)
+		logboek.Error().LogF("%s", output)
 		return fmt.Errorf("unable to remove container %s: %s", srv.DockerContainerName, err)
 	}
 	return nil
@@ -185,7 +185,7 @@ func (srv *RsyncServer) GetCopyCommand(importConfig *config.Import) string {
 
 	command := strings.Join(args, " && ")
 
-	logboek.Debug.LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+	logboek.Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 
 	return command
 }

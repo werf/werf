@@ -142,7 +142,7 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
+	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	purgeOptions := cleaning.PurgeOptions{
 		ImagesPurgeOptions: cleaning.ImagesPurgeOptions{

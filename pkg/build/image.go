@@ -3,13 +3,14 @@ package build
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/container_runtime"
-
 	"github.com/fatih/color"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
@@ -48,23 +49,23 @@ func (i *Image) LogDetailedName() string {
 	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 
-func (i *Image) LogProcessStyle() *logboek.Style {
+func (i *Image) LogProcessStyle() *style.Style {
 	return ImageLogProcessStyle(i.isArtifact)
 }
 
-func (i *Image) LogTagStyle() *logboek.Style {
+func (i *Image) LogTagStyle() *style.Style {
 	return ImageLogTagStyle(i.isArtifact)
 }
 
-func ImageLogProcessStyle(isArtifact bool) *logboek.Style {
+func ImageLogProcessStyle(isArtifact bool) *style.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func ImageLogTagStyle(isArtifact bool) *logboek.Style {
+func ImageLogTagStyle(isArtifact bool) *style.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func imageDefaultStyle(isArtifact bool) *logboek.Style {
+func imageDefaultStyle(isArtifact bool) *style.Style {
 	var attributes []color.Attribute
 	if isArtifact {
 		attributes = []color.Attribute{color.FgCyan, color.Bold}
@@ -72,7 +73,7 @@ func imageDefaultStyle(isArtifact bool) *logboek.Style {
 		attributes = []color.Attribute{color.FgYellow, color.Bold}
 	}
 
-	return &logboek.Style{Attributes: attributes}
+	return &style.Style{Attributes: attributes}
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -149,19 +150,22 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
 			if baseImageRepoId == inspect.ID || err != nil {
 				if err != nil {
-					logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-					logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-					logboek.Warn.LogOptionalLn()
+					logboek.Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
+					logboek.Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+					logboek.Warn().LogOptionalLn()
 				}
 
 				return nil
 			}
 		}
 
-		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-		if err := logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
-			return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
-		}); err != nil {
+		if err := logboek.Default().LogProcess("Pulling base image %s", i.baseImage.Name()).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
+			}); err != nil {
 			return err
 		}
 
@@ -201,7 +205,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 
 	var fetchedBaseRepoImage *image.Info
 	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
-	if err := logboek.Info.LogProcessInline(processMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
+	if err := logboek.Info().LogProcessInline(processMsg).DoError(func() error {
 		var fetchImageIdErr error
 		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(baseImageName)
 		if fetchImageIdErr != nil {

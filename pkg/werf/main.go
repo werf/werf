@@ -100,9 +100,7 @@ func ReleaseHostLock(lock lockgate.LockHandle) error {
 
 func DefaultLockerOnWait(lockName string, doWait func() error) error {
 	logProcessMsg := fmt.Sprintf("Waiting for locked %q", lockName)
-	return logboek.LogProcessInline(logProcessMsg, logboek.LogProcessInlineOptions{}, func() error {
-		return doWait()
-	})
+	return logboek.LogProcessInline(logProcessMsg).DoError(doWait)
 }
 
 func DefaultLockerOnLostLease(lock lockgate.LockHandle) error {

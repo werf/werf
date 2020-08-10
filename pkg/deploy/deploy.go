@@ -55,7 +55,7 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 
 	var werfChart *werf_chart.WerfChart
 
-	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
+	if err := logboek.Default().LogBlock("Deploy options").DoError(func() error {
 		if kube.Context != "" {
 			logboek.LogF("Kube-config context: %s\n", kube.Context)
 		}
@@ -76,9 +76,8 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 
 		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
 		serviceValuesRawStr := strings.TrimRight(string(serviceValuesRaw), "\n")
-		_ = logboek.Info.LogBlock(fmt.Sprintf("Service values"), logboek.LevelLogBlockOptions{}, func() error {
-			logboek.Info.LogLn(serviceValuesRawStr)
-			return nil
+		logboek.Info().LogBlock(fmt.Sprintf("Service values")).Do(func() {
+			logboek.Info().LogLn(serviceValuesRawStr)
 		})
 
 		werfChart, err = PrepareWerfChart(ctx, werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)

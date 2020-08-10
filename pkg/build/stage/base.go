@@ -139,7 +139,7 @@ func (s *BaseStage) getNextStageGitDependencies(c Conveyor) (string, error) {
 		}
 	}
 
-	logboek.Debug.LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
+	logboek.Debug().LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
@@ -188,7 +188,7 @@ ScanImages:
 
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
-				logboek.LogErrorF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
+				logboek.Warn().LogF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
@@ -205,11 +205,11 @@ ScanImages:
 			}
 
 			if !isOurAncestor {
-				logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Debug().LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
 				continue ScanImages
 			}
 
-			logboek.Debug.LogF(
+			logboek.Debug().LogF(
 				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
 				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
 			)

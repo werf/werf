@@ -9,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 )
@@ -77,7 +78,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 			result.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug.LogF(
+				logboek.Debug().LogF(
 					"File was added:         %s (worktree: %s, staging: %s)\n",
 					fileStatusFullFilepath,
 					fileStatusMapping[rune(fileStatus.Worktree)],
@@ -95,7 +96,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if matched || shouldGoTrough {
 			if debugProcess() {
-				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleFullFilepath)
+				logboek.Debug().LogF("Submodule was checking: %s\n", submoduleFullFilepath)
 			}
 
 			submoduleResult := &SubmoduleResult{}
@@ -103,8 +104,8 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 			if err != nil {
 				if err == git.ErrSubmoduleNotInitialized {
 					if debugProcess() {
-						logboek.Debug.LogFWithCustomStyle(
-							logboek.StyleByName(logboek.FailStyleName),
+						logboek.Debug().LogFWithCustomStyle(
+							style.Get(style.FailName),
 							"Submodule is not initialized: path %s will be added to checksum\n",
 							submoduleFullFilepath,
 						)
@@ -133,8 +134,8 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 				submoduleResult.currentCommit = submoduleStatus.Current.String()
 
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not clean: current commit %s will be added to checksum\n",
 						submoduleStatus.Current,
 					)

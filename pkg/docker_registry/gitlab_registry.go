@@ -76,10 +76,10 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 		if err := deleteFunc(repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "404 Not Found; 404 page not found") {
-				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
 				break
 			} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
-				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
 
@@ -97,7 +97,7 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 		if err := deleteFunc(repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "UNAUTHORIZED") {
-				logboek.Debug.LogF("DEBUG: %s: %s", reference, err)
+				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
 

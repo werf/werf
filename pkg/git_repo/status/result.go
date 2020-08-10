@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -49,7 +50,7 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 			res.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug.LogF(
+				logboek.Debug().LogF(
 					"File was added:         %s (worktree: %s, staging: %s)\n",
 					fileStatusFullFilepath,
 					fileStatusMapping[rune(fileStatus.Worktree)],
@@ -63,15 +64,15 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleResult.repositoryFullFilepath)
 		if isMatched || shouldGoThrough {
 			if debugProcess() {
-				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
+				logboek.Debug().LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
 			}
 
 			if submoduleResult.isNotInitialized {
 				res.submoduleResults = append(res.submoduleResults, submoduleResult)
 
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						submoduleResult.repositoryFullFilepath,
 					)
@@ -81,8 +82,8 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 
 			if submoduleResult.isNotClean {
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not clean: current commit %s will be added to checksum\n",
 						submoduleResult.currentCommit,
 					)
@@ -259,8 +260,8 @@ func (r *Result) Checksum() (string, error) {
 			args = append(args, mode, data)
 		}
 
-		logboek.Debug.LogF("Args was added: %v\n", args)
-		logboek.Debug.LogF("  worktree %s  staging %s  result %s\n", fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)], fileStatusMapping[rune(fileStatusToAdd)])
+		logboek.Debug().LogF("Args was added: %v\n", args)
+		logboek.Debug().LogF("  worktree %s  staging %s  result %s\n", fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)], fileStatusMapping[rune(fileStatusToAdd)])
 		h.Write([]byte(strings.Join(args, "🐜")))
 	}
 
@@ -269,9 +270,8 @@ func (r *Result) Checksum() (string, error) {
 	})
 
 	for _, sr := range r.submoduleResults {
-		logboek.Debug.LogOptionalLn()
-		logBlockMsg := fmt.Sprintf("submodule %s", sr.repositoryFullFilepath)
-		if err := logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
+		logboek.Debug().LogOptionalLn()
+		if err := logboek.Debug().LogBlock("submodule %s", sr.repositoryFullFilepath).DoError(func() error {
 			var srChecksumArgs []string
 
 			srChecksumArgs = append(srChecksumArgs, sr.repositoryFullFilepath)
@@ -295,7 +295,7 @@ func (r *Result) Checksum() (string, error) {
 				}
 			}
 
-			logboek.Debug.LogF("Args was added: %v\n", srChecksumArgs)
+			logboek.Debug().LogF("Args was added: %v\n", srChecksumArgs)
 			h.Write([]byte(strings.Join(srChecksumArgs, "🐜")))
 
 			return nil

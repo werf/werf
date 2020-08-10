@@ -17,6 +17,8 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -91,7 +93,7 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		err := editIteration()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption failed") {
-				logboek.LogWarnF("Error: %s\n", err)
+				logboek.Warn().LogF("Error: %s\n", err)
 				ok, err := askForConfirmation()
 				if err != nil {
 					return err
@@ -146,7 +148,7 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 func askForConfirmation() (bool, error) {
 	r := os.Stdin
 
-	fmt.Println(logboek.HighlightStyle().Colorize("Do you want to continue editing the file (Y/n)?"))
+	fmt.Println(style.Highlight().Colorize("Do you want to continue editing the file (Y/n)?"))
 
 	isTerminal := terminal.IsTerminal(int(r.Fd()))
 	if isTerminal {

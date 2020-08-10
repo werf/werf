@@ -60,7 +60,7 @@ func NewEnvSettings(namespace string) (res *cli.EnvSettings) {
 		res = cli.New()
 	})
 
-	res.Debug = logboek.Debug.IsAccepted()
+	res.Debug = logboek.Debug().IsAccepted()
 
 	return
 }
@@ -78,7 +78,7 @@ func NewActionConfig(envSettings *cli.EnvSettings, opts InitActionConfigOptions)
 
 func InitActionConfig(envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) {
 	helmDriver := os.Getenv("HELM_DRIVER")
-	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Debug.LogF); err != nil {
+	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Debug().LogF); err != nil {
 		log.Fatal(err)
 	}
 	if helmDriver == "memory" {

@@ -106,7 +106,7 @@ tryPull:
 					attempt += 1
 					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
-					logboek.LogWarnF("Retrying docker pull in %d seconds (%d/%d) ...\n", seconds, attempt, cliPullMaxAttempts)
+					logboek.Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", seconds, attempt, cliPullMaxAttempts)
 					time.Sleep(time.Duration(seconds) * time.Second)
 					goto tryPull
 				}
@@ -178,7 +178,7 @@ tryPush:
 					attempt += 1
 					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
-					logboek.Warn.LogFDetails("Retrying docker push in %d seconds (%d/%d) ...\n", seconds, attempt, cliPushMaxAttempts)
+					logboek.Warn().LogFDetails("Retrying docker push in %d seconds (%d/%d) ...\n", seconds, attempt, cliPushMaxAttempts)
 
 					time.Sleep(time.Duration(seconds) * time.Second)
 					goto tryPush

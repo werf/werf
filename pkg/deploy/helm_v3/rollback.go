@@ -1,7 +1,6 @@
 package helm_v3
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/werf/logboek"
@@ -25,17 +24,13 @@ type RollbackOptions struct {
 }
 
 func Rollback(releaseName string, opts RollbackOptions) error {
-	return logboek.Default.LogProcess(fmt.Sprintf("Rolling back release %q"), logboek.LevelLogProcessOptions{}, func() error {
+	return logboek.Default().LogProcess("Rolling back release %q", releaseName).DoError(func() error {
 		envSettings := NewEnvSettings(opts.Namespace)
 		cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 		client := action.NewRollback(cfg)
 		client.Timeout = opts.Timeout
 		client.Version = opts.Version
 
-		if err := client.Run(releaseName); err != nil {
-			return err
-		}
-
-		return nil
+		return client.Run(releaseName)
 	})
 }

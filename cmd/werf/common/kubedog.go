@@ -16,11 +16,11 @@ func InitKubedog() error {
 	// Suppress info and warnings from client-go reflector
 	klog.SetOutputBySeverity("INFO", ioutil.Discard)
 	klog.SetOutputBySeverity("WARNING", ioutil.Discard)
-	klog.SetOutputBySeverity("ERROR", logboek.GetErrStream())
-	klog.SetOutputBySeverity("FATAL", logboek.GetErrStream())
+	klog.SetOutputBySeverity("ERROR", logboek.ProxyErrStream())
+	klog.SetOutputBySeverity("FATAL", logboek.ProxyErrStream())
 
-	display.SetOut(logboek.GetOutStream())
-	display.SetErr(logboek.GetErrStream())
+	display.SetOut(logboek.ProxyOutStream())
+	display.SetErr(logboek.ProxyErrStream())
 
 	return nil
 }

@@ -31,13 +31,13 @@ func HostCleanup(options HostCleanupOptions) error {
 	}
 
 	return werf.WithHostLock("host-cleanup", lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		if err := logboek.LogProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
 			return safeContainersCleanup(commonOptions)
 		}); err != nil {
 			return err
 		}
 
-		if err := logboek.LogProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
+		if err := logboek.LogProcess("Running cleanup for dangling docker images created by werf").DoError(func() error {
 			return safeDanglingImagesCleanup(commonOptions)
 		}); err != nil {
 			return nil
@@ -70,7 +70,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logboek.Debug.LogFDetails("Ignore dangling image %s processed by another werf process\n", imgName)
+				logboek.Debug().LogFDetails("Ignore dangling image %s processed by another werf process\n", imgName)
 				continue
 			}
 
@@ -110,7 +110,7 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		if containerName == "" {
-			logboek.LogWarnF("Ignore bad container %s\n", container.ID)
+			logboek.Warn().LogF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
@@ -122,7 +122,7 @@ func safeContainersCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logboek.Default.LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
+				logboek.Default().LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
 			defer werf.ReleaseHostLock(lock)

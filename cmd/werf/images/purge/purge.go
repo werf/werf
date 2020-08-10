@@ -127,7 +127,7 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imageNameList)
+	logboek.Debug().LogF("Managed images names: %v\n", imageNameList)
 
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImageNameList: imageNameList,

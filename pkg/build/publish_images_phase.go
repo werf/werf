@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
@@ -75,7 +77,7 @@ func (phase *PublishImagesPhase) AfterImages() error {
 	if data, err := json.Marshal(phase.PublishReport); err != nil {
 		return fmt.Errorf("unable to prepare publish report: %s", err)
 	} else {
-		logboek.Debug.LogF("Publish report:\n%s\n", data)
+		logboek.Debug().LogF("Publish report:\n%s\n", data)
 
 		if phase.PublishReportPath != "" && phase.PublishReportFormat == PublishReportJSON {
 			if err := ioutil.WriteFile(phase.PublishReportPath, append(data, []byte("\n")...), 0644); err != nil {
@@ -128,26 +130,27 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 	}
 
 	if phase.Conveyor.localGitRepo != nil {
-		if err := logboek.Info.LogProcess(fmt.Sprintf("publishing image %s git metadata", img.GetName()), logboek.LevelLogProcessOptions{}, func() error {
-			headCommit, err := phase.Conveyor.localGitRepo.HeadCommit()
-			if err != nil {
-				return err
-			}
+		if err := logboek.Info().LogProcess(fmt.Sprintf("publishing image %s git metadata", img.GetName())).
+			DoError(func() error {
+				headCommit, err := phase.Conveyor.localGitRepo.HeadCommit()
+				if err != nil {
+					return err
+				}
 
-			if metadata, err := phase.Conveyor.StagesManager.StagesStorage.GetImageMetadataByCommit(phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
-				return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
-			} else if metadata != nil {
-				if metadata.ContentSignature != img.GetContentSignature() {
-					// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
-					// TODO: allowInconsistentPublish: true option for werf.yaml
-					// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+				if metadata, err := phase.Conveyor.StagesManager.StagesStorage.GetImageMetadataByCommit(phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
+					return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
+				} else if metadata != nil {
+					if metadata.ContentSignature != img.GetContentSignature() {
+						// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
+						// TODO: allowInconsistentPublish: true option for werf.yaml
+						// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+						return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+					}
+					return nil
+				} else {
 					return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
 				}
-				return nil
-			} else {
-				return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
-			}
-		}); err != nil {
+			}); err != nil {
 			return err
 		}
 	}
@@ -162,10 +165,11 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 	for _, strategy := range nonEmptySchemeInOrder {
 		imageMetaTags := phase.TagsByScheme[strategy]
 
-		if err := logboek.Info.LogProcess(
-			fmt.Sprintf("%s tagging strategy", string(strategy)),
-			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-			func() error {
+		if err := logboek.Info().LogProcess("%s tagging strategy", string(strategy)).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
 				for _, imageMetaTag := range imageMetaTags {
 					if err := phase.publishImageByTag(img, imageMetaTag, strategy, publishImageByTagOptions{ExistingTagsList: existingTags, CheckAlreadyExistingTagByContentSignatureLabel: true}); err != nil {
 						return fmt.Errorf("error publishing image %s by tag %s: %s", img.LogName(), imageMetaTag, err)
@@ -173,24 +177,23 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 				}
 
 				return nil
-			},
-		); err != nil {
+			}); err != nil {
 			return err
 		}
 	}
 
 	if phase.TagByStagesSignature {
-		if err := logboek.Info.LogProcess(
-			fmt.Sprintf("%s tagging strategy", tag_strategy.StagesSignature),
-			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-			func() error {
+		if err := logboek.Info().LogProcess("%s tagging strategy", tag_strategy.StagesSignature).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
 				if err := phase.publishImageByTag(img, img.GetContentSignature(), tag_strategy.StagesSignature, publishImageByTagOptions{ExistingTagsList: existingTags}); err != nil {
 					return fmt.Errorf("error publishing image %s by image signature %s: %s", img.GetName(), img.GetContentSignature(), err)
 				}
 
 				return nil
-			},
-		); err != nil {
+			}); err != nil {
 			return err
 		}
 	}
@@ -200,11 +203,10 @@ func (phase *PublishImagesPhase) publishImage(img *Image) error {
 
 func (phase *PublishImagesPhase) fetchExistingTags(imageName string) (existingTags []string, err error) {
 	logProcessMsg := fmt.Sprintf("Fetching existing repo tags")
-	_ = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
+	logboek.Info().LogProcessInline(logProcessMsg).Do(func() {
 		existingTags, err = phase.ImagesRepo.GetAllImageRepoTags(imageName)
-		return nil
 	})
-	logboek.Info.LogOptionalLn()
+	logboek.Info().LogOptionalLn()
 
 	if err != nil {
 		return existingTags, fmt.Errorf("error fetching existing tags from image repository %s: %s", phase.ImagesRepo.String(), err)
@@ -228,12 +230,11 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	}
 
 	if alreadyExists {
-		logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
+		logboek.Default().LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
 
-		_ = logboek.WithIndent(func() error {
-			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
-			logboek.Default.LogFDetails("      image: %s\n", imageName)
-			return nil
+		logboek.Streams().DoWithIndent(func() {
+			logboek.Default().LogFDetails("images-repo: %s\n", imageRepository)
+			logboek.Default().LogFDetails("      image: %s\n", imageName)
 		})
 
 		logboek.LogOptionalLn()
@@ -261,10 +262,9 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 	})
 
 	successInfoSectionFunc := func() {
-		_ = logboek.WithIndent(func() error {
-			logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
-			logboek.Default.LogFDetails("      image: %s\n", imageName)
-			return nil
+		logboek.Streams().DoWithIndent(func() {
+			logboek.Default().LogFDetails("images-repo: %s\n", imageRepository)
+			logboek.Default().LogFDetails("      image: %s\n", imageName)
 		})
 	}
 
@@ -273,7 +273,7 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 			return err
 		}
 
-		if err := logboek.Info.LogProcess("Building final image with meta information", logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Info().LogProcess("Building final image with meta information").DoError(func() error {
 			if err := publishImage.Build(container_runtime.BuildOptions{}); err != nil {
 				return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, tagStrategy, err)
 			}
@@ -299,13 +299,11 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		}
 
 		if alreadyExists {
-			logboek.Default.LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
-			_ = logboek.WithIndent(func() error {
-				logboek.Info.LogFDetails("discarding newly built image %s\n", publishImage.MustGetBuiltId())
-				logboek.Default.LogFDetails("images-repo: %s\n", imageRepository)
-				logboek.Default.LogFDetails("      image: %s\n", imageName)
-
-				return nil
+			logboek.Default().LogFHighlight("%s tag %s is up-to-date\n", string(tagStrategy), imageActualTag)
+			logboek.Streams().DoWithIndent(func() {
+				logboek.Info().LogFDetails("discarding newly built image %s\n", publishImage.MustGetBuiltId())
+				logboek.Default().LogFDetails("images-repo: %s\n", imageRepository)
+				logboek.Default().LogFDetails("      image: %s\n", imageName)
 			})
 
 			logboek.LogOptionalLn()
@@ -334,13 +332,12 @@ func (phase *PublishImagesPhase) publishImageByTag(img *Image, imageMetaTag stri
 		return nil
 	}
 
-	return logboek.Default.LogProcess(
-		fmt.Sprintf("Publishing image %s by %s tag %s", img.LogName(), tagStrategy, imageMetaTag),
-		logboek.LevelLogProcessOptions{
-			SuccessInfoSectionFunc: successInfoSectionFunc,
-			Style:                  logboek.HighlightStyle(),
-		},
-		publishingFunc)
+	return logboek.Default().LogProcess("Publishing image %s by %s tag %s", img.LogName(), tagStrategy, imageMetaTag).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.SuccessInfoSectionFunc(successInfoSectionFunc)
+			options.Style(style.Highlight())
+		}).
+		DoError(publishingFunc)
 }
 
 func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, werfImageName, imageMetaTag, imageContentSignature string, checkAlreadyExistingTagByContentSignatureFromLabels bool) (bool, string, error) {
@@ -365,15 +362,14 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(existingTags []string, 
 		return nil
 	}
 
-	logProcessMsg := fmt.Sprintf("Getting existing tag %s manifest", imageActualTag)
-	err = logboek.Info.LogProcessInline(logProcessMsg, logboek.LevelLogProcessInlineOptions{}, getImageContentSignature)
+	err = logboek.Info().LogProcessInline("Getting existing tag %s manifest", imageActualTag).DoError(getImageContentSignature)
 	if err != nil {
 		return false, "", fmt.Errorf("unable to get image %s parent id: %s", werfImageName, err)
 	}
 
-	logboek.Debug.LogF("Current image content signature: %s\n", imageContentSignature)
-	logboek.Debug.LogF("Already published image content signature: %s\n", repoImageContentSignature)
-	logboek.Debug.LogF("Already published image docker ID: %s\n", repoDockerImageID)
+	logboek.Debug().LogF("Current image content signature: %s\n", imageContentSignature)
+	logboek.Debug().LogF("Already published image content signature: %s\n", repoImageContentSignature)
+	logboek.Debug().LogF("Already published image docker ID: %s\n", repoDockerImageID)
 
 	return imageContentSignature == repoImageContentSignature, repoDockerImageID, nil
 }

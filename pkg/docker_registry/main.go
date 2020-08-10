@@ -12,12 +12,12 @@ import (
 var generic *api
 
 func Init(insecureRegistry, skipTlsVerifyRegistry bool) error {
-	if logboek.Debug.IsAccepted() {
-		logs.Progress.SetOutput(logboek.GetOutStream())
-		logs.Warn.SetOutput(logboek.GetErrStream())
+	if logboek.Debug().IsAccepted() {
+		logs.Progress.SetOutput(logboek.ProxyOutStream())
+		logs.Warn.SetOutput(logboek.ProxyErrStream())
 
 		if debugDockerRegistryAPI() {
-			logs.Debug.SetOutput(logboek.GetOutStream())
+			logs.Debug.SetOutput(logboek.ProxyOutStream())
 		} else {
 			logs.Debug.SetOutput(ioutil.Discard)
 		}

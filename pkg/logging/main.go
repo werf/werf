@@ -3,12 +3,10 @@ package logging
 import (
 	"fmt"
 	"log"
-	"os"
-	"runtime"
-
-	"github.com/mattn/go-isatty"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
+	"github.com/werf/logboek/pkg/style"
 )
 
 var (
@@ -17,52 +15,41 @@ var (
 )
 
 func Init() error {
-	if err := logboek.Init(); err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "windows" && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		DisableLogColor()
-	}
-
-	logboek.EnableFitMode()
-
-	log.SetOutput(logboek.GetOutStream())
-
+	logboek.Streams().EnableLineWrapping()
+	log.SetOutput(logboek.ProxyOutStream())
 	return nil
 }
 
 func EnableLogQuiet() {
-	logboek.SetLevel(logboek.Error)
-	logboek.MuteOut()
+	logboek.Streams().Mute()
 }
 
 func EnableLogDebug() {
-	logboek.SetLevel(logboek.Debug)
-	logboek.SetRunningTimePrefix(logboek.DetailsStyle())
+	logboek.SetAcceptedLevel(level.Debug)
+	logboek.Streams().SetPrefixStyle(style.Details())
 }
 
 func EnableLogVerbose() {
-	logboek.SetLevel(logboek.Info)
+	logboek.SetAcceptedLevel(level.Info)
 }
 
 func EnableLogColor() {
-	logboek.EnableLogColor()
+	logboek.Streams().EnableStyle()
 }
 
 func DisableLogColor() {
-	logboek.DisableLogColor()
+	logboek.Streams().DisableStyle()
 }
 
 func SetWidth(value int) {
-	logboek.SetWidth(value)
+	logboek.Streams().SetWidth(value)
 }
 
 func DisablePrettyLog() {
 	imageNameFormat = "image %s"
 	artifactNameFormat = "artifact %s"
 
-	logboek.DisablePrettyLog()
+	logboek.Streams().DisablePrettyLog()
 }
 
 func ImageLogName(name string, isArtifact bool) string {

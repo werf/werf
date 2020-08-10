@@ -25,7 +25,7 @@ func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, 
 
 	if isSecretsExists {
 		if ignoreSecretKey {
-			logboek.Default.LogLnDetails("Secrets decryption disabled")
+			logboek.Default().LogLnDetails("Secrets decryption disabled")
 			return secret.NewSafeManager()
 		}
 

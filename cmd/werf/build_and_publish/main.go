@@ -126,7 +126,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.ProxyOutStream(), Err: logboek.ProxyErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -205,7 +205,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

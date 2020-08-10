@@ -42,9 +42,9 @@ func (handler *StagesStorageCacheHttpHandler) handleGetAllStages(w http.Response
 	var request GetAllStagesRequest
 	var response GetAllStagesResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- GetAllStages request %#v\n", request)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- GetAllStages request %#v\n", request)
 		response.Found, response.Stages, response.Err.Error = handler.StagesStorageCache.GetAllStages(request.ProjectName)
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- GetAllStages response %#v\n", response)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- GetAllStages response %#v\n", response)
 	})
 }
 
@@ -59,9 +59,9 @@ func (handler *StagesStorageCacheHttpHandler) handleDeleteAllStages(w http.Respo
 	var request DeleteAllStagesRequest
 	var response DeleteAllStagesResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- DeleteAllStages request %#v\n", request)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- DeleteAllStages request %#v\n", request)
 		response.Err.Error = handler.StagesStorageCache.DeleteAllStages(request.ProjectName)
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- DeleteAllStages response %#v\n", response)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- DeleteAllStages response %#v\n", response)
 	})
 }
 
@@ -79,9 +79,9 @@ func (handler *StagesStorageCacheHttpHandler) handleGetStagesBySignature(w http.
 	var request GetStagesBySignatureRequest
 	var response GetStagesBySignatureResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- GetStagesBySignature request %#v\n", request)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- GetStagesBySignature request %#v\n", request)
 		response.Found, response.Stages, response.Err.Error = handler.StagesStorageCache.GetStagesBySignature(request.ProjectName, request.Signature)
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- GetStagesBySignature response %#v\n", response)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- GetStagesBySignature response %#v\n", response)
 	})
 }
 
@@ -98,9 +98,9 @@ func (handler *StagesStorageCacheHttpHandler) handleStoreStagesBySignature(w htt
 	var request StoreStagesBySignatureRequest
 	var response StoreStagesBySignatureResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- StoreStagesBySignature request %#v\n", request)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- StoreStagesBySignature request %#v\n", request)
 		response.Err.Error = handler.StagesStorageCache.StoreStagesBySignature(request.ProjectName, request.Signature, request.Stages)
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- StoreStagesBySignature response %#v\n", response)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- StoreStagesBySignature response %#v\n", response)
 	})
 }
 
@@ -116,8 +116,8 @@ func (handler *StagesStorageCacheHttpHandler) handleDeleteStagesBySignature(w ht
 	var request DeleteStagesBySignatureRequest
 	var response DeleteStagesBySignatureResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- DeleteStagesBySignature request %#v\n", request)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- DeleteStagesBySignature request %#v\n", request)
 		response.Err.Error = handler.StagesStorageCache.DeleteStagesBySignature(request.ProjectName, request.Signature)
-		logboek.Debug.LogF("StagesStorageCacheHttpHandler -- DeleteStagesBySignature response %#v\n", response)
+		logboek.Debug().LogF("StagesStorageCacheHttpHandler -- DeleteStagesBySignature response %#v\n", response)
 	})
 }

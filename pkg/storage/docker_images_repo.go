@@ -26,7 +26,7 @@ func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, 
 	if err != nil {
 		return nil, err
 	}
-	logboek.Info.LogLn("Using images repo docker registry implementation:", resolvedImplementation)
+	logboek.Info().LogLn("Using images repo docker registry implementation:", resolvedImplementation)
 
 	dockerRegistry, err := docker_registry.NewDockerRegistry(imagesRepoAddress, resolvedImplementation, options.DockerRegistryOptions)
 	if err != nil {
@@ -37,7 +37,7 @@ func NewDockerImagesRepo(projectName, imagesRepoAddress, imagesRepoMode string, 
 	if err != nil {
 		return nil, err
 	}
-	logboek.Info.LogLn("Using images repo mode:", resolvedImagesRepoMode)
+	logboek.Info().LogLn("Using images repo mode:", resolvedImagesRepoMode)
 
 	imagesRepoManager, err := newImagesRepoManager(imagesRepoAddress, resolvedImagesRepoMode)
 	if err != nil {

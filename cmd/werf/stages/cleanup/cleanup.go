@@ -142,7 +142,7 @@ func runSync() error {
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
+	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		ImageNameList: imagesNames,

@@ -406,15 +406,10 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		)
 
 		var mainLsTreeResult *ls_tree.Result
-		processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
-		if err := logboek.Debug.LogProcess(
-			processMsg,
-			logboek.LevelLogProcessOptions{},
-			func() error {
-				mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
-				return err
-			},
-		); err != nil {
+		if err := logboek.Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
+			mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
+			return err
+		}); err != nil {
 			return err
 		}
 
@@ -426,24 +421,21 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 				false,
 			)
 
-			processMsg := fmt.Sprintf("ls-tree (%s)", pathMatcher.String())
-			logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
+			logProcess := logboek.Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
+			logProcess.Start()
 			pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
 			if err != nil {
-				logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+				logProcess.Fail()
 				return err
 			}
-			logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+			logProcess.End()
 
 			var pathChecksum string
 			if !pathLsTreeResult.IsEmpty() {
-				blockMsg := fmt.Sprintf("ls-tree result checksum (%s)", pathMatcher.String())
-				_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+				logboek.Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
 					pathChecksum = pathLsTreeResult.Checksum()
-					logboek.Debug.LogLn()
-					logboek.Debug.LogLn(pathChecksum)
-
-					return nil
+					logboek.Debug().LogLn()
+					logboek.Debug().LogLn(pathChecksum)
 				})
 			}
 

@@ -3,18 +3,18 @@ package list
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -110,15 +110,18 @@ func run(projectNames ...string) error {
 			return err
 		}
 
-		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
-			stagesPurgeOptions := cleaning.StagesPurgeOptions{
-				RmContainersThatUseWerfImages: cmdData.Force,
-				DryRun:                        *commonCmdData.DryRun,
-			}
+		if err := logboek.Default().LogProcess("Project " + projectName).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				stagesPurgeOptions := cleaning.StagesPurgeOptions{
+					RmContainersThatUseWerfImages: cmdData.Force,
+					DryRun:                        *commonCmdData.DryRun,
+				}
 
-			return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
-		}); err != nil {
+				return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
+			}); err != nil {
 			return err
 		}
 	}

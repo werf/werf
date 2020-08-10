@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
@@ -124,7 +125,7 @@ const (
 )
 
 func GetLongCommandDescription(text string) string {
-	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
+	return logboek.FitText(text, types.FitTextOptions{MaxWidth: 100})
 }
 
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
@@ -682,7 +683,7 @@ func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
 * $WERF_LOG_TERMINAL_WIDTH
-* interactive terminal width or %d`, logboek.DefaultWidth))
+* interactive terminal width or %d`, 140))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -1413,7 +1414,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logboek.Default.LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
+	logboek.Default().LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
 
 	return err
 }
@@ -1426,7 +1427,8 @@ func TerminateWithError(errMsg string, exitCode int) {
 	msg := fmt.Sprintf("Error: %s", errMsg)
 	msg = strings.TrimSuffix(msg, "\n")
 
-	logboek.LogErrorLn(msg)
+	logboek.Streams().DisableLineWrapping()
+	logboek.Error().LogLn(msg)
 	os.Exit(exitCode)
 }
 
@@ -1463,8 +1465,8 @@ func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (clean
 			}
 
 			if isShallow {
-				logboek.Warn.LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-				logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
+				logboek.Warn().LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
 
 				return nil, fmt.Errorf("git shallow clone is not allowed")
 			}

@@ -126,7 +126,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		logboek.Default.LogFDetails("Clone %s\n", repo.Url)
+		logboek.Default().LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0755); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
@@ -185,7 +185,7 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		logboek.Default.LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
+		logboek.Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -239,7 +239,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	logboek.Info.LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
+	logboek.Info().LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -270,7 +270,7 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
 
-	logboek.Info.LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
+	logboek.Info().LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
 
 	return res, nil
 }
@@ -284,16 +284,11 @@ func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
 }
 
 func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	_ = logboek.Debug.LogProcess(
-		"Calculating checksum",
-		logboek.LevelLogProcessOptions{},
-		func() error {
-			checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
-			return nil
-		},
-	)
+	logboek.Debug().LogProcess("Calculating checksum").Do(func() {
+		checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+	})
 
-	return
+	return checksum, err
 }
 
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {

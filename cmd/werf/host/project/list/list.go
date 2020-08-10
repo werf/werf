@@ -150,7 +150,7 @@ func printProjects(projects map[string]*projectFields) {
 		}
 	} else {
 		t := uitable.New()
-		t.MaxColWidth = uint(logboek.ContentWidth())
+		t.MaxColWidth = uint(logboek.Streams().ContentWidth())
 		t.AddRow("NAME", "CREATED", "MODIFIED")
 		for projectName, project := range projects {
 			now := time.Now().UTC()

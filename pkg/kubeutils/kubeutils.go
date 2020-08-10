@@ -7,10 +7,12 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"k8s.io/client-go/dynamic"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 )
 
 // Not namespaced resource specifies without namespace
@@ -56,11 +58,11 @@ func RemoveResourceAndWaitUntilRemoved(name, kind, namespace string) error {
 		logProcessMsg = fmt.Sprintf("Deleting %s/%s", groupVersionResource.Resource, name)
 	}
 
-	return logboek.LogProcessInline(logProcessMsg,
-		logboek.LogProcessInlineOptions{
-			LevelLogProcessInlineOptions: logboek.LevelLogProcessInlineOptions{Style: logboek.DetailsStyle()},
-		},
-		func() error {
+	return logboek.LogProcessInline(logProcessMsg).
+		Options(func(options types.LogProcessInlineOptionsInterface) {
+			options.Style(style.Details())
+		}).
+		DoError(func() error {
 			deletePropagation := metav1.DeletePropagationForeground
 			deleteOptions := metav1.DeleteOptions{
 				PropagationPolicy: &deletePropagation,

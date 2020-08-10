@@ -81,9 +81,9 @@ func (i *StageImage) Build(options BuildOptions) error {
 		if containerRunErr := i.container.run(); containerRunErr != nil {
 			if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 				if options.IntrospectBeforeError {
-					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+					logboek.Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
-					if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
+					if err := logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(i.introspectBefore); err != nil {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 				} else if options.IntrospectAfterError {
@@ -91,9 +91,9 @@ func (i *StageImage) Build(options BuildOptions) error {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 
-					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+					logboek.Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
-					if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
+					if err := logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(i.Introspect); err != nil {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 				}
@@ -233,22 +233,22 @@ func (i *StageImage) Import(name string) error {
 }
 
 func (i *StageImage) Export(name string) error {
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Info().LogProcess(fmt.Sprintf("Tagging %s", name)).DoError(func() error {
 		return i.Tag(name)
 	}); err != nil {
 		return err
 	}
 
 	defer func() {
-		if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
+		if err := logboek.Info().LogProcess(fmt.Sprintf("Untagging %s", name)).DoError(func() error {
 			return docker.CliRmi(name)
 		}); err != nil {
 			// TODO: errored image state
-			logboek.Error.LogF("Unable to remote temporary image %q: %s", name, err)
+			logboek.Error().LogF("Unable to remote temporary image %q: %s", name, err)
 		}
 	}()
 
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Info().LogProcess(fmt.Sprintf("Pushing %s", name)).DoError(func() error {
 		return docker.CliPushWithRetries(name)
 	}); err != nil {
 		return err

@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 )
 
 func CheckIgnore(repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {
@@ -78,8 +79,8 @@ mainLoop:
 		submoduleRepository, err := submodule.Repository()
 		if err != nil {
 			if err == git.ErrSubmoduleNotInitialized {
-				logboek.Debug.LogFWithCustomStyle(
-					logboek.StyleByName(logboek.FailStyleName),
+				logboek.Debug().LogFWithCustomStyle(
+					style.Get(style.FailName),
 					"Submodule %s is not initialized: the following paths will not be counted:\n%s",
 					submoduleFilepath,
 					strings.Join(submoduleAbsFilepathsToCheck, "\n"),
@@ -120,14 +121,14 @@ func getRepositoryIgnoredAbsFilepaths(repositoryAbsFilepath string, absFilepaths
 	cmd.Stdin = &b
 
 	if debugProcess() {
-		logboek.Debug.LogLn("command:", commandString)
-		logboek.Debug.LogLn("stdin:  ", toStdinString)
+		logboek.Debug().LogLn("command:", commandString)
+		logboek.Debug().LogLn("stdin:  ", toStdinString)
 	}
 
 	output, err := cmd.CombinedOutput()
 
 	if debugProcess() {
-		logboek.Debug.LogLn("output:\n", string(output))
+		logboek.Debug().LogLn("output:\n", string(output))
 	}
 
 	if err != nil {
@@ -136,7 +137,7 @@ func getRepositoryIgnoredAbsFilepaths(repositoryAbsFilepath string, absFilepaths
 				exitCode := s.ExitStatus()
 				if exitCode == 1 { // None of the provided paths are ignored
 					if debugProcess() {
-						logboek.Debug.LogLn("None of the provided paths are ignored")
+						logboek.Debug().LogLn("None of the provided paths are ignored")
 					}
 
 					return []string{}, nil

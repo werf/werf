@@ -167,7 +167,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir strin
 	}
 
 	for filePath, fileData := range regeneratedFilesData {
-		err := logboek.LogProcess(fmt.Sprintf("Saving file '%s'", filePath), logboek.LogProcessOptions{}, func() error {
+		err := logboek.LogProcess(fmt.Sprintf("Saving file '%s'", filePath)).DoError(func() error {
 			fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
 			return ioutil.WriteFile(filePath, fileData, 0644)
 		})
@@ -182,21 +182,22 @@ func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir strin
 
 func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decodeFunc, encodeFunc func([]byte) ([]byte, error)) error {
 	for filePath, fileData := range filesData {
-		err := logboek.LogProcess(fmt.Sprintf("Regenerating file '%s'", filePath), logboek.LogProcessOptions{}, func() error {
-			data, err := decodeFunc(fileData)
-			if err != nil {
-				return fmt.Errorf("check old encryption key and file data: %s", err)
-			}
+		err := logboek.LogProcess(fmt.Sprintf("Regenerating file '%s'", filePath)).
+			DoError(func() error {
+				data, err := decodeFunc(fileData)
+				if err != nil {
+					return fmt.Errorf("check old encryption key and file data: %s", err)
+				}
 
-			resultData, err := encodeFunc(data)
-			if err != nil {
-				return err
-			}
+				resultData, err := encodeFunc(data)
+				if err != nil {
+					return err
+				}
 
-			regeneratedFilesData[filePath] = resultData
+				regeneratedFilesData[filePath] = resultData
 
-			return nil
-		})
+				return nil
+			})
 
 		if err != nil {
 			return err

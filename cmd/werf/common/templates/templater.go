@@ -12,6 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
+
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -127,7 +129,7 @@ func (t *templater) cmdGroupsString(c *cobra.Command) string {
 				separator := " "
 				cmdLeftPart := rpad(cmd.Name(), cmd.NamePadding())
 				cmdRightPartWidth := len(indent) + len(cmdLeftPart) + len(separator)
-				fitTextOptions := logboek.FitTextOptions{ExtraIndentWidth: cmdRightPartWidth}
+				fitTextOptions := types.FitTextOptions{ExtraIndentWidth: cmdRightPartWidth}
 				cmdRightPart := strings.TrimLeft(logboek.FitText(cmd.Short, fitTextOptions), " ")
 				cmdLine := fmt.Sprintf("%s%s%s%s", indent, cmdLeftPart, separator, cmdRightPart)
 
@@ -211,7 +213,7 @@ func FlagsUsages(f *flag.FlagSet) string {
 		}
 
 		leftPart := flagLeftPart(flag)
-		rightPart := logboek.FitText(flag.Usage, logboek.FitTextOptions{ExtraIndentWidth: 12})
+		rightPart := logboek.FitText(flag.Usage, types.FitTextOptions{ExtraIndentWidth: 12})
 
 		fmt.Fprintf(x, "%s:\n%s\n", leftPart, rightPart)
 	})

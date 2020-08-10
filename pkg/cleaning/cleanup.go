@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
 )
 
@@ -23,22 +25,22 @@ func Cleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManag
 		defer storageLockManager.Unlock(lock)
 	}
 
-	if err := logboek.Default.LogProcess(
-		"Running images cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.imagesCleanupManager.run,
-	); err != nil {
+	if err := logboek.Default().LogProcess("Running images cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(m.imagesCleanupManager.run); err != nil {
 		return err
 	}
 
 	repoImages := m.imagesCleanupManager.getImageRepoImageList()
 	m.stagesCleanupManager.setImagesRepoImageList(flattenRepoImages(repoImages))
 
-	if err := logboek.Default.LogProcess(
-		"Running stages cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.stagesCleanupManager.run,
-	); err != nil {
+	if err := logboek.Default().LogProcess("Running stages cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(m.stagesCleanupManager.run); err != nil {
 		return err
 	}
 

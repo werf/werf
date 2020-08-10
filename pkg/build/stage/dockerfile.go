@@ -16,6 +16,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -338,8 +339,8 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 
 	normalizedWildcards := normalizeCopyAddSources(wildcards)
 
-	logProcessMsg := fmt.Sprintf("Calculating files checksum (%v)", normalizedWildcards)
-	logboek.Debug.LogProcessStart(logProcessMsg, logboek.LevelLogProcessStartOptions{})
+	logProcess := logboek.Debug().LogProcess("Calculating files checksum (%v)", normalizedWildcards)
+	logProcess.Start()
 	if s.localGitRepo != nil {
 		checksum, err = s.calculateFilesChecksumWithGit(normalizedWildcards)
 	} else {
@@ -352,38 +353,39 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 	}
 
 	if err != nil {
-		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		logProcess.Fail()
 		return "", err
+	} else {
+		logProcess.End()
 	}
 
-	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
-
-	logboek.Debug.LogF("Result checksum: %s\n", checksum)
-	logboek.Debug.LogOptionalLn()
+	logboek.Debug().LogF("Result checksum: %s\n", checksum)
+	logboek.Debug().LogOptionalLn()
 
 	return checksum, nil
 }
 
 func (s *DockerfileStage) calculateFilesChecksumWithGit(wildcards []string) (string, error) {
 	if s.mainLsTreeResult == nil {
-		processMsg := fmt.Sprintf("ls-tree (%s)", s.dockerignorePathMatcher.String())
-		logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
+		logProcess := logboek.Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
+		logProcess.Start()
 		result, err := s.localGitRepo.LsTree(s.dockerignorePathMatcher, git_repo.LsTreeOptions{UseHeadCommit: true})
 		if err != nil {
 			if err.Error() == "entry not found" {
-				logboek.Debug.LogFWithCustomStyle(
-					logboek.StyleByName(logboek.FailStyleName),
+				logboek.Debug().LogFWithCustomStyle(
+					style.Get(style.FailName),
 					"Entry %s is not found\n",
 					s.dockerignorePathMatcher.BaseFilepath(),
 				)
-				logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+				logProcess.End()
 				goto entryNotFoundInGitRepository
 			}
 
-			logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return "", err
+		} else {
+			logProcess.End()
 		}
-		logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 		s.mainLsTreeResult = result
 	}
@@ -393,78 +395,80 @@ entryNotFoundInGitRepository:
 
 	var lsTreeResultChecksum string
 	if s.mainLsTreeResult != nil {
-		blockMsg := fmt.Sprintf("ls-tree (%s)", wildcardsPathMatcher.String())
-		logboek.Debug.LogProcessStart(blockMsg, logboek.LevelLogProcessStartOptions{})
+		logProcess := logboek.Debug().LogProcess("ls-tree (%s)", wildcardsPathMatcher.String())
+		logProcess.Start()
 		lsTreeResult, err := s.mainLsTreeResult.LsTree(wildcardsPathMatcher)
 		if err != nil {
-			logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return "", err
+		} else {
+			logProcess.End()
 		}
-		logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 		if !lsTreeResult.IsEmpty() {
-			blockMsg = fmt.Sprintf("ls-tree result checksum (%s)", wildcardsPathMatcher.String())
-			_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+			logboek.Debug().LogBlock("ls-tree result checksum (%s)", wildcardsPathMatcher.String()).Do(func() {
 				lsTreeResultChecksum = lsTreeResult.Checksum()
-				logboek.Debug.LogOptionalLn()
-				logboek.Debug.LogLn(lsTreeResultChecksum)
-
-				return nil
+				logboek.Debug().LogOptionalLn()
+				logboek.Debug().LogLn(lsTreeResultChecksum)
 			})
 		}
 	}
 
 	if s.mainStatusResult == nil {
-		processMsg := fmt.Sprintf("status (%s)", s.dockerignorePathMatcher.String())
-		logboek.Debug.LogProcessStart(processMsg, logboek.LevelLogProcessStartOptions{})
+		logProcess := logboek.Debug().LogProcess("status (%s)", s.dockerignorePathMatcher.String())
+		logProcess.Start()
 		result, err := s.localGitRepo.Status(s.dockerignorePathMatcher)
 		if err != nil {
-			logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return "", err
+		} else {
+			logProcess.End()
 		}
-		logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 		s.mainStatusResult = result
 	}
 
-	blockMsg := fmt.Sprintf("status (%s)", wildcardsPathMatcher.String())
-	logboek.Debug.LogProcessStart(blockMsg, logboek.LevelLogProcessStartOptions{})
+	logProcess := logboek.Debug().LogProcess("status (%s)", wildcardsPathMatcher.String())
+	logProcess.Start()
 	statusResult, err := s.mainStatusResult.Status(wildcardsPathMatcher)
 	if err != nil {
-		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		logProcess.Fail()
 		return "", err
+	} else {
+		logProcess.End()
 	}
-	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 	var statusResultChecksum string
 	if !statusResult.IsEmpty() {
-		blockMsg = fmt.Sprintf("Status result checksum (%s)", wildcardsPathMatcher.String())
-		if err := logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
-			statusResultChecksum, err = statusResult.Checksum()
-			if err != nil {
-				return err
-			}
+		if err := logboek.Debug().LogBlock("Status result checksum (%s)", wildcardsPathMatcher.String()).
+			DoError(func() error {
+				statusResultChecksum, err = statusResult.Checksum()
+				if err != nil {
+					return err
+				}
 
-			logboek.Debug.LogOptionalLn()
-			logboek.Debug.LogLn(statusResultChecksum)
-			return nil
-		}); err != nil {
+				logboek.Debug().LogOptionalLn()
+				logboek.Debug().LogLn(statusResultChecksum)
+				return nil
+			}); err != nil {
 			return "", fmt.Errorf("status result checksum failed: %s", err)
 		}
 	}
 
-	blockMsg = fmt.Sprintf("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
-	logboek.Debug.LogProcessStart(blockMsg, logboek.LevelLogProcessStartOptions{})
+	logProcess = logboek.Debug().LogProcess("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
+	logProcess.Start()
 	gitIgnoredFilesChecksum, err := s.calculateGitIgnoredFilesChecksum(wildcards)
 	if err != nil {
-		logboek.Debug.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+		logProcess.Fail()
 		return "", err
+	} else {
+		if gitIgnoredFilesChecksum != "" {
+			logboek.Debug().LogOptionalLn()
+			logboek.Debug().LogLn(gitIgnoredFilesChecksum)
+		}
+
+		logProcess.End()
 	}
-	if gitIgnoredFilesChecksum != "" {
-		logboek.Debug.LogOptionalLn()
-		logboek.Debug.LogLn(gitIgnoredFilesChecksum)
-	}
-	logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
 	var resultChecksum string
 	if gitIgnoredFilesChecksum == "" { // TODO: legacy till v1.2
@@ -502,7 +506,7 @@ func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]stri
 
 		relContextWildcard, err := filepath.Rel(s.projectPath, contextWildcard)
 		if err != nil || relContextWildcard == ".." || strings.HasPrefix(relContextWildcard, ".."+string(os.PathSeparator)) {
-			logboek.Warn.LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
+			logboek.Warn().LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
 			continue
 		}
 
@@ -555,7 +559,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 		}
 
 		dependencies = append(dependencies, relPath)
-		logboek.Debug.LogF("File %s was added:\n", relPath)
+		logboek.Debug().LogF("File %s was added:\n", relPath)
 
 		stat, err := os.Lstat(path)
 		if err != nil {
@@ -563,7 +567,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 		}
 
 		dependencies = append(dependencies, stat.Mode().String())
-		logboek.Debug.LogF("  mode: %s\n", stat.Mode().String())
+		logboek.Debug().LogF("  mode: %s\n", stat.Mode().String())
 
 		if stat.Mode()&os.ModeSymlink != 0 {
 			linkTo, err := os.Readlink(path)
@@ -572,7 +576,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 			}
 
 			dependencies = append(dependencies, linkTo)
-			logboek.Debug.LogF("  linkTo: %s\n", linkTo)
+			logboek.Debug().LogF("  linkTo: %s\n", linkTo)
 		} else {
 			data, err := ioutil.ReadFile(path)
 			if err != nil {
@@ -581,7 +585,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 
 			dataHash := util.Sha256Hash(string(data))
 			dependencies = append(dependencies, dataHash)
-			logboek.Debug.LogF("  content hash: %s\n", dataHash)
+			logboek.Debug().LogF("  content hash: %s\n", dataHash)
 		}
 	}
 

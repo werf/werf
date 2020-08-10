@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/stages_manager"
-
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type StagesPurgeOptions struct {
@@ -27,11 +28,11 @@ func StagesPurge(projectName string, storageLockManager storage.LockManager, sta
 		defer storageLockManager.Unlock(lock)
 	}
 
-	return logboek.Default.LogProcess(
-		"Running stages purge",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.run,
-	)
+	return logboek.Default().LogProcess("Running stages purge").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(m.run)
 }
 
 func newStagesPurgeManager(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) *stagesPurgeManager {
@@ -60,24 +61,28 @@ func (m *stagesPurgeManager) run() error {
 
 	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
 	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		logboek.Default.LogProcessStart("Deleting stages", logboek.LevelLogProcessStartOptions{})
+		logProcess := logboek.Default().LogProcess("Deleting stages")
+		logProcess.Start()
 
 		stages, err := m.StagesManager.GetAllStages()
 		if err != nil {
-			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return err
 		}
 
 		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
-			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return err
+		} else {
+			logProcess.End()
 		}
-		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-		logboek.Default.LogProcessStart("Deleting managed images", logboek.LevelLogProcessStartOptions{})
+		logProcess = logboek.Default().LogProcess("Deleting managed images")
+		logProcess.Start()
+
 		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(m.ProjectName)
 		if err != nil {
-			logboek.Default.LogProcessFail(logboek.LevelLogProcessFailOptions{})
+			logProcess.Fail()
 			return err
 		}
 
@@ -93,10 +98,11 @@ func (m *stagesPurgeManager) run() error {
 				logTag = storage.NamelessImageRecordTag
 			}
 
-			logboek.Default.LogFDetails("  tag: %s\n", logTag)
+			logboek.Default().LogFDetails("  tag: %s\n", logTag)
 			logboek.LogOptionalLn()
 		}
-		logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+
+		logProcess.End()
 
 		return nil
 	})

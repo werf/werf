@@ -44,7 +44,7 @@ func (s *UserStage) getStageDependenciesChecksum(c Conveyor, name StageName) (st
 		}
 
 		if debugUserStageChecksum() {
-			logboek.Debug.LogFHighlight(
+			logboek.Debug().LogFHighlight(
 				"DEBUG: %s stage git mapping %s checksum %v\n",
 				name, gitMapping.Name, checksum,
 			)

@@ -129,7 +129,7 @@ func (gm *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo
 func (gm *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	var res git_repo.Archive
 
-	err := logboek.Info.LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add), logboek.LevelLogProcessOptions{}, func() error {
+	err := logboek.Info().LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add)).DoError(func() error {
 		archive, err := gm.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -162,7 +162,7 @@ func (gm *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 	var res git_repo.Patch
 
 	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Add)
-	err := logboek.Info.LogProcess(logProcessMsg, logboek.LevelLogProcessOptions{}, func() error {
+	err := logboek.Info().LogProcess(logProcessMsg).DoError(func() error {
 		patch, err := gm.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err
@@ -296,11 +296,11 @@ func (gm *GitMapping) GetLatestCommitInfo(c Conveyor) (ImageCommitInfo, error) {
 			} else if len(parents) == 2 {
 				if res.VirtualMergeIntoCommit == "" {
 					res.VirtualMergeIntoCommit = parents[0]
-					logboek.Debug.LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
+					logboek.Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
 				}
 				if res.VirtualMergeFromCommit == "" {
 					res.VirtualMergeFromCommit = parents[1]
-					logboek.Debug.LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
+					logboek.Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
 				}
 			}
 		}
@@ -354,7 +354,7 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(c Conveyor, prevBuiltImage 
 			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
 				return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %s", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
 			} else {
-				logboek.Info.LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
+				logboek.Info().LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
 				baseCommit = detachedMergeCommit
 			}
 		}
@@ -673,7 +673,7 @@ func (gm *GitMapping) StageDependenciesChecksum(c Conveyor, stageName StageName)
 	}
 
 	for _, p := range checksum.GetNoMatchPaths() {
-		logboek.LogWarnF(
+		logboek.Warn().LogF(
 			"WARNING: stage %s dependency path %s has not been found in %s git\n",
 			stageName, p, gm.GitRepo().GetName(),
 		)
