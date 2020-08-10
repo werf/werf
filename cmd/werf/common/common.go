@@ -375,8 +375,12 @@ func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StatusProgressPeriodSeconds = new(int64)
+	SetupStatusProgressPeriodP(cmdData.StatusProgressPeriodSeconds, cmd)
+}
+
+func SetupStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(
-		cmdData.StatusProgressPeriodSeconds,
+		destination,
 		"status-progress-period",
 		"",
 		*statusProgressPeriodDefaultValue(),
@@ -423,8 +427,12 @@ func statusProgressPeriodDefaultValue() *int64 {
 
 func SetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HooksStatusProgressPeriodSeconds = new(int64)
+	SetupHooksStatusProgressPeriodP(cmdData.HooksStatusProgressPeriodSeconds, cmd)
+}
+
+func SetupHooksStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(
-		cmdData.HooksStatusProgressPeriodSeconds,
+		destination,
 		"hooks-status-progress-period",
 		"",
 		*hooksStatusProgressPeriodDefaultValue(),

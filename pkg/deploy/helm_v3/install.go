@@ -25,13 +25,16 @@ type InstallOptions struct {
 	Install         bool
 	Atomic          bool
 	Timeout         time.Duration
+
+	StatusProgressPeriod      time.Duration
+	HooksStatusProgressPeriod time.Duration
 }
 
 func Install(ctx context.Context, chart, releaseName string, opts InstallOptions) error {
 	outfmt := output.Table
 
 	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings)
+	cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 	client := action.NewInstall(cfg)
 	client.Namespace = opts.Namespace
 	client.CreateNamespace = opts.CreateNamespace

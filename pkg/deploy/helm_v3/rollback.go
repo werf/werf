@@ -19,12 +19,15 @@ type RollbackOptions struct {
 	Timeout       time.Duration
 	Wait          bool
 	CleanupOnFail bool
+
+	StatusProgressPeriod      time.Duration
+	HooksStatusProgressPeriod time.Duration
 }
 
 func Rollback(releaseName string, opts RollbackOptions) error {
 	return logboek.Default.LogProcess(fmt.Sprintf("Rolling back release %q"), logboek.LevelLogProcessOptions{}, func() error {
 		envSettings := NewEnvSettings(opts.Namespace)
-		cfg := NewActionConfig(envSettings)
+		cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 		client := action.NewRollback(cfg)
 		client.Timeout = opts.Timeout
 		client.Version = opts.Version

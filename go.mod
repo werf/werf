@@ -83,6 +83,7 @@ require (
 	k8s.io/client-go v0.18.6
 	k8s.io/helm v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
+	k8s.io/kubectl v0.18.6
 	k8s.io/kubernetes v1.18.6 // indirect
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
@@ -140,7 +141,7 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200807164411-27919fc0c010
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200810125217-27be3ebf58f2
 
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
@@ -149,4 +150,3 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
 go 1.14
-
