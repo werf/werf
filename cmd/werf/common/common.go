@@ -114,6 +114,13 @@ type CmdData struct {
 const (
 	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
 	StubImagesRepoAddress                  = "stub/repository"
+
+	CiEnvGitTagStrategyLimitDefault               = 10
+	CiEnvGitTagStrategyExpiryDaysDefault          = 30
+	CiEnvGitCommitStrategyLimitDefault            = 50
+	CiEnvGitCommitStrategyExpiryDaysDefault       = 30
+	CiEnvStagesSignatureStrategyLimitDefault      = -1
+	CiEnvStagesSignatureStrategyExpiryDaysDefault = -1
 )
 
 func GetLongCommandDescription(text string) string {
@@ -940,6 +947,17 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 	stagesSignatureDays, err := GetStagesSignatureStrategyExpiryDays(cmdData)
 	if err != nil {
 		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	if tagLimit != CiEnvGitTagStrategyLimitDefault && tagLimit != -1 ||
+		tagDays != CiEnvGitTagStrategyExpiryDaysDefault && tagDays != -1 ||
+		commitLimit != CiEnvGitCommitStrategyLimitDefault && commitLimit != -1 ||
+		commitDays != CiEnvGitCommitStrategyExpiryDaysDefault && commitDays != -1 ||
+		stagesSignatureLimit != CiEnvStagesSignatureStrategyLimitDefault ||
+		stagesSignatureDays != CiEnvStagesSignatureStrategyExpiryDaysDefault {
+		logboek.Warn.LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes (https://werf.io/documentation/reference/cleaning_process.html#tagging-scheme-based-cleanup-algorithm) which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
+
+Now werf uses the git history-based cleanup algorithm (https://werf.io/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm) with the following default policies (https://werf.io/documentation/configuration/cleanup.html#default-policies).`)
 	}
 
 	res := cleanup.ImagesCleanupPolicies{}
