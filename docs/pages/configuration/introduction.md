@@ -522,7 +522,7 @@ Go templates are available within YAML configuration. The following functions ar
   shell:
     setup:
     - |
-      head -c -1 <<EOF > /etc/nginx/nginx.conf
+      head -c -1 <<'EOF' > /etc/nginx/nginx.conf
   {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
       EOF
   ```
