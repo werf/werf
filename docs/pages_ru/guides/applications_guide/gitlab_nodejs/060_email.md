@@ -27,6 +27,7 @@ npm install mailgun-js
 
 {% snippetcut name="consumer.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/060-email/consumer/consumer.js" %}
 {% raw %}
+```js
 const mailgun = require("mailgun-js");
 ...
 const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAILGUN_DOMAIN, host: "api.eu.mailgun.net"});
