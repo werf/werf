@@ -125,6 +125,10 @@ func (storage *LocalDockerServerStagesStorage) GetStageDescription(projectName, 
 func (storage *LocalDockerServerStagesStorage) AddManagedImage(projectName, imageName string) error {
 	logboek.Debug.LogF("-- LocalDockerServerStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
+	if validateImageName(imageName) != nil {
+		return nil
+	}
+
 	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
 
 	if exsts, err := docker.ImageExist(fullImageName); err != nil {
@@ -174,6 +178,10 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(projectName stri
 			_, tag := image.ParseRepositoryAndTag(repoTag)
 
 			imageName := unslugDockerImageTagAsImageName(tag)
+
+			if err := validateImageName(imageName); err != nil {
+				continue
+			}
 
 			res = append(res, imageName)
 		}
