@@ -42,7 +42,7 @@ Werf предлагает использовать для стадий след�
 shell:
 <...>
   install:
-  - cd /app && npm сi
+  - cd /app && npm ci
 ```
 {% endraw %}
 {% endsnippetcut %}

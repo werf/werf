@@ -44,6 +44,18 @@ toc: false
 
 Перед тем, как вносить изменения — **необходимо убедиться, что в собранных ассетах нет привязки к конкретному окружению**. То есть в собранных образах не должно быть логинов, паролей, доменов и тому подобного. В момент сборки NodeJs не должен подключаться к базе данных, использовать user-generated контент и тому подобное.
 
+В традиции фронтэнд-разработки сложилась обратная практика: пробрасывать некоторые переменные, завязанные на окружение, на стадии сборки. И мы понимаем, что существует огромное количество приложений, собираемых, например, webpack-ом, по такому принципу. Решение проблемы легаси-проектов выходит за рамки этого гайда, мы будем рассматривать задачу кубернетизации на приложении, где этой проблемы нет.
+
+{% offtopic title="А что делать с легаси-проектами?" %}
+Конечно, лучше начать переписывать раньше, чем позже. Но мы понимаем, что это дорогая и сложная задача.
+
+В качестве временной меры _иногда_ можно подставить вместо значения переменных, завязанных на окружение, уникальную строку. К примеру, если в приложение передаётся домен cdn-сервера `cdn_server` со значениями `mycdn0.mydomain.io` / `mycdn0-staging.mydomain.io` — можно вместо этих значений в сборку передать случайный GUID `cdfe0513-ba1f-4f92-8503-48a497d98059`. А в helm-шаблонах, в initContainer-е, сделать с помощью утилиты [sed](https://ru.wikipedia.org/wiki/Sed) замену GUID-а на нужное именно на этом окружении значение.
+
+Но использование этого или другого "костыля" является лишь временной мерой с сомнительным результатом и не избавляет от необходимости модернизировать js-приложение.
+{% endofftopic %}
+
+С исходным кодом нашего приложения можно [ознакомиться в репозитории](https://github.com/werf/demos/tree/master/applications-guide/gitlab-nodejs/examples/040-assets/src).
+
 ## Изменения в сборке
 
 Для ассетов мы соберём отдельный образ с nginx и ассетами. Для этого нужно собрать образ с nginx и забросить туда ассеты, предварительно собранные с помощью [механизма артефактов](https://ru.werf.io/documentation/configuration/stapel_artifact.html).
@@ -86,14 +98,37 @@ shell:
   setup:
   - cd /app && npm run build
 git:
-  - add: /
-    to: /app
-    stageDependencies:
-      install:
-      - package.json
-      - webpack-*
-      setup:
-      - "**/*"
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - package.json
+    - webpack-*
+    setup:
+    - "**/*"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+И, чтобы это работало, необходимо добавить сценарий `build` и нужные зависимости в ваш `package.json`:
+
+{% snippetcut name="package.json" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/package.json" %}
+{% raw %}
+```yaml
+    "build": "rm -rf dist && webpack --config webpack.config.js --mode development"
+<...>
+  "devDependencies": {
+    "copy-webpack-plugin": "^6.0.3",
+    "css-loader": "^4.2.0",
+    "file-loader": "^6.0.0",
+    "html-webpack-plugin": "^4.3.0",
+    "sass": "^1.26.10",
+    "sass-loader": "^9.0.3",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -104,13 +139,21 @@ git:
 {% raw %}
 ```yaml
 ---
-image: node_assets
+image: "node-assets"
 from: nginx:stable-alpine
 docker:
   EXPOSE: '80'
+shell:
+  beforeInstall:
+  - |
+    head -c -1 <<'EOF' > /etc/nginx/nginx.conf
+    {{ .Files.Get ".werf/nginx.conf" | nindent 4 }}
+    EOF
 ```
 {% endraw %}
 {% endsnippetcut %}
+
+_Исходный код nginx.conf можно [посмотреть в репозитории](https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.werf/nginx.conf)_
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
@@ -135,8 +178,8 @@ import:
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/040-assets/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-      - name: assets
-{{ tuple "assets" . | include "werf_container_image" | indent 8 }}
+      - name: node-assets
+{{ tuple "node-assets" . | include "werf_container_image" | indent 8 }}
         lifecycle:
           preStop:
             exec:

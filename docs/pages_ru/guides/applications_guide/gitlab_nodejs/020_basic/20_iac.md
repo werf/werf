@@ -106,7 +106,7 @@ Helm — шаблонизатор, и он поддерживает множес
       env:
 <...>
       - name: DEBUG_2
-        value: {{ .Values.app.isDebug }}
+        value: "{{ .Values.isDebug }}"
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -118,8 +118,8 @@ Helm — шаблонизатор, и он поддерживает множес
 ```yaml
       env:
 <...>
-      - name: DEBUG_3
-        value: {{ pluck .Values.global.env .Values.app.isDebug | first | default .Values.app.isDebug._default }}
+      - name: "DEBUG"
+        value: "{{ pluck .Values.global.env .Values.app.isDebug | first | default .Values.app.isDebug._default }}"
 ```
 {% endraw %}
 {% endsnippetcut %}
