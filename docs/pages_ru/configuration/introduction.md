@@ -531,11 +531,11 @@ shell:
   image: app
   from: alpine
   shell:
-   setup:
-   - |
-     head -c -1 <<EOF > /etc/nginx/nginx.conf
-  {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
-     EOF
+    setup:
+    - |
+      head -c -1 <<'EOF' > /etc/nginx/nginx.conf
+   {{ .Files.Get ".werf/nginx.conf" | indent 4 }}
+      EOF
   ```
   {% endraw %}
 
