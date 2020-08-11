@@ -174,6 +174,10 @@ func (storage *RepoStagesStorage) GetStageDescription(projectName, signature str
 func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string) error {
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
+	if validateImageName(imageName) != nil {
+		return nil
+	}
+
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
@@ -226,6 +230,11 @@ func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string
 			}
 
 			managedImageName := unslugDockerImageTagAsImageName(strings.TrimPrefix(tag, RepoManagedImageRecord_ImageTagPrefix))
+
+			if validateImageName(managedImageName) != nil {
+				continue
+			}
+
 			res = append(res, managedImageName)
 		}
 	}
@@ -400,6 +409,13 @@ func unslugDockerImageTagAsImageName(tag string) string {
 	}
 
 	return res
+}
+
+func validateImageName(name string) error {
+	if strings.ToLower(name) != name {
+		return fmt.Errorf("no upcase symbols allowed")
+	}
+	return nil
 }
 
 func (storage *RepoStagesStorage) GetClientIDRecords(projectName string) ([]*ClientIDRecord, error) {
