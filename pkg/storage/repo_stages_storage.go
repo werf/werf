@@ -170,6 +170,10 @@ func (storage *RepoStagesStorage) GetStageDescription(projectName, signature str
 func (storage *RepoStagesStorage) AddManagedImage(projectName, imageName string) error {
 	logboek.Debug.LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
+	if validateImageName(imageName) != nil {
+		return nil
+	}
+
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 
 	if _, lock, err := werf.AcquireHostLock(fmt.Sprintf("managed_image.%s-%s", projectName, imageName), lockgate.AcquireOptions{}); err != nil {
@@ -248,6 +252,9 @@ func (storage *RepoStagesStorage) GetManagedImages(projectName string) ([]string
 			if managedImageName == NamelessImageRecordTag {
 				res = append(res, "")
 			} else {
+				if validateImageName(managedImageName) != nil {
+					continue
+				}
 				res = append(res, managedImageName)
 			}
 		}
@@ -299,6 +306,13 @@ func (storage *RepoStagesStorage) String() string {
 
 func (storage *RepoStagesStorage) Address() string {
 	return storage.RepoAddress
+}
+
+func validateImageName(name string) error {
+	if strings.ToLower(name) != name {
+		return fmt.Errorf("no upcase symbols allowed")
+	}
+	return nil
 }
 
 func makeRepoManagedImageRecord(repoAddress, imageName string) string {
