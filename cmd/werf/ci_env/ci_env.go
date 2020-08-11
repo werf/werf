@@ -548,12 +548,12 @@ func getCleanupConfig() (CleanupConfig, error) {
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return CleanupConfig{
-			GitTagStrategyLimit:               10,
-			GitTagStrategyExpiryDays:          30,
-			GitCommitStrategyLimit:            50,
-			GitCommitStrategyExpiryDays:       30,
-			StagesSignatureStrategyLimit:      -1,
-			StagesSignatureStrategyExpiryDays: -1,
+			GitTagStrategyLimit:               common.CiEnvGitTagStrategyLimitDefault,
+			GitTagStrategyExpiryDays:          common.CiEnvGitTagStrategyExpiryDaysDefault,
+			GitCommitStrategyLimit:            common.CiEnvGitCommitStrategyLimitDefault,
+			GitCommitStrategyExpiryDays:       common.CiEnvGitCommitStrategyExpiryDaysDefault,
+			StagesSignatureStrategyLimit:      common.CiEnvStagesSignatureStrategyLimitDefault,
+			StagesSignatureStrategyExpiryDays: common.CiEnvStagesSignatureStrategyExpiryDaysDefault,
 		}, nil
 	}
 
