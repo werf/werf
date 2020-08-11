@@ -3,6 +3,21 @@ title: Cleanup
 sidebar: documentation
 permalink: documentation/configuration/cleanup.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">cleanup</span><span class="pi">:</span>
+    <span class="na">keepPolicies</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">references</span><span class="pi">:</span>
+        <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;string|/REGEXP/&gt;</span>
+        <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;string|/REGEXP/&gt;</span>
+        <span class="na">limit</span><span class="pi">:</span>
+          <span class="na">last</span><span class="pi">:</span> <span class="s">&lt;int&gt;</span>
+          <span class="na">in</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
+          <span class="na">operator</span><span class="pi">:</span> <span class="s">&lt;And|Or&gt;</span>
+      <span class="na">imagesPerReference</span><span class="pi">:</span>
+        <span class="na">last</span><span class="pi">:</span> <span class="s">&lt;int&gt;</span>
+        <span class="na">in</span><span class="pi">:</span> <span class="s">&lt;duration string&gt;</span>
+        <span class="na">operator</span><span class="pi">:</span> <span class="s">&lt;And|Or&gt;</span>
+  </code></pre></div></div>  
 ---
 
 ## Configuring cleanup policies
