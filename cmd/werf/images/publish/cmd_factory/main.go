@@ -36,7 +36,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		DisableFlagsInUseLine: true,
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			return common.LogRunningTime(func() error {
 				if err := common.ProcessLogOptions(commonCmdData); err != nil {
@@ -88,6 +88,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 }
 
 func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -104,7 +106,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -130,7 +132,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	projectName := werfConfig.Meta.Project
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -157,7 +159,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -171,7 +173,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -196,8 +198,8 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
-	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
-		return c.PublishImages(opts)
+	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		return c.PublishImages(ctx, opts)
 	}); err != nil {
 		return err
 	}

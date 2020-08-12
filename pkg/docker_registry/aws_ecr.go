@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -39,7 +40,7 @@ func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
 	return awsEcr, nil
 }
 
-func (r *awsEcr) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImageList ...*image.Info) error {
 	repositoriesByRegion := map[string]map[string][]*ecr.ImageIdentifier{}
 
 	for _, repoImage := range repoImageList {
@@ -85,7 +86,7 @@ func (r *awsEcr) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *awsEcr) CreateRepo(reference string) error {
+func (r *awsEcr) CreateRepo(_ context.Context, reference string) error {
 	_, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
@@ -106,7 +107,7 @@ func (r *awsEcr) CreateRepo(reference string) error {
 	return nil
 }
 
-func (r *awsEcr) DeleteRepo(reference string) error {
+func (r *awsEcr) DeleteRepo(_ context.Context, reference string) error {
 	_, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err

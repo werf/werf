@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -35,7 +36,7 @@ func CheckContainerDirectory(werfBinPath, projectPath, containerDirPath string, 
 }
 
 func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string, extraDockerOptions []string, cmds []string) {
-	container, err := stapel.GetOrCreateContainer()
+	container, err := stapel.GetOrCreateContainer(context.Background())
 	Ω(err).ShouldNot(HaveOccurred())
 
 	dockerOptions := []string{

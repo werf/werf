@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -39,24 +40,24 @@ type GitPatchStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	if empty, err := s.GitStage.IsEmpty(c, prevBuiltImage); err != nil {
+func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+	if empty, err := s.GitStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
 		return true, nil
 	}
 
-	return s.hasPrevBuiltStageHadActualGitMappings(c, prevBuiltImage)
+	return s.hasPrevBuiltStageHadActualGitMappings(ctx, c, prevBuiltImage)
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
 			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
 
-		latestCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
+		latestCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
 			return false, fmt.Errorf("unable to get latest commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
@@ -69,21 +70,21 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(c Conveyor, prevBu
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	if err := s.prepareImage(c, prevBuiltImage, image); err != nil {
+	if err := s.prepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyPatchCommand(c, prevBuiltImage, image); err != nil {
+		if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, image); err != nil {
 			return err
 		}
 	}

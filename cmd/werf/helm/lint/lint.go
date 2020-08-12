@@ -1,7 +1,6 @@
 package lint
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -61,6 +60,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runLint() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -69,11 +70,11 @@ func runLint() error {
 		return err
 	}
 
-	if err := deploy.Init(deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
+	if err := deploy.Init(ctx, deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -95,6 +96,7 @@ func runLint() error {
 	projectName := werfConfig.Meta.Project
 
 	stubImagesRepo, err := storage.NewImagesRepo(
+		ctx,
 		projectName,
 		common.StubImagesRepoAddress,
 		"auto",
@@ -126,7 +128,7 @@ func runLint() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(context.Background(), projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

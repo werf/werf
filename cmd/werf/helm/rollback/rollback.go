@@ -1,7 +1,6 @@
 package rollback
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -31,7 +30,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -74,6 +73,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runRollback(releaseName string, revision int32) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -97,7 +98,8 @@ func runRollback(releaseName string, revision int32) error {
 			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -111,11 +113,11 @@ func runRollback(releaseName string, revision int32) error {
 
 	common.LogKubeContext(kube.Context)
 
-	if err := common.InitKubedog(); err != nil {
+	if err := common.InitKubedog(ctx); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	if err := helm.Rollback(context.Background(), releaseName, revision, cmdData.RollbackOptions); err != nil {
+	if err := helm.Rollback(ctx, releaseName, revision, cmdData.RollbackOptions); err != nil {
 		return err
 	}
 

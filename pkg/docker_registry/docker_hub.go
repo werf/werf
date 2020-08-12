@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -50,13 +51,13 @@ func newDockerHub(options dockerHubOptions) (*dockerHub, error) {
 	return dockerHub, nil
 }
 
-func (r *dockerHub) DeleteRepo(reference string) error {
-	return r.deleteRepo(reference)
+func (r *dockerHub) DeleteRepo(ctx context.Context, reference string) error {
+	return r.deleteRepo(ctx, reference)
 }
 
-func (r *dockerHub) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
 			return err
 		}
 	}
@@ -64,8 +65,8 @@ func (r *dockerHub) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *dockerHub) deleteRepo(reference string) error {
-	token, err := r.getToken()
+func (r *dockerHub) deleteRepo(ctx context.Context, reference string) error {
+	token, err := r.getToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func (r *dockerHub) deleteRepo(reference string) error {
 		return err
 	}
 
-	resp, err := r.dockerHubApi.deleteRepository(account, project, token)
+	resp, err := r.dockerHubApi.deleteRepository(ctx, account, project, token)
 	if resp != nil {
 		if resp.StatusCode == http.StatusUnauthorized {
 			return DockerHubUnauthorizedError{error: err}
@@ -91,8 +92,8 @@ func (r *dockerHub) deleteRepo(reference string) error {
 	return nil
 }
 
-func (r *dockerHub) deleteRepoImage(repoImage *image.Info) error {
-	token, err := r.getToken()
+func (r *dockerHub) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+	token, err := r.getToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info) error {
 		return err
 	}
 
-	resp, err := r.dockerHubApi.deleteTag(account, project, repoImage.Tag, token)
+	resp, err := r.dockerHubApi.deleteTag(ctx, account, project, repoImage.Tag, token)
 	if resp != nil {
 		if resp.StatusCode == http.StatusUnauthorized {
 			return DockerHubUnauthorizedError{error: err}
@@ -118,9 +119,9 @@ func (r *dockerHub) deleteRepoImage(repoImage *image.Info) error {
 	return nil
 }
 
-func (r *dockerHub) getToken() (string, error) {
+func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 	if r.dockerHubCredentials.token == "" {
-		token, resp, err := r.dockerHubApi.getToken(r.dockerHubCredentials.username, r.dockerHubCredentials.password)
+		token, resp, err := r.dockerHubApi.getToken(ctx, r.dockerHubCredentials.username, r.dockerHubCredentials.password)
 		if resp != nil {
 			if resp.StatusCode == http.StatusUnauthorized {
 				return "", DockerHubUnauthorizedError{error: err}
@@ -139,7 +140,7 @@ func (r *dockerHub) getToken() (string, error) {
 	return r.dockerHubCredentials.token, nil
 }
 
-func (r *dockerHub) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error) {
+func (r *dockerHub) ResolveRepoMode(_ context.Context, registryOrRepositoryAddress, repoMode string) (string, error) {
 	account, repository, err := r.parseReference(registryOrRepositoryAddress)
 	if err != nil {
 		return "", err

@@ -1,12 +1,13 @@
 package tmp_manager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 )
 
-func CreateWerfConfigRender() (string, error) {
+func CreateWerfConfigRender(ctx context.Context) (string, error) {
 	newFile, err := newTmpFile(WerfConfigRenderPrefix)
 	if err != nil {
 		return "", err
@@ -23,7 +24,7 @@ func CreateWerfConfigRender() (string, error) {
 	}
 
 	if shouldRunGC {
-		err := runGC()
+		err := runGC(ctx)
 		if err != nil {
 			return "", fmt.Errorf("tmp manager GC failed: %s", err)
 		}

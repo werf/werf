@@ -24,7 +24,7 @@ type LintOptions struct {
 }
 
 func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
-	logboek.Debug().LogF("Lint options: %#v\n", opts)
+	logboek.Context(ctx).Debug().LogF("Lint options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {

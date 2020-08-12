@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -46,8 +47,8 @@ func newHarbor(options harborOptions) (*harbor, error) {
 	return harbor, nil
 }
 
-func (r *harbor) Tags(reference string) ([]string, error) {
-	tags, err := r.defaultImplementation.Tags(reference)
+func (r *harbor) Tags(ctx context.Context, reference string) ([]string, error) {
+	tags, err := r.defaultImplementation.Tags(ctx, reference)
 	if err != nil {
 		if IsNotFoundError(err) {
 			return []string{}, nil
@@ -58,26 +59,26 @@ func (r *harbor) Tags(reference string) ([]string, error) {
 	return tags, nil
 }
 
-func (r *harbor) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.Tags(reference)
+func (r *harbor) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+	tags, err := r.Tags(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.selectRepoImageListByTags(reference, tags, f)
+	return r.selectRepoImageListByTags(ctx, reference, tags, f)
 }
 
-func (r *harbor) DeleteRepo(reference string) error {
-	return r.deleteRepo(reference)
+func (r *harbor) DeleteRepo(ctx context.Context, reference string) error {
+	return r.deleteRepo(ctx, reference)
 }
 
-func (r *harbor) deleteRepo(reference string) error {
+func (r *harbor) deleteRepo(ctx context.Context, reference string) error {
 	hostname, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	resp, err := r.harborApi.DeleteRepository(hostname, repository, r.harborCredentials.username, r.harborCredentials.password)
+	resp, err := r.harborApi.DeleteRepository(ctx, hostname, repository, r.harborCredentials.username, r.harborCredentials.password)
 	if resp != nil {
 		if resp.StatusCode == http.StatusNotFound {
 			return HarborNotFoundError{error: err}

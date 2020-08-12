@@ -57,6 +57,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -69,7 +71,7 @@ func run() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -78,7 +80,7 @@ func run() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -120,7 +122,7 @@ func run() error {
 	_ = stagesStorageCache
 	_ = storageLockManager
 
-	if images, err := stagesStorage.GetManagedImages(projectName); err != nil {
+	if images, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)
 	} else {
 		for _, imgName := range images {

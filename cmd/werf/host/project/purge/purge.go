@@ -30,7 +30,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project stages from local stages storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -70,6 +70,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run(projectNames ...string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -78,7 +80,7 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -106,7 +108,7 @@ func run(projectNames ...string) error {
 		}
 
 		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 			return err
 		}
 
@@ -120,7 +122,7 @@ func run(projectNames ...string) error {
 					DryRun:                        *commonCmdData.DryRun,
 				}
 
-				return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
+				return cleaning.StagesPurge(ctx, projectName, storageLockManager, stagesManager, stagesPurgeOptions)
 			}); err != nil {
 			return err
 		}

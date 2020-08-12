@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -25,14 +26,14 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func RenderWerfConfig(werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string) error {
-	werfConfig, err := GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, false)
+func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string) error {
+	werfConfig, err := GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, false)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir)
+		werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -61,19 +62,19 @@ func RenderWerfConfig(werfConfigPath, werfConfigTemplatesDir string, imagesToPro
 	return nil
 }
 
-func GetWerfConfig(werfConfigPath, werfConfigTemplatesDir string, logRenderedFilePath bool) (*WerfConfig, error) {
-	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir)
+func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, logRenderedFilePath bool) (*WerfConfig, error) {
+	werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
 
-	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender()
+	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	if logRenderedFilePath {
-		logboek.LogF("Using werf config render file: %s\n", werfConfigRenderPath)
+		logboek.Context(ctx).LogF("Using werf config render file: %s\n", werfConfigRenderPath)
 	}
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
@@ -92,7 +93,7 @@ func GetWerfConfig(werfConfigPath, werfConfigTemplatesDir string, logRenderedFil
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(filepath.Dir(werfConfigPath))
+		defaultProjectName, err := GetProjectName(ctx, filepath.Dir(werfConfigPath))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
@@ -121,13 +122,13 @@ func GetWerfConfig(werfConfigPath, werfConfigTemplatesDir string, logRenderedFil
 	return werfConfig, nil
 }
 
-func GetProjectName(projectDir string) (string, error) {
+func GetProjectName(ctx context.Context, projectDir string) (string, error) {
 	name := filepath.Base(projectDir)
 
 	if exist, err := util.DirExists(filepath.Join(projectDir, ".git")); err != nil {
 		return "", err
 	} else if exist {
-		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
+		remoteOriginUrl, err := gitOwnRepoOriginUrl(ctx, projectDir)
 		if err != nil {
 			return "", err
 		}
@@ -147,13 +148,13 @@ func GetProjectName(projectDir string) (string, error) {
 	return slug.Project(name), nil
 }
 
-func gitOwnRepoOriginUrl(projectDir string) (string, error) {
+func gitOwnRepoOriginUrl(ctx context.Context, projectDir string) (string, error) {
 	localGitRepo := &git_repo.Local{
 		Path:   projectDir,
 		GitDir: filepath.Join(projectDir, ".git"),
 	}
 
-	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()
+	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl(ctx)
 	if err != nil {
 		return "", nil
 	}
@@ -202,7 +203,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir string) (string, error) {
+func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string) (string, error) {
 	data, err := ioutil.ReadFile(werfConfigPath)
 	if err != nil {
 		return "", err
@@ -238,7 +239,7 @@ func parseWerfConfigYaml(werfConfigPath, werfConfigTemplatesDir string) (string,
 		return "", err
 	}
 
-	files := files{filepath.Dir(werfConfigPath)}
+	files := files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath)}
 	config, err := executeTemplate(tmpl, "werfConfig", map[string]interface{}{"Files": files})
 
 	return config, err
@@ -309,6 +310,7 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 }
 
 type files struct {
+	ctx        context.Context
 	ProjectDir string
 }
 
@@ -316,7 +318,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logboek.Warn().LogF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
@@ -375,12 +377,12 @@ func (f files) Glob(pattern string) map[string]interface{} {
 	})
 
 	if err != nil {
-		logboek.Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
+		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
 		return nil
 	}
 
 	if len(result) == 0 {
-		logboek.Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
+		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
 		return nil
 	}
 

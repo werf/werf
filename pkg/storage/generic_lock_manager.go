@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/lockgate"
@@ -17,30 +18,30 @@ type GenericLockManager struct {
 	Locker lockgate.Locker
 }
 
-func (manager *GenericLockManager) LockStage(projectName, signature string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+func (manager *GenericLockManager) LockStage(ctx context.Context, projectName, signature string) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockStageCache(projectName, signature string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+func (manager *GenericLockManager) LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockImage(projectName, imageName string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericImageLockName(imageName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+func (manager *GenericLockManager) LockImage(ctx context.Context, projectName, imageName string) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericImageLockName(imageName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
+func (manager *GenericLockManager) LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) Unlock(lock LockHandle) error {
+func (manager *GenericLockManager) Unlock(ctx context.Context, lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
-		logboek.Error().LogF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
+		logboek.Context(ctx).Error().LogF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
 	}
 	return err
 }

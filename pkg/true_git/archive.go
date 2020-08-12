@@ -3,6 +3,7 @@ package true_git
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -35,11 +36,11 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
-func ArchiveWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
 	var res *ArchiveDescriptor
 
-	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
-		writeArchiveRes, err := writeArchive(out, gitDir, workTreeCacheDir, true, opts)
+	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		writeArchiveRes, err := writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
 		res = writeArchiveRes
 		return err
 	})
@@ -47,11 +48,11 @@ func ArchiveWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts 
 	return res, err
 }
 
-func Archive(out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
 	var res *ArchiveDescriptor
 
-	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
-		writeArchiveRes, err := writeArchive(out, gitDir, workTreeCacheDir, false, opts)
+	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		writeArchiveRes, err := writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
 		res = writeArchiveRes
 		return err
 	})
@@ -63,7 +64,7 @@ func debugArchive() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
-func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
@@ -83,7 +84,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		}
 	}
 
-	workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
+	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
 	}
@@ -116,31 +117,31 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 		desc.Type = DirectoryArchive
 
 		if debugArchive() {
-			logboek.Debug().LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
+			logboek.Context(ctx).Debug().LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
 		}
 	} else {
 		desc.Type = FileArchive
 
 		if debugArchive() {
-			logboek.Debug().LogF("Found BasePath %s file: file archive\n", absBasePath)
+			logboek.Context(ctx).Debug().LogF("Found BasePath %s file: file archive\n", absBasePath)
 		}
 	}
 
 	tw := tar.NewWriter(out)
 
-	logProcess := logboek.Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
+	logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
 	logProcess.Start()
-	result, err := ls_tree.LsTree(repository, opts.Commit, opts.PathMatcher, true)
+	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher, true)
 	if err != nil {
 		logProcess.Fail()
 		return nil, err
 	}
 	logProcess.End()
 
-	logProcess = logboek.Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
+	logProcess = logboek.Context(ctx).Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
 	logProcess.Start()
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
-		logboek.Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
+		logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
 
 		desc.IsEmpty = false
 
@@ -184,7 +185,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			}
 
 			if debugArchive() {
-				logboek.Debug().LogF("Added archive file '%s'\n", relToBasePathFilepath)
+				logboek.Context(ctx).Debug().LogF("Added archive file '%s'\n", relToBasePathFilepath)
 			}
 		case filemode.Symlink:
 			isSymlink := info.Mode()&os.ModeSymlink != 0
@@ -220,7 +221,7 @@ func writeArchive(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules
 			}
 
 			if debugArchive() {
-				logboek.Debug().LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
+				logboek.Context(ctx).Debug().LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
 			}
 
 			return nil

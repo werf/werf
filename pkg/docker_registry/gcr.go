@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"strings"
 
 	"github.com/werf/werf/pkg/image"
@@ -29,7 +30,7 @@ func newGcr(options GcrOptions) (*gcr, error) {
 	return gcr, nil
 }
 
-func (r *gcr) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *gcr) DeleteRepoImage(_ context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if err := r.deleteRepoImage(repoImage); err != nil {
 			return err

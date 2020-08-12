@@ -34,7 +34,7 @@ First step is 'werf images purge', which will delete all project images from ima
 
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -76,6 +76,8 @@ WARNING: Do not run this command during any other werf command is working on the
 }
 
 func runPurge() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -95,7 +97,7 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -129,7 +131,7 @@ func runPurge() error {
 	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -138,7 +140,7 @@ func runPurge() error {
 		return err
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -156,7 +158,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
+	if err := cleaning.Purge(ctx, projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
 		return err
 	}
 

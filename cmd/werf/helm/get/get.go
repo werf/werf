@@ -1,7 +1,6 @@
 package get
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -61,6 +60,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runGet(releaseName string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -84,11 +85,11 @@ func runGet(releaseName string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
-	if err := helm.Get(context.Background(), os.Stdout, releaseName, cmdData.GetOptions); err != nil {
+	if err := helm.Get(common.BackgroundContext(), os.Stdout, releaseName, cmdData.GetOptions); err != nil {
 		return err
 	}
 

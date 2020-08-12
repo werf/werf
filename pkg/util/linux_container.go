@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
-func RemoveHostDirsWithLinuxContainer(mountDir string, dirs []string) error {
+func RemoveHostDirsWithLinuxContainer(ctx context.Context, mountDir string, dirs []string) error {
 	var containerDirs []string
 	for _, dir := range dirs {
 		containerDirs = append(containerDirs, ToLinuxContainerPath(dir))
@@ -23,7 +24,7 @@ func RemoveHostDirsWithLinuxContainer(mountDir string, dirs []string) error {
 
 	args = append(args, containerDirs...)
 
-	return docker.CliRun(args...)
+	return docker.CliRun(ctx, args...)
 }
 
 func ToLinuxContainerPath(path string) string {

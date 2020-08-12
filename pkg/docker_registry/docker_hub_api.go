@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,14 +14,14 @@ func newDockerHubApi() dockerHubApi {
 	return dockerHubApi{}
 }
 
-func (api *dockerHubApi) deleteRepository(account, project, token string) (*http.Response, error) {
+func (api *dockerHubApi) deleteRepository(ctx context.Context, account, project, token string) (*http.Response, error) {
 	url := fmt.Sprintf(
 		"https://hub.docker.com/v2/repositories/%s/%s/",
 		account,
 		project,
 	)
 
-	resp, _, err := doRequest(http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/json",
 			"Authorization": fmt.Sprintf("JWT %s", token),
@@ -31,7 +32,7 @@ func (api *dockerHubApi) deleteRepository(account, project, token string) (*http
 	return resp, err
 }
 
-func (api *dockerHubApi) deleteTag(account, project, tag, token string) (*http.Response, error) {
+func (api *dockerHubApi) deleteTag(ctx context.Context, account, project, tag, token string) (*http.Response, error) {
 	url := fmt.Sprintf(
 		"https://hub.docker.com/v2/repositories/%s/%s/tags/%s/",
 		account,
@@ -39,7 +40,7 @@ func (api *dockerHubApi) deleteTag(account, project, tag, token string) (*http.R
 		tag,
 	)
 
-	resp, _, err := doRequest(http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/json",
 			"Authorization": fmt.Sprintf("JWT %s", token),
@@ -50,7 +51,7 @@ func (api *dockerHubApi) deleteTag(account, project, tag, token string) (*http.R
 	return resp, err
 }
 
-func (api *dockerHubApi) getToken(username, password string) (string, *http.Response, error) {
+func (api *dockerHubApi) getToken(ctx context.Context, username, password string) (string, *http.Response, error) {
 	url := "https://hub.docker.com/v2/users/login/"
 	body, err := json.Marshal(map[string]string{
 		"username": username,
@@ -60,7 +61,7 @@ func (api *dockerHubApi) getToken(username, password string) (string, *http.Resp
 		return "", nil, err
 	}
 
-	resp, respBody, err := doRequest(http.MethodPost, url, bytes.NewBuffer(body), doRequestOptions{
+	resp, respBody, err := doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(body), doRequestOptions{
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},

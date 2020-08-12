@@ -1,6 +1,7 @@
 package helm_v3
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -19,9 +20,9 @@ type StatusOptions struct {
 	Namespace string
 }
 
-func Status(releaseName string, opts StatusOptions) (*release.Release, error) {
-	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings, InitActionConfigOptions{})
+func Status(ctx context.Context, releaseName string, opts StatusOptions) (*release.Release, error) {
+	envSettings := NewEnvSettings(ctx, opts.Namespace)
+	cfg := NewActionConfig(ctx, envSettings, InitActionConfigOptions{})
 	client := action.NewStatus(cfg)
 	client.Version = opts.Version
 	return client.Run(releaseName)

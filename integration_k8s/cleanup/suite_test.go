@@ -1,6 +1,7 @@
 package cleanup_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -60,7 +61,7 @@ var _ = BeforeEach(func() {
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 
 	imagesRepoAddress := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
-	imagesRepo = utils.NewImagesRepo(imagesRepoAddress, "multirepo", "default", docker_registry.DockerRegistryOptions{})
+	imagesRepo = utils.NewImagesRepo(context.Background(), imagesRepoAddress, "multirepo", "default", docker_registry.DockerRegistryOptions{})
 
 	stagesStorageRepoAddress := fmt.Sprintf("%s/%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName(), "stages")
 	stagesStorage = utils.NewStagesStorage(stagesStorageRepoAddress, "default", docker_registry.DockerRegistryOptions{})
@@ -83,9 +84,9 @@ var _ = AfterEach(func() {
 })
 
 func imagesRepoAllImageRepoTags(imageName string) []string {
-	return utils.ImagesRepoAllImageRepoTags(imagesRepo, imageName)
+	return utils.ImagesRepoAllImageRepoTags(context.Background(), imagesRepo, imageName)
 }
 
 func stagesStorageRepoImagesCount() int {
-	return utils.StagesStorageRepoImagesCount(stagesStorage)
+	return utils.StagesStorageRepoImagesCount(context.Background(), stagesStorage)
 }

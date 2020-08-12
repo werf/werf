@@ -1,7 +1,6 @@
 package history
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -32,7 +31,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -65,6 +64,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runHistory(releaseName string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -88,11 +89,12 @@ func runHistory(releaseName string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
-	if err := helm.History(context.Background(), os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
+	if err := helm.History(ctx, os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
 		return err
 	}
 

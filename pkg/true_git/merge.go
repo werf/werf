@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,10 +15,10 @@ type CreateDetachedMergeCommitOptions struct {
 	HasSubmodules bool
 }
 
-func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateDetachedMergeCommitOptions) (string, error) {
+func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateDetachedMergeCommitOptions) (string, error) {
 	var resCommit string
 
-	if err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
+	if err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
 		gitDir, err = filepath.Abs(gitDir)
@@ -37,7 +38,7 @@ func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeInt
 			}
 		}
 
-		if workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
+		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %s", mergeIntoCommit, err)
 		} else {
 			var err error

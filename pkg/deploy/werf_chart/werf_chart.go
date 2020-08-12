@@ -122,8 +122,8 @@ func (chart *WerfChart) LogExtraAnnotations(ctx context.Context) {
 	res, _ := yaml.Marshal(chart.ExtraAnnotations)
 
 	annotations := strings.TrimRight(string(res), "\n")
-	logboek.LogBlock("Extra annotations").Do(func() {
-		logboek.LogLn(annotations)
+	logboek.Context(ctx).LogBlock("Extra annotations").Do(func() {
+		logboek.Context(ctx).LogLn(annotations)
 	})
 }
 
@@ -135,8 +135,8 @@ func (chart *WerfChart) LogExtraLabels(ctx context.Context) {
 	res, _ := yaml.Marshal(chart.ExtraLabels)
 
 	labels := strings.TrimRight(string(res), "\n")
-	logboek.LogBlock("Extra labels").Do(func() {
-		logboek.LogLn(labels)
+	logboek.Context(ctx).LogBlock("Extra labels").Do(func() {
+		logboek.Context(ctx).LogLn(labels)
 	})
 }
 
@@ -164,7 +164,7 @@ func InitWerfChart(ctx context.Context, projectName, chartDir string, env string
 	if exist, err := util.FileExists(chartYamlFile); err != nil {
 		return nil, fmt.Errorf("check file %s existence failed: %s", chartYamlFile, err)
 	} else if exist {
-		logboek.Warn().LogF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
+		logboek.Context(ctx).Warn().LogF("WARNING: werf generates Chart metadata based on project werf.yaml! To skip the warning please delete .helm/Chart.yaml.\n")
 	}
 
 	defaultSecretValues := filepath.Join(chartDir, DefaultSecretValuesFileName)

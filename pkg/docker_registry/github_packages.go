@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -47,8 +48,8 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 	return gitHub, nil
 }
 
-func (r *gitHubPackages) Tags(reference string) ([]string, error) {
-	tags, err := r.api.Tags(reference)
+func (r *gitHubPackages) Tags(ctx context.Context, reference string) ([]string, error) {
+	tags, err := r.api.Tags(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
@@ -70,18 +71,18 @@ func (r *gitHubPackages) exceptMetaTag(tags []string) []string {
 	return result
 }
 
-func (r *gitHubPackages) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.Tags(reference)
+func (r *gitHubPackages) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+	tags, err := r.Tags(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.defaultImplementation.selectRepoImageListByTags(reference, tags, f)
+	return r.defaultImplementation.selectRepoImageListByTags(ctx, reference, tags, f)
 }
 
-func (r *gitHubPackages) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
 			return err
 		}
 	}
@@ -89,13 +90,13 @@ func (r *gitHubPackages) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *gitHubPackages) deleteRepoImage(repoImage *image.Info) error {
+func (r *gitHubPackages) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	owner, project, packageName, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
 	}
 
-	err = r.deletePackageVersion(owner, project, packageName, repoImage.Tag)
+	err = r.deletePackageVersion(ctx, owner, project, packageName, repoImage.Tag)
 	if err != nil {
 		return err
 	}
@@ -103,7 +104,7 @@ func (r *gitHubPackages) deleteRepoImage(repoImage *image.Info) error {
 	return nil
 }
 
-func (r *gitHubPackages) deletePackageVersion(owner, project, packageName, packageVersion string) error {
+func (r *gitHubPackages) deletePackageVersion(ctx context.Context, owner, project, packageName, packageVersion string) error {
 	processError := func(resp *http.Response, err error) error {
 		if resp != nil && resp.StatusCode == http.StatusUnauthorized {
 			return GitHubPackagesUnauthorizedError{error: err}
@@ -112,31 +113,31 @@ func (r *gitHubPackages) deletePackageVersion(owner, project, packageName, packa
 		return err
 	}
 
-	packageVersionId, resp, err := r.gitHubApi.getPackageVersionId(owner, project, packageName, packageVersion, r.token)
+	packageVersionId, resp, err := r.gitHubApi.getPackageVersionId(ctx, owner, project, packageName, packageVersion, r.token)
 	if err != nil {
 		return processError(resp, err)
 	}
 
-	if resp, err := r.gitHubApi.deletePackageVersion(packageVersionId, r.token); err != nil {
+	if resp, err := r.gitHubApi.deletePackageVersion(ctx, packageVersionId, r.token); err != nil {
 		return processError(resp, err)
 	}
 
 	return nil
 }
 
-func (r *gitHubPackages) DeleteRepo(reference string) error {
-	return r.deleteRepo(reference)
+func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error {
+	return r.deleteRepo(ctx, reference)
 }
 
-func (r *gitHubPackages) deleteRepo(reference string) error {
+func (r *gitHubPackages) deleteRepo(ctx context.Context, reference string) error {
 	owner, project, packageName, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	tags, err := r.Tags(reference)
+	tags, err := r.Tags(ctx, reference)
 	for _, tag := range tags {
-		if err := r.deletePackageVersion(owner, project, packageName, tag); err != nil {
+		if err := r.deletePackageVersion(ctx, owner, project, packageName, tag); err != nil {
 			return err
 		}
 	}
@@ -144,7 +145,7 @@ func (r *gitHubPackages) deleteRepo(reference string) error {
 	return nil
 }
 
-func (r *gitHubPackages) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error) {
+func (r *gitHubPackages) ResolveRepoMode(ctx context.Context, registryOrRepositoryAddress, repoMode string) (string, error) {
 	_, _, packageName, err := r.parseReference(registryOrRepositoryAddress)
 	if err != nil {
 		return "", err

@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/werf/locker_with_retry"
@@ -20,7 +21,7 @@ type LockManager struct {
 	Locker    lockgate.Locker
 }
 
-func NewLockManager(namespace string) (*LockManager, error) {
+func NewLockManager(ctx context.Context, namespace string) (*LockManager, error) {
 	configMapName := "werf-synchronization"
 
 	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
@@ -34,7 +35,7 @@ func NewLockManager(namespace string) (*LockManager, error) {
 			Resource: "configmaps",
 		}, configMapName, namespace,
 	)
-	lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(ctx, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	return &LockManager{
 		Namespace: namespace,
@@ -42,8 +43,8 @@ func NewLockManager(namespace string) (*LockManager, error) {
 	}, nil
 }
 
-func (lockManager *LockManager) LockRelease(releaseName string) (lockgate.LockHandle, error) {
-	_, handle, err := lockManager.Locker.Acquire(fmt.Sprintf("release/%s", releaseName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+func (lockManager *LockManager) LockRelease(ctx context.Context, releaseName string) (lockgate.LockHandle, error) {
+	_, handle, err := lockManager.Locker.Acquire(fmt.Sprintf("release/%s", releaseName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return handle, err
 }
 

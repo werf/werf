@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"path"
@@ -45,7 +46,7 @@ func newQuay(options quayOptions) (*quay, error) {
 	return quay, nil
 }
 
-func (r *quay) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error) {
+func (r *quay) ResolveRepoMode(_ context.Context, registryOrRepositoryAddress, repoMode string) (string, error) {
 	_, _, repository, err := r.parseReference(registryOrRepositoryAddress)
 	if err != nil {
 		return "", err
@@ -75,17 +76,17 @@ func (r *quay) ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (st
 	}
 }
 
-func (r *quay) DeleteRepo(reference string) error {
-	return r.deleteRepo(reference)
+func (r *quay) DeleteRepo(ctx context.Context, reference string) error {
+	return r.deleteRepo(ctx, reference)
 }
 
-func (r *quay) deleteRepo(reference string) error {
+func (r *quay) deleteRepo(ctx context.Context, reference string) error {
 	hostname, namespace, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	resp, err := r.quayApi.DeleteRepository(hostname, namespace, repository, r.quayCredentials.token)
+	resp, err := r.quayApi.DeleteRepository(ctx, hostname, namespace, repository, r.quayCredentials.token)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {
 		return QuayNotFoundError{error: err}
 	}

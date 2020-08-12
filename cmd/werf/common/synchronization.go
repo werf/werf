@@ -51,48 +51,49 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 		return
 	}
 
+	ctx := BackgroundContext()
 	doPrintWarning := false
 	if *cmdData.KubeConfigBase64 != "" {
 		doPrintWarning = true
-		werf.GlobalWarningLn(`###`)
-		werf.GlobalWarningLn(`##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		werf.GlobalWarningLn(fmt.Sprintf(`##  because --kube-config-base64=%s (or WERF_KUBE_CONFIG_BASE64, or WERF_KUBECONFIG_BASE64, or $KUBECONFIG_BASE64 env var) has been specified explicitly.`, *cmdData.KubeConfigBase64))
+		werf.GlobalWarningLn(ctx, `###`)
+		werf.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
+		werf.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-config-base64=%s (or WERF_KUBE_CONFIG_BASE64, or WERF_KUBECONFIG_BASE64, or $KUBECONFIG_BASE64 env var) has been specified explicitly.`, *cmdData.KubeConfigBase64))
 	} else if kubeConfigEnv := os.Getenv("KUBECONFIG"); kubeConfigEnv != "" {
 		doPrintWarning = true
-		werf.GlobalWarningLn(`###`)
-		werf.GlobalWarningLn(`##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		werf.GlobalWarningLn(fmt.Sprintf(`##  because KUBECONFIG=%s env var has been specified explicitly.`, kubeConfigEnv))
+		werf.GlobalWarningLn(ctx, `###`)
+		werf.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
+		werf.GlobalWarningLn(ctx, fmt.Sprintf(`##  because KUBECONFIG=%s env var has been specified explicitly.`, kubeConfigEnv))
 	} else if *cmdData.KubeConfig != "" {
 		doPrintWarning = true
-		werf.GlobalWarningLn(`###`)
-		werf.GlobalWarningLn(`##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		werf.GlobalWarningLn(fmt.Sprintf(`##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, kubeConfigEnv))
+		werf.GlobalWarningLn(ctx, `###`)
+		werf.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
+		werf.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, kubeConfigEnv))
 	} else if *cmdData.KubeContext != "" {
 		doPrintWarning = true
-		werf.GlobalWarningLn(`###`)
-		werf.GlobalWarningLn(`##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		werf.GlobalWarningLn(fmt.Sprintf(`##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, kubeConfigEnv))
+		werf.GlobalWarningLn(ctx, `###`)
+		werf.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
+		werf.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, kubeConfigEnv))
 	}
 
 	if doPrintWarning {
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  IMPORTANT: all invocations of the werf for any single project should use the same`)
-		werf.GlobalWarningLn(`##  --synchronization param (or WERF_SYNCHRONIZATION env var) value`)
-		werf.GlobalWarningLn(`##  to prevent inconsistency of the werf setup for this project.`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  Format of the synchronization param: kubernetes://NAMESPACE[:CONTEXT][@(base64:BASE64_CONFIG_DATA)|CONFIG_PATH]`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  By default werf stores synchronization data using --synchronization=kubernetes://werf-synchronization namespace`)
-		werf.GlobalWarningLn(`##  with default kube-config and kube-context.`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  For example, configure werf synchronization with the following settings:`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##      export WERF_SYNCHRONIZATION=kubernetes://werf-synchronization:mycontext@/root/.kube/custom-config`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  — these same settings required to be used in every werf invocation for your project.`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  More info about synchronization: https://werf.io/documentation/reference/stages_and_images.html#synchronization-locks-and-stages-storage-cache`)
-		werf.GlobalWarningLn(`###`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  IMPORTANT: all invocations of the werf for any single project should use the same`)
+		werf.GlobalWarningLn(ctx, `##  --synchronization param (or WERF_SYNCHRONIZATION env var) value`)
+		werf.GlobalWarningLn(ctx, `##  to prevent inconsistency of the werf setup for this project.`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  Format of the synchronization param: kubernetes://NAMESPACE[:CONTEXT][@(base64:BASE64_CONFIG_DATA)|CONFIG_PATH]`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  By default werf stores synchronization data using --synchronization=kubernetes://werf-synchronization namespace`)
+		werf.GlobalWarningLn(ctx, `##  with default kube-config and kube-context.`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  For example, configure werf synchronization with the following settings:`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##      export WERF_SYNCHRONIZATION=kubernetes://werf-synchronization:mycontext@/root/.kube/custom-config`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  — these same settings required to be used in every werf invocation for your project.`)
+		werf.GlobalWarningLn(ctx, `##  `)
+		werf.GlobalWarningLn(ctx, `##  More info about synchronization: https://werf.io/documentation/reference/stages_and_images.html#synchronization-locks-and-stages-storage-cache`)
+		werf.GlobalWarningLn(ctx, `###`)
 	}
 }
 
@@ -129,7 +130,7 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 		var address string
 		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server")).
 			DoError(func() error {
-				if clientID, err := synchronization_server.GetOrCreateClientID(projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
+				if clientID, err := synchronization_server.GetOrCreateClientID(BackgroundContext(), projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
 					return fmt.Errorf("unable to get synchronization client id: %s", err)
 				} else {
 					address = fmt.Sprintf("%s/%s", synchronization, clientID)
@@ -208,7 +209,7 @@ func GetStorageLockManager(synchronization *SynchronizationParams) (storage.Lock
 		}
 	case HttpSynchronization:
 		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
-		lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+		lockerWithRetry := locker_with_retry.NewLockerWithRetry(BackgroundContext(), locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 		return storage.NewGenericLockManager(lockerWithRetry), nil
 	default:
 		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))

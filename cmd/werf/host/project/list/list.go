@@ -1,6 +1,7 @@
 package list
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -61,15 +62,17 @@ func NewCmd() *cobra.Command {
 }
 
 func run() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
-	projects, err := getProjects()
+	projects, err := getProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -89,12 +92,12 @@ type projectFields struct {
 	Modified int64
 }
 
-func getProjects() (map[string]*projectFields, error) {
+func getProjects(ctx context.Context) (map[string]*projectFields, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("label", imagePkg.WerfLabel)
 	options := types.ImageListOptions{Filters: filterSet}
 
-	images, err := docker.Images(options)
+	images, err := docker.Images(ctx, options)
 	if err != nil {
 		return nil, err
 	}

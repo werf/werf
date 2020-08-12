@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -25,11 +26,11 @@ type PatchDescriptor struct {
 	BinaryPaths []string
 }
 
-func PatchWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
+func PatchWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
 	var res *PatchDescriptor
 
-	err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(out, gitDir, workTreeCacheDir, true, opts)
+	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, true, opts)
 		res = writePatchRes
 		return err
 	})
@@ -37,15 +38,15 @@ func PatchWithSubmodules(out io.Writer, gitDir, workTreeCacheDir string, opts Pa
 	return res, err
 }
 
-func Patch(out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	return writePatch(out, gitDir, "", false, opts)
+func Patch(ctx context.Context, out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, error) {
+	return writePatch(ctx, out, gitDir, "", false, opts)
 }
 
 func debugPatch() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
-func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
@@ -89,7 +90,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 	var cmd *exec.Cmd
 
 	if withSubmodules {
-		workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
+		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.ToCommit, err)
 		}

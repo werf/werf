@@ -1,13 +1,17 @@
 package storage
 
-import "github.com/werf/lockgate"
+import (
+	"context"
+
+	"github.com/werf/lockgate"
+)
 
 type LockManager interface {
-	LockStage(projectName, signature string) (LockHandle, error)
-	LockStageCache(projectName, signature string) (LockHandle, error)
-	LockImage(projectName, imageName string) (LockHandle, error)
-	LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) (LockHandle, error)
-	Unlock(lockHandle LockHandle) error
+	LockStage(ctx context.Context, projectName, signature string) (LockHandle, error)
+	LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error)
+	LockImage(ctx context.Context, projectName, imageName string) (LockHandle, error)
+	LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error)
+	Unlock(ctx context.Context, lockHandle LockHandle) error
 }
 
 type LockHandle struct {

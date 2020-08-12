@@ -1,6 +1,7 @@
 package git_repo
 
 import (
+	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -28,15 +29,15 @@ type Base struct {
 	TmpDir string
 }
 
-func (repo *Base) HeadCommit() (string, error) {
+func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) LatestBranchCommit(branch string) (string, error) {
+func (repo *Base) LatestBranchCommit(ctx context.Context, branch string) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) TagCommit(branch string) (string, error) {
+func (repo *Base) TagCommit(ctx context.Context, branch string) (string, error) {
 	panic("not implemented")
 }
 
@@ -58,7 +59,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 	return "", nil
 }
 
-func (repo *Base) isEmpty(repoPath string) (bool, error) {
+func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -100,7 +101,7 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
-func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -153,9 +154,9 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeCacheDir string, opts Pa
 
 	var desc *true_git.PatchDescriptor
 	if hasSubmodules {
-		desc, err = true_git.PatchWithSubmodules(fileHandler, gitDir, workTreeCacheDir, patchOpts)
+		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, patchOpts)
 	} else {
-		desc, err = true_git.Patch(fileHandler, gitDir, patchOpts)
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, patchOpts)
 	}
 
 	if err != nil {
@@ -183,7 +184,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
-func (repo *Base) createDetachedMergeCommit(gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
+func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
 	repository, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
@@ -201,7 +202,7 @@ func (repo *Base) createDetachedMergeCommit(gitDir, path, workTreeCacheDir strin
 		return "", err
 	}
 
-	return true_git.CreateDetachedMergeCommit(gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules})
+	return true_git.CreateDetachedMergeCommit(ctx, gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules})
 }
 
 func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
@@ -227,7 +228,7 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 	return res, nil
 }
 
-func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -267,9 +268,9 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 
 	var desc *true_git.ArchiveDescriptor
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		desc, err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, archiveOpts)
 	} else {
-		desc, err = true_git.Archive(fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		desc, err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, archiveOpts)
 	}
 
 	if err != nil {
@@ -281,7 +282,7 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeCacheDir string, opts 
 	return archive, nil
 }
 
-func (repo *Base) isCommitExists(repoPath, gitDir string, commit string) (bool, error) {
+func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -366,7 +367,7 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
+func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -392,7 +393,7 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		Hash:         sha256.New(),
 	}
 
-	err = true_git.WithWorkTree(gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(worktreeDir string) error {
+	err = true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(worktreeDir string) error {
 		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
 		if err != nil {
 			return err
@@ -406,8 +407,8 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 		)
 
 		var mainLsTreeResult *ls_tree.Result
-		if err := logboek.Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
-			mainLsTreeResult, err = ls_tree.LsTree(repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
+		if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
+			mainLsTreeResult, err = ls_tree.LsTree(ctx, repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
 			return err
 		}); err != nil {
 			return err
@@ -421,9 +422,9 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 				false,
 			)
 
-			logProcess := logboek.Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
+			logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
 			logProcess.Start()
-			pathLsTreeResult, err = mainLsTreeResult.LsTree(pathMatcher)
+			pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, pathMatcher)
 			if err != nil {
 				logProcess.Fail()
 				return err
@@ -432,10 +433,10 @@ func (repo *Base) checksumWithLsTree(repoPath, gitDir, workTreeCacheDir string, 
 
 			var pathChecksum string
 			if !pathLsTreeResult.IsEmpty() {
-				logboek.Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
-					pathChecksum = pathLsTreeResult.Checksum()
-					logboek.Debug().LogLn()
-					logboek.Debug().LogLn(pathChecksum)
+				logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
+					pathChecksum = pathLsTreeResult.Checksum(ctx)
+					logboek.Context(ctx).Debug().LogLn()
+					logboek.Context(ctx).Debug().LogLn(pathChecksum)
 				})
 			}
 

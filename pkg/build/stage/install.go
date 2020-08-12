@@ -1,15 +1,17 @@
 package stage
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateInstallStage(imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
+func GenerateInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
-	if b != nil && !b.IsInstallEmpty() {
+	if b != nil && !b.IsInstallEmpty(ctx) {
 		return newInstallStage(b, gitPatchStageOptions, baseStageOptions)
 	}
 
@@ -26,21 +28,21 @@ type InstallStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *InstallStage) GetDependencies(c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
-	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(c, Install)
+func (s *InstallStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(ctx, c, Install)
 	if err != nil {
 		return "", err
 	}
 
-	return util.Sha256Hash(s.builder.InstallChecksum(), stageDependenciesChecksum), nil
+	return util.Sha256Hash(s.builder.InstallChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *InstallStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+func (s *InstallStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	if err := s.builder.Install(image.BuilderContainer()); err != nil {
+	if err := s.builder.Install(ctx, image.BuilderContainer()); err != nil {
 		return err
 	}
 

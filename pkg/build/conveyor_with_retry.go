@@ -1,6 +1,8 @@
 package build
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/stages_manager"
@@ -40,7 +42,7 @@ func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
 	return nil
 }
 
-func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(f func(c *Conveyor) error) error {
+func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f func(c *Conveyor) error) error {
 Retry:
 	newConveyor, err := NewConveyor(
 		wrapper.WerfConfig,
@@ -59,10 +61,10 @@ Retry:
 	}
 
 	if shouldRetry, err := func() (bool, error) {
-		defer newConveyor.Terminate()
+		defer newConveyor.Terminate(ctx)
 
 		if err := f(newConveyor); stages_manager.ShouldResetStagesStorageCache(err) {
-			if err := newConveyor.StagesManager.ResetStagesStorageCache(); err != nil {
+			if err := newConveyor.StagesManager.ResetStagesStorageCache(ctx); err != nil {
 				return false, err
 			}
 			return true, nil

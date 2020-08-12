@@ -1,31 +1,25 @@
 package converge
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/werf/werf/pkg/stages_manager"
-
-	"github.com/werf/werf/pkg/tag_strategy"
-
-	"github.com/werf/werf/pkg/images_manager"
-
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/helm"
-
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
 
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -59,7 +53,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -128,6 +122,8 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 }
 
 func runConverge() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -144,7 +140,7 @@ func runConverge() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -162,13 +158,13 @@ func runConverge() error {
 
 	projectName := werfConfig.Meta.Project
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -221,7 +217,7 @@ func runConverge() error {
 			InitNamespace:               true,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -233,7 +229,7 @@ func runConverge() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	if err := common.InitKubedog(); err != nil {
+	if err := common.InitKubedog(ctx); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
@@ -271,7 +267,7 @@ func runConverge() error {
 		}
 
 		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 			return err
 		}
 
@@ -284,8 +280,8 @@ func runConverge() error {
 		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()
 
-		if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
-			if err := c.BuildAndPublish(opts); err != nil {
+		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			if err := c.BuildAndPublish(ctx, opts); err != nil {
 				return err
 			}
 
@@ -299,7 +295,7 @@ func runConverge() error {
 		logboek.LogOptionalLn()
 	}
 
-	return deploy.Deploy(context.Background(), projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

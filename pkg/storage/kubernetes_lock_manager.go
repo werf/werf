@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -38,7 +39,7 @@ type KuberntesLockManager struct {
 	mux sync.Mutex
 }
 
-func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lockgate.Locker, error) {
+func (manager *KuberntesLockManager) getLockerForProject(ctx context.Context, projectName string) (lockgate.Locker, error) {
 	manager.mux.Lock()
 	defer manager.mux.Unlock()
 
@@ -58,56 +59,56 @@ func (manager *KuberntesLockManager) getLockerForProject(projectName string) (lo
 			Resource: "configmaps",
 		}, name, manager.Namespace,
 	)
-	lockerWithRetry := locker_with_retry.NewLockerWithRetry(locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(ctx, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	manager.LockerPerProject[projectName] = lockerWithRetry
 
 	return locker, nil
 }
 
-func (manager *KuberntesLockManager) LockStage(projectName, signature string) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(projectName); err != nil {
+func (manager *KuberntesLockManager) LockStage(ctx context.Context, projectName, signature string) (LockHandle, error) {
+	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
 
-func (manager *KuberntesLockManager) LockStageCache(projectName, signature string) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(projectName); err != nil {
+func (manager *KuberntesLockManager) LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error) {
+	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kubernetesStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
 
-func (manager *KuberntesLockManager) LockImage(projectName, imageName string) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(projectName); err != nil {
+func (manager *KuberntesLockManager) LockImage(ctx context.Context, projectName, imageName string) (LockHandle, error) {
+	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kuberntesImageLockName(projectName, imageName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kuberntesImageLockName(projectName, imageName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
 
-func (manager *KuberntesLockManager) LockStagesAndImages(projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(projectName); err != nil {
+func (manager *KuberntesLockManager) LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
+	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kuberntesStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
+		_, lock, err := locker.Acquire(kuberntesStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
 
-func (manager *KuberntesLockManager) Unlock(lock LockHandle) error {
-	if locker, err := manager.getLockerForProject(lock.ProjectName); err != nil {
+func (manager *KuberntesLockManager) Unlock(ctx context.Context, lock LockHandle) error {
+	if locker, err := manager.getLockerForProject(ctx, lock.ProjectName); err != nil {
 		return err
 	} else {
 		err := locker.Release(lock.LockgateHandle)
 		if err != nil {
-			logboek.Error().LogF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
+			logboek.Context(ctx).Error().LogF("ERROR: unable to release lock for %q: %s\n", lock.LockgateHandle.LockName, err)
 		}
 		return err
 	}

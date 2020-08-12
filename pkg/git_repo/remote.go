@@ -1,6 +1,7 @@
 package git_repo
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,11 +46,11 @@ func (repo *Remote) ValidateEndpoint() error {
 	return nil
 }
 
-func (repo *Remote) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), fromCommit, toCommit)
+func (repo *Remote) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
+	return repo.createDetachedMergeCommit(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), fromCommit, toCommit)
 }
 
-func (repo *Remote) GetMergeCommitParents(commit string) ([]string, error) {
+func (repo *Remote) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
 	return repo.getMergeCommitParents(repo.GetClonePath(), commit)
 }
 
@@ -69,16 +70,16 @@ func (repo *Remote) RemoteOriginUrl() (string, error) {
 	return repo.remoteOriginUrl(repo.GetClonePath())
 }
 
-func (repo *Remote) IsEmpty() (bool, error) {
-	return repo.isEmpty(repo.GetClonePath())
+func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
+	return repo.isEmpty(ctx, repo.GetClonePath())
 }
 
-func (repo *Remote) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
 	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GetClonePath())
 }
 
-func (repo *Remote) CloneAndFetch() error {
-	isCloned, err := repo.Clone()
+func (repo *Remote) CloneAndFetch(ctx context.Context) error {
+	isCloned, err := repo.Clone(ctx)
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (repo *Remote) CloneAndFetch() error {
 		return nil
 	}
 
-	return repo.Fetch()
+	return repo.Fetch(ctx)
 }
 
 func (repo *Remote) isCloneExists() (bool, error) {
@@ -102,7 +103,7 @@ func (repo *Remote) isCloneExists() (bool, error) {
 	return false, nil
 }
 
-func (repo *Remote) Clone() (bool, error) {
+func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	if repo.IsDryRun {
 		return false, nil
 	}
@@ -117,7 +118,7 @@ func (repo *Remote) Clone() (bool, error) {
 		return false, nil
 	}
 
-	return true, repo.withRemoteRepoLock(func() error {
+	return true, repo.withRemoteRepoLock(ctx, func() error {
 		exists, err := repo.isCloneExists()
 		if err != nil {
 			return err
@@ -126,7 +127,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		logboek.Default().LogFDetails("Clone %s\n", repo.Url)
+		logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0755); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
@@ -156,7 +157,7 @@ func (repo *Remote) Clone() (bool, error) {
 	})
 }
 
-func (repo *Remote) Fetch() error {
+func (repo *Remote) Fetch(ctx context.Context) error {
 	if repo.IsDryRun {
 		return nil
 	}
@@ -179,13 +180,13 @@ func (repo *Remote) Fetch() error {
 		}
 	}
 
-	return repo.withRemoteRepoLock(func() error {
+	return repo.withRemoteRepoLock(ctx, func() error {
 		rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		logboek.Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
+		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -196,7 +197,7 @@ func (repo *Remote) Fetch() error {
 	})
 }
 
-func (repo *Remote) HeadCommit() (string, error) {
+func (repo *Remote) HeadCommit(_ context.Context) (string, error) {
 	return repo.getHeadCommit(repo.GetClonePath())
 }
 
@@ -223,7 +224,7 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 	return res, nil
 }
 
-func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
+func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (string, error) {
 	var err error
 
 	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
@@ -239,12 +240,12 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	logboek.Info().LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
+	logboek.Context(ctx).Info().LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
 
 	return res, nil
 }
 
-func (repo *Remote) TagCommit(tag string) (string, error) {
+func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 	var err error
 
 	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
@@ -270,44 +271,44 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
 
-	logboek.Info().LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
+	logboek.Context(ctx).Info().LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
 
 	return res, nil
 }
 
-func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
-	return repo.createPatch(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+func (repo *Remote) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
+	return repo.createPatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 }
 
-func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+func (repo *Remote) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 }
 
-func (repo *Remote) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	logboek.Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
+	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
+		checksum, err = repo.checksumWithLsTree(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
 	})
 
 	return checksum, err
 }
 
-func (repo *Remote) IsCommitExists(commit string) (bool, error) {
-	return repo.isCommitExists(repo.GetClonePath(), repo.GetClonePath(), commit)
+func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {
+	return repo.isCommitExists(ctx, repo.GetClonePath(), repo.GetClonePath(), commit)
 }
 
 func (repo *Remote) getWorkTreeCacheDir() string {
 	return filepath.Join(GetWorkTreeCacheDir(), repo.getFilesystemRelativePathByEndpoint())
 }
 
-func (repo *Remote) withRemoteRepoLock(f func() error) error {
+func (repo *Remote) withRemoteRepoLock(ctx context.Context, f func() error) error {
 	lockName := fmt.Sprintf("remote_git_mapping.%s", repo.Name)
-	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
-func (repo *Remote) TagsList() ([]string, error) {
+func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
 	return repo.tagsList(repo.GetClonePath())
 }
 
-func (repo *Remote) RemoteBranchesList() ([]string, error) {
+func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
 }

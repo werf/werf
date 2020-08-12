@@ -1,6 +1,7 @@
 package container_runtime
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -67,11 +68,11 @@ func (c *StageImageContainer) ServiceCommitChangeOptions() ContainerOptions {
 	return c.serviceCommitChangeOptions
 }
 
-func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
+func (c *StageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
 
-	runOptions, err := c.prepareRunOptions()
+	runOptions, err := c.prepareRunOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Streams().ContentWidth())
+	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
 	fromImageId := c.image.fromImage.GetID()
@@ -124,8 +125,8 @@ func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
-func (c *StageImageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
-	args, err := c.prepareIntrospectArgsBase()
+func (c *StageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) ([]string, error) {
+	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +140,8 @@ func (c *StageImageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectArgs() ([]string, error) {
-	args, err := c.prepareIntrospectArgsBase()
+func (c *StageImageContainer) prepareIntrospectArgs(ctx context.Context) ([]string, error) {
+	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +155,10 @@ func (c *StageImageContainer) prepareIntrospectArgs() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectArgsBase() ([]string, error) {
+func (c *StageImageContainer) prepareIntrospectArgsBase(ctx context.Context) ([]string, error) {
 	var args []string
 
-	runOptions, err := c.prepareIntrospectOptions()
+	runOptions, err := c.prepareIntrospectOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -173,21 +174,21 @@ func (c *StageImageContainer) prepareIntrospectArgsBase() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareRunOptions() (*StageImageContainerOptions, error) {
-	serviceRunOptions, err := c.prepareServiceRunOptions()
+func (c *StageImageContainer) prepareRunOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+	serviceRunOptions, err := c.prepareServiceRunOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return serviceRunOptions.merge(c.runOptions), nil
 }
 
-func (c *StageImageContainer) prepareServiceRunOptions() (*StageImageContainerOptions, error) {
+func (c *StageImageContainer) prepareServiceRunOptions(ctx context.Context) (*StageImageContainerOptions, error) {
 	serviceRunOptions := newStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
 
-	stapelContainerName, err := stapel.GetOrCreateContainer()
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -197,12 +198,12 @@ func (c *StageImageContainer) prepareServiceRunOptions() (*StageImageContainerOp
 	return serviceRunOptions, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectOptions() (*StageImageContainerOptions, error) {
-	return c.prepareRunOptions()
+func (c *StageImageContainer) prepareIntrospectOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+	return c.prepareRunOptions(ctx)
 }
 
-func (c *StageImageContainer) prepareCommitChanges() ([]string, error) {
-	commitOptions, err := c.prepareCommitOptions()
+func (c *StageImageContainer) prepareCommitChanges(ctx context.Context) ([]string, error) {
+	commitOptions, err := c.prepareCommitOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +215,8 @@ func (c *StageImageContainer) prepareCommitChanges() ([]string, error) {
 	return commitChanges, nil
 }
 
-func (c *StageImageContainer) prepareCommitOptions() (*StageImageContainerOptions, error) {
-	inheritedCommitOptions, err := c.prepareInheritedCommitOptions()
+func (c *StageImageContainer) prepareCommitOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+	inheritedCommitOptions, err := c.prepareInheritedCommitOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -224,14 +225,14 @@ func (c *StageImageContainer) prepareCommitOptions() (*StageImageContainerOption
 	return commitOptions, nil
 }
 
-func (c *StageImageContainer) prepareInheritedCommitOptions() (*StageImageContainerOptions, error) {
+func (c *StageImageContainer) prepareInheritedCommitOptions(ctx context.Context) (*StageImageContainerOptions, error) {
 	inheritedOptions := newStageContainerOptions()
 
 	if c.image.fromImage == nil {
 		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
 	}
 
-	if err := c.image.fromImage.MustResetInspect(); err != nil {
+	if err := c.image.fromImage.MustResetInspect(ctx); err != nil {
 		return nil, fmt.Errorf("unable to reset inspect for image %s: %s", c.image.fromImage.Name(), err)
 	}
 	fromImageInspect := c.image.fromImage.GetInspect()
@@ -253,26 +254,26 @@ func (c *StageImageContainer) prepareInheritedCommitOptions() (*StageImageContai
 	return inheritedOptions, nil
 }
 
-func (c *StageImageContainer) run() error {
-	runArgs, err := c.prepareRunArgs()
+func (c *StageImageContainer) run(ctx context.Context) error {
+	runArgs, err := c.prepareRunArgs(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
 		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (c *StageImageContainer) introspect() error {
-	runArgs, err := c.prepareIntrospectArgs()
+func (c *StageImageContainer) introspect(ctx context.Context) error {
+	runArgs, err := c.prepareIntrospectArgs(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}
@@ -281,13 +282,13 @@ func (c *StageImageContainer) introspect() error {
 	return nil
 }
 
-func (c *StageImageContainer) introspectBefore() error {
-	runArgs, err := c.prepareIntrospectBeforeArgs()
+func (c *StageImageContainer) introspectBefore(ctx context.Context) error {
+	runArgs, err := c.prepareIntrospectBeforeArgs(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := docker.CliRun_LiveOutput(runArgs...); err != nil {
+	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
 		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
 			return err
 		}
@@ -307,14 +308,14 @@ func IsStartContainerErr(err error) bool {
 	return false
 }
 
-func (c *StageImageContainer) commit() (string, error) {
-	commitChanges, err := c.prepareCommitChanges()
+func (c *StageImageContainer) commit(ctx context.Context) (string, error) {
+	commitChanges, err := c.prepareCommitChanges(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
-	id, err := docker.ContainerCommit(c.name, commitOptions)
+	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
 	}
@@ -322,6 +323,6 @@ func (c *StageImageContainer) commit() (string, error) {
 	return id, nil
 }
 
-func (c *StageImageContainer) rm() error {
-	return docker.ContainerRemove(c.name, types.ContainerRemoveOptions{})
+func (c *StageImageContainer) rm(ctx context.Context) error {
+	return docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{})
 }

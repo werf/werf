@@ -1,6 +1,8 @@
 package werf
 
 import (
+	"context"
+
 	"github.com/werf/logboek"
 )
 
@@ -8,17 +10,17 @@ var (
 	GlobalWarningLines []string
 )
 
-func PrintGlobalWarnings() {
+func PrintGlobalWarnings(ctx context.Context) {
 	for _, line := range GlobalWarningLines {
-		printGlobalWarningLn(line)
+		printGlobalWarningLn(ctx, line)
 	}
 }
 
-func GlobalWarningLn(line string) {
+func GlobalWarningLn(ctx context.Context, line string) {
 	GlobalWarningLines = append(GlobalWarningLines, line)
-	printGlobalWarningLn(line)
+	printGlobalWarningLn(ctx, line)
 }
 
-func printGlobalWarningLn(line string) {
-	logboek.Error().LogF("WARNING: %s\n", line)
+func printGlobalWarningLn(ctx context.Context, line string) {
+	logboek.Context(ctx).Error().LogF("WARNING: %s\n", line)
 }

@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -17,18 +18,18 @@ const (
 )
 
 type DockerRegistry interface {
-	CreateRepo(reference string) error
-	DeleteRepo(reference string) error
-	Tags(reference string) ([]string, error)
-	GetRepoImage(reference string) (*image.Info, error)
-	TryGetRepoImage(reference string) (*image.Info, error)
-	IsRepoImageExists(reference string) (bool, error)
-	GetRepoImageList(reference string) ([]*image.Info, error)
-	SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
-	DeleteRepoImage(repoImageList ...*image.Info) error
-	PushImage(reference string, opts PushImageOptions) error
+	CreateRepo(ctx context.Context, reference string) error
+	DeleteRepo(ctx context.Context, reference string) error
+	Tags(ctx context.Context, reference string) ([]string, error)
+	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
+	TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error)
+	IsRepoImageExists(ctx context.Context, reference string) (bool, error)
+	GetRepoImageList(ctx context.Context, reference string) ([]*image.Info, error)
+	SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
+	DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error
+	PushImage(ctx context.Context, reference string, opts PushImageOptions) error
 
-	ResolveRepoMode(registryOrRepositoryAddress, repoMode string) (string, error)
+	ResolveRepoMode(ctx context.Context, registryOrRepositoryAddress, repoMode string) (string, error)
 	String() string
 }
 

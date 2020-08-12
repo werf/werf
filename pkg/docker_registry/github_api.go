@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,10 +18,10 @@ func newGitHubApi() gitHubApi {
 	return gitHubApi{}
 }
 
-func (api *gitHubApi) deletePackageVersion(packageVersionId, token string) (*http.Response, error) {
+func (api *gitHubApi) deletePackageVersion(ctx context.Context, packageVersionId, token string) (*http.Response, error) {
 	body := []byte(fmt.Sprintf(`{"query":"mutation { deletePackageVersion(input:{packageVersionId:\"%s\"}) { success }}"}"}`, packageVersionId))
 
-	resp, _, err := api.doRequest(http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
+	resp, _, err := api.doRequest(ctx, http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.package-deletes-preview+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -31,10 +32,10 @@ func (api *gitHubApi) deletePackageVersion(packageVersionId, token string) (*htt
 	return resp, err
 }
 
-func (api *gitHubApi) getPackageVersionId(owner, repo, packageName, versionName, token string) (string, *http.Response, error) {
+func (api *gitHubApi) getPackageVersionId(ctx context.Context, owner, repo, packageName, versionName, token string) (string, *http.Response, error) {
 	body := []byte(fmt.Sprintf(`{"query":"query{repository(owner:\"%s\",name:\"%s\"){packages(names: \"%s\", first: 1){nodes{id, version(version: \"%s\") { id, version }}}}}"}`, owner, repo, packageName, versionName))
 
-	resp, respBody, err := api.doRequest(http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
+	resp, respBody, err := api.doRequest(ctx, http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.packages-preview+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -73,8 +74,8 @@ func (api *gitHubApi) getPackageVersionId(owner, repo, packageName, versionName,
 	return nodes[0].Version.Id, resp, nil
 }
 
-func (api *gitHubApi) doRequest(method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
-	resp, respBody, err := doRequest(method, url, body, options)
+func (api *gitHubApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+	resp, respBody, err := doRequest(ctx, method, url, body, options)
 	if err != nil {
 		return resp, respBody, err
 	}

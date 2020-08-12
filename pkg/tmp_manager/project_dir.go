@@ -1,12 +1,13 @@
 package tmp_manager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 )
 
-func CreateProjectDir() (string, error) {
+func CreateProjectDir(ctx context.Context) (string, error) {
 	newDir, err := newTmpDir(ProjectDirPrefix)
 	if err != nil {
 		return "", err
@@ -23,7 +24,7 @@ func CreateProjectDir() (string, error) {
 	}
 
 	if shouldRunGC {
-		err := runGC()
+		err := runGC(ctx)
 		if err != nil {
 			return "", fmt.Errorf("tmp manager GC failed: %s", err)
 		}

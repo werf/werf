@@ -1,6 +1,7 @@
 package git_repo
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/werf/werf/pkg/werf"
@@ -43,19 +44,19 @@ type GitRepo interface {
 	String() string
 	GetName() string
 
-	IsEmpty() (bool, error)
-	HeadCommit() (string, error)
-	LatestBranchCommit(branch string) (string, error)
-	TagCommit(tag string) (string, error)
-	IsCommitExists(commit string) (bool, error)
-	IsAncestor(ancestorCommit, descendantCommit string) (bool, error)
+	IsEmpty(ctx context.Context) (bool, error)
+	HeadCommit(ctx context.Context) (string, error)
+	LatestBranchCommit(ctx context.Context, branch string) (string, error)
+	TagCommit(ctx context.Context, tag string) (string, error)
+	IsCommitExists(ctx context.Context, commit string) (bool, error)
+	IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error)
 
-	GetMergeCommitParents(commit string) ([]string, error)
+	GetMergeCommitParents(ctx context.Context, commit string) ([]string, error)
 
-	CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error)
-	CreatePatch(PatchOptions) (Patch, error)
-	CreateArchive(ArchiveOptions) (Archive, error)
-	Checksum(ChecksumOptions) (Checksum, error)
+	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
+	CreatePatch(context.Context, PatchOptions) (Patch, error)
+	CreateArchive(context.Context, ArchiveOptions) (Archive, error)
+	Checksum(context.Context, ChecksumOptions) (Checksum, error)
 }
 
 type Patch interface {

@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"context"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -26,7 +27,7 @@ type FetchOptions struct {
 	RefSpecs  map[string]string
 }
 
-func Fetch(path string, options FetchOptions) error {
+func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	command := "git"
 	commandArgs := []string{"-C", path, "fetch"}
 
@@ -54,7 +55,7 @@ func Fetch(path string, options FetchOptions) error {
 		commandArgs = append(commandArgs, remote, refSpec)
 	}
 
-	logboek.Debug().LogLnDetails(command, strings.Join(commandArgs, " "))
+	logboek.Context(ctx).Debug().LogLnDetails(command, strings.Join(commandArgs, " "))
 
 	cmd := exec.Command(command, commandArgs...)
 	cmd.Stdout = outStream

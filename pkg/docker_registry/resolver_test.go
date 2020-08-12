@@ -1,6 +1,8 @@
 package docker_registry_test
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/docker_registry"
 
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -22,7 +24,7 @@ var _ = DescribeTable("resolve implementation name and repo mode", func(entry en
 	dockerRegistry, err := docker_registry.NewDockerRegistry(entry.imagesRepoAddress, resolvedImplementation, docker_registry.DockerRegistryOptions{})
 	Ω(err).ShouldNot(HaveOccurred())
 
-	resolvedRepoMode, err := dockerRegistry.ResolveRepoMode(entry.imagesRepoAddress, "")
+	resolvedRepoMode, err := dockerRegistry.ResolveRepoMode(context.Background(), entry.imagesRepoAddress, "")
 	Ω(err).ShouldNot(HaveOccurred())
 
 	Ω(resolvedRepoMode).Should(Equal(entry.expectedRepoMode))

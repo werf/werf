@@ -1,6 +1,7 @@
 package git_repo
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -46,13 +47,13 @@ func (repo *Local) PlainOpen() (*git.Repository, error) {
 	return git.PlainOpen(repo.Path)
 }
 
-func (repo *Local) SyncWithOrigin() error {
+func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 	isShallow, err := repo.IsShallowClone()
 	if err != nil {
 		return fmt.Errorf("check shallow clone failed: %s", err)
 	}
 
-	remoteOriginUrl, err := repo.RemoteOriginUrl()
+	remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
 	if err != nil {
 		return fmt.Errorf("get remote origin failed: %s", err)
 	}
@@ -61,7 +62,7 @@ func (repo *Local) SyncWithOrigin() error {
 		return fmt.Errorf("git remote origin was not detected")
 	}
 
-	return logboek.Default().LogProcess("Syncing origin branches and tags").DoError(func() error {
+	return logboek.Context(ctx).Default().LogProcess("Syncing origin branches and tags").DoError(func() error {
 		fetchOptions := true_git.FetchOptions{
 			Prune:     true,
 			PruneTags: true,
@@ -69,7 +70,7 @@ func (repo *Local) SyncWithOrigin() error {
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
 		}
 
-		if err := true_git.Fetch(repo.Path, fetchOptions); err != nil {
+		if err := true_git.Fetch(ctx, repo.Path, fetchOptions); err != nil {
 			return fmt.Errorf("fetch failed: %s", err)
 		}
 
@@ -77,13 +78,13 @@ func (repo *Local) SyncWithOrigin() error {
 	})
 }
 
-func (repo *Local) FetchOrigin() error {
+func (repo *Local) FetchOrigin(ctx context.Context) error {
 	isShallow, err := repo.IsShallowClone()
 	if err != nil {
 		return fmt.Errorf("check shallow clone failed: %s", err)
 	}
 
-	remoteOriginUrl, err := repo.RemoteOriginUrl()
+	remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
 	if err != nil {
 		return fmt.Errorf("get remote origin failed: %s", err)
 	}
@@ -92,13 +93,13 @@ func (repo *Local) FetchOrigin() error {
 		return fmt.Errorf("git remote origin was not detected")
 	}
 
-	return logboek.Default().LogProcess("Fetching origin").DoError(func() error {
+	return logboek.Context(ctx).Default().LogProcess("Fetching origin").DoError(func() error {
 		fetchOptions := true_git.FetchOptions{
 			Unshallow: isShallow,
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
 		}
 
-		if err := true_git.Fetch(repo.Path, fetchOptions); err != nil {
+		if err := true_git.Fetch(ctx, repo.Path, fetchOptions); err != nil {
 			return fmt.Errorf("fetch failed: %s", err)
 		}
 
@@ -110,11 +111,11 @@ func (repo *Local) IsShallowClone() (bool, error) {
 	return true_git.IsShallowClone(repo.Path)
 }
 
-func (repo *Local) CreateDetachedMergeCommit(fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
+func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
+	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
 }
 
-func (repo *Local) GetMergeCommitParents(commit string) ([]string, error) {
+func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
 	return repo.getMergeCommitParents(repo.GitDir, commit)
 }
 
@@ -124,7 +125,7 @@ type LsTreeOptions struct {
 	Strict        bool
 }
 
-func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
+func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
 	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
@@ -132,7 +133,7 @@ func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptio
 
 	var commit string
 	if opts.UseHeadCommit {
-		if headCommit, err := repo.HeadCommit(); err != nil {
+		if headCommit, err := repo.HeadCommit(ctx); err != nil {
 			return nil, fmt.Errorf("unable to get repo head commit: %s", err)
 		} else {
 			commit = headCommit
@@ -143,44 +144,44 @@ func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher, opts LsTreeOptio
 		commit = opts.Commit
 	}
 
-	return ls_tree.LsTree(repository, commit, pathMatcher, opts.Strict)
+	return ls_tree.LsTree(ctx, repository, commit, pathMatcher, opts.Strict)
 }
 
-func (repo *Local) Status(pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
+func (repo *Local) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
 	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
 
-	return status.Status(repository, repo.Path, pathMatcher)
+	return status.Status(ctx, repository, repo.Path, pathMatcher)
 }
 
-func (repo *Local) CheckIgnore(paths []string) (*check_ignore.Result, error) {
+func (repo *Local) CheckIgnore(ctx context.Context, paths []string) (*check_ignore.Result, error) {
 	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
 	}
 
-	return check_ignore.CheckIgnore(repository, repo.Path, paths)
+	return check_ignore.CheckIgnore(ctx, repository, repo.Path, paths)
 }
 
-func (repo *Local) IsEmpty() (bool, error) {
-	return repo.isEmpty(repo.Path)
+func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
+	return repo.isEmpty(ctx, repo.Path)
 }
 
-func (repo *Local) IsAncestor(ancestorCommit, descendantCommit string) (bool, error) {
+func (repo *Local) IsAncestor(_ context.Context, ancestorCommit, descendantCommit string) (bool, error) {
 	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GitDir)
 }
 
-func (repo *Local) RemoteOriginUrl() (string, error) {
+func (repo *Local) RemoteOriginUrl(ctx context.Context) (string, error) {
 	return repo.remoteOriginUrl(repo.Path)
 }
 
-func (repo *Local) HeadCommit() (string, error) {
+func (repo *Local) HeadCommit(ctx context.Context) (string, error) {
 	return repo.getHeadCommit(repo.Path)
 }
 
-func (repo *Local) IsHeadReferenceExist() (bool, error) {
+func (repo *Local) IsHeadReferenceExist(ctx context.Context) (bool, error) {
 	_, err := repo.getHeadCommit(repo.Path)
 	if err == errHeadNotFound {
 		return false, nil
@@ -190,31 +191,31 @@ func (repo *Local) IsHeadReferenceExist() (bool, error) {
 	return true, nil
 }
 
-func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
-	return repo.createPatch(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+func (repo *Local) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
+	return repo.createPatch(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
-func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+func (repo *Local) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	return repo.createArchive(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 }
 
-func (repo *Local) Checksum(opts ChecksumOptions) (checksum Checksum, err error) {
-	logboek.Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
+	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
+		checksum, err = repo.checksumWithLsTree(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
 	})
 
 	return checksum, err
 }
 
-func (repo *Local) IsCommitExists(commit string) (bool, error) {
-	return repo.isCommitExists(repo.Path, repo.GitDir, commit)
+func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
+	return repo.isCommitExists(ctx, repo.Path, repo.GitDir, commit)
 }
 
-func (repo *Local) TagsList() ([]string, error) {
+func (repo *Local) TagsList(ctx context.Context) ([]string, error) {
 	return repo.tagsList(repo.Path)
 }
 
-func (repo *Local) RemoteBranchesList() ([]string, error) {
+func (repo *Local) RemoteBranchesList(ctx context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.Path)
 }
 

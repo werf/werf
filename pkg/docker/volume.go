@@ -4,7 +4,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-func VolumeRm(volumeName string, force bool) error {
-	ctx := context.Background()
+func VolumeRm(ctx context.Context, volumeName string, force bool) error {
 	return apiClient.VolumeRemove(ctx, volumeName, force)
 }

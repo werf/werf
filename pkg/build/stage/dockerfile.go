@@ -2,6 +2,7 @@ package stage
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -105,7 +106,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(_ Conveyor, cr container_runtime.ContainerRuntime) error {
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, cr container_runtime.ContainerRuntime) error {
 	containerRuntime := cr.(*container_runtime.LocalDockerServerRuntime)
 
 	var dockerMetaArgsString []string
@@ -137,7 +138,7 @@ outerLoop:
 			continue
 		}
 
-		inspect, err := containerRuntime.GetImageInspect(resolvedBaseName)
+		inspect, err := containerRuntime.GetImageInspect(ctx, resolvedBaseName)
 		if err != nil {
 			return err
 		} else if inspect != nil {
@@ -145,7 +146,7 @@ outerLoop:
 			continue
 		}
 
-		configFile, err := docker_registry.API().GetRepoImageConfigFile(resolvedBaseName)
+		configFile, err := docker_registry.API().GetRepoImageConfigFile(ctx, resolvedBaseName)
 		if err != nil {
 			return fmt.Errorf("get repo image %s config file failed: %s", resolvedBaseName, err)
 		} else {
@@ -156,7 +157,7 @@ outerLoop:
 	return nil
 }
 
-func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var dockerMetaArgsString []string
 	for key, value := range s.dockerArgsHash {
 		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", key, value))
@@ -183,7 +184,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
 		if ok {
 			for _, instruction := range onBuildInstructions {
-				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(instruction)
+				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, instruction)
 				if err != nil {
 					return "", err
 				}
@@ -193,7 +194,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 		}
 
 		for _, cmd := range stage.Commands {
-			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(cmd)
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, cmd)
 			if err != nil {
 				return "", err
 			}
@@ -234,7 +235,7 @@ func (s *DockerfileStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, cmd interface{}) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
@@ -247,7 +248,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]
 	case *instructions.AddCommand:
 		dependencies = append(dependencies, c.String())
 
-		checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
+		checksum, err := s.calculateFilesChecksum(ctx, c.SourcesAndDest.Sources())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -255,14 +256,14 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]
 	case *instructions.CopyCommand:
 		dependencies = append(dependencies, c.String())
 		if c.From == "" {
-			checksum, err := s.calculateFilesChecksum(c.SourcesAndDest.Sources())
+			checksum, err := s.calculateFilesChecksum(ctx, c.SourcesAndDest.Sources())
 			if err != nil {
 				return nil, nil, err
 			}
 			dependencies = append(dependencies, checksum)
 		}
 	case *instructions.OnbuildCommand:
-		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(c.Expression)
+		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, c.Expression)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -278,7 +279,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(cmd interface{}) ([]
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(expression string) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, expression string) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err
@@ -294,7 +295,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(expression st
 		return nil, nil, err
 	}
 
-	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(cmd)
+	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, cmd)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -302,7 +303,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(expression st
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(c Conveyor, prevBuiltImage, img container_runtime.ImageInterface) error {
+func (s *DockerfileStage) PrepareImage(_ context.Context, c Conveyor, prevBuiltImage, img container_runtime.ImageInterface) error {
 	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
 	return nil
 }
@@ -333,23 +334,23 @@ func (s *DockerfileStage) DockerBuildArgs() []string {
 	return result
 }
 
-func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
 	var checksum string
 	var err error
 
 	normalizedWildcards := normalizeCopyAddSources(wildcards)
 
-	logProcess := logboek.Debug().LogProcess("Calculating files checksum (%v)", normalizedWildcards)
+	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v)", normalizedWildcards)
 	logProcess.Start()
 	if s.localGitRepo != nil {
-		checksum, err = s.calculateFilesChecksumWithGit(normalizedWildcards)
+		checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards)
 	} else {
-		projectFilesPaths, err := s.getProjectFilesByWildcards(normalizedWildcards)
+		projectFilesPaths, err := s.getProjectFilesByWildcards(ctx, normalizedWildcards)
 		if err != nil {
 			return "", err
 		}
 
-		checksum, err = s.calculateProjectFilesChecksum(projectFilesPaths)
+		checksum, err = s.calculateProjectFilesChecksum(ctx, projectFilesPaths)
 	}
 
 	if err != nil {
@@ -359,20 +360,20 @@ func (s *DockerfileStage) calculateFilesChecksum(wildcards []string) (string, er
 		logProcess.End()
 	}
 
-	logboek.Debug().LogF("Result checksum: %s\n", checksum)
-	logboek.Debug().LogOptionalLn()
+	logboek.Context(ctx).Debug().LogF("Result checksum: %s\n", checksum)
+	logboek.Context(ctx).Debug().LogOptionalLn()
 
 	return checksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithGit(wildcards []string) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, wildcards []string) (string, error) {
 	if s.mainLsTreeResult == nil {
-		logProcess := logboek.Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
+		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
 		logProcess.Start()
-		result, err := s.localGitRepo.LsTree(s.dockerignorePathMatcher, git_repo.LsTreeOptions{UseHeadCommit: true})
+		result, err := s.localGitRepo.LsTree(ctx, s.dockerignorePathMatcher, git_repo.LsTreeOptions{UseHeadCommit: true})
 		if err != nil {
 			if err.Error() == "entry not found" {
-				logboek.Debug().LogFWithCustomStyle(
+				logboek.Context(ctx).Debug().LogFWithCustomStyle(
 					style.Get(style.FailName),
 					"Entry %s is not found\n",
 					s.dockerignorePathMatcher.BaseFilepath(),
@@ -395,9 +396,9 @@ entryNotFoundInGitRepository:
 
 	var lsTreeResultChecksum string
 	if s.mainLsTreeResult != nil {
-		logProcess := logboek.Debug().LogProcess("ls-tree (%s)", wildcardsPathMatcher.String())
+		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", wildcardsPathMatcher.String())
 		logProcess.Start()
-		lsTreeResult, err := s.mainLsTreeResult.LsTree(wildcardsPathMatcher)
+		lsTreeResult, err := s.mainLsTreeResult.LsTree(ctx, wildcardsPathMatcher)
 		if err != nil {
 			logProcess.Fail()
 			return "", err
@@ -406,18 +407,18 @@ entryNotFoundInGitRepository:
 		}
 
 		if !lsTreeResult.IsEmpty() {
-			logboek.Debug().LogBlock("ls-tree result checksum (%s)", wildcardsPathMatcher.String()).Do(func() {
-				lsTreeResultChecksum = lsTreeResult.Checksum()
-				logboek.Debug().LogOptionalLn()
-				logboek.Debug().LogLn(lsTreeResultChecksum)
+			logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", wildcardsPathMatcher.String()).Do(func() {
+				lsTreeResultChecksum = lsTreeResult.Checksum(ctx)
+				logboek.Context(ctx).Debug().LogOptionalLn()
+				logboek.Context(ctx).Debug().LogLn(lsTreeResultChecksum)
 			})
 		}
 	}
 
 	if s.mainStatusResult == nil {
-		logProcess := logboek.Debug().LogProcess("status (%s)", s.dockerignorePathMatcher.String())
+		logProcess := logboek.Context(ctx).Debug().LogProcess("status (%s)", s.dockerignorePathMatcher.String())
 		logProcess.Start()
-		result, err := s.localGitRepo.Status(s.dockerignorePathMatcher)
+		result, err := s.localGitRepo.Status(ctx, s.dockerignorePathMatcher)
 		if err != nil {
 			logProcess.Fail()
 			return "", err
@@ -428,9 +429,9 @@ entryNotFoundInGitRepository:
 		s.mainStatusResult = result
 	}
 
-	logProcess := logboek.Debug().LogProcess("status (%s)", wildcardsPathMatcher.String())
+	logProcess := logboek.Context(ctx).Debug().LogProcess("status (%s)", wildcardsPathMatcher.String())
 	logProcess.Start()
-	statusResult, err := s.mainStatusResult.Status(wildcardsPathMatcher)
+	statusResult, err := s.mainStatusResult.Status(ctx, wildcardsPathMatcher)
 	if err != nil {
 		logProcess.Fail()
 		return "", err
@@ -440,31 +441,31 @@ entryNotFoundInGitRepository:
 
 	var statusResultChecksum string
 	if !statusResult.IsEmpty() {
-		if err := logboek.Debug().LogBlock("Status result checksum (%s)", wildcardsPathMatcher.String()).
+		if err := logboek.Context(ctx).Debug().LogBlock("Status result checksum (%s)", wildcardsPathMatcher.String()).
 			DoError(func() error {
-				statusResultChecksum, err = statusResult.Checksum()
+				statusResultChecksum, err = statusResult.Checksum(ctx)
 				if err != nil {
 					return err
 				}
 
-				logboek.Debug().LogOptionalLn()
-				logboek.Debug().LogLn(statusResultChecksum)
+				logboek.Context(ctx).Debug().LogOptionalLn()
+				logboek.Context(ctx).Debug().LogLn(statusResultChecksum)
 				return nil
 			}); err != nil {
 			return "", fmt.Errorf("status result checksum failed: %s", err)
 		}
 	}
 
-	logProcess = logboek.Debug().LogProcess("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
+	logProcess = logboek.Context(ctx).Debug().LogProcess("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
 	logProcess.Start()
-	gitIgnoredFilesChecksum, err := s.calculateGitIgnoredFilesChecksum(wildcards)
+	gitIgnoredFilesChecksum, err := s.calculateGitIgnoredFilesChecksum(ctx, wildcards)
 	if err != nil {
 		logProcess.Fail()
 		return "", err
 	} else {
 		if gitIgnoredFilesChecksum != "" {
-			logboek.Debug().LogOptionalLn()
-			logboek.Debug().LogLn(gitIgnoredFilesChecksum)
+			logboek.Context(ctx).Debug().LogOptionalLn()
+			logboek.Context(ctx).Debug().LogLn(gitIgnoredFilesChecksum)
 		}
 
 		logProcess.End()
@@ -480,8 +481,8 @@ entryNotFoundInGitRepository:
 	return resultChecksum, nil
 }
 
-func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(wildcards []string) (string, error) {
-	projectFilesPaths, err := s.getProjectFilesByWildcards(wildcards)
+func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
+	projectFilesPaths, err := s.getProjectFilesByWildcards(ctx, wildcards)
 	if err != nil {
 		return "", err
 	}
@@ -490,15 +491,15 @@ func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(wildcards []string) (
 		return "", nil
 	}
 
-	result, err := s.localGitRepo.CheckIgnore(projectFilesPaths)
+	result, err := s.localGitRepo.CheckIgnore(ctx, projectFilesPaths)
 	if err != nil {
 		return "", err
 	}
 
-	return s.calculateProjectFilesChecksum(result.IgnoredFilesPaths())
+	return s.calculateProjectFilesChecksum(ctx, result.IgnoredFilesPaths())
 }
 
-func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]string, error) {
+func (s *DockerfileStage) getProjectFilesByWildcards(ctx context.Context, wildcards []string) ([]string, error) {
 	var paths []string
 
 	for _, wildcard := range wildcards {
@@ -506,7 +507,7 @@ func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]stri
 
 		relContextWildcard, err := filepath.Rel(s.projectPath, contextWildcard)
 		if err != nil || relContextWildcard == ".." || strings.HasPrefix(relContextWildcard, ".."+string(os.PathSeparator)) {
-			logboek.Warn().LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
+			logboek.Context(ctx).Warn().LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
 			continue
 		}
 
@@ -546,7 +547,7 @@ func (s *DockerfileStage) getProjectFilesByWildcards(wildcards []string) ([]stri
 	return paths, nil
 }
 
-func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksum string, err error) {
+func (s *DockerfileStage) calculateProjectFilesChecksum(ctx context.Context, paths []string) (checksum string, err error) {
 	var dependencies []string
 
 	sort.Strings(paths)
@@ -559,7 +560,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 		}
 
 		dependencies = append(dependencies, relPath)
-		logboek.Debug().LogF("File %s was added:\n", relPath)
+		logboek.Context(ctx).Debug().LogF("File %s was added:\n", relPath)
 
 		stat, err := os.Lstat(path)
 		if err != nil {
@@ -567,7 +568,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 		}
 
 		dependencies = append(dependencies, stat.Mode().String())
-		logboek.Debug().LogF("  mode: %s\n", stat.Mode().String())
+		logboek.Context(ctx).Debug().LogF("  mode: %s\n", stat.Mode().String())
 
 		if stat.Mode()&os.ModeSymlink != 0 {
 			linkTo, err := os.Readlink(path)
@@ -576,7 +577,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 			}
 
 			dependencies = append(dependencies, linkTo)
-			logboek.Debug().LogF("  linkTo: %s\n", linkTo)
+			logboek.Context(ctx).Debug().LogF("  linkTo: %s\n", linkTo)
 		} else {
 			data, err := ioutil.ReadFile(path)
 			if err != nil {
@@ -585,7 +586,7 @@ func (s *DockerfileStage) calculateProjectFilesChecksum(paths []string) (checksu
 
 			dataHash := util.Sha256Hash(string(data))
 			dependencies = append(dependencies, dataHash)
-			logboek.Debug().LogF("  content hash: %s\n", dataHash)
+			logboek.Context(ctx).Debug().LogF("  content hash: %s\n", dataHash)
 		}
 	}
 

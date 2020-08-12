@@ -1,15 +1,12 @@
 package deploy_chart
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
@@ -21,6 +18,7 @@ import (
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -47,7 +45,7 @@ func NewCmd() *cobra.Command {
 `,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
 				return err
@@ -108,6 +106,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runDeployChart(chartDirOrChartReference string, releaseName string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -138,7 +138,8 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 			InitNamespace:               true,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -152,7 +153,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 
 	common.LogKubeContext(kube.Context)
 
-	if err := common.InitKubedog(); err != nil {
+	if err := common.InitKubedog(ctx); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
@@ -196,7 +197,7 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 
 	logboek.LogOptionalLn()
 	werfChart := &werf_chart.WerfChart{ChartDir: chartDir}
-	if err := werfChart.Deploy(context.Background(), releaseName, namespace, helm.ChartOptions{
+	if err := werfChart.Deploy(ctx, releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(cmdData.Timeout) * time.Second,
 		ChartValuesOptions: helm.ChartValuesOptions{
 			Set:       *commonCmdData.Set,

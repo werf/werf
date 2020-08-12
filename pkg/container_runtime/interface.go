@@ -1,8 +1,11 @@
 package container_runtime
 
 import (
-	"github.com/docker/docker/api/types"
+	"context"
+
 	"github.com/werf/werf/pkg/image"
+
+	"github.com/docker/docker/api/types"
 )
 
 type BuildOptions struct {
@@ -14,8 +17,8 @@ type ImageInterface interface {
 	Name() string
 	SetName(name string)
 
-	Pull() error
-	Untag() error
+	Pull(ctx context.Context) error
+	Untag(ctx context.Context) error
 
 	// TODO: build specifics for stapel builder and dockerfile builder
 	// TODO: should be under a single separate interface
@@ -23,12 +26,12 @@ type ImageInterface interface {
 	BuilderContainer() BuilderContainer
 	DockerfileImageBuilder() *DockerfileImageBuilder
 
-	Build(BuildOptions) error
+	Build(context.Context, BuildOptions) error
 	GetBuiltId() string
-	TagBuiltImage(name string) error
-	Export(name string) error
+	TagBuiltImage(ctx context.Context, name string) error
+	Export(ctx context.Context, name string) error
 
-	Introspect() error
+	Introspect(ctx context.Context) error
 
 	SetInspect(inspect *types.ImageInspect)
 	IsExistsLocally() bool

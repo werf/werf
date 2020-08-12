@@ -1,6 +1,7 @@
 package cleanup_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -188,7 +189,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 }
 
 func initImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	imagesRepo = utils.NewImagesRepo(imagesRepoAddress, imageRepoMode, implementationName, dockerRegistryOptions)
+	imagesRepo = utils.NewImagesRepo(context.Background(), imagesRepoAddress, imageRepoMode, implementationName, dockerRegistryOptions)
 }
 
 func initStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
@@ -196,15 +197,15 @@ func initStagesStorage(stagesStorageAddress string, implementationName string, d
 }
 
 func imagesRepoAllImageRepoTags(imageName string) []string {
-	return utils.ImagesRepoAllImageRepoTags(imagesRepo, imageName)
+	return utils.ImagesRepoAllImageRepoTags(context.Background(), imagesRepo, imageName)
 }
 
 func stagesStorageRepoImagesCount() int {
-	return utils.StagesStorageRepoImagesCount(stagesStorage)
+	return utils.StagesStorageRepoImagesCount(context.Background(), stagesStorage)
 }
 
 func stagesStorageManagedImagesCount() int {
-	return utils.StagesStorageManagedImagesCount(stagesStorage)
+	return utils.StagesStorageManagedImagesCount(context.Background(), stagesStorage)
 }
 
 func implementationListToCheck() []string {
@@ -347,7 +348,7 @@ func implementationImagesRepoDockerRegistryOptions(implementationName string) do
 func implementationBeforeEach(implementationName string) {
 	switch implementationName {
 	case docker_registry.AwsEcrImplementationName:
-		err := imagesRepo.CreateImageRepo("image")
+		err := imagesRepo.CreateImageRepo(context.Background(), "image")
 		Ω(err).Should(Succeed())
 	default:
 	}
@@ -369,7 +370,7 @@ func implementationAfterEach(implementationName string) {
 			Ω(utilsDocker.CliPush(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker push")
 		}
 
-		err := imagesRepo.DeleteImageRepo("image")
+		err := imagesRepo.DeleteImageRepo(context.Background(), "image")
 		switch err := err.(type) {
 		case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
 		default:

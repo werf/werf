@@ -1,6 +1,7 @@
 package ls_tree
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"path/filepath"
@@ -32,7 +33,7 @@ type LsTreeEntry struct {
 	object.TreeEntry
 }
 
-func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	res := &Result{
 		repository:                           r.repository,
 		repositoryFullFilepath:               r.repositoryFullFilepath,
@@ -51,21 +52,21 @@ func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 			isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
 			if isTreeMatched {
 				if debugProcess() {
-					logboek.Debug().LogLn("Root tree was added")
+					logboek.Context(ctx).Debug().LogLn("Root tree was added")
 				}
 				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
 			} else if shouldWalkThrough {
 				if debugProcess() {
-					logboek.Debug().LogLn("Root tree was checking")
+					logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 				}
 
-				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
+				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
 				if err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
 		}
 
 		res.lsTreeEntries = append(res.lsTreeEntries, entryLsTreeEntries...)
@@ -73,7 +74,7 @@ func (r *Result) LsTree(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	}
 
 	for _, submoduleResult := range r.submodulesResults {
-		sr, err := submoduleResult.LsTree(pathMatcher)
+		sr, err := submoduleResult.LsTree(ctx, pathMatcher)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +112,7 @@ func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
 	return nil
 }
 
-func (r *Result) Checksum() string {
+func (r *Result) Checksum(ctx context.Context) string {
 	if r.IsEmpty() {
 		return ""
 	}
@@ -126,7 +127,7 @@ func (r *Result) Checksum() string {
 			logFilepath = "."
 		}
 
-		logboek.Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+		logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
 
 		return nil
 	})
@@ -135,7 +136,7 @@ func (r *Result) Checksum() string {
 	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepaths {
 		checksumArg := fmt.Sprintf("-%s", filepath.ToSlash(submoduleFullFilepath))
 		h.Write([]byte(checksumArg))
-		logboek.Debug().LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
+		logboek.Context(ctx).Debug().LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
 	}
 
 	sort.Slice(r.submodulesResults, func(i, j int) bool {
@@ -145,12 +146,12 @@ func (r *Result) Checksum() string {
 	for _, submoduleResult := range r.submodulesResults {
 		var submoduleChecksum string
 		if !submoduleResult.IsEmpty() {
-			logboek.Debug().LogOptionalLn()
+			logboek.Context(ctx).Debug().LogOptionalLn()
 			blockMsg := fmt.Sprintf("submodule %s", submoduleResult.repositoryFullFilepath)
-			logboek.Debug().LogBlock(blockMsg).Do(func() {
-				submoduleChecksum = submoduleResult.Checksum()
-				logboek.Debug().LogLn()
-				logboek.Debug().LogLn(submoduleChecksum)
+			logboek.Context(ctx).Debug().LogBlock(blockMsg).Do(func() {
+				submoduleChecksum = submoduleResult.Checksum(ctx)
+				logboek.Context(ctx).Debug().LogLn()
+				logboek.Context(ctx).Debug().LogLn(submoduleChecksum)
 			})
 		}
 

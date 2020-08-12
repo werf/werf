@@ -1,7 +1,6 @@
 package ls
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -76,6 +75,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runLs(filter string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -99,11 +100,11 @@ func runLs(filter string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
-	if err := helm.Ls(context.Background(), os.Stdout, filter, CmdData.LsOptions); err != nil {
+	if err := helm.Ls(ctx, os.Stdout, filter, CmdData.LsOptions); err != nil {
 		return err
 	}
 

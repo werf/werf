@@ -28,7 +28,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Cleanup project stages from stages storage",
 		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -70,6 +70,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runSync() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -82,7 +84,7 @@ func runSync() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -93,7 +95,7 @@ func runSync() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -129,7 +131,7 @@ func runSync() error {
 	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -138,7 +140,7 @@ func runSync() error {
 		return err
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -150,5 +152,5 @@ func runSync() error {
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.StagesCleanup(projectName, imagesRepo, stagesManager, storageLockManager, stagesCleanupOptions)
+	return cleaning.StagesCleanup(ctx, projectName, imagesRepo, stagesManager, storageLockManager, stagesCleanupOptions)
 }

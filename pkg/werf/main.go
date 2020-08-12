@@ -1,6 +1,7 @@
 package werf
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -74,9 +75,9 @@ func GetHostLocker() lockgate.Locker {
 	return hostLocker
 }
 
-func SetupLockerDefaultOptions(opts lockgate.AcquireOptions) lockgate.AcquireOptions {
+func SetupLockerDefaultOptions(ctx context.Context, opts lockgate.AcquireOptions) lockgate.AcquireOptions {
 	if opts.OnWaitFunc == nil {
-		opts.OnWaitFunc = DefaultLockerOnWait
+		opts.OnWaitFunc = DefaultLockerOnWait(ctx)
 	}
 	if opts.OnLostLeaseFunc == nil {
 		opts.OnLostLeaseFunc = DefaultLockerOnLostLease
@@ -84,23 +85,25 @@ func SetupLockerDefaultOptions(opts lockgate.AcquireOptions) lockgate.AcquireOpt
 	return opts
 }
 
-func WithHostLock(lockName string, opts lockgate.AcquireOptions, f func() error) error {
-	return lockgate.WithAcquire(GetHostLocker(), lockName, SetupLockerDefaultOptions(opts), func(_ bool) error {
+func WithHostLock(ctx context.Context, lockName string, opts lockgate.AcquireOptions, f func() error) error {
+	return lockgate.WithAcquire(GetHostLocker(), lockName, SetupLockerDefaultOptions(ctx, opts), func(_ bool) error {
 		return f()
 	})
 }
 
-func AcquireHostLock(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
-	return GetHostLocker().Acquire(lockName, SetupLockerDefaultOptions(opts))
+func AcquireHostLock(ctx context.Context, lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
+	return GetHostLocker().Acquire(lockName, SetupLockerDefaultOptions(ctx, opts))
 }
 
 func ReleaseHostLock(lock lockgate.LockHandle) error {
 	return GetHostLocker().Release(lock)
 }
 
-func DefaultLockerOnWait(lockName string, doWait func() error) error {
-	logProcessMsg := fmt.Sprintf("Waiting for locked %q", lockName)
-	return logboek.LogProcessInline(logProcessMsg).DoError(doWait)
+func DefaultLockerOnWait(ctx context.Context) func(lockName string, doWait func() error) error {
+	return func(lockName string, doWait func() error) error {
+		logProcessMsg := fmt.Sprintf("Waiting for locked %q", lockName)
+		return logboek.Context(ctx).LogProcessInline(logProcessMsg).DoError(doWait)
+	}
 }
 
 func DefaultLockerOnLostLease(lock lockgate.LockHandle) error {

@@ -16,7 +16,7 @@ import (
 )
 
 // Not namespaced resource specifies without namespace
-func RemoveResourceAndWaitUntilRemoved(name, kind, namespace string) error {
+func RemoveResourceAndWaitUntilRemoved(ctx context.Context, name, kind, namespace string) error {
 	isNamespacedResource := namespace != ""
 
 	groupVersionResource, err := kube.GroupVersionResourceByKind(kube.Client, kind)
@@ -58,7 +58,7 @@ func RemoveResourceAndWaitUntilRemoved(name, kind, namespace string) error {
 		logProcessMsg = fmt.Sprintf("Deleting %s/%s", groupVersionResource.Resource, name)
 	}
 
-	return logboek.LogProcessInline(logProcessMsg).
+	return logboek.Context(ctx).LogProcessInline(logProcessMsg).
 		Options(func(options types.LogProcessInlineOptionsInterface) {
 			options.Style(style.Details())
 		}).

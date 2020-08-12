@@ -30,7 +30,7 @@ var (
 	isVerbose            bool
 )
 
-func Init(dockerConfigDir string, verbose, debug bool) error {
+func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool) error {
 	if dockerConfigDir != "" {
 		cliconfig.SetDir(dockerConfigDir)
 	}
@@ -39,7 +39,7 @@ func Init(dockerConfigDir string, verbose, debug bool) error {
 		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %s", dockerConfigDir, err)
 	}
 
-	if err := setDockerClient(); err != nil {
+	if err := setDockerClient(ctx); err != nil {
 		return err
 	}
 
@@ -47,7 +47,7 @@ func Init(dockerConfigDir string, verbose, debug bool) error {
 		return err
 	}
 
-	logrus.StandardLogger().SetOutput(logboek.ProxyOutStream())
+	logrus.StandardLogger().SetOutput(logboek.Context(ctx).ProxyOutStream())
 
 	isDebug = debug
 	isVerbose = verbose
@@ -85,10 +85,10 @@ func newDockerCli(opts []command.DockerCliOption) (*command.DockerCli, error) {
 	return newCli, nil
 }
 
-func setDockerClient() error {
+func setDockerClient(ctx context.Context) error {
 	if c, err := newDockerCli([]command.DockerCliOption{
-		command.WithOutputStream(logboek.ProxyOutStream()),
-		command.WithErrorStream(logboek.ProxyErrStream()),
+		command.WithOutputStream(logboek.Context(ctx).ProxyOutStream()),
+		command.WithErrorStream(logboek.Context(ctx).ProxyErrStream()),
 		command.WithContentTrust(false),
 	}); err != nil {
 		return fmt.Errorf("unable to create live output docker cli: %s", err)
@@ -118,7 +118,7 @@ func Debug() bool {
 	return os.Getenv("WERF_DEBUG_DOCKER") == "1"
 }
 
-func callCliWithRecordedOutput(commandCaller func(c *command.DockerCli) error) (string, error) {
+func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c *command.DockerCli) error) (string, error) {
 	var output bytes.Buffer
 
 	if c, err := getRecordingOutputCli(&output, &output); err != nil {
@@ -146,15 +146,15 @@ func prepareCliCmd(cmd *cobra.Command, args ...string) *cobra.Command {
 	return cmd
 }
 
-func callCliWithAutoOutput(commandCaller func(c *command.DockerCli) error) error {
+func callCliWithAutoOutput(ctx context.Context, commandCaller func(c *command.DockerCli) error) error {
 	if liveCliOutputEnabled {
 		return commandCaller(liveOutputCli)
 	} else {
-		output, err := callCliWithRecordedOutput(func(c *command.DockerCli) error {
+		output, err := callCliWithRecordedOutput(ctx, func(c *command.DockerCli) error {
 			return commandCaller(c)
 		})
 		if err != nil {
-			logboek.Warn().LogF("%s", output)
+			logboek.Context(ctx).Warn().LogF("%s", output)
 		}
 		return err
 	}

@@ -1,6 +1,7 @@
 package cleaning
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
@@ -37,7 +38,7 @@ func (r *referenceToScan) String() string {
 	return fmt.Sprintf("%s%s", r.Name().Short(), imagesCleanupKeepPolicy)
 }
 
-func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*referenceToScan, error) {
+func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*referenceToScan, error) {
 	rs, err := gitRepository.References()
 	if err != nil {
 		return nil, fmt.Errorf("get repository references failed: %s", err)
@@ -182,9 +183,9 @@ func getReferencesToScan(gitRepository *git.Repository, keepPolicies []*config.M
 			resultTagsRefs = mergeReferences(resultTagsRefs, policyRefs)
 		}
 
-		logboek.Default().LogBlock(policy.String()).Do(func() {
+		logboek.Context(ctx).Default().LogBlock(policy.String()).Do(func() {
 			for _, ref := range policyRefs {
-				logboek.Default().LogLnDetails(ref.Name().Short())
+				logboek.Context(ctx).Default().LogLnDetails(ref.Name().Short())
 			}
 		})
 	}

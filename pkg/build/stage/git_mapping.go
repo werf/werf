@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -104,9 +105,9 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 	panic("GitRepo not initialized")
 }
 
-func (gm *GitMapping) getOrCreateChecksum(opts git_repo.ChecksumOptions) (git_repo.Checksum, error) {
+func (gm *GitMapping) getOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (git_repo.Checksum, error) {
 	if _, hasKey := gm.GitRepoCache.Checksums[objectToHashKey(opts)]; !hasKey {
-		checksum, err := gm.GitRepo().Checksum(opts)
+		checksum, err := gm.GitRepo().Checksum(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -115,9 +116,9 @@ func (gm *GitMapping) getOrCreateChecksum(opts git_repo.ChecksumOptions) (git_re
 	return gm.GitRepoCache.Checksums[objectToHashKey(opts)], nil
 }
 
-func (gm *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
+func (gm *GitMapping) getOrCreateArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	if _, hasKey := gm.GitRepoCache.Archives[objectToHashKey(opts)]; !hasKey {
-		archive, err := gm.createArchive(opts)
+		archive, err := gm.createArchive(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -126,11 +127,11 @@ func (gm *GitMapping) getOrCreateArchive(opts git_repo.ArchiveOptions) (git_repo
 	return gm.GitRepoCache.Archives[objectToHashKey(opts)], nil
 }
 
-func (gm *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
+func (gm *GitMapping) createArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	var res git_repo.Archive
 
-	err := logboek.Info().LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add)).DoError(func() error {
-		archive, err := gm.GitRepo().CreateArchive(opts)
+	err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add)).DoError(func() error {
+		archive, err := gm.GitRepo().CreateArchive(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -147,9 +148,9 @@ func (gm *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Arch
 	return res, nil
 }
 
-func (gm *GitMapping) getOrCreatePatch(opts git_repo.PatchOptions) (git_repo.Patch, error) {
+func (gm *GitMapping) getOrCreatePatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
 	if _, hasKey := gm.GitRepoCache.Patches[objectToHashKey(opts)]; !hasKey {
-		patch, err := gm.createPatch(opts)
+		patch, err := gm.createPatch(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -158,12 +159,12 @@ func (gm *GitMapping) getOrCreatePatch(opts git_repo.PatchOptions) (git_repo.Pat
 	return gm.GitRepoCache.Patches[objectToHashKey(opts)], nil
 }
 
-func (gm *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, error) {
+func (gm *GitMapping) createPatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
 	var res git_repo.Patch
 
 	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Add)
-	err := logboek.Info().LogProcess(logProcessMsg).DoError(func() error {
-		patch, err := gm.GitRepo().CreatePatch(opts)
+	err := logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
+		patch, err := gm.GitRepo().CreatePatch(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -196,20 +197,20 @@ func (gm *GitMapping) IsLocal() bool {
 	}
 }
 
-func (gm *GitMapping) getLatestCommit() (string, error) {
+func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
 	if gm.Commit != "" {
 		return gm.Commit, nil
 	}
 
 	if gm.Tag != "" {
-		return gm.GitRepo().TagCommit(gm.Tag)
+		return gm.GitRepo().TagCommit(ctx, gm.Tag)
 	}
 
 	if gm.Branch != "" {
-		return gm.GitRepo().LatestBranchCommit(gm.Branch)
+		return gm.GitRepo().LatestBranchCommit(ctx, gm.Branch)
 	}
 
-	commit, err := gm.GitRepo().HeadCommit()
+	commit, err := gm.GitRepo().HeadCommit(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -251,18 +252,18 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyPatchCommand(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
+func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return fmt.Errorf("unable to get base commit from built image: %s", err)
 	}
 
-	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	commands, err := gm.baseApplyPatchCommand(fromCommit, toCommitInfo.Commit, prevBuiltImage)
+	commands, err := gm.baseApplyPatchCommand(ctx, fromCommit, toCommitInfo.Commit, prevBuiltImage)
 	if err != nil {
 		return err
 	}
@@ -276,10 +277,10 @@ func (gm *GitMapping) ApplyPatchCommand(c Conveyor, prevBuiltImage, image contai
 	return nil
 }
 
-func (gm *GitMapping) GetLatestCommitInfo(c Conveyor) (ImageCommitInfo, error) {
+func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (ImageCommitInfo, error) {
 	res := ImageCommitInfo{}
 
-	if commit, err := gm.getLatestCommit(); err != nil {
+	if commit, err := gm.getLatestCommit(ctx); err != nil {
 		return ImageCommitInfo{}, err
 	} else {
 		res.Commit = commit
@@ -291,16 +292,16 @@ func (gm *GitMapping) GetLatestCommitInfo(c Conveyor) (ImageCommitInfo, error) {
 		res.VirtualMergeIntoCommit = c.GetLocalGitRepoVirtualMergeOptions().VirtualMergeIntoCommit
 
 		if res.VirtualMergeFromCommit == "" || res.VirtualMergeIntoCommit == "" {
-			if parents, err := gm.GitRepo().GetMergeCommitParents(res.Commit); err != nil {
+			if parents, err := gm.GitRepo().GetMergeCommitParents(ctx, res.Commit); err != nil {
 				return ImageCommitInfo{}, fmt.Errorf("unable to get virtual merge commit %s parents for git repo %s: %s", res.Commit, gm.GitRepo().GetName(), err)
 			} else if len(parents) == 2 {
 				if res.VirtualMergeIntoCommit == "" {
 					res.VirtualMergeIntoCommit = parents[0]
-					logboek.Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
+					logboek.Context(ctx).Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
 				}
 				if res.VirtualMergeFromCommit == "" {
 					res.VirtualMergeFromCommit = parents[1]
-					logboek.Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
+					logboek.Context(ctx).Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
 				}
 			}
 		}
@@ -334,7 +335,7 @@ func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInt
 	}
 }
 
-func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	if baseCommit, hasKey := gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Name()]; hasKey {
 		return baseCommit, nil
 	}
@@ -346,15 +347,15 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(c Conveyor, prevBuiltImage 
 
 	var baseCommit string
 	if prevBuiltImageCommitInfo.VirtualMerge {
-		if latestCommit, err := gm.getLatestCommit(); err != nil {
+		if latestCommit, err := gm.getLatestCommit(ctx); err != nil {
 			return "", err
 		} else if _, isLocal := gm.GitRepo().(*git_repo.Local); isLocal && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
 			baseCommit = prevBuiltImageCommitInfo.Commit
 		} else {
-			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
+			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(ctx, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
 				return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %s", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
 			} else {
-				logboek.Info().LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
+				logboek.Context(ctx).Info().LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
 				baseCommit = detachedMergeCommit
 			}
 		}
@@ -418,7 +419,7 @@ func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-virtual-merge-into-commit", gm.GetParamshash())
 }
 
-func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
+func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
@@ -427,7 +428,7 @@ func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 		ToCommit:      toCommit,
 	}
 
-	patch, err := gm.getOrCreatePatch(patchOpts)
+	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -503,7 +504,7 @@ func (gm *GitMapping) baseApplyPatchCommand(fromCommit, toCommit string, prevBui
 			Commit:        toCommit,
 		}
 
-		archive, err := gm.getOrCreateArchive(archiveOpts)
+		archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -585,13 +586,13 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyArchiveCommand(c Conveyor, image container_runtime.ImageInterface) error {
-	commitInfo, err := gm.GetLatestCommitInfo(c)
+func (gm *GitMapping) ApplyArchiveCommand(ctx context.Context, c Conveyor, image container_runtime.ImageInterface) error {
+	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	commands, err := gm.baseApplyArchiveCommand(commitInfo.Commit, image)
+	commands, err := gm.baseApplyArchiveCommand(ctx, commitInfo.Commit, image)
 	if err != nil {
 		return err
 	}
@@ -618,13 +619,13 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 	return nil
 }
 
-func (gm *GitMapping) baseApplyArchiveCommand(commit string, image container_runtime.ImageInterface) ([]string, error) {
+func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: gm.getRepoFilterOptions(),
 		Commit:        commit,
 	}
 
-	archive, err := gm.getOrCreateArchive(archiveOpts)
+	archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -650,13 +651,13 @@ func (gm *GitMapping) baseApplyArchiveCommand(commit string, image container_run
 	return commands, err
 }
 
-func (gm *GitMapping) StageDependenciesChecksum(c Conveyor, stageName StageName) (string, error) {
+func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor, stageName StageName) (string, error) {
 	depsPaths := gm.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
 		return "", nil
 	}
 
-	commitInfo, err := gm.GetLatestCommitInfo(c)
+	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return "", fmt.Errorf("unable to get latest commit info: %s", err)
 	}
@@ -667,13 +668,13 @@ func (gm *GitMapping) StageDependenciesChecksum(c Conveyor, stageName StageName)
 		Commit:        commitInfo.Commit,
 	}
 
-	checksum, err := gm.getOrCreateChecksum(checksumOpts)
+	checksum, err := gm.getOrCreateChecksum(ctx, checksumOpts)
 	if err != nil {
 		return "", err
 	}
 
 	for _, p := range checksum.GetNoMatchPaths() {
-		logboek.Warn().LogF(
+		logboek.Context(ctx).Warn().LogF(
 			"WARNING: stage %s dependency path %s has not been found in %s git\n",
 			stageName, p, gm.GitRepo().GetName(),
 		)
@@ -682,8 +683,8 @@ func (gm *GitMapping) StageDependenciesChecksum(c Conveyor, stageName StageName)
 	return checksum.String(), nil
 }
 
-func (gm *GitMapping) PatchSize(c Conveyor, fromCommit string) (int64, error) {
-	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit string) (int64, error) {
+	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return 0, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
@@ -700,7 +701,7 @@ func (gm *GitMapping) PatchSize(c Conveyor, fromCommit string) (int64, error) {
 		WithBinary:            true,
 	}
 
-	patch, err := gm.getOrCreatePatch(patchOpts)
+	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return 0, err
 	}
@@ -765,13 +766,13 @@ func formatParamshashPaths(paths ...string) []string {
 	return resultPaths
 }
 
-func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
+func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
 
-	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return "", fmt.Errorf("unable to get latest commit info: %s", err)
 	}
@@ -785,7 +786,7 @@ func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runti
 		FromCommit:    fromCommit,
 		ToCommit:      toCommitInfo.Commit,
 	}
-	patch, err := gm.getOrCreatePatch(patchOpts)
+	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return "", err
 	}
@@ -797,21 +798,21 @@ func (gm *GitMapping) GetPatchContent(c Conveyor, prevBuiltImage container_runti
 	return string(data), nil
 }
 
-func (gm *GitMapping) IsPatchEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
+func (gm *GitMapping) IsPatchEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return false, fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
 	}
 
-	toCommitInfo, err := gm.GetLatestCommitInfo(c)
+	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return false, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	return gm.baseIsPatchEmpty(fromCommit, toCommitInfo.Commit)
+	return gm.baseIsPatchEmpty(ctx, fromCommit, toCommitInfo.Commit)
 }
 
-func (gm *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
+func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit string) (bool, error) {
 	if fromCommit == toCommit {
 		return true, nil
 	}
@@ -822,7 +823,7 @@ func (gm *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error
 		ToCommit:      toCommit,
 	}
 
-	patch, err := gm.getOrCreatePatch(patchOpts)
+	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return false, err
 	}
@@ -830,8 +831,8 @@ func (gm *GitMapping) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error
 	return patch.IsEmpty(), nil
 }
 
-func (gm *GitMapping) IsEmpty(c Conveyor) (bool, error) {
-	commitInfo, err := gm.GetLatestCommitInfo(c)
+func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
+	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return false, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
@@ -841,7 +842,7 @@ func (gm *GitMapping) IsEmpty(c Conveyor) (bool, error) {
 		Commit:        commitInfo.Commit,
 	}
 
-	archive, err := gm.getOrCreateArchive(archiveOpts)
+	archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
 	if err != nil {
 		return false, err
 	}

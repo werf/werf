@@ -1,6 +1,7 @@
 package cleaning
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,20 +20,22 @@ type StagesPurgeOptions struct {
 	DryRun                        bool
 }
 
-func StagesPurge(projectName string, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
+func StagesPurge(ctx context.Context, projectName string, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
 	m := newStagesPurgeManager(projectName, stagesManager, options)
 
-	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	return logboek.Default().LogProcess("Running stages purge").
+	return logboek.Context(ctx).Default().LogProcess("Running stages purge").
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
-		DoError(m.run)
+		DoError(func() error {
+			return m.run(ctx)
+		})
 }
 
 func newStagesPurgeManager(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) *stagesPurgeManager {
@@ -51,7 +54,7 @@ type stagesPurgeManager struct {
 	DryRun                        bool
 }
 
-func (m *stagesPurgeManager) run() error {
+func (m *stagesPurgeManager) run(ctx context.Context) error {
 	deleteImageOptions := storage.DeleteImageOptions{
 		RmiForce:                 true,
 		SkipUsedImage:            false,
@@ -60,27 +63,27 @@ func (m *stagesPurgeManager) run() error {
 	}
 
 	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
-	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		logProcess := logboek.Default().LogProcess("Deleting stages")
+	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		logProcess := logboek.Context(ctx).Default().LogProcess("Deleting stages")
 		logProcess.Start()
 
-		stages, err := m.StagesManager.GetAllStages()
+		stages, err := m.StagesManager.GetAllStages(ctx)
 		if err != nil {
 			logProcess.Fail()
 			return err
 		}
 
-		if err := deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
+		if err := deleteStageInStagesStorage(ctx, m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
 			logProcess.Fail()
 			return err
 		} else {
 			logProcess.End()
 		}
 
-		logProcess = logboek.Default().LogProcess("Deleting managed images")
+		logProcess = logboek.Context(ctx).Default().LogProcess("Deleting managed images")
 		logProcess.Start()
 
-		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(m.ProjectName)
+		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
 		if err != nil {
 			logProcess.Fail()
 			return err
@@ -88,7 +91,7 @@ func (m *stagesPurgeManager) run() error {
 
 		for _, managedImage := range managedImages {
 			if !m.DryRun {
-				if err := m.StagesManager.StagesStorage.RmManagedImage(m.ProjectName, managedImage); err != nil {
+				if err := m.StagesManager.StagesStorage.RmManagedImage(ctx, m.ProjectName, managedImage); err != nil {
 					return err
 				}
 			}
@@ -98,8 +101,8 @@ func (m *stagesPurgeManager) run() error {
 				logTag = storage.NamelessImageRecordTag
 			}
 
-			logboek.Default().LogFDetails("  tag: %s\n", logTag)
-			logboek.LogOptionalLn()
+			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", logTag)
+			logboek.Context(ctx).LogOptionalLn()
 		}
 
 		logProcess.End()

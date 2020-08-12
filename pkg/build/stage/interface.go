@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 )
@@ -9,15 +11,15 @@ type Interface interface {
 	Name() StageName
 	LogDetailedName() string
 
-	IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error)
+	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error)
 
-	FetchDependencies(c Conveyor, cr container_runtime.ContainerRuntime) error
-	GetDependencies(c Conveyor, prevImage container_runtime.ImageInterface, prevBuiltImage container_runtime.ImageInterface) (string, error)
-	GetNextStageDependencies(c Conveyor) (string, error)
+	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime) error
+	GetDependencies(ctx context.Context, c Conveyor, prevImage container_runtime.ImageInterface, prevBuiltImage container_runtime.ImageInterface) (string, error)
+	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error
+	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error
 
-	PreRunHook(Conveyor) error
+	PreRunHook(context.Context, Conveyor) error
 
 	SetSignature(signature string)
 	GetSignature() string
@@ -31,5 +33,5 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error)
+	SelectSuitableStage(_ context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error)
 }

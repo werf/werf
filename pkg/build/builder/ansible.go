@@ -3,6 +3,7 @@ package builder
 //go:generate esc -no-compress -ignore static.go -o ansible/static.go -pkg ansible ansible
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -34,26 +35,42 @@ func NewAnsibleBuilder(config *config.Ansible, extra *Extra) *Ansible {
 	return &Ansible{config: config, extra: extra}
 }
 
-func (b *Ansible) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeInstall") }
-func (b *Ansible) IsInstallEmpty() bool       { return b.isEmptyStage("Install") }
-func (b *Ansible) IsBeforeSetupEmpty() bool   { return b.isEmptyStage("BeforeSetup") }
-func (b *Ansible) IsSetupEmpty() bool         { return b.isEmptyStage("Setup") }
+func (b *Ansible) IsBeforeInstallEmpty(ctx context.Context) bool {
+	return b.isEmptyStage(ctx, "BeforeInstall")
+}
+func (b *Ansible) IsInstallEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Install") }
+func (b *Ansible) IsBeforeSetupEmpty(ctx context.Context) bool {
+	return b.isEmptyStage(ctx, "BeforeSetup")
+}
+func (b *Ansible) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Ansible) BeforeInstall(container Container) error { return b.stage("BeforeInstall", container) }
-func (b *Ansible) Install(container Container) error       { return b.stage("Install", container) }
-func (b *Ansible) BeforeSetup(container Container) error   { return b.stage("BeforeSetup", container) }
-func (b *Ansible) Setup(container Container) error         { return b.stage("Setup", container) }
-
-func (b *Ansible) BeforeInstallChecksum() string { return b.stageChecksum("BeforeInstall") }
-func (b *Ansible) InstallChecksum() string       { return b.stageChecksum("Install") }
-func (b *Ansible) BeforeSetupChecksum() string   { return b.stageChecksum("BeforeSetup") }
-func (b *Ansible) SetupChecksum() string         { return b.stageChecksum("Setup") }
-
-func (b *Ansible) isEmptyStage(userStageName string) bool {
-	return b.stageChecksum(userStageName) == ""
+func (b *Ansible) BeforeInstall(ctx context.Context, container Container) error {
+	return b.stage(ctx, "BeforeInstall", container)
+}
+func (b *Ansible) Install(ctx context.Context, container Container) error {
+	return b.stage(ctx, "Install", container)
+}
+func (b *Ansible) BeforeSetup(ctx context.Context, container Container) error {
+	return b.stage(ctx, "BeforeSetup", container)
+}
+func (b *Ansible) Setup(ctx context.Context, container Container) error {
+	return b.stage(ctx, "Setup", container)
 }
 
-func (b *Ansible) stage(userStageName string, container Container) error {
+func (b *Ansible) BeforeInstallChecksum(ctx context.Context) string {
+	return b.stageChecksum(ctx, "BeforeInstall")
+}
+func (b *Ansible) InstallChecksum(ctx context.Context) string { return b.stageChecksum(ctx, "Install") }
+func (b *Ansible) BeforeSetupChecksum(ctx context.Context) string {
+	return b.stageChecksum(ctx, "BeforeSetup")
+}
+func (b *Ansible) SetupChecksum(ctx context.Context) string { return b.stageChecksum(ctx, "Setup") }
+
+func (b *Ansible) isEmptyStage(ctx context.Context, userStageName string) bool {
+	return b.stageChecksum(ctx, userStageName) == ""
+}
+
+func (b *Ansible) stage(ctx context.Context, userStageName string, container Container) error {
 	if len(b.stageTasks(userStageName)) == 0 {
 		return nil
 	}
@@ -91,7 +108,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
 	)
 
-	containerName, err := stapel.GetOrCreateContainer()
+	containerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
 		return err
 	}
@@ -112,7 +129,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	return nil
 }
 
-func (b *Ansible) stageChecksum(userStageName string) string {
+func (b *Ansible) stageChecksum(ctx context.Context, userStageName string) string {
 	var checksumArgs []string
 
 	for _, task := range b.stageTasks(userStageName) {
@@ -129,12 +146,12 @@ func (b *Ansible) stageChecksum(userStageName string) string {
 	}
 
 	if debugUserStageChecksum() {
-		logboek.Debug().LogFHighlight("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
+		logboek.Context(ctx).Debug().LogFHighlight("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
 	}
 
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
 		if debugUserStageChecksum() {
-			logboek.Debug().LogFHighlight("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
+			logboek.Context(ctx).Debug().LogFHighlight("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
 		}
 
 		checksumArgs = append(checksumArgs, stageVersionChecksum)

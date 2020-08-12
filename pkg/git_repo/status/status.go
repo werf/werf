@@ -1,6 +1,7 @@
 package status
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,11 +26,11 @@ var fileStatusMapping = map[rune]string{
 	'U': "Updated",
 }
 
-func Status(repository *git.Repository, repositoryAbsFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	return status(repository, repositoryAbsFilepath, "", pathMatcher)
+func Status(ctx context.Context, repository *git.Repository, repositoryAbsFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	return status(ctx, repository, repositoryAbsFilepath, "", pathMatcher)
 }
 
-func status(repository *git.Repository, repositoryAbsFilepath string, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepath string, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 			result.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug().LogF(
+				logboek.Context(ctx).Debug().LogF(
 					"File was added:         %s (worktree: %s, staging: %s)\n",
 					fileStatusFullFilepath,
 					fileStatusMapping[rune(fileStatus.Worktree)],
@@ -96,7 +97,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if matched || shouldGoTrough {
 			if debugProcess() {
-				logboek.Debug().LogF("Submodule was checking: %s\n", submoduleFullFilepath)
+				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleFullFilepath)
 			}
 
 			submoduleResult := &SubmoduleResult{}
@@ -104,7 +105,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 			if err != nil {
 				if err == git.ErrSubmoduleNotInitialized {
 					if debugProcess() {
-						logboek.Debug().LogFWithCustomStyle(
+						logboek.Context(ctx).Debug().LogFWithCustomStyle(
 							style.Get(style.FailName),
 							"Submodule is not initialized: path %s will be added to checksum\n",
 							submoduleFullFilepath,
@@ -134,7 +135,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 				submoduleResult.currentCommit = submoduleStatus.Current.String()
 
 				if debugProcess() {
-					logboek.Debug().LogFWithCustomStyle(
+					logboek.Context(ctx).Debug().LogFWithCustomStyle(
 						style.Get(style.FailName),
 						"Submodule is not clean: current commit %s will be added to checksum\n",
 						submoduleStatus.Current,
@@ -142,7 +143,7 @@ func status(repository *git.Repository, repositoryAbsFilepath string, repository
 				}
 			}
 
-			sResult, err := status(submoduleRepository, submoduleRepositoryAbsFilepath, submoduleFullFilepath, pathMatcher)
+			sResult, err := status(ctx, submoduleRepository, submoduleRepositoryAbsFilepath, submoduleFullFilepath, pathMatcher)
 			if err != nil {
 				return nil, err
 			}

@@ -33,16 +33,16 @@ type InstallOptions struct {
 func Install(ctx context.Context, chart, releaseName string, opts InstallOptions) error {
 	outfmt := output.Table
 
-	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
+	envSettings := NewEnvSettings(ctx, opts.Namespace)
+	cfg := NewActionConfig(ctx, envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 	client := action.NewInstall(cfg)
 	client.Namespace = opts.Namespace
 	client.CreateNamespace = opts.CreateNamespace
 	client.ReleaseName = releaseName
 
-	logboek.Debug().LogF("Original chart version: %q", client.Version)
+	logboek.Context(ctx).Debug().LogF("Original chart version: %q", client.Version)
 	if client.Version == "" && client.Devel {
-		logboek.Debug().LogF("setting version to >0.0.0-0")
+		logboek.Context(ctx).Debug().LogF("setting version to >0.0.0-0")
 		client.Version = ">0.0.0-0"
 	}
 
@@ -51,7 +51,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		return err
 	}
 
-	logboek.Debug().LogF("CHART PATH: %s\n", cp)
+	logboek.Context(ctx).Debug().LogF("CHART PATH: %s\n", cp)
 
 	p := getter.All(envSettings)
 	vals, err := opts.ValuesOptions.MergeValues(p)
@@ -77,7 +77,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		if err := action.CheckDependencies(chartRequested, req); err != nil {
 			if client.DependencyUpdate {
 				man := &downloader.Manager{
-					Out:              logboek.ProxyOutStream(),
+					Out:              logboek.Context(ctx).ProxyOutStream(),
 					ChartPath:        cp,
 					Keyring:          client.ChartPathOptions.Keyring,
 					SkipUpdate:       false,
@@ -104,7 +104,7 @@ func Install(ctx context.Context, chart, releaseName string, opts InstallOptions
 		return errors.Wrap(err, "INSTALL FAILED")
 	}
 
-	return outfmt.Write(logboek.ProxyOutStream(), &statusPrinter{rel, envSettings.Debug})
+	return outfmt.Write(logboek.Context(ctx).ProxyOutStream(), &statusPrinter{rel, envSettings.Debug})
 }
 
 // isChartInstallable validates if a chart can be installed

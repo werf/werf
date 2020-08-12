@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -8,9 +9,9 @@ import (
 	"github.com/werf/logboek"
 )
 
-func syncSubmodules(repoDir, workTreeDir string) error {
+func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Sync submodules in work tree '%s'", workTreeDir)
-	return logboek.Info().LogProcess(logProcessMsg).DoError(func() error {
+	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		cmd := exec.Command(
 			"git", "-c", "core.autocrlf=false",
 			"submodule", "sync", "--recursive",
@@ -33,9 +34,9 @@ func syncSubmodules(repoDir, workTreeDir string) error {
 	})
 }
 
-func updateSubmodules(repoDir, workTreeDir string) error {
+func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree '%s'", workTreeDir)
-	return logboek.Info().LogProcess(logProcessMsg).DoError(func() error {
+	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		cmd := exec.Command(
 			"git", "-c", "core.autocrlf=false",
 			"submodule", "update", "--checkout", "--force", "--init", "--recursive",

@@ -90,17 +90,17 @@ func GetServiceValues(ctx context.Context, projectName string, imagesRepository,
 				} else {
 					imageData[key] = value
 				}
-				logboek.Debug().LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
+				logboek.Context(ctx).Debug().LogF("ServiceValues: %s.%s=%s", image.GetImageName(), key, value)
 			}
 
-			imageID, err := image.GetImageID()
+			imageID, err := image.GetImageID(ctx)
 			if err != nil {
 				return nil, err
 			}
 
 			setKey("docker_image_id", imageID)
 
-			imageDigest, err := image.GetImageDigest()
+			imageDigest, err := image.GetImageDigest(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +110,7 @@ func GetServiceValues(ctx context.Context, projectName string, imagesRepository,
 	}
 
 	data, err := yaml.Marshal(res)
-	logboek.Debug().LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
+	logboek.Context(ctx).Debug().LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
 
 	return res, nil
 }

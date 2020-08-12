@@ -2,6 +2,7 @@ package docker
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/docker/cli/cli/command"
@@ -10,7 +11,7 @@ import (
 	"github.com/werf/logboek"
 )
 
-func Login(username, password, repo string) error {
+func Login(ctx context.Context, username, password, repo string) error {
 	var outb, errb bytes.Buffer
 
 	cliOpts := []command.DockerCliOption{
@@ -37,7 +38,7 @@ func Login(username, password, repo string) error {
 
 	err = cmd.Execute()
 	if Debug() {
-		fmt.Fprintf(logboek.ProxyOutStream(), "Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
+		fmt.Fprintf(logboek.Context(ctx).ProxyOutStream(), "Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 	}
 
 	if err != nil {

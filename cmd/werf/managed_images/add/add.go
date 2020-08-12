@@ -60,6 +60,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run(imageName string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -72,7 +74,7 @@ func run(imageName string) error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
 
@@ -81,7 +83,7 @@ func run(imageName string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -124,7 +126,7 @@ func run(imageName string) error {
 	_ = stagesStorageCache
 	_ = storageLockManager
 
-	if err := stagesStorage.AddManagedImage(projectName, common.GetManagedImageName(imageName)); err != nil {
+	if err := stagesStorage.AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 		return fmt.Errorf("unable to add managed image %q for project %q: %s", imageName, projectName, err)
 	}
 

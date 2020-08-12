@@ -1,6 +1,7 @@
 package stapel
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -33,37 +34,37 @@ func getContainer() container {
 	}
 }
 
-func GetOrCreateContainer() (string, error) {
+func GetOrCreateContainer(ctx context.Context) (string, error) {
 	container := getContainer()
 
-	if err := container.CreateIfNotExist(); err != nil {
+	if err := container.CreateIfNotExist(ctx); err != nil {
 		return "", err
 	} else {
 		return container.Name, nil
 	}
 }
 
-func Purge() error {
+func Purge(ctx context.Context) error {
 	container := getContainer()
-	if err := container.RmIfExist(); err != nil {
+	if err := container.RmIfExist(ctx); err != nil {
 		return err
 	}
 
-	if err := rmiIfExist(); err != nil {
+	if err := rmiIfExist(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func rmiIfExist() error {
-	exist, err := docker.ImageExist(ImageName())
+func rmiIfExist(ctx context.Context) error {
+	exist, err := docker.ImageExist(ctx, ImageName())
 	if err != nil {
 		return err
 	}
 
 	if exist {
-		return docker.CliRmi(ImageName())
+		return docker.CliRmi(ctx, ImageName())
 	}
 
 	return nil

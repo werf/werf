@@ -1,6 +1,7 @@
 package container_runtime
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -29,10 +30,10 @@ func (b *DockerfileImageBuilder) AppendBuildArgs(buildArgs ...string) {
 	b.BuildArgs = append(b.BuildArgs, buildArgs...)
 }
 
-func (b *DockerfileImageBuilder) Build() error {
+func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
 	buildArgs := append(b.BuildArgs, fmt.Sprintf("--tag=%s", b.temporalId))
 
-	if err := docker.CliBuild_LiveOutput(buildArgs...); err != nil {
+	if err := docker.CliBuild_LiveOutput(ctx, buildArgs...); err != nil {
 		return err
 	}
 
@@ -41,8 +42,8 @@ func (b *DockerfileImageBuilder) Build() error {
 	return nil
 }
 
-func (b *DockerfileImageBuilder) Cleanup() error {
-	if err := docker.CliRmi(b.temporalId, "--force"); err != nil {
+func (b *DockerfileImageBuilder) Cleanup(ctx context.Context) error {
+	if err := docker.CliRmi(ctx, b.temporalId, "--force"); err != nil {
 		return fmt.Errorf("unable to remove temporal dockerfile image %q: %s", b.temporalId, err)
 	}
 	return nil

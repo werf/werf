@@ -1,6 +1,8 @@
 package images_manager
 
 import (
+	"context"
+
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/image"
@@ -11,8 +13,8 @@ type ImageInfoGetter interface {
 	IsNameless() bool
 	GetName() string
 	GetImageName() string
-	GetImageID() (string, error)
-	GetImageDigest() (string, error)
+	GetImageID(ctx context.Context) (string, error)
+	GetImageDigest(ctx context.Context) (string, error)
 	GetImageTag() string
 }
 
@@ -25,9 +27,9 @@ type ImageInfo struct {
 	info *image.Info
 }
 
-func (d *ImageInfo) getOrCreateInfo() (*image.Info, error) {
+func (d *ImageInfo) getOrCreateInfo(ctx context.Context) (*image.Info, error) {
 	if d.info == nil {
-		repoImage, err := d.ImagesRepo.GetRepoImage(d.Name, d.Tag)
+		repoImage, err := d.ImagesRepo.GetRepoImage(ctx, d.Name, d.Tag)
 		if err != nil {
 			return nil, err
 		}
@@ -50,28 +52,28 @@ func (d *ImageInfo) GetImageName() string {
 	return d.ImagesRepo.ImageRepositoryNameWithTag(d.Name, d.Tag)
 }
 
-func (d *ImageInfo) GetImageID() (string, error) {
+func (d *ImageInfo) GetImageID(ctx context.Context) (string, error) {
 	if d.WithoutRegistry {
 		return "", nil
 	}
 
-	repoImage, err := d.getOrCreateInfo()
+	repoImage, err := d.getOrCreateInfo(ctx)
 	if err != nil {
-		logboek.Warn().LogF("WARNING: Getting image %s id failed: %s\n", d.GetImageName(), err)
+		logboek.Context(ctx).Warn().LogF("WARNING: Getting image %s id failed: %s\n", d.GetImageName(), err)
 		return "", nil
 	}
 
 	return repoImage.ID, nil
 }
 
-func (d *ImageInfo) GetImageDigest() (string, error) {
+func (d *ImageInfo) GetImageDigest(ctx context.Context) (string, error) {
 	if d.WithoutRegistry {
 		return "", nil
 	}
 
-	repoImage, err := d.getOrCreateInfo()
+	repoImage, err := d.getOrCreateInfo(ctx)
 	if err != nil {
-		logboek.Warn().LogF("WARNING: Getting image %s digest failed: %s\n", d.GetImageName(), err)
+		logboek.Context(ctx).Warn().LogF("WARNING: Getting image %s digest failed: %s\n", d.GetImageName(), err)
 		return "", nil
 	}
 

@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"net/http"
 	neturl "net/url"
 	"path"
@@ -12,7 +13,7 @@ func newHarborApi() harborApi {
 	return harborApi{}
 }
 
-func (api *harborApi) DeleteRepository(hostname, repository, username, password string) (*http.Response, error) {
+func (api *harborApi) DeleteRepository(ctx context.Context, hostname, repository, username, password string) (*http.Response, error) {
 	u, err := neturl.Parse("https://" + hostname + "/api")
 	if err != nil {
 		return nil, err
@@ -21,7 +22,7 @@ func (api *harborApi) DeleteRepository(hostname, repository, username, password 
 	u.Path = path.Join(u.Path, "repositories", repository)
 	url := u.String()
 
-	resp, _, err := doRequest(http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept": "application/json",
 		},

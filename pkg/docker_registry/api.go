@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -32,7 +33,7 @@ func newAPI(options apiOptions) *api {
 	}
 }
 
-func (api *api) Tags(reference string) ([]string, error) {
+func (api *api) Tags(_ context.Context, reference string) ([]string, error) {
 	tags, err := api.list(reference)
 	if err != nil {
 		if IsNameUnknownError(err) {
@@ -44,16 +45,16 @@ func (api *api) Tags(reference string) ([]string, error) {
 	return tags, nil
 }
 
-func (api *api) IsRepoImageExists(reference string) (bool, error) {
-	if imgInfo, err := api.TryGetRepoImage(reference); err != nil {
+func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
+	if imgInfo, err := api.TryGetRepoImage(ctx, reference); err != nil {
 		return false, err
 	} else {
 		return imgInfo != nil, nil
 	}
 }
 
-func (api *api) TryGetRepoImage(reference string) (*image.Info, error) {
-	if imgInfo, err := api.GetRepoImage(reference); err != nil {
+func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	if imgInfo, err := api.GetRepoImage(ctx, reference); err != nil {
 		if IsManifestUnknownError(err) || IsNameUnknownError(err) {
 			return imgInfo, nil
 		}
@@ -63,7 +64,7 @@ func (api *api) TryGetRepoImage(reference string) (*image.Info, error) {
 	}
 }
 
-func (api *api) GetRepoImageConfigFile(reference string) (*v1.ConfigFile, error) {
+func (api *api) GetRepoImageConfigFile(_ context.Context, reference string) (*v1.ConfigFile, error) {
 	imageInfo, _, err := api.image(reference)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func (api *api) GetRepoImageConfigFile(reference string) (*v1.ConfigFile, error)
 	return imageInfo.ConfigFile()
 }
 
-func (api *api) GetRepoImage(reference string) (*image.Info, error) {
+func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, error) {
 	imageInfo, _, err := api.image(reference)
 	if err != nil {
 		return nil, err
@@ -140,7 +141,7 @@ func (api *api) deleteImageByReference(reference string) error {
 	return nil
 }
 
-func (api *api) PushImage(reference string, opts PushImageOptions) error {
+func (api *api) PushImage(_ context.Context, reference string, opts PushImageOptions) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)

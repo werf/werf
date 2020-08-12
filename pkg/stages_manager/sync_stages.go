@@ -1,6 +1,7 @@
 package stages_manager
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/logboek"
@@ -18,9 +19,9 @@ type SyncStagesOptions struct {
 // SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
 // Repeatedly calling SyncStages will copy stages from source stages storage to destination, that already exists in the destination.
 // SyncStages will not delete excess stages from destination storage, that does not exists in the source.
-func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, storageLockManager storage.LockManager, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
+func SyncStages(ctx context.Context, projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, storageLockManager storage.LockManager, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
 	isOk := false
-	logProcess := logboek.Default().LogProcess("Sync %q project stages", projectName)
+	logProcess := logboek.Context(ctx).Default().LogProcess("Sync %q project stages", projectName)
 	logProcess.Start()
 	defer func() {
 		if isOk {
@@ -31,27 +32,27 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 	}()
 
 	if !opts.WithoutLock {
-		if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
+		if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
 			return fmt.Errorf("unable to lock stages and images of project %q: %s", projectName, err)
 		} else {
-			defer storageLockManager.Unlock(lock)
+			defer storageLockManager.Unlock(ctx, lock)
 		}
 	}
 
-	logboek.Default().LogFDetails("Source      — %s\n", fromStagesStorage.String())
-	logboek.Default().LogFDetails("Destination — %s\n", toStagesStorage.String())
-	logboek.Default().LogOptionalLn()
+	logboek.Context(ctx).Default().LogFDetails("Source      — %s\n", fromStagesStorage.String())
+	logboek.Context(ctx).Default().LogFDetails("Destination — %s\n", toStagesStorage.String())
+	logboek.Context(ctx).Default().LogOptionalLn()
 
 	var errors []error
 
 	getAllStagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]image.StageID, error) {
-		logProcess := logboek.Default().LogProcess(logProcessMsg, projectName)
+		logProcess := logboek.Context(ctx).Default().LogProcess(logProcessMsg, projectName)
 		logProcess.Start()
-		if stages, err := stagesStorage.GetAllStages(projectName); err != nil {
+		if stages, err := stagesStorage.GetAllStages(ctx, projectName); err != nil {
 			logProcess.Fail()
 			return nil, fmt.Errorf("unable to get repo images from %s: %s", fromStagesStorage.String(), err)
 		} else {
-			logboek.Default().LogFDetails("Stages count: %d\n", len(stages))
+			logboek.Context(ctx).Default().LogFDetails("Stages count: %d\n", len(stages))
 			logProcess.End()
 			return stages, nil
 		}
@@ -88,7 +89,7 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 		}
 	}
 
-	logboek.Default().LogFDetails("Stages to sync: %d\n", len(stagesToSync))
+	logboek.Context(ctx).Default().LogFDetails("Stages to sync: %d\n", len(stagesToSync))
 
 	maxWorkers := 10
 	resultsChan := make(chan struct {
@@ -98,7 +99,7 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 	jobsChan := make(chan image.StageID, 1000)
 
 	for w := 0; w < maxWorkers; w++ {
-		go runSyncWorker(projectName, fromStagesStorage, toStagesStorage, containerRuntime, opts, w, jobsChan, resultsChan)
+		go runSyncWorker(ctx, projectName, fromStagesStorage, toStagesStorage, containerRuntime, opts, w, jobsChan, resultsChan)
 	}
 
 	for _, stageDesc := range stagesToSync {
@@ -113,17 +114,17 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 
 		if desc.error != nil {
 			failedCounter++
-			logboek.Warn().LogF("%5d/%d failed: %s\n", failedCounter, len(stagesToSync), desc.error)
+			logboek.Context(ctx).Warn().LogF("%5d/%d failed: %s\n", failedCounter, len(stagesToSync), desc.error)
 			errors = append(errors, desc.error)
 		} else {
 			succeededCounter++
-			logboek.Default().LogF("%5d/%d synced\n", succeededCounter, len(stagesToSync))
+			logboek.Context(ctx).Default().LogF("%5d/%d synced\n", succeededCounter, len(stagesToSync))
 		}
 	}
 
 	if len(errors) > 0 {
-		logboek.Default().LogLn()
-		logboek.Default().LogFHighlight("synced %d/%d, failed %d/%d\n", succeededCounter, len(stagesToSync), failedCounter, len(stagesToSync))
+		logboek.Context(ctx).Default().LogLn()
+		logboek.Context(ctx).Default().LogFHighlight("synced %d/%d, failed %d/%d\n", succeededCounter, len(stagesToSync), failedCounter, len(stagesToSync))
 
 		errorMsg := fmt.Sprintf("following errors occured:\n")
 		for _, err := range errors {
@@ -136,7 +137,7 @@ func SyncStages(projectName string, fromStagesStorage storage.StagesStorage, toS
 	return nil
 }
 
-func runSyncWorker(projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions, workerId int, jobs chan image.StageID, results chan struct {
+func runSyncWorker(ctx context.Context, projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions, workerId int, jobs chan image.StageID, results chan struct {
 	error
 	image.StageID
 }) {
@@ -145,18 +146,18 @@ func runSyncWorker(projectName string, fromStagesStorage storage.StagesStorage, 
 			error
 			image.StageID
 		}{
-			syncStage(projectName, stageID, fromStagesStorage, toStagesStorage, containerRuntime, opts),
+			syncStage(ctx, projectName, stageID, fromStagesStorage, toStagesStorage, containerRuntime, opts),
 			stageID,
 		}
 	}
 }
 
-func syncStage(projectName string, stageID image.StageID, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
+func syncStage(ctx context.Context, projectName string, stageID image.StageID, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
 	if fromStagesStorage.Address() == storage.LocalStorageAddress || toStagesStorage.Address() == storage.LocalStorageAddress {
 		opts.CleanupLocalCache = false
 	}
 
-	stageDesc, err := fromStagesStorage.GetStageDescription(projectName, stageID.Signature, stageID.UniqueID)
+	stageDesc, err := fromStagesStorage.GetStageDescription(ctx, projectName, stageID.Signature, stageID.UniqueID)
 	if err != nil {
 		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), fromStagesStorage.String(), err)
 	} else if stageDesc == nil {
@@ -164,29 +165,29 @@ func syncStage(projectName string, stageID image.StageID, fromStagesStorage stor
 		return nil
 	}
 
-	if destStageDesc, err := toStagesStorage.GetStageDescription(projectName, stageID.Signature, stageID.UniqueID); err != nil {
+	if destStageDesc, err := toStagesStorage.GetStageDescription(ctx, projectName, stageID.Signature, stageID.UniqueID); err != nil {
 		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), toStagesStorage.String(), err)
 	} else if destStageDesc == nil {
 		img := container_runtime.NewStageImage(nil, stageDesc.Info.Name, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
 
-		logboek.Info().LogF("Fetching %s\n", img.Name())
-		if err := fromStagesStorage.FetchImage(&container_runtime.DockerImage{Image: img}); err != nil {
+		logboek.Context(ctx).Info().LogF("Fetching %s\n", img.Name())
+		if err := fromStagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: img}); err != nil {
 			return fmt.Errorf("unable to fetch %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
 		}
 
 		newImageName := toStagesStorage.ConstructStageImageName(projectName, stageDesc.StageID.Signature, stageDesc.StageID.UniqueID)
-		logboek.Info().LogF("Renaming image %s to %s\n", img.Name(), newImageName)
-		if err := containerRuntime.RenameImage(&container_runtime.DockerImage{Image: img}, newImageName, opts.CleanupLocalCache); err != nil {
+		logboek.Context(ctx).Info().LogF("Renaming image %s to %s\n", img.Name(), newImageName)
+		if err := containerRuntime.RenameImage(ctx, &container_runtime.DockerImage{Image: img}, newImageName, opts.CleanupLocalCache); err != nil {
 			return err
 		}
 
-		logboek.Info().LogF("Storing %s\n", newImageName)
-		if err := toStagesStorage.StoreImage(&container_runtime.DockerImage{Image: img}); err != nil {
+		logboek.Context(ctx).Info().LogF("Storing %s\n", newImageName)
+		if err := toStagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: img}); err != nil {
 			return fmt.Errorf("unable to store %s to %s: %s", stageDesc.Info.Name, toStagesStorage.String(), err)
 		}
 
 		if opts.CleanupLocalCache {
-			if err := containerRuntime.RemoveImage(&container_runtime.DockerImage{Image: img}); err != nil {
+			if err := containerRuntime.RemoveImage(ctx, &container_runtime.DockerImage{Image: img}); err != nil {
 				return err
 			}
 		}
@@ -194,8 +195,8 @@ func syncStage(projectName string, stageID image.StageID, fromStagesStorage stor
 
 	if opts.RemoveSource {
 		deleteOpts := storage.DeleteImageOptions{RmiForce: true, RmForce: true, RmContainersThatUseImage: true}
-		logboek.Info().LogF("Removing %s\n", stageDesc.Info.Name)
-		if err := fromStagesStorage.DeleteStages(deleteOpts, stageDesc); err != nil {
+		logboek.Context(ctx).Info().LogF("Removing %s\n", stageDesc.Info.Name)
+		if err := fromStagesStorage.DeleteStages(ctx, deleteOpts, stageDesc); err != nil {
 			return fmt.Errorf("unable to remove %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
 		}
 	}

@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -33,7 +34,7 @@ var (
 
 type gitLabRegistry struct {
 	*defaultImplementation
-	deleteRepoImageFunc func(repoImage *image.Info) error
+	deleteRepoImageFunc func(ctx context.Context, repoImage *image.Info) error
 }
 
 type gitLabRegistryOptions struct {
@@ -51,9 +52,9 @@ func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
 	return gitLab, nil
 }
 
-func (r *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
 			return err
 		}
 	}
@@ -61,10 +62,10 @@ func (r *gitLabRegistry) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	deleteRepoImageFunc := r.deleteRepoImageFunc
 	if deleteRepoImageFunc != nil {
-		return deleteRepoImageFunc(repoImage)
+		return deleteRepoImageFunc(ctx, repoImage)
 	}
 
 	// DELETE /v2/<name>/tags/reference/<reference> method is available since the v2.8.0-gitlab
@@ -76,10 +77,10 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 		if err := deleteFunc(repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "404 Not Found; 404 page not found") {
-				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
+				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				break
 			} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
-				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
+				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
 
@@ -97,7 +98,7 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 		if err := deleteFunc(repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "UNAUTHORIZED") {
-				logboek.Debug().LogF("DEBUG: %s: %s", reference, err)
+				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
 
@@ -108,7 +109,7 @@ func (r *gitLabRegistry) deleteRepoImage(repoImage *image.Info) error {
 		return nil
 	}
 
-	err = r.defaultImplementation.deleteRepoImage(repoImage)
+	err = r.defaultImplementation.deleteRepoImage(ctx, repoImage)
 	if err != nil {
 		return err
 	}

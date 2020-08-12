@@ -1,12 +1,12 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -37,15 +37,15 @@ type GitArchiveStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitArchiveStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
-	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(c, stages)
+func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
 	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		args = append(args, gitMapping.GetParamshash())
@@ -56,17 +56,17 @@ func (s *GitArchiveStage) GetDependencies(_ Conveyor, _, _ container_runtime.Ima
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitArchiveStage) GetNextStageDependencies(c Conveyor) (string, error) {
-	return s.BaseStage.getNextStageGitDependencies(c)
+func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyArchiveCommand(c, image); err != nil {
+		if err := gitMapping.ApplyArchiveCommand(ctx, c, image); err != nil {
 			return err
 		}
 	}

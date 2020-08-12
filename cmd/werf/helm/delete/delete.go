@@ -39,7 +39,7 @@ func NewCmd() *cobra.Command {
 			if err := common.ValidateMinimumNArgs(1, args, cmd); err != nil {
 				return err
 			}
-			return runDelete(context.Background(), args)
+			return runDelete(common.BackgroundContext(), args)
 		},
 	}
 
@@ -85,7 +85,7 @@ func runDelete(ctx context.Context, releaseNames []string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(common.BackgroundContext(), deployInitOptions); err != nil {
 		return err
 	}
 

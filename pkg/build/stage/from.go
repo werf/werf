@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -45,7 +46,7 @@ type FromStage struct {
 	cacheVersion                 string
 }
 
-func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ container_runtime.ImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -69,8 +70,8 @@ func (s *FromStage) GetDependencies(c Conveyor, prevImage, _ container_runtime.I
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.addProjectRepoCommitToLabels(c, image); err != nil {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.addProjectRepoCommitToLabels(ctx, c, image); err != nil {
 		return err
 	}
 

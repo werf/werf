@@ -1,6 +1,7 @@
 package stages_manager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -62,10 +63,10 @@ func NewStagesManager(projectName string, storageLockManager storage.LockManager
 //}
 //}
 
-func (m *StagesManager) ResetStagesStorageCache() error {
+func (m *StagesManager) ResetStagesStorageCache(ctx context.Context) error {
 	msg := fmt.Sprintf("Reset stages storage cache %s for project %q", m.StagesStorageCache.String(), m.ProjectName)
-	return logboek.Default().LogProcess(msg).DoError(func() error {
-		return m.StagesStorageCache.DeleteAllStages(m.ProjectName)
+	return logboek.Context(ctx).Default().LogProcess(msg).DoError(func() error {
+		return m.StagesStorageCache.DeleteAllStages(ctx, m.ProjectName)
 	})
 }
 
@@ -123,8 +124,8 @@ func stagesSwitchFromLocalBlockLockName(projectName string) string {
 	return fmt.Sprintf("stages_switch_from_local_block.%s", projectName)
 }
 
-func (m *StagesManager) SetStagesSwitchFromLocalBlock(newStagesStorage storage.StagesStorage) error {
-	if _, lock, err := werf.AcquireHostLock(stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
+func (m *StagesManager) SetStagesSwitchFromLocalBlock(ctx context.Context, newStagesStorage storage.StagesStorage) error {
+	if _, lock, err := werf.AcquireHostLock(ctx, stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
 		return err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -136,8 +137,8 @@ func (m *StagesManager) SetStagesSwitchFromLocalBlock(newStagesStorage storage.S
 	return nil
 }
 
-func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) error {
-	if _, lock, err := werf.AcquireHostLock(stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
+func (m *StagesManager) UseStagesStorage(ctx context.Context, stagesStorage storage.StagesStorage) error {
+	if _, lock, err := werf.AcquireHostLock(ctx, stagesSwitchFromLocalBlockLockName(m.ProjectName), lockgate.AcquireOptions{}); err != nil {
 		return err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -150,17 +151,17 @@ func (m *StagesManager) UseStagesStorage(stagesStorage storage.StagesStorage) er
 	return nil
 }
 
-func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {
-	if stageIDs, err := m.StagesStorage.GetAllStages(m.ProjectName); err != nil {
+func (m *StagesManager) GetAllStages(ctx context.Context) ([]*image.StageDescription, error) {
+	if stageIDs, err := m.StagesStorage.GetAllStages(ctx, m.ProjectName); err != nil {
 		return nil, err
 	} else {
 		var stages []*image.StageDescription
 
 		for _, stageID := range stageIDs {
-			if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
+			if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
 				return nil, err
 			} else if stageDesc == nil {
-				logboek.Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
 				continue
 			} else {
 				stages = append(stages, stageDesc)
@@ -171,32 +172,32 @@ func (m *StagesManager) GetAllStages() ([]*image.StageDescription, error) {
 	}
 }
 
-func (m *StagesManager) DeleteStages(options storage.DeleteImageOptions, stages ...*image.StageDescription) error {
+func (m *StagesManager) DeleteStages(ctx context.Context, options storage.DeleteImageOptions, stages ...*image.StageDescription) error {
 	for _, stageDesc := range stages {
-		if err := m.StagesStorageCache.DeleteStagesBySignature(m.ProjectName, stageDesc.StageID.Signature); err != nil {
+		if err := m.StagesStorageCache.DeleteStagesBySignature(ctx, m.ProjectName, stageDesc.StageID.Signature); err != nil {
 			return fmt.Errorf("unable to delete stages storage cache record (%s): %s", stageDesc.StageID.Signature, err)
 		}
 	}
-	return m.StagesStorage.DeleteStages(options, stages...)
+	return m.StagesStorage.DeleteStages(ctx, options, stages...)
 }
 
-func (m *StagesManager) FetchStage(stg stage.Interface) error {
-	logboek.Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
-	if freshStageDescription, err := m.StagesStorage.GetStageDescription(m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
+func (m *StagesManager) FetchStage(ctx context.Context, stg stage.Interface) error {
+	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
+	if freshStageDescription, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 		return err
 	} else if freshStageDescription == nil {
-		logboek.Error().LogF("Invalid stage %s image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
+		logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
 		return ErrShouldResetStagesStorageCache
 	}
 
-	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(&container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
-		if err := logboek.Default().LogProcess("Fetching stage %s from stages storage", stg.LogDetailedName()).
+	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
+		if err := logboek.Context(ctx).Default().LogProcess("Fetching stage %s from stages storage", stg.LogDetailedName()).
 			Options(func(options types.LogProcessOptionsInterface) {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				logboek.Info().LogF("Image name: %s\n", stg.GetImage().Name())
-				if err := m.StagesStorage.FetchImage(&container_runtime.DockerImage{Image: stg.GetImage()}); err != nil {
+				logboek.Context(ctx).Info().LogF("Image name: %s\n", stg.GetImage().Name())
+				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err != nil {
 					return fmt.Errorf("unable to fetch stage %s image %s from stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 				}
 				return nil
@@ -210,16 +211,16 @@ func (m *StagesManager) FetchStage(stg stage.Interface) error {
 	return nil
 }
 
-func (m *StagesManager) SelectSuitableStage(c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error) {
+func (m *StagesManager) SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error) {
 	if len(stages) == 0 {
 		return nil, nil
 	}
 
 	var stageDesc *image.StageDescription
-	if err := logboek.Info().LogProcess("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()).
+	if err := logboek.Context(ctx).Info().LogProcess("Selecting suitable image for stage %s by signature %s", stg.Name(), stg.GetSignature()).
 		DoError(func() error {
 			var err error
-			stageDesc, err = stg.SelectSuitableStage(c, stages)
+			stageDesc, err = stg.SelectSuitableStage(ctx, c, stages)
 			return err
 		}); err != nil {
 		return nil, err
@@ -233,35 +234,35 @@ func (m *StagesManager) SelectSuitableStage(c stage.Conveyor, stg stage.Interfac
 		panic(err)
 	}
 
-	logboek.Debug().LogBlock("Selected cache image").
+	logboek.Context(ctx).Debug().LogBlock("Selected cache image").
 		Options(func(options types.LogBlockOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
 		Do(func() {
-			logboek.Debug().LogF(string(imgInfoData))
+			logboek.Context(ctx).Debug().LogF(string(imgInfoData))
 		})
 
 	return stageDesc, nil
 }
 
-func (m *StagesManager) AtomicStoreStagesBySignatureToCache(stageName, stageSig string, stageIDs []image.StageID) error {
-	if lock, err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
+func (m *StagesManager) AtomicStoreStagesBySignatureToCache(ctx context.Context, stageName, stageSig string, stageIDs []image.StageID) error {
+	if lock, err := m.StorageLockManager.LockStageCache(ctx, m.ProjectName, stageSig); err != nil {
 		return fmt.Errorf("error locking stage %s cache by signature %s: %s", stageName, stageSig, err)
 	} else {
-		defer m.StorageLockManager.Unlock(lock)
+		defer m.StorageLockManager.Unlock(ctx, lock)
 	}
 
-	return logboek.Info().LogProcess("Storing stage %s images by signature %s into stages storage cache", stageName, stageSig).
+	return logboek.Context(ctx).Info().LogProcess("Storing stage %s images by signature %s into stages storage cache", stageName, stageSig).
 		DoError(func() error {
-			if err := m.StagesStorageCache.StoreStagesBySignature(m.ProjectName, stageSig, stageIDs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesBySignature(ctx, m.ProjectName, stageSig, stageIDs); err != nil {
 				return fmt.Errorf("error storing stage %s images by signature %s into stages storage cache: %s", stageName, stageSig, err)
 			}
 			return nil
 		})
 }
 
-func (m *StagesManager) GetStagesBySignature(stageName, stageSig string) ([]*image.StageDescription, error) {
-	cacheExists, cacheStages, err := m.getStagesBySignatureFromCache(stageName, stageSig)
+func (m *StagesManager) GetStagesBySignature(ctx context.Context, stageName, stageSig string) ([]*image.StageDescription, error) {
+	cacheExists, cacheStages, err := m.getStagesBySignatureFromCache(ctx, stageName, stageSig)
 	if err != nil {
 		return nil, err
 	}
@@ -269,21 +270,21 @@ func (m *StagesManager) GetStagesBySignature(stageName, stageSig string) ([]*ima
 		return cacheStages, nil
 	}
 
-	logboek.Info().LogF(
+	logboek.Context(ctx).Info().LogF(
 		"Stage %s cache by signature %s is not exists in the stages storage cache: resetting stages storage cache\n",
 		stageName, stageSig,
 	)
-	return m.atomicGetStagesBySignatureWithCacheReset(stageName, stageSig)
+	return m.atomicGetStagesBySignatureWithCacheReset(ctx, stageName, stageSig)
 }
 
-func (m *StagesManager) getStagesBySignatureFromCache(stageName, stageSig string) (bool, []*image.StageDescription, error) {
+func (m *StagesManager) getStagesBySignatureFromCache(ctx context.Context, stageName, stageSig string) (bool, []*image.StageDescription, error) {
 	var cacheExists bool
 	var cacheStagesIDs []image.StageID
 
-	err := logboek.Info().LogProcess("Getting stage %s images by signature %s from stages storage cache", stageName, stageSig).
+	err := logboek.Context(ctx).Info().LogProcess("Getting stage %s images by signature %s from stages storage cache", stageName, stageSig).
 		DoError(func() error {
 			var err error
-			cacheExists, cacheStagesIDs, err = m.StagesStorageCache.GetStagesBySignature(m.ProjectName, stageSig)
+			cacheExists, cacheStagesIDs, err = m.StagesStorageCache.GetStagesBySignature(ctx, m.ProjectName, stageSig)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from stages storage cache: %s", m.ProjectName, stageSig, err)
 			}
@@ -293,7 +294,7 @@ func (m *StagesManager) getStagesBySignatureFromCache(stageName, stageSig string
 	var stages []*image.StageDescription
 
 	for _, stageID := range cacheStagesIDs {
-		if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: true}); err != nil {
+		if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: true}); err != nil {
 			return false, nil, err
 		} else {
 			stages = append(stages, stageDesc)
@@ -303,23 +304,23 @@ func (m *StagesManager) getStagesBySignatureFromCache(stageName, stageSig string
 	return cacheExists, stages, err
 }
 
-func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(stageName, stageSig string) ([]*image.StageDescription, error) {
-	if lock, err := m.StorageLockManager.LockStageCache(m.ProjectName, stageSig); err != nil {
+func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(ctx context.Context, stageName, stageSig string) ([]*image.StageDescription, error) {
+	if lock, err := m.StorageLockManager.LockStageCache(ctx, m.ProjectName, stageSig); err != nil {
 		return nil, fmt.Errorf("error locking project %s stage %s cache: %s", m.ProjectName, stageSig, err)
 	} else {
-		defer m.StorageLockManager.Unlock(lock)
+		defer m.StorageLockManager.Unlock(ctx, lock)
 	}
 
 	var stageIDs []image.StageID
-	if err := logboek.Default().LogProcess("Get %s stages by signature %s from stages storage", stageName, stageSig).
+	if err := logboek.Context(ctx).Default().LogProcess("Get %s stages by signature %s from stages storage", stageName, stageSig).
 		DoError(func() error {
 			var err error
-			stageIDs, err = m.StagesStorage.GetStagesBySignature(m.ProjectName, stageSig)
+			stageIDs, err = m.StagesStorage.GetStagesBySignature(ctx, m.ProjectName, stageSig)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from stages storage: %s", m.StagesStorage.String(), stageSig, err)
 			}
 
-			logboek.Debug().LogF("Stages ids: %#v\n", stageIDs)
+			logboek.Context(ctx).Debug().LogF("Stages ids: %#v\n", stageIDs)
 
 			return nil
 		}); err != nil {
@@ -328,19 +329,19 @@ func (m *StagesManager) atomicGetStagesBySignatureWithCacheReset(stageName, stag
 
 	var stages []*image.StageDescription
 	for _, stageID := range stageIDs {
-		if stageDesc, err := m.getStageDescription(stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
+		if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
 			return nil, err
 		} else if stageDesc == nil {
-			logboek.Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
 			continue
 		} else {
 			stages = append(stages, stageDesc)
 		}
 	}
 
-	if err := logboek.Info().LogProcess("Storing %s stages by signature %s into stages storage cache", stageName, stageSig).
+	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by signature %s into stages storage cache", stageName, stageSig).
 		DoError(func() error {
-			if err := m.StagesStorageCache.StoreStagesBySignature(m.ProjectName, stageSig, stageIDs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesBySignature(ctx, m.ProjectName, stageSig, stageIDs); err != nil {
 				return fmt.Errorf("error storing stage %s images by signature %s into stages storage cache: %s", stageName, stageSig, err)
 			}
 			return nil
@@ -356,36 +357,36 @@ type getStageDescriptionOptions struct {
 	WithManifestCache bool
 }
 
-func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStageDescriptionOptions) (*image.StageDescription, error) {
+func (m *StagesManager) getStageDescription(ctx context.Context, stageID image.StageID, opts getStageDescriptionOptions) (*image.StageDescription, error) {
 	stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Signature, stageID.UniqueID)
 
 	if opts.WithManifestCache {
-		logboek.Debug().LogF("Getting image %s info from manifest cache...\n", stageImageName)
-		if imgInfo, err := image.CommonManifestCache.GetImageInfo(stageImageName); err != nil {
+		logboek.Context(ctx).Debug().LogF("Getting image %s info from manifest cache...\n", stageImageName)
+		if imgInfo, err := image.CommonManifestCache.GetImageInfo(ctx, stageImageName); err != nil {
 			return nil, fmt.Errorf("error getting image %s info from manifest cache: %s", stageImageName, err)
 		} else if imgInfo != nil {
-			logboek.Debug().LogF("Got image %s info from manifest cache (CACHE HIT)\n", stageImageName)
+			logboek.Context(ctx).Debug().LogF("Got image %s info from manifest cache (CACHE HIT)\n", stageImageName)
 			return &image.StageDescription{
 				StageID: &image.StageID{Signature: stageID.Signature, UniqueID: stageID.UniqueID},
 				Info:    imgInfo,
 			}, nil
 		} else {
-			logboek.Info().LogF("Not found %s image info in manifest cache (CACHE MISS)\n", stageImageName)
+			logboek.Context(ctx).Info().LogF("Not found %s image info in manifest cache (CACHE MISS)\n", stageImageName)
 		}
 	}
 
-	logboek.Debug().LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
-	if stageDesc, err := m.StagesStorage.GetStageDescription(m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
+	logboek.Context(ctx).Debug().LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
+	if stageDesc, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
 		return nil, fmt.Errorf("error getting signature %q uniqueID %d stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 	} else if stageDesc != nil {
-		logboek.Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
-		if err := image.CommonManifestCache.StoreImageInfo(stageDesc.Info); err != nil {
+		logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
+		if err := image.CommonManifestCache.StoreImageInfo(ctx, stageDesc.Info); err != nil {
 			return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
 		}
 
 		return stageDesc, nil
 	} else if opts.StageShouldExist {
-		logboek.Warn().LogF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
+		logboek.Context(ctx).Warn().LogF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
 		return nil, ErrShouldResetStagesStorageCache
 	} else {
 		return nil, nil
