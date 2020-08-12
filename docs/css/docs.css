@@ -655,6 +655,14 @@
     margin-right: auto;
 }
 
+.docs .snippetcut .snippetcut__title .snippetcut__title-name-text {
+    font-size: 75%;
+    font-family: monospace, monospace;
+    color: #000000;
+    white-space: nowrap;
+    margin-right: auto;
+}
+
 .docs .snippetcut .snippetcut__title .snippetcut__title-btn {
     display: inline-block;
     padding: 2px 5px;

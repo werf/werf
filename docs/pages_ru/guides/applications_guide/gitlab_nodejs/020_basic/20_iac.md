@@ -22,7 +22,7 @@ toc: false
 В этой главе мы научимся описывать helm-шаблоны, используя возможности werf, а также освоим встроенные инструменты отладки.
 
 
-### Составление конфигов инфраструктуры
+## Составление конфигов инфраструктуры
 
 На сегодняшний день [Helm](https://helm.sh/) один из самых удобных способов которым вы можете описать свой deploy в Kubernetes. Кроме возможности установки готовых чартов с приложениями прямиком из репозитория, где вы можете введя одну команду, развернуть себе готовый Redis, Postgres, Rabbitmq прямиком в Kubernetes, вы также можете использовать Helm для разработки собственных чартов с удобным синтаксисом для шаблонизации выката ваших приложений.
 
@@ -44,7 +44,7 @@ toc: false
 
 Для работы нашего приложения в среде Kubernetes понадобится описать сущности Deployment (который породит в кластере Pod), Service, направить трафик на приложение, донастроив роутинг в кластере с помощью сущности Ingress. И не забыть создать отдельную сущность Secret, которая позволит нашему Kubernetes скачивать собранные образа из registry.
 
-#### Создание Pod-а
+### Создание Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
 - .helm/templates/deployment.yaml
@@ -150,7 +150,7 @@ console.error("I will goto the STDERR");
 var morgan = require("morgan");
 app.use(morgan("combined"));
 ```
-#### Доступность Pod-а
+### Доступность Pod-а
 
 {% filesused title="Файлы, упомянутые в главе" %}
 - .helm/templates/deployment.yaml
@@ -250,7 +250,7 @@ spec:
 {% endraw %}
 {% endsnippetcut %}
 
-#### Разное поведение в разных окружениях
+### Разное поведение в разных окружениях
 
 Некоторые настройки хочется видеть разными в разных окружениях. К примеру, домен, на котором будет открываться приложение должен быть либо staging.mydomain.io, либо mydomain.io — смотря куда мы задеплоились.
 
@@ -319,9 +319,58 @@ app:
 ```
 {% endsnippetcut %}
 
+<a name="registryaccess" />
+
+### Доступ кластера к Registry
+
+Для того, чтобы кластер имел доступ к собранным образам — необходимо организовать ключ доступа к Registry и прописать его в кластер. Этот ключ мы назовём `registrysecret`.
+
+Сперва нужно создать API-ключ в GitLab: зайдите в настройки пользователя (`Settings`) и в разделе `Personal Access Tokens` создайте API-ключ с правами на `read_registry`. Корректнее всего создать отдельного служебного пользователя, чтобы не завязываться на персональный аккаунт. 
+
+Полученный ключ должен быть прописан в **каждом** namespace в kubernetes, куда осуществляется деплой, в виде объекта Secret. Сделать это можно выполнив на master-ноде команду:
+
+```bash
+kubectl create secret docker-registry registrysecret -n <namespace> --docker-server=<registry_domain> --docker-username=<account_email> --docker-password=<account_password> --docker-email=<account_email>
+```
+
+где
+
+- `<namespace>` — имя namespace-а в kubernetes, например, `werf-guided-project-production`
+- `<registry_domain>` — домен registry, например, `registry.gitlab.com`
+- `<account_email>` — е-мэйл вашей учётной записи в gitlab
+- `<account_password>` — созданный API-ключ
+
+В каждом Deployment также указывается имя секрета:
+
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/020-basic-1/.helm/templates/deployment.yaml" %}
+{% raw %}
+```yaml
+    spec:
+      imagePullSecrets:
+      - name: "registrysecret"
+```
+{% endraw %}
+{% endsnippetcut %}
+
+{% offtopic title="Это каждый раз копировать руками?" %}
+
+В идеале проблема копирования секретов должна решаться на уровне платформы, но если это не сделано — можно прописать нужные команды в CI-процесс.
+
+Как вариант решения — завести секрет один раз в namespace `kube-system`, а затем в `.gitlab-ci.yaml` при деплое копировать этот секрет:
+
+```bash
+kubectl get ns ${CI_ENVIRONMENT_CUSTOM_SLUG:-${CI_ENVIRONMENT_SLUG}} || kubectl create namespace ${CI_ENVIRONMENT_CUSTOM_SLUG:-${CI_ENVIRONMENT_SLUG}}
+kubectl get secret registrysecret -n kube-system -o json |
+                      jq ".metadata.namespace = \"${CI_ENVIRONMENT_CUSTOM_SLUG:-${CI_ENVIRONMENT_SLUG}}\"|
+                      del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
+                      kubectl apply -f -
+```
+{% endofftopic %}
+
+
 <a name="iac-debug-deploy" />
 
-### Отладка конфигов инфраструктуры и деплой в Kubernetes
+## Отладка конфигов инфраструктуры и деплой в Kubernetes
 
 После того, как написана основная часть конфигов — хочется проверить корректность конфигов и задеплоить их в Kubernetes. Для того, чтобы отрендерить конфиги инфраструктуры нужны сведения об окружении, на которое будет произведён деплой, ключ для расшифровки секретных значений и т.п.
 

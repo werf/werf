@@ -39,7 +39,9 @@ module Jekyll
         %Q(
 <div class="snippetcut#{@config[:limited] ? ' snippetcut_limited' : ''}" data-snippetcut>
 <div class="snippetcut__title">
-<a href="#{@config[:url]}" target="_blank" class="snippetcut__title-name" data-snippetcut-name>#{@config[:name]}</a>
+  #{if (@config[:url]!='#') then "<a href=\""+@config[:url]+"\" target=\"_blank\" class=\"snippetcut__title-name\" data-snippetcut-name>" else "<span class=\"snippetcut__title-name-text\">" end}
+  #{@config[:name]}
+  #{if (@config[:url]!='#') then "</a>" else "</span>" end}
 <a href="javascript:void(0)" class="snippetcut__title-btn" data-snippetcut-btn-name>копировать имя</a>
 <a href="javascript:void(0)" class="snippetcut__title-btn" data-snippetcut-btn-text>копировать текст</a>
 </div>
@@ -47,9 +49,9 @@ module Jekyll
 <div class="snippetcut__raw" data-snippetcut-text>#{content}</div>
 </div>
         )
-      end
-    end
   end
-end
+        end
+        end
+        end
 
-Liquid::Template.register_tag('snippetcut', Jekyll::SnippetCut::SnippetCutTag)
+        Liquid::Template.register_tag('snippetcut', Jekyll::SnippetCut::SnippetCutTag)
