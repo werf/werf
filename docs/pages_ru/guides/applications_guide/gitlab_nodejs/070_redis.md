@@ -60,7 +60,7 @@ dependencies:
   script:
     - werf helm repo init
     - werf helm dependency update
-    - werf deploy
+    - werf deploy --set "global.ci_url=$(cut -d / -f 3 <<< $CI_ENVIRONMENT_URL)"
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -71,8 +71,8 @@ dependencies:
 {% raw %}
 ```yaml
 redis:
-  fullnameOverride: guided-redis
-  nameOverride: guided-redis
+  fullnameOverride: redis
+  nameOverride: redis
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -81,7 +81,7 @@ redis:
 {% offtopic title="А ключ redis он откуда такой?" %}
 Этот ключ должен совпадать с именем сабчарта-зависимости в файле `requirements.yaml` — тогда настройки будут пробрасываться в сабчарт.
 {% endofftopic %}
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/secret-values.yaml" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
 {% raw %}
 ```yaml
 redis:
@@ -96,6 +96,7 @@ redis:
 {% raw %}
 ```yaml
 redis:
+<...>
    _port:
       _default: 6379
 ```
@@ -139,26 +140,49 @@ metadata:
 
 В нашем приложении мы будем использовать Redis как хранилище сессий.
 
-{% snippetcut name="backend/src/server/server.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/backend/src/server/server.js" %}
+{% snippetcut name="app.js" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/app.js" %}
 {% raw %}
 ```js
-const REDIS_URI = "redis://"+ process.env.REDIS_HOST+":"+ process.env.REDIS_PORT || "redis://127.0.0.1:6379";
+// Get configuration from envs
+const REDIS_URI = "redis://"+ "root"+":" + process.env.REDIS_PASSWORD +"@"+process.env.REDIS_HOST+":"+ process.env.REDIS_PORT || "redis://127.0.0.1:6379";
 const SESSION_TTL = process.env.SESSION_TTL || 3600;
-const COOKIE_SECRET = process.env.COOKIE_SECRET || "supersecret";
-// Redis connect
-const expSession = require("express-session");
+
+// Init ExpressJS
+var express = require('express');
+var app = express();
+
+// Redis
 const redis = require("redis");
 let redisClient = redis.createClient(REDIS_URI);
-let redisStore = require("connect-redis")(expSession);
+// Session
+const expSession = require("express-session");
 
+// Connect sessions to Redis & configure
+let redisStore = require("connect-redis")(expSession);
 var session = expSession({
-  store: new redisStore({ client: redisClient, ttl: SESSION_TTL }),
-  secret: "keyboard cat",
+  secret: "keyboard cat", // TODO: CHANGE ME! 'keyboard cat' is insecure!
   resave: false,
   saveUninitialized: false,
+  store: new redisStore({ client: redisClient, ttl: SESSION_TTL }),
 });
-var sharedsession = require("express-socket.io-session");
 app.use(session);
+console.log(`Connect to REDIS ${REDIS_URI}`);
+
+app.get('/', function (req, res) {
+  if (req.session.views) {
+    req.session.views++
+    res.setHeader('Content-Type', 'text/html')
+    res.write('<p>views: ' + req.session.views + '</p>')
+    res.write('<p>expires in: ' + (req.session.cookie.maxAge / 1000) + 's</p>')
+    res.end()
+  } else {
+    req.session.views = 1
+    res.end('welcome to the session demo. refresh!')
+  }
+});
+app.listen(3000, function () {
+  console.log('Example app listening on port 3000!');
+});
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -170,8 +194,8 @@ app.use(session);
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: REDIS_HOST
-  value: "{{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host._default | quote }}"
+        - name: REDIS_HOST
+          value: {{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host._default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -180,8 +204,9 @@ app.use(session);
 {% raw %}
 ```yaml
 redis:
+<...>
   host:
-    _default: guided-redis-master
+    _default: redis-master
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -193,8 +218,8 @@ redis:
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: REDIS_HOST
-  value: "{{ .Chart.Name }}-{{ .Values.global.env }}-redis-master"
+        - name: REDIS_HOST
+          value: {{ pluck .Values.global.env .Values.redis.host | first | default .Values.redis.host._default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -205,8 +230,9 @@ redis:
 {% raw %}
 ```yaml
 redis:
-   host:
-      _default: guided-redis-master
+<...>
+  host:
+    _default: redis-master
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -219,8 +245,8 @@ redis:
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: REDIS_PORT
-  value: "{{ pluck .Values.global.env .Values.redis._port | first | default .Values.redis._port._default | quote }}"
+        - name: REDIS_PORT
+          value: {{ pluck .Values.global.env .Values.redis._port | first | default .Values.redis._port._default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -230,8 +256,8 @@ redis:
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: REDIS_PASSWORD
-  value: "{{ .Values.redis.password | quote }}"
+        - name: REDIS_PASSWORD
+          value: {{ .Values.redis.password | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -241,10 +267,8 @@ redis:
 {% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
-- name: SESSION_TTL
-  value: "{{ pluck .Values.global.env .Values.app.redis.session_ttl | first | default .Values.redis.session_ttl_default | quote }}"
-- name: COOKIE_SECRET
-  value: "{{ pluck .Values.global.env .Values.app.redis.cookie_secret | first | default .Values.app.redis.cookie_secret_default | quote }}"
+        - name: SESSION_TTL
+          value: {{ pluck .Values.global.env .Values.app.redis.session_ttl | first | default .Values.app.redis.session_ttl._default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -255,9 +279,9 @@ redis:
 ```yaml
   redis:
     session_ttl:
-        _default: "3600"
+      _default: "3600"
     cookie_secret:
-        _default: "supersecret"
+      _default: "supersecret"
 ```
 {% endraw %}
 {% endsnippetcut %}
