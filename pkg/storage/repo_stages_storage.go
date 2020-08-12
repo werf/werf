@@ -331,6 +331,11 @@ func (storage *RepoStagesStorage) GetImageMetadataByCommit(projectName, imageNam
 
 		return metadata, nil
 	} else {
+		logboek.Debug.LogF("imgInfo = %v\n", imgInfo)
+		if imgInfo != nil {
+			logboek.Debug.LogF("imgInfo.Labels = %v\n", imgInfo.Labels)
+		}
+
 		logboek.Info.LogF("No metadata found for image %q by commit %s\n", imageName, commit)
 		return nil, nil
 	}
@@ -362,7 +367,7 @@ func (storage *RepoStagesStorage) GetImageCommits(projectName, imageName string)
 			iName := unslugDockerImageTagAsImageName(sluggedImage)
 
 			if imageName == iName {
-				logboek.Debug.LogF("Found image %q metadata by commit %s\n", imageName, commit)
+				logboek.Debug.LogF("Found image %q metadata by commit %s, full image name: %s:%s\n", imageName, commit, storage.RepoAddress, tag)
 				res = append(res, commit)
 			}
 		}
