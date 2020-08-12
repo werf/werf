@@ -159,11 +159,9 @@ func (m *imagesCleanupManager) initImageCommitHashImageMetadata() error {
 				return fmt.Errorf("get image %s metadata by commit %s failed", imageName, commit)
 			}
 
-			if imageMetadata == nil {
-				panic(fmt.Sprintf("image %s metadata was not found: %s", imageName, err))
+			if imageMetadata != nil {
+				commitImageMetadata[plumbing.NewHash(commit)] = imageMetadata
 			}
-
-			commitImageMetadata[plumbing.NewHash(commit)] = imageMetadata
 		}
 
 		imageCommitImageMetadata[imageName] = commitImageMetadata
