@@ -33,7 +33,7 @@ toc: false
 
 Пропишем использование `aws-java-sdk` как зависимость:
 
-{% snippetcut name="pom.xml" url="#" %}
+{% snippetcut name="pom.xml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/050-assets/pom.xml#L27-31" %}
 ```xml
 <dependency>
    <groupId>com.amazonaws</groupId>
@@ -45,7 +45,7 @@ toc: false
 
 И сконфигурируем:
 
-{% snippetcut name="src/main/resources/application.properties" url="#" %}
+{% snippetcut name="src/main/resources/application.properties" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/050-assets/src/main/resources/application.properties" %}
 {% raw %}
 ```yaml
 amazonProperties:
@@ -59,7 +59,7 @@ amazonProperties:
 
 Для работы с S3 необходимо пробросить в ключи доступа в приложение. Для этого стоит использовать [механизм секретных переменных](https://ru.werf.io/documentation/reference/deploy_process/working_with_secrets.html). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*
 
-{% snippetcut name="secret-values.yaml (расшифрованный)" url="#" %}
+{% snippetcut name="secret-values.yaml (расшифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/050-assets/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 app:
@@ -76,7 +76,7 @@ app:
 
 А не секретные значения — храним в `values.yaml`
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/050-assets/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 app:
@@ -92,7 +92,7 @@ app:
 
 После того, как значения корректно прописаны и зашифрованы — мы можем пробросить соответствующие значения в Deployment.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/050-assets/.helm/templates/deployment.yaml#L31-40" %}
 {% raw %}
 ```yaml
        env:

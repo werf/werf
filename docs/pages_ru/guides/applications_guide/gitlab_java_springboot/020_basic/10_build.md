@@ -41,7 +41,7 @@ _В скором времени werf предоставит разработчи
 git clone git@github.com:werf/demos.git
 ```
 
-Примеры из данного гайда находятся в папке `/applications-guide/gitlab-java-springboot`, начнём с примера `00-demo`.
+Примеры из данного гайда находятся в папке `/applications-guide/gitlab-java-springboot`, начнём с примера `000-app`.
 
 {% offtopic title="Как мы сделали этот код? %}
 Код сгенерирован автоматически с помощью [start.spring.io](https://start.spring.io).
@@ -96,7 +96,7 @@ shell:
 
 Начнём werf.yaml с обязательной [**секции мета-информации**]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации):
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/werf.yaml" %}
 ```yaml
 project: werf-guided-project
 configVersion: 1
@@ -110,7 +110,7 @@ configVersion: 1
 
 После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [**image config section**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%81%D0%B5%D0%BA%D1%86%D0%B8%D1%8F-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0).
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/werf.yaml" %}
 ```yaml
 project: werf-guided-project
 configVersion: 1
@@ -152,7 +152,7 @@ from: {{ $base_image }}
 
 Добавим исходный код нашего приложения в контейнер с помощью [**директивы git**](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html)
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/werf.yaml" %}
 {% raw %}
 ```yaml
 project: werf-guided-project
@@ -241,10 +241,11 @@ git:
 
 Добавим в `werf.yaml` следующий блок используя shell синтаксис:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/werf.yaml" %}
 ```yaml
 shell: 
   setup:
+  - cd /app
   - mvn -B -f pom.xml package dependency:resolve
 ```
 {% endsnippetcut %}
@@ -286,22 +287,24 @@ Werf предоставляет удобные способы отладки.
 
 ```
 ...
-│ ┌ Building stage basicapp/beforeInstall
+│ ┌ Building stage basicapp/dockerInstructions
+│ │ ┌ Store into stages storage
+│ │ └ Store into stages storage (0.01 seconds)
 │ ├ Info
 │ │     repository: werf-stages-storage/werf-guided-project
-│ │       image_id: 2743bc56bbf7
-│ │        created: 2020-05-26T22:44:26.0159982Z
-│ │            tag: 7e691385166fc7283f859e35d0c9b9f1f6dc2ea7a61cb94e96f8a08c-1590533066068
+│ │       image_id: 5de8518684f1
+│ │        created: 2020-08-13 01:16:04.21714499 +0300 MSK
+│ │            tag: 58b2dfb3a595fb5d90a6d9cd140f4c69dd38c40d1a2d6acdee5aa499-1597270564251
 │ │           diff: 0 B
 │ │   instructions: WORKDIR /app
-│ └ Building stage basicapp/beforeInstall (0.82 seconds)
-└ ⛵ image basicapp (239.56 seconds)
+│ └ Building stage basicapp/dockerInstructions (0.81 seconds)
+└ ⛵ image basicapp (273.15 seconds)
 ```
 
 В конце werf отдал информацию о готовом repository и о tag для этого образа для дальнейшего использования.
 
 ```
-werf-stages-storage/werf-guided-project:981ece3acc63d57d5ab07f45fd0c0c477088649523822c2bff033df4-1594911680806
+werf-stages-storage/werf-guided-project:58b2dfb3a595fb5d90a6d9cd140f4c69dd38c40d1a2d6acdee5aa499-1597270564251
 ```
 
 Запустим собранный образ с помощью [werf run](https://werf.io/documentation/cli/main/run.html):

@@ -53,7 +53,7 @@ toc: false
 
 Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `basicapp`. Укажем, **как этот контейнер будет запускаться**:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       containers:
@@ -81,7 +81,7 @@ Werf складывает собранные образы в Registry с раз�
 
 Для JAVA это, например, JAVA_OPT - различные опции с которыми будет запускаться java. И, для примера, сейчас использоваться не будет, возьмем пароль к бд - DBPASS.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -104,7 +104,7 @@ Werf складывает собранные образы в Registry с раз�
 
 Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -116,7 +116,7 @@ Helm — шаблонизатор, и он поддерживает множес
 
 или даже более сложный, для того, чтобы значение основывалось на текущем окружении:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -126,7 +126,7 @@ Helm — шаблонизатор, и он поддерживает множес
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/values.yaml" %}
 ```yaml
 app:
   java_opt:
@@ -163,7 +163,7 @@ Spring-framework уже автоматически предоставляет л
 
 Наше приложение работает на стандартном порту `8080` — **откроем порт Pod-у**:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 ```yaml
         ports:
         - containerPort: 8080
@@ -174,7 +174,7 @@ Spring-framework уже автоматически предоставляет л
 
 Затем, **пропишем Service**, чтобы к Pod-у могли обращаться другие приложения кластера.
 
-{% snippetcut name="service.yaml" url="#" %}
+{% snippetcut name="service.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -195,7 +195,7 @@ spec:
 
 Обратите внимание на поле `selector` у Service: он должен совпадать с аналогичным полем у Deployment и ошибки в этой части — самая частая проблема с настройкой маршрута до приложения.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: apps/v1
@@ -228,7 +228,7 @@ spec:
 
 После этого можно настраивать **роутинг на Ingress**. Укажем, на какой домен и путь, в какой сервис и на какой порт направлять запросы.
 
-{% snippetcut name="ingress.yaml" url="#" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -259,7 +259,7 @@ spec:
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
-{% snippetcut name="ingress.yaml" url="#" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -288,7 +288,7 @@ $ werf helm secret values edit .helm/secret-values.yaml
 
 Откроется консольный текстовый редактор с данными в расшифованном виде:
 
-{% snippetcut name="secret-values.yaml в расшифрованном виде" url="#" %}
+{% snippetcut name="secret-values.yaml в расшифрованном виде" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/secret-values.yaml" %}
 ```yaml
 app:
   password:
@@ -299,7 +299,7 @@ app:
 
 После сохранения значения в файле зашифруются и примут примерно такой вид:
 
-{% snippetcut name="secret-values.yaml в зашифрованном виде" url="#" %}
+{% snippetcut name="secret-values.yaml в зашифрованном виде" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/020-basic/.helm/templates/secret-values.yaml" %}
 ```yaml
 app:
   password:

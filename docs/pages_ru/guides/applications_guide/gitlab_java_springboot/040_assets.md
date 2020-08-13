@@ -80,7 +80,7 @@ from: ubuntu:latest
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в артефакте на стадии `setup`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/werf.yaml#L37-47" %}
 {% raw %}
 ```yaml
 artifact: assets-built
@@ -105,7 +105,7 @@ git:
 
 Также стоит исключить assets из сборки Java:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/werf.yaml#L6-10" %}
 {% raw %}
 ```yaml
 git:
@@ -119,25 +119,26 @@ git:
 
 Теперь, когда артефакт собран, соберём образ с nginx. Стоит иметь ввиду, что сейчас мы кладем nginx.conf на этапе сборки образа. Это не правильно, так как это конфиг и он должен лежать в configmap, чтобы не вызывать пересборку приложения. Как это делается мы покажем позже, а пока что, для выполнения целей этой главы добавим его средствами сборки. 
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/werf.yaml#L56-65" %}
 {% raw %}
 ```yaml
 image: assets
-from: nginx:alpine
-ansible:
+from: nginx:stable-alpine
+docker:
+  EXPOSE: '80'
+shell:
   beforeInstall:
-  - name: Add nginx config
-    copy:
-      content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
+  - |
+    head -c -1 <<'EOF' > /etc/nginx/nginx.conf
+    {{ .Files.Get ".werf/nginx.conf" | nindent 4 }}
+    EOF
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/werf.yaml#L66-70" %}
 {% raw %}
 ```yaml
 import:
@@ -155,7 +156,7 @@ import:
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/.helm/templates/deployment.yaml#L19-38" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -184,7 +185,7 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="#" %}
+{% snippetcut name=".helm/templates/service.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/.helm/templates/service.yaml#L10-12" %}
 {% raw %}
 ```yaml
   ports:
@@ -197,7 +198,7 @@ import:
 
 В Ingress также необходимо отправить запросы на правильный порт, чтобы они попадали на nginx.
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/.helm/templates/ingress.yaml#L17-20" %}
 {% raw %}
 ```yaml
       paths:
@@ -213,7 +214,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/040-assets/.helm/templates/ingress.yaml#L12-20" %}
 {% raw %}
 ```yaml
       paths:
