@@ -47,7 +47,7 @@ Kubernetes автоматически разворачивает приложе�
 
 Пропишем helm-зависимости:
 
-{% snippetcut name=".helm/requirements.yaml" url="#" %}
+{% snippetcut name=".helm/requirements.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/requirements.yaml" %}
 {% raw %}
 ```yaml
 dependencies:
@@ -61,7 +61,7 @@ dependencies:
 
 Для того чтобы werf при деплое загрузил необходимые нам сабчарты - нужно прописать в `.gitlab-ci.yml` работу с зависимостями
 
-{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
 .base_deploy:
@@ -78,7 +78,7 @@ dependencies:
 
 Изучив [документацию](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#parameters) к нашему сабчарту мы можем увидеть, что задать название основной базы данных, пользователя, хоста и пароля и даже версии postgres мы можем через следующие переменные:
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -93,7 +93,7 @@ postgresql:
 
 Пароль от базы данных мы тоже конфигурируем, но хранить их нужно в секретных переменных. Для этого стоит использовать [механизм секретных переменных](#######TODO). *Вопрос работы с секретными переменными рассматривался подробнее, [когда мы делали базовое приложение](020_basic.html#secret-values-yaml)*.
 
-{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="#" %}
+{% snippetcut name=".helm/secret-values.yaml (зашифрованный)" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/secret-values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -114,7 +114,7 @@ postgresql:
 
 Далее мы указываем настройки `persistence`, с помощью которых мы настроим хранилище для нашей БД.
 
-{% snippetcut name=".helm/values.yaml" url="#" %}
+{% snippetcut name=".helm/values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
@@ -134,7 +134,7 @@ postgresql:
 
 В нашем случае для корректного развертывания БД нам осталось указать только одну сущность - [PersitentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
-{% snippetcut name="postgres-pvc.yaml" url="#" %}
+{% snippetcut name="postgres-pvc.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/postgres-pvc.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: v1
@@ -235,7 +235,7 @@ spec:
 
 Для подключения Spring приложения к PostgreSQL необходимо установить postgresql-driver 'postgresql' и jpa (Java persistence api) и сконфигурировать:
 
-{% snippetcut name="pom.xml" url="#" %}
+{% snippetcut name="pom.xml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/pom.xml" %}
 {% raw %}
 ```xml
     <dependency>
@@ -257,12 +257,12 @@ spec:
 
 {% offtopic title="Как работает вынос части шаблона в блок?" %}
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 {{- define "database_envs" }}
 - name: POSTGRESQL_HOST
-  value: "{{ pluck .Values.global.env .Values.postgre.host | first | default .Values.postgre.host_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.host | first | default .Values.postgresql.host_default | quote }}
 ...
 {{- end }}
 ```
@@ -271,7 +271,7 @@ spec:
 
 Вставляя этот блок — не забываем добавить отступы с помощью функции `indent`:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 {{- include "database_envs" . | indent 8 }}
@@ -285,47 +285,47 @@ spec:
 {% offtopic title="Какие значения прописываем в переменные окружения?" %}
 Будем **конфигурировать хост** через `values.yaml`:
 
-{% snippetcut name=".helm/templates/_envs.tpl" url="#" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_HOST
-  value: "{{ pluck .Values.global.env .Values.postgresql.host | first | default .Values.postgresql.host_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.host | first | default .Values.postgresql.host_default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 **Конфигурируем логин и порт** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_LOGIN
-  value: "{{ pluck .Values.global.env .Values.postgresql.login | first | default .Values.postgresql.login_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.login | first | default .Values.postgresql.login_default | quote }}
 - name: POSTGRESQL_PORT
-  value: "{{ pluck .Values.global.env .Values.postgresql.port | first | default .Values.postgresql.port_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.port | first | default .Values.postgresql.port_default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/values.yaml" %}
 {% raw %}
 ```yaml
 postgresql:
-   login:
-      _default: postgresuser
-   port:
-      _default: postgresport
+  login:
+    _default: postgresuser
+  port:
+    _default: postgresport
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 **Конфигурируем пароль** через `values.yaml`, просто прописывая значения:
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/_envs.tpl" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/080-database/.helm/templates/_envs.tpl" %}
 {% raw %}
 ```yaml
 - name: POSTGRESQL_PASSWORD
-  value: "{{ pluck .Values.global.env .Values.postgresql.password | first | default .Values.postgresql.password_default | quote }}"
+  value: {{ pluck .Values.global.env .Values.postgresql.password | first | default .Values.postgresql.password_default | quote }}
 ```
 {% endraw %}
 {% endsnippetcut %}

@@ -27,7 +27,7 @@ Java - компилируемый язык, значит в случае про�
 
 Нам нужно добавить эту зависимость в наше приложение (в файл `pom.xml`) и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
-{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/090-unittesting/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
 test:
@@ -42,7 +42,7 @@ test:
 
 Созданную стадию нужно добавить в список стадий
 
-{% snippetcut name=".gitlab-ci.yml" url="#" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-java-springboot/examples/090-unittesting/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
 stages:
