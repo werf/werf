@@ -44,14 +44,16 @@ toc: false
 {% snippetcut name="deployment.yaml" url="#" %}
 {% raw %}
 ```yaml
-git:
-  <...>
-  stageDependencies:
-    install:
-    - package.json
+      containers:
+      - name: basicapp
+        command:
+         - echo "OK"
+{{ tuple "basicapp" . | include "werf_container_image" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
+
+<!--
 
 Мы против бездумного копирования файлов, но для того, чтобы вам было проще разобраться — в некоторых точках гайда есть **milestone-ы с полным кодом файлов на текущий момент**. Таким образом вы можете свериться с образцом:
 
@@ -126,6 +128,8 @@ git:
 {% endraw %}
 {% endsnippetcut %}
 </div>
+
+-->
 
 <div>
     <a href="010_preparing.html" class="nav-btn">Далее: Подготовка к работе</a>

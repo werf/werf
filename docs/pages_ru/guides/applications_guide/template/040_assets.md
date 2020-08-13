@@ -8,6 +8,7 @@ toc: false
 ---
 
 {% filesused title="Файлы, упомянутые в главе" %}
+- .helm/templates/deployment.yaml
 - .helm/templates/service.yaml
 - .helm/templates/ingress.yaml
 - werf.yaml
