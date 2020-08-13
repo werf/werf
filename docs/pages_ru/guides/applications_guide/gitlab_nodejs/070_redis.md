@@ -55,7 +55,7 @@ dependencies:
 {% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/070-redis/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
-.base_deploy:
+.base_deploy: &base_deploy
   stage: deploy
   script:
     - werf helm repo init
