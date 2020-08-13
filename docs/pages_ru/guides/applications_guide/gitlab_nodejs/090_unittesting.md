@@ -15,14 +15,15 @@ toc: false
 
 Нам нужно добавить эту зависимость в наше `package.json`, создать к нему конфигурационный файл `.eslintrc.json` и прописать выполнение задания отдельной стадией на нашем gitlab runner командной [werf run](https://ru.werf.io/documentation/cli/main/run.html).
 
-{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.gitlab-ci.yml" %}
+{% snippetcut name=".gitlab-ci.yml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-unittesting/.gitlab-ci.yml" %}
 {% raw %}
 ```yaml
-Run_Tests:
+Run Tests:
   stage: test
   script:
     - werf run --stages-storage :local node -- npm run pretest
-  stage: test
+  except:
+    - schedules
   tags:
     - werf
   needs: ["Build"]

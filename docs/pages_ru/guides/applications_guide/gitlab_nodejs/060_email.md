@@ -29,7 +29,7 @@ npm install mailgun-js
 {% raw %}
 ```js
 const mailgun = require("mailgun-js");
-...
+<...>
 const mg = mailgun({apiKey: process.env.MAILGUN_APIKEY, domain: process.env.MAILGUN_DOMAIN, host: "api.eu.mailgun.net"});
 ```
 {% endraw %}

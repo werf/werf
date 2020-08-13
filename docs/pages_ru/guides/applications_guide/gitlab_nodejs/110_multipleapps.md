@@ -57,11 +57,11 @@ Helm обрабатывает все файлы, которые находятс
 
 Сборка образа `node` аналогична ранее описанному [базовому приложению](020_basic.html) с [зависимостями](030_dependencies.html), за исключением того, откуда берётся исходный код:
 
-{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/110-multipleapps/werf.yaml" %}
 {% raw %}
 ```yaml
 git:
-- add: /node
+- add: /nodejs
   to: /app
 ```
 {% endraw %}
@@ -71,14 +71,30 @@ git:
 
 Сборка для python приложения описана в файле `werf.yaml` как отдельный образ.
 
-{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/werf.yaml" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/110-multipleapps/werf.yaml" %}
 {% raw %}
 ```yaml
-image: bot
+image: python
 from: python:3.8-slim
 git:
-- add: /python
-  to: /app
+- add: '/python'
+  to: '/app'
+  stageDependencies:
+    install:
+    - python/requirements.txt
+ansible:
+  beforeInstall:
+  - name: Install dependencies
+    apt:
+      name:
+      - python3-dev
+      update_cache: yes
+  install:
+  - name: Install pip
+    pip:
+      executable: pip3
+      requirements: /app/requirements.txt
+---
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -91,54 +107,75 @@ git:
 
 При деплое нескольких Deployment крайне важно правильно прописать `selector`-ы в Service и Deployment:
 
-{% snippetcut name="service-app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/service.yaml" %}
+{% snippetcut name="service-app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/110-multipleapps/.helm/templates/service-py.yaml" %}
 {% raw %}
 ```yaml
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}-py
 spec:
   selector:
-    app: {{ .Chart.Name }}
+    app: {{ .Chart.Name }}-py
+  ports:
+  - name: http
+    port: 5000
+    protocol: TCP
 ```
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/deployment.yaml" %}
+{% snippetcut name="app.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/110-multipleapps/.helm/templates/deployment-py.yaml" %}
 {% raw %}
 ```yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}-py
 spec:
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
+      app: {{ .Chart.Name }}-py
+<...>
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
+        app: {{ $.Chart.Name }}-py
+    spec:
+<...>
+      containers:
+      - name: python
+        command: ["python","/app/app.py"]
+{{ tuple "python" . | include "werf_container_image" | indent 8 }}
+        workingDir: /app
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        env:
+        - name: "DEBUG"
+          value: "{{ pluck .Values.global.env .Values.app.isDebug | first | default .Values.app.isDebug._default }}"
+{{ tuple "python" . | include "werf_container_env" | indent 8 }}
 ```
 {% endraw %}
 {% endsnippetcut %}
 
 Маршрутизация запросов будет осуществляться через Ingress:
 
-{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/090-final/.helm/templates/ingress.yaml" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-nodejs/examples/110-multipleapps/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
+spec:
   rules:
   - host: {{ .Values.global.ci_url }}
     http:
       paths:
-      - path: /
+<...>
+      - path: /pyapp
         backend:
-          serviceName: {{ .Chart.Name }}
-          servicePort: 3000
+          serviceName: {{ .Chart.Name }}-py
+          servicePort: 5000
 ```
 {% endraw %}
 {% endsnippetcut %}
