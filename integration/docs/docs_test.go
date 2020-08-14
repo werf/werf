@@ -1,6 +1,7 @@
 package docs_test
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -23,7 +24,6 @@ var _ = BeforeEach(func() {
 
 	stubs.UnsetEnv("DOCKER_CONFIG")
 	stubs.UnsetEnv("WERF_DOCKER_CONFIG")
-	stubs.SetEnv("WERF_HELM_HOME", "~/.helm")
 	stubs.SetEnv("WERF_LOG_TERMINAL_WIDTH", "100")
 })
 
@@ -57,10 +57,11 @@ var itBody = func(entry entry) {
 		werfArgs = append(werfArgs, entry.extraArgsFunc()...)
 	}
 
-	utils.RunSucceedCommand(
+	_, _ = utils.RunCommandWithOptions(
 		testDirPath,
 		werfBinPath,
-		werfArgs...,
+		werfArgs,
+		utils.RunCommandOptions{ShouldSucceed: true, Env: append(os.Environ(), "HOME=~")},
 	)
 
 	utils.RunSucceedCommand(
