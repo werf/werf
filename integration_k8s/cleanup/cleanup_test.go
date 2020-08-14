@@ -34,6 +34,7 @@ var _ = Describe("cleaning images and stages", func() {
 		)
 
 		stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
+		stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "0")
 	})
 
 	Context("with deployed image", func() {
