@@ -42,7 +42,7 @@ var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 		commit = strings.TrimSpace(out)
 
 		stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
-
+		stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "0")
 		stubs.SetEnv("FROM_CACHE_VERSION", "x")
 	})
 

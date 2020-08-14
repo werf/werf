@@ -22,6 +22,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 		Describe(description, func() {
 			Context("when deployed images in kubernetes are not taken into account", func() {
 				BeforeEach(func() {
+					stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "0")
 					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 				})
 
