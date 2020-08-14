@@ -53,7 +53,7 @@ werf helm-v3 template [NAME] [CHART] [flags] [options]
             set .Release.IsUpgrade instead of .Release.IsInstall
       --key-file='':
             identify HTTPS client using this SSL key file
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             location of public keys used for verification
       --name-template='':
             specify template used to name the release

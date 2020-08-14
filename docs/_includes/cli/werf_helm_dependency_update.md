@@ -35,7 +35,7 @@ werf helm dependency update [options]
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for update
-      --keyring='$HOME/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
       --log-color-mode='auto':
             Set log color mode.

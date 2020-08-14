@@ -108,7 +108,7 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --key-file='':
             identify HTTPS client using this SSL key file
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             location of public keys used for verification
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           

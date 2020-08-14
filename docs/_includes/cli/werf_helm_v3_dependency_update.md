@@ -29,7 +29,7 @@ werf helm-v3 dependency update CHART [flags] [options]
 ```shell
   -h, --help=false:
             help for update
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
       --skip-refresh=false:
             do not refresh the local repository cache

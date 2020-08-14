@@ -42,10 +42,6 @@ func newRepoFetchCmd() *cobra.Command {
 				return err
 			}
 
-			if downloadChartOptions.Keyring != "" {
-				downloadChartOptions.Keyring = os.ExpandEnv(downloadChartOptions.Keyring)
-			}
-
 			if len(args) == 0 {
 				return fmt.Errorf("need at least one argument, url or repo/name of the chart")
 			}
