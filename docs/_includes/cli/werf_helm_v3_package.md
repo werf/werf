@@ -38,7 +38,7 @@ werf helm-v3 package [CHART_PATH] [...] [flags] [options]
             help for package
       --key='':
             name of the key to use when signing. Used if --sign is true
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             location of a public keyring
       --sign=false:
             use a PGP private key to sign this package

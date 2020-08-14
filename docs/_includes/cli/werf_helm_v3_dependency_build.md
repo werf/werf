@@ -25,7 +25,7 @@ werf helm-v3 dependency build CHART [flags] [options]
 ```shell
   -h, --help=false:
             help for build
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
       --verify=false:
             verify the packages against signatures

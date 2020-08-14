@@ -28,7 +28,7 @@ werf helm-v3 show readme [CHART] [flags] [options]
             help for readme
       --key-file='':
             identify HTTPS client using this SSL key file
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             location of public keys used for verification
       --password='':
             chart repository password where to locate the requested chart

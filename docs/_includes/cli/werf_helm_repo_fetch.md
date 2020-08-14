@@ -43,7 +43,7 @@ werf helm repo fetch [chart URL | repo/chartname] [...] [options]
             help for fetch
       --key-file='':
             identify HTTPS client using this SSL key file
-      --keyring='$HOME/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
       --log-color-mode='auto':
             Set log color mode.

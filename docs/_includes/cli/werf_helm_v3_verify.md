@@ -25,7 +25,7 @@ werf helm-v3 verify PATH [flags] [options]
 ```shell
   -h, --help=false:
             help for verify
-      --keyring='/home/distorhead/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
 ```
 
