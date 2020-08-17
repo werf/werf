@@ -102,7 +102,7 @@ The latest release can be found at [this page](https://bintray.com/flant/werf/we
 #### MacOS
 
 ```shell
-curl -L https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-darwin-amd64-v1.0.6-rc.5 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-darwin-amd64-v1.1.21+fix22 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -110,7 +110,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 #### Linux
 
 ```shell
-curl -L https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-linux-amd64-v1.0.6-rc.5 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-linux-amd64-v1.1.21+fix22 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -123,7 +123,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 $WERF_BIN_PATH = "C:\ProgramData\werf\bin"
 mkdir $WERF_BIN_PATH
 
-Invoke-WebRequest -Uri https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-windows-amd64-v1.0.6-rc.5.exe -OutFile $WERF_BIN_PATH\werf.exe
+Invoke-WebRequest -Uri https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-windows-amd64-v1.1.21+fix22.exe -OutFile $WERF_BIN_PATH\werf.exe
 
 [Environment]::SetEnvironmentVariable(
     "Path",
@@ -138,7 +138,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 ```shell
 set WERF_BIN_PATH="C:\ProgramData\werf\bin"
 mkdir %WERF_BIN_PATH%
-bitsadmin.exe /transfer "werf" https://dl.bintray.com/flant/werf/v1.0.6-rc.5/werf-windows-amd64-v1.0.6-rc.5.exe %WERF_BIN_PATH%\werf.exe
+bitsadmin.exe /transfer "werf" https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-windows-amd64-v1.1.21+fix22.exe %WERF_BIN_PATH%\werf.exe
 setx /M PATH "%PATH%;%WERF_BIN_PATH%"
 
 # open new cmd.exe session and start using werf
