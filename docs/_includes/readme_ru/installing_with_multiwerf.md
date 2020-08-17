@@ -45,7 +45,7 @@ echo '. $(multiwerf use 1.1 stable --as-file)' >> ~/.bashrc
 $MULTIWERF_BIN_PATH = "C:\ProgramData\multiwerf\bin"
 mkdir $MULTIWERF_BIN_PATH
 
-Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
+Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
 
 [Environment]::SetEnvironmentVariable(
     "Path",
@@ -66,10 +66,12 @@ Invoke-Expression -Command "multiwerf use 1.1 stable --as-file --shell powershel
 
 ###### Установка multiwerf
 
+Запустите cmd.exe от имени администратора, а затем выполните следующие действия:
+
 ```shell
 set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
 mkdir %MULTIWERF_BIN_PATH%
-bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.0.16/multiwerf-windows-amd64-v1.0.16.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
+bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
 setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 
 # откройте новую сессию и начните использовать multiwerf
