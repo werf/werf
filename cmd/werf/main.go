@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/werf/logboek"
 
 	"github.com/spf13/cobra"
@@ -86,6 +88,7 @@ import (
 func main() {
 	common.EnableTerminationSignalsTrap()
 	log.SetOutput(logboek.ProxyOutStream())
+	logrus.StandardLogger().SetOutput(logboek.ProxyOutStream())
 
 	if err := process_exterminator.Init(); err != nil {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)

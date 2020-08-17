@@ -9,6 +9,11 @@ import (
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+	apiClient, err := apiCli()
+	if err != nil {
+		return nil, err
+	}
+
 	return apiClient.ContainerList(ctx, options)
 }
 
@@ -23,10 +28,20 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
+	apiClient, err := apiCli()
+	if err != nil {
+		return types.ContainerJSON{}, err
+	}
+
 	return apiClient.ContainerInspect(ctx, ref)
 }
 
 func ContainerCommit(ctx context.Context, ref string, commitOptions types.ContainerCommitOptions) (string, error) {
+	apiClient, err := apiCli()
+	if err != nil {
+		return "", err
+	}
+
 	response, err := apiClient.ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
@@ -36,12 +51,12 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 }
 
 func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
-	err := apiClient.ContainerRemove(ctx, ref, options)
+	apiClient, err := apiCli()
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return apiClient.ContainerRemove(ctx, ref, options)
 }
 
 func doCliCreate(c *command.DockerCli, args ...string) error {
@@ -55,11 +70,16 @@ func CliCreate(ctx context.Context, args ...string) error {
 }
 
 func CliCreate_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliCreate(liveOutputCli, args...)
+	cli, err := cli(ctx)
+	if err != nil {
+		return err
+	}
+
+	return doCliCreate(cli, args...)
 }
 
-func CliCreate_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c *command.DockerCli) error {
+func CliCreate_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
 		return doCliCreate(c, args...)
 	})
 }
@@ -75,11 +95,16 @@ func CliRun(ctx context.Context, args ...string) error {
 }
 
 func CliRun_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRun(liveOutputCli, args...)
+	cli, err := cli(ctx)
+	if err != nil {
+		return err
+	}
+
+	return doCliRun(cli, args...)
 }
 
-func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c *command.DockerCli) error {
+func CliRun_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
 		return doCliRun(c, args...)
 	})
 }
@@ -95,11 +120,16 @@ func CliRm(ctx context.Context, args ...string) error {
 }
 
 func CliRm_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRm(liveOutputCli, args...)
+	cli, err := cli(ctx)
+	if err != nil {
+		return err
+	}
+
+	return doCliRm(cli, args...)
 }
 
-func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c *command.DockerCli) error {
+func CliRm_RecordedOutput(args ...string) (string, error) {
+	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
 		return doCliRm(c, args...)
 	})
 }

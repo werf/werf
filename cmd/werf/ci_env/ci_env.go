@@ -401,7 +401,7 @@ func generateSessionDockerConfigDir() (string, error) {
 	}
 
 	// Init with new docker config dir
-	if err := docker.Init(ctx, dockerConfigDir, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(dockerConfigDir, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return "", err
 	}
 
