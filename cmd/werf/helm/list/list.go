@@ -6,8 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -81,7 +79,7 @@ func runLs(filter string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.ProxyOutStream(), Err: logboek.ProxyErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 

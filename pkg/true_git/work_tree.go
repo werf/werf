@@ -163,7 +163,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			"git", "-C", repoDir,
 			"worktree", "add", "--force", "--detach", workTreeDir, commit,
 		)
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
@@ -180,7 +180,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 		"reset", "--hard", commit,
 	)
 	cmd.Dir = workTreeDir
-	output = setCommandRecordingLiveOutput(cmd)
+	output = setCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
@@ -194,7 +194,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 		"clean", "-d", "-f", "-f", "-x",
 	)
 	cmd.Dir = workTreeDir
-	output = setCommandRecordingLiveOutput(cmd)
+	output = setCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
@@ -222,7 +222,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			"git", "-c", "core.autocrlf=false", "reset", "--hard",
 		)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
@@ -237,7 +237,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			"git", "clean", "-d", "-f", "-f", "-x",
 		)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}

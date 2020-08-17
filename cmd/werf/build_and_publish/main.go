@@ -128,7 +128,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.ProxyOutStream(), Err: logboek.ProxyErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
