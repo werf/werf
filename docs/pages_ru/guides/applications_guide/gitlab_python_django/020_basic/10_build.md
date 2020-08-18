@@ -35,13 +35,14 @@ _В скором времени werf предоставит разработчи
 Один из минусов это отзывчивость. На процесс от пуша кода до появления результата может потребоваться несколько минут.
 {% endofftopic %}
 
-Возьмём исходный код приложения из git:
+Возьмиите исходный код приложения [из репозитория на github](https://github.com/werf/demos/tree/master/applications-guide/gitlab-django/examples/000-app): 
 
 ```bash
 git clone git@github.com:werf/demos.git
+cd demos/applications-guide/gitlab-django/000-app
 ```
 
-Примеры из данного гайда находятся в папке `/applications-guide/gitlab_python_django`, начнём с примера `example-00`.
+И скопируйте его в свой проект в GitLab. Далее мы будем работать с исходным кодом проекта в GitLab.
 
 Для того чтобы werf смог собрать docker-образ с приложением - необходимо в корне нашего репозитория создать файл `werf.yaml` в которым будут описаны инструкции по сборке.
 
@@ -91,7 +92,7 @@ shell:
 
 Начнём werf.yaml с обязательной [**секции мета-информации**]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации):
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/werf.yaml" %}
 ```yaml
 project: werf-guided-project
 configVersion: 1
@@ -105,7 +106,7 @@ configVersion: 1
 
 После мы сразу переходим к следующей секции конфигурации, которая и будет для нас основной секцией для сборки - [**image config section**](https://ru.werf.io/v1.1-alpha/documentation/configuration/introduction.html#%D1%81%D0%B5%D0%BA%D1%86%D0%B8%D1%8F-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0).
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/werf.yaml" %}
 ```yaml
 project: werf-guided-project
 configVersion: 1
@@ -147,7 +148,7 @@ from: {{ $base_image }}
 
 Добавим исходный код нашего приложения в контейнер с помощью [**директивы git**](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/git_directive.html)
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/werf.yaml" %}
 {% raw %}
 ```yaml
 project: werf-guided-project
@@ -236,18 +237,20 @@ git:
 
 Добавим в `werf.yaml` следующий блок используя shell синтаксис:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/werf.yaml" %}
 ```yaml
 shell:
   beforeInstall:
   - apt update
   - apt install -y tzdata locales
+  install:
+  - cd /app && pip install -r requirements.txt
 ```
 {% endsnippetcut %}
 
 Чтобы при запуске приложения по умолчанию использовалась директория `/app` - воспользуемся **[указанием Docker-инструкций](https://ru.werf.io/v1.1-alpha/documentation/configuration/stapel_image/docker_directive.html)**:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/werf.yaml" %}
 ```yaml
 docker:
   WORKDIR: /app

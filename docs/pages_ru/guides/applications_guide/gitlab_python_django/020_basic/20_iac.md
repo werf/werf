@@ -52,7 +52,7 @@ toc: false
 
 Для того, чтобы в кластере появился Pod с нашим приложением — мы пропишем объект Deployment. У создаваемого Pod будет один контейнер `basicapp`. Укажем, **как этот контейнер будет запускаться**:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       containers:
@@ -77,7 +77,7 @@ Werf складывает собранные образы в Registry с раз�
 
 Для Django это, например, `DEBUG` и `SECRET_KEY`
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -101,7 +101,7 @@ Werf складывает собранные образы в Registry с раз�
 
 Helm — шаблонизатор, и он поддерживает множество инструментов для подстановки значений. Один из центральных способов — подставлять значения из файла `values.yaml`. Наша конструкция могла бы иметь вид
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -113,7 +113,7 @@ Helm — шаблонизатор, и он поддерживает множес
 
 или даже более сложный, для того, чтобы значение основывалось на текущем окружении:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       env:
@@ -123,7 +123,7 @@ Helm — шаблонизатор, и он поддерживает множес
 {% endraw %}
 {% endsnippetcut %}
 
-{% snippetcut name="values.yaml" url="#" %}
+{% snippetcut name="values.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/values.yaml" %}
 ```yaml
 app:
   secret_key:
@@ -177,12 +177,12 @@ LOGGING = {
 В статьях и бытовой речи оба этих термина зачастую называют "Ingress", так что нужно догадываться по контексту.
 {% endofftopic %}
 
-Наше приложение работает на стандартном порту `3000` — **откроем порт Pod-у**:
+Наше приложение работает на стандартн ом порту `8001` — **откроем порт Pod-у**:
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/templates/deployment.yaml" %}
 ```yaml
         ports:
-        - containerPort: 3000
+        - containerPort: 8001
           name: http
           protocol: TCP
 ```
@@ -190,7 +190,7 @@ LOGGING = {
 
 Затем, **пропишем Service**, чтобы к Pod-у могли обращаться другие приложения кластера.
 
-{% snippetcut name="service.yaml" url="#" %}
+{% snippetcut name="service.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
 ---
@@ -203,7 +203,7 @@ spec:
     app: {{ .Chart.Name }}
   ports:
   - name: http
-    port: 3000
+    port: 8001
     protocol: TCP
 ```
 {% endraw %}
@@ -211,7 +211,7 @@ spec:
 
 Обратите внимание на поле `selector` у Service: он должен совпадать с аналогичным полем у Deployment и ошибки в этой части — самая частая проблема с настройкой маршрута до приложения.
 
-{% snippetcut name="deployment.yaml" url="#" %}
+{% snippetcut name="deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
 apiVersion: apps/v1
@@ -244,7 +244,7 @@ spec:
 
 После этого можно настраивать **роутинг на Ingress**. Укажем, на какой домен и путь, в какой сервис и на какой порт направлять запросы.
 
-{% snippetcut name="ingress.yaml" url="#" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -254,7 +254,7 @@ spec:
       - path: /
         backend:
           serviceName: {{ .Chart.Name }}
-          servicePort: 3000
+          servicePort: 8001
 ```
 {% endraw %}
 {% endsnippetcut %}
@@ -275,7 +275,7 @@ spec:
 
 Этот вариант удобен для проброски, например, имени домена для каждого окружения
 
-{% snippetcut name="ingress.yaml" url="#" %}
+{% snippetcut name="ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
   rules:
@@ -317,7 +317,7 @@ app:
 
 После сохранения значения в файле зашифруются и примут примерно такой вид:
 
-{% snippetcut name="secret-values.yaml в зашифрованном виде" url="#" %}
+{% snippetcut name="secret-values.yaml в зашифрованном виде" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/020-basic-1/.helm/secret-values.yaml" %}
 ```yaml
 app:
   s3:

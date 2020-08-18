@@ -71,15 +71,15 @@ from: ubuntu:latest
 
 Начнём с создания артефакта: установим необходимые пакеты и выполним сборку ассетов. Генерация ассетов должна происходить в артефакте на стадии `setup`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
 artifact: assets-built
-fromImage: django
+fromImage: basicapp
 shell:
   setup:
-  - mkdir -p /usr/src/app/static
-  - cd /usr/src/app
+  - mkdir -p /app/static
+  - cd /app
   - python manage.py collectstatic --noinput
 ```
 {% endraw %}
@@ -87,7 +87,7 @@ shell:
 
 Теперь, когда артефакт собран, соберём образ с nginx:
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
 image: assets
@@ -105,7 +105,7 @@ ansible:
 
 И пропишем в нём импорт из артефакта под названием `build`.
 
-{% snippetcut name="werf.yaml" url="#" %}
+{% snippetcut name="werf.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/werf.yaml" %}
 {% raw %}
 ```yaml
 import:
@@ -123,7 +123,7 @@ import:
 
  Обязательно укажем `livenessProbe` и `readinessProbe`, которые будут проверять корректную работу контейнера в Pod-е, а также `preStop` команду для корректного завершение процесса nginx, чтобы при выкате новой версии приложения корректно завершались активные сессии.
 
-{% snippetcut name=".helm/templates/deployment.yaml" url="#" %}
+{% snippetcut name=".helm/templates/deployment.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/.helm/templates/deployment.yaml" %}
 {% raw %}
 ```yaml
       - name: assets
@@ -152,11 +152,11 @@ import:
 
 В описании Service так же должен быть указан правильный порт:
 
-{% snippetcut name=".helm/templates/service.yaml" url="#" %}
+{% snippetcut name=".helm/templates/service.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/.helm/templates/service.yaml" %}
 {% raw %}
 ```yaml
   ports:
-  - name: http
+  - name: http2
     port: 80
     protocol: TCP
 ```
@@ -181,7 +181,7 @@ import:
 
 В некоторых случаях нужно разделить трафик на уровне ingress. В таком случае можно разделить запросы по path и портам:
 
-{% snippetcut name=".helm/templates/ingress.yaml" url="#" %}
+{% snippetcut name=".helm/templates/ingress.yaml" url="https://github.com/werf/demos/blob/master/applications-guide/gitlab-django/examples/040-assets/.helm/templates/ingress.yaml" %}
 {% raw %}
 ```yaml
       paths:
