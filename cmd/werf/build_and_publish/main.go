@@ -109,7 +109,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
-	common.SetupParallel(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -218,7 +218,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	opts := build.BuildAndPublishOptions{
+	buildAndPublishOptions := build.BuildAndPublishOptions{
 		BuildStagesOptions: buildStagesOptions,
 		PublishImagesOptions: build.PublishImagesOptions{
 			ImagesToPublish:     imagesToProcess,
@@ -228,13 +228,18 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		},
 	}
 
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildAndPublishOptions.BuildStagesOptions)
+	if err != nil {
+		return err
+	}
+
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptionsWithParallel(&commonCmdData, buildStagesOptions))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		return c.BuildAndPublish(ctx, opts)
+		return c.BuildAndPublish(ctx, buildAndPublishOptions)
 	}); err != nil {
 		return err
 	}

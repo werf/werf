@@ -1,6 +1,8 @@
 package common
 
 import (
+	"fmt"
+
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -19,10 +21,18 @@ func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
 	}
 }
 
-func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions build.BuildStagesOptions) build.ConveyorOptions {
+func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions build.BuildStagesOptions) (build.ConveyorOptions, error) {
 	conveyorOptions := GetConveyorOptions(commonCmdData)
 	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && *commonCmdData.Parallel
-	return conveyorOptions
+
+	parallelTasksLimit, err := GetParallelTasksLimit(commonCmdData)
+	if err != nil {
+		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %s", err)
+	}
+
+	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
+
+	return conveyorOptions, nil
 }
 
 func GetBuildStagesOptions(commonCmdData *CmdData, werfConfig *config.WerfConfig) (build.BuildStagesOptions, error) {

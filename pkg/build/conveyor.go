@@ -80,6 +80,7 @@ type Conveyor struct {
 
 type ConveyorOptions struct {
 	Parallel                        bool
+	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	GitUnshallow                    bool
 	AllowGitShallowClone            bool
@@ -612,7 +613,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		var goResults []goResult
 		imageSetCounter := len(c.imageSets[setId])
 
-		queueCh := make(chan bool, imageSetCounter)
+		queueLength := imageSetCounter
+		if c.ParallelTasksLimit > 0 {
+			queueLength = int(c.ParallelTasksLimit)
+		}
+
+		queueCh := make(chan bool, queueLength)
 		errCh := make(chan goResult)
 		doneCh := make(chan goResult)
 		quitCh := make(chan bool)
@@ -731,7 +737,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		return nil
 	}
 
-	logboek.Context(ctx).LogBlock("Concurrent builds plan").
+	blockMsg := "Concurrent builds plan"
+	if c.ParallelTasksLimit > 0 {
+		blockMsg = fmt.Sprintf("%s (simultaneously no more than %d image(s))", blockMsg, c.ParallelTasksLimit)
+	}
+
+	logboek.Context(ctx).LogBlock(blockMsg).
 		Options(func(options types.LogBlockOptionsInterface) {
 			options.Style(style.Highlight())
 		}).

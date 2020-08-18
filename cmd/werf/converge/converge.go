@@ -115,7 +115,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
-	common.SetupParallel(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
@@ -234,7 +234,7 @@ func runConverge() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	opts := build.BuildAndPublishOptions{
+	buildAndPublishOptions := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{
 			ImageBuildOptions: container_runtime.BuildOptions{},
 		},
@@ -278,11 +278,16 @@ func runConverge() error {
 		}
 		imagesRepository = imagesRepo.String()
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptionsWithParallel(&commonCmdData, opts.BuildStagesOptions))
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildAndPublishOptions.BuildStagesOptions)
+		if err != nil {
+			return err
+		}
+
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if err := c.BuildAndPublish(ctx, opts); err != nil {
+			if err := c.BuildAndPublish(ctx, buildAndPublishOptions); err != nil {
 				return err
 			}
 
