@@ -115,6 +115,10 @@ werf stages build [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -p, --parallel=false:
+            Run in parallel (default $WERF_PARALLEL)
+      --parallel-tasks-limit=-1:
+            Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
