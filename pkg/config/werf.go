@@ -277,28 +277,84 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
-func (c *WerfConfig) ImageTree(interf ImageInterface) (tree []ImageInterface) {
+func (c *WerfConfig) ImagesWithDependenciesBySets(images []ImageInterface) (sets [][]ImageInterface) {
+	sets = [][]ImageInterface{}
+	isDepChecked := map[ImageInterface]bool{}
+	imageDepsToHandle := c.imageDependenciesInOrder(images)
+
+	for len(imageDepsToHandle) != 0 {
+		var currentDeps []ImageInterface
+
+	outerLoop:
+		for image, deps := range imageDepsToHandle {
+			for _, dep := range deps {
+				_, ok := isDepChecked[dep]
+				if !ok {
+					continue outerLoop
+				}
+			}
+
+			currentDeps = append(currentDeps, image)
+		}
+
+		for _, dep := range currentDeps {
+			isDepChecked[dep] = true
+			delete(imageDepsToHandle, dep)
+		}
+
+		sets = append(sets, currentDeps)
+	}
+
+	return sets
+}
+
+func (c *WerfConfig) imageDependenciesInOrder(images []ImageInterface) (imageDeps map[ImageInterface][]ImageInterface) {
+	imageDeps = map[ImageInterface][]ImageInterface{}
+	stack := images
+
+	for len(stack) != 0 {
+		current := stack[0]
+		stack = stack[1:]
+
+		imageDeps[current] = c.imageDependencies(current)
+
+	outerLoop:
+		for _, dep := range imageDeps[current] {
+			for key, _ := range imageDeps {
+				if key == dep {
+					continue outerLoop
+				}
+			}
+
+			stack = append(stack, dep)
+		}
+	}
+
+	return imageDeps
+}
+
+func (c *WerfConfig) imageDependencies(interf ImageInterface) (deps []ImageInterface) {
 	switch i := interf.(type) {
 	case StapelImageInterface:
 		if i.ImageBaseConfig().FromImageName != "" {
-			tree = append(tree, c.ImageTree(c.GetImage(i.ImageBaseConfig().FromImageName))...)
+			deps = append(deps, c.GetImage(i.ImageBaseConfig().FromImageName))
 		}
 
 		if i.ImageBaseConfig().FromImageArtifactName != "" {
-			tree = append(tree, c.ImageTree(c.GetArtifact(i.ImageBaseConfig().FromImageArtifactName))...)
+			deps = append(deps, c.GetArtifact(i.ImageBaseConfig().FromImageArtifactName))
 		}
 
 		for _, imp := range i.imports() {
 			if imp.ImageName != "" {
-				tree = append(tree, c.ImageTree(c.GetImage(imp.ImageName))...)
+				deps = append(deps, c.GetImage(imp.ImageName))
 			} else if imp.ArtifactName != "" {
-				tree = append(tree, c.ImageTree(c.GetArtifact(imp.ArtifactName))...)
+				deps = append(deps, c.GetArtifact(imp.ArtifactName))
 			}
 		}
 	case *ImageFromDockerfile:
 	}
 
-	return append(tree, interf)
+	return deps
 }
 
 func (c *WerfConfig) relatedImageImages(interf ImageInterface) (images []ImageInterface) {

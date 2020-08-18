@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
 	helm_common "github.com/werf/werf/cmd/werf/helm/common"
@@ -65,8 +66,7 @@ These values includes project name, docker images ids and other`),
 }
 
 func runGetServiceValues() error {
-	logboek.Streams().Mute()
-	defer logboek.Streams().Unmute()
+	logboek.SetAcceptedLevel(level.Error)
 
 	ctx := common.BackgroundContext()
 
@@ -139,7 +139,7 @@ func runGetServiceValues() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.Error().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

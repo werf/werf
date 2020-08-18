@@ -139,7 +139,13 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 	}
 
 	if phase.ShouldBeBuiltMode {
-		return phase.calculateStage(ctx, img, stg, true)
+		err := phase.calculateStage(ctx, img, stg, true)
+		if err != nil {
+			return err
+		}
+
+		defer phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Unlock()
+		return nil
 	} else {
 		if stg.Name() != "from" && stg.Name() != "dockerfile" {
 			if phase.StagesIterator.PrevNonEmptyStage == nil {
@@ -156,6 +162,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 		if err := phase.calculateStage(ctx, img, stg, false); err != nil {
 			return err
 		}
+		defer phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Unlock()
 
 		// Stage is cached in the stages storage
 		if stg.GetImage().GetStageDescription() != nil {
@@ -229,6 +236,9 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 		return err
 	}
 	stg.SetSignature(stageSig)
+
+	logboek.Context(ctx).Info().LogProcessInline("Locking stage %s handling", stg.LogDetailedName()).
+		Do(phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Lock)
 
 	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stageSig); err != nil {
 		return err
@@ -577,4 +587,9 @@ E.g.:
 - manually with werf purge, werf stages purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
 		})
+}
+
+func (phase *BuildPhase) Clone() Phase {
+	u := *phase
+	return &u
 }

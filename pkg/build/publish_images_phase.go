@@ -130,10 +130,11 @@ func (phase *PublishImagesPhase) publishImage(ctx context.Context, img *Image) e
 		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, strategy)
 	}
 
-	if phase.Conveyor.localGitRepo != nil {
+	localGitRepo := phase.Conveyor.GetLocalGitRepo()
+	if localGitRepo != nil {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("publishing image %s git metadata", img.GetName())).
 			DoError(func() error {
-				headCommit, err := phase.Conveyor.localGitRepo.HeadCommit(ctx)
+				headCommit, err := localGitRepo.HeadCommit(ctx)
 				if err != nil {
 					return err
 				}
@@ -373,4 +374,9 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, ex
 	logboek.Context(ctx).Debug().LogF("Already published image docker ID: %s\n", repoDockerImageID)
 
 	return imageContentSignature == repoImageContentSignature, repoDockerImageID, nil
+}
+
+func (phase *PublishImagesPhase) Clone() Phase {
+	u := *phase
+	return &u
 }

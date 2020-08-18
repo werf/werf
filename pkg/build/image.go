@@ -195,13 +195,16 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 }
 
 func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor, baseImageName string) (string, error) {
+	c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Lock()
+	defer c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Unlock()
+
 	if i.baseImageRepoId != "" {
 		return i.baseImageRepoId, nil
-	} else if cachedBaseImageRepoId, exist := c.baseImagesRepoIdsCache[baseImageName]; exist {
-		i.baseImageRepoId = cachedBaseImageRepoId
-		return cachedBaseImageRepoId, nil
-	} else if cachedBaseImagesRepoErr, exist := c.baseImagesRepoErrCache[baseImageName]; exist {
-		return "", cachedBaseImagesRepoErr
+	} else if c.IsBaseImagesRepoIdsCacheExist(baseImageName) {
+		i.baseImageRepoId = c.GetBaseImagesRepoIdsCache(baseImageName)
+		return i.baseImageRepoId, nil
+	} else if c.IsBaseImagesRepoErrCacheExist(baseImageName) {
+		return "", c.GetBaseImagesRepoErrCache(baseImageName)
 	}
 
 	var fetchedBaseRepoImage *image.Info
@@ -210,7 +213,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 		var fetchImageIdErr error
 		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, baseImageName)
 		if fetchImageIdErr != nil {
-			c.baseImagesRepoErrCache[baseImageName] = fetchImageIdErr
+			c.SetBaseImagesRepoErrCache(baseImageName, fetchImageIdErr)
 			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)
 		}
 
@@ -220,7 +223,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 	}
 
 	i.baseImageRepoId = fetchedBaseRepoImage.ID
-	c.baseImagesRepoIdsCache[baseImageName] = i.baseImageRepoId
+	c.SetBaseImagesRepoIdsCache(baseImageName, i.baseImageRepoId)
 
 	return i.baseImageRepoId, nil
 }

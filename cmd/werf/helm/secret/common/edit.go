@@ -148,7 +148,7 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 func askForConfirmation() (bool, error) {
 	r := os.Stdin
 
-	fmt.Println(style.Highlight().Colorize("Do you want to continue editing the file (Y/n)?"))
+	fmt.Println(logboek.Colorize(style.Highlight(), "Do you want to continue editing the file (Y/n)?"))
 
 	isTerminal := terminal.IsTerminal(int(r.Fd()))
 	if isTerminal {

@@ -3,20 +3,19 @@ package run
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -34,7 +33,7 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logboek.Streams().Mute()
+			logboek.SetAcceptedLevel(level.Error)
 
 			var imageName string
 			if len(args) > 1 {
