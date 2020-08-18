@@ -96,7 +96,9 @@ type CmdData struct {
 
 	WithoutKube *bool
 
-	StagesToIntrospect *[]string
+	IntrospectBeforeError *bool
+	IntrospectAfterError  *bool
+	StagesToIntrospect    *[]string
 
 	LogDebug         *bool
 	LogPretty        *bool
@@ -750,6 +752,16 @@ func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
 	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
+}
+
+func SetupIntrospectAfterError(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.IntrospectAfterError = new(bool)
+	cmd.Flags().BoolVarP(cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+}
+
+func SetupIntrospectBeforeError(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.IntrospectBeforeError = new(bool)
+	cmd.Flags().BoolVarP(cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 }
 
 func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {

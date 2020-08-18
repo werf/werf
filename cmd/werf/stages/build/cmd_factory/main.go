@@ -25,9 +25,6 @@ import (
 type CmdData struct {
 	PullUsername string
 	PullPassword string
-
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
 }
 
 func NewCmdWithData(cmdData *CmdData, commonCmdData *common.CmdData) *cobra.Command {
@@ -84,6 +81,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupInsecureRegistry(commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(commonCmdData, cmd)
 
+	common.SetupIntrospectAfterError(commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(commonCmdData, cmd)
 	common.SetupIntrospectStage(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)
@@ -101,9 +100,6 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupGitUnshallow(commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(commonCmdData, cmd)
 	common.SetupParallel(commonCmdData, cmd)
-
-	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
-	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	return cmd
 }
@@ -192,22 +188,14 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		}
 	}()
 
-	introspectOptions, err := common.GetIntrospectOptions(commonCmdData, werfConfig)
+	opts, err := common.GetBuildStagesOptions(commonCmdData, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	opts := build.BuildStagesOptions{
-		ImageBuildOptions: container_runtime.BuildOptions{
-			IntrospectAfterError:  cmdData.IntrospectAfterError,
-			IntrospectBeforeError: cmdData.IntrospectBeforeError,
-		},
-		IntrospectOptions: introspectOptions,
-	}
-
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager, common.GetConveyorOptions(commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager, common.GetConveyorOptionsWithParallel(commonCmdData, opts))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

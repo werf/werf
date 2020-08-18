@@ -23,9 +23,6 @@ import (
 var cmdData struct {
 	PullUsername string
 	PullPassword string
-
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
 }
 
 var commonCmdData common.CmdData
@@ -94,6 +91,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
 	common.SetupIntrospectStage(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
@@ -111,9 +110,6 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 	common.SetupParallel(&commonCmdData, cmd)
-
-	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
-	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	return cmd
 }
@@ -212,7 +208,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		}
 	}()
 
-	introspectOptions, err := common.GetIntrospectOptions(&commonCmdData, werfConfig)
+	buildStagesOptions, err := common.GetBuildStagesOptions(&commonCmdData, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -223,13 +219,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	opts := build.BuildAndPublishOptions{
-		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: container_runtime.BuildOptions{
-				IntrospectAfterError:  cmdData.IntrospectAfterError,
-				IntrospectBeforeError: cmdData.IntrospectBeforeError,
-			},
-			IntrospectOptions: introspectOptions,
-		},
+		BuildStagesOptions: buildStagesOptions,
 		PublishImagesOptions: build.PublishImagesOptions{
 			ImagesToPublish:     imagesToProcess,
 			TagOptions:          tagOpts,
@@ -240,7 +230,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptionsWithParallel(&commonCmdData, buildStagesOptions))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
