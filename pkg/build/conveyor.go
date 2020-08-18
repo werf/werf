@@ -79,6 +79,7 @@ type Conveyor struct {
 }
 
 type ConveyorOptions struct {
+	Parallel                        bool
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	GitUnshallow                    bool
 	AllowGitShallowClone            bool
@@ -586,7 +587,17 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 }
 
 func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
-	return c.doImagesInParallel(ctx, phases, logImages)
+	if !c.Parallel {
+		for _, img := range c.images {
+			if err := c.doImage(ctx, img, phases, logImages); err != nil {
+				return err
+			}
+		}
+	} else {
+		return c.doImagesInParallel(ctx, phases, logImages)
+	}
+
+	return nil
 }
 
 type goResult struct {

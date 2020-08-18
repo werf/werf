@@ -80,6 +80,7 @@ type CmdData struct {
 	GitHistorySynchronization *bool
 	GitUnshallow              *bool
 	AllowGitShallowClone      *bool
+	Parallel                  *bool
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -729,6 +730,11 @@ func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AllowGitShallowClone = new(bool)
 	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
+}
+
+func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Parallel = new(bool)
+	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultFalse("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
 }
 
 func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {

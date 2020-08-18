@@ -6,6 +6,11 @@ import (
 )
 
 func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
+	var parallel bool
+	if commonCmdData.Parallel != nil {
+		parallel = *commonCmdData.Parallel
+	}
+
 	return build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge:           *commonCmdData.VirtualMerge,
@@ -14,5 +19,6 @@ func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
 		},
 		GitUnshallow:         *commonCmdData.GitUnshallow,
 		AllowGitShallowClone: *commonCmdData.AllowGitShallowClone,
+		Parallel:             parallel,
 	}
 }

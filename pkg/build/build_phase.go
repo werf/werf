@@ -238,6 +238,11 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 	stg.SetSignature(stageSig)
 
 	logboek.Context(ctx).Info().LogProcessInline("Locking stage %s handling", stg.LogDetailedName()).
+		Options(func(options types.LogProcessInlineOptionsInterface) {
+			if !phase.Conveyor.Parallel {
+				options.Mute()
+			}
+		}).
 		Do(phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Lock)
 
 	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stageSig); err != nil {

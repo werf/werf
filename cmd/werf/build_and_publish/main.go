@@ -110,6 +110,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
+	common.SetupParallel(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
