@@ -48,12 +48,6 @@ jobs:
 #      shell: bash
 #      if: matrix.os == 'windows-latest'
 
-    - uses: actions/cache@v1
-      with:
-        path: ~/go/pkg/mod
-        key: go-${{ hashFiles('**/go.sum') }}
-        restore-keys: go-
-          
     - name: Compile tests binaries
       run: |
         # unit tests binaries
