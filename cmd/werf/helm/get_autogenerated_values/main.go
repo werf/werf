@@ -90,16 +90,22 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -116,7 +122,7 @@ func runGetServiceValues() error {
 		withoutRepo = false
 	}
 
-	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(projectName, &commonCmdData)
+	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}

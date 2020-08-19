@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -97,7 +98,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 	}
 }
 
-func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
+func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 	var defaultKubernetesSynchronization string
 	if *cmdData.Synchronization == "" {
 		defaultKubernetesSynchronization = storage.DefaultKubernetesStorageAddress
@@ -130,7 +131,7 @@ func GetSynchronization(cmdData *CmdData, projectName string, stagesStorage stor
 		var address string
 		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server")).
 			DoError(func() error {
-				if clientID, err := synchronization_server.GetOrCreateClientID(BackgroundContext(), projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
+				if clientID, err := synchronization_server.GetOrCreateClientID(ctx, projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
 					return fmt.Errorf("unable to get synchronization client id: %s", err)
 				} else {
 					address = fmt.Sprintf("%s/%s", synchronization, clientID)
@@ -187,7 +188,7 @@ func GetStagesStorageCache(synchronization *SynchronizationParams) (storage.Stag
 	}
 }
 
-func GetStorageLockManager(synchronization *SynchronizationParams) (storage.LockManager, error) {
+func GetStorageLockManager(ctx context.Context, synchronization *SynchronizationParams) (storage.LockManager, error) {
 	switch synchronization.SynchronizationType {
 	case LocalSynchronization:
 		return storage.NewGenericLockManager(werf.GetHostLocker()), nil
@@ -209,7 +210,7 @@ func GetStorageLockManager(synchronization *SynchronizationParams) (storage.Lock
 		}
 	case HttpSynchronization:
 		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
-		lockerWithRetry := locker_with_retry.NewLockerWithRetry(BackgroundContext(), locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+		lockerWithRetry := locker_with_retry.NewLockerWithRetry(ctx, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 		return storage.NewGenericLockManager(lockerWithRetry), nil
 	default:
 		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))

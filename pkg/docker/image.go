@@ -28,22 +28,12 @@ func CreateImage(ctx context.Context, ref string, labels map[string]string) erro
 		opts.Changes = append(opts.Changes, changeOption)
 	}
 
-	apiClient, err := apiCli()
-	if err != nil {
-		return err
-	}
-
-	_, err = apiClient.ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, opts)
+	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, opts)
 	return err
 }
 
 func Images(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error) {
-	apiClient, err := apiCli()
-	if err != nil {
-		return nil, err
-	}
-
-	images, err := apiClient.ImageList(ctx, options)
+	images, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +52,7 @@ func ImageExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
-	apiClient, err := apiCli()
-	if err != nil {
-		return nil, err
-	}
-
-	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
+	inspect, _, err := apiCli(ctx).ImageInspectWithRaw(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -75,34 +60,29 @@ func ImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) 
 	return &inspect, nil
 }
 
-func doCliPull(c *command.DockerCli, args ...string) error {
+func doCliPull(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewPullCommand(c), args...).Execute()
 }
 
 func CliPull(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliPull(c, args...)
 	})
 }
 
 func CliPull_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliPull(cli, args...)
+	return doCliPull(cli(ctx), args...)
 }
 
-func CliPull_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliPull_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliPull(c, args...)
 	})
 }
 
 const cliPullMaxAttempts = 5
 
-func doCliPullWithRetries(ctx context.Context, c *command.DockerCli, args ...string) error {
+func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
 	var attempt int
 
 tryPull:
@@ -136,54 +116,44 @@ tryPull:
 }
 
 func CliPullWithRetries(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliPullWithRetries(ctx, c, args...)
 	})
 }
 
 func CliPullWithRetries_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliPullWithRetries(ctx, cli, args...)
+	return doCliPullWithRetries(ctx, cli(ctx), args...)
 }
 
 func CliPullWithRetries_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliPullWithRetries(ctx, c, args...)
 	})
 }
 
-func doCliPush(c *command.DockerCli, args ...string) error {
+func doCliPush(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewPushCommand(c), args...).Execute()
 }
 
 func CliPush(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliPush(c, args...)
 	})
 }
 
 func CliPush_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliPush(cli, args...)
+	return doCliPush(cli(ctx), args...)
 }
 
-func CliPush_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliPush_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliPush(c, args...)
 	})
 }
 
 const cliPushMaxAttempts = 10
 
-func doCliPushWithRetries(c *command.DockerCli, args ...string) error {
+func doCliPushWithRetries(c command.Cli, args ...string) error {
 	var attempt int
 
 tryPush:
@@ -220,97 +190,77 @@ tryPush:
 }
 
 func CliPushWithRetries(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliPushWithRetries(c, args...)
 	})
 }
 
 func CliPushWithRetries_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliPushWithRetries(cli, args...)
+	return doCliPushWithRetries(cli(ctx), args...)
 }
 
-func CliPushWithRetries_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliPushWithRetries_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliPushWithRetries(c, args...)
 	})
 }
 
-func doCliTag(c *command.DockerCli, args ...string) error {
+func doCliTag(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewTagCommand(c), args...).Execute()
 }
 
 func CliTag(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliTag(c, args...)
 	})
 }
 
 func CliTag_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliTag(cli, args...)
+	return doCliTag(cli(ctx), args...)
 }
 
-func CliTag_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliTag_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliTag(c, args...)
 	})
 }
 
-func doCliRmi(c *command.DockerCli, args ...string) error {
+func doCliRmi(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewRemoveCommand(c), args...).Execute()
 }
 
 func CliRmi(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliRmi(c, args...)
 	})
 }
 
 func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliRmi(cli, args...)
+	return doCliRmi(cli(ctx), args...)
 }
 
-func CliRmiOutput_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliRmiOutput_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliRmi(c, args...)
 	})
 }
 
-func doCliBuild(c *command.DockerCli, args ...string) error {
+func doCliBuild(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewBuildCommand(c), args...).Execute()
 }
 
 func CliBuild(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliBuild(c, args...)
 	})
 }
 
 func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliBuild(cli, args...)
+	return doCliBuild(cli(ctx), args...)
 }
 
-func CliBuild_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliBuild_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliBuild(c, args...)
 	})
 }

@@ -20,7 +20,7 @@ type HistoryOptions struct {
 	ColWidth     uint
 }
 
-func History(ctx context.Context, out io.Writer, releaseName string, opts HistoryOptions) error {
+func History(out io.Writer, releaseName string, opts HistoryOptions) error {
 	r, err := tillerReleaseServer.GetHistory(context.Background(), &services.GetHistoryRequest{
 		Name: releaseName,
 		Max:  int32(opts.Max),

@@ -7,48 +7,50 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
 	"golang.org/x/net/context"
-
-	"github.com/werf/logboek"
 
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+
+	"github.com/werf/logboek"
 )
 
 var (
 	liveCliOutputEnabled bool
 	isDebug              bool
+	defaultCLi           command.Cli
 )
 
-func Init(dockerConfigDir string, verbose, debug bool) error {
+const (
+	ctxDockerCliKey = "docker_cli"
+)
+
+func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool) error {
 	if dockerConfigDir != "" {
 		cliconfig.SetDir(dockerConfigDir)
 	}
 
-	if err := os.Setenv("DOCKER_CONFIG", dockerConfigDir); err != nil {
+	err := os.Setenv("DOCKER_CONFIG", dockerConfigDir)
+	if err != nil {
 		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %s", dockerConfigDir, err)
 	}
 
 	isDebug = debug
 	liveCliOutputEnabled = verbose || debug
 
+	defaultCLi, err = newDockerCli(defaultCliOptions(ctx))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ServerVersion() (*types.Version, error) {
-	cli, err := newDockerCli([]command.DockerCliOption{
-		command.WithContentTrust(false),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to create docker cli: %s", err)
-	}
-
-	ctx := context.Background()
-	version, err := cli.Client().ServerVersion(ctx)
+func ServerVersion(ctx context.Context) (*types.Version, error) {
+	version, err := cli(ctx).Client().ServerVersion(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ func ServerVersion() (*types.Version, error) {
 	return &version, nil
 }
 
-func newDockerCli(opts []command.DockerCliOption) (*command.DockerCli, error) {
+func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 	newCli, err := command.NewDockerCli(opts...)
 	if err != nil {
 		return nil, err
@@ -75,48 +77,81 @@ func newDockerCli(opts []command.DockerCliOption) (*command.DockerCli, error) {
 	return newCli, nil
 }
 
-func cli(ctx context.Context) (*command.DockerCli, error) {
-	c, err := newDockerCli([]command.DockerCliOption{
+func cli(ctx context.Context) command.Cli {
+	cliInterf := ctx.Value(ctxDockerCliKey)
+	if cliInterf != nil {
+		return cliInterf.(command.Cli)
+	} else if ctx == context.Background() {
+		return defaultCLi
+	} else {
+		panic("context is not bound with docker cli")
+	}
+}
+
+func apiCli(ctx context.Context) client.APIClient {
+	return cli(ctx).Client()
+}
+
+func defaultCliOptions(ctx context.Context) []command.DockerCliOption {
+	return []command.DockerCliOption{
+		command.WithInputStream(nil),
 		command.WithOutputStream(logboek.Context(ctx).ProxyOutStream()),
 		command.WithErrorStream(logboek.Context(ctx).ProxyErrStream()),
 		command.WithContentTrust(false),
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to create live output docker cli: %s", err)
 	}
-
-	return c, nil
 }
 
-func apiCli() (*client.Client, error) {
-	serverVersion, err := ServerVersion()
-	if err != nil {
-		return nil, err
+func cliWithCustomOptions(ctx context.Context, options []command.DockerCliOption, f func(cli command.Cli) error) error {
+	if err := cli(ctx).Apply(options...); err != nil {
+		return err
 	}
 
-	apiClient, err := client.NewClientWithOpts(client.WithVersion(serverVersion.APIVersion))
-	if err != nil {
-		return nil, err
+	err := f(cli(ctx))
+
+	if applyErr := cli(ctx).Apply(defaultCliOptions(ctx)...); applyErr != nil {
+		if err != nil {
+			return err
+		} else {
+			return applyErr
+		}
 	}
 
-	return apiClient, nil
+	return err
 }
 
-func callCliWithRecordedOutput(commandCaller func(c *command.DockerCli) error) (string, error) {
+func NewContext(ctx context.Context) (context.Context, error) {
+	c, err := newDockerCli(defaultCliOptions(ctx))
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to create docker cli: %s", err)
+	}
+
+	newCtx := context.WithValue(ctx, ctxDockerCliKey, c)
+	return newCtx, nil
+}
+
+func SyncContextCliWithLogger(ctx context.Context) error {
+	return cli(ctx).Apply(defaultCliOptions(ctx)...)
+}
+
+func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command.Cli) error) (string, error) {
 	var output bytes.Buffer
 
-	if c, err := getRecordingOutputCli(&output, &output); err != nil {
-		return "", fmt.Errorf("unable to create docker cli: %s", err)
-	} else {
-		if err := commandCaller(c); err != nil {
-			return output.String(), err
-		}
-		return output.String(), err
+	if err := cliWithCustomOptions(
+		ctx,
+		[]command.DockerCliOption{
+			command.WithOutputStream(&output),
+			command.WithErrorStream(&output),
+		},
+		commandCaller,
+	); err != nil {
+		return "", err
 	}
+
+	return output.String(), nil
 }
 
-func getRecordingOutputCli(stdoutWriter, stderrWriter io.Writer) (*command.DockerCli, error) {
+func getRecordingOutputCli(stdoutWriter, stderrWriter io.Writer) (command.Cli, error) {
 	return newDockerCli([]command.DockerCliOption{
 		command.WithOutputStream(stdoutWriter),
 		command.WithErrorStream(stderrWriter),
@@ -131,16 +166,11 @@ func prepareCliCmd(cmd *cobra.Command, args ...string) *cobra.Command {
 	return cmd
 }
 
-func callCliWithAutoOutput(ctx context.Context, commandCaller func(c *command.DockerCli) error) error {
+func callCliWithAutoOutput(ctx context.Context, commandCaller func(c command.Cli) error) error {
 	if liveCliOutputEnabled {
-		c, err := cli(ctx)
-		if err != nil {
-			return err
-		}
-
-		return commandCaller(c)
+		return commandCaller(cli(ctx))
 	} else {
-		output, err := callCliWithRecordedOutput(func(c *command.DockerCli) error {
+		output, err := callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 			return commandCaller(c)
 		})
 		if err != nil {

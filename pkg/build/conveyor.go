@@ -28,6 +28,7 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/logging"
@@ -588,7 +589,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 }
 
 func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
-	if !c.Parallel {
+	if !c.Parallel || len(c.images) == 1 {
 		for _, img := range c.images {
 			if err := c.doImage(ctx, img, phases, logImages); err != nil {
 				return err
@@ -607,6 +608,19 @@ type goResult struct {
 }
 
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
+	var maxTasksNumber int
+	for _, set := range c.imageSets {
+		if maxTasksNumber < len(set) {
+			maxTasksNumber = len(set)
+		}
+	}
+
+	if int(c.ParallelTasksLimit) > 0 && maxTasksNumber > int(c.ParallelTasksLimit) {
+		maxTasksNumber = int(c.ParallelTasksLimit)
+	}
+
+	goCtxsWithDockerCli := make([]context.Context, maxTasksNumber-1)
+
 	doImageSetInParallel := func(setId int) error {
 		var buffs, doneBuffs []*bytes.Buffer
 		var goCtxs []context.Context
@@ -623,6 +637,16 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		doneCh := make(chan goResult)
 		quitCh := make(chan bool)
 
+		liveLogger := logboek.NewLogger(os.Stdout, os.Stderr)
+		liveLogger.GetStreamsSettingsFrom(logboek.Context(ctx))
+		liveLogger.SetAcceptedLevel(logboek.Context(ctx).AcceptedLevel())
+		liveCtx := logboek.NewContext(ctx, liveLogger)
+
+		if err := docker.SyncContextCliWithLogger(liveCtx); err != nil {
+			return err
+		}
+		defer docker.SyncContextCliWithLogger(ctx)
+
 		isLiveOutputOn := true
 
 		for ind := range c.imageSets[setId] {
@@ -630,13 +654,35 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			var goResult goResult
 
 			if ind == 0 {
-				goCtx = ctx
+				goCtx = liveCtx
 			} else {
+				goCtxWithDockerCli := goCtxsWithDockerCli[ind-1]
+				if goCtxWithDockerCli != nil {
+					goCtx = goCtxWithDockerCli
+				} else {
+					goCtx = ctx
+				}
+
 				buf := bytes.NewBuffer([]byte{})
 				goResult.buff = buf
 				buffs = append(buffs, buf)
-				goCtx = logboek.NewContext(ctx, logboek.NewSubLogger(buf, buf))
+				goCtx = logboek.NewContext(goCtx, logboek.Context(ctx).NewSubLogger(buf, buf))
 				logboek.Context(goCtx).Streams().SetPrefixStyle(style.Highlight())
+
+				if goCtxWithDockerCli == nil {
+					var err error
+					goCtx, err = docker.NewContext(goCtx)
+					if err != nil {
+						return nil
+					}
+				} else {
+					err := docker.SyncContextCliWithLogger(goCtx)
+					if err != nil {
+						return err
+					}
+				}
+
+				goCtxsWithDockerCli[ind-1] = goCtx
 			}
 
 			goCtxs = append(goCtxs, goCtx)
@@ -715,7 +761,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				close(quitCh)
 
 				if res.buff != nil {
-					logboek.Context(ctx).ResetState()
+					liveLogger.Streams().Mute()
 					for _, buf := range buffs {
 						if buf != res.buff {
 							renderBuff(buf)
@@ -740,7 +786,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	blockMsg := "Concurrent builds plan"
 	if c.ParallelTasksLimit > 0 {
-		blockMsg = fmt.Sprintf("%s (simultaneously no more than %d image(s))", blockMsg, c.ParallelTasksLimit)
+		blockMsg = fmt.Sprintf("%s (no more than %d image(s))", blockMsg, c.ParallelTasksLimit)
 	}
 
 	logboek.Context(ctx).LogBlock(blockMsg).
@@ -751,7 +797,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			for setId := range c.imageSets {
 				logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
 				for _, img := range c.imageSets[setId] {
-					logboek.Context(ctx).LogLnHighlight("-", img.name)
+					logboek.Context(ctx).LogLnHighlight("-", img.LogName())
 				}
 				logboek.Context(ctx).LogOptionalLn()
 
@@ -759,6 +805,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		})
 
 	for setId := range c.imageSets {
+		logboek.Context(ctx).LogLn()
 		if err := doImageSetInParallel(setId); err != nil {
 			return err
 		}
