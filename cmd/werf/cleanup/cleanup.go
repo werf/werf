@@ -88,6 +88,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 }
 
 func runCleanup() error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

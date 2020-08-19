@@ -3,10 +3,7 @@ package purge
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/pkg/stages_manager"
 
 	"github.com/werf/logboek"
 
@@ -14,6 +11,9 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -76,6 +76,7 @@ WARNING: Do not run this command during any other werf command is working on the
 }
 
 func runPurge() error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

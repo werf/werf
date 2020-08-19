@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -47,8 +46,6 @@ func run() error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
-
-	tmp_manager.AutoGCEnabled = false
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {

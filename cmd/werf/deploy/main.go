@@ -126,6 +126,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 }
 
 func runDeploy() error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

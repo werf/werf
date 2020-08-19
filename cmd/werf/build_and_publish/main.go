@@ -115,6 +115,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 }
 
 func runBuildAndPublish(imagesToProcess []string) error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

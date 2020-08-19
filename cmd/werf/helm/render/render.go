@@ -15,7 +15,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/images_manager"
-	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -75,7 +74,6 @@ func NewCmd() *cobra.Command {
 
 func runRender(outputFilePath string) error {
 	ctx := common.BackgroundContext()
-	tmp_manager.AutoGCEnabled = false
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)

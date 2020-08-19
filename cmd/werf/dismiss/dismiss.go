@@ -13,6 +13,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -90,6 +91,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 }
 
 func runDismiss() error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
