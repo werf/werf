@@ -74,9 +74,15 @@ func runReset() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	logboek.LogOptionalLn()
 	hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}

@@ -74,9 +74,15 @@ func runGC() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	logboek.LogOptionalLn()
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}

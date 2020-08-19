@@ -92,7 +92,7 @@ func runHistory(releaseName string) error {
 		return err
 	}
 
-	if err := helm.History(ctx, os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
+	if err := helm.History(os.Stdout, releaseName, cmdData.HistoryOptions); err != nil {
 		return err
 	}
 

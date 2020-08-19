@@ -9,12 +9,7 @@ import (
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
-	apiClient, err := apiCli()
-	if err != nil {
-		return nil, err
-	}
-
-	return apiClient.ContainerList(ctx, options)
+	return apiCli(ctx).ContainerList(ctx, options)
 }
 
 func ContainerExist(ctx context.Context, ref string) (bool, error) {
@@ -28,21 +23,11 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
-	apiClient, err := apiCli()
-	if err != nil {
-		return types.ContainerJSON{}, err
-	}
-
-	return apiClient.ContainerInspect(ctx, ref)
+	return apiCli(ctx).ContainerInspect(ctx, ref)
 }
 
 func ContainerCommit(ctx context.Context, ref string, commitOptions types.ContainerCommitOptions) (string, error) {
-	apiClient, err := apiCli()
-	if err != nil {
-		return "", err
-	}
-
-	response, err := apiClient.ContainerCommit(ctx, ref, commitOptions)
+	response, err := apiCli(ctx).ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
 	}
@@ -51,85 +36,65 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 }
 
 func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
-	apiClient, err := apiCli()
-	if err != nil {
-		return err
-	}
-
-	return apiClient.ContainerRemove(ctx, ref, options)
+	return apiCli(ctx).ContainerRemove(ctx, ref, options)
 }
 
-func doCliCreate(c *command.DockerCli, args ...string) error {
+func doCliCreate(c command.Cli, args ...string) error {
 	return prepareCliCmd(container.NewCreateCommand(c), args...).Execute()
 }
 
 func CliCreate(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliCreate(c, args...)
 	})
 }
 
 func CliCreate_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliCreate(cli, args...)
+	return doCliCreate(cli(ctx), args...)
 }
 
-func CliCreate_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliCreate_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliCreate(c, args...)
 	})
 }
 
-func doCliRun(c *command.DockerCli, args ...string) error {
+func doCliRun(c command.Cli, args ...string) error {
 	return prepareCliCmd(container.NewRunCommand(c), args...).Execute()
 }
 
 func CliRun(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliRun(c, args...)
 	})
 }
 
 func CliRun_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliRun(cli, args...)
+	return doCliRun(cli(ctx), args...)
 }
 
-func CliRun_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliRun(c, args...)
 	})
 }
 
-func doCliRm(c *command.DockerCli, args ...string) error {
+func doCliRm(c command.Cli, args ...string) error {
 	return prepareCliCmd(container.NewRmCommand(c), args...).Execute()
 }
 
 func CliRm(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c *command.DockerCli) error {
+	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliRm(c, args...)
 	})
 }
 
 func CliRm_LiveOutput(ctx context.Context, args ...string) error {
-	cli, err := cli(ctx)
-	if err != nil {
-		return err
-	}
-
-	return doCliRm(cli, args...)
+	return doCliRm(cli(ctx), args...)
 }
 
-func CliRm_RecordedOutput(args ...string) (string, error) {
-	return callCliWithRecordedOutput(func(c *command.DockerCli) error {
+func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {
+	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliRm(c, args...)
 	})
 }

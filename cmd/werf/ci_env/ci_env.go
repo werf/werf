@@ -2,6 +2,7 @@ package ci_env
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -78,6 +79,8 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 func runCIEnv(cmd *cobra.Command, args []string) error {
 	logboek.SetAcceptedLevel(level.Error)
 
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -85,6 +88,21 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 		return err
 	}
+
+	dockerConfig, err := generateSessionDockerConfigDir(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+		return err
+	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	switch cmdData.Shell {
 	case "", "default", "cmdexe", "powershell":
@@ -110,7 +128,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	ciSystem := args[0]
 	switch ciSystem {
 	case "github":
-		err := generateGithubEnvs(w, cmdData.TaggingStrategy)
+		err := generateGithubEnvs(ctx, w, dockerConfig, cmdData.TaggingStrategy)
 		if err != nil {
 			if !cmdData.AsFile && !cmdData.AsEnvFile {
 				writeError(w, err.Error())
@@ -118,7 +136,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case "gitlab":
-		err := generateGitlabEnvs(w, cmdData.TaggingStrategy)
+		err := generateGitlabEnvs(ctx, w, dockerConfig, cmdData.TaggingStrategy)
 		if err != nil {
 			if !cmdData.AsFile && !cmdData.AsEnvFile {
 				writeError(w, err.Error())
@@ -144,12 +162,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
-	dockerConfig, err := generateSessionDockerConfigDir()
-	if err != nil {
-		return err
-	}
-
+func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingStrategy string) error {
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
@@ -178,7 +191,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 
 	if doLogin {
-		err := docker.Login(common.BackgroundContext(), imagesUsername, imagesPassword, ciRegistryImageEnv)
+		err := docker.Login(ctx, imagesUsername, imagesPassword, ciRegistryImageEnv)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImageEnv, err)
 		}
@@ -259,7 +272,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
-	if err = generateImageCleanupPolicies(w); err != nil {
+	if err := generateImageCleanupPolicies(w); err != nil {
 		return err
 	}
 
@@ -289,17 +302,12 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	return nil
 }
 
-func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
-	dockerConfigDir, err := generateSessionDockerConfigDir()
-	if err != nil {
-		return err
-	}
-
+func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingStrategy string) error {
 	githubRegistry := "docker.pkg.github.com"
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	if ciGithubActor != "" && ciGithubToken != "" {
-		err := docker.Login(common.BackgroundContext(), ciGithubActor, ciGithubToken, githubRegistry)
+		err := docker.Login(ctx, ciGithubActor, ciGithubToken, githubRegistry)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker repo %s: %s", githubRegistry, err)
 		}
@@ -314,7 +322,7 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 			return fmt.Errorf("getting project dir failed: %s", err)
 		}
 
-		werfConfig, err := common.GetOptionalWerfConfig(projectDir, &commonCmdData, true)
+		werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, true)
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}
@@ -335,7 +343,7 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
-	writeEnv(w, "DOCKER_CONFIG", dockerConfigDir, true)
+	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "STAGES_STORAGE", true)
 	writeEnv(w, "WERF_STAGES_STORAGE", stagesStorageRepo, false)
@@ -375,20 +383,18 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 	writeHeader(w, "CLEANUP", true)
 	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
-	if err = generateImageCleanupPolicies(w); err != nil {
+	if err := generateImageCleanupPolicies(w); err != nil {
 		return err
 	}
 
-	if err = generateOther(w); err != nil {
+	if err := generateOther(w); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateSessionDockerConfigDir() (string, error) {
-	ctx := common.BackgroundContext()
-
+func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 	dockerConfigPath := *commonCmdData.DockerConfig
 	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
@@ -397,11 +403,6 @@ func generateSessionDockerConfigDir() (string, error) {
 	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(ctx, dockerConfigPath)
 	if err != nil {
 		return "", fmt.Errorf("unable to create tmp docker config: %s", err)
-	}
-
-	// Init with new docker config dir
-	if err := docker.Init(dockerConfigDir, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
-		return "", err
 	}
 
 	return dockerConfigDir, nil

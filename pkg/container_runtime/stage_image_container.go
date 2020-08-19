@@ -208,7 +208,7 @@ func (c *StageImageContainer) prepareCommitChanges(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	commitChanges, err := commitOptions.prepareCommitChanges()
+	commitChanges, err := commitOptions.prepareCommitChanges(ctx)
 	if err != nil {
 		return nil, err
 	}

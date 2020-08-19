@@ -1049,15 +1049,15 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 	return *cmdData.StagesStorage
 }
 
-func GetImagesRepoWithOptionalStubRepoAddress(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
-	return getImagesRepo(projectName, cmdData, true)
+func GetImagesRepoWithOptionalStubRepoAddress(ctx context.Context, projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(ctx, projectName, cmdData, true)
 }
 
-func GetImagesRepo(projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
-	return getImagesRepo(projectName, cmdData, false)
+func GetImagesRepo(ctx context.Context, projectName string, cmdData *CmdData) (storage.ImagesRepo, error) {
+	return getImagesRepo(ctx, projectName, cmdData, false)
 }
 
-func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress bool) (storage.ImagesRepo, error) {
+func getImagesRepo(ctx context.Context, projectName string, cmdData *CmdData, optionalStubRepoAddress bool) (storage.ImagesRepo, error) {
 	var imagesRepoAddress string
 	var err error
 	if optionalStubRepoAddress {
@@ -1084,7 +1084,7 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 	}
 
 	return storage.NewImagesRepo(
-		BackgroundContext(),
+		ctx,
 		projectName,
 		imagesRepoAddress,
 		imagesRepoMode,
@@ -1179,7 +1179,7 @@ func getImagesRepoMode(cmdData *CmdData) (string, error) {
 	}
 }
 
-func GetOptionalWerfConfig(projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
+func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, false)
 	if err != nil {
 		return nil, err
@@ -1187,13 +1187,13 @@ func GetOptionalWerfConfig(projectDir string, cmdData *CmdData, logRenderedFileP
 
 	if werfConfigPath != "" {
 		werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
-		return config.GetWerfConfig(BackgroundContext(), werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+		return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 	}
 
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
+func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, true)
 	if err != nil {
 		return nil, err
@@ -1201,7 +1201,7 @@ func GetRequiredWerfConfig(projectDir string, cmdData *CmdData, logRenderedFileP
 
 	werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
 
-	return config.GetWerfConfig(BackgroundContext(), werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+	return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 }
 
 func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (string, error) {

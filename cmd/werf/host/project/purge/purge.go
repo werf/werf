@@ -80,9 +80,15 @@ func run(projectNames ...string) error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
@@ -94,7 +100,7 @@ func run(projectNames ...string) error {
 	logboek.LogOptionalLn()
 
 	for _, projectName := range projectNames {
-		synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
+		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
 		}
@@ -102,7 +108,7 @@ func run(projectNames ...string) error {
 		if err != nil {
 			return err
 		}
-		storageLockManager, err := common.GetStorageLockManager(synchronization)
+		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 		if err != nil {
 			return err
 		}

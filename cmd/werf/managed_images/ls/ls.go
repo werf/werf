@@ -71,9 +71,15 @@ func run() error {
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
 		return err
 	}
+
+	ctxWithDockerCli, err := docker.NewContext(ctx)
+	if err != nil {
+		return err
+	}
+	ctx = ctxWithDockerCli
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
@@ -86,7 +92,7 @@ func run() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetOptionalWerfConfig(projectDir, &commonCmdData, false)
+	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -107,7 +113,7 @@ func run() error {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(&commonCmdData, projectName, stagesStorage)
+	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
 	}
@@ -115,7 +121,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	storageLockManager, err := common.GetStorageLockManager(synchronization)
+	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 	if err != nil {
 		return err
 	}

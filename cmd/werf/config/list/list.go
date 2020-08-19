@@ -52,7 +52,7 @@ func run() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, false)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -45,16 +44,12 @@ func runGetRelease() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
-		return err
-	}
-
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(projectDir, &commonCmdData, false)
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

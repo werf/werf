@@ -1,6 +1,7 @@
 package container_runtime
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/go-version"
@@ -201,7 +202,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	return args
 }
 
-func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
+func (co *StageImageContainerOptions) prepareCommitChanges(ctx context.Context) ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -233,7 +234,7 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	if co.Entrypoint != "" {
 		entrypoint = co.Entrypoint
 	} else {
-		entrypoint, err = getEmptyEntrypointInstructionValue()
+		entrypoint, err = getEmptyEntrypointInstructionValue(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
@@ -254,8 +255,8 @@ func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	return args, nil
 }
 
-func getEmptyEntrypointInstructionValue() (string, error) {
-	v, err := docker.ServerVersion()
+func getEmptyEntrypointInstructionValue(ctx context.Context) (string, error) {
+	v, err := docker.ServerVersion(ctx)
 	if err != nil {
 		return "", err
 	}
