@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -45,7 +45,7 @@ func InputFromInteractiveStdin() ([]byte, error) {
 
 	isStdoutTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
 	if isStdoutTerminal {
-		fmt.Printf(logboek.HighlightStyle().Colorize("Enter secret: "))
+		fmt.Printf(style.Highlight().Colorize("Enter secret: "))
 	}
 
 	data, err = terminal.ReadPassword(int(os.Stdin.Fd()))

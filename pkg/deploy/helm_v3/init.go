@@ -1,6 +1,7 @@
 package helm_v3
 
 import (
+	"context"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -45,7 +46,7 @@ func withEnvs(envsMap map[string]string, do func()) {
 	do()
 }
 
-func NewEnvSettings(namespace string) (res *cli.EnvSettings) {
+func NewEnvSettings(ctx context.Context, namespace string) (res *cli.EnvSettings) {
 	withEnvs(map[string]string{
 		"HELM_NAMESPACE":         namespace,
 		"HELM_KUBECONTEXT":       "",
@@ -60,7 +61,7 @@ func NewEnvSettings(namespace string) (res *cli.EnvSettings) {
 		res = cli.New()
 	})
 
-	res.Debug = logboek.Debug.IsAccepted()
+	res.Debug = logboek.Context(ctx).Debug().IsAccepted()
 
 	return
 }
@@ -70,15 +71,15 @@ type InitActionConfigOptions struct {
 	HooksStatusProgressPeriod time.Duration
 }
 
-func NewActionConfig(envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
+func NewActionConfig(ctx context.Context, envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
 	actionConfig := &action.Configuration{}
-	InitActionConfig(envSettings, actionConfig, opts)
+	InitActionConfig(ctx, envSettings, actionConfig, opts)
 	return actionConfig
 }
 
-func InitActionConfig(envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) {
+func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) {
 	helmDriver := os.Getenv("HELM_DRIVER")
-	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Debug.LogF); err != nil {
+	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
 		log.Fatal(err)
 	}
 	if helmDriver == "memory" {

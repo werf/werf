@@ -1,6 +1,10 @@
 package stage
 
-import "github.com/werf/werf/pkg/build/import_server"
+import (
+	"context"
+
+	"github.com/werf/werf/pkg/build/import_server"
+)
 
 type Conveyor interface {
 	GetImageStageContentSignature(imageName, stageName string) string
@@ -12,10 +16,10 @@ type Conveyor interface {
 	GetImageNameForImageStage(imageName, stageName string) string
 	GetImageIDForImageStage(imageName, stageName string) string
 
-	GetImportServer(imageName, stageName string) (import_server.ImportServer, error)
+	GetImportServer(ctx context.Context, imageName, stageName string) (import_server.ImportServer, error)
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
-	GetProjectRepoCommit() (string, error)
+	GetProjectRepoCommit(ctx context.Context) (string, error)
 }
 
 type VirtualMergeOptions struct {

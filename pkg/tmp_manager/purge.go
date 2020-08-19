@@ -1,6 +1,7 @@
 package tmp_manager
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,11 +15,11 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-func Purge(dryRun bool) error {
-	return logboek.LogProcess("Running purge for tmp data", logboek.LogProcessOptions{}, func() error { return purge(dryRun) })
+func Purge(ctx context.Context, dryRun bool) error {
+	return logboek.Context(ctx).LogProcess("Running purge for tmp data").DoError(func() error { return purge(ctx, dryRun) })
 }
 
-func purge(dryRun bool) error {
+func purge(ctx context.Context, dryRun bool) error {
 	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
 	if err != nil {
 		return fmt.Errorf("unable to list tmp files in %s: %s", werf.GetTmpDir(), err)
@@ -40,7 +41,7 @@ func purge(dryRun bool) error {
 	var errors []error
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logboek.LogLn(projectDirToRemove)
+			logboek.Context(ctx).LogLn(projectDirToRemove)
 		}
 		if !dryRun {
 			if runtime.GOOS == "windows" {
@@ -50,7 +51,7 @@ func purge(dryRun bool) error {
 					}
 				}
 			} else {
-				if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
+				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
 					errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
@@ -60,7 +61,7 @@ func purge(dryRun bool) error {
 	filesToRemove = append(filesToRemove, GetServiceTmpDir())
 
 	for _, file := range filesToRemove {
-		logboek.LogLn(file)
+		logboek.Context(ctx).LogLn(file)
 
 		if !dryRun {
 			err := os.RemoveAll(file)

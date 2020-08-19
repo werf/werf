@@ -2,15 +2,12 @@ package render
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-
-	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	helm_common "github.com/werf/werf/cmd/werf/helm/common"
@@ -77,17 +74,18 @@ func NewCmd() *cobra.Command {
 }
 
 func runRender(outputFilePath string) error {
+	ctx := common.BackgroundContext()
 	tmp_manager.AutoGCEnabled = false
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
-	if err := deploy.Init(deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
+	if err := deploy.Init(ctx, deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
 		return err
 	}
 
@@ -173,7 +171,7 @@ func runRender(outputFilePath string) error {
 	}
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(context.Background(), buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
+	if err := deploy.RunRender(ctx, buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
 		WithoutImagesRepo:    withoutImagesRepo,

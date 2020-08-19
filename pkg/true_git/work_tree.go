@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,8 +22,8 @@ type WithWorkTreeOptions struct {
 	HasSubmodules bool
 }
 
-func WithWorkTree(gitDir, workTreeCacheDir string, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
-	return withWorkTreeCacheLock(workTreeCacheDir, func() error {
+func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir string, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
+	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
 		gitDir, err = filepath.Abs(gitDir)
@@ -42,7 +43,7 @@ func WithWorkTree(gitDir, workTreeCacheDir string, commit string, opts WithWorkT
 			}
 		}
 
-		workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
+		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
 		if err != nil {
 			return fmt.Errorf("cannot prepare worktree: %s", err)
 		}
@@ -51,12 +52,12 @@ func WithWorkTree(gitDir, workTreeCacheDir string, commit string, opts WithWorkT
 	})
 }
 
-func withWorkTreeCacheLock(workTreeCacheDir string, f func() error) error {
+func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func() error) error {
 	lockName := fmt.Sprintf("git_work_tree_cache %s", workTreeCacheDir)
-	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
-func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
+func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %s", workTreeCacheDir, err)
 	}
@@ -100,7 +101,7 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	}
 
 	if isWorkTreeDirExist && !isWorkTreeRegistered {
-		logboek.Info.LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+		logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
 
 		if err := os.RemoveAll(currentCommitPath); err != nil {
 			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
@@ -130,13 +131,13 @@ func prepareWorkTree(repoDir, workTreeCacheDir string, commit string, withSubmod
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
 	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
-	if err := logboek.Info.LogProcess(logProcessMsg, logboek.LevelLogProcessOptions{}, func() error {
-		logboek.Info.LogFDetails("Work tree dir: %s\n", workTreeDir)
-		logboek.Info.LogFDetails("Commit: %s\n", commit)
+	if err := logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
+		logboek.Context(ctx).Info().LogFDetails("Work tree dir: %s\n", workTreeDir)
+		logboek.Context(ctx).Info().LogFDetails("Commit: %s\n", commit)
 		if currentCommit != "" {
-			logboek.Info.LogFDetails("Current commit: %s\n", currentCommit)
+			logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
 		}
-		return switchWorkTree(repoDir, workTreeDir, commit, withSubmodules)
+		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
 	}
@@ -152,7 +153,7 @@ func debugWorktreeSwitch() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_WORKTREE_SWITCH") == "1"
 }
 
-func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules bool) error {
+func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
 	var err error
 	var cmd *exec.Cmd
 	var output *bytes.Buffer
@@ -162,7 +163,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 			"git", "-C", repoDir,
 			"worktree", "add", "--force", "--detach", workTreeDir, commit,
 		)
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
@@ -179,7 +180,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		"reset", "--hard", commit,
 	)
 	cmd.Dir = workTreeDir
-	output = setCommandRecordingLiveOutput(cmd)
+	output = setCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
@@ -193,7 +194,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		"clean", "-d", "-f", "-f", "-x",
 	)
 	cmd.Dir = workTreeDir
-	output = setCommandRecordingLiveOutput(cmd)
+	output = setCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
@@ -205,12 +206,12 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	if withSubmodules {
 		var err error
 
-		err = syncSubmodules(repoDir, workTreeDir)
+		err = syncSubmodules(ctx, repoDir, workTreeDir)
 		if err != nil {
 			return fmt.Errorf("cannot sync submodules: %s", err)
 		}
 
-		err = updateSubmodules(repoDir, workTreeDir)
+		err = updateSubmodules(ctx, repoDir, workTreeDir)
 		if err != nil {
 			return fmt.Errorf("cannot update submodules: %s", err)
 		}
@@ -221,7 +222,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 			"git", "-c", "core.autocrlf=false", "reset", "--hard",
 		)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
@@ -236,7 +237,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 			"git", "clean", "-d", "-f", "-f", "-x",
 		)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
-		output = setCommandRecordingLiveOutput(cmd)
+		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}

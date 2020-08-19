@@ -37,7 +37,7 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -64,6 +64,8 @@ WARNING: Do not run this command during any other werf command is working on the
 }
 
 func runReset() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -78,7 +80,7 @@ func runReset() error {
 
 	logboek.LogOptionalLn()
 	hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
-	if err := host_cleaning.HostPurge(hostPurgeOptions); err != nil {
+	if err := host_cleaning.HostPurge(ctx, hostPurgeOptions); err != nil {
 		return err
 	}
 

@@ -34,11 +34,7 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//if err := common.ProcessLogOptions(&commonCmdData); err != nil {
-			//	common.PrintHelp(cmd)
-			//	return err
-			//}
-			logging.EnableLogQuiet()
+			logboek.Streams().Mute()
 
 			var imageName string
 			if len(args) > 1 {
@@ -86,6 +82,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run(imageName string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -96,7 +94,7 @@ func run(imageName string) error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -122,19 +120,19 @@ func run(imageName string) error {
 
 	projectName := werfConfig.Meta.Project
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logboek.LogWarnF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
@@ -167,15 +165,15 @@ func run(imageName string) error {
 	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, nil, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
-	if err := conveyorWithRetry.WithRetryBlock(func(c *build.Conveyor) error {
-		if err = c.ShouldBeBuilt(build.ShouldBeBuiltOptions{}); err != nil {
+	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		if err = c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
 			return err
 		}
 

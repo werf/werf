@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,10 +15,10 @@ type CreateDetachedMergeCommitOptions struct {
 	HasSubmodules bool
 }
 
-func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateDetachedMergeCommitOptions) (string, error) {
+func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateDetachedMergeCommitOptions) (string, error) {
 	var resCommit string
 
-	if err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
+	if err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
 		gitDir, err = filepath.Abs(gitDir)
@@ -37,7 +38,7 @@ func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeInt
 			}
 		}
 
-		if workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
+		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %s", mergeIntoCommit, err)
 		} else {
 			var err error
@@ -51,7 +52,7 @@ func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeInt
 
 			cmd = exec.Command("git", "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)
 			cmd.Dir = workTreeDir
-			output = setCommandRecordingLiveOutput(cmd)
+			output = setCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("git merge %q failed: %s\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), err, output.String())
@@ -62,7 +63,7 @@ func CreateDetachedMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeInt
 
 			cmd = exec.Command("git", "rev-parse", "HEAD")
 			cmd.Dir = workTreeDir
-			output = setCommandRecordingLiveOutput(cmd)
+			output = setCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("git merge failed: %s\n%s", err, output.String())

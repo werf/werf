@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
@@ -124,7 +128,7 @@ const (
 )
 
 func GetLongCommandDescription(text string) string {
-	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
+	return logboek.FitText(text, types.FitTextOptions{MaxWidth: 100})
 }
 
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
@@ -682,7 +686,7 @@ func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
 * $WERF_LOG_TERMINAL_WIDTH
-* interactive terminal width or %d`, logboek.DefaultWidth))
+* interactive terminal width or %d`, 140))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -955,7 +959,7 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 		commitDays != CiEnvGitCommitStrategyExpiryDaysDefault && commitDays != -1 ||
 		stagesSignatureLimit != CiEnvStagesSignatureStrategyLimitDefault ||
 		stagesSignatureDays != CiEnvStagesSignatureStrategyExpiryDaysDefault {
-		logboek.Warn.LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes (https://werf.io/documentation/reference/cleaning_process.html#tagging-scheme-based-cleanup-algorithm) which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
+		logboek.Warn().LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes (https://werf.io/documentation/reference/cleaning_process.html#tagging-scheme-based-cleanup-algorithm) which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
 
 Now werf uses the git history-based cleanup algorithm (https://werf.io/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm) with the following default policies (https://werf.io/documentation/configuration/cleanup.html#default-policies).`)
 	}
@@ -1036,6 +1040,7 @@ func getImagesRepo(projectName string, cmdData *CmdData, optionalStubRepoAddress
 	}
 
 	return storage.NewImagesRepo(
+		BackgroundContext(),
 		projectName,
 		imagesRepoAddress,
 		imagesRepoMode,
@@ -1138,7 +1143,7 @@ func GetOptionalWerfConfig(projectDir string, cmdData *CmdData, logRenderedFileP
 
 	if werfConfigPath != "" {
 		werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
-		return config.GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+		return config.GetWerfConfig(BackgroundContext(), werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 	}
 
 	return nil, nil
@@ -1152,7 +1157,7 @@ func GetRequiredWerfConfig(projectDir string, cmdData *CmdData, logRenderedFileP
 
 	werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
 
-	return config.GetWerfConfig(werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+	return config.GetWerfConfig(BackgroundContext(), werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
 }
 
 func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (string, error) {
@@ -1297,14 +1302,17 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	}
 
 	if *cmdData.LogQuiet {
-		logging.EnableLogQuiet()
+		logboek.Streams().Mute()
 	} else if *cmdData.LogDebug {
-		logging.EnableLogDebug()
+		logboek.SetAcceptedLevel(level.Debug)
+		logboek.Streams().EnablePrefixWithTime()
+		logboek.Streams().SetPrefixStyle(style.Details())
 	} else if *cmdData.LogVerbose {
-		logging.EnableLogVerbose()
+		logboek.SetAcceptedLevel(level.Info)
 	}
 
 	if !*cmdData.LogPretty {
+		logboek.Streams().DisablePrettyLog()
 		logging.DisablePrettyLog()
 	}
 
@@ -1321,9 +1329,9 @@ func ProcessLogColorMode(cmdData *CmdData) error {
 	switch logColorMode {
 	case "auto":
 	case "on":
-		logging.EnableLogColor()
+		logboek.Streams().EnableStyle()
 	case "off":
-		logging.DisableLogColor()
+		logboek.Streams().DisableStyle()
 	default:
 		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", logColorMode)
 	}
@@ -1339,7 +1347,7 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 			return fmt.Errorf("--log-terminal-width parameter (%d) can not be negative", value)
 		}
 
-		logging.SetWidth(int(value))
+		logboek.Streams().SetWidth(int(value))
 	} else {
 		pInt64, err := getInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
 		if err != nil {
@@ -1354,14 +1362,14 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 			return fmt.Errorf("WERF_LOG_TERMINAL_WIDTH value (%s) can not be negative", os.Getenv("WERF_LOG_TERMINAL_WIDTH"))
 		}
 
-		logging.SetWidth(int(*pInt64))
+		logboek.Streams().SetWidth(int(*pInt64))
 	}
 
 	return nil
 }
 
 func DockerRegistryInit(cmdData *CmdData) error {
-	return docker_registry.Init(*cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+	return docker_registry.Init(BackgroundContext(), *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
 func ValidateRepoImplementation(implementation string) error {
@@ -1413,7 +1421,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logboek.Default.LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
+	logboek.Default().LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
 
 	return err
 }
@@ -1426,7 +1434,8 @@ func TerminateWithError(errMsg string, exitCode int) {
 	msg := fmt.Sprintf("Error: %s", errMsg)
 	msg = strings.TrimSuffix(msg, "\n")
 
-	logboek.LogErrorLn(msg)
+	logboek.Streams().DisableLineWrapping()
+	logboek.Error().LogLn(msg)
 	os.Exit(exitCode)
 }
 
@@ -1463,15 +1472,15 @@ func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (clean
 			}
 
 			if isShallow {
-				logboek.Warn.LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-				logboek.Warn.LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
+				logboek.Warn().LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
 
 				return nil, fmt.Errorf("git shallow clone is not allowed")
 			}
 		}
 
 		if *cmdData.GitHistorySynchronization {
-			if err := localGitRepo.SyncWithOrigin(); err != nil {
+			if err := localGitRepo.SyncWithOrigin(BackgroundContext()); err != nil {
 				return nil, fmt.Errorf("synchronization failed: %s", err)
 			}
 		}
@@ -1480,4 +1489,8 @@ func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (clean
 	} else {
 		return nil, nil
 	}
+}
+
+func BackgroundContext() context.Context {
+	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
 }

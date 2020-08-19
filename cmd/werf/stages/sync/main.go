@@ -26,7 +26,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Sync project stages from one stages storage to another",
 		Long:                  common.GetLongCommandDescription("Sync project stages from one stages storage to another"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -68,6 +68,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runSync() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -126,5 +128,5 @@ func runSync() error {
 	}
 	_ = stagesStorageCache
 
-	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
+	return stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
 }

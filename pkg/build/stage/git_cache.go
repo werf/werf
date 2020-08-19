@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -20,22 +21,22 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
-	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(c, stages)
+func (s *GitCacheStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
 	}
 	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
-func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
-	if isEmptyBase, err := s.GitPatchStage.IsEmpty(c, prevBuiltImage); err != nil {
+func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+	if isEmptyBase, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return isEmptyBase, err
 	} else if isEmptyBase {
 		return true, err
 	}
 
-	patchSize, err := s.gitMappingsPatchSize(c, prevBuiltImage)
+	patchSize, err := s.gitMappingsPatchSize(ctx, c, prevBuiltImage)
 	if err != nil {
 		return false, err
 	}
@@ -45,8 +46,8 @@ func (s *GitCacheStage) IsEmpty(c Conveyor, prevBuiltImage container_runtime.Ima
 	return isEmpty, nil
 }
 
-func (s *GitCacheStage) GetDependencies(c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
-	patchSize, err := s.gitMappingsPatchSize(c, prevBuiltImage)
+func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	patchSize, err := s.gitMappingsPatchSize(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", err
 	}
@@ -54,21 +55,21 @@ func (s *GitCacheStage) GetDependencies(c Conveyor, _, prevBuiltImage container_
 	return util.Sha256Hash(fmt.Sprintf("%d", patchSize/patchSizeStep)), nil
 }
 
-func (s *GitCacheStage) gitMappingsPatchSize(c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {
+func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(c, prevBuiltImage)
+		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
 			return 0, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
 		}
 
-		exist, err := gitMapping.GitRepo().IsCommitExists(commit)
+		exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commit)
 		if err != nil {
 			return 0, err
 		}
 
 		if exist {
-			patchSize, err := gitMapping.PatchSize(c, commit)
+			patchSize, err := gitMapping.PatchSize(ctx, c, commit)
 			if err != nil {
 				return 0, err
 			}
@@ -82,6 +83,6 @@ func (s *GitCacheStage) gitMappingsPatchSize(c Conveyor, prevBuiltImage containe
 	return size, nil
 }
 
-func (s *GitCacheStage) GetNextStageDependencies(c Conveyor) (string, error) {
-	return s.BaseStage.getNextStageGitDependencies(c)
+func (s *GitCacheStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
+	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }

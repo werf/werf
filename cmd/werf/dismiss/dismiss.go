@@ -1,10 +1,7 @@
 package dismiss
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
 
@@ -15,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -46,7 +44,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -92,6 +90,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 }
 
 func runDismiss() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -115,7 +115,8 @@ func runDismiss() error {
 			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -149,7 +150,7 @@ func runDismiss() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	if err := common.InitKubedog(); err != nil {
+	if err := common.InitKubedog(ctx); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
@@ -163,7 +164,7 @@ func runDismiss() error {
 		return err
 	}
 
-	return deploy.RunDismiss(context.Background(), projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
+	return deploy.RunDismiss(ctx, projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: cmdData.WithNamespace,
 		WithHooks:     cmdData.WithHooks,
 	})

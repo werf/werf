@@ -1,6 +1,7 @@
 package tmp_manager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,7 +9,7 @@ import (
 	"github.com/otiai10/copy"
 )
 
-func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
+func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string, error) {
 	newDir, err := newTmpDir(DockerConfigDirPrefix)
 	if err != nil {
 		return "", err
@@ -36,7 +37,7 @@ func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
 	}
 
 	if shouldRunGC {
-		err := runGC()
+		err := runGC(ctx)
 		if err != nil {
 			return "", fmt.Errorf("tmp manager GC failed: %s", err)
 		}

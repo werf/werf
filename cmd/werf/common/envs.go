@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 )
 
 type Env string
@@ -42,7 +43,7 @@ func EnvsDescription(envs ...Env) string {
 		leftPart := strings.Join([]string{"  ", "$", string(env), strings.Repeat(" ", envNameWidth-len(env))}, "")
 		leftPartLength := len(leftPart)
 		space := "  "
-		fitTextOptions := logboek.FitTextOptions{MaxWidth: 100, ExtraIndentWidth: leftPartLength + len(space)}
+		fitTextOptions := types.FitTextOptions{MaxWidth: 100, ExtraIndentWidth: leftPartLength + len(space)}
 		rightPart := strings.TrimLeft(logboek.FitText(envDescription[env], fitTextOptions), " ")
 		lines = append(lines, fmt.Sprintf("%s%s%s", leftPart, space, rightPart))
 	}

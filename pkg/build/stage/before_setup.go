@@ -1,15 +1,17 @@
 package stage
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateBeforeSetupStage(imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
-	if b != nil && !b.IsBeforeSetupEmpty() {
+	if b != nil && !b.IsBeforeSetupEmpty(ctx) {
 		return newBeforeSetupStage(b, gitPatchStageOptions, baseStageOptions)
 	}
 
@@ -26,21 +28,21 @@ type BeforeSetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *BeforeSetupStage) GetDependencies(c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
-	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(c, BeforeSetup)
+func (s *BeforeSetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(ctx, c, BeforeSetup)
 	if err != nil {
 		return "", err
 	}
 
-	return util.Sha256Hash(s.builder.BeforeSetupChecksum(), stageDependenciesChecksum), nil
+	return util.Sha256Hash(s.builder.BeforeSetupChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *BeforeSetupStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	if err := s.builder.BeforeSetup(image.BuilderContainer()); err != nil {
+	if err := s.builder.BeforeSetup(ctx, image.BuilderContainer()); err != nil {
 		return err
 	}
 

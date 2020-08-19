@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 
@@ -11,13 +12,13 @@ import (
 
 var generic *api
 
-func Init(insecureRegistry, skipTlsVerifyRegistry bool) error {
-	if logboek.Debug.IsAccepted() {
-		logs.Progress.SetOutput(logboek.GetOutStream())
-		logs.Warn.SetOutput(logboek.GetErrStream())
+func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) error {
+	if logboek.Context(ctx).Debug().IsAccepted() {
+		logs.Progress.SetOutput(logboek.Context(ctx).ProxyOutStream())
+		logs.Warn.SetOutput(logboek.Context(ctx).ProxyErrStream())
 
 		if debugDockerRegistryAPI() {
-			logs.Debug.SetOutput(logboek.GetOutStream())
+			logs.Debug.SetOutput(logboek.Context(ctx).ProxyOutStream())
 		} else {
 			logs.Debug.SetOutput(ioutil.Discard)
 		}

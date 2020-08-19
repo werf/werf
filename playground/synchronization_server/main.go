@@ -21,11 +21,11 @@ func doMain() error {
 		return err
 	}
 
-	if err := logboek.Init(); err != nil {
+	if err := logboek.Context(ctx).Init(); err != nil {
 		return err
 	}
 
-	logboek.SetLevel(logboek.Debug)
+	logboek.Context(ctx).SetLevel(logboek.Context(ctx).Debug)
 
 	synchronizationServerDir := "synchronization-server"
 

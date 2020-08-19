@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/config"
@@ -41,7 +42,7 @@ type ImportsStage struct {
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(_ context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {
@@ -71,7 +72,7 @@ func (s *ImportsStage) GetDependencies(c Conveyor, _, _ container_runtime.ImageI
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImportsStage) PrepareImage(c Conveyor, _, image container_runtime.ImageInterface) error {
+func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.ImageInterface) error {
 	for _, elm := range s.imports {
 		var importImage string
 		if elm.ImageName != "" {
@@ -80,12 +81,12 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image container_runtime.Image
 			importImage = elm.ArtifactName
 		}
 
-		srv, err := c.GetImportServer(importImage, elm.Stage)
+		srv, err := c.GetImportServer(ctx, importImage, elm.Stage)
 		if err != nil {
 			return fmt.Errorf("unable to get import server for image %q: %s", importImage, err)
 		}
 
-		command := srv.GetCopyCommand(elm)
+		command := srv.GetCopyCommand(ctx, elm)
 		image.Container().AddServiceRunCommands(command)
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()

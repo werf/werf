@@ -2,68 +2,12 @@ package logging
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"runtime"
-
-	"github.com/mattn/go-isatty"
-
-	"github.com/werf/logboek"
 )
 
 var (
 	imageNameFormat    = "⛵ image %s"
 	artifactNameFormat = "🛸 artifact %s"
 )
-
-func Init() error {
-	if err := logboek.Init(); err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "windows" && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		DisableLogColor()
-	}
-
-	logboek.EnableFitMode()
-
-	log.SetOutput(logboek.GetOutStream())
-
-	return nil
-}
-
-func EnableLogQuiet() {
-	logboek.SetLevel(logboek.Error)
-	logboek.MuteOut()
-}
-
-func EnableLogDebug() {
-	logboek.SetLevel(logboek.Debug)
-	logboek.SetRunningTimePrefix(logboek.DetailsStyle())
-}
-
-func EnableLogVerbose() {
-	logboek.SetLevel(logboek.Info)
-}
-
-func EnableLogColor() {
-	logboek.EnableLogColor()
-}
-
-func DisableLogColor() {
-	logboek.DisableLogColor()
-}
-
-func SetWidth(value int) {
-	logboek.SetWidth(value)
-}
-
-func DisablePrettyLog() {
-	imageNameFormat = "image %s"
-	artifactNameFormat = "artifact %s"
-
-	logboek.DisablePrettyLog()
-}
 
 func ImageLogName(name string, isArtifact bool) string {
 	if !isArtifact {
@@ -82,4 +26,9 @@ func ImageLogProcessName(name string, isArtifact bool) string {
 	} else {
 		return fmt.Sprintf(artifactNameFormat, logName)
 	}
+}
+
+func DisablePrettyLog() {
+	imageNameFormat = "image %s"
+	artifactNameFormat = "artifact %s"
 }

@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -37,9 +38,9 @@ func newAzureCr(options azureCrOptions) (*azureCr, error) {
 	return azureCr, nil
 }
 
-func (r *azureCr) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *azureCr) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
 			return err
 		}
 	}
@@ -47,13 +48,14 @@ func (r *azureCr) DeleteRepoImage(repoImageList ...*image.Info) error {
 	return nil
 }
 
-func (r *azureCr) deleteRepoImage(repoImage *image.Info) error {
+func (r *azureCr) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	registryName, repository, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
 	}
 
 	return r.azRun(
+		ctx,
 		"acr", "repository", "delete",
 		"--name="+registryName,
 		"--image="+strings.Join([]string{repository, repoImage.Tag}, ":"),
@@ -61,13 +63,14 @@ func (r *azureCr) deleteRepoImage(repoImage *image.Info) error {
 	)
 }
 
-func (r *azureCr) DeleteRepo(reference string) error {
+func (r *azureCr) DeleteRepo(ctx context.Context, reference string) error {
 	registryName, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
 	err = r.azRun(
+		ctx,
 		"acr", "repository", "delete",
 		"--name="+registryName,
 		"--repository="+repository,
@@ -107,18 +110,18 @@ func (r *azureCr) parseReference(reference string) (string, string, error) {
 	return registryId, repository, nil
 }
 
-func (r *azureCr) azRun(args ...string) error {
+func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 	_, err := exec.LookPath("az")
 	if err != nil {
 		return err
 	}
 
 	command := strings.Join(append([]string{"az"}, args...), " ")
-	logboek.Debug.LogLn(command)
+	logboek.Context(ctx).Debug().LogLn(command)
 	c := exec.Command("az", args...)
 
 	output, err := c.CombinedOutput()
-	logboek.Debug.LogLn("output:", string(output))
+	logboek.Context(ctx).Debug().LogLn("output:", string(output))
 
 	if err != nil {
 		return fmt.Errorf(

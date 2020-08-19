@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,11 +34,12 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 	return &ManifestCache{CacheDir: cacheDir}
 }
 
-func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.GetImageInfo %s", imageName), logboek.LevelLogProcessStartOptions{})
-	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+func (cache *ManifestCache) GetImageInfo(ctx context.Context, imageName string) (*Info, error) {
+	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.GetImageInfo %s", imageName)
+	logProcess.Start()
+	defer logProcess.End()
 
-	if lock, err := cache.lock(imageName); err != nil {
+	if lock, err := cache.lock(ctx, imageName); err != nil {
 		return nil, err
 	} else {
 		defer cache.unlock(lock)
@@ -58,11 +60,12 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 	}
 }
 
-func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.StoreImageInfo %s", imgInfo.Name), logboek.LevelLogProcessStartOptions{})
-	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+func (cache *ManifestCache) StoreImageInfo(ctx context.Context, imgInfo *Info) error {
+	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.StoreImageInfo %s", imgInfo.Name)
+	logProcess.Start()
+	defer logProcess.End()
 
-	if lock, err := cache.lock(imgInfo.Name); err != nil {
+	if lock, err := cache.lock(ctx, imgInfo.Name); err != nil {
 		return err
 	} else {
 		defer cache.unlock(lock)
@@ -117,9 +120,9 @@ func (cache *ManifestCache) constructFilePathForImage(imageName string) string {
 	return filepath.Join(cache.CacheDir, util.Sha256Hash(imageName))
 }
 
-func (cache *ManifestCache) lock(imageName string) (lockgate.LockHandle, error) {
+func (cache *ManifestCache) lock(ctx context.Context, imageName string) (lockgate.LockHandle, error) {
 	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
-	if _, lock, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
 		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
 	} else {
 		return lock, nil

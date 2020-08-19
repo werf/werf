@@ -83,6 +83,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runSynchronization() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -107,7 +109,7 @@ func runSynchronization() error {
 			return fmt.Errorf("cannot initialize kube: %s", err)
 		}
 
-		if err := common.InitKubedog(); err != nil {
+		if err := common.InitKubedog(ctx); err != nil {
 			return fmt.Errorf("cannot init kubedog: %s", err)
 		}
 
@@ -118,8 +120,6 @@ func runSynchronization() error {
 			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
 				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %s", configMapName, namespace, err)
 			}
-
-			fmt.Printf("THE FUCK?\n")
 
 			store := optimistic_locking_store.NewKubernetesResourceAnnotationsStore(
 				kube.DynamicClient, schema.GroupVersionResource{
@@ -152,5 +152,5 @@ func runSynchronization() error {
 		}
 	}
 
-	return synchronization_server.RunSynchronizationServer(host, port, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
+	return synchronization_server.RunSynchronizationServer(ctx, host, port, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
 }

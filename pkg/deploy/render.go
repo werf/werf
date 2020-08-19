@@ -27,7 +27,7 @@ type RenderOptions struct {
 }
 
 func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts RenderOptions) error {
-	logboek.Debug.LogF("Render options: %#v\n", opts)
+	logboek.Context(ctx).Debug().LogF("Render options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {

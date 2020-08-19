@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,25 +27,15 @@ var (
 	forbiddenGitVersionErrorMsg = fmt.Sprintf("Forbidden git versions: %s", strings.Join(ForbiddenGitVersionsConstraintValues, ", "))
 	submodulesVersionErrorMsg   = fmt.Sprintf("To use git submodules install git >= %s", MinGitVersionWithSubmodulesConstraintValue)
 
-	outStream, errStream io.Writer
-	liveGitOutput        bool
+	liveGitOutput bool
 )
 
 type Options struct {
-	Out, Err      io.Writer
 	LiveGitOutput bool
 }
 
 func Init(opts Options) error {
-	outStream = os.Stdout
-	errStream = os.Stderr
 	liveGitOutput = opts.LiveGitOutput
-	if opts.Out != nil {
-		outStream = opts.Out
-	}
-	if opts.Err != nil {
-		errStream = opts.Err
-	}
 
 	var err error
 

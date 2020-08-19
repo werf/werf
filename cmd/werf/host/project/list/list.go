@@ -1,6 +1,7 @@
 package list
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -61,6 +62,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -69,7 +72,7 @@ func run() error {
 		return err
 	}
 
-	projects, err := getProjects()
+	projects, err := getProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -89,12 +92,12 @@ type projectFields struct {
 	Modified int64
 }
 
-func getProjects() (map[string]*projectFields, error) {
+func getProjects(ctx context.Context) (map[string]*projectFields, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("label", imagePkg.WerfLabel)
 	options := types.ImageListOptions{Filters: filterSet}
 
-	images, err := docker.Images(options)
+	images, err := docker.Images(ctx, options)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +153,7 @@ func printProjects(projects map[string]*projectFields) {
 		}
 	} else {
 		t := uitable.New()
-		t.MaxColWidth = uint(logboek.ContentWidth())
+		t.MaxColWidth = uint(logboek.Streams().ContentWidth())
 		t.AddRow("NAME", "CREATED", "MODIFIED")
 		for projectName, project := range projects {
 			now := time.Now().UTC()

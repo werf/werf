@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -23,24 +24,24 @@ func newDefaultImplementation(options defaultImplementationOptions) (*defaultImp
 	return d, nil
 }
 
-func (r *defaultImplementation) GetRepoImageList(reference string) ([]*image.Info, error) {
-	return r.SelectRepoImageList(reference, nil)
+func (r *defaultImplementation) GetRepoImageList(ctx context.Context, reference string) ([]*image.Info, error) {
+	return r.SelectRepoImageList(ctx, reference, nil)
 }
 
-func (r *defaultImplementation) SelectRepoImageList(reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.api.Tags(reference)
+func (r *defaultImplementation) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+	tags, err := r.api.Tags(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.selectRepoImageListByTags(reference, tags, f)
+	return r.selectRepoImageListByTags(ctx, reference, tags, f)
 }
 
-func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags []string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
+func (r *defaultImplementation) selectRepoImageListByTags(ctx context.Context, reference string, tags []string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	var repoImageList []*image.Info
 	for _, tag := range tags {
 		ref := strings.Join([]string{reference, tag}, ":")
-		repoImage, err := r.GetRepoImage(ref)
+		repoImage, err := r.GetRepoImage(ctx, ref)
 
 		if f != nil {
 			ok, err := f(ref, repoImage, err)
@@ -61,17 +62,17 @@ func (r *defaultImplementation) selectRepoImageListByTags(reference string, tags
 	return repoImageList, nil
 }
 
-func (r *defaultImplementation) CreateRepo(_ string) error {
+func (r *defaultImplementation) CreateRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
 
-func (r *defaultImplementation) DeleteRepo(_ string) error {
+func (r *defaultImplementation) DeleteRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
 
-func (r *defaultImplementation) DeleteRepoImage(repoImageList ...*image.Info) error {
+func (r *defaultImplementation) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
+		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
 			return err
 		}
 	}
@@ -79,12 +80,12 @@ func (r *defaultImplementation) DeleteRepoImage(repoImageList ...*image.Info) er
 	return nil
 }
 
-func (r *defaultImplementation) deleteRepoImage(repoImage *image.Info) error {
+func (r *defaultImplementation) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
 	return r.api.deleteImageByReference(reference)
 }
 
-func (r *defaultImplementation) ResolveRepoMode(_, repoMode string) (string, error) {
+func (r *defaultImplementation) ResolveRepoMode(_ context.Context, _, repoMode string) (string, error) {
 	switch repoMode {
 	case MonorepoRepoMode, MultirepoRepoMode:
 		return repoMode, nil

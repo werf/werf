@@ -3,6 +3,7 @@ package check_ignore
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,13 +14,14 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 )
 
-func CheckIgnore(repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {
-	return checkIgnore(repository, absRepositoryFilepath, absFilepathsToCheck)
+func CheckIgnore(ctx context.Context, repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {
+	return checkIgnore(ctx, repository, absRepositoryFilepath, absFilepathsToCheck)
 }
 
-func checkIgnore(repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {
+func checkIgnore(ctx context.Context, repository *git.Repository, absRepositoryFilepath string, absFilepathsToCheck []string) (*Result, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -55,7 +57,7 @@ mainLoop:
 		repositoryAbsFilepathsToCheck = append(repositoryAbsFilepathsToCheck, absFilepathToCheck)
 	}
 
-	ignoredAbsFilepaths, err := getRepositoryIgnoredAbsFilepaths(absRepositoryFilepath, repositoryAbsFilepathsToCheck)
+	ignoredAbsFilepaths, err := getRepositoryIgnoredAbsFilepaths(ctx, absRepositoryFilepath, repositoryAbsFilepathsToCheck)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +80,8 @@ mainLoop:
 		submoduleRepository, err := submodule.Repository()
 		if err != nil {
 			if err == git.ErrSubmoduleNotInitialized {
-				logboek.Debug.LogFWithCustomStyle(
-					logboek.StyleByName(logboek.FailStyleName),
+				logboek.Context(ctx).Debug().LogFWithCustomStyle(
+					style.Get(style.FailName),
 					"Submodule %s is not initialized: the following paths will not be counted:\n%s",
 					submoduleFilepath,
 					strings.Join(submoduleAbsFilepathsToCheck, "\n"),
@@ -91,7 +93,7 @@ mainLoop:
 			return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFilepath, err)
 		}
 
-		submoduleResult, err := checkIgnore(submoduleRepository, submoduleAbsFilepath, submoduleAbsFilepathsToCheck)
+		submoduleResult, err := checkIgnore(ctx, submoduleRepository, submoduleAbsFilepath, submoduleAbsFilepathsToCheck)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +104,7 @@ mainLoop:
 	return result, nil
 }
 
-func getRepositoryIgnoredAbsFilepaths(repositoryAbsFilepath string, absFilepathsToCheck []string) ([]string, error) {
+func getRepositoryIgnoredAbsFilepaths(ctx context.Context, repositoryAbsFilepath string, absFilepathsToCheck []string) ([]string, error) {
 	if len(absFilepathsToCheck) == 0 {
 		return []string{}, nil
 	}
@@ -120,14 +122,14 @@ func getRepositoryIgnoredAbsFilepaths(repositoryAbsFilepath string, absFilepaths
 	cmd.Stdin = &b
 
 	if debugProcess() {
-		logboek.Debug.LogLn("command:", commandString)
-		logboek.Debug.LogLn("stdin:  ", toStdinString)
+		logboek.Context(ctx).Debug().LogLn("command:", commandString)
+		logboek.Context(ctx).Debug().LogLn("stdin:  ", toStdinString)
 	}
 
 	output, err := cmd.CombinedOutput()
 
 	if debugProcess() {
-		logboek.Debug.LogLn("output:\n", string(output))
+		logboek.Context(ctx).Debug().LogLn("output:\n", string(output))
 	}
 
 	if err != nil {
@@ -136,7 +138,7 @@ func getRepositoryIgnoredAbsFilepaths(repositoryAbsFilepath string, absFilepaths
 				exitCode := s.ExitStatus()
 				if exitCode == 1 { // None of the provided paths are ignored
 					if debugProcess() {
-						logboek.Debug.LogLn("None of the provided paths are ignored")
+						logboek.Context(ctx).Debug().LogLn("None of the provided paths are ignored")
 					}
 
 					return []string{}, nil

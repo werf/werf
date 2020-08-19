@@ -1,6 +1,7 @@
 package tmp_manager
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,9 +22,9 @@ var (
 	AutoGCEnabled = os.Getenv("WERF_DISABLE_AUTO_GC") != "1"
 )
 
-func runGC() error {
-	return werf.WithHostLock("gc", lockgate.AcquireOptions{}, func() error {
-		return GC(false)
+func runGC(ctx context.Context) error {
+	return werf.WithHostLock(ctx, "gc", lockgate.AcquireOptions{}, func() error {
+		return GC(ctx, false)
 	})
 }
 
@@ -80,11 +81,11 @@ func checkShouldRunGC() (bool, error) {
 	return false, nil
 }
 
-func GC(dryRun bool) error {
-	return logboek.LogProcess("Running GC for tmp data", logboek.LogProcessOptions{}, func() error { return gc(dryRun) })
+func GC(ctx context.Context, dryRun bool) error {
+	return logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error { return gc(ctx, dryRun) })
 }
 
-func gc(dryRun bool) error {
+func gc(ctx context.Context, dryRun bool) error {
 	projectDirsToRemove := []string{}
 	pathsToRemove := []string{}
 
@@ -108,7 +109,7 @@ func gc(dryRun bool) error {
 
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logboek.LogLn(projectDirToRemove)
+			logboek.Context(ctx).LogLn(projectDirToRemove)
 		}
 
 		if !dryRun {
@@ -119,7 +120,7 @@ func gc(dryRun bool) error {
 					}
 				}
 			} else {
-				if err := util.RemoveHostDirsWithLinuxContainer(werf.GetTmpDir(), projectDirsToRemove); err != nil {
+				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
 					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
@@ -127,7 +128,7 @@ func gc(dryRun bool) error {
 	}
 
 	for _, path := range pathsToRemove {
-		logboek.LogLn(path)
+		logboek.Context(ctx).LogLn(path)
 
 		if !dryRun {
 			err := os.RemoveAll(path)

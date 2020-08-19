@@ -1,6 +1,7 @@
 package synchronization_server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -23,7 +24,7 @@ func (client *StagesStorageCacheHttpClient) String() string {
 	return fmt.Sprintf("http-client %s", client.URL)
 }
 
-func (client *StagesStorageCacheHttpClient) GetAllStages(projectName string) (bool, []image.StageID, error) {
+func (client *StagesStorageCacheHttpClient) GetAllStages(_ context.Context, projectName string) (bool, []image.StageID, error) {
 	var request = GetAllStagesRequest{projectName}
 	var response GetAllStagesResponse
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "get-all-stages"), request, &response); err != nil {
@@ -32,7 +33,7 @@ func (client *StagesStorageCacheHttpClient) GetAllStages(projectName string) (bo
 	return response.Found, response.Stages, response.Err.Error
 }
 
-func (client *StagesStorageCacheHttpClient) DeleteAllStages(projectName string) error {
+func (client *StagesStorageCacheHttpClient) DeleteAllStages(_ context.Context, projectName string) error {
 	var request = DeleteAllStagesRequest{projectName}
 	var response DeleteAllStagesResponse
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "delete-all-stages"), request, &response); err != nil {
@@ -41,7 +42,7 @@ func (client *StagesStorageCacheHttpClient) DeleteAllStages(projectName string) 
 	return response.Err.Error
 }
 
-func (client *StagesStorageCacheHttpClient) GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error) {
+func (client *StagesStorageCacheHttpClient) GetStagesBySignature(_ context.Context, projectName, signature string) (bool, []image.StageID, error) {
 	var request = GetStagesBySignatureRequest{projectName, signature}
 	var response GetStagesBySignatureResponse
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "get-stages-by-signature"), request, &response); err != nil {
@@ -50,7 +51,7 @@ func (client *StagesStorageCacheHttpClient) GetStagesBySignature(projectName, si
 	return response.Found, response.Stages, response.Err.Error
 }
 
-func (client *StagesStorageCacheHttpClient) StoreStagesBySignature(projectName, signature string, stages []image.StageID) error {
+func (client *StagesStorageCacheHttpClient) StoreStagesBySignature(_ context.Context, projectName, signature string, stages []image.StageID) error {
 	var request = StoreStagesBySignatureRequest{projectName, signature, stages}
 	var response StoreStagesBySignatureResponse
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "store-stages-by-signature"), request, &response); err != nil {
@@ -59,7 +60,7 @@ func (client *StagesStorageCacheHttpClient) StoreStagesBySignature(projectName, 
 	return response.Err.Error
 }
 
-func (client *StagesStorageCacheHttpClient) DeleteStagesBySignature(projectName, signature string) error {
+func (client *StagesStorageCacheHttpClient) DeleteStagesBySignature(_ context.Context, projectName, signature string) error {
 	var request = DeleteStagesBySignatureRequest{projectName, signature}
 	var response DeleteStagesBySignatureResponse
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "delete-stages-by-signature"), request, &response); err != nil {

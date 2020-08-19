@@ -3,18 +3,18 @@ package list
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -30,7 +30,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project stages from local stages storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -70,6 +70,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run(projectNames ...string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -106,19 +108,22 @@ func run(projectNames ...string) error {
 		}
 
 		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-		if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+		if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 			return err
 		}
 
-		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-		if err := logboek.Default.LogProcess("Project "+projectName, logProcessOptions, func() error {
-			stagesPurgeOptions := cleaning.StagesPurgeOptions{
-				RmContainersThatUseWerfImages: cmdData.Force,
-				DryRun:                        *commonCmdData.DryRun,
-			}
+		if err := logboek.Default().LogProcess("Project " + projectName).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				stagesPurgeOptions := cleaning.StagesPurgeOptions{
+					RmContainersThatUseWerfImages: cmdData.Force,
+					DryRun:                        *commonCmdData.DryRun,
+				}
 
-			return cleaning.StagesPurge(projectName, storageLockManager, stagesManager, stagesPurgeOptions)
-		}); err != nil {
+				return cleaning.StagesPurge(ctx, projectName, storageLockManager, stagesManager, stagesPurgeOptions)
+			}); err != nil {
 			return err
 		}
 	}

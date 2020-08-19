@@ -17,7 +17,9 @@ import (
 func SetupCmdActionConfig(cmdData *common.CmdData, cmd *cobra.Command, actionConfig *action.Configuration) {
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		helm_v3.InitActionConfig(helm_v3_cmd.Settings, actionConfig, helm_v3.InitActionConfigOptions{
+		ctx := common.BackgroundContext()
+
+		helm_v3.InitActionConfig(ctx, helm_v3_cmd.Settings, actionConfig, helm_v3.InitActionConfigOptions{
 			StatusProgressPeriod:      time.Duration(*cmdData.StatusProgressPeriodSeconds) * time.Second,
 			HooksStatusProgressPeriod: time.Duration(*cmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		})
@@ -30,7 +32,7 @@ func SetupCmdActionConfig(cmdData *common.CmdData, cmd *cobra.Command, actionCon
 			return fmt.Errorf("cannot initialize kube: %s", err)
 		}
 
-		if err := common.InitKubedog(); err != nil {
+		if err := common.InitKubedog(ctx); err != nil {
 			return fmt.Errorf("cannot init kubedog: %s", err)
 		}
 

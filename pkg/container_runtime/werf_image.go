@@ -1,5 +1,7 @@
 package container_runtime
 
+import "context"
+
 type WerfImage struct {
 	*StageImage
 }
@@ -8,10 +10,10 @@ func NewWerfImage(fromImage *StageImage, name string, localDockerServerRuntime *
 	return &WerfImage{StageImage: NewStageImage(fromImage, name, localDockerServerRuntime)}
 }
 
-func (i *WerfImage) Tag() error {
-	return i.StageImage.Tag(i.name)
+func (i *WerfImage) Tag(ctx context.Context) error {
+	return i.StageImage.Tag(ctx, i.name)
 }
 
-func (i *WerfImage) Export() error {
-	return i.StageImage.Export(i.name)
+func (i *WerfImage) Export(ctx context.Context) error {
+	return i.StageImage.Export(ctx, i.name)
 }

@@ -1,6 +1,7 @@
 package import_server
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -11,10 +12,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/docker"
-
 	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/stapel"
 )
 
@@ -28,8 +29,8 @@ type RsyncServer struct {
 	AuthUser, AuthPassword string
 }
 
-func RunRsyncServer(dockerImageName string, tmpDir string) (*RsyncServer, error) {
-	logboek.Debug.LogF("RunRsyncServer for docker image %q\n", dockerImageName)
+func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) (*RsyncServer, error) {
+	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{
 		Port:                rsyncServerPort,
@@ -38,7 +39,7 @@ func RunRsyncServer(dockerImageName string, tmpDir string) (*RsyncServer, error)
 		AuthPassword:        generateSecureRandomString(16),
 	}
 
-	stapelContainerName, err := stapel.GetOrCreateContainer()
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,15 +85,15 @@ strict modes = false
 		"--no-detach",
 		"--config=/.werf/rsyncd.conf",
 	}
-	logboek.Debug.LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
+	logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 	if output, err := docker.CliRun_RecordedOutput(runArgs...); err != nil {
-		logboek.LogErrorF("%s", output)
+		logboek.Context(ctx).Error().LogF("%s", output)
 		return nil, err
 	}
 
-	logboek.Debug.LogF("Inspect container %s\n", srv.DockerContainerName)
+	logboek.Context(ctx).Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
 
-	if inspect, err := docker.ContainerInspect(srv.DockerContainerName); err != nil {
+	if inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName); err != nil {
 		return nil, fmt.Errorf("unable to inspect import server container %s: %s", srv.DockerContainerName, err)
 	} else {
 		if inspect.NetworkSettings == nil {
@@ -104,15 +105,15 @@ strict modes = false
 	return srv, nil
 }
 
-func (srv *RsyncServer) Shutdown() error {
+func (srv *RsyncServer) Shutdown(ctx context.Context) error {
 	if output, err := docker.CliRm_RecordedOutput("--force", srv.DockerContainerName); err != nil {
-		logboek.LogErrorF("%s", output)
+		logboek.Context(ctx).Error().LogF("%s", output)
 		return fmt.Errorf("unable to remove container %s: %s", srv.DockerContainerName, err)
 	}
 	return nil
 }
 
-func (srv *RsyncServer) GetCopyCommand(importConfig *config.Import) string {
+func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config.Import) string {
 	var args []string
 
 	rsyncImportPathSpec := fmt.Sprintf("rsync://%s@%s:%s/import/%s", srv.AuthUser, srv.IPAddress, srv.Port, importConfig.Add)
@@ -185,7 +186,7 @@ func (srv *RsyncServer) GetCopyCommand(importConfig *config.Import) string {
 
 	command := strings.Join(args, " && ")
 
-	logboek.Debug.LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 
 	return command
 }

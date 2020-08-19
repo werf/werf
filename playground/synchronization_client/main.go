@@ -17,11 +17,11 @@ func doMain() error {
 		return err
 	}
 
-	if err := logboek.Init(); err != nil {
+	if err := logboek.Context(ctx).Init(); err != nil {
 		return err
 	}
 
-	logboek.SetLevel(logboek.Debug)
+	logboek.Context(ctx).SetLevel(logboek.Context(ctx).Debug)
 
 	client := synchronization_server.NewLockManagerHttpClient("http://localhost:55581/lock-manager")
 	if lockHandle, err := client.LockStage("myproj", "5050505050"); err != nil {

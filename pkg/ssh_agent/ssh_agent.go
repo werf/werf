@@ -1,6 +1,7 @@
 package ssh_agent
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,7 @@ var (
 	tmpSockPath string
 )
 
-func Init(keys []string) error {
+func Init(ctx context.Context, keys []string) error {
 	for _, key := range keys {
 		if keyExists, err := util.FileExists(key); !keyExists {
 			return fmt.Errorf("specified ssh key %s does not exist", key)
@@ -32,7 +33,7 @@ func Init(keys []string) error {
 	}
 
 	if len(keys) > 0 {
-		agentSock, err := runSSHAgentWithKeys(keys)
+		agentSock, err := runSSHAgentWithKeys(ctx, keys)
 		if err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func Init(keys []string) error {
 	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
 	if systemAgentSock != "" && systemAgentSockExists {
 		SSHAuthSock = systemAgentSock
-		logboek.Info.LogF("Using system ssh-agent: %s\n", systemAgentSock)
+		logboek.Context(ctx).Info().LogF("Using system ssh-agent: %s\n", systemAgentSock)
 		return nil
 	}
 
@@ -64,12 +65,12 @@ func Init(keys []string) error {
 		for _, key := range defaultKeys {
 			keyData, err := ioutil.ReadFile(key)
 			if err != nil {
-				logboek.Warn.LogF("WARNING: cannot read default key %s: %s\n", key, err)
+				logboek.Context(ctx).Warn().LogF("WARNING: cannot read default key %s: %s\n", key, err)
 				continue
 			}
 			_, err = ssh.ParseRawPrivateKey(keyData)
 			if err != nil {
-				logboek.Warn.LogF("WARNING: default key %s validation error: %s\n", key, err)
+				logboek.Context(ctx).Warn().LogF("WARNING: default key %s validation error: %s\n", key, err)
 				continue
 			}
 
@@ -77,7 +78,7 @@ func Init(keys []string) error {
 		}
 
 		if len(validKeys) > 0 {
-			agentSock, err := runSSHAgentWithKeys(validKeys)
+			agentSock, err := runSSHAgentWithKeys(ctx, validKeys)
 			if err != nil {
 				return err
 			}
@@ -99,14 +100,14 @@ func Terminate() error {
 	return nil
 }
 
-func runSSHAgentWithKeys(keys []string) (string, error) {
-	agentSock, err := runSSHAgent()
+func runSSHAgentWithKeys(ctx context.Context, keys []string) (string, error) {
+	agentSock, err := runSSHAgent(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error running ssh agent: %s", err)
 	}
 
 	for _, key := range keys {
-		err := addSSHKey(agentSock, key)
+		err := addSSHKey(ctx, agentSock, key)
 		if err != nil {
 			return "", fmt.Errorf("error adding ssh key %s: %s", key, err)
 		}
@@ -115,7 +116,7 @@ func runSSHAgentWithKeys(keys []string) (string, error) {
 	return agentSock, nil
 }
 
-func runSSHAgent() (string, error) {
+func runSSHAgent(ctx context.Context) (string, error) {
 	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewV4().String())
 	tmpSockPath = sockPath
 
@@ -129,7 +130,7 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	logboek.Info.LogF("Running ssh agent on unix sock: %s\n", sockPath)
+	logboek.Context(ctx).Info().LogF("Running ssh agent on unix sock: %s\n", sockPath)
 
 	go func() {
 		agnt := agent.NewKeyring()
@@ -137,7 +138,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				logboek.LogWarnF("WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logboek.Context(ctx).Warn().LogF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -146,13 +147,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					logboek.LogWarnF("WARNING: ssh-agent server error: %s\n", err)
+					logboek.Context(ctx).Warn().LogF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					logboek.LogWarnF("WARNING: ssh-agent server connection close error: %s\n", err)
+					logboek.Context(ctx).Warn().LogF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()
@@ -162,7 +163,7 @@ func runSSHAgent() (string, error) {
 	return sockPath, nil
 }
 
-func addSSHKey(authSock string, key string) error {
+func addSSHKey(ctx context.Context, authSock string, key string) error {
 	conn, err := net.Dial("unix", authSock)
 	if err != nil {
 		return fmt.Errorf("error dialing with ssh agent %s: %s", authSock, err)
@@ -186,7 +187,7 @@ func addSSHKey(authSock string, key string) error {
 		return err
 	}
 
-	logboek.Info.LogF("Added private key %s to ssh agent %s\n", key, authSock)
+	logboek.Context(ctx).Info().LogF("Added private key %s to ssh agent %s\n", key, authSock)
 
 	return nil
 }

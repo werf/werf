@@ -1,6 +1,7 @@
 package host_cleaning
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -22,7 +23,7 @@ type HostCleanupOptions struct {
 	DryRun bool
 }
 
-func HostCleanup(options HostCleanupOptions) error {
+func HostCleanup(ctx context.Context, options HostCleanupOptions) error {
 	commonOptions := CommonOptions{
 		SkipUsedImages: true,
 		RmiForce:       false,
@@ -30,21 +31,21 @@ func HostCleanup(options HostCleanupOptions) error {
 		DryRun:         options.DryRun,
 	}
 
-	return werf.WithHostLock("host-cleanup", lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		if err := logboek.LogProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
-			return safeContainersCleanup(commonOptions)
+	return werf.WithHostLock(ctx, "host-cleanup", lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		if err := logboek.Context(ctx).LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
+			return safeContainersCleanup(ctx, commonOptions)
 		}); err != nil {
 			return err
 		}
 
-		if err := logboek.LogProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
-			return safeDanglingImagesCleanup(commonOptions)
+		if err := logboek.Context(ctx).LogProcess("Running cleanup for dangling docker images created by werf").DoError(func() error {
+			return safeDanglingImagesCleanup(ctx, commonOptions)
 		}); err != nil {
 			return nil
 		}
 
-		return werf.WithHostLock("gc", lockgate.AcquireOptions{}, func() error {
-			if err := tmp_manager.GC(commonOptions.DryRun); err != nil {
+		return werf.WithHostLock(ctx, "gc", lockgate.AcquireOptions{}, func() error {
+			if err := tmp_manager.GC(ctx, commonOptions.DryRun); err != nil {
 				return fmt.Errorf("tmp files gc failed: %s", err)
 			}
 
@@ -53,8 +54,8 @@ func HostCleanup(options HostCleanupOptions) error {
 	})
 }
 
-func safeDanglingImagesCleanup(options CommonOptions) error {
-	images, err := werfImagesByFilterSet(danglingFilterSet())
+func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
+	images, err := werfImagesByFilterSet(ctx, danglingFilterSet())
 	if err != nil {
 		return err
 	}
@@ -64,13 +65,13 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
 			imageLockName := container_runtime.ImageLockName(imgName)
-			isLocked, lock, err := werf.AcquireHostLock(imageLockName, lockgate.AcquireOptions{NonBlocking: true})
+			isLocked, lock, err := werf.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
 			}
 
 			if !isLocked {
-				logboek.Debug.LogFDetails("Ignore dangling image %s processed by another werf process\n", imgName)
+				logboek.Context(ctx).Debug().LogFDetails("Ignore dangling image %s processed by another werf process\n", imgName)
 				continue
 			}
 
@@ -82,20 +83,20 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 		}
 	}
 
-	imagesToRemove, err = processUsedImages(imagesToRemove, options)
+	imagesToRemove, err = processUsedImages(ctx, imagesToRemove, options)
 	if err != nil {
 		return err
 	}
 
-	if err := imagesRemove(imagesToRemove, options); err != nil {
+	if err := imagesRemove(ctx, imagesToRemove, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func safeContainersCleanup(options CommonOptions) error {
-	containers, err := werfContainersByFilterSet(filters.NewArgs())
+func safeContainersCleanup(ctx context.Context, options CommonOptions) error {
+	containers, err := werfContainersByFilterSet(ctx, filters.NewArgs())
 	if err != nil {
 		return fmt.Errorf("cannot get stages build containers: %s", err)
 	}
@@ -110,24 +111,24 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		if containerName == "" {
-			logboek.LogWarnF("Ignore bad container %s\n", container.ID)
+			logboek.Context(ctx).Warn().LogF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
 		err := func() error {
 			containerLockName := container_runtime.ContainerLockName(containerName)
-			isLocked, lock, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{NonBlocking: true})
+			isLocked, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
 			}
 
 			if !isLocked {
-				logboek.Default.LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
+				logboek.Context(ctx).Default().LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
 			defer werf.ReleaseHostLock(lock)
 
-			if err := containersRemove([]types.Container{container}, options); err != nil {
+			if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)
 			}
 

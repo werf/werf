@@ -27,7 +27,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Switch current project stages storage from :local to repo",
 		Long:                  common.GetLongCommandDescription("Switch current project stages storage to another"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -67,6 +67,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runSwitch() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -124,7 +126,7 @@ func runSwitch() error {
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
 
-	if err := stagesManager.UseStagesStorage(fromStagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, fromStagesStorage); err != nil {
 		return err
 	}
 
@@ -136,19 +138,19 @@ func runSwitch() error {
 		return fmt.Errorf("cannot switch to local stages storage, specify repo address --to=REPO")
 	}
 
-	if err := stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{}); err != nil {
+	if err := stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{}); err != nil {
 		return err
 	}
 
-	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{}); err != nil {
 		return err
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	if err := stagesManager.SetStagesSwitchFromLocalBlock(toStagesStorage); err != nil {
+	if err := stagesManager.SetStagesSwitchFromLocalBlock(ctx, toStagesStorage); err != nil {
 		return err
 	}
 
-	return stages_manager.SyncStages(projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
+	return stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
 }

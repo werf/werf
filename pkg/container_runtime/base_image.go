@@ -1,6 +1,7 @@
 package container_runtime
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/image"
@@ -10,8 +11,8 @@ import (
 )
 
 type baseImage struct {
-	name             string
-	inspect          *types.ImageInspect
+	name      string
+	inspect   *types.ImageInspect
 	stageDesc *image.StageDescription
 
 	LocalDockerServerRuntime *LocalDockerServerRuntime
@@ -32,8 +33,8 @@ func (i *baseImage) SetName(name string) {
 	i.name = name
 }
 
-func (i *baseImage) MustResetInspect() error {
-	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(i.Name()); err != nil {
+func (i *baseImage) MustResetInspect(ctx context.Context) error {
+	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(ctx, i.Name()); err != nil {
 		return fmt.Errorf("unable to get inspect for image %s: %s", i.Name(), err)
 	} else {
 		i.SetInspect(inspect)
@@ -57,8 +58,8 @@ func (i *baseImage) UnsetInspect() {
 	i.inspect = nil
 }
 
-func (i *baseImage) Untag() error {
-	if err := docker.CliRmi(i.name, "--force"); err != nil {
+func (i *baseImage) Untag(ctx context.Context) error {
+	if err := docker.CliRmi(ctx, i.name, "--force"); err != nil {
 		return err
 	}
 

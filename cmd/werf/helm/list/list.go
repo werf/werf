@@ -1,13 +1,10 @@
 package ls
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy"
@@ -76,11 +73,13 @@ func NewCmd() *cobra.Command {
 }
 
 func runLs(filter string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -99,11 +98,11 @@ func runLs(filter string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
-	if err := helm.Ls(context.Background(), os.Stdout, filter, CmdData.LsOptions); err != nil {
+	if err := helm.Ls(ctx, os.Stdout, filter, CmdData.LsOptions); err != nil {
 		return err
 	}
 

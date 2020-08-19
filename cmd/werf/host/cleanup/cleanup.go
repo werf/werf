@@ -34,7 +34,7 @@ The data include:
 It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, deploy, stages and images cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -60,6 +60,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 }
 
 func runGC() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -68,7 +70,7 @@ func runGC() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -78,7 +80,7 @@ func runGC() error {
 
 	logboek.LogOptionalLn()
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
-	if err := host_cleaning.HostCleanup(hostCleanupOptions); err != nil {
+	if err := host_cleaning.HostCleanup(ctx, hostCleanupOptions); err != nil {
 		return err
 	}
 

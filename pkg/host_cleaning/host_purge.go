@@ -1,6 +1,7 @@
 package host_cleaning
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -22,7 +23,7 @@ type HostPurgeOptions struct {
 	RmContainersThatUseWerfImages bool
 }
 
-func HostPurge(options HostPurgeOptions) error {
+func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 	commonOptions := CommonOptions{
 		RmiForce:                      true,
 		RmForce:                       true,
@@ -30,8 +31,8 @@ func HostPurge(options HostPurgeOptions) error {
 		DryRun:                        options.DryRun,
 	}
 
-	if err := logboek.LogProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
-		if err := werfContainersFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
+	if err := logboek.Context(ctx).LogProcess("Running werf docker containers purge").DoError(func() error {
+		if err := werfContainersFlushByFilterSet(ctx, filters.NewArgs(), commonOptions); err != nil {
 			return err
 		}
 
@@ -40,18 +41,18 @@ func HostPurge(options HostPurgeOptions) error {
 		return err
 	}
 
-	if err := logboek.LogProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.Context(ctx).LogProcess("Running werf docker images purge").DoError(func() error {
 		filterSet := filters.NewArgs()
 		filterSet.Add("label", image.WerfLabel)
 
-		if err := werfImagesFlushByFilterSet(filterSet, commonOptions); err != nil {
+		if err := werfImagesFlushByFilterSet(ctx, filterSet, commonOptions); err != nil {
 			return err
 		}
 
 		filterSet = filters.NewArgs()
 		filterSet.Add("reference", fmt.Sprintf(storage.LocalManagedImageRecord_ImageNameFormat, "*"))
 
-		if err := werfImagesFlushByFilterSet(filterSet, commonOptions); err != nil {
+		if err := werfImagesFlushByFilterSet(ctx, filterSet, commonOptions); err != nil {
 			return err
 		}
 
@@ -60,18 +61,18 @@ func HostPurge(options HostPurgeOptions) error {
 		return err
 	}
 
-	if err := tmp_manager.Purge(commonOptions.DryRun); err != nil {
+	if err := tmp_manager.Purge(ctx, commonOptions.DryRun); err != nil {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	if err := logboek.LogProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
-		return purgeHomeWerfFiles(commonOptions.DryRun)
+	if err := logboek.Context(ctx).LogProcess("Running werf home data purge").DoError(func() error {
+		return purgeHomeWerfFiles(ctx, commonOptions.DryRun)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.LogProcess("Deleting stapel", logboek.LogProcessOptions{}, func() error {
-		return deleteStapel(commonOptions.DryRun)
+	if err := logboek.Context(ctx).LogProcess("Deleting stapel").DoError(func() error {
+		return deleteStapel(ctx, commonOptions.DryRun)
 	}); err != nil {
 		return fmt.Errorf("stapel delete failed: %s", err)
 	}
@@ -79,23 +80,23 @@ func HostPurge(options HostPurgeOptions) error {
 	return nil
 }
 
-func deleteStapel(dryRun bool) error {
+func deleteStapel(ctx context.Context, dryRun bool) error {
 	if dryRun {
 		return nil
 	}
 
-	if err := stapel.Purge(); err != nil {
+	if err := stapel.Purge(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func purgeHomeWerfFiles(dryRun bool) error {
+func purgeHomeWerfFiles(ctx context.Context, dryRun bool) error {
 	pathsToRemove := []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()}
 
 	for _, path := range pathsToRemove {
-		logboek.LogLn(path)
+		logboek.Context(ctx).LogLn(path)
 	}
 
 	if dryRun {
@@ -111,6 +112,6 @@ func purgeHomeWerfFiles(dryRun bool) error {
 
 		return nil
 	} else {
-		return util.RemoveHostDirsWithLinuxContainer(werf.GetHomeDir(), pathsToRemove)
+		return util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetHomeDir(), pathsToRemove)
 	}
 }

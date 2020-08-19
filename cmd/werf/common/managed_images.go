@@ -1,12 +1,12 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/storage"
-
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -18,9 +18,9 @@ func GetManagedImageName(userSpecifiedImageName string) string {
 	return userSpecifiedImageName
 }
 
-func GetManagedImagesNames(projectName string, stagesStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
+func GetManagedImagesNames(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
 	var imagesNames []string
-	if managedImages, err := stagesStorage.GetManagedImages(projectName); err != nil {
+	if managedImages, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
 		return nil, fmt.Errorf("unable to get managed images for project %q: %s", projectName, err)
 	} else {
 		imagesNames = append(imagesNames, managedImages...)

@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -8,12 +9,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -109,19 +109,19 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) FetchDependencies(_ Conveyor, _ container_runtime.ContainerRuntime) error {
+func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime) error {
 	return nil
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetNextStageDependencies(_ Conveyor) (string, error) {
+func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (string, error) {
 	return "", nil
 }
 
-func (s *BaseStage) getNextStageGitDependencies(c Conveyor) (string, error) {
+func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if s.image.GetStageDescription() != nil {
@@ -131,7 +131,7 @@ func (s *BaseStage) getNextStageGitDependencies(c Conveyor) (string, error) {
 				args = append(args, commitInfo.Commit)
 			}
 		} else {
-			latestCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
+			latestCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 			if err != nil {
 				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %s", gitMapping.Name, err)
 			}
@@ -139,13 +139,13 @@ func (s *BaseStage) getNextStageGitDependencies(c Conveyor) (string, error) {
 		}
 	}
 
-	logboek.Debug.LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
+	logboek.Context(ctx).Debug().LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *BaseStage) IsEmpty(_ Conveyor, _ container_runtime.ImageInterface) (bool, error) {
+func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ container_runtime.ImageInterface) (bool, error) {
 	return false, nil
 }
 
@@ -161,12 +161,12 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	return oldestStage, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
+func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
 	var suitableStages []*image.StageDescription
 	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
-		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(c)
+		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
 		}
@@ -188,7 +188,7 @@ ScanImages:
 
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
-				logboek.LogErrorF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
@@ -199,17 +199,17 @@ ScanImages:
 				commitToCheckAncestry = imageCommitInfo.Commit
 			}
 
-			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(commitToCheckAncestry, currentCommit)
+			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
 			if err != nil {
 				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commitToCheckAncestry, currentCommit, err)
 			}
 
 			if !isOurAncestor {
-				logboek.Debug.LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Context(ctx).Debug().LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
 				continue ScanImages
 			}
 
-			logboek.Debug.LogF(
+			logboek.Context(ctx).Debug().LogF(
 				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
 				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
 			)
@@ -221,17 +221,17 @@ ScanImages:
 	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectSuitableStage(c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	if err := s.addProjectRepoCommitToLabels(c, image); err != nil {
+	if err := s.addProjectRepoCommitToLabels(ctx, c, image); err != nil {
 		return err
 	}
 
@@ -250,8 +250,8 @@ func (s *BaseStage) PrepareImage(c Conveyor, prevBuiltImage, image container_run
 	return nil
 }
 
-func (s *BaseStage) addProjectRepoCommitToLabels(c Conveyor, image container_runtime.ImageInterface) error {
-	if commit, err := c.GetProjectRepoCommit(); err != nil {
+func (s *BaseStage) addProjectRepoCommitToLabels(ctx context.Context, c Conveyor, image container_runtime.ImageInterface) error {
+	if commit, err := c.GetProjectRepoCommit(ctx); err != nil {
 		return fmt.Errorf("unable to get project repo commit: %s", err)
 	} else if commit != "" {
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: commit})
@@ -259,7 +259,7 @@ func (s *BaseStage) addProjectRepoCommitToLabels(c Conveyor, image container_run
 	return nil
 }
 
-func (s *BaseStage) PreRunHook(_ Conveyor) error {
+func (s *BaseStage) PreRunHook(_ context.Context, _ Conveyor) error {
 	return nil
 }
 

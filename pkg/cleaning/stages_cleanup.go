@@ -1,21 +1,22 @@
 package cleaning
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -25,20 +26,22 @@ type StagesCleanupOptions struct {
 	DryRun        bool
 }
 
-func StagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
+func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
 	m := newStagesCleanupManager(projectName, imagesRepo, stagesManager, options)
 
-	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	return logboek.Default.LogProcess(
-		"Running stages cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.run,
-	)
+	return logboek.Context(ctx).Default().LogProcess("Running stages cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			return m.run(ctx)
+		})
 }
 
 func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) *stagesCleanupManager {
@@ -61,8 +64,8 @@ type stagesCleanupManager struct {
 	DryRun        bool
 }
 
-func (m *stagesCleanupManager) initImagesRepoImageList() error {
-	repoImages, err := selectRepoImagesFromImagesRepo(m.ImagesRepo, m.ImageNameList)
+func (m *stagesCleanupManager) initImagesRepoImageList(ctx context.Context) error {
+	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
@@ -76,9 +79,9 @@ func (m *stagesCleanupManager) setImagesRepoImageList(repoImageList []*image.Inf
 	m.imagesRepoImageList = &repoImageList
 }
 
-func (m *stagesCleanupManager) getOrInitImagesRepoImageList() ([]*image.Info, error) {
+func (m *stagesCleanupManager) getOrInitImagesRepoImageList(ctx context.Context) ([]*image.Info, error) {
 	if m.imagesRepoImageList == nil {
-		if err := m.initImagesRepoImageList(); err != nil {
+		if err := m.initImagesRepoImageList(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -86,7 +89,7 @@ func (m *stagesCleanupManager) getOrInitImagesRepoImageList() ([]*image.Info, er
 	return *m.imagesRepoImageList, nil
 }
 
-func (m *stagesCleanupManager) run() error {
+func (m *stagesCleanupManager) run(ctx context.Context) error {
 	deleteImageOptions := storage.DeleteImageOptions{
 		RmiForce:      false,
 		SkipUsedImage: true,
@@ -94,12 +97,12 @@ func (m *stagesCleanupManager) run() error {
 	}
 
 	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
-	return werf.WithHostLock(lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		var stagesImageList []*image.Info
 		stagesByImageName := map[string]*image.StageDescription{}
 
-		if err := logboek.Default.LogProcess("Fetching stages", logboek.LevelLogProcessOptions{}, func() error {
-			stages, err := m.StagesManager.GetAllStages()
+		if err := logboek.Context(ctx).Default().LogProcess("Fetching stages").DoError(func() error {
+			stages, err := m.StagesManager.GetAllStages(ctx)
 			if err != nil {
 				return err
 			}
@@ -117,8 +120,8 @@ func (m *stagesCleanupManager) run() error {
 		var repoImageList []*image.Info
 		var err error
 
-		if err := logboek.Default.LogProcess("Fetching repo images", logboek.LevelLogProcessOptions{}, func() error {
-			repoImageList, err = m.getOrInitImagesRepoImageList()
+		if err := logboek.Context(ctx).Default().LogProcess("Fetching repo images").DoError(func() error {
+			repoImageList, err = m.getOrInitImagesRepoImageList(ctx)
 			return err
 		}); err != nil {
 			return err
@@ -147,8 +150,8 @@ func (m *stagesCleanupManager) run() error {
 			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
 		}
 
-		return logboek.Default.LogProcess("Deleting stages tags", logboek.LevelLogProcessOptions{}, func() error {
-			return deleteStageInStagesStorage(m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
+		return logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
+			return deleteStageInStagesStorage(ctx, m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
 		})
 	})
 }
@@ -216,11 +219,11 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 	return
 }
 
-func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+func deleteStageInStagesStorage(ctx context.Context, stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
 	for _, stageDesc := range stages {
 		if !dryRun {
-			if err := stagesManager.DeleteStages(options, stageDesc); err != nil {
-				if err := handleDeleteStageOrImageError(err, stageDesc.Info.Name); err != nil {
+			if err := stagesManager.DeleteStages(ctx, options, stageDesc); err != nil {
+				if err := handleDeleteStageOrImageError(ctx, err, stageDesc.Info.Name); err != nil {
 					return err
 				}
 
@@ -228,14 +231,14 @@ func deleteStageInStagesStorage(stagesManager *stages_manager.StagesManager, opt
 			}
 		}
 
-		logboek.Default.LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
-		logboek.LogOptionalLn()
+		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.Context(ctx).LogOptionalLn()
 	}
 
 	return nil
 }
 
-func handleDeleteStageOrImageError(err error, imageName string) error {
+func handleDeleteStageOrImageError(ctx context.Context, err error, imageName string) error {
 	switch err.(type) {
 	case docker_registry.DockerHubUnauthorizedError:
 		return fmt.Errorf(`%s
@@ -255,7 +258,7 @@ Read more details here https://werf.io/documentation/reference/working_with_dock
 			return err
 		}
 
-		logboek.Warn.LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
+		logboek.Context(ctx).Warn().LogF("WARNING: Image %s deletion failed: %s\n", imageName, err)
 		return nil
 	}
 }

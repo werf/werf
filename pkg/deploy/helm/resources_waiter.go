@@ -151,8 +151,8 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	}
 
 	// NOTE: use context from resources-waiter object here, will be changed in helm 3
-	logboek.LogOptionalLn()
-	return logboek.LogProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
+	logboek.Context(waiter.Ctx).LogOptionalLn()
+	return logboek.Context(waiter.Ctx).LogProcess("Waiting for release resources to become ready").DoError(func() error {
 		return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
 			StatusProgressPeriod: waiter.StatusProgressPeriod,
 			Options: tracker.Options{
@@ -166,8 +166,8 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 func makeMultitrackSpec(ctx context.Context, objMeta *metav1.ObjectMeta, failuresCountOptions allowedFailuresCountOptions, kind string) (*multitrack.MultitrackSpec, error) {
 	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, failuresCountOptions)
 	if err != nil {
-		logboek.LogWarnLn()
-		logboek.LogWarnF("WARNING %s\n", err)
+		logboek.Context(ctx).Warn().LogLn()
+		logboek.Context(ctx).Warn().LogF("WARNING %s\n", err)
 		return nil, nil
 	}
 
@@ -331,7 +331,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 				specs.Jobs = append(specs.Jobs, *spec)
 			}
 
-			return logboek.LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name), logboek.LogProcessOptions{}, func() error {
+			return logboek.Context(waiter.Ctx).LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name)).DoError(func() error {
 				return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
 					StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
 					Options: tracker.Options{
@@ -342,7 +342,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 			})
 
 		default:
-			logboek.Default.LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
+			logboek.Context(waiter.Ctx).Default().LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
 		}
 	}
 

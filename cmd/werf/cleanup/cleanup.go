@@ -39,7 +39,7 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
 		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -88,11 +88,13 @@ It is safe to run this command periodically (daily is enough) by automated clean
 }
 
 func runCleanup() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -116,7 +118,7 @@ func runCleanup() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	if err := common.InitKubedog(); err != nil {
+	if err := common.InitKubedog(ctx); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
@@ -127,7 +129,7 @@ func runCleanup() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -161,7 +163,7 @@ func runCleanup() error {
 	}
 
 	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(stagesStorage); err != nil {
+	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -170,11 +172,11 @@ func runCleanup() error {
 		return err
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imagesNames)
+	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
 	if err != nil {
@@ -215,7 +217,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(projectName, imagesRepo, storageLockManager, stagesManager, cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(ctx, projectName, imagesRepo, storageLockManager, stagesManager, cleanupOptions); err != nil {
 		return err
 	}
 

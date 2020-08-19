@@ -61,6 +61,8 @@ func NewCmd() *cobra.Command {
 }
 
 func run(imageNames []string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -82,7 +84,7 @@ func run(imageNames []string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir()
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -126,7 +128,7 @@ func run(imageNames []string) error {
 
 	errs := []error{}
 	for _, imageName := range imageNames {
-		if err := stagesStorage.RmManagedImage(projectName, common.GetManagedImageName(imageName)); err != nil {
+		if err := stagesStorage.RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 			errs = append(errs, fmt.Errorf("unable to remove known config image name %q of project %q: %s", imageName, projectName, err))
 		}
 	}

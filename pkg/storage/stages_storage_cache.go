@@ -1,13 +1,17 @@
 package storage
 
-import "github.com/werf/werf/pkg/image"
+import (
+	"context"
+
+	"github.com/werf/werf/pkg/image"
+)
 
 type StagesStorageCache interface {
-	GetAllStages(projectName string) (bool, []image.StageID, error)
-	DeleteAllStages(projectName string) error
-	GetStagesBySignature(projectName, signature string) (bool, []image.StageID, error)
-	StoreStagesBySignature(projectName, signature string, stages []image.StageID) error
-	DeleteStagesBySignature(projectName, signature string) error
+	GetAllStages(ctx context.Context, projectName string) (bool, []image.StageID, error)
+	DeleteAllStages(ctx context.Context, projectName string) error
+	GetStagesBySignature(ctx context.Context, projectName, signature string) (bool, []image.StageID, error)
+	StoreStagesBySignature(ctx context.Context, projectName, signature string, stages []image.StageID) error
+	DeleteStagesBySignature(ctx context.Context, projectName, signature string) error
 
 	String() string
 }

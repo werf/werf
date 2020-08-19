@@ -42,12 +42,12 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 		return nil
 	}
 
-	lockManager, err := NewLockManager(namespace)
+	lockManager, err := NewLockManager(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	if lock, err := lockManager.LockRelease(release); err != nil {
+	if lock, err := lockManager.LockRelease(ctx, release); err != nil {
 		return err
 	} else {
 		defer lockManager.Unlock(lock)
@@ -55,14 +55,14 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 
 	var werfChart *werf_chart.WerfChart
 
-	if err := logboek.Default.LogBlock("Deploy options", logboek.LevelLogBlockOptions{}, func() error {
+	if err := logboek.Context(ctx).Default().LogBlock("Deploy options").DoError(func() error {
 		if kube.Context != "" {
-			logboek.LogF("Kube-config context: %s\n", kube.Context)
+			logboek.Context(ctx).LogF("Kube-config context: %s\n", kube.Context)
 		}
-		logboek.LogF("Kubernetes namespace: %s\n", namespace)
-		logboek.LogF("Helm release storage namespace: %s\n", helmReleaseStorageNamespace)
-		logboek.LogF("Helm release storage type: %s\n", helmReleaseStorageType)
-		logboek.LogF("Helm release name: %s\n", release)
+		logboek.Context(ctx).LogF("Kubernetes namespace: %s\n", namespace)
+		logboek.Context(ctx).LogF("Helm release storage namespace: %s\n", helmReleaseStorageNamespace)
+		logboek.Context(ctx).LogF("Helm release storage type: %s\n", helmReleaseStorageType)
+		logboek.Context(ctx).LogF("Helm release name: %s\n", release)
 
 		m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
 		if err != nil {
@@ -76,9 +76,8 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 
 		serviceValuesRaw, _ := yaml.Marshal(serviceValues)
 		serviceValuesRawStr := strings.TrimRight(string(serviceValuesRaw), "\n")
-		_ = logboek.Info.LogBlock(fmt.Sprintf("Service values"), logboek.LevelLogBlockOptions{}, func() error {
-			logboek.Info.LogLn(serviceValuesRawStr)
-			return nil
+		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Service values")).Do(func() {
+			logboek.Context(ctx).Info().LogLn(serviceValuesRawStr)
 		})
 
 		werfChart, err = PrepareWerfChart(ctx, werfConfig.Meta.Project, helmChartDir, opts.Env, m, opts.SecretValues, serviceValues)
@@ -94,11 +93,11 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 
 		return nil
 	}); err != nil {
-		logboek.LogOptionalLn()
+		logboek.Context(ctx).LogOptionalLn()
 		return err
 	}
 
-	logboek.LogOptionalLn()
+	logboek.Context(ctx).LogOptionalLn()
 
 	helm.WerfTemplateEngine.InitWerfEngineExtraTemplatesFunctions(werfChart.DecodedSecretFilesData)
 	patchLoadChartfile(werfChart.Name)

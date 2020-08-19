@@ -1,15 +1,17 @@
 package build
 
 import (
+	"context"
 	"fmt"
-
-	"github.com/werf/werf/pkg/container_runtime"
 
 	"github.com/fatih/color"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
@@ -48,23 +50,23 @@ func (i *Image) LogDetailedName() string {
 	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 
-func (i *Image) LogProcessStyle() *logboek.Style {
+func (i *Image) LogProcessStyle() *style.Style {
 	return ImageLogProcessStyle(i.isArtifact)
 }
 
-func (i *Image) LogTagStyle() *logboek.Style {
+func (i *Image) LogTagStyle() *style.Style {
 	return ImageLogTagStyle(i.isArtifact)
 }
 
-func ImageLogProcessStyle(isArtifact bool) *logboek.Style {
+func ImageLogProcessStyle(isArtifact bool) *style.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func ImageLogTagStyle(isArtifact bool) *logboek.Style {
+func ImageLogTagStyle(isArtifact bool) *style.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func imageDefaultStyle(isArtifact bool) *logboek.Style {
+func imageDefaultStyle(isArtifact bool) *style.Style {
 	var attributes []color.Attribute
 	if isArtifact {
 		attributes = []color.Attribute{color.FgCyan, color.Bold}
@@ -72,7 +74,7 @@ func imageDefaultStyle(isArtifact bool) *logboek.Style {
 		attributes = []color.Attribute{color.FgYellow, color.Bold}
 	}
 
-	return &logboek.Style{Attributes: attributes}
+	return &style.Style{Attributes: attributes}
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -132,12 +134,12 @@ func (i *Image) GetBaseImage() *container_runtime.StageImage {
 	return i.baseImage
 }
 
-func (i *Image) FetchBaseImage(c *Conveyor) error {
+func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		containerRuntime := c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime)
 
-		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
+		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if inspect != nil {
 			// TODO: do not use container_runtime.StageImage for base image
@@ -146,26 +148,29 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
 			})
 
-			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(c, i.baseImage.Name())
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Name())
 			if baseImageRepoId == inspect.ID || err != nil {
 				if err != nil {
-					logboek.LogWarnF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-					logboek.LogWarnF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
-					logboek.Warn.LogOptionalLn()
+					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
+					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+					logboek.Context(ctx).Warn().LogOptionalLn()
 				}
 
 				return nil
 			}
 		}
 
-		logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-		if err := logboek.Default.LogProcess(fmt.Sprintf("Pulling base image %s", i.baseImage.Name()), logProcessOptions, func() error {
-			return c.ContainerRuntime.PullImageFromRegistry(&container_runtime.DockerImage{Image: i.baseImage})
-		}); err != nil {
+		if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseImage.Name()).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				return c.ContainerRuntime.PullImageFromRegistry(ctx, &container_runtime.DockerImage{Image: i.baseImage})
+			}); err != nil {
 			return err
 		}
 
-		if inspect, err := containerRuntime.GetImageInspect(i.baseImage.Name()); err != nil {
+		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if inspect == nil {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
@@ -176,10 +181,10 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 			})
 		}
 	case StageAsBaseImage:
-		if err := c.ContainerRuntime.RefreshImageObject(&container_runtime.DockerImage{Image: i.baseImage}); err != nil {
+		if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.DockerImage{Image: i.baseImage}); err != nil {
 			return err
 		}
-		if err := c.StagesManager.FetchStage(i.stageAsBaseImage); err != nil {
+		if err := c.StagesManager.FetchStage(ctx, i.stageAsBaseImage); err != nil {
 			return err
 		}
 	default:
@@ -189,7 +194,7 @@ func (i *Image) FetchBaseImage(c *Conveyor) error {
 	return nil
 }
 
-func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string) (string, error) {
+func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor, baseImageName string) (string, error) {
 	if i.baseImageRepoId != "" {
 		return i.baseImageRepoId, nil
 	} else if cachedBaseImageRepoId, exist := c.baseImagesRepoIdsCache[baseImageName]; exist {
@@ -201,9 +206,9 @@ func (i *Image) getFromBaseImageIdFromRegistry(c *Conveyor, baseImageName string
 
 	var fetchedBaseRepoImage *image.Info
 	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
-	if err := logboek.Info.LogProcessInline(processMsg, logboek.LevelLogProcessInlineOptions{}, func() error {
+	if err := logboek.Context(ctx).Info().LogProcessInline(processMsg).DoError(func() error {
 		var fetchImageIdErr error
-		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(baseImageName)
+		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, baseImageName)
 		if fetchImageIdErr != nil {
 			c.baseImagesRepoErrCache[baseImageName] = fetchImageIdErr
 			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)

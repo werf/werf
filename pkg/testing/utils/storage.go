@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -8,10 +10,11 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func NewImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.ImagesRepo {
+func NewImagesRepo(ctx context.Context, imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.ImagesRepo {
 	projectName := ProjectName()
 
 	i, err := storage.NewImagesRepo(
+		ctx,
 		projectName,
 		imagesRepoAddress,
 		imageRepoMode,
@@ -43,20 +46,20 @@ func NewStagesStorage(stagesStorageAddress string, implementationName string, do
 	return s
 }
 
-func ImagesRepoAllImageRepoTags(imagesRepo storage.ImagesRepo, imageName string) []string {
-	tags, err := imagesRepo.GetAllImageRepoTags(imageName)
+func ImagesRepoAllImageRepoTags(ctx context.Context, imagesRepo storage.ImagesRepo, imageName string) []string {
+	tags, err := imagesRepo.GetAllImageRepoTags(ctx, imageName)
 	Ω(err).ShouldNot(HaveOccurred())
 	return tags
 }
 
-func StagesStorageRepoImagesCount(stagesStorage storage.StagesStorage) int {
-	repoImages, err := stagesStorage.GetAllStages(ProjectName())
+func StagesStorageRepoImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+	repoImages, err := stagesStorage.GetAllStages(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }
 
-func StagesStorageManagedImagesCount(stagesStorage storage.StagesStorage) int {
-	managedImages, err := stagesStorage.GetManagedImages(ProjectName())
+func StagesStorageManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+	managedImages, err := stagesStorage.GetManagedImages(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(managedImages)
 }

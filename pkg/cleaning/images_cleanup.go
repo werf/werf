@@ -18,6 +18,8 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/image"
@@ -41,20 +43,22 @@ type ImagesCleanupOptions struct {
 	DryRun                        bool
 }
 
-func ImagesCleanup(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
+func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
 	m := newImagesCleanupManager(projectName, imagesRepo, stagesManager, options)
 
-	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	return logboek.Default.LogProcess(
-		"Running images cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.run,
-	)
+	return logboek.Context(ctx).Default().LogProcess("Running images cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			return m.run(ctx)
+		})
 }
 
 func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options ImagesCleanupOptions) *imagesCleanupManager {
@@ -94,9 +98,9 @@ type imagesCleanupManager struct {
 
 type GitRepo interface {
 	PlainOpen() (*git.Repository, error)
-	IsCommitExists(commit string) (bool, error)
-	TagsList() ([]string, error)
-	RemoteBranchesList() ([]string, error)
+	IsCommitExists(ctx context.Context, commit string) (bool, error)
+	TagsList(ctx context.Context) ([]string, error)
+	RemoteBranchesList(ctx context.Context) ([]string, error)
 }
 
 type ImagesCleanupPolicies struct {
@@ -119,13 +123,17 @@ type ImagesCleanupPolicies struct {
 	StagesSignatureStrategyExpiryPeriod    time.Duration
 }
 
-func (m *imagesCleanupManager) initRepoImagesData() error {
-	if err := logboek.Info.LogProcess("Fetching repo images", logboek.LevelLogProcessOptions{}, m.initRepoImages); err != nil {
+func (m *imagesCleanupManager) initRepoImagesData(ctx context.Context) error {
+	if err := logboek.Context(ctx).Info().LogProcess("Fetching repo images").DoError(func() error {
+		return m.initRepoImages(ctx)
+	}); err != nil {
 		return err
 	}
 
 	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
-		if err := logboek.Info.LogProcess("Fetching images metadata", logboek.LevelLogProcessOptions{}, m.initImageCommitHashImageMetadata); err != nil {
+		if err := logboek.Context(ctx).Info().LogProcess("Fetching images metadata").DoError(func() error {
+			return m.initImageCommitHashImageMetadata(ctx)
+		}); err != nil {
 			return err
 		}
 	}
@@ -133,8 +141,8 @@ func (m *imagesCleanupManager) initRepoImagesData() error {
 	return nil
 }
 
-func (m *imagesCleanupManager) initRepoImages() error {
-	repoImages, err := selectRepoImagesFromImagesRepo(m.ImagesRepo, m.ImageNameList)
+func (m *imagesCleanupManager) initRepoImages(ctx context.Context) error {
+	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.ImagesRepo, m.ImageNameList)
 	if err != nil {
 		return err
 	}
@@ -144,17 +152,17 @@ func (m *imagesCleanupManager) initRepoImages() error {
 	return nil
 }
 
-func (m *imagesCleanupManager) initImageCommitHashImageMetadata() error {
+func (m *imagesCleanupManager) initImageCommitHashImageMetadata(ctx context.Context) error {
 	imageCommitImageMetadata := map[string]map[plumbing.Hash]*storage.ImageMetadata{}
 	for _, imageName := range m.ImageNameList {
-		commits, err := m.StagesManager.StagesStorage.GetImageCommits(m.ProjectName, imageName)
+		commits, err := m.StagesManager.StagesStorage.GetImageCommits(ctx, m.ProjectName, imageName)
 		if err != nil {
 			return fmt.Errorf("get image %s commits failed: %s", imageName, err)
 		}
 
 		commitImageMetadata := map[plumbing.Hash]*storage.ImageMetadata{}
 		for _, commit := range commits {
-			imageMetadata, err := m.StagesManager.StagesStorage.GetImageMetadataByCommit(m.ProjectName, imageName, commit)
+			imageMetadata, err := m.StagesManager.StagesStorage.GetImageMetadataByCommit(ctx, m.ProjectName, imageName, commit)
 			if err != nil {
 				return fmt.Errorf("get image %s metadata by commit %s failed", imageName, commit)
 			}
@@ -188,10 +196,12 @@ func (m *imagesCleanupManager) setImageCommitImageMetadata(imageCommitImageMetad
 	m.imageCommitHashImageMetadata = &imageCommitImageMetadata
 }
 
-func (m *imagesCleanupManager) run() error {
+func (m *imagesCleanupManager) run(ctx context.Context) error {
 	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", m.ImagesRepo.String())
-	return werf.WithHostLock(imagesCleanupLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		if err := logboek.LogProcess("Fetching repo images data", logboek.LogProcessOptions{}, m.initRepoImagesData); err != nil {
+	return werf.WithHostLock(ctx, imagesCleanupLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		if err := logboek.Context(ctx).LogProcess("Fetching repo images data").DoError(func() error {
+			return m.initRepoImagesData(ctx)
+		}); err != nil {
 			return err
 		}
 
@@ -200,15 +210,15 @@ func (m *imagesCleanupManager) run() error {
 		resultRepoImages := map[string][]*image.Info{}
 
 		if m.LocalGit == nil {
-			logboek.Default.LogLnDetails("Images cleanup skipped due to local git repository was not detected")
+			logboek.Context(ctx).Default().LogLnDetails("Images cleanup skipped due to local git repository was not detected")
 			return nil
 		}
 
 		var err error
 
 		if !m.WithoutKube {
-			if err := logboek.LogProcess("Skipping repo images that are being used in Kubernetes", logboek.LogProcessOptions{}, func() error {
-				repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(repoImagesToCleanup, m.KubernetesContextsClients)
+			if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in Kubernetes").DoError(func() error {
+				repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextsClients)
 				return err
 			}); err != nil {
 				return err
@@ -216,12 +226,12 @@ func (m *imagesCleanupManager) run() error {
 		}
 
 		if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
-			resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(repoImagesToCleanup)
+			resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(ctx, repoImagesToCleanup)
 			if err != nil {
 				return err
 			}
 		} else {
-			resultRepoImages, err = m.repoImagesCleanup(repoImagesToCleanup)
+			resultRepoImages, err = m.repoImagesCleanup(ctx, repoImagesToCleanup)
 			if err != nil {
 				return err
 			}
@@ -242,8 +252,8 @@ func (m *imagesCleanupManager) run() error {
 	})
 }
 
-func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, map[string][]*image.Info, error) {
-	deployedDockerImagesNames, err := getDeployedDockerImagesNames(kubernetesContextsClients)
+func exceptRepoImagesByWhitelist(ctx context.Context, repoImages map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface) (map[string][]*image.Info, map[string][]*image.Info, error) {
+	deployedDockerImagesNames, err := getDeployedDockerImagesNames(ctx, kubernetesContextsClients)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -252,7 +262,7 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 	for imageName, repoImageList := range repoImages {
 		var newRepoImages []*image.Info
 
-		_ = logboek.Default.LogBlock(logging.ImageLogProcessName(imageName, false), logboek.LevelLogBlockOptions{}, func() error {
+		logboek.Context(ctx).Default().LogBlock(logging.ImageLogProcessName(imageName, false)).Do(func() {
 
 		Loop:
 			for _, repoImage := range repoImageList {
@@ -267,8 +277,8 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 						exceptedImageList = append(exceptedImageList, repoImage)
 						exceptedRepoImages[imageName] = exceptedImageList
 
-						logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
-						logboek.LogOptionalLn()
+						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImage.Tag)
+						logboek.Context(ctx).LogOptionalLn()
 						continue Loop
 					}
 				}
@@ -277,27 +287,26 @@ func exceptRepoImagesByWhitelist(repoImages map[string][]*image.Info, kubernetes
 			}
 
 			repoImages[imageName] = newRepoImages
-
-			return nil
 		})
 	}
 
 	return repoImages, exceptedRepoImages, nil
 }
 
-func getDeployedDockerImagesNames(kubernetesContextsClients map[string]kubernetes.Interface) ([]string, error) {
+func getDeployedDockerImagesNames(ctx context.Context, kubernetesContextsClients map[string]kubernetes.Interface) ([]string, error) {
 	var deployedDockerImagesNames []string
 	for contextName, kubernetesClient := range kubernetesContextsClients {
-		if err := logboek.LogProcessInline(fmt.Sprintf("Getting deployed docker images (context %s)", contextName), logboek.LogProcessInlineOptions{}, func() error {
-			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
-			if err != nil {
-				return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
-			}
+		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextName).
+			DoError(func() error {
+				kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
+				if err != nil {
+					return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
+				}
 
-			deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
+				deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
 
-			return nil
-		}); err != nil {
+				return nil
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -305,29 +314,28 @@ func getDeployedDockerImagesNames(kubernetesContextsClients map[string]kubernete
 	return deployedDockerImagesNames, nil
 }
 
-func (m *imagesCleanupManager) repoImagesCleanup(repoImagesToCleanup map[string][]*image.Info) (map[string][]*image.Info, error) {
+func (m *imagesCleanupManager) repoImagesCleanup(ctx context.Context, repoImagesToCleanup map[string][]*image.Info) (map[string][]*image.Info, error) {
 	resultRepoImages := map[string][]*image.Info{}
 
 	for imageName, repoImageListToCleanup := range repoImagesToCleanup {
-		logProcessMessage := fmt.Sprintf("Processing %s", logging.ImageLogProcessName(imageName, false))
-		if err := logboek.Default.LogProcess(
-			logProcessMessage,
-			logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-			func() error {
-				repoImageListToCleanup, err := m.repoImagesCleanupByNonexistentGitPrimitive(repoImageListToCleanup)
+		if err := logboek.Context(ctx).Default().LogProcess("Processing %s", logging.ImageLogProcessName(imageName, false)).
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				repoImageListToCleanup, err := m.repoImagesCleanupByNonexistentGitPrimitive(ctx, repoImageListToCleanup)
 				if err != nil {
 					return err
 				}
 
-				resultRepoImageList, err := m.repoImagesCleanupByPolicies(repoImageListToCleanup)
+				resultRepoImageList, err := m.repoImagesCleanupByPolicies(ctx, repoImageListToCleanup)
 				if err != nil {
 					return err
 				}
 				resultRepoImages[imageName] = resultRepoImageList
 
 				return nil
-			},
-		); err != nil {
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -335,7 +343,7 @@ func (m *imagesCleanupManager) repoImagesCleanup(repoImagesToCleanup map[string]
 	return resultRepoImages, nil
 }
 
-func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToCleanup map[string][]*image.Info) (map[string][]*image.Info, error) {
+func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Context, repoImagesToCleanup map[string][]*image.Info) (map[string][]*image.Info, error) {
 	resultRepoImages := map[string][]*image.Info{}
 
 	gitRepository, err := m.LocalGit.PlainOpen()
@@ -344,8 +352,8 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 	}
 
 	var referencesToScan []*referenceToScan
-	if err := logboek.Default.LogProcess("Preparing references to scan", logboek.LevelLogProcessOptions{}, func() error {
-		referencesToScan, err = getReferencesToScan(gitRepository, m.GitHistoryBasedCleanupOptions.KeepPolicies)
+	if err := logboek.Context(ctx).Default().LogProcess("Preparing references to scan").DoError(func() error {
+		referencesToScan, err = getReferencesToScan(ctx, gitRepository, m.GitHistoryBasedCleanupOptions.KeepPolicies)
 		return err
 	}); err != nil {
 		return nil, err
@@ -353,24 +361,25 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 	var imageContentSignatureRepoImageListToCleanup map[string]map[string][]*image.Info
 	var imageContentSignatureExistingCommitHashes map[string]map[string][]plumbing.Hash
-	if err := logboek.Info.LogProcess("Grouping repo images tags by content signature", logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Context(ctx).Info().LogProcess("Grouping repo images tags by content signature").DoError(func() error {
 		imageContentSignatureRepoImageListToCleanup, err = m.getImageContentSignatureRepoImageListToCleanup(repoImagesToCleanup)
 		if err != nil {
 			return err
 		}
 
-		imageContentSignatureExistingCommitHashes, err = m.getImageContentSignatureExistingCommitHashes()
+		imageContentSignatureExistingCommitHashes, err = m.getImageContentSignatureExistingCommitHashes(ctx)
 		if err != nil {
 			return err
 		}
 
-		if logboek.Info.IsAccepted() {
+		if logboek.Context(ctx).Info().IsAccepted() {
 			for imageName, contentSignatureRepoImageListToCleanup := range imageContentSignatureRepoImageListToCleanup {
 				if len(contentSignatureRepoImageListToCleanup) == 0 {
 					continue
 				}
 
-				logboek.Info.LogProcessStart(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessStartOptions{})
+				logProcess := logboek.Context(ctx).Info().LogProcess(logging.ImageLogProcessName(imageName, false))
+				logProcess.Start()
 
 				var rows [][]interface{}
 				for contentSignature, repoImageListToCleanup := range contentSignatureRepoImageListToCleanup {
@@ -410,7 +419,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 						if len(repoImageListToCleanup) > ind {
 							column := repoImageListToCleanup[ind].Tag
-							if logboek.ContentWidth() < 100 {
+							if logboek.Context(ctx).Streams().ContentWidth() < 100 {
 								column = shortify(column)
 							}
 							columns = append(columns, column)
@@ -424,32 +433,30 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 
 				if len(rows) != 0 {
 					tbl := table.New("Content Signature", "Existing Commits", "Tags")
-					tbl.WithWriter(logboek.GetOutStream())
+					tbl.WithWriter(logboek.Context(ctx).ProxyOutStream())
 					tbl.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
 					for _, row := range rows {
 						tbl.AddRow(row...)
 					}
 					tbl.Print()
 
-					logboek.LogOptionalLn()
+					logboek.Context(ctx).LogOptionalLn()
 				}
 
 				for contentSignature, repoImageListToCleanup := range contentSignatureRepoImageListToCleanup {
 					commitHashes := imageContentSignatureExistingCommitHashes[imageName][contentSignature]
 					if len(commitHashes) == 0 {
 						logBlockMessage := fmt.Sprintf("Content signature %s is associated with non-existing commits. The following tags will be deleted", contentSignature)
-						_ = logboek.Info.LogBlock(logBlockMessage, logboek.LevelLogBlockOptions{}, func() error {
+						logboek.Context(ctx).Info().LogBlock(logBlockMessage).Do(func() {
 							for _, repoImage := range repoImageListToCleanup {
-								logboek.Info.LogFDetails("  tag: %s\n", repoImage.Tag)
-								logboek.LogOptionalLn()
+								logboek.Context(ctx).Info().LogFDetails("  tag: %s\n", repoImage.Tag)
+								logboek.Context(ctx).LogOptionalLn()
 							}
-
-							return nil
 						})
 					}
 				}
 
-				logboek.Info.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+				logProcess.End()
 			}
 		}
 
@@ -458,31 +465,32 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 		return nil, err
 	}
 
-	if err = logboek.Default.LogProcess("Processing images tags without related image metadata", logboek.LevelLogProcessOptions{}, func() error {
+	if err = logboek.Context(ctx).Default().LogProcess("Processing images tags without related image metadata").DoError(func() error {
 		imageRepoImageListWithoutRelatedContentSignature, err := m.getImageRepoImageListWithoutRelatedImageMetadata(repoImagesToCleanup, imageContentSignatureRepoImageListToCleanup)
 		if err != nil {
 			return err
 		}
 
 		for imageName, repoImages := range imageRepoImageListWithoutRelatedContentSignature {
-			logboek.Default.LogProcessStart(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessStartOptions{})
+			logProcess := logboek.Context(ctx).Default().LogProcess(logging.ImageLogProcessName(imageName, false))
+			logProcess.Start()
 
 			if !m.GitHistoryBasedCleanupV12 {
 				if len(repoImages) != 0 {
-					logboek.Warn.LogF("Detected tags without related image metadata.\nThese tags will be saved during cleanup.\n")
-					logboek.Warn.LogF("Since v1.2 git history based cleanup will delete such tags by default.\nYou can force this behaviour in current werf version with --git-history-based-cleanup-v1.2 option.\n")
+					logboek.Context(ctx).Warn().LogF("Detected tags without related image metadata.\nThese tags will be saved during cleanup.\n")
+					logboek.Context(ctx).Warn().LogF("Since v1.2 git history based cleanup will delete such tags by default.\nYou can force this behaviour in current werf version with --git-history-based-cleanup-v1.2 option.\n")
 				}
 
 				for _, repoImage := range repoImages {
-					logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
-					logboek.LogOptionalLn()
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImage.Tag)
+					logboek.Context(ctx).LogOptionalLn()
 				}
 
 				resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImages...)
 				repoImagesToCleanup[imageName] = exceptRepoImageList(repoImagesToCleanup[imageName], repoImages...)
 			}
 
-			logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+			logProcess.End()
 		}
 
 		return nil
@@ -490,104 +498,105 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(repoImagesToClea
 		return nil, err
 	}
 
-	if err := logboek.Default.LogProcess("Git history based cleanup", logboek.LevelLogProcessOptions{
-		Style: logboek.HighlightStyle(),
-	}, func() error {
-		for imageName, repoImageListToCleanup := range repoImagesToCleanup {
-			var repoImageListToSave []*image.Info
-			if err := logboek.LogProcess(logging.ImageLogProcessName(imageName, false), logboek.LogProcessOptions{}, func() error {
-				if err := logboek.Default.LogProcess("Scanning git references history", logboek.LevelLogProcessOptions{}, func() error {
-					contentSignatureCommitHashes := map[string][]plumbing.Hash{}
-					contentSignatureRepoImageListToCleanup := imageContentSignatureRepoImageListToCleanup[imageName]
-					for contentSignature, _ := range contentSignatureRepoImageListToCleanup {
-						existingCommitHashes := imageContentSignatureExistingCommitHashes[imageName][contentSignature]
-						if len(existingCommitHashes) == 0 {
-							continue
-						}
-
-						contentSignatureCommitHashes[contentSignature] = existingCommitHashes
-					}
-
-					var repoImageListToKeep []*image.Info
-					if len(contentSignatureCommitHashes) != 0 {
-						reachedContentSignatureList, err := scanReferencesHistory(gitRepository, referencesToScan, contentSignatureCommitHashes)
-						if err != nil {
-							return err
-						}
-
-						for _, contentSignature := range reachedContentSignatureList {
-							contentSignatureRepoImageListToCleanup, ok := imageContentSignatureRepoImageListToCleanup[imageName][contentSignature]
-							if !ok {
-								panic("runtime error")
+	if err := logboek.Context(ctx).Default().LogProcess("Git history based cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			for imageName, repoImageListToCleanup := range repoImagesToCleanup {
+				var repoImageListToSave []*image.Info
+				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(imageName, false)).DoError(func() error {
+					if err := logboek.Context(ctx).LogProcess("Scanning git references history").DoError(func() error {
+						contentSignatureCommitHashes := map[string][]plumbing.Hash{}
+						contentSignatureRepoImageListToCleanup := imageContentSignatureRepoImageListToCleanup[imageName]
+						for contentSignature, _ := range contentSignatureRepoImageListToCleanup {
+							existingCommitHashes := imageContentSignatureExistingCommitHashes[imageName][contentSignature]
+							if len(existingCommitHashes) == 0 {
+								continue
 							}
 
-							repoImageListToKeep = append(repoImageListToKeep, contentSignatureRepoImageListToCleanup...)
+							contentSignatureCommitHashes[contentSignature] = existingCommitHashes
 						}
 
-						repoImageListToSave = append(repoImageListToSave, repoImageListToKeep...)
-						resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImageListToKeep...)
-						repoImageListToCleanup = exceptRepoImageList(repoImageListToCleanup, repoImageListToKeep...)
-					} else {
-						logboek.LogLn("Scanning stopped due to nothing to seek")
+						var repoImageListToKeep []*image.Info
+						if len(contentSignatureCommitHashes) != 0 {
+							reachedContentSignatureList, err := scanReferencesHistory(ctx, gitRepository, referencesToScan, contentSignatureCommitHashes)
+							if err != nil {
+								return err
+							}
+
+							for _, contentSignature := range reachedContentSignatureList {
+								contentSignatureRepoImageListToCleanup, ok := imageContentSignatureRepoImageListToCleanup[imageName][contentSignature]
+								if !ok {
+									panic("runtime error")
+								}
+
+								repoImageListToKeep = append(repoImageListToKeep, contentSignatureRepoImageListToCleanup...)
+							}
+
+							repoImageListToSave = append(repoImageListToSave, repoImageListToKeep...)
+							resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImageListToKeep...)
+							repoImageListToCleanup = exceptRepoImageList(repoImageListToCleanup, repoImageListToKeep...)
+						} else {
+							logboek.Context(ctx).LogLn("Scanning stopped due to nothing to seek")
+						}
+
+						return nil
+					}); err != nil {
+						return err
+					}
+
+					if len(repoImageListToSave) != 0 {
+						logboek.Context(ctx).Default().LogBlock("Saved tags").Do(func() {
+							for _, repoImage := range repoImageListToSave {
+								logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImage.Tag)
+								logboek.Context(ctx).LogOptionalLn()
+							}
+						})
+					}
+
+					if err := logboek.Context(ctx).Default().LogProcess("Deleting tags").DoError(func() error {
+						return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, repoImageListToCleanup...)
+					}); err != nil {
+						return err
 					}
 
 					return nil
 				}); err != nil {
 					return err
 				}
-
-				if len(repoImageListToSave) != 0 {
-					_ = logboek.Default.LogBlock("Saved tags", logboek.LevelLogBlockOptions{}, func() error {
-						for _, repoImage := range repoImageListToSave {
-							logboek.Default.LogFDetails("  tag: %s\n", repoImage.Tag)
-							logboek.LogOptionalLn()
-						}
-
-						return nil
-					})
-				}
-
-				if err := logboek.Default.LogProcess("Deleting tags", logboek.LevelLogProcessOptions{}, func() error {
-					return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, repoImageListToCleanup...)
-				}); err != nil {
-					return err
-				}
-
-				return nil
-			}); err != nil {
-				return err
 			}
-		}
 
-		return nil
-	}); err != nil {
+			return nil
+		}); err != nil {
 		return nil, err
 	}
 
-	if err := logboek.Default.LogProcess("Deleting unused images metadata", logboek.LevelLogProcessOptions{}, func() error {
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting unused images metadata").DoError(func() error {
 		imageUnusedCommitHashes, err := m.getImageUnusedCommitHashes(resultRepoImages)
 		if err != nil {
 			return err
 		}
 
 		for imageName, commitHashes := range imageUnusedCommitHashes {
-			logboek.Default.LogProcessStart(logging.ImageLogProcessName(imageName, false), logboek.LevelLogProcessStartOptions{})
+			logProcess := logboek.Context(ctx).Default().LogProcess(logging.ImageLogProcessName(imageName, false))
+			logProcess.Start()
 
 			for _, commitHash := range commitHashes {
 				if m.DryRun {
-					logboek.Default.LogLn(commitHash)
+					logboek.Context(ctx).Default().LogLn(commitHash)
 				} else {
-					if err := m.StagesManager.StagesStorage.RmImageCommit(m.ProjectName, imageName, commitHash.String()); err != nil {
-						logboek.Warn.LogF(
+					if err := m.StagesManager.StagesStorage.RmImageCommit(ctx, m.ProjectName, imageName, commitHash.String()); err != nil {
+						logboek.Context(ctx).Warn().LogF(
 							"WARNING: Metadata image deletion (image %s, commit: %s) failed: %s\n",
 							logging.ImageLogName(imageName, false), commitHash.String(), err,
 						)
-						logboek.LogOptionalLn()
+						logboek.Context(ctx).LogOptionalLn()
 					}
 				}
 			}
 
-			logboek.Default.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
+			logProcess.End()
 		}
 
 		return nil
@@ -628,7 +637,7 @@ func (m *imagesCleanupManager) getImageContentSignatureRepoImageListToCleanup(re
 	return imageContentSignatureRepoImageListToCleanup, nil
 }
 
-func (m *imagesCleanupManager) repoImagesCleanupByNonexistentGitPrimitive(repoImages []*image.Info) ([]*image.Info, error) {
+func (m *imagesCleanupManager) repoImagesCleanupByNonexistentGitPrimitive(ctx context.Context, repoImages []*image.Info) ([]*image.Info, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []*image.Info
 
 	var gitTags []string
@@ -636,12 +645,12 @@ func (m *imagesCleanupManager) repoImagesCleanupByNonexistentGitPrimitive(repoIm
 
 	if m.LocalGit != nil {
 		var err error
-		gitTags, err = m.LocalGit.TagsList()
+		gitTags, err = m.LocalGit.TagsList(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot get local git tags list: %s", err)
 		}
 
-		gitBranches, err = m.LocalGit.RemoteBranchesList()
+		gitBranches, err = m.LocalGit.RemoteBranchesList(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot get local git branches list: %s", err)
 		}
@@ -678,7 +687,7 @@ Loop:
 			if m.LocalGit != nil {
 				var err error
 
-				exist, err = m.LocalGit.IsCommitExists(repoImageMetaTag)
+				exist, err = m.LocalGit.IsCommitExists(ctx, repoImageMetaTag)
 				if err != nil {
 					if strings.HasPrefix(err.Error(), "bad commit hash") {
 						exist = false
@@ -695,13 +704,9 @@ Loop:
 	}
 
 	if len(nonexistentGitTagRepoImages) != 0 {
-		if err := logboek.Default.LogBlock(
-			"Removed tags by nonexistent git-tag policy",
-			logboek.LevelLogBlockOptions{},
-			func() error {
-				return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, nonexistentGitTagRepoImages...)
-			},
-		); err != nil {
+		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-tag policy").DoError(func() error {
+			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitTagRepoImages...)
+		}); err != nil {
 			return nil, err
 		}
 
@@ -709,13 +714,9 @@ Loop:
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
-		if err := logboek.Default.LogBlock(
-			"Removed tags by nonexistent git-branch policy",
-			logboek.LevelLogBlockOptions{},
-			func() error {
-				return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, nonexistentGitBranchRepoImages...)
-			},
-		); err != nil {
+		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-branch policy").DoError(func() error {
+			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitBranchRepoImages...)
+		}); err != nil {
 			return nil, err
 		}
 
@@ -723,13 +724,9 @@ Loop:
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
-		if err := logboek.Default.LogBlock(
-			"Removed tags by nonexistent git-commit policy",
-			logboek.LevelLogBlockOptions{},
-			func() error {
-				return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, nonexistentGitCommitRepoImages...)
-			},
-		); err != nil {
+		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-commit policy").DoError(func() error {
+			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitCommitRepoImages...)
+		}); err != nil {
 			return nil, err
 		}
 
@@ -749,7 +746,7 @@ func repoImageMetaTagMatch(imageMetaTag string, matches ...string) bool {
 	return false
 }
 
-func (m *imagesCleanupManager) repoImagesCleanupByPolicies(repoImages []*image.Info) ([]*image.Info, error) {
+func (m *imagesCleanupManager) repoImagesCleanupByPolicies(ctx context.Context, repoImages []*image.Info) ([]*image.Info, error) {
 	var repoImagesWithGitTagScheme, repoImagesWithGitCommitScheme, repoImagesWithStagesSignatureScheme []*image.Info
 
 	for _, repoImage := range repoImages {
@@ -777,7 +774,7 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicies(repoImages []*image.I
 	}
 
 	var err error
-	repoImages, err = m.repoImagesCleanupByPolicy(repoImages, repoImagesWithGitTagScheme, cleanupByPolicyOptions)
+	repoImages, err = m.repoImagesCleanupByPolicy(ctx, repoImages, repoImagesWithGitTagScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -790,7 +787,7 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicies(repoImages []*image.I
 		schemeName:      string(tag_strategy.GitCommit),
 	}
 
-	repoImages, err = m.repoImagesCleanupByPolicy(repoImages, repoImagesWithGitCommitScheme, cleanupByPolicyOptions)
+	repoImages, err = m.repoImagesCleanupByPolicy(ctx, repoImages, repoImagesWithGitCommitScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +800,7 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicies(repoImages []*image.I
 		schemeName:      string(tag_strategy.StagesSignature),
 	}
 
-	repoImages, err = m.repoImagesCleanupByPolicy(repoImages, repoImagesWithStagesSignatureScheme, cleanupByPolicyOptions)
+	repoImages, err = m.repoImagesCleanupByPolicy(ctx, repoImages, repoImagesWithStagesSignatureScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -819,7 +816,7 @@ type repoImagesCleanupByPolicyOptions struct {
 	schemeName      string
 }
 
-func (m *imagesCleanupManager) repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []*image.Info, options repoImagesCleanupByPolicyOptions) ([]*image.Info, error) {
+func (m *imagesCleanupManager) repoImagesCleanupByPolicy(ctx context.Context, repoImages, repoImagesWithScheme []*image.Info, options repoImagesCleanupByPolicyOptions) ([]*image.Info, error) {
 	var expiryTime time.Time
 	if options.hasExpiryPeriod {
 		expiryTime = time.Now().Add(-options.expiryPeriod)
@@ -842,13 +839,9 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicy(repoImages, repoImagesW
 
 	if len(expiredRepoImages) != 0 {
 		logBlockMessage := fmt.Sprintf("Removed tags by %s date policy (created before %s)", options.schemeName, expiryTime.Format("2006-01-02T15:04:05-0700"))
-		if err := logboek.Default.LogBlock(
-			logBlockMessage,
-			logboek.LevelLogBlockOptions{},
-			func() error {
-				return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, expiredRepoImages...)
-			},
-		); err != nil {
+		if err := logboek.Context(ctx).Default().LogBlock(logBlockMessage).DoError(func() error {
+			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, expiredRepoImages...)
+		}); err != nil {
 			return nil, err
 		}
 
@@ -859,12 +852,9 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicy(repoImages, repoImagesW
 		excessImagesByLimit := notExpiredRepoImages[:int64(len(notExpiredRepoImages))-options.limit]
 
 		logBlockMessage := fmt.Sprintf("Removed tags by %s limit policy (> %d)", options.schemeName, options.limit)
-		if err := logboek.Default.LogBlock(
-			logBlockMessage,
-			logboek.LevelLogBlockOptions{},
-			func() error {
-				return deleteRepoImageInImagesRepo(m.ImagesRepo, m.DryRun, excessImagesByLimit...)
-			},
+		if err := logboek.Context(ctx).Default().LogBlock(logBlockMessage).DoError(func() error {
+			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, excessImagesByLimit...)
+		},
 		); err != nil {
 			return nil, err
 		}
@@ -924,7 +914,7 @@ func (m *imagesCleanupManager) getImageRepoImageListWithoutRelatedImageMetadata(
 }
 
 // getImageContentSignatureExistingCommitHashes groups images, content signatures and commit hashes which exist in the git repo.
-func (m *imagesCleanupManager) getImageContentSignatureExistingCommitHashes() (map[string]map[string][]plumbing.Hash, error) {
+func (m *imagesCleanupManager) getImageContentSignatureExistingCommitHashes(ctx context.Context) (map[string]map[string][]plumbing.Hash, error) {
 	imageContentSignatureCommitHashes := map[string]map[string][]plumbing.Hash{}
 
 	for _, imageName := range m.ImageNameList {
@@ -936,7 +926,7 @@ func (m *imagesCleanupManager) getImageContentSignatureExistingCommitHashes() (m
 				commitHashes = []plumbing.Hash{}
 			}
 
-			exist, err := m.LocalGit.IsCommitExists(commitHash.String())
+			exist, err := m.LocalGit.IsCommitExists(ctx, commitHash.String())
 			if err != nil {
 				return nil, fmt.Errorf("check git commit existence failed: %s", err)
 			}

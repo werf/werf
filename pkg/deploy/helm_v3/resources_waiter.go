@@ -158,23 +158,24 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 	}
 
 	// NOTE: use context from resources-waiter object here, will be changed in helm 3
-	logboek.LogOptionalLn()
-	return logboek.LogProcess("Waiting for release resources to become ready", logboek.LogProcessOptions{}, func() error {
-		return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
-			StatusProgressPeriod: waiter.StatusProgressPeriod,
-			Options: tracker.Options{
-				Timeout:      timeout,
-				LogsFromTime: waiter.LogsFromTime,
-			},
+	logboek.Context(ctx).LogOptionalLn()
+	return logboek.Context(ctx).LogProcess("Waiting for release resources to become ready").
+		DoError(func() error {
+			return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
+				StatusProgressPeriod: waiter.StatusProgressPeriod,
+				Options: tracker.Options{
+					Timeout:      timeout,
+					LogsFromTime: waiter.LogsFromTime,
+				},
+			})
 		})
-	})
 }
 
 func makeMultitrackSpec(ctx context.Context, objMeta *metav1.ObjectMeta, failuresCountOptions allowedFailuresCountOptions, kind string) (*multitrack.MultitrackSpec, error) {
 	multitrackSpec, err := prepareMultitrackSpec(objMeta.Name, kind, objMeta.Namespace, objMeta.Annotations, failuresCountOptions)
 	if err != nil {
-		logboek.LogWarnLn()
-		logboek.LogWarnF("WARNING %s\n", err)
+		logboek.Context(ctx).Warn().LogLn()
+		logboek.Context(ctx).Warn().LogF("WARNING %s\n", err)
 		return nil, nil
 	}
 
@@ -333,18 +334,19 @@ func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace st
 				specs.Jobs = append(specs.Jobs, *spec)
 			}
 
-			return logboek.LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name), logboek.LogProcessOptions{}, func() error {
-				return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
-					StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
-					Options: tracker.Options{
-						Timeout:      timeout,
-						LogsFromTime: waiter.LogsFromTime,
-					},
+			return logboek.Context(ctx).LogProcess("Waiting for helm hook job/%s termination", name).
+				DoError(func() error {
+					return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
+						StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
+						Options: tracker.Options{
+							Timeout:      timeout,
+							LogsFromTime: waiter.LogsFromTime,
+						},
+					})
 				})
-			})
 
 		default:
-			logboek.Default.LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
+			logboek.Context(ctx).Default().LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
 		}
 	}
 

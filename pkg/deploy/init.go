@@ -1,6 +1,8 @@
 package deploy
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/deploy/helm"
 )
 
@@ -9,9 +11,9 @@ type InitOptions struct {
 	WithoutHelm     bool
 }
 
-func Init(options InitOptions) error {
+func Init(ctx context.Context, options InitOptions) error {
 	if !options.WithoutHelm {
-		if err := helm.Init(options.HelmInitOptions); err != nil {
+		if err := helm.Init(ctx, options.HelmInitOptions); err != nil {
 			return err
 		}
 	}

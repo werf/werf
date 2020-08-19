@@ -1,6 +1,7 @@
 package container_runtime
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -52,21 +53,21 @@ func (i *StageImage) GetID() string {
 	}
 }
 
-func (i *StageImage) Build(options BuildOptions) error {
+func (i *StageImage) Build(ctx context.Context, options BuildOptions) error {
 	if i.dockerfileImageBuilder != nil {
-		if err := i.dockerfileImageBuilder.Build(); err != nil {
+		if err := i.dockerfileImageBuilder.Build(ctx); err != nil {
 			return err
 		}
 	} else {
 		containerLockName := ContainerLockName(i.container.Name())
-		if _, lock, err := werf.AcquireHostLock(containerLockName, lockgate.AcquireOptions{}); err != nil {
+		if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 		} else {
 			defer werf.ReleaseHostLock(lock)
 		}
 
 		if debugDockerRunCommand() {
-			runArgs, err := i.container.prepareRunArgs()
+			runArgs, err := i.container.prepareRunArgs(ctx)
 			if err != nil {
 				return err
 			}
@@ -78,27 +79,31 @@ func (i *StageImage) Build(options BuildOptions) error {
 			}
 		}
 
-		if containerRunErr := i.container.run(); containerRunErr != nil {
+		if containerRunErr := i.container.run(ctx); containerRunErr != nil {
 			if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 				if options.IntrospectBeforeError {
-					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+					logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
-					if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
+					if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+						return i.introspectBefore(ctx)
+					}); err != nil {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 				} else if options.IntrospectAfterError {
-					if err := i.Commit(); err != nil {
+					if err := i.Commit(ctx); err != nil {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 
-					logboek.Default.LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+					logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
-					if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
+					if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+						return i.Introspect(ctx)
+					}); err != nil {
 						return fmt.Errorf("introspect error failed: %s", err)
 					}
 				}
 
-				if err := i.container.rm(); err != nil {
+				if err := i.container.rm(ctx); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
@@ -106,16 +111,16 @@ func (i *StageImage) Build(options BuildOptions) error {
 			return containerRunErr
 		}
 
-		if err := i.Commit(); err != nil {
+		if err := i.Commit(ctx); err != nil {
 			return err
 		}
 
-		if err := i.container.rm(); err != nil {
+		if err := i.container.rm(ctx); err != nil {
 			return err
 		}
 	}
 
-	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(i.MustGetBuiltId()); err != nil {
+	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(ctx, i.MustGetBuiltId()); err != nil {
 		return err
 	} else {
 		i.SetInspect(inspect)
@@ -128,8 +133,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 	return nil
 }
 
-func (i *StageImage) Commit() error {
-	builtId, err := i.container.commit()
+func (i *StageImage) Commit(ctx context.Context) error {
+	builtId, err := i.container.commit(ctx)
 	if err != nil {
 		return err
 	}
@@ -139,27 +144,27 @@ func (i *StageImage) Commit() error {
 	return nil
 }
 
-func (i *StageImage) Introspect() error {
-	if err := i.container.introspect(); err != nil {
+func (i *StageImage) Introspect(ctx context.Context) error {
+	if err := i.container.introspect(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *StageImage) introspectBefore() error {
-	if err := i.container.introspectBefore(); err != nil {
+func (i *StageImage) introspectBefore(ctx context.Context) error {
+	if err := i.container.introspectBefore(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *StageImage) MustResetInspect() error {
+func (i *StageImage) MustResetInspect(ctx context.Context) error {
 	if i.buildImage != nil {
-		return i.buildImage.MustResetInspect()
+		return i.buildImage.MustResetInspect(ctx)
 	} else {
-		return i.baseImage.MustResetInspect()
+		return i.baseImage.MustResetInspect(ctx)
 	}
 }
 
@@ -190,16 +195,16 @@ func (i *StageImage) GetBuiltId() string {
 	}
 }
 
-func (i *StageImage) TagBuiltImage(name string) error {
-	return docker.CliTag(i.MustGetBuiltId(), i.name)
+func (i *StageImage) TagBuiltImage(ctx context.Context, name string) error {
+	return docker.CliTag(ctx, i.MustGetBuiltId(), i.name)
 }
 
-func (i *StageImage) Tag(name string) error {
-	return docker.CliTag(i.GetID(), name)
+func (i *StageImage) Tag(ctx context.Context, name string) error {
+	return docker.CliTag(ctx, i.GetID(), name)
 }
 
-func (i *StageImage) Pull() error {
-	if err := docker.CliPullWithRetries(i.name); err != nil {
+func (i *StageImage) Pull(ctx context.Context) error {
+	if err := docker.CliPullWithRetries(ctx, i.name); err != nil {
 		return err
 	}
 
@@ -208,48 +213,48 @@ func (i *StageImage) Pull() error {
 	return nil
 }
 
-func (i *StageImage) Push() error {
-	return docker.CliPushWithRetries(i.name)
+func (i *StageImage) Push(ctx context.Context) error {
+	return docker.CliPushWithRetries(ctx, i.name)
 }
 
-func (i *StageImage) Import(name string) error {
+func (i *StageImage) Import(ctx context.Context, name string) error {
 	importedImage := newBaseImage(name, i.LocalDockerServerRuntime)
 
-	if err := docker.CliPullWithRetries(name); err != nil {
+	if err := docker.CliPullWithRetries(ctx, name); err != nil {
 		return err
 	}
 
 	importedImageId := importedImage.GetStageDescription().Info.ID
 
-	if err := docker.CliTag(importedImageId, i.name); err != nil {
+	if err := docker.CliTag(ctx, importedImageId, i.name); err != nil {
 		return err
 	}
 
-	if err := docker.CliRmi(name); err != nil {
+	if err := docker.CliRmi(ctx, name); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *StageImage) Export(name string) error {
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Tagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
-		return i.Tag(name)
+func (i *StageImage) Export(ctx context.Context, name string) error {
+	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging %s", name)).DoError(func() error {
+		return i.Tag(ctx, name)
 	}); err != nil {
 		return err
 	}
 
 	defer func() {
-		if err := logboek.Info.LogProcess(fmt.Sprintf("Untagging %s", name), logboek.LevelLogProcessOptions{}, func() error {
-			return docker.CliRmi(name)
+		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Untagging %s", name)).DoError(func() error {
+			return docker.CliRmi(ctx, name)
 		}); err != nil {
 			// TODO: errored image state
-			logboek.Error.LogF("Unable to remote temporary image %q: %s", name, err)
+			logboek.Context(ctx).Error().LogF("Unable to remote temporary image %q: %s", name, err)
 		}
 	}()
 
-	if err := logboek.Info.LogProcess(fmt.Sprintf("Pushing %s", name), logboek.LevelLogProcessOptions{}, func() error {
-		return docker.CliPushWithRetries(name)
+	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", name)).DoError(func() error {
+		return docker.CliPushWithRetries(ctx, name)
 	}); err != nil {
 		return err
 	}

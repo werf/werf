@@ -1,6 +1,7 @@
 package status
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -32,7 +34,7 @@ type SubmoduleResult struct {
 	currentCommit    string
 }
 
-func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	res := &Result{
 		repository:             r.repository,
 		repositoryAbsFilepath:  r.repositoryAbsFilepath,
@@ -49,7 +51,7 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 			res.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
-				logboek.Debug.LogF(
+				logboek.Context(ctx).Debug().LogF(
 					"File was added:         %s (worktree: %s, staging: %s)\n",
 					fileStatusFullFilepath,
 					fileStatusMapping[rune(fileStatus.Worktree)],
@@ -63,15 +65,15 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleResult.repositoryFullFilepath)
 		if isMatched || shouldGoThrough {
 			if debugProcess() {
-				logboek.Debug.LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
+				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
 			}
 
 			if submoduleResult.isNotInitialized {
 				res.submoduleResults = append(res.submoduleResults, submoduleResult)
 
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Context(ctx).Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						submoduleResult.repositoryFullFilepath,
 					)
@@ -81,15 +83,15 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 
 			if submoduleResult.isNotClean {
 				if debugProcess() {
-					logboek.Debug.LogFWithCustomStyle(
-						logboek.StyleByName(logboek.FailStyleName),
+					logboek.Context(ctx).Debug().LogFWithCustomStyle(
+						style.Get(style.FailName),
 						"Submodule is not clean: current commit %s will be added to checksum\n",
 						submoduleResult.currentCommit,
 					)
 				}
 			}
 
-			newResult, err := submoduleResult.Status(pathMatcher)
+			newResult, err := submoduleResult.Status(ctx, pathMatcher)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +112,7 @@ func (r *Result) Status(pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	return res, nil
 }
 
-func (r *Result) Checksum() (string, error) {
+func (r *Result) Checksum(ctx context.Context) (string, error) {
 	if r.IsEmpty() {
 		return "", nil
 	}
@@ -259,8 +261,8 @@ func (r *Result) Checksum() (string, error) {
 			args = append(args, mode, data)
 		}
 
-		logboek.Debug.LogF("Args was added: %v\n", args)
-		logboek.Debug.LogF("  worktree %s  staging %s  result %s\n", fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)], fileStatusMapping[rune(fileStatusToAdd)])
+		logboek.Context(ctx).Debug().LogF("Args was added: %v\n", args)
+		logboek.Context(ctx).Debug().LogF("  worktree %s  staging %s  result %s\n", fileStatusMapping[rune(fileStatus.Worktree)], fileStatusMapping[rune(fileStatus.Staging)], fileStatusMapping[rune(fileStatusToAdd)])
 		h.Write([]byte(strings.Join(args, "🐜")))
 	}
 
@@ -269,9 +271,8 @@ func (r *Result) Checksum() (string, error) {
 	})
 
 	for _, sr := range r.submoduleResults {
-		logboek.Debug.LogOptionalLn()
-		logBlockMsg := fmt.Sprintf("submodule %s", sr.repositoryFullFilepath)
-		if err := logboek.Debug.LogBlock(logBlockMsg, logboek.LevelLogBlockOptions{}, func() error {
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		if err := logboek.Context(ctx).Debug().LogBlock("submodule %s", sr.repositoryFullFilepath).DoError(func() error {
 			var srChecksumArgs []string
 
 			srChecksumArgs = append(srChecksumArgs, sr.repositoryFullFilepath)
@@ -285,7 +286,7 @@ func (r *Result) Checksum() (string, error) {
 					srChecksumArgs = append(srChecksumArgs, sr.currentCommit)
 				}
 
-				srChecksum, err := sr.Checksum()
+				srChecksum, err := sr.Checksum(ctx)
 				if err != nil {
 					return err
 				}
@@ -295,7 +296,7 @@ func (r *Result) Checksum() (string, error) {
 				}
 			}
 
-			logboek.Debug.LogF("Args was added: %v\n", srChecksumArgs)
+			logboek.Context(ctx).Debug().LogF("Args was added: %v\n", srChecksumArgs)
 			h.Write([]byte(strings.Join(srChecksumArgs, "🐜")))
 
 			return nil

@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/werf/werf/cmd/werf/helm_v3"
+	"github.com/sirupsen/logrus"
 
-	"github.com/werf/werf/cmd/werf/diff"
-
-	"github.com/werf/werf/cmd/werf/converge"
+	"github.com/werf/logboek"
 
 	"github.com/spf13/cobra"
+
+	"github.com/werf/werf/cmd/werf/converge"
+	"github.com/werf/werf/cmd/werf/diff"
+	"github.com/werf/werf/cmd/werf/helm_v3"
 
 	"github.com/werf/werf/cmd/werf/build"
 	"github.com/werf/werf/cmd/werf/build_and_publish"
@@ -79,16 +82,13 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/cmd/werf/common/templates"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/process_exterminator"
 )
 
 func main() {
 	common.EnableTerminationSignalsTrap()
-
-	if err := logging.Init(); err != nil {
-		common.TerminateWithError(fmt.Sprintf("logger initialization failed: %s", err), 1)
-	}
+	log.SetOutput(logboek.ProxyOutStream())
+	logrus.StandardLogger().SetOutput(logboek.ProxyOutStream())
 
 	if err := process_exterminator.Init(); err != nil {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)

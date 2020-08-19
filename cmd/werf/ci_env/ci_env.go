@@ -14,10 +14,11 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
@@ -74,11 +75,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
-	//if err := common.ProcessLogOptions(&commonCmdData); err != nil {
-	//	common.PrintHelp(cmd)
-	//	return err
-	//}
-	logging.EnableLogQuiet()
+	logboek.Streams().Mute()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -180,7 +177,7 @@ func generateGitlabEnvs(w io.Writer, taggingStrategy string) error {
 	}
 
 	if doLogin {
-		err := docker.Login(imagesUsername, imagesPassword, ciRegistryImageEnv)
+		err := docker.Login(common.BackgroundContext(), imagesUsername, imagesPassword, ciRegistryImageEnv)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImageEnv, err)
 		}
@@ -301,7 +298,7 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	if ciGithubActor != "" && ciGithubToken != "" {
-		err := docker.Login(ciGithubActor, ciGithubToken, githubRegistry)
+		err := docker.Login(common.BackgroundContext(), ciGithubActor, ciGithubToken, githubRegistry)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker repo %s: %s", githubRegistry, err)
 		}
@@ -389,6 +386,8 @@ func generateGithubEnvs(w io.Writer, taggingStrategy string) error {
 }
 
 func generateSessionDockerConfigDir() (string, error) {
+	ctx := common.BackgroundContext()
+
 	dockerConfigPath := *commonCmdData.DockerConfig
 	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
@@ -396,7 +395,7 @@ func generateSessionDockerConfigDir() (string, error) {
 
 	tmp_manager.AutoGCEnabled = false
 
-	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
+	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(ctx, dockerConfigPath)
 	if err != nil {
 		return "", fmt.Errorf("unable to create tmp docker config: %s", err)
 	}

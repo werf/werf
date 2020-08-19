@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -39,7 +38,7 @@ func NewCmd() *cobra.Command {
 			if err := common.ValidateMinimumNArgs(1, args, cmd); err != nil {
 				return err
 			}
-			return runDelete(context.Background(), args)
+			return runDelete(common.BackgroundContext(), args)
 		},
 	}
 
@@ -66,7 +65,7 @@ func runDelete(ctx context.Context, releaseNames []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -85,7 +84,7 @@ func runDelete(ctx context.Context, releaseNames []string) error {
 			ReleasesMaxHistory:          0,
 		},
 	}
-	if err := deploy.Init(deployInitOptions); err != nil {
+	if err := deploy.Init(common.BackgroundContext(), deployInitOptions); err != nil {
 		return err
 	}
 

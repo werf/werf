@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -14,33 +15,33 @@ const (
 )
 
 type StagesStorage interface {
-	GetAllStages(projectName string) ([]image.StageID, error)
-	GetStagesBySignature(projectName, signature string) ([]image.StageID, error)
-	GetStageDescription(projectName, signature string, uniqueID int64) (*image.StageDescription, error)
-	DeleteStages(options DeleteImageOptions, stages ...*image.StageDescription) error
+	GetAllStages(ctx context.Context, projectName string) ([]image.StageID, error)
+	GetStagesBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error)
+	GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error)
+	DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error
 
 	ConstructStageImageName(projectName, signature string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
-	FetchImage(img container_runtime.Image) error
+	FetchImage(ctx context.Context, img container_runtime.Image) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
-	StoreImage(img container_runtime.Image) error
-	ShouldFetchImage(img container_runtime.Image) (bool, error)
+	StoreImage(ctx context.Context, img container_runtime.Image) error
+	ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error)
 
-	CreateRepo() error
-	DeleteRepo() error
+	CreateRepo(ctx context.Context) error
+	DeleteRepo(ctx context.Context) error
 
-	AddManagedImage(projectName, imageName string) error
-	RmManagedImage(projectName, imageName string) error
-	GetManagedImages(projectName string) ([]string, error)
+	AddManagedImage(ctx context.Context, projectName, imageName string) error
+	RmManagedImage(ctx context.Context, projectName, imageName string) error
+	GetManagedImages(ctx context.Context, projectName string) ([]string, error)
 
-	PutImageCommit(projectName, imageName, commit string, metadata *ImageMetadata) error
-	RmImageCommit(projectName, imageName, commit string) error
-	GetImageCommits(projectName, imageName string) ([]string, error)
-	GetImageMetadataByCommit(projectName, imageName, commit string) (*ImageMetadata, error)
+	PutImageCommit(ctx context.Context, projectName, imageName, commit string, metadata *ImageMetadata) error
+	RmImageCommit(ctx context.Context, projectName, imageName, commit string) error
+	GetImageCommits(ctx context.Context, projectName, imageName string) ([]string, error)
+	GetImageMetadataByCommit(ctx context.Context, projectName, imageName, commit string) (*ImageMetadata, error)
 
-	GetClientIDRecords(projectName string) ([]*ClientIDRecord, error)
-	PostClientIDRecord(projectName string, rec *ClientIDRecord) error
+	GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error)
+	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 
 	String() string
 	Address() string

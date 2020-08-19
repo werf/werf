@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"sort"
 
 	"github.com/werf/werf/pkg/config"
@@ -29,7 +30,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -59,8 +60,8 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
-	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 

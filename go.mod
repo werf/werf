@@ -38,7 +38,6 @@ require (
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mailru/easyjson v0.7.2 // indirect
-	github.com/mattn/go-isatty v0.0.12
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/moby/buildkit v0.7.1-0.20200615045306-df35e9818d1f
 	github.com/moby/term v0.0.0-20200611042045-63b9a826fb74 // indirect
@@ -60,9 +59,9 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.3.5-0.20200729112351-cb49a986a194
+	github.com/werf/kubedog v0.4.1-0.20200810223601-b04eea8908f3
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
-	github.com/werf/logboek v0.3.5-0.20200608145450-5b5f18fe7009
+	github.com/werf/logboek v0.4.2
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9

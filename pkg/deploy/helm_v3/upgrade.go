@@ -32,8 +32,8 @@ type UpgradeOptions struct {
 func Upgrade(ctx context.Context, chart, releaseName string, opts UpgradeOptions) error {
 	outfmt := output.Table
 
-	envSettings := NewEnvSettings(opts.Namespace)
-	cfg := NewActionConfig(envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
+	envSettings := NewEnvSettings(ctx, opts.Namespace)
+	cfg := NewActionConfig(ctx, envSettings, InitActionConfigOptions{StatusProgressPeriod: opts.StatusProgressPeriod, HooksStatusProgressPeriod: opts.HooksStatusProgressPeriod})
 	client := action.NewUpgrade(cfg)
 
 	client.Namespace = opts.Namespace
@@ -48,7 +48,7 @@ func Upgrade(ctx context.Context, chart, releaseName string, opts UpgradeOptions
 		histClient := action.NewHistory(cfg)
 		histClient.Max = 1
 		if _, err := histClient.Run(releaseName); err == driver.ErrReleaseNotFound {
-			logboek.Debug.LogF("Release %q does not exist. Installing it now.\n", releaseName)
+			logboek.Context(ctx).Debug().LogF("Release %q does not exist. Installing it now.\n", releaseName)
 
 			return Install(ctx, chart, releaseName, InstallOptions{
 				ValuesOptions:   opts.ValuesOptions,
@@ -64,7 +64,7 @@ func Upgrade(ctx context.Context, chart, releaseName string, opts UpgradeOptions
 	}
 
 	if client.Version == "" && client.Devel {
-		logboek.Debug.LogF("setting version to >0.0.0-0")
+		logboek.Context(ctx).Debug().LogF("setting version to >0.0.0-0")
 		client.Version = ">0.0.0-0"
 	}
 
@@ -94,7 +94,7 @@ func Upgrade(ctx context.Context, chart, releaseName string, opts UpgradeOptions
 		return errors.Wrap(err, "UPGRADE FAILED")
 	}
 
-	logboek.Debug.LogF("Release %q has been upgraded\n", releaseName)
+	logboek.Context(ctx).Debug().LogF("Release %q has been upgraded\n", releaseName)
 
-	return outfmt.Write(logboek.GetOutStream(), &statusPrinter{rel, envSettings.Debug})
+	return outfmt.Write(logboek.Context(ctx).ProxyOutStream(), &statusPrinter{rel, envSettings.Debug})
 }

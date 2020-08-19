@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -8,17 +9,18 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -71,19 +73,19 @@ func (phase *BuildPhase) Name() string {
 	return "build"
 }
 
-func (phase *BuildPhase) BeforeImages() error {
+func (phase *BuildPhase) BeforeImages(_ context.Context) error {
 	return nil
 }
 
-func (phase *BuildPhase) AfterImages() error {
+func (phase *BuildPhase) AfterImages(_ context.Context) error {
 	return nil
 }
 
-func (phase *BuildPhase) ImageProcessingShouldBeStopped(img *Image) bool {
+func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, img *Image) bool {
 	return false
 }
 
-func (phase *BuildPhase) BeforeImageStages(img *Image) error {
+func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *Image) error {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	img.SetupBaseImage(phase.Conveyor)
@@ -91,10 +93,10 @@ func (phase *BuildPhase) BeforeImageStages(img *Image) error {
 	return nil
 }
 
-func (phase *BuildPhase) AfterImageStages(img *Image) error {
+func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
 
-	if imgContentSig, err := calculateSignature("imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor); err != nil {
+	if imgContentSig, err := calculateSignature(ctx, "imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor); err != nil {
 		return fmt.Errorf("unable to calculate image %s content signature: %s", img.GetName(), err)
 	} else {
 		// TODO: in v1.2 use:
@@ -104,7 +106,7 @@ func (phase *BuildPhase) AfterImageStages(img *Image) error {
 	}
 
 	if phase.ShouldAddManagedImageRecord && !img.isArtifact {
-		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(phase.Conveyor.projectName(), img.GetName()); err != nil {
+		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
 		}
 	}
@@ -121,23 +123,23 @@ func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
 	return 0
 }
 
-func (phase *BuildPhase) OnImageStage(img *Image, stg stage.Interface) error {
-	return phase.StagesIterator.OnImageStage(img, stg, func(img *Image, stg stage.Interface, isEmpty bool) error {
-		return phase.onImageStage(img, stg, isEmpty)
+func (phase *BuildPhase) OnImageStage(ctx context.Context, img *Image, stg stage.Interface) error {
+	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *Image, stg stage.Interface, isEmpty bool) error {
+		return phase.onImageStage(ctx, img, stg, isEmpty)
 	})
 }
 
-func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty bool) error {
+func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage.Interface, isEmpty bool) error {
 	if isEmpty {
 		return nil
 	}
 
-	if err := stg.FetchDependencies(phase.Conveyor, phase.Conveyor.ContainerRuntime); err != nil {
+	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime); err != nil {
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
 	}
 
 	if phase.ShouldBeBuiltMode {
-		return phase.calculateStage(img, stg, true)
+		return phase.calculateStage(ctx, img, stg, true)
 	} else {
 		if stg.Name() != "from" && stg.Name() != "dockerfile" {
 			if phase.StagesIterator.PrevNonEmptyStage == nil {
@@ -151,20 +153,20 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 			}
 		}
 
-		if err := phase.calculateStage(img, stg, false); err != nil {
+		if err := phase.calculateStage(ctx, img, stg, false); err != nil {
 			return err
 		}
 
 		// Stage is cached in the stages storage
 		if stg.GetImage().GetStageDescription() != nil {
-			logboek.Default.LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+			logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
 
-			logImageInfo(stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+			logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
 
-			logboek.LogOptionalLn()
+			logboek.Context(ctx).LogOptionalLn()
 
 			if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
-				if err := introspectStage(stg); err != nil {
+				if err := introspectStage(ctx, stg); err != nil {
 					return err
 				}
 			}
@@ -172,15 +174,15 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 			return nil
 		}
 
-		if err := phase.fetchBaseImageForStage(img, stg); err != nil {
+		if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
 			return err
 		}
 
-		if err := phase.prepareStageInstructions(img, stg); err != nil {
+		if err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
 		}
 
-		if err := phase.buildStage(img, stg); err != nil {
+		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
 
@@ -195,15 +197,15 @@ func (phase *BuildPhase) onImageStage(img *Image, stg stage.Interface, isEmpty b
 	}
 }
 
-func (phase *BuildPhase) fetchBaseImageForStage(img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image, stg stage.Interface) error {
 	if stg.Name() == "from" {
-		if err := img.FetchBaseImage(phase.Conveyor); err != nil {
+		if err := img.FetchBaseImage(ctx, phase.Conveyor); err != nil {
 			return fmt.Errorf("unable to fetch base image %s for stage %s: %s", img.GetBaseImage().Name(), stg.LogDetailedName(), err)
 		}
 	} else if stg.Name() == "dockerfile" {
 		return nil
 	} else {
-		return phase.Conveyor.StagesManager.FetchStage(phase.StagesIterator.PrevBuiltStage)
+		return phase.Conveyor.StagesManager.FetchStage(ctx, phase.StagesIterator.PrevBuiltStage)
 	}
 
 	return nil
@@ -216,22 +218,22 @@ func castToStageImage(img container_runtime.ImageInterface) *container_runtime.S
 	return img.(*container_runtime.StageImage)
 }
 
-func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldBeBuiltMode bool) error {
-	stageDependencies, err := stg.GetDependencies(phase.Conveyor, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
+func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface, shouldBeBuiltMode bool) error {
+	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
 	if err != nil {
 		return err
 	}
 
-	stageSig, err := calculateSignature(string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
+	stageSig, err := calculateSignature(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
 		return err
 	}
 	stg.SetSignature(stageSig)
 
-	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stageSig); err != nil {
+	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stageSig); err != nil {
 		return err
 	} else {
-		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(phase.Conveyor, stg, stages); err != nil {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
 			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
@@ -239,7 +241,7 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldB
 			stg.SetImage(i)
 		} else {
 			if shouldBeBuiltMode {
-				phase.printShouldBeBuiltError(img, stg)
+				phase.printShouldBeBuiltError(ctx, img, stg)
 				return fmt.Errorf("stages required")
 			}
 
@@ -249,19 +251,19 @@ func (phase *BuildPhase) calculateStage(img *Image, stg stage.Interface, shouldB
 		}
 	}
 
-	stageContentSig, err := calculateSignature(fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
+	stageContentSig, err := calculateSignature(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
 		return fmt.Errorf("unable to calculate stage %s content signature: %s", stg.Name(), err)
 	}
 	stg.SetContentSignature(stageContentSig)
 
-	logboek.Info.LogF("Stage %s content signature: %s\n", stg.LogDetailedName(), stageContentSig)
+	logboek.Context(ctx).Info().LogF("Stage %s content signature: %s\n", stg.LogDetailedName(), stageContentSig)
 
 	return nil
 }
 
-func (phase *BuildPhase) prepareStageInstructions(img *Image, stg stage.Interface) error {
-	logboek.Debug.LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
+func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Image, stg stage.Interface) error {
+	logboek.Context(ctx).Debug().LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
 
 	stageImage := stg.GetImage()
 
@@ -286,7 +288,7 @@ func (phase *BuildPhase) prepareStageInstructions(img *Image, stg stage.Interfac
 		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.DockerfileImageBuilder().Cleanup()
+			return stageImage.DockerfileImageBuilder().Cleanup(ctx)
 		})
 
 	default:
@@ -300,7 +302,7 @@ func (phase *BuildPhase) prepareStageInstructions(img *Image, stg stage.Interfac
 		}
 	}
 
-	err := stg.PrepareImage(phase.Conveyor, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %s", stg.Name(), err)
 	}
@@ -308,42 +310,39 @@ func (phase *BuildPhase) prepareStageInstructions(img *Image, stg stage.Interfac
 	return nil
 }
 
-func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
-	_, err := stapel.GetOrCreateContainer()
+func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.Interface) error {
+	_, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
 		return fmt.Errorf("get or create stapel container failed: %s", err)
 	}
 
 	infoSectionFunc := func(err error) {
 		if err != nil {
-			_ = logboek.WithIndent(func() error {
-				logImageCommands(stg.GetImage())
-				return nil
+			logboek.Context(ctx).Streams().DoWithIndent(func() {
+				logImageCommands(ctx, stg.GetImage())
 			})
 			return
 		}
-		logImageInfo(stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), false)
+		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), false)
 	}
 
-	if err := logboek.Default.LogProcess(
-		fmt.Sprintf("Building stage %s", stg.LogDetailedName()),
-		logboek.LevelLogProcessOptions{
-			InfoSectionFunc: infoSectionFunc,
-			Style:           logboek.HighlightStyle(),
-		},
-		func() (err error) {
-			if err := stg.PreRunHook(phase.Conveyor); err != nil {
+	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.InfoSectionFunc(infoSectionFunc)
+			options.Style(style.Highlight())
+		}).
+		DoError(func() (err error) {
+			if err := stg.PreRunHook(ctx, phase.Conveyor); err != nil {
 				return fmt.Errorf("%s preRunHook failed: %s", stg.LogDetailedName(), err)
 			}
 
-			return phase.atomicBuildStageImage(img, stg)
-		},
-	); err != nil {
+			return phase.atomicBuildStageImage(ctx, img, stg)
+		}); err != nil {
 		return err
 	}
 
 	if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
-		if err := introspectStage(stg); err != nil {
+		if err := introspectStage(ctx, stg); err != nil {
 			return err
 		}
 	}
@@ -351,7 +350,7 @@ func (phase *BuildPhase) buildStage(img *Image, stg stage.Interface) error {
 	return nil
 }
 
-func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, stg stage.Interface) error {
 	stageImage := stg.GetImage()
 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD"); v != "" {
@@ -361,11 +360,8 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
-	if err := logboek.WithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
-		if err := stageImage.Build(phase.ImageBuildOptions); err != nil {
-			return err
-		}
-		return nil
+	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
+		return stageImage.Build(ctx, phase.ImageBuildOptions)
 	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %s with signature %s: %s", stg.Name(), stg.GetSignature(), err)
 	}
@@ -377,19 +373,19 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
-	if lock, err := phase.Conveyor.StorageLockManager.LockStage(phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
+	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
 		return fmt.Errorf("unable to lock project %s signature %s: %s", phase.Conveyor.projectName(), stg.GetSignature(), err)
 	} else {
-		defer phase.Conveyor.StorageLockManager.Unlock(lock)
+		defer phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
 	}
 
-	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(stg.LogDetailedName(), stg.GetSignature()); err != nil {
+	if stages, err := phase.Conveyor.StagesManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stg.GetSignature()); err != nil {
 		return err
 	} else {
-		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(phase.Conveyor, stg, stages); err != nil {
+		if stageDesc, err := phase.Conveyor.StagesManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
-			logboek.Default.LogF(
+			logboek.Context(ctx).Default().LogF(
 				"Discarding newly built image for stage %s by signature %s: detected already existing image %s in the stages storage\n",
 				stg.LogDetailedName(), stg.GetSignature(), stageDesc.Info.Name,
 			)
@@ -412,21 +408,17 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			logboek.Info.LogF("Storing new image %s info into manifest cache\n", stageImageObj.GetStageDescription().Info.Name)
-			if err := image.CommonManifestCache.StoreImageInfo(stageImageObj.GetStageDescription().Info); err != nil {
+			logboek.Context(ctx).Info().LogF("Storing new image %s info into manifest cache\n", stageImageObj.GetStageDescription().Info.Name)
+			if err := image.CommonManifestCache.StoreImageInfo(ctx, stageImageObj.GetStageDescription().Info); err != nil {
 				return fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageObj.GetStageDescription().Info.Name, err)
 			}
 
-			if err := logboek.Default.LogProcess(
-				fmt.Sprintf("Store into stages storage"),
-				logboek.LevelLogProcessOptions{},
-				func() error {
-					if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(&container_runtime.DockerImage{Image: stageImage}); err != nil {
-						return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
-					}
-					return nil
-				},
-			); err != nil {
+			if err := logboek.Context(ctx).Default().LogProcess("Store into stages storage").DoError(func() error {
+				if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
+					return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
+				}
+				return nil
+			}); err != nil {
 				return err
 			}
 
@@ -436,23 +428,25 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 			}
 			stageIDs = append(stageIDs, *stageImage.GetStageDescription().StageID)
 
-			return phase.Conveyor.StagesManager.AtomicStoreStagesBySignatureToCache(string(stg.Name()), stg.GetSignature(), stageIDs)
+			return phase.Conveyor.StagesManager.AtomicStoreStagesBySignatureToCache(ctx, string(stg.Name()), stg.GetSignature(), stageIDs)
 		}
 	}
 }
 
-func introspectStage(s stage.Interface) error {
-	return logboek.Info.LogProcess(
-		fmt.Sprintf("Introspecting stage %s", s.Name()),
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		func() error {
-			if err := logboek.WithRawStreamsOutputModeOn(s.GetImage().Introspect); err != nil {
+func introspectStage(ctx context.Context, s stage.Interface) error {
+	return logboek.Context(ctx).Info().LogProcess("Introspecting stage %s", s.Name()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+				return s.GetImage().Introspect(ctx)
+			}); err != nil {
 				return fmt.Errorf("introspect error failed: %s", err)
 			}
 
 			return nil
-		},
-	)
+		})
 }
 
 var (
@@ -460,37 +454,37 @@ var (
 	logImageInfoFormat        = fmt.Sprintf("  %%%ds: %%s\n", logImageInfoLeftPartWidth)
 )
 
-func logImageInfo(img container_runtime.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
+func logImageInfo(ctx context.Context, img container_runtime.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
 	repository, tag := image.ParseRepositoryAndTag(img.Name())
-	logboek.Default.LogFDetails(logImageInfoFormat, "repository", repository)
-	logboek.Default.LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
-	logboek.Default.LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
-	logboek.Default.LogFDetails(logImageInfoFormat, "tag", tag)
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "repository", repository)
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "tag", tag)
 
 	if prevStageImageSize == 0 {
-		logboek.Default.LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
 	} else {
-		logboek.Default.LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize))
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize))
 	}
 
 	if !isUsingCache {
 		changes := img.Container().UserCommitChanges()
 		if len(changes) != 0 {
-			fitTextOptions := logboek.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-			formattedCommands := strings.TrimLeft(logboek.FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
-			logboek.Default.LogFDetails(logImageInfoFormat, "instructions", formattedCommands)
+			fitTextOptions := types.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+			formattedCommands := strings.TrimLeft(logboek.Context(ctx).FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
+			logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "instructions", formattedCommands)
 		}
 
-		logImageCommands(img)
+		logImageCommands(ctx, img)
 	}
 }
 
-func logImageCommands(img container_runtime.ImageInterface) {
+func logImageCommands(ctx context.Context, img container_runtime.ImageInterface) {
 	commands := img.Container().UserRunCommands()
 	if len(commands) != 0 {
-		fitTextOptions := logboek.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-		formattedCommands := strings.TrimLeft(logboek.FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
-		logboek.Default.LogFDetails(logImageInfoFormat, "commands", formattedCommands)
+		fitTextOptions := types.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+		formattedCommands := strings.TrimLeft(logboek.Context(ctx).FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "commands", formattedCommands)
 	}
 }
 
@@ -507,10 +501,10 @@ func byteCountBinary(b int64) string {
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
+func calculateSignature(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
 	checksumArgs := []string{image.BuildCacheVersion, stageName, stageDependencies}
 	if prevNonEmptyStage != nil {
-		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(conveyor)
+		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
 		if err != nil {
 			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", prevNonEmptyStage.Name(), stageName, err)
 		}
@@ -521,7 +515,7 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 	signature := util.Sha3_224Hash(checksumArgs...)
 
 	blockMsg := fmt.Sprintf("Stage %s signature %s", stageName, signature)
-	_ = logboek.Debug.LogBlock(blockMsg, logboek.LevelLogBlockOptions{}, func() error {
+	logboek.Context(ctx).Debug().LogBlock(blockMsg).Do(func() {
 		checksumArgsNames := []string{
 			"BuildCacheVersion",
 			"stageName",
@@ -530,57 +524,57 @@ func calculateSignature(stageName, stageDependencies string, prevNonEmptyStage s
 			"prevNonEmptyStage dependencies for next stage",
 		}
 		for ind, checksumArg := range checksumArgs {
-			logboek.Debug.LogF("%s => %q\n", checksumArgsNames[ind], checksumArg)
+			logboek.Context(ctx).Debug().LogF("%s => %q\n", checksumArgsNames[ind], checksumArg)
 		}
-		return nil
 	})
 
 	return signature, nil
 }
 
 // TODO: move these prints to the after-images hook, print summary over all images
-func (phase *BuildPhase) printShouldBeBuiltError(img *Image, stg stage.Interface) {
-	logProcessOptions := logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()}
-	logboek.Default.LogProcess("Built stages cache check", logProcessOptions, func() error {
-		logboek.LogWarnF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
+func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image, stg stage.Interface) {
+	logboek.Context(ctx).Default().LogProcess("Built stages cache check").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		Do(func() {
+			logboek.Context(ctx).Warn().LogF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
 
-		var reasonNumber int
-		reasonNumberFunc := func() string {
-			reasonNumber++
-			return fmt.Sprintf("(%d) ", reasonNumber)
-		}
+			var reasonNumber int
+			reasonNumberFunc := func() string {
+				reasonNumber++
+				return fmt.Sprintf("(%d) ", reasonNumber)
+			}
 
-		logboek.LogWarnLn()
-		logboek.LogWarnLn("There are some possible reasons:")
-		logboek.LogWarnLn()
+			logboek.Context(ctx).Warn().LogLn()
+			logboek.Context(ctx).Warn().LogLn("There are some possible reasons:")
+			logboek.Context(ctx).Warn().LogLn()
 
-		if img.isDockerfileImage {
-			logboek.LogWarnLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
+			if img.isDockerfileImage {
+				logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
 - .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
 - auto-generated file`)
-			logboek.LogWarnLn()
-		}
+				logboek.Context(ctx).Warn().LogLn()
+			}
 
-		logboek.LogWarnLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
 - environment variable (e.g. {{ env "JOB_ID" }})
 - dynamic go template function (e.g. one of sprig date functions http://masterminds.github.io/sprig/date.html)
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
-		logboek.LogWarnLn()
+			logboek.Context(ctx).Warn().LogLn()
 
-		logboek.LogWarnLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+			logboek.Context(ctx).Warn().LogLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
 
 To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
 E.g.:
 
   diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`)
-		logboek.LogWarnLn()
+			logboek.Context(ctx).Warn().LogLn()
 
-		logboek.LogWarnLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
 - automatically with werf cleanup command
 - manually with werf purge, werf stages purge or werf host purge commands`)
-		logboek.LogWarnLn()
-
-		return nil
-	})
+			logboek.Context(ctx).Warn().LogLn()
+		})
 }

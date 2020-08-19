@@ -1,12 +1,9 @@
 package lint
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
-
-	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy"
@@ -61,15 +58,17 @@ func NewCmd() *cobra.Command {
 }
 
 func runLint() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream(), LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
-	if err := deploy.Init(deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
+	if err := deploy.Init(ctx, deploy.InitOptions{HelmInitOptions: helm.InitOptions{WithoutKube: true}}); err != nil {
 		return err
 	}
 
@@ -95,6 +94,7 @@ func runLint() error {
 	projectName := werfConfig.Meta.Project
 
 	stubImagesRepo, err := storage.NewImagesRepo(
+		ctx,
 		projectName,
 		common.StubImagesRepoAddress,
 		"auto",
@@ -126,7 +126,7 @@ func runLint() error {
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(context.Background(), projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

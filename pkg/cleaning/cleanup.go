@@ -1,11 +1,14 @@
 package cleaning
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/logboek/pkg/types"
 
+	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
 )
 
@@ -14,31 +17,35 @@ type CleanupOptions struct {
 	StagesCleanupOptions
 }
 
-func Cleanup(projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
+func Cleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
 	m := newCleanupManager(projectName, imagesRepo, stagesManager, options)
 
-	if lock, err := storageLockManager.LockStagesAndImages(projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
+	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
 	} else {
-		defer storageLockManager.Unlock(lock)
+		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	if err := logboek.Default.LogProcess(
-		"Running images cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.imagesCleanupManager.run,
-	); err != nil {
+	if err := logboek.Context(ctx).Default().LogProcess("Running images cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			return m.imagesCleanupManager.run(ctx)
+		}); err != nil {
 		return err
 	}
 
 	repoImages := m.imagesCleanupManager.getImageRepoImageList()
 	m.stagesCleanupManager.setImagesRepoImageList(flattenRepoImages(repoImages))
 
-	if err := logboek.Default.LogProcess(
-		"Running stages cleanup",
-		logboek.LevelLogProcessOptions{Style: logboek.HighlightStyle()},
-		m.stagesCleanupManager.run,
-	); err != nil {
+	if err := logboek.Context(ctx).Default().LogProcess("Running stages cleanup").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			return m.stagesCleanupManager.run(ctx)
+		}); err != nil {
 		return err
 	}
 

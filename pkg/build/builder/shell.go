@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -26,23 +27,39 @@ func NewShellBuilder(config *config.Shell, extra *Extra) *Shell {
 	return &Shell{config: config, extra: extra}
 }
 
-func (b *Shell) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeInstall") }
-func (b *Shell) IsInstallEmpty() bool       { return b.isEmptyStage("Install") }
-func (b *Shell) IsBeforeSetupEmpty() bool   { return b.isEmptyStage("BeforeSetup") }
-func (b *Shell) IsSetupEmpty() bool         { return b.isEmptyStage("Setup") }
+func (b *Shell) IsBeforeInstallEmpty(ctx context.Context) bool {
+	return b.isEmptyStage(ctx, "BeforeInstall")
+}
+func (b *Shell) IsInstallEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Install") }
+func (b *Shell) IsBeforeSetupEmpty(ctx context.Context) bool {
+	return b.isEmptyStage(ctx, "BeforeSetup")
+}
+func (b *Shell) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Shell) BeforeInstall(container Container) error { return b.stage("BeforeInstall", container) }
-func (b *Shell) Install(container Container) error       { return b.stage("Install", container) }
-func (b *Shell) BeforeSetup(container Container) error   { return b.stage("BeforeSetup", container) }
-func (b *Shell) Setup(container Container) error         { return b.stage("Setup", container) }
+func (b *Shell) BeforeInstall(_ context.Context, container Container) error {
+	return b.stage("BeforeInstall", container)
+}
+func (b *Shell) Install(_ context.Context, container Container) error {
+	return b.stage("Install", container)
+}
+func (b *Shell) BeforeSetup(_ context.Context, container Container) error {
+	return b.stage("BeforeSetup", container)
+}
+func (b *Shell) Setup(_ context.Context, container Container) error {
+	return b.stage("Setup", container)
+}
 
-func (b *Shell) BeforeInstallChecksum() string { return b.stageChecksum("BeforeInstall") }
-func (b *Shell) InstallChecksum() string       { return b.stageChecksum("Install") }
-func (b *Shell) BeforeSetupChecksum() string   { return b.stageChecksum("BeforeSetup") }
-func (b *Shell) SetupChecksum() string         { return b.stageChecksum("Setup") }
+func (b *Shell) BeforeInstallChecksum(ctx context.Context) string {
+	return b.stageChecksum(ctx, "BeforeInstall")
+}
+func (b *Shell) InstallChecksum(ctx context.Context) string { return b.stageChecksum(ctx, "Install") }
+func (b *Shell) BeforeSetupChecksum(ctx context.Context) string {
+	return b.stageChecksum(ctx, "BeforeSetup")
+}
+func (b *Shell) SetupChecksum(ctx context.Context) string { return b.stageChecksum(ctx, "Setup") }
 
-func (b *Shell) isEmptyStage(userStageName string) bool {
-	return b.stageChecksum(userStageName) == ""
+func (b *Shell) isEmptyStage(ctx context.Context, userStageName string) bool {
+	return b.stageChecksum(ctx, userStageName) == ""
 }
 
 func (b *Shell) stage(userStageName string, container Container) error {
@@ -66,18 +83,18 @@ func (b *Shell) stage(userStageName string, container Container) error {
 	return nil
 }
 
-func (b *Shell) stageChecksum(userStageName string) string {
+func (b *Shell) stageChecksum(ctx context.Context, userStageName string) string {
 	var checksumArgs []string
 
 	checksumArgs = append(checksumArgs, b.stageCommands(userStageName)...)
 
 	if debugUserStageChecksum() {
-		logboek.Debug.LogFHighlight("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
+		logboek.Context(ctx).Debug().LogFHighlight("DEBUG: %s stage tasks checksum dependencies %v\n", userStageName, checksumArgs)
 	}
 
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
 		if debugUserStageChecksum() {
-			logboek.Debug.LogFHighlight("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
+			logboek.Context(ctx).Debug().LogFHighlight("DEBUG: %s stage version checksum %v\n", userStageName, stageVersionChecksum)
 		}
 		checksumArgs = append(checksumArgs, stageVersionChecksum)
 	}

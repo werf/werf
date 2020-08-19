@@ -1,20 +1,23 @@
 package builder
 
-import "os"
+import (
+	"context"
+	"os"
+)
 
 type Builder interface {
-	IsBeforeInstallEmpty() bool
-	IsInstallEmpty() bool
-	IsBeforeSetupEmpty() bool
-	IsSetupEmpty() bool
-	BeforeInstall(container Container) error
-	Install(container Container) error
-	BeforeSetup(container Container) error
-	Setup(container Container) error
-	BeforeInstallChecksum() string
-	InstallChecksum() string
-	BeforeSetupChecksum() string
-	SetupChecksum() string
+	IsBeforeInstallEmpty(ctx context.Context) bool
+	IsInstallEmpty(ctx context.Context) bool
+	IsBeforeSetupEmpty(ctx context.Context) bool
+	IsSetupEmpty(ctx context.Context) bool
+	BeforeInstall(ctx context.Context, container Container) error
+	Install(ctx context.Context, container Container) error
+	BeforeSetup(ctx context.Context, container Container) error
+	Setup(ctx context.Context, container Container) error
+	BeforeInstallChecksum(ctx context.Context) string
+	InstallChecksum(ctx context.Context) string
+	BeforeSetupChecksum(ctx context.Context) string
+	SetupChecksum(ctx context.Context) string
 }
 
 type Container interface {

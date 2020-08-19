@@ -24,7 +24,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings()
+			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -65,6 +65,8 @@ func NewCmd() *cobra.Command {
 }
 
 func runPurge() error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -123,11 +125,11 @@ func runPurge() error {
 		return err
 	}
 
-	imageNameList, err := common.GetManagedImagesNames(projectName, stagesStorage, werfConfig)
+	imageNameList, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
-	logboek.Debug.LogF("Managed images names: %v\n", imageNameList)
+	logboek.Debug().LogF("Managed images names: %v\n", imageNameList)
 
 	imagesPurgeOptions := cleaning.ImagesPurgeOptions{
 		ImageNameList: imageNameList,
@@ -135,7 +137,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesPurge(projectName, imagesRepo, storageLockManager, imagesPurgeOptions); err != nil {
+	if err := cleaning.ImagesPurge(ctx, projectName, imagesRepo, storageLockManager, imagesPurgeOptions); err != nil {
 		return err
 	}
 

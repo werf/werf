@@ -1,6 +1,7 @@
 package host_cleaning
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -13,27 +14,27 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
-func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
-	images, err := werfImagesByFilterSet(filterSet)
+func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, options CommonOptions) error {
+	images, err := werfImagesByFilterSet(ctx, filterSet)
 	if err != nil {
 		return err
 	}
 
-	images, err = processUsedImages(images, options)
+	images, err = processUsedImages(ctx, images, options)
 	if err != nil {
 		return err
 	}
 
-	if err := imagesRemove(images, options); err != nil {
+	if err := imagesRemove(ctx, images, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func werfImagesByFilterSet(filterSet filters.Args) ([]types.ImageSummary, error) {
+func werfImagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.ImageSummary, error) {
 	options := types.ImageListOptions{Filters: filterSet}
-	return docker.Images(options)
+	return docker.Images(ctx, options)
 }
 
 func danglingFilterSet() filters.Args {
@@ -42,13 +43,13 @@ func danglingFilterSet() filters.Args {
 	return filterSet
 }
 
-func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
+func processUsedImages(ctx context.Context, images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
 	filterSet := filters.NewArgs()
 	for _, img := range images {
 		filterSet.Add("ancestor", img.ID)
 	}
 
-	containers, err := containersByFilterSet(filterSet)
+	containers, err := containersByFilterSet(ctx, filterSet)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 		for _, img := range images {
 			if img.ID == container.ImageID {
 				if options.SkipUsedImages {
-					logboek.Default.LogFDetails("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
+					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
 				} else if options.RmContainersThatUseWerfImages {
 					containersToRemove = append(containersToRemove, container)
@@ -70,7 +71,7 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 		}
 	}
 
-	if err := containersRemove(containersToRemove, options); err != nil {
+	if err := containersRemove(ctx, containersToRemove, options); err != nil {
 		return nil, err
 	}
 
@@ -92,7 +93,7 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 	return newImages
 }
 
-func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
+func imagesRemove(ctx context.Context, images []types.ImageSummary, options CommonOptions) error {
 	var imageReferences []string
 
 	for _, img := range images {
@@ -112,18 +113,18 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 		}
 	}
 
-	if err := imageReferencesRemove(imageReferences, options); err != nil {
+	if err := imageReferencesRemove(ctx, imageReferences, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func imageReferencesRemove(references []string, options CommonOptions) error {
+func imageReferencesRemove(ctx context.Context, references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
-			logboek.LogLn(strings.Join(references, "\n"))
-			logboek.LogOptionalLn()
+			logboek.Context(ctx).LogLn(strings.Join(references, "\n"))
+			logboek.Context(ctx).LogOptionalLn()
 		} else {
 			var args []string
 
@@ -132,7 +133,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			}
 			args = append(args, references...)
 
-			if err := docker.CliRmi_LiveOutput(args...); err != nil {
+			if err := docker.CliRmi_LiveOutput(ctx, args...); err != nil {
 				return err
 			}
 		}
