@@ -105,6 +105,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 }
 
 func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToProcess []string) error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

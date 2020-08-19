@@ -123,6 +123,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 }
 
 func runConverge() error {
+	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

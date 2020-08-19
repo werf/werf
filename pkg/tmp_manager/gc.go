@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	AutoGCEnabled = os.Getenv("WERF_DISABLE_AUTO_GC") != "1"
+	AutoGCEnabled bool
 )
 
 func runGC(ctx context.Context) error {
@@ -29,7 +29,7 @@ func runGC(ctx context.Context) error {
 }
 
 func checkShouldRunGC() (bool, error) {
-	if !AutoGCEnabled {
+	if !isAutoGCEnabled() {
 		return false, nil
 	}
 
@@ -79,6 +79,10 @@ func checkShouldRunGC() (bool, error) {
 	}
 
 	return false, nil
+}
+
+func isAutoGCEnabled() bool {
+	return AutoGCEnabled && os.Getenv("WERF_DISABLE_AUTO_GC") != "1"
 }
 
 func GC(ctx context.Context, dryRun bool) error {

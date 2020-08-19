@@ -87,8 +87,6 @@ func run(imageName string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	tmp_manager.AutoGCEnabled = false
-
 	if err := image.Init(); err != nil {
 		return err
 	}

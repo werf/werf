@@ -394,8 +394,6 @@ func generateSessionDockerConfigDir() (string, error) {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
 	}
 
-	tmp_manager.AutoGCEnabled = false
-
 	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(ctx, dockerConfigPath)
 	if err != nil {
 		return "", fmt.Errorf("unable to create tmp docker config: %s", err)
