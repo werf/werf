@@ -248,19 +248,19 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/werf/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                Тегирование, основанное на контенте.
+                                <strike>Тегирование, основанное на контенте.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
                             <a href="https://github.com/werf/werf/issues/2199" class="roadmap__steps-list-item-issue" target="_blank">#2199</a>
                             <span class="roadmap__steps-list-item-text">
-                                Поддержка большинства сервисов,<br />предоставляющих Docker registry.
+                                <strike>Поддержка большинства сервисов,<br />предоставляющих Docker registry.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
                             <a href="https://github.com/werf/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
                             <span class="roadmap__steps-list-item-text">
-                                Распределенная сборка с общим Docker registry.
+                                <strike>Распределенная сборка с общим Docker registry.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
@@ -272,7 +272,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="2200">
                             <a href="https://github.com/werf/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
-                                Параллельная сборка образов.
+                                <strike>Параллельная сборка образов.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">

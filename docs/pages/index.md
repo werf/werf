@@ -246,7 +246,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1184">
                             <a href="https://github.com/werf/werf/issues/1184" class="roadmap__steps-list-item-issue" target="_blank">#1184</a>
                             <span class="roadmap__steps-list-item-text">
-                                Content-based tagging scheme.
+                                <strike>Content-based tagging scheme.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="2199">
@@ -258,7 +258,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="1614">
                             <a href="https://github.com/werf/werf/issues/1614" class="roadmap__steps-list-item-issue" target="_blank">#1614</a>
                             <span class="roadmap__steps-list-item-text">
-                                Distributed builds with common Docker registry.
+                                <strike>Distributed builds with common Docker registry.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1940">
@@ -270,7 +270,7 @@ layout: default
                         <li class="roadmap__steps-list-item" data-roadmap-step="2200">
                             <a href="https://github.com/werf/werf/issues/2200" class="roadmap__steps-list-item-issue" target="_blank">#2200</a>
                             <span class="roadmap__steps-list-item-text">
-                                Concurrent building of images.
+                                <strike>Concurrent building of images.</strike>
                             </span>
                         </li>
                         <li class="roadmap__steps-list-item" data-roadmap-step="1617">
