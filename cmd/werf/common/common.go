@@ -742,7 +742,7 @@ func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Parallel = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultFalse("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
+	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
 }
 
 func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command) {
