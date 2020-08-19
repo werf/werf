@@ -1488,6 +1488,8 @@ github.com/werf/logboek v0.4.0/go.mod h1:ojB1CXOMReLbo3qvjxSdYHOERz6kEv3/Qc8t/qe
 github.com/werf/logboek v0.4.2/go.mod h1:79ek+WZSj2+UDdQcebk9lbOKj6S7PaJEljVihgQdJq8=
 github.com/werf/logboek v0.4.3 h1:aXAVLlGT/ZiD8Srj+B71Tw20PtDyuYZSEJZjODNraeA=
 github.com/werf/logboek v0.4.3/go.mod h1:79ek+WZSj2+UDdQcebk9lbOKj6S7PaJEljVihgQdJq8=
+github.com/werf/logboek v0.4.4 h1:uhxh+yGz/bxhBKeyovCBiu0UXWDRTc3M61+KJugDcbA=
+github.com/werf/logboek v0.4.4/go.mod h1:79ek+WZSj2+UDdQcebk9lbOKj6S7PaJEljVihgQdJq8=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/go-gitlab v0.32.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
