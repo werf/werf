@@ -682,6 +682,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 					defer logboek.Context(ctx).Streams().EnablePrefixWithTime()
 				}
 
+				logboek.Context(ctx).LogOptionalLn()
 				_, _ = logboek.Context(ctx).ProxyOutStream().Write(buf.Bytes())
 				logboek.Context(ctx).LogOptionalLn()
 			})
@@ -714,7 +715,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				close(quitCh)
 
 				if res.buff != nil {
-					logboek.Context(ctx).Reset()
+					logboek.Context(ctx).ResetState()
 					for _, buf := range buffs {
 						if buf != res.buff {
 							renderBuff(buf)
