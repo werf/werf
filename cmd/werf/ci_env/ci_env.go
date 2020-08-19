@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
@@ -75,7 +76,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
-	logboek.Streams().Mute()
+	logboek.SetAcceptedLevel(level.Error)
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)

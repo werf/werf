@@ -149,6 +149,10 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
       --namespace='':
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+  -p, --parallel=false:
+            Run in parallel (default $WERF_PARALLEL)
+      --parallel-tasks-limit=-1:
+            Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)

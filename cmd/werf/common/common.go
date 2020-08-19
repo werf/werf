@@ -80,6 +80,8 @@ type CmdData struct {
 	GitHistorySynchronization *bool
 	GitUnshallow              *bool
 	AllowGitShallowClone      *bool
+	Parallel                  *bool
+	ParallelTasksLimit        *int64
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -95,7 +97,9 @@ type CmdData struct {
 
 	WithoutKube *bool
 
-	StagesToIntrospect *[]string
+	IntrospectBeforeError *bool
+	IntrospectAfterError  *bool
+	StagesToIntrospect    *[]string
 
 	LogDebug         *bool
 	LogPretty        *bool
@@ -731,6 +735,21 @@ func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
 }
 
+func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command) {
+	SetupParallel(cmdData, cmd)
+	SetupParallelTasksLimit(cmdData, cmd)
+}
+
+func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Parallel = new(bool)
+	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultFalse("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
+}
+
+func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ParallelTasksLimit = new(int64)
+	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", -1, "Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)")
+}
+
 func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.GitUnshallow = new(bool)
 	cmd.Flags().BoolVarP(cmdData.GitUnshallow, "git-unshallow", "", GetBoolEnvironmentDefaultFalse("WERF_GIT_UNSHALLOW"), "Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)")
@@ -744,6 +763,16 @@ func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
 	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
+}
+
+func SetupIntrospectAfterError(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.IntrospectAfterError = new(bool)
+	cmd.Flags().BoolVarP(cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+}
+
+func SetupIntrospectBeforeError(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.IntrospectBeforeError = new(bool)
+	cmd.Flags().BoolVarP(cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 }
 
 func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
@@ -854,6 +883,21 @@ func getIntEnvVar(varName string) (*int64, error) {
 	}
 
 	return nil, nil
+}
+
+func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
+	v, err := getInt64EnvVar("WERF_PARALLEL_TASKS_LIMIT")
+	if err != nil {
+		return 0, err
+	}
+	if v == nil {
+		v = cmdData.ParallelTasksLimit
+	}
+	if *v <= 0 {
+		return -1, nil
+	} else {
+		return *v, nil
+	}
 }
 
 func GetGitTagStrategyLimit(cmdData *CmdData) (int64, error) {

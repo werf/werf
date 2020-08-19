@@ -14,6 +14,7 @@ type Phase interface {
 	OnImageStage(ctx context.Context, img *Image, stg stage.Interface) error
 	AfterImageStages(ctx context.Context, img *Image) error
 	ImageProcessingShouldBeStopped(ctx context.Context, img *Image) bool
+	Clone() Phase
 }
 
 type BasePhase struct {

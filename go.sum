@@ -1480,12 +1480,14 @@ github.com/werf/helm/v3 v3.0.0-20200810125217-27be3ebf58f2 h1:I38q4Jp1OsGBPVXGqV
 github.com/werf/helm/v3 v3.0.0-20200810125217-27be3ebf58f2/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
 github.com/werf/kubedog v0.4.1-0.20200810223601-b04eea8908f3 h1:Al6Rim/nDLK4qLhQMJYIzYh4eGM+LeALw6d/9RvBjPw=
 github.com/werf/kubedog v0.4.1-0.20200810223601-b04eea8908f3/go.mod h1:1kabCQ7X01iZCS0PEPcw1jidgecjCLT9WE8LuZ5gSi0=
+github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07 h1:pKU78lxdl5Ck4zkWzwH74FOnAC3uf/5u5rbS8SRcXwk=
+github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea h1:R5tJUhL5a3YfHTrHWyuAdJW3h//fmONrpHJjjAZ79e4=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea/go.mod h1:/CeY6KDiBSCU9PUmjt7zGhqpzp8FAPg/wNVfLZHQGWI=
-github.com/werf/logboek v0.4.0 h1:aF3wGEtGtoxU3BVHUcQcWkfCjQSWfZ49NSvgxHYzhjE=
 github.com/werf/logboek v0.4.0/go.mod h1:ojB1CXOMReLbo3qvjxSdYHOERz6kEv3/Qc8t/qeUjRw=
-github.com/werf/logboek v0.4.2 h1:2tdN8HWvHgQJge35Wqjxu8OO6N6Nsa2rmRe/N1G6rb0=
 github.com/werf/logboek v0.4.2/go.mod h1:79ek+WZSj2+UDdQcebk9lbOKj6S7PaJEljVihgQdJq8=
+github.com/werf/logboek v0.4.3 h1:aXAVLlGT/ZiD8Srj+B71Tw20PtDyuYZSEJZjODNraeA=
+github.com/werf/logboek v0.4.3/go.mod h1:79ek+WZSj2+UDdQcebk9lbOKj6S7PaJEljVihgQdJq8=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/go-gitlab v0.32.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=

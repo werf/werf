@@ -59,9 +59,9 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.4.1-0.20200810223601-b04eea8908f3
+	github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
-	github.com/werf/logboek v0.4.2
+	github.com/werf/logboek v0.4.3
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9

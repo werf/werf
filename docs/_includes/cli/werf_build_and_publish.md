@@ -147,6 +147,10 @@ werf build-and-publish [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -p, --parallel=false:
+            Run in parallel (default $WERF_PARALLEL)
+      --parallel-tasks-limit=-1:
+            Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)
       --publish-report-format='json':
             Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by      
             default)

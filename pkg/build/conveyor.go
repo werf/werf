@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/pkg/fileutils"
@@ -52,7 +53,8 @@ type Conveyor struct {
 
 	gitReposCaches map[string]*stage.GitRepoCache
 
-	imagesInOrder []*Image
+	images    []*Image
+	imageSets [][]*Image
 
 	stageImages    map[string]*container_runtime.StageImage
 	localGitRepo   *git_repo.Local
@@ -70,9 +72,15 @@ type Conveyor struct {
 	importServers    map[string]import_server.ImportServer
 
 	ConveyorOptions
+
+	mutex               sync.Mutex
+	serviceRWMutex      map[string]*sync.RWMutex
+	stageSignatureMutex map[string]*sync.Mutex
 }
 
 type ConveyorOptions struct {
+	Parallel                        bool
+	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	GitUnshallow                    bool
 	AllowGitShallowClone            bool
@@ -93,7 +101,8 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		gitReposCaches:         make(map[string]*stage.GitRepoCache),
 		baseImagesRepoIdsCache: make(map[string]string),
 		baseImagesRepoErrCache: make(map[string]error),
-		imagesInOrder:          []*Image{},
+		images:                 []*Image{},
+		imageSets:              [][]*Image{},
 		remoteGitRepos:         make(map[string]*git_repo.Remote),
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
@@ -104,9 +113,82 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		StagesManager:      stagesManager,
 
 		ConveyorOptions: opts,
+
+		serviceRWMutex:      map[string]*sync.RWMutex{},
+		stageSignatureMutex: map[string]*sync.Mutex{},
 	}
 
 	return c, c.Init()
+}
+
+func (c *Conveyor) getServiceRWMutex(service string) *sync.RWMutex {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	rwMutex, ok := c.serviceRWMutex[service]
+	if !ok {
+		rwMutex = &sync.RWMutex{}
+		c.serviceRWMutex[service] = rwMutex
+	}
+
+	return rwMutex
+}
+
+func (c *Conveyor) IsBaseImagesRepoIdsCacheExist(key string) bool {
+	c.getServiceRWMutex("BaseImagesRepoIdsCache").RLock()
+	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
+
+	_, exist := c.baseImagesRepoIdsCache[key]
+	return exist
+}
+
+func (c *Conveyor) GetBaseImagesRepoIdsCache(key string) string {
+	c.getServiceRWMutex("BaseImagesRepoIdsCache").RLock()
+	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
+
+	return c.baseImagesRepoIdsCache[key]
+}
+
+func (c *Conveyor) SetBaseImagesRepoIdsCache(key, value string) {
+	c.getServiceRWMutex("BaseImagesRepoIdsCache").Lock()
+	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").Unlock()
+
+	c.baseImagesRepoIdsCache[key] = value
+}
+
+func (c *Conveyor) IsBaseImagesRepoErrCacheExist(key string) bool {
+	c.getServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
+	defer c.getServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
+
+	_, exist := c.baseImagesRepoErrCache[key]
+	return exist
+}
+
+func (c *Conveyor) GetBaseImagesRepoErrCache(key string) error {
+	c.getServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
+	defer c.getServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
+
+	return c.baseImagesRepoErrCache[key]
+}
+
+func (c *Conveyor) SetBaseImagesRepoErrCache(key string, err error) {
+	c.getServiceRWMutex("BaseImagesRepoErrCache").Lock()
+	defer c.getServiceRWMutex("BaseImagesRepoErrCache").Unlock()
+
+	c.baseImagesRepoErrCache[key] = err
+}
+
+func (c *Conveyor) GetStageSignatureMutex(stage string) *sync.Mutex {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	m, ok := c.stageSignatureMutex[stage]
+	if !ok {
+		m = &sync.Mutex{}
+		c.stageSignatureMutex[stage] = m
+	}
+
+	return m
 }
 
 func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
@@ -114,6 +196,9 @@ func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOption
 }
 
 func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName string) (import_server.ImportServer, error) {
+	c.getServiceRWMutex("ImportServer").Lock()
+	defer c.getServiceRWMutex("ImportServer").Unlock()
+
 	importServerName := imageName
 	if stageName != "" {
 		importServerName += "/" + stageName
@@ -174,7 +259,7 @@ func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
 func (c *Conveyor) Terminate(ctx context.Context) error {
 	var terminateErrors []error
 
-	for gitRepoName, gitRepoCache := range c.gitReposCaches {
+	for gitRepoName, gitRepoCache := range c.GetGitRepoCaches() {
 		if err := gitRepoCache.Terminate(); err != nil {
 			terminateErrors = append(terminateErrors, fmt.Errorf("unable to terminate cache of git repo '%s': %s", gitRepoName, err))
 		}
@@ -202,7 +287,17 @@ func (c *Conveyor) Terminate(ctx context.Context) error {
 	return nil
 }
 
-func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
+func (c *Conveyor) GetGitRepoCaches() map[string]*stage.GitRepoCache {
+	c.getServiceRWMutex("GitRepoCaches").RLock()
+	defer c.getServiceRWMutex("GitRepoCaches").RUnlock()
+
+	return c.gitReposCaches
+}
+
+func (c *Conveyor) GetOrCreateGitRepoCache(gitRepoName string) *stage.GitRepoCache {
+	c.getServiceRWMutex("GitRepoCaches").Lock()
+	defer c.getServiceRWMutex("GitRepoCaches").Unlock()
+
 	if _, hasKey := c.gitReposCaches[gitRepoName]; !hasKey {
 		c.gitReposCaches[gitRepoName] = &stage.GitRepoCache{
 			Archives:  make(map[string]git_repo.Archive),
@@ -210,15 +305,36 @@ func (c *Conveyor) GetGitRepoCache(gitRepoName string) *stage.GitRepoCache {
 			Checksums: make(map[string]git_repo.Checksum),
 		}
 	}
+
 	return c.gitReposCaches[gitRepoName]
 }
 
 func (c *Conveyor) SetLocalGitRepo(repo *git_repo.Local) {
+	c.getServiceRWMutex("LocalGitRepo").Lock()
+	defer c.getServiceRWMutex("LocalGitRepo").Unlock()
+
 	c.localGitRepo = repo
 }
 
 func (c *Conveyor) GetLocalGitRepo() *git_repo.Local {
+	c.getServiceRWMutex("LocalGitRepo").RLock()
+	defer c.getServiceRWMutex("LocalGitRepo").RUnlock()
+
 	return c.localGitRepo
+}
+
+func (c *Conveyor) SetRemoteGitRepo(key string, repo *git_repo.Remote) {
+	c.getServiceRWMutex("RemoteGitRepo").Lock()
+	defer c.getServiceRWMutex("RemoteGitRepo").Unlock()
+
+	c.remoteGitRepos[key] = repo
+}
+
+func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
+	c.getServiceRWMutex("RemoteGitRepo").RLock()
+	defer c.getServiceRWMutex("RemoteGitRepo").RUnlock()
+
+	return c.remoteGitRepos[key]
 }
 
 type TagOptions struct {
@@ -283,7 +399,7 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	for _, imageName := range imagesNames {
 		var tag string
 		if tagStrategy == tag_strategy.StagesSignature {
-			for _, img := range c.imagesInOrder {
+			for _, img := range c.images {
 				if img.GetName() == imageName {
 					tag = img.GetContentSignature()
 					break
@@ -377,91 +493,68 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {
-	imagesInterfaces := getImageConfigsInOrder(ctx, c)
-	for _, imageInterfaceConfig := range imagesInterfaces {
-		var img *Image
-		var imageLogName string
-		var style *style.Style
+	imageConfigsToProcess := getImageConfigsToProcess(ctx, c)
+	configSets := c.werfConfig.ImagesWithDependenciesBySets(imageConfigsToProcess)
 
-		switch imageConfig := imageInterfaceConfig.(type) {
-		case config.StapelImageInterface:
-			imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
-			style = ImageLogProcessStyle(imageConfig.IsArtifact())
-		case *config.ImageFromDockerfile:
-			imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
-			style = ImageLogProcessStyle(false)
+	for _, iteration := range configSets {
+		var imageSet []*Image
+
+		for _, imageInterfaceConfig := range iteration {
+			var img *Image
+			var imageLogName string
+			var style *style.Style
+
+			switch imageConfig := imageInterfaceConfig.(type) {
+			case config.StapelImageInterface:
+				imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
+				style = ImageLogProcessStyle(imageConfig.IsArtifact())
+			case *config.ImageFromDockerfile:
+				imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
+				style = ImageLogProcessStyle(false)
+			}
+
+			err := logboek.Context(ctx).Info().LogProcess(imageLogName).
+				Options(func(options types.LogProcessOptionsInterface) {
+					options.Style(style)
+				}).
+				DoError(func() error {
+					var err error
+
+					switch imageConfig := imageInterfaceConfig.(type) {
+					case config.StapelImageInterface:
+						img, err = prepareImageBasedOnStapelImageConfig(ctx, imageConfig, c)
+					case *config.ImageFromDockerfile:
+						img, err = prepareImageBasedOnImageFromDockerfile(ctx, imageConfig, c)
+					}
+
+					if err != nil {
+						return err
+					}
+
+					c.images = append(c.images, img)
+					imageSet = append(imageSet, img)
+
+					return nil
+				})
+
+			if err != nil {
+				return err
+			}
 		}
 
-		err := logboek.Context(ctx).Info().LogProcess(imageLogName).
-			Options(func(options types.LogProcessOptionsInterface) {
-				options.Style(style)
-			}).
-			DoError(func() error {
-				var err error
-
-				switch imageConfig := imageInterfaceConfig.(type) {
-				case config.StapelImageInterface:
-					img, err = prepareImageBasedOnStapelImageConfig(ctx, imageConfig, c)
-				case *config.ImageFromDockerfile:
-					img, err = prepareImageBasedOnImageFromDockerfile(ctx, imageConfig, c)
-				}
-
-				if err != nil {
-					return err
-				}
-
-				c.imagesInOrder = append(c.imagesInOrder, img)
-
-				return nil
-			})
-
-		if err != nil {
-			return err
-		}
+		c.imageSets = append(c.imageSets, imageSet)
 	}
 
 	return nil
 }
 
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {
-	// TODO: Parallelize builds
-	//images (по зависимостям), dependantImagesByStage
-	//dependantImagesByStage строится в InitializationPhase, спросить у stage что она ждет.
-	//Количество воркеров-goroutine ограничено.
-	//Надо распределить images по воркерам.
-	//
-	//for img := range images {
-	//	Goroutine {
-	//		phases = append(phases, NewBuildStage())
-	//
-	//    	for phase = range phases {
-	//            phase.OnStart()
-	//
-	//	    	for stage = range stages {
-	//		    	for img = dependantImagesByStage[stage.name] {
-	//			    	wait <-imgChanMap[img]
-	//				}
-	//				phase.HandleStage(stage)
-	//    		}
-	//		}
-	//
-	//        close(imgChanMap[img])
-	//	} Goroutine
-	//}
-
 	if lock, err := c.StorageLockManager.LockStagesAndImages(ctx, c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
 		return fmt.Errorf("unable to lock stages and images (to get or create stages and images only): %s", err)
 	} else {
 		c.AppendOnTerminateFunc(func() error {
 			return c.StorageLockManager.Unlock(ctx, lock)
 		})
-	}
-
-	var imagesLogger types.ManagerInterface
-	if logImages {
-		imagesLogger = logboek.Context(ctx).Default()
-	} else {
-		imagesLogger = logboek.Context(ctx).Info()
 	}
 
 	for _, phase := range phases {
@@ -474,53 +567,8 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 		logProcess.End()
 	}
 
-	for _, img := range c.imagesInOrder {
-		if err := imagesLogger.LogProcess(img.LogDetailedName()).
-			Options(func(options types.LogProcessOptionsInterface) {
-				options.Style(img.LogProcessStyle())
-			}).
-			DoError(func() error {
-				for _, phase := range phases {
-					logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name())
-					logProcess.Start()
-					if err := phase.BeforeImageStages(ctx, img); err != nil {
-						logProcess.Fail()
-						return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
-					}
-					logProcess.End()
-
-					logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
-					logProcess.Start()
-					for _, stg := range img.GetStages() {
-						logboek.Context(ctx).Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
-						if err := phase.OnImageStage(ctx, img, stg); err != nil {
-							logProcess.Fail()
-							return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
-						}
-					}
-					logProcess.End()
-
-					logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- AfterImageStages()", phase.Name())
-					logProcess.Start()
-					if err := phase.AfterImageStages(ctx, img); err != nil {
-						logProcess.Fail()
-						return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
-					}
-					logProcess.End()
-
-					logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name())
-					logProcess.Start()
-					if phase.ImageProcessingShouldBeStopped(ctx, img) {
-						logProcess.End()
-						return nil
-					}
-					logProcess.End()
-				}
-
-				return nil
-			}); err != nil {
-			return err
-		}
+	if err := c.doImages(ctx, phases, logImages); err != nil {
+		return err
 	}
 
 	for _, phase := range phases {
@@ -539,34 +587,276 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 	return nil
 }
 
+func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
+	if !c.Parallel {
+		for _, img := range c.images {
+			if err := c.doImage(ctx, img, phases, logImages); err != nil {
+				return err
+			}
+		}
+	} else {
+		return c.doImagesInParallel(ctx, phases, logImages)
+	}
+
+	return nil
+}
+
+type goResult struct {
+	buff *bytes.Buffer
+	err  error
+}
+
+func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
+	doImageSetInParallel := func(setId int) error {
+		var buffs, doneBuffs []*bytes.Buffer
+		var goCtxs []context.Context
+		var goResults []goResult
+		imageSetCounter := len(c.imageSets[setId])
+
+		queueLength := imageSetCounter
+		if c.ParallelTasksLimit > 0 {
+			queueLength = int(c.ParallelTasksLimit)
+		}
+
+		queueCh := make(chan bool, queueLength)
+		errCh := make(chan goResult)
+		doneCh := make(chan goResult)
+		quitCh := make(chan bool)
+
+		isLiveOutputOn := true
+
+		for ind := range c.imageSets[setId] {
+			var goCtx context.Context
+			var goResult goResult
+
+			if ind == 0 {
+				goCtx = ctx
+			} else {
+				buf := bytes.NewBuffer([]byte{})
+				goResult.buff = buf
+				buffs = append(buffs, buf)
+				goCtx = logboek.NewContext(ctx, logboek.NewSubLogger(buf, buf))
+				logboek.Context(goCtx).Streams().SetPrefixStyle(style.Highlight())
+			}
+
+			goCtxs = append(goCtxs, goCtx)
+			goResults = append(goResults, goResult)
+		}
+
+		go func() {
+			for ind, img := range c.imageSets[setId] {
+				goImg := img
+				goCtx := goCtxs[ind]
+				goResult := goResults[ind]
+
+				var goPhases []Phase
+				for _, phase := range phases {
+					goPhases = append(goPhases, phase.Clone())
+				}
+
+				go func() {
+					err := c.doImage(goCtx, goImg, goPhases, logImages)
+					goResult.err = err
+
+					ch := doneCh
+					if err != nil {
+						ch = errCh
+					}
+
+					select {
+					case ch <- goResult:
+						return
+					case <-quitCh:
+						return
+					}
+				}()
+
+				queueCh <- true
+			}
+		}()
+
+		renderBuff := func(buf *bytes.Buffer) {
+			logboek.Streams().DoWithoutIndent(func() {
+				if logboek.Context(ctx).Streams().IsPrefixWithTimeEnabled() {
+					logboek.Context(ctx).Streams().DisablePrefixWithTime()
+					defer logboek.Context(ctx).Streams().EnablePrefixWithTime()
+				}
+
+				_, _ = logboek.Context(ctx).ProxyOutStream().Write(buf.Bytes())
+				logboek.Context(ctx).LogOptionalLn()
+			})
+		}
+
+	outerLoop:
+		for {
+			select {
+			case res := <-doneCh:
+				<-queueCh
+
+				if res.buff != nil {
+					if isLiveOutputOn {
+						doneBuffs = append(doneBuffs, res.buff)
+					} else {
+						renderBuff(res.buff)
+					}
+				} else {
+					isLiveOutputOn = false
+					for _, buf := range doneBuffs {
+						renderBuff(buf)
+					}
+				}
+
+				imageSetCounter--
+				if imageSetCounter == 0 {
+					break outerLoop
+				}
+			case res := <-errCh:
+				close(quitCh)
+
+				if res.buff != nil {
+					logboek.Context(ctx).Reset()
+					for _, buf := range buffs {
+						if buf != res.buff {
+							renderBuff(buf)
+						}
+					}
+
+					renderBuff(res.buff)
+				} else {
+					if logboek.Context(ctx).Info().IsAccepted() {
+						for _, buf := range buffs {
+							renderBuff(buf)
+						}
+					}
+				}
+
+				return res.err
+			}
+		}
+
+		return nil
+	}
+
+	blockMsg := "Concurrent builds plan"
+	if c.ParallelTasksLimit > 0 {
+		blockMsg = fmt.Sprintf("%s (simultaneously no more than %d image(s))", blockMsg, c.ParallelTasksLimit)
+	}
+
+	logboek.Context(ctx).LogBlock(blockMsg).
+		Options(func(options types.LogBlockOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		Do(func() {
+			for setId := range c.imageSets {
+				logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
+				for _, img := range c.imageSets[setId] {
+					logboek.Context(ctx).LogLnHighlight("-", img.name)
+				}
+				logboek.Context(ctx).LogOptionalLn()
+
+			}
+		})
+
+	for setId := range c.imageSets {
+		if err := doImageSetInParallel(setId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logImages bool) error {
+	var imagesLogger types.ManagerInterface
+	if logImages {
+		imagesLogger = logboek.Context(ctx).Default()
+	} else {
+		imagesLogger = logboek.Context(ctx).Info()
+	}
+
+	return imagesLogger.LogProcess(img.LogDetailedName()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(img.LogProcessStyle())
+		}).
+		DoError(func() error {
+			for _, phase := range phases {
+				logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name())
+				logProcess.Start()
+				if err := phase.BeforeImageStages(ctx, img); err != nil {
+					logProcess.Fail()
+					return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+				}
+				logProcess.End()
+
+				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
+				logProcess.Start()
+				for _, stg := range img.GetStages() {
+					logboek.Context(ctx).Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
+					if err := phase.OnImageStage(ctx, img, stg); err != nil {
+						logProcess.Fail()
+						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
+					}
+				}
+				logProcess.End()
+
+				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- AfterImageStages()", phase.Name())
+				logProcess.Start()
+				if err := phase.AfterImageStages(ctx, img); err != nil {
+					logProcess.Fail()
+					return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+				}
+				logProcess.End()
+
+				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name())
+				logProcess.Start()
+				if phase.ImageProcessingShouldBeStopped(ctx, img) {
+					logProcess.End()
+					return nil
+				}
+				logProcess.End()
+			}
+
+			return nil
+		})
+}
+
 func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
 }
 
 func (c *Conveyor) GetStageImage(name string) *container_runtime.StageImage {
+	c.getServiceRWMutex("StageImages").RLock()
+	defer c.getServiceRWMutex("StageImages").RUnlock()
+
 	return c.stageImages[name]
 }
 
 func (c *Conveyor) UnsetStageImage(name string) {
+	c.getServiceRWMutex("StageImages").Lock()
+	defer c.getServiceRWMutex("StageImages").Unlock()
+
 	delete(c.stageImages, name)
 }
 
 func (c *Conveyor) SetStageImage(stageImage *container_runtime.StageImage) {
+	c.getServiceRWMutex("StageImages").Lock()
+	defer c.getServiceRWMutex("StageImages").Unlock()
+
 	c.stageImages[stageImage.Name()] = stageImage
 }
 
 func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.StageImage, name string) *container_runtime.StageImage {
-	if img, ok := c.stageImages[name]; ok {
+	if img := c.GetStageImage(name); img != nil {
 		return img
 	}
 
 	img := container_runtime.NewStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
-	c.stageImages[name] = img
+	c.SetStageImage(img)
 	return img
 }
 
 func (c *Conveyor) GetImage(name string) *Image {
-	for _, img := range c.imagesInOrder {
+	for _, img := range c.images {
 		if img.GetName() == name {
 			return img
 		}
@@ -613,8 +903,9 @@ func (c *Conveyor) GetImageTmpDir(imageName string) string {
 }
 
 func (c *Conveyor) GetProjectRepoCommit(ctx context.Context) (string, error) {
-	if c.localGitRepo != nil {
-		return c.localGitRepo.HeadCommit(ctx)
+	localGitRepo := c.GetLocalGitRepo()
+	if localGitRepo != nil {
+		return localGitRepo.HeadCommit(ctx)
 	} else {
 		return "", nil
 	}
@@ -676,28 +967,6 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 	return from, fromImageName, imageBaseConfig.FromLatest
 }
 
-func getImageConfigsInOrder(ctx context.Context, c *Conveyor) []config.ImageInterface {
-	var images []config.ImageInterface
-	for _, imageInterf := range getImageConfigsToProcess(ctx, c) {
-		var imagesInBuildOrder []config.ImageInterface
-
-		switch image := imageInterf.(type) {
-		case *config.StapelImage, *config.StapelImageArtifact:
-			imagesInBuildOrder = c.werfConfig.ImageTree(image)
-		case *config.ImageFromDockerfile:
-			imagesInBuildOrder = append(imagesInBuildOrder, image)
-		}
-
-		for i := 0; i < len(imagesInBuildOrder); i++ {
-			if isNotInArr(images, imagesInBuildOrder[i]) {
-				images = append(images, imagesInBuildOrder[i])
-			}
-		}
-	}
-
-	return images
-}
-
 func getImageConfigsToProcess(ctx context.Context, c *Conveyor) []config.ImageInterface {
 	var imageConfigsToProcess []config.ImageInterface
 
@@ -720,16 +989,6 @@ func getImageConfigsToProcess(ctx context.Context, c *Conveyor) []config.ImageIn
 	}
 
 	return imageConfigsToProcess
-}
-
-func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
-	for _, elm := range arr {
-		if reflect.DeepEqual(elm, obj) {
-			return false
-		}
-	}
-
-	return true
 }
 
 func initStages(ctx context.Context, image *Image, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) error {
@@ -842,8 +1101,8 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 	}
 
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
-		remoteGitRepo, exist := c.remoteGitRepos[remoteGitMappingConfig.Name]
-		if !exist {
+		remoteGitRepo := c.GetRemoteGitRepo(remoteGitMappingConfig.Name)
+		if remoteGitRepo == nil {
 			var err error
 			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url)
 			if err != nil {
@@ -857,7 +1116,7 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 				return nil, err
 			}
 
-			c.remoteGitRepos[remoteGitMappingConfig.Name] = remoteGitRepo
+			c.SetRemoteGitRepo(remoteGitMappingConfig.Name, remoteGitRepo)
 		}
 
 		gitMappings = append(gitMappings, gitRemoteArtifactInit(remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, c))
@@ -981,7 +1240,7 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 
 	gitMapping.GitRepoInterface = remoteGitRepo
 
-	gitMapping.GitRepoCache = c.GetGitRepoCache(remoteGitRepo.GetName())
+	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(remoteGitRepo.GetName())
 
 	return gitMapping
 }
@@ -993,7 +1252,7 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_
 
 	gitMapping.GitRepoInterface = localGitRepo
 
-	gitMapping.GitRepoCache = c.GetGitRepoCache(localGitRepo.GetName())
+	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(localGitRepo.GetName())
 
 	return gitMapping
 }
