@@ -2,33 +2,29 @@ project: none
 configVersion: 1
 ---
 
-artifact: booking-app
-from: golang:1.10
+artifact: gowebapp-build
+from: golang:1.14
 ansible:
-  beforeInstall:
-  - name: Install additional packages
-    apt:
-      update_cache: yes
-      pkg:
-      - gcc
-      - sqlite3
-      - libsqlite3-dev
   install:
   - name: Getting packages
-    shell: |
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+    shell: go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 ---
-image: go-booking
+image: gowebapp
+docker:
+  WORKDIR: /app
 from: ubuntu:18.04
 import:
-- artifact: booking-app
+- artifact: gowebapp-build
   add: /app
   to: /app
   after: install

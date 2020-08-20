@@ -29,11 +29,11 @@ var _ = Describe("Advanced build/Artifacts", func() {
 			"build", "-s", ":local",
 		)
 
-		containerName := fmt.Sprintf("go_booking_artifacts_%s", utils.GetRandomString(10))
+		containerName := fmt.Sprintf("gowebapp_build_artifacts_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :9000 --name %s", containerName), "go-booking", "--", "/app/run.sh",
+			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :9000 --name %s", containerName), "gowebapp", "--", "/app/gowebapp",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
@@ -41,7 +41,7 @@ var _ = Describe("Advanced build/Artifacts", func() {
 		waitTillHostReadyAndCheckResponseBody(
 			url,
 			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
-			"revel framework booking demo",
+			"Go Web App",
 		)
 	})
 })

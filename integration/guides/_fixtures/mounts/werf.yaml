@@ -3,12 +3,14 @@ configVersion: 1
 ---
 
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
-{{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
-{{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
+{{ $_ := set . "GoTarball" "go1.14.7.linux-amd64.tar.gz" }}
+{{ $_ := set . "GoTarballChecksum" "sha256:4a7fa60f323ee1416a4b1425aefc37ea359e9d64df19c326a58953a97ad41ea5" }}
 {{ $_ := set . "BaseImage" "ubuntu:18.04" }}
 
-image: go-booking
+image: gowebapp
 from: {{ .BaseImage }}
+docker:
+  WORKDIR: /app
 mount:
 - from: tmp_dir
   to: /var/lib/apt/lists
@@ -41,26 +43,24 @@ ansible:
       src: /usr/local/src/{{ .GoTarball }}
       dest: /usr/local
       copy: no
-  - name: Install additional packages
-    apt:
-      name: ['gcc','sqlite3','libsqlite3-dev']
-      update_cache: yes
   install:
   - name: Getting packages
     shell: |
-{{ include "export golang vars" . | indent 6 }}
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+{{ include "export go vars" . | indent 6 }}
+      go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-{{ include "export golang vars" . | indent 6 }}
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+{{ include "export go vars" . | indent 6 }}
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 
-# GO-template for exporting environment variables
-{{- define "export golang vars" -}}
+{{- define "export go vars" -}}
 export GOPATH=/go
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 {{- end -}}
