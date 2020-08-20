@@ -34,20 +34,20 @@
         },
         {
           "name": "beta",
-	  "version": "v1.1.21+fix24"
+	      "version": "v1.1.21-fix25"
         },
         {
           "name": "ea",
-          "version": "v1.1.21+fix24"
+          "version": "v1.1.21-fix25"
         },
         {
           "name": "stable",
-	  "version": "v1.1.21+fix22"
+	      "version": "v1.1.21-fix25"
         },
         {
           "name": "rock-solid",
-	  "_candidate": "v1.1.20+fix23",
-	  "version": "v1.1.19+fix11"
+          "_candidate": "v1.1.20+fix23",
+	      "version": "v1.1.19+fix11"
         }
       ]
     }
