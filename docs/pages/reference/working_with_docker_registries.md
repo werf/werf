@@ -24,6 +24,7 @@ There are several types of commands that are working with the Docker registries 
 | [_GitHub Packages_](#github-packages) |         **ok**        	| **ok (with native API and only in private GitHub repositories)** 	    |
 | _GitLab Registry_ 	                |         **ok**        	|                            **ok**                            	        |
 | _Harbor_          	                |         **ok**        	|                            **ok**                            	        |
+| _JFrog Artifactory_         	        |         **ok**        	|                            **ok**                            	        |
 | [_Quay_](#quay)            	        |         **ok**        	|                            **ok**                            	        |
 
 > In the near future we will add support for JFrog Container Registry and Nexus Registry
@@ -65,6 +66,7 @@ Thus, the user has only 3 combinations of using _images repo_ and _images repo m
 | [_GitHub Packages_](#github-packages) | **ok**                   	| **ok**                    	| **not supported**         	|
 | _GitLab Registry_ 	                | **ok**                   	| **ok**                    	| **ok**                     	|
 | _Harbor_          	                | **ok**                   	| **ok**                    	| **ok**                     	|
+| _JFrog Artifactory_                   | **ok**                   	| **ok**                    	| **ok**                     	|
 | [_Quay_](#quay)            	        | **ok**                   	| **ok**                    	| **not supported**         	|
 
 Most implementations support nested repositories and work with different _images repo mode_. By default, such implementations has **multirepo** _images repo mode_. The default _images repo mode_ value for rest implementations depends on specified _images repo_. 

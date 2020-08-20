@@ -5,6 +5,7 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
@@ -15,14 +16,47 @@ type manifestOnlyImage struct {
 }
 
 func NewManifestOnlyImage(labels map[string]string) v1.Image {
-	if img, err := partial.UncompressedToImage(manifestOnlyImage{
-		CreatedAt: time.Now(),
-		Labels:    labels,
-	}); err != nil {
+	img, err := newManifestOnlyImage(labels)
+	if err != nil {
 		panic(fmt.Sprintf("unable to create new ManifestOnlyImage: %s", err))
-	} else {
-		return img
 	}
+
+	return img
+}
+
+func newManifestOnlyImage(labels map[string]string) (v1.Image, error) {
+	t := time.Now()
+
+	img, err := partial.UncompressedToImage(manifestOnlyImage{
+		CreatedAt: t,
+		Labels:    labels,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	img, err = mutate.CreatedAt(img, v1.Time{Time: t})
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := img.ConfigFile()
+	if err != nil {
+		return nil, err
+	}
+
+	layers, err := img.Layers()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.History = make([]v1.History, len(layers))
+	img, err = mutate.ConfigFile(img, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return img, nil
 }
 
 // MediaType implements partial.UncompressedImageCore.
