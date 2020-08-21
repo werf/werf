@@ -33,11 +33,11 @@ var _ = Describe("Advanced build/Artifacts", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :9000 --name %s", containerName), "gowebapp", "--", "/app/gowebapp",
+			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :80 --name %s", containerName), "gowebapp", "--", "/app/gowebapp",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
-		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "9000/tcp"))
+		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "80/tcp"))
 		waitTillHostReadyAndCheckResponseBody(
 			url,
 			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,

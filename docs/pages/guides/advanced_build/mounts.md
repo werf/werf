@@ -189,7 +189,7 @@ Add the following to mount directives into config:
 ### Complete werf.yaml config
 
 {% raw %}
-```
+```yaml
 project: gowebapp
 configVersion: 1
 ---

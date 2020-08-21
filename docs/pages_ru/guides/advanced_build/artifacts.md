@@ -35,7 +35,6 @@ werf может [импортировать]({{ site.baseurl }}/documentation/co
 Создадим папку `gowebapp` и файл `werf.yaml` со следующим содержимым:
 {% raw %}
 ```yaml
-```yaml
 project: gowebapp
 configVersion: 1
 ---
@@ -154,7 +153,7 @@ import:
 Обратите внимание, что при сборке образа `gowebapp` используется образ `ubuntu`, а не `golang`.
 
 Соберём приложение с измененным файлом инструкций:
-```yaml
+```shell
 werf build --stages-storage :local
 ```
 
