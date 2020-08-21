@@ -314,9 +314,10 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	}
 
 	ciGithubOwnerWithProject := os.Getenv("GITHUB_REPOSITORY")
+	ciGithubDockerPackage := strings.ToLower(ciGithubOwnerWithProject)
 
 	var imagesRepo, stagesStorageRepo string
-	if ciGithubOwnerWithProject != "" {
+	if ciGithubDockerPackage != "" {
 		projectDir, err := common.GetProjectDir(&commonCmdData)
 		if err != nil {
 			return fmt.Errorf("getting project dir failed: %s", err)
@@ -328,7 +329,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 		}
 
 		if werfConfig != nil {
-			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubOwnerWithProject)
+			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubDockerPackage)
 			multirepo := projectRepo
 			monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
 
