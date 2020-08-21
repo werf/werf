@@ -29,45 +29,41 @@ This command should be run prior running any werf command in your shell session:
 
 ## Sample application
 
-The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [Go](https://golang.org/) for [Revel Framework](https://github.com/revel).
+The example application is the [Go Web App](https://github.com/josephspurrier/gowebapp), written in [Go](https://golang.org/).
 
 ### Building
 
-Create a `booking` directory and place the following `werf.yaml` in the `booking` directory:
+Create a `gowebapp` directory and place the following `werf.yaml` in the `gowebapp` directory:
 {% raw %}
 ```yaml
-project: hotel-booking
+project: gowebapp
 configVersion: 1
 ---
 
-image: go-booking
-from: golang:1.10
+image: gowebapp
+from: golang:1.14
+docker:
+  WORKDIR: /app
 ansible:
-  beforeInstall:
-  - name: Install additional packages
-    apt:
-      update_cache: yes
-      pkg:
-      - gcc
-      - sqlite3
-      - libsqlite3-dev
   install:
   - name: Getting packages
-    shell: |
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+    shell: go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 ```
 {% endraw %}
 
-The config describes instructions to build one image — `go-booking`.
+The config describes instructions to build one image — `gowebapp`.
 
-Build the application by executing the following command in the `booking` directory:
+Build the application by executing the following command in the `gowebapp` directory:
 
 ```shell
 werf build --stages-storage :local
@@ -75,25 +71,25 @@ werf build --stages-storage :local
 
 ### Running
 
-Run the application by executing the following command in the `booking` directory:
+Run the application by executing the following command in the `gowebapp` directory:
 ```shell
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking"  go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:80 --name gowebapp"  gowebapp -- /app/gowebapp
 ```
 
 Check that container is running by executing the following command:
 ```shell
-docker ps -f "name=go-booking"
+docker ps -f "name=gowebapp"
 ```
 
-You should see a running container with the `go-booking` name, like this:
+You should see a running container with the `gowebapp` name, like this:
 ```shell
-CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
+CONTAINER ID  IMAGE                                          COMMAND           CREATED        STATUS        PORTS                  NAMES
+41d6f49798a8  werf-stages-storage/gowebapp:84d7...44992265   "/app/gowebapp"   2 minutes ago  Up 2 minutes  0.0.0.0:9000->80/tcp   gowebapp
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
 
-The `revel framework booking demo` page should open, and you can login by entering `demo/demo` as a login/password.
+The `Go Web App` page should open. Click "Click here to login" to a login page where you can create a new account and login to the application.
 
 ### Getting the image size
 
@@ -101,17 +97,17 @@ Determine the image size by executing:
 
 {% raw %}
 ```shell
-docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
+docker images `docker ps -f "name=gowebapp" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
 ```shell
 REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
-image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
+werf-stages-storage/gowebapp   84d7...44992265   07cdc430e1c8      10 minutes ago      857MB
 ```
 
-Pay attention, that the image size of the application is **above 1 GB**.
+Pay attention, that the image size of the application is **above 800 MB**.
 
 ## Optimize sample application with artifacts
 
@@ -125,46 +121,42 @@ Replace `werf.yaml` with the following content:
 
 {% raw %}
 ```yaml
-project: hotel-booking
+project: gowebapp
 configVersion: 1
 ---
 
-artifact: booking-app
-from: golang:1.10
+artifact: gowebapp-build
+from: golang:1.14
 ansible:
-  beforeInstall:
-  - name: Install additional packages
-    apt:
-      update_cache: yes
-      pkg:
-      - gcc
-      - sqlite3
-      - libsqlite3-dev
   install:
   - name: Getting packages
-    shell: |
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+    shell: go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 ---
-image: go-booking
+image: gowebapp
+docker:
+  WORKDIR: /app
 from: ubuntu:18.04
 import:
-- artifact: booking-app
+- artifact: gowebapp-build
   add: /app
   to: /app
   after: install
 ```
 {% endraw %}
 
-In the optimized config, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` image.
+In the optimized config, we build the application in the `gowebapp-build` artifact and import the `/app` directory into the `gowebapp` image.
 
-Pay attention, that `go-booking` image based on the `ubuntu` image, but not on the `golang` image.
+Pay attention, that `gowebapp` image based on the `ubuntu` image, but not on the `golang` image.
 
 Build the application with the modified config:
 ```yaml
@@ -173,45 +165,45 @@ werf build --stages-storage :local
 
 ### Running
 
-Before running the modified application, you need to stop and remove running `go-booking` container we built. Otherwise, the new container can't start or bind to 9000 port on localhost. E.g., execute the following command to stop and remove the `go-booking` container:
+Before running the modified application, you need to stop and remove running `gowebapp` container we built. Otherwise, the new container can't start or bind to 9000 port on localhost. E.g., execute the following command to stop and remove the `gowebapp` container:
 
 ```shell
-docker stop go-booking && docker rm go-booking
+docker rm -f gowebapp
 ```
 
 Run the modified application by executing the following command:
 ```shell
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:80 --name gowebapp" gowebapp -- /app/gowebapp
 ```
 
 Check that container is running by executing the following command:
 ```shell
-docker ps -f "name=go-booking"
+docker ps -f "name=gowebapp"
 ```
 
-You should see a running container with the `go-booking` name, like this:
+You should see a running container with the `gowebapp` name, like this:
 ```shell
-CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
+CONTAINER ID  IMAGE                                          COMMAND          CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  werf-stages-storage/gowebapp:84d7...44992265   "/app/gowebapp"  2 minutes ago  Up 2 minutes  0.0.0.0:9000->80/tcp   gowebapp
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
 
-The `revel framework booking demo` page should open, and you can login by entering `demo/demo` as a login/password.
+The `Go Web App` page should open. Click "Click here to login" to a login page where you can create a new account and login to the application.
 
 ### Getting images size
 
 Determine the image size of optimized build, by executing:
 {% raw %}
 ```shell
-docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
+docker images `docker ps -f "name=gowebapp" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 The output will be something like this:
 ```shell
-REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
-image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      103 MB
+REPOSITORY                     TAG               IMAGE ID       CREATED          SIZE
+werf-stages-storage/gowebapp   84d7...44992265   07cdc430e1c8   10 minutes ago   79MB
 ```
 
 Our example shows that **with using artifacts**, the image size **smaller by more than 90%** than the original image size!

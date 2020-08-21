@@ -20,7 +20,7 @@ werf может [импортировать]({{ site.baseurl }}/documentation/co
 
 ### Выбор версии werf
 
-Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале stable, релиза 1.0, выполним следующую команду:
+Перед началом работы необходимо выбрать версию werf. Для выбора актуальной версии werf в канале stable, релиза 1.1, выполним следующую команду:
 
 ```shell
 . $(multiwerf use 1.1 stable --as-file)
@@ -28,45 +28,41 @@ werf может [импортировать]({{ site.baseurl }}/documentation/co
 
 ## Тестовое приложение
 
-Возьмем в качестве примера приложение [Hotel Booking](https://github.com/revel/examples/tree/master/booking), написанное на [Go](https://golang.org/) и с фреймворком [Revel Framework](https://github.com/revel).
+Возьмем в качестве примера приложение [Go Web App](https://github.com/josephspurrier/gowebapp), написанное на [Go](https://golang.org/).
 
 ### Сборка
 
-Создадим папку `booking` и файл `werf.yaml` со следующим содержимым:
+Создадим папку `gowebapp` и файл `werf.yaml` со следующим содержимым:
 {% raw %}
 ```yaml
-project: hotel-booking
+project: gowebapp
 configVersion: 1
 ---
 
-image: go-booking
-from: golang:1.10
+image: gowebapp
+from: golang:1.14
+docker:
+  WORKDIR: /app
 ansible:
-  beforeInstall:
-  - name: Install additional packages
-    apt:
-      update_cache: yes
-      pkg:
-      - gcc
-      - sqlite3
-      - libsqlite3-dev
   install:
   - name: Getting packages
-    shell: |
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+    shell: go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 ```
 {% endraw %}
 
-Приведенные инструкции описывают сборку одного образа — `go-booking`.
+Приведенные инструкции описывают сборку одного образа — `gowebapp`.
 
-Соберём образ приложения, выполнив следующую команду в папке `booking`:
+Соберём образ приложения, выполнив следующую команду в папке `gowebapp`:
 
 ```shell
 werf build --stages-storage :local
@@ -74,23 +70,23 @@ werf build --stages-storage :local
 
 ### Запуск
 
-Запустим приложение, выполнив следующую команду в папке `booking`:
+Запустим приложение, выполнив следующую команду в папке `gowebapp`:
 ```shell
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking"  go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:80 --name gowebapp"  gowebapp -- /app/gowebapp
 ```
 
 Убедитесь, что контейнер запустился, выполнив следующую команду:
 ```shell
-docker ps -f "name=go-booking"
+docker ps -f "name=gowebapp"
 ```
 
-Вы должны увидеть запущенный контейнер `go-booking`, например, вывод может быть подобен следующему:
+Вы должны увидеть запущенный контейнер `gowebapp`, например, вывод может быть подобен следующему:
 ```shell
-CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
+CONTAINER ID  IMAGE                                          COMMAND           CREATED        STATUS        PORTS                  NAMES
+41d6f49798a8  werf-stages-storage/gowebapp:84d7...44992265   "/app/gowebapp"   2 minutes ago  Up 2 minutes  0.0.0.0:9000->80/tcp   gowebapp
 ```
 
-Откройте в браузере адрес [http://localhost:9000](http://localhost:9000) — вы должны увидеть страницу `revel framework booking demo`. Выполните авторизацию, введя `demo` в качестве логина и пароля.
+Откройте в браузере адрес [http://localhost:9000](http://localhost:9000) — вы должны увидеть страницу `Go Web App`. Перейдите по ссылке "Click here to login", где вы сможете зарегистрироваться и авторизоваться в приложении.
 
 ### Размер собранного образа
 
@@ -98,17 +94,17 @@ CONTAINER ID  IMAGE                                          COMMAND        CREA
 
 {% raw %}
 ```shell
-docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
+docker images `docker ps -f "name=gowebapp" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 Пример вывода:
 ```shell
 REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
-image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
+werf-stages-storage/gowebapp   84d7...44992265   07cdc430e1c8      10 minutes ago      857MB
 ```
 
-Обратите внимание, что размер образа приложения получился **более 1 гигабайта**.
+Обратите внимание, что размер образа приложения получился **более 800 Мегабайт**.
 
 ## Оптимизация сборки приложения с использованием артефактов
 
@@ -119,91 +115,87 @@ image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ag
 Заменим имеющийся файл `werf.yaml` следующим содержимым:
 {% raw %}
 ```yaml
-project: hotel-booking
+project: gowebapp
 configVersion: 1
 ---
 
-artifact: booking-app
-from: golang:1.10
+artifact: gowebapp-build
+from: golang:1.14
 ansible:
-  beforeInstall:
-  - name: Install additional packages
-    apt:
-      update_cache: yes
-      pkg:
-      - gcc
-      - sqlite3
-      - libsqlite3-dev
   install:
   - name: Getting packages
-    shell: |
-      go get -v github.com/revel/revel
-      go get -v github.com/revel/cmd/revel
-      (go get -v github.com/revel/examples/booking/... ; true )
+    shell: go get github.com/josephspurrier/gowebapp
   setup:
-  - name: Preparing config and building application
+  - file:
+      path: /app
+      state: directory
+  - name: Copying config
     shell: |
-      sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
-      revel build --run-mode dev github.com/revel/examples/booking /app
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/config /app/config
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/static /app/static
+      cp -r $GOPATH/src/github.com/josephspurrier/gowebapp/template /app/template
+      cp $GOPATH/bin/gowebapp /app/
 ---
-image: go-booking
+image: gowebapp
+docker:
+  WORKDIR: /app
 from: ubuntu:18.04
 import:
-- artifact: booking-app
+- artifact: gowebapp-build
   add: /app
   to: /app
   after: install
 ```
 {% endraw %}
 
-В оптимизированных инструкциях сборки само приложение собирается в артефакте `booking-app`, после чего получившиеся файлы импортируются в образ `go-booking`.
+В оптимизированных инструкциях сборки само приложение собирается в артефакте `gowebapp-build`, после чего получившиеся файлы импортируются в образ `gowebapp`.
 
-Обратите внимание, что при сборке образа `go-booking` используется образ `ubuntu`, а не `golang`.
+Обратите внимание, что при сборке образа `gowebapp` используется образ `ubuntu`, а не `golang`.
 
 Соберём приложение с измененным файлом инструкций:
-```yaml
+```shell
 werf build --stages-storage :local
 ```
 
 ### Запуск
 
-Перед запуском измененного приложения нужно остановить и удалить запущенный контейнер `go-booking`, собранный и запущенный ранее. В противном случае новый контейнер не сможет запуститься из-за того, что контейнер с таким именем уже существует, порт 9000 занят. Например, выполните следующие команды для остановки и удаления контейнера `go-booking`:
+Перед запуском измененного приложения нужно остановить и удалить запущенный контейнер `gowebapp`, собранный и запущенный ранее. В противном случае новый контейнер не сможет запуститься из-за того, что контейнер с таким именем уже существует, порт 9000 занят. Например, выполните следующие команды для остановки и удаления контейнера `gowebapp`:
 
 ```shell
-docker stop go-booking && docker rm go-booking
+docker rm -f gowebapp
 ```
 
 Запустим измененное приложение, выполнив следующую команду:
 ```shell
-werf run --stages-storage :local --docker-options="-d -p 9000:9000 --name go-booking" go-booking -- /app/run.sh
+werf run --stages-storage :local --docker-options="-d -p 9000:80 --name gowebapp" gowebapp -- /app/gowebapp
 ```
 
 Убедитесь, что контейнер запустился, выполнив следующую команду:
 ```shell
-docker ps -f "name=go-booking"
+docker ps -f "name=gowebapp"
 ```
 
-Вы должны увидеть запущенный контейнер `go-booking`, например, вывод может быть следующим:
+Вы должны увидеть запущенный контейнер `gowebapp`, например, вывод может быть следующим:
 ```shell
-CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
+CONTAINER ID  IMAGE                                          COMMAND          CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  werf-stages-storage/gowebapp:84d7...44992265   "/app/gowebapp"  2 minutes ago  Up 2 minutes  0.0.0.0:9000->80/tcp   gowebapp
 ```
 
-Откройте в браузере адрес [http://localhost:9000](http://localhost:9000) — вы должны увидеть страницу `revel framework booking demo`. Выполните авторизацию, введя `demo` в качестве логина и пароля.
+Откройте в браузере адрес [http://localhost:9000](http://localhost:9000) — вы должны увидеть страницу `Go Web App`. Перейдите по ссылке "Click here to login", где вы сможете зарегистрироваться и авторизоваться в приложении.
 
 ### Размер собранного образа
 
 Получим размер образа, выполнив:
 {% raw %}
 ```shell
-docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
+docker images `docker ps -f "name=gowebapp" --format='{{.Image}}'`
 ```
 {% endraw %}
 
 Пример вывода:
 ```shell
-REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
-image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      103 MB
+REPOSITORY                     TAG               IMAGE ID       CREATED          SIZE
+werf-stages-storage/gowebapp   84d7...44992265   07cdc430e1c8   10 minutes ago   79MB
 ```
 
 Сравнивая размеры можно увидеть, что **образ, собранный с использованием артефактов, меньше на 90%**, чем первоначальный.

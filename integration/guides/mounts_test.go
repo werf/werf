@@ -29,19 +29,19 @@ var _ = Describe("Advanced build/Mounts", func() {
 			"build", "-s", ":local",
 		)
 
-		containerName := fmt.Sprintf("go_booking_mounts_%s", utils.GetRandomString(10))
+		containerName := fmt.Sprintf("gowebapp_mounts_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :9000 --name %s", containerName), "go-booking", "--", "/app/run.sh",
+			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :80 --name %s", containerName), "gowebapp", "--", "/app/gowebapp",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
-		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "9000/tcp"))
+		url := fmt.Sprintf("http://localhost:%s", utilsDocker.ContainerHostPort(containerName, "80/tcp"))
 		waitTillHostReadyAndCheckResponseBody(
 			url,
 			utils.DefaultWaitTillHostReadyToRespondMaxAttempts,
-			"revel framework booking demo",
+			"Go Web App",
 		)
 	})
 })
