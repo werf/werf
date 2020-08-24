@@ -34,20 +34,20 @@ func TestSlug(t *testing.T) {
 		},
 		{
 			name:   "maxSizeExceeded",
-			data:   strings.Repeat("x", slugMaxSize+1),
-			result: strings.Repeat("x", slugMaxSize-servicePartSize) + "-27e2f02f",
+			data:   strings.Repeat("x", DefaultSlugMaxSize+1),
+			result: strings.Repeat("x", DefaultSlugMaxSize-servicePartSize) + "-27e2f02f",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := Slug(test.data)
+			result := LimitedSlug(test.data, DefaultSlugMaxSize)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
 			}
 
-			if len(result) > slugMaxSize {
-				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", slugMaxSize, len(result))
+			if len(result) > DefaultSlugMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", DefaultSlugMaxSize, len(result))
 			}
 		})
 	}

@@ -90,7 +90,7 @@ func (s *ImportsStage) PrepareImage(c Conveyor, _, image container_runtime.Image
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
 
-		labelKey := imagePkg.WerfImportLabelPrefix + slug.Slug(importImage)
+		labelKey := imagePkg.WerfImportLabelPrefix + slug.LimitedSlug(importImage, slug.DefaultSlugMaxSize)
 
 		var labelValue string
 		if elm.Stage == "" {

@@ -314,9 +314,9 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 			var absoluteFrom string
 			switch mountType {
 			case "tmp_dir":
-				absoluteFrom = filepath.Join(s.imageTmpDir, "mount", slug.Slug(absoluteMountpoint))
+				absoluteFrom = filepath.Join(s.imageTmpDir, "mount", slug.LimitedSlug(absoluteMountpoint, slug.DefaultSlugMaxSize))
 			case "build_dir":
-				absoluteFrom = filepath.Join(werf.GetSharedContextDir(), "mounts", "projects", s.projectName, slug.Slug(absoluteMountpoint))
+				absoluteFrom = filepath.Join(werf.GetSharedContextDir(), "mounts", "projects", s.projectName, slug.LimitedSlug(absoluteMountpoint, slug.DefaultSlugMaxSize))
 			default:
 				panic(fmt.Sprintf("unknown mount type %s", mountType))
 			}
