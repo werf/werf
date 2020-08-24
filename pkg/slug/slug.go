@@ -13,7 +13,7 @@ import (
 const slugSeparator = "-"
 
 var (
-	slugMaxSize = 42
+	DefaultSlugMaxSize = 42 // legacy
 
 	dockerTagRegexp  = regexp.MustCompile(`^[\w][\w.-]*$`)
 	dockerTagMaxSize = 128
@@ -26,6 +26,10 @@ var (
 )
 
 func Slug(data string) string {
+	return slugify(data)
+}
+
+func LimitedSlug(data string, slugMaxSize int) string {
 	if len(data) == 0 || slugify(data) == data && len(data) < slugMaxSize {
 		return data
 	}
