@@ -589,14 +589,14 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 }
 
 func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
-	if !c.Parallel || len(c.images) == 1 {
+	if c.Parallel && len(c.images) > 1 {
+		return c.doImagesInParallel(ctx, phases, logImages)
+	} else {
 		for _, img := range c.images {
 			if err := c.doImage(ctx, img, phases, logImages); err != nil {
 				return err
 			}
 		}
-	} else {
-		return c.doImagesInParallel(ctx, phases, logImages)
 	}
 
 	return nil
