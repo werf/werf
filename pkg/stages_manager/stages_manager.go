@@ -371,7 +371,7 @@ func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStage
 
 	if opts.WithManifestCache {
 		logboek.Debug.LogF("Getting image %s info from manifest cache...\n", stageImageName)
-		if imgInfo, err := image.CommonManifestCache.GetImageInfo(stageImageName); err != nil {
+		if imgInfo, err := image.CommonManifestCache.GetImageInfo(m.StagesStorage.String(), stageImageName); err != nil {
 			return nil, fmt.Errorf("error getting image %s info from manifest cache: %s", stageImageName, err)
 		} else if imgInfo != nil {
 			logboek.Debug.LogF("Got image %s info from manifest cache (CACHE HIT)\n", stageImageName)
@@ -389,7 +389,7 @@ func (m *StagesManager) getStageDescription(stageID image.StageID, opts getStage
 		return nil, fmt.Errorf("error getting signature %q uniqueID %d stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 	} else if stageDesc != nil {
 		logboek.Debug.LogF("Storing image %s info into manifest cache\n", stageImageName)
-		if err := image.CommonManifestCache.StoreImageInfo(stageDesc.Info); err != nil {
+		if err := image.CommonManifestCache.StoreImageInfo(m.StagesStorage.String(), stageDesc.Info); err != nil {
 			return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
 		}
 

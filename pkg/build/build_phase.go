@@ -412,11 +412,6 @@ func (phase *BuildPhase) atomicBuildStageImage(img *Image, stg stage.Interface) 
 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			logboek.Info.LogF("Storing new image %s info into manifest cache\n", stageImageObj.GetStageDescription().Info.Name)
-			if err := image.CommonManifestCache.StoreImageInfo(stageImageObj.GetStageDescription().Info); err != nil {
-				return fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageObj.GetStageDescription().Info.Name, err)
-			}
-
 			if err := logboek.Default.LogProcess(
 				fmt.Sprintf("Store into stages storage"),
 				logboek.LevelLogProcessOptions{},

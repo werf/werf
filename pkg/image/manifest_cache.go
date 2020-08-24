@@ -11,13 +11,13 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 
-	"github.com/werf/werf/pkg/werf"
-
+	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (
-	ManifestCacheVersion = "1"
+	ManifestCacheVersion = "2"
 )
 
 type ManifestCache struct {
@@ -33,11 +33,11 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 	return &ManifestCache{CacheDir: cacheDir}
 }
 
-func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.GetImageInfo %s", imageName), logboek.LevelLogProcessStartOptions{})
+func (cache *ManifestCache) GetImageInfo(storageName, imageName string) (*Info, error) {
+	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.GetImageInfo %s %s", storageName, imageName), logboek.LevelLogProcessStartOptions{})
 	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-	if lock, err := cache.lock(imageName); err != nil {
+	if lock, err := cache.lock(storageName, imageName); err != nil {
 		return nil, err
 	} else {
 		defer cache.unlock(lock)
@@ -45,11 +45,11 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 
 	now := time.Now()
 
-	if record, err := cache.readRecord(imageName); err != nil {
+	if record, err := cache.readRecord(storageName, imageName); err != nil {
 		return nil, err
 	} else if record != nil {
 		record.AccessTimestamp = now.Unix()
-		if err := cache.writeRecord(record); err != nil {
+		if err := cache.writeRecord(storageName, record); err != nil {
 			return nil, err
 		}
 		return record.Info, nil
@@ -58,11 +58,11 @@ func (cache *ManifestCache) GetImageInfo(imageName string) (*Info, error) {
 	}
 }
 
-func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
-	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.StoreImageInfo %s", imgInfo.Name), logboek.LevelLogProcessStartOptions{})
+func (cache *ManifestCache) StoreImageInfo(storageName string, imgInfo *Info) error {
+	logboek.Debug.LogProcessStart(fmt.Sprintf("-- ManifestCache.StoreImageInfo %s %s", storageName, imgInfo.Name), logboek.LevelLogProcessStartOptions{})
 	defer logboek.Debug.LogProcessEnd(logboek.LevelLogProcessEndOptions{})
 
-	if lock, err := cache.lock(imgInfo.Name); err != nil {
+	if lock, err := cache.lock(storageName, imgInfo.Name); err != nil {
 		return err
 	} else {
 		defer cache.unlock(lock)
@@ -72,11 +72,11 @@ func (cache *ManifestCache) StoreImageInfo(imgInfo *Info) error {
 		AccessTimestamp: time.Now().Unix(),
 		Info:            imgInfo,
 	}
-	return cache.writeRecord(record)
+	return cache.writeRecord(storageName, record)
 }
 
-func (cache *ManifestCache) readRecord(imageName string) (*ManifestCacheRecord, error) {
-	filePath := cache.constructFilePathForImage(imageName)
+func (cache *ManifestCache) readRecord(storageName, imageName string) (*ManifestCacheRecord, error) {
+	filePath := cache.constructFilePathForImage(storageName, imageName)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return nil, nil
@@ -95,8 +95,8 @@ func (cache *ManifestCache) readRecord(imageName string) (*ManifestCacheRecord, 
 	}
 }
 
-func (cache *ManifestCache) writeRecord(record *ManifestCacheRecord) error {
-	filePath := cache.constructFilePathForImage(record.Info.Name)
+func (cache *ManifestCache) writeRecord(storageName string, record *ManifestCacheRecord) error {
+	filePath := cache.constructFilePathForImage(storageName, record.Info.Name)
 
 	dirPath := filepath.Dir(filePath)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
@@ -113,12 +113,12 @@ func (cache *ManifestCache) writeRecord(record *ManifestCacheRecord) error {
 	}
 }
 
-func (cache *ManifestCache) constructFilePathForImage(imageName string) string {
-	return filepath.Join(cache.CacheDir, util.Sha256Hash(imageName))
+func (cache *ManifestCache) constructFilePathForImage(storageName, imageName string) string {
+	return filepath.Join(cache.CacheDir, slug.Slug(storageName), util.Sha256Hash(imageName))
 }
 
-func (cache *ManifestCache) lock(imageName string) (lockgate.LockHandle, error) {
-	lockName := fmt.Sprintf("manifest_cache.%s", imageName)
+func (cache *ManifestCache) lock(storageName, imageName string) (lockgate.LockHandle, error) {
+	lockName := fmt.Sprintf("manifest_cache.%s.%s", slug.Slug(storageName), imageName)
 	if _, lock, err := werf.AcquireHostLock(lockName, lockgate.AcquireOptions{}); err != nil {
 		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
 	} else {
