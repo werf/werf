@@ -423,11 +423,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			logboek.Context(ctx).Info().LogF("Storing new image %s info into manifest cache\n", stageImageObj.GetStageDescription().Info.Name)
-			if err := image.CommonManifestCache.StoreImageInfo(ctx, stageImageObj.GetStageDescription().Info); err != nil {
-				return fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageObj.GetStageDescription().Info.Name, err)
-			}
-
 			if err := logboek.Context(ctx).Default().LogProcess("Store into stages storage").DoError(func() error {
 				if err := phase.Conveyor.StagesManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
 					return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StagesManager.StagesStorage.String(), err)
