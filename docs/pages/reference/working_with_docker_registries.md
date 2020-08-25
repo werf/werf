@@ -27,7 +27,7 @@ There are several types of commands that are working with the Docker registries 
 | _JFrog Artifactory_         	        |         **ok**        	|                            **ok**                            	        |
 | [_Quay_](#quay)            	        |         **ok**        	|                            **ok**                            	        |
 
-> In the near future we will add support for JFrog Container Registry and Nexus Registry
+> In the nearest future we will add support for Nexus Registry
 
 The following implementations are fully supported and do not require additional actions except [docker authorization](#docker-authorization):
 * _Default_.
