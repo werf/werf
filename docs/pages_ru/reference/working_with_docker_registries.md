@@ -26,7 +26,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _JFrog Artifactory_         	        |         **ок**        	|                            **ок**                            	        |
 | [_Quay_](#quay)            	        |         **ок**        	|                            **ок**                            	        |
 
-> В ближайшее время планируется добавить поддержку для JFrog Container Registry и Nexus Registry
+> В ближайшее время планируется добавить поддержку для Nexus Registry
 
 Следующие имплементации полностью поддерживаются и от пользователя требуется только выполнить [авторизацию Docker](#авторизация-docker): 
 * _Default_.
