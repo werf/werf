@@ -54,7 +54,7 @@ The annotation name depends on the selected CI/CD system and is composed as foll
 
 The [`WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git": URL`](#werf_add_annotation_project_git) environment variable will be set as a result of running the `werf ci-env` command.
 
-Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*; see the [article for more details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotate-and-label-chart-resources).
+Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*; see the [article for more details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotating-and-labeling-chart-resources).
 
 ### CI/CD configuration integration
 

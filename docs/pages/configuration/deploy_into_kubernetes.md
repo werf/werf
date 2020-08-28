@@ -21,7 +21,7 @@ deploy:
 
 `deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
 
-`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name-slug) to generated helm release name. Default: `true`.
+`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#slugging-the-release-name) to generated helm release name. Default: `true`.
 
 `TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates). E.g. you can mix the value with an environment variable:
 
@@ -49,4 +49,4 @@ deploy:
 
 `deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace-slug) to generated kubernetes namespace. Default: `true`.
+`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#slugging-kubernetes-namespace) to generated kubernetes namespace. Default: `true`.

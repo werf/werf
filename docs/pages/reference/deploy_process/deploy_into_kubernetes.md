@@ -15,7 +15,6 @@ werf includes all the existing Helm functionality (the latter is integrated into
 - also, werf has some unique features which we will discuss below.
 
 werf uses the following two commands to deal with an application in the Kubernetes cluster:
-Для работы с приложением в Kubernetes достаточно двух команд: 
 - [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or update an application;  
 - [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html) — to delete an application from the cluster.
 
@@ -344,7 +343,7 @@ werf uses the following syntax for accessing values contained in the chart templ
 ```
 {% endraw %}
 
-The `.Values` object contains the [merged map of resulting values](#merge-result-values) map.
+The `.Values` object contains the [merged map of resulting values](#merging-the-resulting-values) map.
 
 ## Release
 
@@ -412,7 +411,7 @@ You can redefine the Kubernetes Namespace using the `--namespace NAMESPACE` depl
 
 You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace) parameter.
 
-#### Slugging Kubernetes namespaces
+#### Slugging Kubernetes namespace
 
 The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) that generates a unique and valid Kubernetes Namespace.
 
@@ -431,9 +430,9 @@ When running the `werf deploy` command, werf starts the deployment process that 
 
 **NOTE:** werf would delete all newly created resources immediately during the ongoing deploy process if this process fails at any of the steps described above!
 
-When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#resource-tracking-configuration) for each hook resource.
+When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#configuring-resource-tracking) for each hook resource.
 
-On step 5, werf would track all release resources until each resource reaches the "ready" state. All resources are tracked simultaneously. During tracking, werf aggregates information obtained from all release resources into the single text output in real-time, and periodically prints the so-called status progress table. Tracking [can be configured](#resource-tracking-configuration) for each resource.
+On step 5, werf would track all release resources until each resource reaches the "ready" state. All resources are tracked simultaneously. During tracking, werf aggregates information obtained from all release resources into the single text output in real-time, and periodically prints the so-called status progress table. Tracking [can be configured](#configuring-resource-tracking) for each resource.
 
 werf displays logs of resource Pods until those pods reach the "ready" state. In the case of Job pods, logs are shown until Pods are terminated.
 
