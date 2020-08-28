@@ -22,6 +22,6 @@ jobs:
       - name: Cleanup
         uses: werf/actions/cleanup@master
         with:
-          kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }} }}
+          kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
 {% endraw %}

@@ -39,7 +39,7 @@ With pure helm user has only the ability to wait for resources using `--wait` fl
 
 Also werf fails fast when there is an error occurred during deploy process. With pure helm and wait flag user should wait till timeout occurred when something went wrong. And failed deploys is not a rare case, so waiting for timeouts significantly slows down CI/CD experience.
 
-And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resource-tracking-configuration).
+And additionally default tracking and error response behaviour can be configured, see [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#configuring-resource-tracking).
 
 werf uses [kubedog resource tracking library](https://github.com/werf/kubedog) under the hood.
 
@@ -55,7 +55,7 @@ User can pass any additional annotations and labels to werf deploy invocation an
 
 This feature opens possibilities for grouping resources by project name, url, etc. for example in monitoring task.
 
-See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotate-and-label-chart-resources).
+See [deploy essentials for more info]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#annotating-and-labeling-chart-resources).
 
 Helm does not have this ability yet and will not have in the near future, [see issue](https://github.com/helm/helm/pull/2631).
 
@@ -104,7 +104,7 @@ Helm does not define a static place in the project where helm chart should be st
 
 Errors like non-existing fields in resource configuration of chart templates are not shown by standard helm. No feedback is given to the user.
 
-werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#resources-manifests-validation).
+werf writes all validation errors as WARNINGS and also writes these warnings into the resource annotation (so that all these warnings can easily be fetched by cli scripts from multiple clusters). See more info [here]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#validating-resource-manifests).
 
 ## Three way merge patches and resources adoption
 
