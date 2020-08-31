@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/werf/logboek"
 
@@ -25,6 +26,10 @@ type GitRepoCache struct {
 	Patches   map[string]git_repo.Patch
 	Checksums map[string]git_repo.Checksum
 	Archives  map[string]git_repo.Archive
+
+	patchesMutex   sync.Mutex
+	checksumsMutex sync.Mutex
+	archivesMutex  sync.Mutex
 }
 
 func objectToHashKey(obj interface{}) string {
@@ -72,6 +77,17 @@ type GitMapping struct {
 	ContainerScriptsDir  string
 
 	BaseCommitByPrevBuiltImageName map[string]string
+
+	mutexes map[string]*sync.Mutex
+	mutex   sync.Mutex
+}
+
+func NewGitMapping() *GitMapping {
+	return &GitMapping{
+		BaseCommitByPrevBuiltImageName: map[string]string{},
+
+		mutexes: map[string]*sync.Mutex{},
+	}
 }
 
 type ContainerFileDescriptor struct {
@@ -93,6 +109,19 @@ func (f *ContainerFileDescriptor) Open(flag int, perm os.FileMode) (*os.File, er
 	return handler, nil
 }
 
+func (gm *GitMapping) getMutex(key string) *sync.Mutex {
+	gm.mutex.Lock()
+	defer gm.mutex.Unlock()
+
+	m, ok := gm.mutexes[key]
+	if !ok {
+		m = &sync.Mutex{}
+		gm.mutexes[key] = m
+	}
+
+	return m
+}
+
 func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 	if gm.GitRepoInterface != nil {
 		return gm.GitRepoInterface
@@ -106,6 +135,9 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 }
 
 func (gm *GitMapping) getOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (git_repo.Checksum, error) {
+	gm.GitRepoCache.checksumsMutex.Lock()
+	defer gm.GitRepoCache.checksumsMutex.Unlock()
+
 	if _, hasKey := gm.GitRepoCache.Checksums[objectToHashKey(opts)]; !hasKey {
 		checksum, err := gm.GitRepo().Checksum(ctx, opts)
 		if err != nil {
@@ -117,6 +149,9 @@ func (gm *GitMapping) getOrCreateChecksum(ctx context.Context, opts git_repo.Che
 }
 
 func (gm *GitMapping) getOrCreateArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
+	gm.GitRepoCache.archivesMutex.Lock()
+	defer gm.GitRepoCache.archivesMutex.Unlock()
+
 	if _, hasKey := gm.GitRepoCache.Archives[objectToHashKey(opts)]; !hasKey {
 		archive, err := gm.createArchive(ctx, opts)
 		if err != nil {
@@ -149,6 +184,9 @@ func (gm *GitMapping) createArchive(ctx context.Context, opts git_repo.ArchiveOp
 }
 
 func (gm *GitMapping) getOrCreatePatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
+	gm.GitRepoCache.patchesMutex.Lock()
+	defer gm.GitRepoCache.patchesMutex.Unlock()
+
 	if _, hasKey := gm.GitRepoCache.Patches[objectToHashKey(opts)]; !hasKey {
 		patch, err := gm.createPatch(ctx, opts)
 		if err != nil {
@@ -336,6 +374,9 @@ func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInt
 }
 
 func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+	gm.getMutex(prevBuiltImage.Name()).Lock()
+	defer gm.getMutex(prevBuiltImage.Name()).Unlock()
+
 	if baseCommit, hasKey := gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Name()]; hasKey {
 		return baseCommit, nil
 	}
