@@ -615,10 +615,6 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		}
 	}
 
-	if int(c.ParallelTasksLimit) > 0 && maxTasksNumber > int(c.ParallelTasksLimit) {
-		maxTasksNumber = int(c.ParallelTasksLimit)
-	}
-
 	goCtxsWithDockerCli := make([]context.Context, maxTasksNumber-1)
 
 	doImageSetInParallel := func(setId int) error {
