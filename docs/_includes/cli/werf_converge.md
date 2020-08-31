@@ -151,8 +151,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
   -p, --parallel=true:
             Run in parallel (default $WERF_PARALLEL)
-      --parallel-tasks-limit=-1:
-            Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)
+      --parallel-tasks-limit=5:
+            Parallel tasks limit, set -1 to remove the limitation (default                          
+            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
