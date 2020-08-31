@@ -46,7 +46,7 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 	var errors []error
 
 	getAllStagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]image.StageID, error) {
-		logProcess := logboek.Context(ctx).Default().LogProcess(logProcessMsg, projectName)
+		logProcess := logboek.Context(ctx).Default().LogProcess(logProcessMsg, stagesStorage.String())
 		logProcess.Start()
 		if stages, err := stagesStorage.GetAllStages(ctx, projectName); err != nil {
 			logProcess.Fail()
@@ -61,13 +61,13 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 	var existingSourceStages []image.StageID
 	var existingDestinationStages []image.StageID
 
-	if stages, err := getAllStagesFunc("Getting all repo images list from source stages storage", fromStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from source stages storage %s", fromStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from source %s: %s", fromStagesStorage.String(), err)
 	} else {
 		existingSourceStages = stages
 	}
 
-	if stages, err := getAllStagesFunc("Getting all repo images list from destination stages storage", toStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from destination stages storage %s", toStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from destination %s: %s", toStagesStorage.String(), err)
 	} else {
 		existingDestinationStages = stages
