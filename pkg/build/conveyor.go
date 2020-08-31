@@ -1311,24 +1311,22 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 		stageDependencies = stageDependenciesToMap(local.GitMappingStageDependencies())
 	}
 
-	gitMapping := &stage.GitMapping{
-		PatchesDir:           getImagePatchesDir(imageName, c),
-		ContainerPatchesDir:  getImagePatchesContainerDir(c),
-		ArchivesDir:          getImageArchivesDir(imageName, c),
-		ContainerArchivesDir: getImageArchivesContainerDir(c),
-		ScriptsDir:           getImageScriptsDir(imageName, c),
-		ContainerScriptsDir:  getImageScriptsContainerDir(c),
+	gitMapping := stage.NewGitMapping()
 
-		Add:                local.GitMappingAdd(),
-		To:                 local.GitMappingTo(),
-		ExcludePaths:       local.GitMappingExcludePath(),
-		IncludePaths:       local.GitMappingIncludePaths(),
-		Owner:              local.Owner,
-		Group:              local.Group,
-		StagesDependencies: stageDependencies,
+	gitMapping.PatchesDir = getImagePatchesDir(imageName, c)
+	gitMapping.ContainerPatchesDir = getImagePatchesContainerDir(c)
+	gitMapping.ArchivesDir = getImageArchivesDir(imageName, c)
+	gitMapping.ContainerArchivesDir = getImageArchivesContainerDir(c)
+	gitMapping.ScriptsDir = getImageScriptsDir(imageName, c)
+	gitMapping.ContainerScriptsDir = getImageScriptsContainerDir(c)
 
-		BaseCommitByPrevBuiltImageName: make(map[string]string),
-	}
+	gitMapping.Add = local.GitMappingAdd()
+	gitMapping.To = local.GitMappingTo()
+	gitMapping.ExcludePaths = local.GitMappingExcludePath()
+	gitMapping.IncludePaths = local.GitMappingIncludePaths()
+	gitMapping.Owner = local.Owner
+	gitMapping.Group = local.Group
+	gitMapping.StagesDependencies = stageDependencies
 
 	return gitMapping
 }
