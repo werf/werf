@@ -747,7 +747,7 @@ func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ParallelTasksLimit = new(int64)
-	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", -1, "Parallel tasks limit (default $WERF_PARALLEL_TASKS_LIMIT or without limit)")
+	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", 5, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
 }
 
 func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {
