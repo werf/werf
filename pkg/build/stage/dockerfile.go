@@ -3,6 +3,7 @@ package stage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -138,24 +139,63 @@ outerLoop:
 			continue
 		}
 
-		inspect, err := containerRuntime.GetImageInspect(ctx, resolvedBaseName)
-		if err != nil {
-			return err
-		} else if inspect != nil {
-			s.imageOnBuildInstructions[resolvedBaseName] = inspect.Config.OnBuild
-			continue
+		getBaseImageOnBuildLocally := func() ([]string, error) {
+			inspect, err := containerRuntime.GetImageInspect(ctx, resolvedBaseName)
+			if err != nil {
+				return nil, err
+			}
+
+			if inspect == nil {
+				return nil, imageNotExistLocally
+			}
+
+			return inspect.Config.OnBuild, nil
 		}
 
-		configFile, err := docker_registry.API().GetRepoImageConfigFile(ctx, resolvedBaseName)
-		if err != nil {
-			return fmt.Errorf("get repo image %s config file failed: %s", resolvedBaseName, err)
-		} else {
-			s.imageOnBuildInstructions[resolvedBaseName] = configFile.Config.OnBuild
+		getBaseImageOnBuildRemotely := func() ([]string, error) {
+			configFile, err := docker_registry.API().GetRepoImageConfigFile(ctx, resolvedBaseName)
+			if err != nil {
+				return nil, fmt.Errorf("get repo image %s config file failed: %s", resolvedBaseName, err)
+			}
+
+			return configFile.Config.OnBuild, nil
 		}
+
+		var onBuild []string
+		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != imageNotExistLocally {
+			return err
+		} else if err == imageNotExistLocally {
+			var getRemotelyErr error
+			if onBuild, getRemotelyErr = getBaseImageOnBuildRemotely(); getRemotelyErr != nil {
+				if isUnsupportedMediaTypeError(getRemotelyErr) {
+					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
+					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating signature of image correctly\n")
+					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
+						return containerRuntime.PullImage(ctx, resolvedBaseName)
+					}); err != nil {
+						return err
+					}
+
+					if onBuild, err = getBaseImageOnBuildLocally(); err != nil {
+						return err
+					}
+				} else {
+					return getRemotelyErr
+				}
+			}
+		}
+
+		s.imageOnBuildInstructions[resolvedBaseName] = onBuild
 	}
 
 	return nil
 }
+
+func isUnsupportedMediaTypeError(err error) bool {
+	return strings.Contains(err.Error(), "unsupported MediaType")
+}
+
+var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var dockerMetaArgsString []string
