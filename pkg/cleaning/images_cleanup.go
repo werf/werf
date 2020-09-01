@@ -445,7 +445,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 
 				for contentSignature, repoImageListToCleanup := range contentSignatureRepoImageListToCleanup {
 					commitHashes := imageContentSignatureExistingCommitHashes[imageName][contentSignature]
-					if len(commitHashes) == 0 {
+					if len(commitHashes) == 0 && len(repoImageListToCleanup) != 0 {
 						logBlockMessage := fmt.Sprintf("Content signature %s is associated with non-existing commits. The following tags will be deleted", contentSignature)
 						logboek.Context(ctx).Info().LogBlock(logBlockMessage).Do(func() {
 							for _, repoImage := range repoImageListToCleanup {
