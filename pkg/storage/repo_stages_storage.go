@@ -8,12 +8,12 @@ import (
 
 	"github.com/golang/example/stringutil"
 
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
-
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/slug"
 )
 
 const (
@@ -22,8 +22,8 @@ const (
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 
-	RepoImageMetadataByCommitRecord_ImageTagPrefix  = "image-metadata-by-commit-"
-	RepoImageMetadataByCommitRecord_ImageNameFormat = "%s:image-metadata-by-commit-%s-%s"
+	RepoImageMetadataByCommitRecord_ImageTagPrefix = "image-metadata-by-commit-"
+	RepoImageMetadataByCommitRecord_TagFormat      = "image-metadata-by-commit-%s-%s"
 
 	RepoClientIDRecrod_ImageTagPrefix  = "client-id-"
 	RepoClientIDRecrod_ImageNameFormat = "%s:client-id-%s-%d"
@@ -356,7 +356,6 @@ func (storage *RepoStagesStorage) GetImageCommits(ctx context.Context, projectNa
 			}
 
 			sluggedImageAndCommit := strings.TrimPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix)
-
 			sluggedImageAndCommitParts := strings.Split(sluggedImageAndCommit, "-")
 			if len(sluggedImageAndCommitParts) < 2 {
 				// unexpected
@@ -364,10 +363,7 @@ func (storage *RepoStagesStorage) GetImageCommits(ctx context.Context, projectNa
 			}
 
 			commit := sluggedImageAndCommitParts[len(sluggedImageAndCommitParts)-1]
-			sluggedImage := strings.TrimSuffix(sluggedImageAndCommit, fmt.Sprintf("-%s", commit))
-			iName := unslugDockerImageTagAsImageName(sluggedImage)
-
-			if imageName == iName {
+			if slugRepoImageMetadataByCommitImageRecordTag(imageName, commit) == tag {
 				logboek.Context(ctx).Debug().LogF("Found image %q metadata by commit %s, full image name: %s:%s\n", imageName, commit, storage.RepoAddress, tag)
 				res = append(res, commit)
 			}
@@ -378,7 +374,10 @@ func (storage *RepoStagesStorage) GetImageCommits(ctx context.Context, projectNa
 }
 
 func makeRepoImageMetadataByCommitImageRecord(repoAddress, imageName, commit string) string {
-	return fmt.Sprintf(RepoImageMetadataByCommitRecord_ImageNameFormat, repoAddress, slugImageNameAsDockerImageTag(imageName), commit)
+	return strings.Join([]string{
+		repoAddress,
+		slugRepoImageMetadataByCommitImageRecordTag(imageName, commit),
+	}, ":")
 }
 
 func (storage *RepoStagesStorage) String() string {
@@ -391,6 +390,28 @@ func (storage *RepoStagesStorage) Address() string {
 
 func makeRepoManagedImageRecord(repoAddress, imageName string) string {
 	return fmt.Sprintf(RepoManagedImageRecord_ImageNameFormat, repoAddress, slugImageNameAsDockerImageTag(imageName))
+}
+
+func slugRepoImageMetadataByCommitImageRecordTag(imageName string, commit string) string {
+	return slugImageMetadataByCommitImageRecordTag(RepoImageMetadataByCommitRecord_TagFormat, imageName, commit)
+}
+
+func slugLocalImageMetadataByCommitImageRecordTag(imageName string, commit string) string {
+	return slugImageMetadataByCommitImageRecordTag(LocalImageMetadataByCommitRecord_TagFormat, imageName, commit)
+}
+
+func slugImageMetadataByCommitImageRecordTag(tagFormat string, imageName string, commit string) string {
+	formattedImageName := slugImageNameAsDockerImageTag(imageName)
+
+	tag := fmt.Sprintf(tagFormat, formattedImageName, commit)
+	if len(tag) <= 128 {
+		return tag
+	} else {
+		extraSize := len(tag) - 128
+		formattedImageName = slug.LimitedSlug(formattedImageName, len(formattedImageName)-extraSize)
+		formattedImageName = strings.ReplaceAll(formattedImageName, "-", "_")
+		return fmt.Sprintf(tagFormat, formattedImageName, commit)
+	}
 }
 
 func slugImageNameAsDockerImageTag(imageName string) string {

@@ -27,7 +27,7 @@ const (
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
 
 	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
-	LocalImageMetadataByCommitRecord_ImageFormat     = "werf-images-metadata-by-commit/%s:%s-%s"
+	LocalImageMetadataByCommitRecord_TagFormat       = "%s-%s"
 
 	LocalClientIDRecord_ImageNameFormat = "werf-client-id/%s"
 	LocalClientIDRecord_ImageFormat     = "werf-client-id/%s:%s-%d"
@@ -301,19 +301,14 @@ func (storage *LocalDockerServerStagesStorage) GetImageCommits(ctx context.Conte
 		for _, repoTag := range img.RepoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
 
-			sluggedImageAndCommit := tag
-
-			sluggedImageAndCommitParts := strings.Split(sluggedImageAndCommit, "-")
+			sluggedImageAndCommitParts := strings.Split(tag, "-")
 			if len(sluggedImageAndCommitParts) < 2 {
 				// unexpected
 				continue
 			}
 
 			commit := sluggedImageAndCommitParts[len(sluggedImageAndCommitParts)-1]
-			sluggedImage := strings.TrimSuffix(sluggedImageAndCommit, fmt.Sprintf("-%s", commit))
-			iName := unslugDockerImageTagAsImageName(sluggedImage)
-
-			if imageName == iName {
+			if slugLocalImageMetadataByCommitImageRecordTag(imageName, commit) == tag {
 				logboek.Context(ctx).Debug().LogF("Found image %q metadata by commit %s\n", imageName, commit)
 				res = append(res, commit)
 			}
@@ -324,7 +319,10 @@ func (storage *LocalDockerServerStagesStorage) GetImageCommits(ctx context.Conte
 }
 
 func makeLocalImageMetadataByCommitImageRecord(projectName, imageName, commit string) string {
-	return fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageFormat, projectName, slugImageNameAsDockerImageTag(imageName), commit)
+	return strings.Join([]string{
+		fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName),
+		slugLocalImageMetadataByCommitImageRecordTag(imageName, commit),
+	}, ":")
 }
 
 func (storage *LocalDockerServerStagesStorage) String() string {
