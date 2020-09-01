@@ -46,8 +46,8 @@
         },
         {
           "name": "rock-solid",
-          "_candidate": "v1.1.20+fix23",
-	      "version": "v1.1.19+fix11"
+          "_candidate": "v1.1.21-fix27",
+          "version": "v1.1.20+fix23"
         }
       ]
     }
