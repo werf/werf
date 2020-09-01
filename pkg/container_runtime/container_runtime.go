@@ -22,7 +22,7 @@ type ContainerRuntime interface {
 
 type LocalDockerServerRuntime struct{}
 
-// GetImageInspect only avaliable for LocalDockerServerRuntime
+// GetImageInspect only available for LocalDockerServerRuntime
 func (runtime *LocalDockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
