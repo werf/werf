@@ -54,6 +54,29 @@ werf helm-v3 list [flags] [options]
             included in the results
   -h, --help=false:
             help for list
+  -m, --max=256:
+            maximum number of releases to fetch
+      --offset=0:
+            next release name in the list, used to offset from start value
+  -o, --output=table:
+            prints the output in the specified format. Allowed values: table, json, yaml
+      --pending=false:
+            show pending releases
+  -r, --reverse=false:
+            reverse the sort order
+  -q, --short=false:
+            output short (quiet) listing format
+      --superseded=false:
+            show superseded releases
+      --uninstalled=false:
+            show uninstalled releases (if 'helm uninstall --keep-history' was used)
+      --uninstalling=false:
+            show releases that are currently being uninstalled
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
       --hooks-status-progress-period=5:
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
@@ -65,28 +88,10 @@ werf helm-v3 list [flags] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-  -m, --max=256:
-            maximum number of releases to fetch
   -n, --namespace='':
             namespace scope for this request
-      --offset=0:
-            next release name in the list, used to offset from start value
-  -o, --output=table:
-            prints the output in the specified format. Allowed values: table, json, yaml
-      --pending=false:
-            show pending releases
-  -r, --reverse=false:
-            reverse the sort order
-  -q, --short=false:
-            output short (quiet) listing format
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --superseded=false:
-            show superseded releases
-      --uninstalled=false:
-            show uninstalled releases (if 'helm uninstall --keep-history' was used)
-      --uninstalling=false:
-            show releases that are currently being uninstalled
 ```
 

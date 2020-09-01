@@ -293,17 +293,17 @@ Also, can be specified with $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeContext = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", os.Getenv("WERF_KUBE_CONTEXT"), "Kubernetes config context (default $WERF_KUBE_CONTEXT)")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeContext, "kube-context", "", os.Getenv("WERF_KUBE_CONTEXT"), "Kubernetes config context (default $WERF_KUBE_CONTEXT)")
 }
 
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfig = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or $KUBECONFIG)")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeConfig, "kube-config", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or $KUBECONFIG)")
 }
 
 func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfigBase64 = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
 }
 
 func getFirstExistingEnvVarAsString(envNames ...string) string {
@@ -394,7 +394,7 @@ func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
-	cmd.Flags().Int64VarP(
+	cmd.PersistentFlags().Int64VarP(
 		destination,
 		"status-progress-period",
 		"",
@@ -446,7 +446,7 @@ func SetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupHooksStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
-	cmd.Flags().Int64VarP(
+	cmd.PersistentFlags().Int64VarP(
 		destination,
 		"hooks-status-progress-period",
 		"",

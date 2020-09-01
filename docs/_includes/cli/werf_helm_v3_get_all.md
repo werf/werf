@@ -19,6 +19,15 @@ werf helm-v3 get all RELEASE_NAME [flags] [options]
 ```shell
   -h, --help=false:
             help for all
+      --revision=0:
+            get the named release with revision
+      --template='':
+            go template for formatting the output, eg: {{.Release.Name}}
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
       --hooks-status-progress-period=5:
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
@@ -32,12 +41,8 @@ werf helm-v3 get all RELEASE_NAME [flags] [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
   -n, --namespace='':
             namespace scope for this request
-      --revision=0:
-            get the named release with revision
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --template='':
-            go template for formatting the output, eg: {{.Release.Name}}
 ```
 

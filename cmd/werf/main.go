@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 
@@ -94,6 +96,18 @@ func main() {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
+	rootCmd := constructRootCmd()
+
+	if err := rootCmd.Execute(); err != nil {
+		common.TerminateWithError(err.Error(), 1)
+	}
+}
+
+func constructRootCmd() *cobra.Command {
+	if filepath.Base(os.Args[0]) == "helm" || os.Getenv("WERF_HELM3_MODE") == "1" {
+		return helm_v3.NewCmd()
+	}
+
 	rootCmd := &cobra.Command{
 		Use:   "werf",
 		Short: "werf helps to implement and support Continuous Integration and Continuous Delivery",
@@ -152,9 +166,7 @@ Find more information at https://werf.io`),
 		stageCmd(),
 	)
 
-	if err := rootCmd.Execute(); err != nil {
-		common.TerminateWithError(err.Error(), 1)
-	}
+	return rootCmd
 }
 
 func configCmd() *cobra.Command {

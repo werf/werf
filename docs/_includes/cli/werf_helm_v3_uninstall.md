@@ -28,12 +28,21 @@ werf helm-v3 uninstall RELEASE_NAME [...] [flags] [options]
             simulate a uninstall
   -h, --help=false:
             help for uninstall
-      --hooks-status-progress-period=5:
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --keep-history=false:
             remove all associated resources and mark the release as deleted, but retain the release 
             history
+      --no-hooks=false:
+            prevent hooks from running during uninstallation
+      --timeout=5m0s:
+            time to wait for any individual Kubernetes operation (like Jobs for hooks)
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -44,12 +53,8 @@ werf helm-v3 uninstall RELEASE_NAME [...] [flags] [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
   -n, --namespace='':
             namespace scope for this request
-      --no-hooks=false:
-            prevent hooks from running during uninstallation
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --timeout=5m0s:
-            time to wait for any individual Kubernetes operation (like Jobs for hooks)
 ```
 
