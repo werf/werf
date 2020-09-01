@@ -132,7 +132,7 @@ func (phase *PublishImagesPhase) publishImage(ctx context.Context, img *Image) e
 
 	localGitRepo := phase.Conveyor.GetLocalGitRepo()
 	if localGitRepo != nil {
-		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("publishing image %s git metadata", img.GetName())).
+		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
 			DoError(func() error {
 				headCommit, err := localGitRepo.HeadCommit(ctx)
 				if err != nil {
