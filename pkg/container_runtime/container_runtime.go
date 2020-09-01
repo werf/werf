@@ -31,7 +31,7 @@ func (runtime *LocalDockerServerRuntime) GetImageInspect(ctx context.Context, re
 	return inspect, err
 }
 
-// PullImage only avaliable for LocalDockerServerRuntime
+// PullImage only available for LocalDockerServerRuntime
 func (runtime *LocalDockerServerRuntime) PullImage(ctx context.Context, ref string) error {
 	if err := docker.CliPull(ctx, ref); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", ref, err)
