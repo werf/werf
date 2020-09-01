@@ -103,25 +103,12 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             generate the name (and omit the NAME parameter)
   -h, --help=false:
             help for install
-      --hooks-status-progress-period=5:
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --key-file='':
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg':
             location of public keys used for verification
-      --kube-config='':
-            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
-            $KUBECONFIG)
-      --kube-config-base64='':
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context='':
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --name-template='':
             specify template used to name the release
-  -n, --namespace='':
-            namespace scope for this request
       --no-hooks=false:
             prevent hooks from running during install
   -o, --output=table:
@@ -149,9 +136,6 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             commas: key1=val1,key2=val2)
       --skip-crds=false:
             if set, no CRDs will be installed. By default, CRDs are installed if not already present
-      --status-progress-period=5:
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --timeout=5m0s:
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
       --username='':
@@ -167,5 +151,26 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
             as successful. It will wait for as long as --timeout
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --kube-config='':
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
+      --kube-config-base64='':
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

@@ -21,6 +21,16 @@ werf helm-v3 test [RELEASE] [flags] [options]
 ```shell
   -h, --help=false:
             help for test
+      --logs=false:
+            dump the logs from test pods (this runs after all tests are complete, but before any    
+            cleanup)
+      --timeout=5m0s:
+            time to wait for any individual Kubernetes operation (like Jobs for hooks)
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
       --hooks-status-progress-period=5:
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
@@ -32,15 +42,10 @@ werf helm-v3 test [RELEASE] [flags] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --logs=false:
-            dump the logs from test pods (this runs after all tests are complete, but before any    
-            cleanup)
   -n, --namespace='':
             namespace scope for this request
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --timeout=5m0s:
-            time to wait for any individual Kubernetes operation (like Jobs for hooks)
 ```
 

@@ -30,6 +30,21 @@ werf helm-v3 rollback <RELEASE> [REVISION] [flags] [options]
             force resource update through delete/recreate if needed
   -h, --help=false:
             help for rollback
+      --no-hooks=false:
+            prevent hooks from running during rollback
+      --recreate-pods=false:
+            performs pods restart for the resource if applicable
+      --timeout=5m0s:
+            time to wait for any individual Kubernetes operation (like Jobs for hooks)
+      --wait=false:
+            if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
+            Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
+            as successful. It will wait for as long as --timeout
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
       --hooks-status-progress-period=5:
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
@@ -43,18 +58,8 @@ werf helm-v3 rollback <RELEASE> [REVISION] [flags] [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
   -n, --namespace='':
             namespace scope for this request
-      --no-hooks=false:
-            prevent hooks from running during rollback
-      --recreate-pods=false:
-            performs pods restart for the resource if applicable
       --status-progress-period=5:
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-      --timeout=5m0s:
-            time to wait for any individual Kubernetes operation (like Jobs for hooks)
-      --wait=false:
-            if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
-            Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
-            as successful. It will wait for as long as --timeout
 ```
 
