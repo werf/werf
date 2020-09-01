@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+
 	"github.com/werf/logboek"
 
-	"github.com/docker/docker/api/types"
 	"github.com/werf/werf/pkg/docker"
-
-	"github.com/docker/docker/client"
 )
 
 type ContainerRuntime interface {
@@ -22,13 +22,22 @@ type ContainerRuntime interface {
 
 type LocalDockerServerRuntime struct{}
 
-// GetImageInspect only avaiable for LocalDockerServerRuntime
+// GetImageInspect only available for LocalDockerServerRuntime
 func (runtime *LocalDockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
 	}
 	return inspect, err
+}
+
+// PullImage only available for LocalDockerServerRuntime
+func (runtime *LocalDockerServerRuntime) PullImage(ctx context.Context, ref string) error {
+	if err := docker.CliPull(ctx, ref); err != nil {
+		return fmt.Errorf("unable to pull image %s: %s", ref, err)
+	}
+
+	return nil
 }
 
 func (runtime *LocalDockerServerRuntime) RefreshImageObject(ctx context.Context, img Image) error {
