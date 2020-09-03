@@ -56,7 +56,7 @@ func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, 
 func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	if imgInfo, err := api.GetRepoImage(ctx, reference); err != nil {
 		if IsManifestUnknownError(err) || IsNameUnknownError(err) {
-			return imgInfo, nil
+			return nil, nil
 		}
 		return imgInfo, err
 	} else {

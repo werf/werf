@@ -59,6 +59,27 @@ func (r *harbor) Tags(ctx context.Context, reference string) ([]string, error) {
 	return tags, nil
 }
 
+func (r *harbor) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
+	if imgInfo, err := r.TryGetRepoImage(ctx, reference); err != nil {
+		return false, err
+	} else {
+		return imgInfo != nil, nil
+	}
+}
+
+func (r *harbor) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	res, err := r.api.TryGetRepoImage(ctx, reference)
+	if err != nil {
+		if IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return res, err
+}
+
 func (r *harbor) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	tags, err := r.Tags(ctx, reference)
 	if err != nil {
