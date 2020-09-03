@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
@@ -57,8 +58,10 @@ var _ = forEachDockerRegistryImplementation("purging stages", func() {
 					werfCommand...,
 				)
 
-				Ω(stagesStorageRepoImagesCount()).Should(Equal(0))
-				Ω(stagesStorageManagedImagesCount()).Should(Equal(0))
+				if testImplementation != docker_registry.QuayImplementationName {
+					Ω(stagesStorageRepoImagesCount()).Should(Equal(0))
+					Ω(stagesStorageManagedImagesCount()).Should(Equal(0))
+				}
 			})
 
 			Context("when there is running container based on werf image", func() {

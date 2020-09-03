@@ -743,8 +743,10 @@ func imagesCleanupCheck(cleanupArgs []string, expectedNumberOfTagsBefore, expect
 		cleanupArgs...,
 	)
 
-	tags = imagesRepoAllImageRepoTags("image")
-	Ω(tags).Should(HaveLen(expectedNumberOfTagsAfter))
+	if testImplementation != docker_registry.QuayImplementationName {
+		tags = imagesRepoAllImageRepoTags("image")
+		Ω(tags).Should(HaveLen(expectedNumberOfTagsAfter))
+	}
 
 	if resultTagsChecks != nil {
 		for _, check := range resultTagsChecks {

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
@@ -163,7 +164,9 @@ var _ = forEachDockerRegistryImplementation("cleaning stages", func() {
 						werfCommand...,
 					)
 
-					Ω(stagesStorageRepoImagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+					if testImplementation != docker_registry.QuayImplementationName {
+						Ω(stagesStorageRepoImagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+					}
 				})
 			}
 		})
