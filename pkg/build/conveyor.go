@@ -782,7 +782,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	blockMsg := "Concurrent builds plan"
 	if c.ParallelTasksLimit > 0 {
-		blockMsg = fmt.Sprintf("%s (no more than %d image(s))", blockMsg, c.ParallelTasksLimit)
+		blockMsg = fmt.Sprintf("%s (no more than %d images at the same time)", blockMsg, c.ParallelTasksLimit)
 	}
 
 	logboek.Context(ctx).LogBlock(blockMsg).
@@ -793,7 +793,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			for setId := range c.imageSets {
 				logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
 				for _, img := range c.imageSets[setId] {
-					logboek.Context(ctx).LogLnHighlight("-", img.LogName())
+					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 				}
 				logboek.Context(ctx).LogOptionalLn()
 
