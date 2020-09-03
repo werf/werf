@@ -419,7 +419,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stageImageObj.GetStageDescription().Info.Name = newStageImageName
 			stageImageObj.GetStageDescription().Info.Repository = repository
 			stageImageObj.GetStageDescription().Info.Tag = tag
-			stageImageObj.GetStageDescription().Info.Size = stageImageObj.GetInspect().Size
 			stageImageObj.GetStageDescription().StageID = &image.StageID{Signature: stg.GetSignature(), UniqueID: uniqueID}
 
 			phase.Conveyor.SetStageImage(stageImageObj)
