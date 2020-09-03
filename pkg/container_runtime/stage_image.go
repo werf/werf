@@ -123,7 +123,9 @@ func (i *StageImage) Build(ctx context.Context, options BuildOptions) error {
 	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(ctx, i.MustGetBuiltId()); err != nil {
 		return err
 	} else {
-		i.SetInspect(inspect)
+		i.baseImage.SetInspect(inspect)
+		i.buildImage.SetInspect(inspect)
+
 		i.SetStageDescription(&image.StageDescription{
 			StageID: nil, // stage id does not available at the moment
 			Info:    image.NewInfoFromInspect(i.Name(), inspect),
