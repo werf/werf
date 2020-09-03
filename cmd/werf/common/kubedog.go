@@ -30,7 +30,7 @@ func InitKubedog(ctx context.Context) error {
 	// Suppress info and warnings from client-go reflector
 	klog.SetOutputBySeverity("INFO", ioutil.Discard)
 	klog.SetOutputBySeverity("WARNING", ioutil.Discard)
-	klog.SetOutputBySeverity("ERROR", logboek.Context(ctx).ProxyErrStream())
+	klog.SetOutputBySeverity("ERROR", ioutil.Discard)
 	klog.SetOutputBySeverity("FATAL", logboek.Context(ctx).ProxyErrStream())
 
 	display.SetOut(logboek.Context(ctx).ProxyOutStream())
