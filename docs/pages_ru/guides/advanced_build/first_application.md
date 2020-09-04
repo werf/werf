@@ -121,8 +121,7 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
           mode: a+x
       install:
       - name: "Install app deps"
-        # NOTICE: Always use `composer install` command in real world environment!
-        shell: composer update
+        shell: composer install
         become: yes
         become_user: app
         args:
