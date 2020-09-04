@@ -122,8 +122,7 @@ To implement these steps and requirements with werf we will add a special file c
           mode: a+x
       install:
       - name: "Install app deps"
-        # NOTICE: Always use `composer install` command in real world environment!
-        shell: composer update
+        shell: composer install
         become: yes
         become_user: app
         args:
