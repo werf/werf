@@ -1,7 +1,6 @@
 package docs_test
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -61,7 +60,7 @@ var itBody = func(entry entry) {
 		testDirPath,
 		werfBinPath,
 		werfArgs,
-		utils.RunCommandOptions{ShouldSucceed: true, Env: append(os.Environ(), "HOME=~")},
+		utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{"HOME=~"}},
 	)
 
 	utils.RunSucceedCommand(

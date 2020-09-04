@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -25,7 +26,7 @@ func SucceedCommandOutputString(dir, command string, args ...string) string {
 }
 
 type RunCommandOptions struct {
-	Env           []string
+	ExtraEnv      []string
 	ToStdin       string
 	ShouldSucceed bool
 }
@@ -41,8 +42,8 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 		cmd.Dir = dir
 	}
 
-	if len(options.Env) != 0 {
-		cmd.Env = options.Env
+	if len(options.ExtraEnv) != 0 {
+		cmd.Env = append(os.Environ(), options.ExtraEnv...)
 	}
 
 	if options.ToStdin != "" {
