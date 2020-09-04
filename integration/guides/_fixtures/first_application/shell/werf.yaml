@@ -25,8 +25,7 @@ shell:
   - chmod a+x /usr/local/bin/composer
   install:
   - cd /app
-  # NOTICE: Always use `composer install` command in real world environment!
-  - su -c 'composer update' app
+  - su -c 'composer install' app
   setup:
   - "echo '#!/bin/bash' >> /app/start.sh"
   - echo 'php -S 0.0.0.0:8000 -t public/' >> /app/start.sh
