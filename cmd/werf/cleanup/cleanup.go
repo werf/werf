@@ -25,6 +25,7 @@ var commonCmdData common.CmdData
 var cmdData struct {
 	GitHistoryBasedCleanup    bool
 	GitHistoryBasedCleanupV12 bool
+	CheckAllNamespaces        bool
 }
 
 func NewCmd() *cobra.Command {
@@ -72,7 +73,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanup, "git-history-based-cleanup", "", common.GetBoolEnvironmentDefaultTrue("WERF_GIT_HISTORY_BASED_CLEANUP"), "Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)")
 	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanupV12, "git-history-based-cleanup-v1.2", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP_v1_2"), "Use git history based cleanup and delete images tags without related image metadata (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)")
-
+	cmd.Flags().BoolVarP(&cmdData.CheckAllNamespaces, "check-all-namespaces", "", common.GetBoolEnvironmentDefaultTrue("WERF_CHECK_ALL_NAMESPACES"), "Check images in all namespaces (default $WERF_CHECK_ALL_NAMESPACES)")
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -205,11 +206,24 @@ func runCleanup() error {
 		}
 	}
 
+	kubernetesNamespaces := map[string]string{}
+	clientConfig, _ := kube.GetClientConfig("", *commonCmdData.KubeConfig, nil)
+	rc, _ := clientConfig.RawConfig()
+	for contextName, context := range rc.Contexts {
+		if cmdData.CheckAllNamespaces {
+			// "" - cluster scope, therefore all namespaces
+			kubernetesNamespaces[contextName] = ""
+		} else {
+			kubernetesNamespaces[contextName] = context.Namespace
+		}
+	}
+
 	cleanupOptions := cleaning.CleanupOptions{
 		ImagesCleanupOptions: cleaning.ImagesCleanupOptions{
 			ImageNameList:                 imagesNames,
 			LocalGit:                      localGitRepo,
 			KubernetesContextsClients:     kubernetesContextsClients,
+			KubernetesNamespaces:          kubernetesNamespaces,
 			WithoutKube:                   *commonCmdData.WithoutKube,
 			Policies:                      policies,
 			GitHistoryBasedCleanup:        cmdData.GitHistoryBasedCleanup,
