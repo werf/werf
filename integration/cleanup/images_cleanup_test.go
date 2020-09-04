@@ -1,6 +1,7 @@
 package cleanup_test
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -342,6 +343,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 			Context("git history based cleanup", func() {
 				BeforeEach(func() {
 					stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "1")
+					stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 				})
 
 				BeforeEach(func() {
@@ -756,10 +758,10 @@ func imagesCleanupCheck(cleanupArgs []string, expectedNumberOfTagsBefore, expect
 }
 
 func setLastCommitCommitterWhen(newDate time.Time) {
-	stubs.SetEnv("GIT_COMMITTER_DATE", newDate.Format(time.RFC3339))
-	utils.RunSucceedCommand(
+	_, _ = utils.RunCommandWithOptions(
 		testDirPath,
 		"git",
-		"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate.Format(time.RFC3339),
+		[]string{"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate.Format(time.RFC3339)},
+		utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{fmt.Sprintf("GIT_COMMITTER_DATE=%s", newDate.Format(time.RFC3339))}},
 	)
 }
