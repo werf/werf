@@ -39,6 +39,17 @@ werf helm-v3 upgrade [RELEASE] [CHART] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --add-annotation=[]:
+            Add annotation to deploying resources (can specify multiple).
+            Format: annoName=annoValue.
+            Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+      --add-label=[]:
+            Add label to deploying resources (can specify multiple).
+            Format: labelName=labelValue.
+            Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
+            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
       --atomic=false:
             if set, upgrade process rolls back changes made in case of failed upgrade. The --wait   
             flag will be set automatically if --atomic is used
