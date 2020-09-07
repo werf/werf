@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/kubedog/pkg/kube"
+
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 
@@ -32,16 +34,16 @@ import (
 )
 
 type ImagesCleanupOptions struct {
-	ImageNameList                 []string
-	LocalGit                      GitRepo
-	KubernetesContextsClients     map[string]kubernetes.Interface
-	KubernetesNamespaces          map[string]string
-	WithoutKube                   bool
-	Policies                      ImagesCleanupPolicies
-	GitHistoryBasedCleanup        bool
-	GitHistoryBasedCleanupV12     bool
-	GitHistoryBasedCleanupOptions config.MetaCleanup
-	DryRun                        bool
+	ImageNameList                           []string
+	LocalGit                                GitRepo
+	KubernetesContextClients                []*kube.ContextClient
+	KubernetesNamespaceRestrictionByContext map[string]string
+	WithoutKube                             bool
+	Policies                                ImagesCleanupPolicies
+	GitHistoryBasedCleanup                  bool
+	GitHistoryBasedCleanupV12               bool
+	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	DryRun                                  bool
 }
 
 func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
@@ -64,19 +66,19 @@ func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.I
 
 func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options ImagesCleanupOptions) *imagesCleanupManager {
 	return &imagesCleanupManager{
-		ProjectName:                   projectName,
-		ImagesRepo:                    imagesRepo,
-		StagesManager:                 stagesManager,
-		ImageNameList:                 options.ImageNameList,
-		DryRun:                        options.DryRun,
-		LocalGit:                      options.LocalGit,
-		KubernetesContextsClients:     options.KubernetesContextsClients,
-		KubernetesNamespaces:          options.KubernetesNamespaces,
-		WithoutKube:                   options.WithoutKube,
-		Policies:                      options.Policies,
-		GitHistoryBasedCleanup:        options.GitHistoryBasedCleanup,
-		GitHistoryBasedCleanupV12:     options.GitHistoryBasedCleanupV12,
-		GitHistoryBasedCleanupOptions: options.GitHistoryBasedCleanupOptions,
+		ProjectName:                             projectName,
+		ImagesRepo:                              imagesRepo,
+		StagesManager:                           stagesManager,
+		ImageNameList:                           options.ImageNameList,
+		DryRun:                                  options.DryRun,
+		LocalGit:                                options.LocalGit,
+		KubernetesContextClients:                options.KubernetesContextClients,
+		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
+		WithoutKube:                             options.WithoutKube,
+		Policies:                                options.Policies,
+		GitHistoryBasedCleanup:                  options.GitHistoryBasedCleanup,
+		GitHistoryBasedCleanupV12:               options.GitHistoryBasedCleanupV12,
+		GitHistoryBasedCleanupOptions:           options.GitHistoryBasedCleanupOptions,
 	}
 }
 
@@ -84,19 +86,19 @@ type imagesCleanupManager struct {
 	imageRepoImageList           *map[string][]*image.Info
 	imageCommitHashImageMetadata *map[string]map[plumbing.Hash]*storage.ImageMetadata
 
-	ProjectName                   string
-	ImagesRepo                    storage.ImagesRepo
-	StagesManager                 *stages_manager.StagesManager
-	ImageNameList                 []string
-	LocalGit                      GitRepo
-	KubernetesContextsClients     map[string]kubernetes.Interface
-	KubernetesNamespaces          map[string]string
-	WithoutKube                   bool
-	Policies                      ImagesCleanupPolicies
-	GitHistoryBasedCleanup        bool
-	GitHistoryBasedCleanupV12     bool
-	GitHistoryBasedCleanupOptions config.MetaCleanup
-	DryRun                        bool
+	ProjectName                             string
+	ImagesRepo                              storage.ImagesRepo
+	StagesManager                           *stages_manager.StagesManager
+	ImageNameList                           []string
+	LocalGit                                GitRepo
+	KubernetesContextClients                []*kube.ContextClient
+	KubernetesNamespaceRestrictionByContext map[string]string
+	WithoutKube                             bool
+	Policies                                ImagesCleanupPolicies
+	GitHistoryBasedCleanup                  bool
+	GitHistoryBasedCleanupV12               bool
+	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	DryRun                                  bool
 }
 
 type GitRepo interface {
@@ -221,7 +223,7 @@ func (m *imagesCleanupManager) run(ctx context.Context) error {
 
 		if !m.WithoutKube {
 			if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in Kubernetes").DoError(func() error {
-				repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextsClients, m.KubernetesNamespaces)
+				repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextClients, m.KubernetesNamespaceRestrictionByContext)
 				return err
 			}); err != nil {
 				return err
@@ -255,8 +257,8 @@ func (m *imagesCleanupManager) run(ctx context.Context) error {
 	})
 }
 
-func exceptRepoImagesByWhitelist(ctx context.Context, repoImages map[string][]*image.Info, kubernetesContextsClients map[string]kubernetes.Interface, kubernetesNamespaces map[string]string) (map[string][]*image.Info, map[string][]*image.Info, error) {
-	deployedDockerImagesNames, err := getDeployedDockerImagesNames(ctx, kubernetesContextsClients, kubernetesNamespaces)
+func exceptRepoImagesByWhitelist(ctx context.Context, repoImages map[string][]*image.Info, kubernetesContextClients []*kube.ContextClient, kubernetesNamespaceRestrictionByContext map[string]string) (map[string][]*image.Info, map[string][]*image.Info, error) {
+	deployedDockerImagesNames, err := getDeployedDockerImagesNames(ctx, kubernetesContextClients, kubernetesNamespaceRestrictionByContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -296,12 +298,12 @@ func exceptRepoImagesByWhitelist(ctx context.Context, repoImages map[string][]*i
 	return repoImages, exceptedRepoImages, nil
 }
 
-func getDeployedDockerImagesNames(ctx context.Context, kubernetesContextsClients map[string]kubernetes.Interface, kubernetesNamespaces map[string]string) ([]string, error) {
+func getDeployedDockerImagesNames(ctx context.Context, kubernetesContextClients []*kube.ContextClient, kubernetesNamespaceRestrictionByContext map[string]string) ([]string, error) {
 	var deployedDockerImagesNames []string
-	for contextName, kubernetesClient := range kubernetesContextsClients {
-		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextName).
+	for _, contextClient := range kubernetesContextClients {
+		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextClient.ContextName).
 			DoError(func() error {
-				kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient, kubernetesNamespaces[contextName])
+				kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(contextClient.Client, kubernetesNamespaceRestrictionByContext[contextClient.ContextName])
 				if err != nil {
 					return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
 				}
