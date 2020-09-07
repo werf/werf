@@ -132,6 +132,11 @@ werf images cleanup [options]
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --scan-context-namespace-only=false:
+            Scan for used images only in namespace linked with context for each available context   
+            in kube-config (or only for the context specified with option --kube-context). When     
+            disabled will scan all namespaces in all contexts (or only for the context specified    
+            with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
