@@ -63,7 +63,7 @@ Werf поддерживает почти все модули из ansible, по�
 {% raw %}
 ```yaml
 - name: "Install additional packages"
-apt:
+  apt:
     state: present
     update_cache: yes
     pkg:
