@@ -82,7 +82,7 @@ func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 
 func (repo *Base) getHeadCommit(repoPath string) (string, error) {
 	if res, err := true_git.ShowRef(repoPath); err != nil {
-		return "", fmt.Errorf("show ref for %s failed: %s", repoPath, err)
+		return "", errHeadNotFound
 	} else {
 		for _, ref := range res.Refs {
 			if ref.IsHEAD {
@@ -90,6 +90,7 @@ func (repo *Base) getHeadCommit(repoPath string) (string, error) {
 			}
 		}
 	}
+
 	return "", errHeadNotFound
 }
 
