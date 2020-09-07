@@ -50,13 +50,15 @@ type DockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfilePath, target, context string, buildArgs map[string]interface{}, addHost []string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfilePath, target, context string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
 	return &DockerRunArgs{
 		dockerfilePath: dockerfilePath,
 		target:         target,
 		context:        context,
 		buildArgs:      buildArgs,
 		addHost:        addHost,
+		network:        network,
+		ssh:            ssh,
 	}
 }
 
@@ -66,6 +68,8 @@ type DockerRunArgs struct {
 	context        string
 	buildArgs      map[string]interface{}
 	addHost        []string
+	network        string
+	ssh            string
 }
 
 func NewDockerStages(dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int) *DockerStages {
@@ -367,6 +371,14 @@ func (s *DockerfileStage) DockerBuildArgs() []string {
 
 	for _, addHost := range s.addHost {
 		result = append(result, fmt.Sprintf("--add-host=%s", addHost))
+	}
+
+	if s.network != "" {
+		result = append(result, fmt.Sprintf("--network=%s", s.network))
+	}
+
+	if s.ssh != "" {
+		result = append(result, fmt.Sprintf("--ssh=%s", s.ssh))
 	}
 
 	result = append(result, s.context)

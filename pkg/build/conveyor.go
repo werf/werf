@@ -1494,6 +1494,8 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			contextDir,
 			imageFromDockerfileConfig.Args,
 			imageFromDockerfileConfig.AddHost,
+			imageFromDockerfileConfig.Network,
+			imageFromDockerfileConfig.SSH,
 		),
 		stage.NewDockerStages(dockerStages, dockerArgsHash, dockerTargetIndex),
 		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, localGitRepo),
