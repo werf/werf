@@ -7,6 +7,8 @@ type ImageFromDockerfile struct {
 	Target     string
 	Args       map[string]interface{}
 	AddHost    []string
+	Network    string
+	SSH        string
 
 	raw *rawImageFromDockerfile
 }

@@ -16,6 +16,8 @@ summary: |
     <span class="s">&lt;build arg name&gt;</span><span class="pi">:</span> <span class="s">&lt;value&gt;</span>
   <span class="na">addHost</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="s">&lt;host:ip&gt;</span>
+  <span class="na">network</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
+  <span class="na">ssh</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
   </code></pre></div></div>
 ---
 
@@ -65,3 +67,5 @@ werf as well as Docker builds the image based on a Dockerfile and a context.
 - `target`: to link specific Dockerfile stage (last one by default, see `docker build` \-\-target option).
 - `args`: to set build-time variables (see `docker build` \-\-build-arg option).
 - `addHost`: to add a custom host-to-IP mapping (host:ip) (see `docker build` \-\-add-host option).
+- `network`: to set the networking mode for the RUN instructions during build (see `docker build` \-\-network option).
+- `ssh`: to expose SSH agent socket or keys to the build (only if BuildKit enabled) (see `docker build` \-\-ssh option).
