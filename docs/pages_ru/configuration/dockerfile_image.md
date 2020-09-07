@@ -16,6 +16,8 @@ summary: |
     <span class="s">&lt;build arg name&gt;</span><span class="pi">:</span> <span class="s">&lt;value&gt;</span>
   <span class="na">addHost</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="s">&lt;host:ip&gt;</span>
+  <span class="na">network</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
+  <span class="na">ssh</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
   </code></pre></div></div>
 ---
 
@@ -57,10 +59,12 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 ## Директивы Dockerfile
 
-werf, так же как и `docker build`, собирает образы, используя Dockerfile-инструкции, контекст, а также дополнительные опции:
+werf, так же как и `docker build`, собирает образы, используя Dockerfile-инструкции, контекст и дополнительные опции:
 
 - `dockerfile` **(обязателен)**: определяет путь к Dockerfile относительно папки проекта.
 - `context`: определяет путь к контексту внутри папки проекта (по умолчанию — папка проекта, `.`).
-- `target`: связывает конкретную стадию Dockerfile (по умолчанию — последнюю, смотри `docker build` \-\-target).
-- `args`: устанавливает переменные окружения на время сборки (смотри `docker build` \-\-build-arg).
-- `addHost`: устанавливает связь host-to-IP (host:ip) (смотри `docker build` \-\-add-host).
+- `target`: связывает конкретную стадию Dockerfile (по умолчанию — последнюю, подобно `docker build` \-\-target).
+- `args`: устанавливает переменные окружения на время сборки (подобно `docker build` \-\-build-arg).
+- `addHost`: устанавливает связь host-to-IP (host:ip) (подобно `docker build` \-\-add-host).
+- `network`: устанавливает сетевой режим для инструкций RUN во время сборки (подобно `docker build` \-\-network).
+- `ssh`: прокидывает сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно `docker build` \-\-ssh).
