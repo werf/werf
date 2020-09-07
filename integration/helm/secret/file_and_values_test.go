@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -58,15 +57,12 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 
 		utils.CopyIn(utils.FixturePath(secretType), testDirPath)
 
-		envs := os.Environ()
-		envs = append(envs, "EDITOR=./editor.sh")
-
 		_, _ = utils.RunCommandWithOptions(
 			testDirPath,
 			werfBinPath,
 			[]string{"helm", "secret", secretType, "edit", "result"},
 			utils.RunCommandOptions{
-				Env:           envs,
+				ExtraEnv:      []string{"EDITOR=./editor.sh"},
 				ShouldSucceed: true,
 			},
 		)
