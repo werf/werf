@@ -13,8 +13,19 @@ i18n:
 en:
   #- title: TITLE
   #  url: URL
-  #  comment: COMMENT
+  #  habr_url: URL
+  #  medium_url: URL
+  #  youtube_url: URL
+  #  img: ABSOLUTE PATH
   #  created: ISO format date, yyyy-mm-dd
+  #  comment: COMMENT
+
+  - title: "Werf: Fully customizable GitOps"
+    url: "https://kubesandclouds.com/index.php/2020/09/01/werf-gitops/"
+    img: "/images/publications/en_010920.png"
+    created: 2020-09-01
+    comment: |
+      <p>This is the third post of a GitOps tools article collection. In this post, the author gets to know continuous integration and continuous deployment tool for Kubernetes  — werf.</p>
   - title: "Distributed CI/CD with werf"
     medium_url: "https://medium.com/flant-com/werf-distributed-build-deploy-7724f6c31988"
     img: "/images/publications/en_020620.png"
