@@ -1,5 +1,6 @@
 {%- assign publications = site.data.publications[include.language] | sort: 'created' | reverse %}
 {%- assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
+{%- assign i18n = site.data.publications.i18n[include.language] %}
 
 <div class="main-container page__container">
     <div class="publications">
@@ -29,19 +30,24 @@
                                     </div>
                                 {%- endif %}
                                 <div class="publications__post-btns">
+                                    {%- if publication.url %}
+                                    <a href="{{ publication.url }}" class="publications__btn" target="_blank">
+                                        {{ i18n.default_btn_title }}
+                                    </a>
+                                    {%- endif %}
                                     {%- if publication.medium_url %}
                                         <a href="{{ publication.medium_url }}" class="publications__btn" target="_blank">
-                                            {{ publication.medium_title }}
+                                            {{ i18n.medium_btn_title }}
                                         </a>
                                     {%- endif %}
                                     {%- if publication.habr_url %}
                                         <a href="{{ publication.habr_url }}" class="publications__btn" target="_blank">
-                                            {{ publication.habr_title }}
+                                            {{ i18n.habr_btn_title }}
                                         </a>
                                     {%- endif %}
                                     {%- if publication.youtube_url %}
                                         <a href="{{ publication.youtube_url }}" class="publications__btn" target="_blank">
-                                            {{ publication.youtube_title }}
+                                            {{ i18n.youtube_btn_title }}
                                         </a>
                                     {%- endif %}
                                 </div>
