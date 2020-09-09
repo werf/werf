@@ -52,17 +52,15 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 
 		var werfSecretKeyPath string
 
-		projectWerfSecretKeyPath, err := filepath.Abs(filepath.Join(projectDir, ".werf_secret_key"))
-		if err != nil {
-			return nil, err
+		if projectDir != "" {
+			if projectWerfSecretKeyPath, err := filepath.Abs(filepath.Join(projectDir, ".werf_secret_key")); err != nil {
+				return nil, err
+			} else {
+				werfSecretKeyPaths = append(werfSecretKeyPaths, projectWerfSecretKeyPath)
+			}
 		}
 
-		homeWerfSecretKeyPath := filepath.Join(werf.GetHomeDir(), "global_secret_key")
-
-		werfSecretKeyPaths = []string{
-			projectWerfSecretKeyPath,
-			homeWerfSecretKeyPath,
-		}
+		werfSecretKeyPaths = append(werfSecretKeyPaths, filepath.Join(werf.GetHomeDir(), "global_secret_key"))
 
 		for _, path := range werfSecretKeyPaths {
 			exist, err := util.FileExists(path)
