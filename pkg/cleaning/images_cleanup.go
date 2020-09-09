@@ -180,7 +180,7 @@ func (m *imagesCleanupManager) initImageCommitHashImageMetadata(ctx context.Cont
 		imageCommitImageMetadata[imageName] = commitImageMetadata
 	}
 
-	m.setImageCommitImageMetadata(imageCommitImageMetadata)
+	m.setImageCommitHashImageMetadata(imageCommitImageMetadata)
 
 	return nil
 }
@@ -197,8 +197,29 @@ func (m *imagesCleanupManager) getImageCommitHashImageMetadata() map[string]map[
 	return *m.imageCommitHashImageMetadata
 }
 
-func (m *imagesCleanupManager) setImageCommitImageMetadata(imageCommitImageMetadata map[string]map[plumbing.Hash]*storage.ImageMetadata) {
-	m.imageCommitHashImageMetadata = &imageCommitImageMetadata
+func (m *imagesCleanupManager) setImageCommitHashImageMetadata(imageCommitHashImageMetadata map[string]map[plumbing.Hash]*storage.ImageMetadata) {
+	m.imageCommitHashImageMetadata = &imageCommitHashImageMetadata
+}
+
+func (m *imagesCleanupManager) updateImageCommitImageMetadata(imageName string, commitHashesToExclude ...plumbing.Hash) {
+	commitImageMetadata, ok := (*m.imageCommitHashImageMetadata)[imageName]
+	if !ok {
+		return
+	}
+
+	resultImage := map[plumbing.Hash]*storage.ImageMetadata{}
+outerLoop:
+	for commitHash, imageMetadata := range commitImageMetadata {
+		for _, commitHashToExclude := range commitHashesToExclude {
+			if commitHash == commitHashToExclude {
+				continue outerLoop
+			}
+		}
+
+		resultImage[commitHash] = imageMetadata
+	}
+
+	(*m.imageCommitHashImageMetadata)[imageName] = resultImage
 }
 
 func (m *imagesCleanupManager) run(ctx context.Context) error {
@@ -510,8 +531,11 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 		DoError(func() error {
 			for imageName, repoImageListToCleanup := range repoImagesToCleanup {
 				var repoImageListToSave []*image.Info
+				var commitHashesToCleanup []plumbing.Hash
+
 				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(imageName, false)).DoError(func() error {
 					if err := logboek.Context(ctx).LogProcess("Scanning git references history").DoError(func() error {
+						var commitHashes []plumbing.Hash
 						contentSignatureCommitHashes := map[string][]plumbing.Hash{}
 						contentSignatureRepoImageListToCleanup := imageContentSignatureRepoImageListToCleanup[imageName]
 						for contentSignature, _ := range contentSignatureRepoImageListToCleanup {
@@ -521,13 +545,29 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 							}
 
 							contentSignatureCommitHashes[contentSignature] = existingCommitHashes
+							commitHashes = append(commitHashes, existingCommitHashes...)
 						}
 
 						var repoImageListToKeep []*image.Info
 						if len(contentSignatureCommitHashes) != 0 {
-							reachedContentSignatureList, err := scanReferencesHistory(ctx, gitRepository, referencesToScan, contentSignatureCommitHashes)
+							reachedContentSignatureList, hitCommitHashes, err := scanReferencesHistory(ctx, gitRepository, referencesToScan, contentSignatureCommitHashes)
 							if err != nil {
 								return err
+							}
+
+							if len(hitCommitHashes) == 0 {
+								commitHashesToCleanup = commitHashes
+							} else {
+							commitHashesLoop:
+								for _, commitHash := range commitHashes {
+									for _, hitCommitHash := range hitCommitHashes {
+										if commitHash == hitCommitHash {
+											continue commitHashesLoop
+										}
+									}
+
+									commitHashesToCleanup = append(commitHashesToCleanup, commitHash)
+								}
 							}
 
 							for _, contentSignature := range reachedContentSignatureList {
@@ -560,10 +600,26 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 						})
 					}
 
-					if err := logboek.Context(ctx).Default().LogProcess("Deleting tags").DoError(func() error {
-						return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, repoImageListToCleanup...)
-					}); err != nil {
-						return err
+					if len(repoImageListToCleanup) != 0 {
+						if err := logboek.Context(ctx).Default().LogProcess("Deleting tags").DoError(func() error {
+							return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, repoImageListToCleanup...)
+						}); err != nil {
+							return err
+						}
+					}
+
+					if len(commitHashesToCleanup) != 0 {
+						logProcess := logboek.Context(ctx).Default().LogProcess("Cleaning up images metadata")
+						logProcess.Start()
+
+						if err := deleteMetaImagesInStagesStorage(ctx, m.StagesManager.StagesStorage, m.ProjectName, imageName, m.DryRun, commitHashesToCleanup...); err != nil {
+							logProcess.Fail()
+							return err
+						}
+
+						m.updateImageCommitImageMetadata(imageName, commitHashesToCleanup...)
+
+						logProcess.End()
 					}
 
 					return nil
@@ -583,23 +639,16 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 			return err
 		}
 
-		for imageName, commitHashes := range imageUnusedCommitHashes {
+		for imageName, unusedCommitHashes := range imageUnusedCommitHashes {
 			logProcess := logboek.Context(ctx).Default().LogProcess(logging.ImageLogProcessName(imageName, false))
 			logProcess.Start()
 
-			for _, commitHash := range commitHashes {
-				if m.DryRun {
-					logboek.Context(ctx).Default().LogLn(commitHash)
-				} else {
-					if err := m.StagesManager.StagesStorage.RmImageCommit(ctx, m.ProjectName, imageName, commitHash.String()); err != nil {
-						logboek.Context(ctx).Warn().LogF(
-							"WARNING: Metadata image deletion (image %s, commit: %s) failed: %s\n",
-							logging.ImageLogName(imageName, false), commitHash.String(), err,
-						)
-						logboek.Context(ctx).LogOptionalLn()
-					}
-				}
+			if err := deleteMetaImagesInStagesStorage(ctx, m.StagesManager.StagesStorage, m.ProjectName, imageName, m.DryRun, unusedCommitHashes...); err != nil {
+				logProcess.Fail()
+				return err
 			}
+
+			m.updateImageCommitImageMetadata(imageName, unusedCommitHashes...)
 
 			logProcess.End()
 		}
@@ -1134,4 +1183,22 @@ func getJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace st
 	}
 
 	return images, nil
+}
+
+func deleteMetaImagesInStagesStorage(ctx context.Context, stagesStorage storage.StagesStorage, projectName, imageName string, dryRun bool, commitHashes ...plumbing.Hash) error {
+	for _, commitHash := range commitHashes {
+		if dryRun {
+			logboek.Context(ctx).Info().LogLn(commitHash)
+		} else {
+			if err := stagesStorage.RmImageCommit(ctx, projectName, imageName, commitHash.String()); err != nil {
+				logboek.Context(ctx).Warn().LogF(
+					"WARNING: Metadata image deletion (image %s, commit: %s) failed: %s\n",
+					logging.ImageLogName(imageName, false), commitHash.String(), err,
+				)
+				logboek.Context(ctx).LogOptionalLn()
+			}
+		}
+	}
+
+	return nil
 }

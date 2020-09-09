@@ -1,6 +1,7 @@
 package cleanup_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -246,12 +247,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 					})
 
 					It("should not remove image that is associated with commit", func() {
-						out := utils.SucceedCommandOutputString(
-							testDirPath,
-							"git",
-							"rev-parse", "HEAD",
-						)
-						commit := strings.TrimSpace(out)
+						commit := getHeadCommit()
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -270,12 +266,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 					})
 
 					It("should remove image by expiry days policy (WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS)", func() {
-						out := utils.SucceedCommandOutputString(
-							testDirPath,
-							"git",
-							"rev-parse", "HEAD",
-						)
-						commit := strings.TrimSpace(out)
+						commit := getHeadCommit()
 
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -308,12 +299,7 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 								"commit", "--allow-empty", "--allow-empty-message", "-m", "",
 							)
 
-							out := utils.SucceedCommandOutputString(
-								testDirPath,
-								"git",
-								"rev-parse", "HEAD",
-							)
-							commit := strings.TrimSpace(out)
+							commit := getHeadCommit()
 
 							utils.RunSucceedCommand(
 								testDirPath,
@@ -696,6 +682,87 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 						)
 					})
 				})
+
+				Context("meta images cleanup", func() {
+					BeforeEach(func() {
+						stubs.SetEnv("WERF_TAG_BY_STAGES_SIGNATURE", "1")
+					})
+
+					When("one content signature", func() {
+						metaImagesCheckFunc := func(before, after int, afterExtraChecks ...func(commits []string)) {
+							imageCommits, err := stagesStorage.GetImageCommits(context.Background(), utils.ProjectName(), "image")
+							Ω(err).ShouldNot(HaveOccurred(), err)
+							Ω(imageCommits).Should(HaveLen(before))
+
+							imagesCleanupCheck(werfCommand, 1, 1)
+
+							imageCommits, err = stagesStorage.GetImageCommits(context.Background(), utils.ProjectName(), "image")
+							Ω(err).ShouldNot(HaveOccurred(), err)
+							Ω(imageCommits).Should(HaveLen(after))
+
+							for _, check := range afterExtraChecks {
+								check(imageCommits)
+							}
+						}
+
+						It("should remove all meta images except latest (one branch)", func() {
+							for i := 0; i < 3; i++ {
+								utils.RunSucceedCommand(
+									testDirPath,
+									"git",
+									"commit", "--allow-empty", "-m", "+",
+								)
+
+								utils.RunSucceedCommand(
+									testDirPath,
+									werfBinPath,
+									"build-and-publish",
+								)
+							}
+
+							utils.RunSucceedCommand(
+								testDirPath,
+								"git",
+								"push", "--set-upstream", "origin", "master",
+							)
+
+							metaImagesCheckFunc(3, 1, func(commits []string) {
+								Ω(commits).Should(ContainElement(getHeadCommit()))
+							})
+						})
+
+						It("should keep all meta images (several branches)", func() {
+							for i := 0; i < 3; i++ {
+								utils.RunSucceedCommand(
+									testDirPath,
+									"git",
+									"commit", "--allow-empty", "-m", "+",
+								)
+
+								utils.RunSucceedCommand(
+									testDirPath,
+									werfBinPath,
+									"build-and-publish",
+								)
+
+								branch := fmt.Sprintf("test_%d", i)
+								utils.RunSucceedCommand(
+									testDirPath,
+									"git",
+									"checkout", "-b", branch,
+								)
+
+								utils.RunSucceedCommand(
+									testDirPath,
+									"git",
+									"push", "--set-upstream", "origin", branch,
+								)
+							}
+
+							metaImagesCheckFunc(3, 3)
+						})
+					})
+				})
 			})
 		})
 	}
@@ -733,6 +800,16 @@ func imagesCleanupBeforeEachBase() {
 	)
 
 	stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
+}
+
+func getHeadCommit() string {
+	out := utils.SucceedCommandOutputString(
+		testDirPath,
+		"git",
+		"rev-parse", "HEAD",
+	)
+
+	return strings.TrimSpace(out)
 }
 
 func imagesCleanupCheck(cleanupArgs []string, expectedNumberOfTagsBefore, expectedNumberOfTagsAfter int, resultTagsChecks ...func([]string)) {
