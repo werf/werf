@@ -119,18 +119,20 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 						stagesStorageAddress = ":local"
 					} else {
 						stagesStorageAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName(), "stages"}, "/")
-						stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
+						stagesStorageDockerRegistryOptions = docker_registry.DockerRegistryOptions{}
 					}
 
 					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
 					imagesRepoMode = docker_registry.MultirepoRepoMode
 				} else {
 					stagesStorageAddress = implementationStagesStorageAddress(implementationName)
-					stagesStorageDockerRegistryOptions = implementationStagesStorageDockerRegistryOptions(implementationName)
 
 					imagesRepoAddress = implementationImagesRepoAddress(implementationName)
 					imagesRepoMode = "auto"
-					imagesRepoDockerRegistryOptions = implementationImagesRepoDockerRegistryOptions(implementationName)
+
+					implementationDockerRegistryOptions := implementationDockerRegistryOptionsAndSetEnvs(implementationName)
+					imagesRepoDockerRegistryOptions = implementationDockerRegistryOptions
+					stagesStorageDockerRegistryOptions = implementationDockerRegistryOptions
 				}
 
 				isNotSupported := true
@@ -265,10 +267,6 @@ func implementationStagesStorageAddress(implementationName string) string {
 	return fmt.Sprintf("%s/%s-stages", registry, projectName)
 }
 
-func implementationStagesStorageDockerRegistryOptions(_ string) docker_registry.DockerRegistryOptions {
-	return docker_registry.DockerRegistryOptions{}
-}
-
 func implementationImagesRepoAddress(implementationName string) string {
 	projectName := utils.ProjectName()
 	implementationCode := strings.ToUpper(implementationName)
@@ -283,7 +281,7 @@ func implementationImagesRepoAddress(implementationName string) string {
 	return strings.Join([]string{registry, projectName}, "/")
 }
 
-func implementationImagesRepoDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {
+func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) docker_registry.DockerRegistryOptions {
 	implementationCode := strings.ToUpper(implementationName)
 
 	usernameEnvName := fmt.Sprintf(
