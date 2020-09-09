@@ -95,15 +95,7 @@ func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *Image) error 
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
-
-	if imgContentSig, err := calculateSignature(ctx, "imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor); err != nil {
-		return fmt.Errorf("unable to calculate image %s content signature: %s", img.GetName(), err)
-	} else {
-		// TODO: in v1.2 use:
-		// img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
-		// — which is incompatible with current signature
-		img.SetContentSignature(imgContentSig)
-	}
+	img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
 
 	if phase.ShouldAddManagedImageRecord && !img.isArtifact {
 		if err := phase.Conveyor.StagesManager.StagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
