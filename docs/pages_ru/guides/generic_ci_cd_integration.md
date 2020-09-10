@@ -53,8 +53,6 @@ export WERF_IMAGES_REPO=registry.company.com/project
 ### Общая интеграция с CI/CD системами
 
 Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#настройка-режима-работы-в-cicd-системе) по общей интеграции с CI/CD системами необходимо определить следующие переменные:
- * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
- * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
  * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_color_mode);
  * [`WERF_LOG_PROJECT_DIR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_project_dir);
  * [`WERF_ENABLE_PROCESS_EXTERMINATOR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_enable_process_exterminator);
@@ -78,8 +76,6 @@ export WERF_TAG_GIT_BRANCH=GIT_BRANCH
 export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://cicd.domain.com/project/x"
 export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=b9a1ddd366aa6a20a0fd43fb6612f349d33465ff"
 export WERF_ENV=ENV
-export WERF_GIT_TAG_STRATEGY_LIMIT=10
-export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30
 export WERF_LOG_COLOR_MODE=on
 export WERF_LOG_PROJECT_DIR=1
 export WERF_ENABLE_PROCESS_EXTERMINATOR=1

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -272,10 +271,6 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
-	if err := generateImageCleanupPolicies(w); err != nil {
-		return err
-	}
-
 	writeHeader(w, "OTHER", true)
 
 	werfLogColorMode := "on"
@@ -384,10 +379,6 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	writeHeader(w, "CLEANUP", true)
 	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
-	if err := generateImageCleanupPolicies(w); err != nil {
-		return err
-	}
-
 	if err := generateOther(w); err != nil {
 		return err
 	}
@@ -407,23 +398,6 @@ func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 	}
 
 	return dockerConfigDir, nil
-}
-
-func generateImageCleanupPolicies(w io.Writer) error {
-	cleanupConfig, err := getCleanupConfig()
-	if err != nil {
-		return fmt.Errorf("unable to get cleanup config: %s", err)
-	}
-
-	writeHeader(w, "IMAGE CLEANUP POLICIES", true)
-	writeEnv(w, "WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
-	writeEnv(w, "WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
-	writeEnv(w, "WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
-	writeEnv(w, "WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
-	writeEnv(w, "WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
-	writeEnv(w, "WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
-
-	return nil
 }
 
 func generateOther(w io.Writer) error {
@@ -532,42 +506,6 @@ func commentLine(message string) string {
 	}
 
 	return fmt.Sprintf("%s %s", commentSign, message)
-}
-
-type CleanupConfig struct {
-	GitTagStrategyLimit               int `yaml:"gitTagStrategyLimit"`
-	GitTagStrategyExpiryDays          int `yaml:"gitTagStrategyExpiryDays"`
-	GitCommitStrategyLimit            int `yaml:"gitCommitStrategyLimit"`
-	GitCommitStrategyExpiryDays       int `yaml:"gitCommitStrategyExpiryDays"`
-	StagesSignatureStrategyExpiryDays int `yaml:"stagesSignatureStrategyExpiryDays"`
-	StagesSignatureStrategyLimit      int `yaml:"stagesSignatureStrategyLimit"`
-}
-
-func getCleanupConfig() (CleanupConfig, error) {
-	configPath := filepath.Join(werf.GetHomeDir(), "config", "cleanup.yaml")
-
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return CleanupConfig{
-			GitTagStrategyLimit:               common.CiEnvGitTagStrategyLimitDefault,
-			GitTagStrategyExpiryDays:          common.CiEnvGitTagStrategyExpiryDaysDefault,
-			GitCommitStrategyLimit:            common.CiEnvGitCommitStrategyLimitDefault,
-			GitCommitStrategyExpiryDays:       common.CiEnvGitCommitStrategyExpiryDaysDefault,
-			StagesSignatureStrategyLimit:      common.CiEnvStagesSignatureStrategyLimitDefault,
-			StagesSignatureStrategyExpiryDays: common.CiEnvStagesSignatureStrategyExpiryDaysDefault,
-		}, nil
-	}
-
-	data, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return CleanupConfig{}, fmt.Errorf("error reading %s: %s", configPath, err)
-	}
-
-	config := CleanupConfig{}
-	if err := yaml.UnmarshalStrict(data, &config); err != nil {
-		return CleanupConfig{}, fmt.Errorf("bad config yaml %s: %s", configPath, err)
-	}
-
-	return config, nil
 }
 
 func createSourceFile(data []byte) (string, error) {

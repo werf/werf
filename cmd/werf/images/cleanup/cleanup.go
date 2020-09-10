@@ -58,7 +58,6 @@ func NewCmd() *cobra.Command {
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupImagesCleanupPolicies(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -185,11 +184,6 @@ func runCleanup() error {
 		return err
 	}
 
-	policies, err := common.GetImagesCleanupPolicies(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	kubernetesContextClients, err := common.GetKubernetesContextClients(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
@@ -201,7 +195,6 @@ func runCleanup() error {
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 		WithoutKube:                             *commonCmdData.WithoutKube,
-		Policies:                                policies,
 		GitHistoryBasedCleanup:                  cmdData.GitHistoryBasedCleanup,
 		GitHistoryBasedCleanupV12:               cmdData.GitHistoryBasedCleanupV12,
 		GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
