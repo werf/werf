@@ -77,6 +77,10 @@ werf helm-v3 upgrade [RELEASE] [CHART] [flags] [options]
             help for upgrade
       --history-max=10:
             limit the maximum number of revisions saved per release. Use 0 for no limit
+      --home-dir='':
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false:
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
   -i, --install=false:
             if a release by this name doesn't already exist, run an install
       --key-file='':
@@ -101,6 +105,11 @@ werf helm-v3 upgrade [RELEASE] [CHART] [flags] [options]
       --reuse-values=false:
             when upgrading, reuse the last release's values and merge in any overrides from the     
             command line via --set and -f. If '--reset-values' is specified, this is ignored
+      --secret-values=[]:
+            Specify helm secret values in a YAML file (can specify multiple).
+            Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)
       --set=[]:
             set values on the command line (can specify multiple or separate values with commas:    
             key1=val1,key2=val2)
@@ -116,6 +125,8 @@ werf helm-v3 upgrade [RELEASE] [CHART] [flags] [options]
             performed with install flag enabled
       --timeout=5m0s:
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
+      --tmp-dir='':
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --username='':
             chart repository username where to locate the requested chart
   -f, --values=[]:
