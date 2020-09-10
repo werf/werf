@@ -41,8 +41,6 @@ These policies determine which _images_ will be deleted while leaving all others
 
 #### Git history-based cleanup algorithm
 
-> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
-
 The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [signature]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature).
 
 The cleanup algorithm is based on the fact that the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) has information about commits related to publishing tags associated with a specific [signature of image stages]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _signature_ for a specific `image` in the `werf.yaml`. 
@@ -58,8 +56,7 @@ Let's review the basic steps of the cleanup algorithm:
     - a set of pairs consisting of the [signature of the image stages]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature) and a commit on which the publication was performed.
 - Obtaining manifests for all tags.
 - Preparing a list of items to clean up:
-    - [tags used in Kubernetes](#whitelisting-images) are ignored;
-    - tags assigned by versions `<v1.1.20` are ignored (and they are deleted starting with `v1.2`; you can force this behaviour by providing the  `--git-history-based-cleanup-v1.2` option).
+    - [tags used in Kubernetes](#whitelisting-images) are ignored.
 - Preparing the data for scanning:
     - tags grouped by the signature of image stages __(1)__;
     - commits grouped by the signature of image stages __(2)__;
@@ -77,7 +74,7 @@ It is worth noting that the algorithm scans the local state of the git repositor
 
 werf saves supplementary data to the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [signature of image stages]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature) and a commit that was used for publishing. It also contains [names of images]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) that were ever built.
 
-Information about commits is the only source of truth for the algorithm, so tags lacking such information are processed separately. Tags assigned by versions lower than `v1.1.20` are ignored (and they are deleted starting with version `v1.2`; you can force this behavior by using the `--git-history-based-cleanup-v1.2` flag).
+Information about commits is the only source of truth for the algorithm, so if tags lacking such information werf deletes them. 
 
 When performing an automatic cleanup, the `werf cleanup` command is executed either on a schedule or manually. To avoid deleting the active cache when adding/deleting images in the `werf.yaml` in neighboring git branches, you can add the name of the image being built to the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) during the build. The user can edit the so-called set of _managed images_ using `werf managed-images ls|add|rm` commands.
 

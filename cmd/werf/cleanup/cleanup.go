@@ -21,11 +21,6 @@ import (
 
 var commonCmdData common.CmdData
 
-var cmdData struct {
-	GitHistoryBasedCleanup    bool
-	GitHistoryBasedCleanupV12 bool
-}
-
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "cleanup",
@@ -67,9 +62,6 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupGitHistorySynchronization(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
-
-	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanup, "git-history-based-cleanup", "", common.GetBoolEnvironmentDefaultTrue("WERF_GIT_HISTORY_BASED_CLEANUP"), "Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)")
-	cmd.Flags().BoolVarP(&cmdData.GitHistoryBasedCleanupV12, "git-history-based-cleanup-v1.2", "", common.GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_BASED_CLEANUP_v1_2"), "Use git history based cleanup and delete images tags without related image metadata (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)")
 
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -201,8 +193,6 @@ func runCleanup() error {
 			KubernetesContextClients:                kubernetesContextClients,
 			KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 			WithoutKube:                             *commonCmdData.WithoutKube,
-			GitHistoryBasedCleanup:                  cmdData.GitHistoryBasedCleanup,
-			GitHistoryBasedCleanupV12:               cmdData.GitHistoryBasedCleanupV12,
 			GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
 			DryRun:                                  *commonCmdData.DryRun,
 		},
