@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/kubeutils"
@@ -15,7 +17,7 @@ type DismissOptions struct {
 }
 
 func RunDismiss(ctx context.Context, projectName, release, namespace, _ string, opts DismissOptions) error {
-	lockManager, err := NewLockManager(ctx, namespace)
+	lockManager, err := lock_manager.NewLockManager(namespace)
 	if err != nil {
 		return err
 	}

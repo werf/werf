@@ -46,8 +46,8 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewTemplateCmd(actionConfig, os.Stdout),
 		cmd_helm.NewRepoCmd(os.Stdout),
 		cmd_helm.NewRollbackCmd(actionConfig, os.Stdout),
-		NewInstallCmd(actionConfig, &commonCmdData),
-		NewUpgradeCmd(actionConfig, &commonCmdData),
+		NewInstallCmd(actionConfig),
+		NewUpgradeCmd(actionConfig),
 		cmd_helm.NewCreateCmd(os.Stdout),
 		cmd_helm.NewEnvCmd(os.Stdout),
 		cmd_helm.NewPackageCmd(os.Stdout),
@@ -109,9 +109,11 @@ func NewCmd() *cobra.Command {
 					if err := oldRunE(cmd, args); err != nil {
 						errValue := reflect.ValueOf(err)
 						if errValue.Kind() == reflect.Struct {
-							codeValue := errValue.FieldByName("code")
-							if !codeValue.IsZero() {
-								os.Exit(int(codeValue.Int()))
+							if !errValue.IsZero() {
+								codeValue := errValue.FieldByName("code")
+								if codeValue.IsValid() && !codeValue.IsZero() {
+									os.Exit(int(codeValue.Int()))
+								}
 							}
 						}
 

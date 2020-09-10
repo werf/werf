@@ -1,4 +1,4 @@
-package deploy
+package lock_manager
 
 import (
 	"context"
@@ -16,12 +16,13 @@ import (
 	"github.com/werf/lockgate"
 )
 
+// NOTE: LockManager for not is not multithreaded due to the lack of support of contexts in the lockgate library
 type LockManager struct {
-	Namespace string
-	Locker    lockgate.Locker
+	Namespace       string
+	LockerWithRetry *locker_with_retry.LockerWithRetry
 }
 
-func NewLockManager(ctx context.Context, namespace string) (*LockManager, error) {
+func NewLockManager(namespace string) (*LockManager, error) {
 	configMapName := "werf-synchronization"
 
 	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
@@ -35,19 +36,24 @@ func NewLockManager(ctx context.Context, namespace string) (*LockManager, error)
 			Resource: "configmaps",
 		}, configMapName, namespace,
 	)
-	lockerWithRetry := locker_with_retry.NewLockerWithRetry(ctx, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(nil, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	return &LockManager{
-		Namespace: namespace,
-		Locker:    lockerWithRetry,
+		Namespace:       namespace,
+		LockerWithRetry: lockerWithRetry,
 	}, nil
 }
 
 func (lockManager *LockManager) LockRelease(ctx context.Context, releaseName string) (lockgate.LockHandle, error) {
-	_, handle, err := lockManager.Locker.Acquire(fmt.Sprintf("release/%s", releaseName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+	// TODO: add support of context into lockgate
+	lockManager.LockerWithRetry.Ctx = ctx
+	_, handle, err := lockManager.LockerWithRetry.Acquire(fmt.Sprintf("release/%s", releaseName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return handle, err
 }
 
 func (lockManager *LockManager) Unlock(handle lockgate.LockHandle) error {
-	return lockManager.Locker.Release(handle)
+	defer func() {
+		lockManager.LockerWithRetry.Ctx = nil
+	}()
+	return lockManager.LockerWithRetry.Release(handle)
 }

@@ -1,12 +1,15 @@
 package werf_chart_v2
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"github.com/werf/werf/pkg/deploy/lock_manager"
 
 	"github.com/werf/werf/pkg/util/secretvalues"
 
@@ -36,12 +39,15 @@ func NewWerfChart() *WerfChart {
 }
 
 type WerfChart struct {
+	ReleaseName                           string
 	ChartDir                              string
 	ChartConfig                           *chart.Metadata
 	SecretValues                          []map[string]interface{}
 	ExtraAnnotationsAndLabelsPostRenderer *helm_v3.ExtraAnnotationsAndLabelsPostRenderer
 	ValueOpts                             *values.Options
-	SecretsManager                        secret.Manager
+
+	LockManager    *lock_manager.LockManager
+	SecretsManager secret.Manager
 
 	decodedSecretFilesData map[string]string
 	secretValuesToMask     []string
@@ -49,20 +55,26 @@ type WerfChart struct {
 }
 
 type WerfChartInitOptions struct {
-	SecretsManager    secret.Manager
+	LockManager    *lock_manager.LockManager
+	SecretsManager secret.Manager
+
+	ReleaseName       string
+	ChartDir          string
 	SecretValuesFiles []string
 	ExtraAnnotations  map[string]string
 	ExtraLabels       map[string]string
 }
 
 // Load secrets, validate, etc.
-func (wc *WerfChart) Init(chartDir string, opts WerfChartInitOptions) error {
+func (wc *WerfChart) Init(opts WerfChartInitOptions) error {
 	if wc.initialized {
 		panic(fmt.Sprintf("werf chart %#v already initialized", *wc))
 	}
 
-	wc.ChartDir = chartDir
+	wc.LockManager = opts.LockManager
 	wc.SecretsManager = opts.SecretsManager
+	wc.ReleaseName = opts.ReleaseName
+	wc.ChartDir = opts.ChartDir
 
 	secretValuesFiles := []string{}
 	defaultSecretValuesFile := filepath.Join(wc.ChartDir, DefaultSecretValuesFileName)
@@ -144,6 +156,19 @@ func (wc *WerfChart) SetEnv(env string) error {
 	return nil
 }
 
-type ChartConfig struct {
-	Name string `json:"name"`
+func (wc *WerfChart) WrapInstall(ctx context.Context, installFunc func() error) error {
+	return wc.lockReleaseWrapper(ctx, installFunc)
+}
+
+func (wc *WerfChart) WrapUpgrade(ctx context.Context, upgradeFunc func() error) error {
+	return wc.lockReleaseWrapper(ctx, upgradeFunc)
+}
+
+func (wc *WerfChart) lockReleaseWrapper(ctx context.Context, commandFunc func() error) error {
+	if lock, err := wc.LockManager.LockRelease(ctx, wc.ReleaseName); err != nil {
+		return err
+	} else {
+		defer wc.LockManager.Unlock(lock)
+	}
+	return commandFunc()
 }
