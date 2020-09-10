@@ -44,11 +44,6 @@ werf cleanup [options]
             stages storage and images repo
       --dry-run=false:
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
-      --git-history-based-cleanup=true:
-            Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)
-      --git-history-based-cleanup-v1.2=false:
-            Use git history based cleanup and delete images tags without related image metadata     
-            (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)
       --git-history-synchronization=false:
             Synchronize git branches and tags with remote origin (default                           
             $WERF_GIT_HISTORY_SYNCHRONIZATION)

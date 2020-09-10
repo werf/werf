@@ -32,8 +32,6 @@ type ImagesCleanupOptions struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
-	GitHistoryBasedCleanup                  bool
-	GitHistoryBasedCleanupV12               bool
 	GitHistoryBasedCleanupOptions           config.MetaCleanup
 	DryRun                                  bool
 }
@@ -66,8 +64,6 @@ func newImagesCleanupManager(projectName string, storageManager *manager.Storage
 		KubernetesContextClients:                options.KubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             options.WithoutKube,
-		GitHistoryBasedCleanup:                  options.GitHistoryBasedCleanup,
-		GitHistoryBasedCleanupV12:               options.GitHistoryBasedCleanupV12,
 		GitHistoryBasedCleanupOptions:           options.GitHistoryBasedCleanupOptions,
 	}
 }
@@ -83,8 +79,6 @@ type imagesCleanupManager struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
-	GitHistoryBasedCleanup                  bool
-	GitHistoryBasedCleanupV12               bool
 	GitHistoryBasedCleanupOptions           config.MetaCleanup
 	DryRun                                  bool
 }
@@ -101,12 +95,10 @@ func (m *imagesCleanupManager) initRepoImagesData(ctx context.Context) error {
 		return err
 	}
 
-	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
-		if err := logboek.Context(ctx).Info().LogProcess("Fetching images metadata").DoError(func() error {
-			return m.initImageCommitHashImageMetadata(ctx)
-		}); err != nil {
-			return err
-		}
+	if err := logboek.Context(ctx).Info().LogProcess("Fetching images metadata").DoError(func() error {
+		return m.initImageCommitHashImageMetadata(ctx)
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -217,11 +209,9 @@ func (m *imagesCleanupManager) run(ctx context.Context) error {
 		}
 	}
 
-	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
-		resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(ctx, repoImagesToCleanup)
-		if err != nil {
-			return err
-		}
+	resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(ctx, repoImagesToCleanup)
+	if err != nil {
+		return err
 	}
 
 	for imageName, repoImageList := range exceptedRepoImages {
@@ -415,39 +405,6 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 
 				logProcess.End()
 			}
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	if err = logboek.Context(ctx).Default().LogProcess("Processing images tags without related image metadata").DoError(func() error {
-		imageRepoImageListWithoutRelatedContentSignature, err := m.getImageRepoImageListWithoutRelatedImageMetadata(repoImagesToCleanup, imageContentSignatureRepoImageListToCleanup)
-		if err != nil {
-			return err
-		}
-
-		for imageName, repoImages := range imageRepoImageListWithoutRelatedContentSignature {
-			logProcess := logboek.Context(ctx).Default().LogProcess(logging.ImageLogProcessName(imageName, false))
-			logProcess.Start()
-
-			if !m.GitHistoryBasedCleanupV12 {
-				if len(repoImages) != 0 {
-					logboek.Context(ctx).Warn().LogF("Detected tags without related image metadata.\nThese tags will be saved during cleanup.\n")
-					logboek.Context(ctx).Warn().LogF("Since v1.2 git history based cleanup will delete such tags by default.\nYou can force this behaviour in current werf version with --git-history-based-cleanup-v1.2 option.\n")
-				}
-
-				for _, repoImage := range repoImages {
-					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImage.Tag)
-					logboek.Context(ctx).LogOptionalLn()
-				}
-
-				resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImages...)
-				repoImagesToCleanup[imageName] = exceptRepoImageList(repoImagesToCleanup[imageName], repoImages...)
-			}
-
-			logProcess.End()
 		}
 
 		return nil
