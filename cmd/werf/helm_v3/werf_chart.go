@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/deploy/werf_chart_v2"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
+	"github.com/werf/werf/pkg/deploy_v2/werf_chart"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/spf13/cobra"
@@ -25,12 +24,8 @@ func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.Cmd
 	cmd_werf_common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 
-func InitWerfChart(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart_v2.WerfChart, setupWerfChartInitOptionsFunc func(opts *werf_chart_v2.WerfChartInitOptions, args []string) error, args []string) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return err
-	}
-
-	werfChartInitOpts := werf_chart_v2.WerfChartInitOptions{
+func InitWerfChart(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, setupWerfChartInitOptionsFunc func(opts *werf_chart.WerfChartInitOptions, args []string) error, args []string) error {
+	werfChartInitOpts := werf_chart.WerfChartInitOptions{
 		SecretValuesFiles: *commonCmdData.SecretValues,
 	}
 	if extraAnnotations, err := cmd_werf_common.GetUserExtraAnnotations(commonCmdData); err != nil {

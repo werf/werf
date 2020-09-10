@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"

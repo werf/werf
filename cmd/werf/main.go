@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/cmd/werf/deploy_v2"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/werf/logboek"
@@ -118,6 +120,13 @@ Find more information at https://werf.io`),
 		SilenceErrors: true,
 	}
 
+	var deployCmd *cobra.Command
+	if os.Getenv("WERF_DEPLOY_HELM_V3") == "1" {
+		deployCmd = deploy_v2.NewCmd()
+	} else {
+		deployCmd = deploy.NewCmd()
+	}
+
 	groups := templates.CommandGroups{
 		{
 			Message: "Main Commands:",
@@ -128,7 +137,7 @@ Find more information at https://werf.io`),
 				publish.NewCmd(),
 				build_and_publish.NewCmd(),
 				run.NewCmd(),
-				deploy.NewCmd(),
+				deployCmd,
 				dismiss.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),

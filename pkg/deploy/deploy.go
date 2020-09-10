@@ -16,8 +16,8 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util/secretvalues"
