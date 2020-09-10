@@ -114,6 +114,10 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             generate the name (and omit the NAME parameter)
   -h, --help=false:
             help for install
+      --home-dir='':
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false:
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --key-file='':
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg':
@@ -136,6 +140,11 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             history. This is unsafe in production
       --repo='':
             chart repository url where to locate the requested chart
+      --secret-values=[]:
+            Specify helm secret values in a YAML file (can specify multiple).
+            Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)
       --set=[]:
             set values on the command line (can specify multiple or separate values with commas:    
             key1=val1,key2=val2)
@@ -149,6 +158,8 @@ werf helm-v3 install [NAME] [CHART] [flags] [options]
             if set, no CRDs will be installed. By default, CRDs are installed if not already present
       --timeout=5m0s:
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
+      --tmp-dir='':
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --username='':
             chart repository username where to locate the requested chart
   -f, --values=[]:
