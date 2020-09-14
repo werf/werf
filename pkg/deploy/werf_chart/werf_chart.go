@@ -9,10 +9,6 @@ import (
 	"strings"
 	"unicode"
 
-	"helm.sh/helm/v3/pkg/cli/values"
-
-	"github.com/werf/werf/pkg/deploy/helm_v3"
-
 	"github.com/ghodss/yaml"
 
 	"github.com/werf/logboek"
@@ -74,32 +70,12 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 }
 
 func (chart *WerfChart) Deploy(ctx context.Context, releaseName string, namespace string, opts helm.ChartOptions) error {
-	if os.Getenv("WERF_HELM3") == "1" {
-		valuesOptions := values.Options{
-			ValueFiles:   append(chart.Values, opts.Values...),
-			StringValues: append(chart.SetString, opts.SetString...),
-			Values:       append(chart.Set, opts.Set...),
-			FileValues:   nil,
-		}
-		secretValues := append(chart.SecretValues, opts.SecretValues...)
-		_ = secretValues
+	opts.SecretValues = append(chart.SecretValues, opts.SecretValues...)
+	opts.Set = append(chart.Set, opts.Set...)
+	opts.SetString = append(chart.SetString, opts.SetString...)
+	opts.Values = append(chart.Values, opts.Values...)
 
-		return helm_v3.Upgrade(ctx, chart.ChartDir, releaseName, helm_v3.UpgradeOptions{
-			ValuesOptions:   valuesOptions,
-			Namespace:       namespace,
-			CreateNamespace: true,
-			Install:         true,
-			Atomic:          false,
-			Timeout:         opts.Timeout,
-		})
-	} else {
-		opts.SecretValues = append(chart.SecretValues, opts.SecretValues...)
-		opts.Set = append(chart.Set, opts.Set...)
-		opts.SetString = append(chart.SetString, opts.SetString...)
-		opts.Values = append(chart.Values, opts.Values...)
-
-		return helm.DeployHelmChart(ctx, chart.ChartDir, releaseName, namespace, opts)
-	}
+	return helm.DeployHelmChart(ctx, chart.ChartDir, releaseName, namespace, opts)
 }
 
 func (chart *WerfChart) MergeExtraAnnotations(extraAnnotations map[string]string) {

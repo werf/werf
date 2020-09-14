@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/pkg/deploy/helm_v3"
+	"github.com/werf/werf/pkg/deploy_v2/helm_v3"
 
 	"helm.sh/helm/v3/pkg/action"
 

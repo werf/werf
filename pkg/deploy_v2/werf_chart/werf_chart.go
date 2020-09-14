@@ -1,4 +1,4 @@
-package werf_chart_v2
+package werf_chart
 
 import (
 	"context"
@@ -9,14 +9,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-
-	"github.com/werf/werf/pkg/util/secretvalues"
-
 	"github.com/werf/werf/pkg/config"
-
-	"github.com/werf/werf/pkg/deploy/helm_v3"
 	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy_v2/helm_v3"
+	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
+	"github.com/werf/werf/pkg/util/secretvalues"
 	"github.com/werf/werf/pkg/werf"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -42,7 +39,6 @@ type WerfChart struct {
 	ReleaseName                           string
 	ChartDir                              string
 	ChartConfig                           *chart.Metadata
-	SecretValues                          []map[string]interface{}
 	ExtraAnnotationsAndLabelsPostRenderer *helm_v3.ExtraAnnotationsAndLabelsPostRenderer
 	ValueOpts                             *values.Options
 

@@ -1,4 +1,4 @@
-package werf_chart_v2
+package werf_chart
 
 import (
 	"fmt"
