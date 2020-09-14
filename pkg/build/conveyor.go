@@ -28,7 +28,6 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/logging"
@@ -37,6 +36,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/util/parallel"
 )
 
 type Conveyor struct {
@@ -608,178 +608,6 @@ type goResult struct {
 }
 
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
-	var maxTasksNumber int
-	for _, set := range c.imageSets {
-		if maxTasksNumber < len(set) {
-			maxTasksNumber = len(set)
-		}
-	}
-
-	goCtxsWithDockerCli := make([]context.Context, maxTasksNumber-1)
-
-	doImageSetInParallel := func(setId int) error {
-		var buffs, doneBuffs []*bytes.Buffer
-		var goCtxs []context.Context
-		var goResults []goResult
-		imageSetCounter := len(c.imageSets[setId])
-
-		queueLength := imageSetCounter
-		if c.ParallelTasksLimit > 0 {
-			queueLength = int(c.ParallelTasksLimit)
-		}
-
-		queueCh := make(chan bool, queueLength)
-		errCh := make(chan goResult)
-		doneCh := make(chan goResult)
-		quitCh := make(chan bool)
-
-		liveLogger := logboek.NewLogger(os.Stdout, os.Stderr)
-		liveLogger.GetStreamsSettingsFrom(logboek.Context(ctx))
-		liveLogger.SetAcceptedLevel(logboek.Context(ctx).AcceptedLevel())
-		liveCtx := logboek.NewContext(ctx, liveLogger)
-
-		if err := docker.SyncContextCliWithLogger(liveCtx); err != nil {
-			return err
-		}
-		defer docker.SyncContextCliWithLogger(ctx)
-
-		isLiveOutputOn := true
-
-		for ind := range c.imageSets[setId] {
-			var goCtx context.Context
-			var goResult goResult
-
-			if ind == 0 {
-				goCtx = liveCtx
-			} else {
-				goCtxWithDockerCli := goCtxsWithDockerCli[ind-1]
-				if goCtxWithDockerCli != nil {
-					goCtx = goCtxWithDockerCli
-				} else {
-					goCtx = ctx
-				}
-
-				buf := bytes.NewBuffer([]byte{})
-				goResult.buff = buf
-				buffs = append(buffs, buf)
-				goCtx = logboek.NewContext(goCtx, logboek.Context(ctx).NewSubLogger(buf, buf))
-				logboek.Context(goCtx).Streams().SetPrefixStyle(style.Highlight())
-
-				if goCtxWithDockerCli == nil {
-					var err error
-					goCtx, err = docker.NewContext(goCtx)
-					if err != nil {
-						return nil
-					}
-				} else {
-					err := docker.SyncContextCliWithLogger(goCtx)
-					if err != nil {
-						return err
-					}
-				}
-
-				goCtxsWithDockerCli[ind-1] = goCtx
-			}
-
-			goCtxs = append(goCtxs, goCtx)
-			goResults = append(goResults, goResult)
-		}
-
-		go func() {
-			for ind, img := range c.imageSets[setId] {
-				goImg := img
-				goCtx := goCtxs[ind]
-				goResult := goResults[ind]
-
-				var goPhases []Phase
-				for _, phase := range phases {
-					goPhases = append(goPhases, phase.Clone())
-				}
-
-				go func() {
-					err := c.doImage(goCtx, goImg, goPhases, logImages)
-					goResult.err = err
-
-					ch := doneCh
-					if err != nil {
-						ch = errCh
-					}
-
-					select {
-					case ch <- goResult:
-						return
-					case <-quitCh:
-						return
-					}
-				}()
-
-				queueCh <- true
-			}
-		}()
-
-		renderBuff := func(buf *bytes.Buffer) {
-			logboek.Streams().DoWithoutIndent(func() {
-				if logboek.Context(ctx).Streams().IsPrefixWithTimeEnabled() {
-					logboek.Context(ctx).Streams().DisablePrefixWithTime()
-					defer logboek.Context(ctx).Streams().EnablePrefixWithTime()
-				}
-
-				logboek.Context(ctx).LogOptionalLn()
-				_, _ = logboek.Context(ctx).ProxyOutStream().Write(buf.Bytes())
-				logboek.Context(ctx).LogOptionalLn()
-			})
-		}
-
-	outerLoop:
-		for {
-			select {
-			case res := <-doneCh:
-				<-queueCh
-
-				if res.buff != nil {
-					if isLiveOutputOn {
-						doneBuffs = append(doneBuffs, res.buff)
-					} else {
-						renderBuff(res.buff)
-					}
-				} else {
-					isLiveOutputOn = false
-					for _, buf := range doneBuffs {
-						renderBuff(buf)
-					}
-				}
-
-				imageSetCounter--
-				if imageSetCounter == 0 {
-					break outerLoop
-				}
-			case res := <-errCh:
-				close(quitCh)
-
-				if res.buff != nil {
-					liveLogger.Streams().Mute()
-					for _, buf := range buffs {
-						if buf != res.buff {
-							renderBuff(buf)
-						}
-					}
-
-					renderBuff(res.buff)
-				} else {
-					if logboek.Context(ctx).Info().IsAccepted() {
-						for _, buf := range buffs {
-							renderBuff(buf)
-						}
-					}
-				}
-
-				return res.err
-			}
-		}
-
-		return nil
-	}
-
 	blockMsg := "Concurrent builds plan"
 	if c.ParallelTasksLimit > 0 {
 		blockMsg = fmt.Sprintf("%s (no more than %d images at the same time)", blockMsg, c.ParallelTasksLimit)
@@ -802,7 +630,24 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	for setId := range c.imageSets {
 		logboek.Context(ctx).LogLn()
-		if err := doImageSetInParallel(setId); err != nil {
+
+		numberOfTasks := len(c.imageSets[setId])
+		numberOfWorkers := int(c.ParallelTasksLimit)
+
+		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
+			InitDockerCLIForEachWorker: true,
+			MaxNumberOfWorkers:         numberOfWorkers,
+			IsLiveOutputOn:             true,
+		}, func(ctx context.Context, taskId int) error {
+			taskImage := c.imageSets[setId][taskId]
+
+			var taskPhases []Phase
+			for _, phase := range phases {
+				taskPhases = append(taskPhases, phase.Clone())
+			}
+
+			return c.doImage(ctx, taskImage, taskPhases, logImages)
+		}); err != nil {
 			return err
 		}
 	}

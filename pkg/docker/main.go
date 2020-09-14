@@ -130,6 +130,10 @@ func NewContext(ctx context.Context) (context.Context, error) {
 	return newCtx, nil
 }
 
+func IsContext(ctx context.Context) bool {
+	return ctx.Value(ctxDockerCliKey) != nil
+}
+
 func SyncContextCliWithLogger(ctx context.Context) error {
 	return cli(ctx).Apply(defaultCliOptions(ctx)...)
 }
