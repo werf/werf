@@ -42,7 +42,16 @@ func scanReferencesHistory(ctx context.Context, gitRepository *git.Repository, r
 				return fmt.Errorf("scan reference history failed: %s", err)
 			}
 
-			stopCommitHashes = append(stopCommitHashes, refStopCommitHashes...)
+		refStopCommitHashesLoop:
+			for _, refStopCommitHash := range refStopCommitHashes {
+				for _, stopCommitHash := range stopCommitHashes {
+					if stopCommitHash == refStopCommitHash {
+						continue refStopCommitHashesLoop
+					}
+				}
+
+				stopCommitHashes = append(stopCommitHashes, refStopCommitHash)
+			}
 
 		reachedContentSignatureListLoop:
 			for _, c1 := range refReachedContentSignatureList {
