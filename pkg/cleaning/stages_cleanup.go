@@ -14,8 +14,8 @@ import (
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -26,8 +26,8 @@ type StagesCleanupOptions struct {
 	DryRun        bool
 }
 
-func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
-	m := newStagesCleanupManager(projectName, imagesRepo, stagesManager, options)
+func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
+	m := newStagesCleanupManager(projectName, imagesRepo, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -44,24 +44,24 @@ func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.I
 		})
 }
 
-func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options StagesCleanupOptions) *stagesCleanupManager {
+func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options StagesCleanupOptions) *stagesCleanupManager {
 	return &stagesCleanupManager{
-		ImagesRepo:    imagesRepo,
-		ImageNameList: options.ImageNameList,
-		StagesManager: stagesManager,
-		ProjectName:   projectName,
-		DryRun:        options.DryRun,
+		ImagesRepo:     imagesRepo,
+		ImageNameList:  options.ImageNameList,
+		StorageManager: storageManager,
+		ProjectName:    projectName,
+		DryRun:         options.DryRun,
 	}
 }
 
 type stagesCleanupManager struct {
 	imagesRepoImageList *[]*image.Info
 
-	ImagesRepo    storage.ImagesRepo
-	ImageNameList []string
-	StagesManager *stages_manager.StagesManager
-	ProjectName   string
-	DryRun        bool
+	ImagesRepo     storage.ImagesRepo
+	ImageNameList  []string
+	StorageManager *manager.StorageManager
+	ProjectName    string
+	DryRun         bool
 }
 
 func (m *stagesCleanupManager) initImagesRepoImageList(ctx context.Context) error {
@@ -96,13 +96,13 @@ func (m *stagesCleanupManager) run(ctx context.Context) error {
 		RmForce:       false,
 	}
 
-	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StagesManager.StagesStorage.String(), m.ProjectName)
+	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StorageManager.StagesStorage.String(), m.ProjectName)
 	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		var stagesImageList []*image.Info
 		stagesByImageName := map[string]*image.StageDescription{}
 
 		if err := logboek.Context(ctx).Default().LogProcess("Fetching stages").DoError(func() error {
-			stages, err := m.StagesManager.GetAllStages(ctx)
+			stages, err := m.StorageManager.GetAllStages(ctx)
 			if err != nil {
 				return err
 			}
@@ -160,7 +160,7 @@ func (m *stagesCleanupManager) run(ctx context.Context) error {
 		}
 
 		return logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
-			return deleteStageInStagesStorage(ctx, m.StagesManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
+			return deleteStageInStagesStorage(ctx, m.StorageManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
 		})
 	})
 }
@@ -228,10 +228,10 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 	return
 }
 
-func deleteStageInStagesStorage(ctx context.Context, stagesManager *stages_manager.StagesManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
+func deleteStageInStagesStorage(ctx context.Context, storageManager *manager.StorageManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
 	for _, stageDesc := range stages {
 		if !dryRun {
-			if err := stagesManager.DeleteStages(ctx, options, stageDesc); err != nil {
+			if err := storageManager.DeleteStages(ctx, options, stageDesc); err != nil {
 				if err := handleDeleteStageOrImageError(ctx, err, stageDesc.Info.Name); err != nil {
 					return err
 				}

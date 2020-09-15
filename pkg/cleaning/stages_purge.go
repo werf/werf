@@ -10,8 +10,8 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -20,8 +20,8 @@ type StagesPurgeOptions struct {
 	DryRun                        bool
 }
 
-func StagesPurge(ctx context.Context, projectName string, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) error {
-	m := newStagesPurgeManager(projectName, stagesManager, options)
+func StagesPurge(ctx context.Context, projectName string, storageLockManager storage.LockManager, storageManager *manager.StorageManager, options StagesPurgeOptions) error {
+	m := newStagesPurgeManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -38,9 +38,9 @@ func StagesPurge(ctx context.Context, projectName string, storageLockManager sto
 		})
 }
 
-func newStagesPurgeManager(projectName string, stagesManager *stages_manager.StagesManager, options StagesPurgeOptions) *stagesPurgeManager {
+func newStagesPurgeManager(projectName string, storageManager *manager.StorageManager, options StagesPurgeOptions) *stagesPurgeManager {
 	return &stagesPurgeManager{
-		StagesManager:                 stagesManager,
+		StorageManager:                storageManager,
 		ProjectName:                   projectName,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
@@ -48,7 +48,7 @@ func newStagesPurgeManager(projectName string, stagesManager *stages_manager.Sta
 }
 
 type stagesPurgeManager struct {
-	StagesManager                 *stages_manager.StagesManager
+	StorageManager                *manager.StorageManager
 	ProjectName                   string
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
@@ -67,13 +67,13 @@ func (m *stagesPurgeManager) run(ctx context.Context) error {
 		logProcess := logboek.Context(ctx).Default().LogProcess("Deleting stages")
 		logProcess.Start()
 
-		stages, err := m.StagesManager.GetAllStages(ctx)
+		stages, err := m.StorageManager.GetAllStages(ctx)
 		if err != nil {
 			logProcess.Fail()
 			return err
 		}
 
-		if err := deleteStageInStagesStorage(ctx, m.StagesManager, deleteImageOptions, m.DryRun, stages...); err != nil {
+		if err := deleteStageInStagesStorage(ctx, m.StorageManager, deleteImageOptions, m.DryRun, stages...); err != nil {
 			logProcess.Fail()
 			return err
 		} else {
@@ -83,7 +83,7 @@ func (m *stagesPurgeManager) run(ctx context.Context) error {
 		logProcess = logboek.Context(ctx).Default().LogProcess("Deleting managed images")
 		logProcess.Start()
 
-		managedImages, err := m.StagesManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
+		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
 		if err != nil {
 			logProcess.Fail()
 			return err
@@ -91,7 +91,7 @@ func (m *stagesPurgeManager) run(ctx context.Context) error {
 
 		for _, managedImage := range managedImages {
 			if !m.DryRun {
-				if err := m.StagesManager.StagesStorage.RmManagedImage(ctx, m.ProjectName, managedImage); err != nil {
+				if err := m.StorageManager.StagesStorage.RmManagedImage(ctx, m.ProjectName, managedImage); err != nil {
 					return err
 				}
 			}

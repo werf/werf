@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -137,8 +137,8 @@ func runPurge() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(ctx, projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
+	if err := cleaning.Purge(ctx, projectName, imagesRepo, storageLockManager, storageManager, purgeOptions); err != nil {
 		return err
 	}
 

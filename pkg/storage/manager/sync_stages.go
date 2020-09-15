@@ -1,4 +1,4 @@
-package stages_manager
+package manager
 
 import (
 	"context"

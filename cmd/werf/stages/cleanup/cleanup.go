@@ -3,10 +3,6 @@ package cleanup
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
-	"github.com/werf/werf/pkg/stages_manager"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -15,6 +11,8 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -136,8 +134,8 @@ func runSync() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -158,5 +156,5 @@ func runSync() error {
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.StagesCleanup(ctx, projectName, imagesRepo, stagesManager, storageLockManager, stagesCleanupOptions)
+	return cleaning.StagesCleanup(ctx, projectName, imagesRepo, storageManager, storageLockManager, stagesCleanupOptions)
 }

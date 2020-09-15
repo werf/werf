@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -164,8 +164,8 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
 	}
 
@@ -209,7 +209,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesCleanup(ctx, projectName, imagesRepo, stagesManager, storageLockManager, imagesCleanupOptions); err != nil {
+	if err := cleaning.ImagesCleanup(ctx, projectName, imagesRepo, storageManager, storageLockManager, imagesCleanupOptions); err != nil {
 		return err
 	}
 

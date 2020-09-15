@@ -139,18 +139,18 @@ func (phase *PublishImagesPhase) publishImage(ctx context.Context, img *Image) e
 					return err
 				}
 
-				if metadata, err := phase.Conveyor.StagesManager.StagesStorage.GetImageMetadataByCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
+				if metadata, err := phase.Conveyor.StorageManager.StagesStorage.GetImageMetadataByCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
 					return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
 				} else if metadata != nil {
 					if metadata.ContentSignature != img.GetContentSignature() {
 						// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
 						// TODO: allowInconsistentPublish: true option for werf.yaml
 						// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
-						return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+						return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
 					}
 					return nil
 				} else {
-					return phase.Conveyor.StagesManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+					return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
 				}
 			}); err != nil {
 			return err
@@ -271,7 +271,7 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 	}
 
 	publishingFunc := func() error {
-		if err := phase.Conveyor.StagesManager.FetchStage(ctx, img.GetLastNonEmptyStage()); err != nil {
+		if err := phase.Conveyor.StorageManager.FetchStage(ctx, img.GetLastNonEmptyStage()); err != nil {
 			return err
 		}
 

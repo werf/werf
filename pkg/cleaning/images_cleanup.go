@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/kubedog/pkg/kube"
-
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 
@@ -18,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -27,8 +26,8 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -46,8 +45,8 @@ type ImagesCleanupOptions struct {
 	DryRun                                  bool
 }
 
-func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
-	m := newImagesCleanupManager(projectName, imagesRepo, stagesManager, options)
+func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
+	m := newImagesCleanupManager(projectName, imagesRepo, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -64,11 +63,11 @@ func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.I
 		})
 }
 
-func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options ImagesCleanupOptions) *imagesCleanupManager {
+func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options ImagesCleanupOptions) *imagesCleanupManager {
 	return &imagesCleanupManager{
 		ProjectName:                             projectName,
 		ImagesRepo:                              imagesRepo,
-		StagesManager:                           stagesManager,
+		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
 		DryRun:                                  options.DryRun,
 		LocalGit:                                options.LocalGit,
@@ -88,7 +87,7 @@ type imagesCleanupManager struct {
 
 	ProjectName                             string
 	ImagesRepo                              storage.ImagesRepo
-	StagesManager                           *stages_manager.StagesManager
+	StorageManager                          *manager.StorageManager
 	ImageNameList                           []string
 	LocalGit                                GitRepo
 	KubernetesContextClients                []*kube.ContextClient
@@ -160,14 +159,14 @@ func (m *imagesCleanupManager) initRepoImages(ctx context.Context) error {
 func (m *imagesCleanupManager) initImageCommitHashImageMetadata(ctx context.Context) error {
 	imageCommitImageMetadata := map[string]map[plumbing.Hash]*storage.ImageMetadata{}
 	for _, imageName := range m.ImageNameList {
-		commits, err := m.StagesManager.StagesStorage.GetImageCommits(ctx, m.ProjectName, imageName)
+		commits, err := m.StorageManager.StagesStorage.GetImageCommits(ctx, m.ProjectName, imageName)
 		if err != nil {
 			return fmt.Errorf("get image %s commits failed: %s", imageName, err)
 		}
 
 		commitImageMetadata := map[plumbing.Hash]*storage.ImageMetadata{}
 		for _, commit := range commits {
-			imageMetadata, err := m.StagesManager.StagesStorage.GetImageMetadataByCommit(ctx, m.ProjectName, imageName, commit)
+			imageMetadata, err := m.StorageManager.StagesStorage.GetImageMetadataByCommit(ctx, m.ProjectName, imageName, commit)
 			if err != nil {
 				return fmt.Errorf("get image %s metadata by commit %s failed", imageName, commit)
 			}
@@ -612,7 +611,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 						logProcess := logboek.Context(ctx).Default().LogProcess("Cleaning up images metadata")
 						logProcess.Start()
 
-						if err := deleteMetaImagesInStagesStorage(ctx, m.StagesManager.StagesStorage, m.ProjectName, imageName, m.DryRun, commitHashesToCleanup...); err != nil {
+						if err := deleteMetaImagesInStagesStorage(ctx, m.StorageManager.StagesStorage, m.ProjectName, imageName, m.DryRun, commitHashesToCleanup...); err != nil {
 							logProcess.Fail()
 							return err
 						}
@@ -643,7 +642,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 			logProcess := logboek.Context(ctx).Default().LogProcess(logging.ImageLogProcessName(imageName, false))
 			logProcess.Start()
 
-			if err := deleteMetaImagesInStagesStorage(ctx, m.StagesManager.StagesStorage, m.ProjectName, imageName, m.DryRun, unusedCommitHashes...); err != nil {
+			if err := deleteMetaImagesInStagesStorage(ctx, m.StorageManager.StagesStorage, m.ProjectName, imageName, m.DryRun, unusedCommitHashes...); err != nil {
 				logProcess.Fail()
 				return err
 			}

@@ -14,7 +14,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -113,8 +113,8 @@ func run(projectNames ...string) error {
 			return err
 		}
 
-		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-		if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+		if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 			return err
 		}
 
@@ -128,7 +128,7 @@ func run(projectNames ...string) error {
 					DryRun:                        *commonCmdData.DryRun,
 				}
 
-				return cleaning.StagesPurge(ctx, projectName, storageLockManager, stagesManager, stagesPurgeOptions)
+				return cleaning.StagesPurge(ctx, projectName, storageLockManager, storageManager, stagesPurgeOptions)
 			}); err != nil {
 			return err
 		}
