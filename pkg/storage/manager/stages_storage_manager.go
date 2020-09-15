@@ -454,8 +454,24 @@ func (m *stagesStorageManager) ForEachGetImageMetadataByCommit(ctx context.Conte
 	}, func(ctx context.Context, taskId int) error {
 		commit := commits[taskId]
 
-		imageMetadata, err := m.StagesStorage.GetImageMetadataByCommit(ctx, projectName, imageName, commit)
-		return f(commit, imageMetadata, err)
+		imageMetadata, err := storage.GetImageMetadataCache().GetImageMetadata(ctx, m.StagesStorage.Address(), imageName, commit)
+		if err != nil {
+			return fmt.Errorf("get image metadata failed: %s", err)
+		}
+
+		if imageMetadata == nil {
+			imageMetadata, err = m.StagesStorage.GetImageMetadataByCommit(ctx, projectName, imageName, commit)
+			if err != nil {
+				return f(commit, imageMetadata, err)
+			}
+
+			err = storage.GetImageMetadataCache().StoreImageMetadata(ctx, m.StagesStorage.Address(), imageName, commit, imageMetadata)
+			if err != nil {
+				return fmt.Errorf("store image metadata failed: %s", err)
+			}
+		}
+
+		return f(commit, imageMetadata, nil)
 	})
 }
 
