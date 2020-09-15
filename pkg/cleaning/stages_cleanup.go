@@ -138,6 +138,15 @@ func (m *stagesCleanupManager) run(ctx context.Context) error {
 					repoImageListToExcept = append(repoImageListToExcept, repoImage)
 				}
 			}
+
+			if len(repoImageListToExcept) != 0 {
+				logboek.Context(ctx).Default().LogBlock("Skipping stages that were built within last two hours").Do(func() {
+					for _, repoImageToExcept := range repoImageListToExcept {
+						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImageToExcept.Tag)
+						logboek.Context(ctx).LogOptionalLn()
+					}
+				})
+			}
 		}
 
 		stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)

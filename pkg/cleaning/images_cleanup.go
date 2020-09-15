@@ -684,7 +684,9 @@ func (m *imagesCleanupManager) getImageContentSignatureRepoImageListToCleanup(re
 				}
 			}
 
-			imageContentSignatureRepoImageListToCleanup[imageName][imageMetadata.ContentSignature] = repoImageListToCleanupBySignature
+			if len(repoImageListToCleanupBySignature) != 0 {
+				imageContentSignatureRepoImageListToCleanup[imageName][imageMetadata.ContentSignature] = repoImageListToCleanupBySignature
+			}
 		}
 	}
 
