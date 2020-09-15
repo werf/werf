@@ -341,6 +341,7 @@ func runDeploy() error {
 	_ = imagesRepository
 	_ = *commonCmdData.Environment
 	_ = cmdData.Timeout
+	_ = imagesInfoGetters
 
 	return wc.WrapUpgrade(context.Background(), func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
