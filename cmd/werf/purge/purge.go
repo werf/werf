@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
@@ -140,6 +141,10 @@ func runPurge() error {
 	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
 	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
+	}
+
+	if stagesStorage.Address() != storage.LocalStorageAddress {
+		storageManager.EnableParallel()
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)

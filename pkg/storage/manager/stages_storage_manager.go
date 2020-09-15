@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -21,12 +22,11 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
 )
 
-var (
-	ErrShouldResetStagesStorageCache = errors.New("should reset stages storage cache")
-)
+var ErrShouldResetStagesStorageCache = errors.New("should reset stages storage cache")
 
 func ShouldResetStagesStorageCache(err error) bool {
 	if err != nil {
@@ -42,6 +42,8 @@ type stagesStorageManager struct {
 	StorageLockManager storage.LockManager
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
+
+	parallel bool
 }
 
 func newStagesStorageManager(projectName string, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *stagesStorageManager {
@@ -53,15 +55,17 @@ func newStagesStorageManager(projectName string, storageLockManager storage.Lock
 	}
 }
 
-//func (m *StagesManager) GetAllStagesIDs() ([]image.StageID, error) {
-//if cacheExists, images, err := m.StagesStorageCache.GetAllStages(m.ProjectName); err != nil {
-//	return nil, err
-//} else if cacheExists {
-//	return images, nil
-//} else {
-//return m.StagesStorage.GetAllStages(m.ProjectName)
-//}
-//}
+func (m *stagesStorageManager) EnableParallel() {
+	m.parallel = true
+}
+
+func (m *stagesStorageManager) MaxNumberOfWorkers() int {
+	if m.parallel {
+		return MaxNumberOfWorkersDefault
+	}
+
+	return 1
+}
 
 func (m *stagesStorageManager) ResetStagesStorageCache(ctx context.Context) error {
 	msg := fmt.Sprintf("Reset stages storage cache %s for project %q", m.StagesStorageCache.String(), m.ProjectName)
@@ -152,24 +156,35 @@ func (m *stagesStorageManager) UseStagesStorage(ctx context.Context, stagesStora
 }
 
 func (m *stagesStorageManager) GetAllStages(ctx context.Context) ([]*image.StageDescription, error) {
-	if stageIDs, err := m.StagesStorage.GetAllStages(ctx, m.ProjectName); err != nil {
+	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName)
+	if err != nil {
 		return nil, err
-	} else {
-		var stages []*image.StageDescription
+	}
 
-		for _, stageID := range stageIDs {
-			if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
-				return nil, err
-			} else if stageDesc == nil {
-				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
-				continue
-			} else {
-				stages = append(stages, stageDesc)
-			}
+	var mutex sync.Mutex
+	var stages []*image.StageDescription
+	if err := parallel.DoTasks(ctx, len(stageIDs), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		stageID := stageIDs[taskId]
+
+		if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
+			return err
+		} else if stageDesc == nil {
+			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+		} else {
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			stages = append(stages, stageDesc)
 		}
 
-		return stages, nil
+		return nil
+	}); err != nil {
+		return nil, err
 	}
+
+	return stages, nil
 }
 
 func (m *stagesStorageManager) DeleteStages(ctx context.Context, options storage.DeleteImageOptions, stages ...*image.StageDescription) error {
@@ -315,7 +330,7 @@ func (m *stagesStorageManager) atomicGetStagesBySignatureWithCacheReset(ctx cont
 	if err := logboek.Context(ctx).Default().LogProcess("Get %s stages by signature %s from stages storage", stageName, stageSig).
 		DoError(func() error {
 			var err error
-			stageIDs, err = m.StagesStorage.GetStagesBySignature(ctx, m.ProjectName, stageSig)
+			stageIDs, err = m.StagesStorage.GetStagesIDsBySignature(ctx, m.ProjectName, stageSig)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from stages storage: %s", m.StagesStorage.String(), stageSig, err)
 			}

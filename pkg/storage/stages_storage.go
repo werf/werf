@@ -15,8 +15,8 @@ const (
 )
 
 type StagesStorage interface {
-	GetAllStages(ctx context.Context, projectName string) ([]image.StageID, error)
-	GetStagesBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error)
+	GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error)
+	GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error)
 	GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error)
 	DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error
 

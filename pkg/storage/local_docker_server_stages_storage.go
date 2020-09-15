@@ -61,7 +61,7 @@ func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectNa
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetAllStages(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -196,7 +196,7 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(ctx context.Cont
 	return res, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStagesBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE signature already depends on build-cache-version

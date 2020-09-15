@@ -4,6 +4,8 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
+const MaxNumberOfWorkersDefault = 20
+
 type StorageManager struct {
 	*stagesStorageManager
 }

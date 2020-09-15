@@ -48,7 +48,7 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 	getAllStagesFunc := func(logProcessMsg string, stagesStorage storage.StagesStorage) ([]image.StageID, error) {
 		logProcess := logboek.Context(ctx).Default().LogProcess(logProcessMsg, stagesStorage.String())
 		logProcess.Start()
-		if stages, err := stagesStorage.GetAllStages(ctx, projectName); err != nil {
+		if stages, err := stagesStorage.GetStagesIDs(ctx, projectName); err != nil {
 			logProcess.Fail()
 			return nil, fmt.Errorf("unable to get repo images from %s: %s", fromStagesStorage.String(), err)
 		} else {
