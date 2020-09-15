@@ -440,3 +440,13 @@ func (m *stagesStorageManager) ForEachGetImageMetadataByCommit(ctx context.Conte
 		return f(commit, imageMetadata, err)
 	})
 }
+
+func (m *stagesStorageManager) ForEachRmImageCommit(ctx context.Context, projectName, imageName string, commits []string, f func(commit string, err error) error) error {
+	return parallel.DoTasks(ctx, len(commits), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		commit := commits[taskId]
+		err := m.StagesStorage.RmImageCommit(ctx, projectName, imageName, commit)
+		return f(commit, err)
+	})
+}
