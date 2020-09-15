@@ -82,7 +82,7 @@ func selectRepoImagesFromImagesRepo(ctx context.Context, imagesRepo storage.Imag
 func deleteRepoImageInImagesRepo(ctx context.Context, imagesRepo storage.ImagesRepo, dryRun bool, repoImageList ...*image.Info) error {
 	for _, repoImage := range repoImageList {
 		if !dryRun {
-			if err := imagesRepo.DeleteRepoImage(ctx, storage.DeleteImageOptions{}, repoImage); err != nil {
+			if err := imagesRepo.DeleteRepoImage(ctx, repoImage); err != nil {
 				if err := handleDeleteStageOrImageError(ctx, err, repoImage.Name); err != nil {
 					return err
 				}

@@ -1,7 +1,10 @@
 package storage
 
 type DeleteImageOptions struct {
-	RmiForce                 bool
+	RmiForce bool
+}
+
+type FilterStagesAndProcessRelatedDataOptions struct {
 	SkipUsedImage            bool
 	RmForce                  bool
 	RmContainersThatUseImage bool

@@ -18,7 +18,8 @@ type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error)
 	GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error)
 	GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error)
-	DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error
+	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
+	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error)
 
 	ConstructStageImageName(projectName, signature string, uniqueID int64) string
 

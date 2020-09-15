@@ -55,11 +55,15 @@ type stagesPurgeManager struct {
 }
 
 func (m *stagesPurgeManager) run(ctx context.Context) error {
-	deleteImageOptions := storage.DeleteImageOptions{
-		RmiForce:                 true,
-		SkipUsedImage:            false,
-		RmForce:                  m.RmContainersThatUseWerfImages,
-		RmContainersThatUseImage: m.RmContainersThatUseWerfImages,
+	deleteStageOptions := manager.ForEachDeleteStageOptions{
+		DeleteImageOptions: storage.DeleteImageOptions{
+			RmiForce: true,
+		},
+		FilterStagesAndProcessRelatedDataOptions: storage.FilterStagesAndProcessRelatedDataOptions{
+			SkipUsedImage:            false,
+			RmForce:                  m.RmContainersThatUseWerfImages,
+			RmContainersThatUseImage: m.RmContainersThatUseWerfImages,
+		},
 	}
 
 	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
@@ -73,7 +77,7 @@ func (m *stagesPurgeManager) run(ctx context.Context) error {
 			return err
 		}
 
-		if err := deleteStageInStagesStorage(ctx, m.StorageManager, deleteImageOptions, m.DryRun, stages...); err != nil {
+		if err := deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stages...); err != nil {
 			logProcess.Fail()
 			return err
 		} else {

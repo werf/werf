@@ -187,13 +187,31 @@ func (m *stagesStorageManager) GetAllStages(ctx context.Context) ([]*image.Stage
 	return stages, nil
 }
 
-func (m *stagesStorageManager) DeleteStages(ctx context.Context, options storage.DeleteImageOptions, stages ...*image.StageDescription) error {
-	for _, stageDesc := range stages {
+type ForEachDeleteStageOptions struct {
+	storage.DeleteImageOptions
+	storage.FilterStagesAndProcessRelatedDataOptions
+}
+
+func (m *stagesStorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(stageDesc *image.StageDescription, err error) error) error {
+	var err error
+	stagesDescriptions, err = m.StagesStorage.FilterStagesAndProcessRelatedData(ctx, stagesDescriptions, options.FilterStagesAndProcessRelatedDataOptions)
+	if err != nil {
+		return err
+	}
+
+	for _, stageDesc := range stagesDescriptions {
 		if err := m.StagesStorageCache.DeleteStagesBySignature(ctx, m.ProjectName, stageDesc.StageID.Signature); err != nil {
 			return fmt.Errorf("unable to delete stages storage cache record (%s): %s", stageDesc.StageID.Signature, err)
 		}
 	}
-	return m.StagesStorage.DeleteStages(ctx, options, stages...)
+
+	return parallel.DoTasks(ctx, len(stagesDescriptions), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		stageDescription := stagesDescriptions[taskId]
+		err := m.StagesStorage.DeleteStage(ctx, stageDescription, options.DeleteImageOptions)
+		return f(stageDescription, err)
+	})
 }
 
 func (m *stagesStorageManager) FetchStage(ctx context.Context, stg stage.Interface) error {

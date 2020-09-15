@@ -90,10 +90,15 @@ func (m *stagesCleanupManager) getOrInitImagesRepoImageList(ctx context.Context)
 }
 
 func (m *stagesCleanupManager) run(ctx context.Context) error {
-	deleteImageOptions := storage.DeleteImageOptions{
-		RmiForce:      false,
-		SkipUsedImage: true,
-		RmForce:       false,
+	deleteStageOptions := manager.ForEachDeleteStageOptions{
+		DeleteImageOptions: storage.DeleteImageOptions{
+			RmiForce: false,
+		},
+		FilterStagesAndProcessRelatedDataOptions: storage.FilterStagesAndProcessRelatedDataOptions{
+			SkipUsedImage:            true,
+			RmForce:                  false,
+			RmContainersThatUseImage: false,
+		},
 	}
 
 	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StorageManager.StagesStorage.String(), m.ProjectName)
@@ -160,7 +165,7 @@ func (m *stagesCleanupManager) run(ctx context.Context) error {
 		}
 
 		return logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
-			return deleteStageInStagesStorage(ctx, m.StorageManager, deleteImageOptions, m.DryRun, stagesToDeleteList...)
+			return deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stagesToDeleteList...)
 		})
 	})
 }
@@ -228,23 +233,27 @@ func flattenRepoImages(repoImages map[string][]*image.Info) (repoImageList []*im
 	return
 }
 
-func deleteStageInStagesStorage(ctx context.Context, storageManager *manager.StorageManager, options storage.DeleteImageOptions, dryRun bool, stages ...*image.StageDescription) error {
-	for _, stageDesc := range stages {
-		if !dryRun {
-			if err := storageManager.DeleteStages(ctx, options, stageDesc); err != nil {
-				if err := handleDeleteStageOrImageError(ctx, err, stageDesc.Info.Name); err != nil {
-					return err
-				}
+func deleteStageInStagesStorage(ctx context.Context, storageManager *manager.StorageManager, options manager.ForEachDeleteStageOptions, dryRun bool, stages ...*image.StageDescription) error {
+	if dryRun {
+		for _, stageDesc := range stages {
+			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
 
-				continue
+	return storageManager.ForEachDeleteStage(ctx, options, stages, func(stageDesc *image.StageDescription, err error) error {
+		if err != nil {
+			if err := handleDeleteStageOrImageError(ctx, err, stageDesc.Info.Name); err != nil {
+				return err
 			}
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
 		logboek.Context(ctx).LogOptionalLn()
-	}
 
-	return nil
+		return nil
+	})
 }
 
 func handleDeleteStageOrImageError(ctx context.Context, err error, imageName string) error {

@@ -194,9 +194,16 @@ func syncStage(ctx context.Context, projectName string, stageID image.StageID, f
 	}
 
 	if opts.RemoveSource {
-		deleteOpts := storage.DeleteImageOptions{RmiForce: true, RmForce: true, RmContainersThatUseImage: true}
-		logboek.Context(ctx).Info().LogF("Removing %s\n", stageDesc.Info.Name)
-		if err := fromStagesStorage.DeleteStages(ctx, deleteOpts, stageDesc); err != nil {
+		if _, err := fromStagesStorage.FilterStagesAndProcessRelatedData(ctx, []*image.StageDescription{stageDesc}, storage.FilterStagesAndProcessRelatedDataOptions{
+			RmForce:                  true,
+			RmContainersThatUseImage: true,
+		}); err != nil {
+			return fmt.Errorf("unable to remove related stage data %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
+		}
+
+		if err := fromStagesStorage.DeleteStage(ctx, stageDesc, storage.DeleteImageOptions{
+			RmiForce: true,
+		}); err != nil {
 			return fmt.Errorf("unable to remove %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
 		}
 	}

@@ -11,7 +11,7 @@ type ImagesRepo interface {
 	GetRepoImage(ctx context.Context, imageName, tag string) (*image.Info, error)
 	GetRepoImages(ctx context.Context, imageNames []string) (map[string][]*image.Info, error)
 	SelectRepoImages(ctx context.Context, imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error)
-	DeleteRepoImage(ctx context.Context, _ DeleteImageOptions, repoImageList ...*image.Info) error
+	DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error
 
 	GetAllImageRepoTags(ctx context.Context, imageName string) ([]string, error)
 	PublishImage(ctx context.Context, publishImage *container_runtime.WerfImage) error

@@ -109,12 +109,12 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName 
 	}
 }
 
-func (storage *RepoStagesStorage) DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error {
-	var imageInfoList []*image.Info
-	for _, stageDesc := range stages {
-		imageInfoList = append(imageInfoList, stageDesc.Info)
-	}
-	return storage.DockerRegistry.DeleteRepoImage(ctx, imageInfoList...)
+func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {
+	return storage.DockerRegistry.DeleteRepoImage(ctx, stageDescription.Info)
+}
+
+func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(_ context.Context, stageDescriptions []*image.StageDescription, _ FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+	return stageDescriptions, nil
 }
 
 func (storage *RepoStagesStorage) CreateRepo(ctx context.Context) error {

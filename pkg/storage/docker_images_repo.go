@@ -78,7 +78,7 @@ func (repo *DockerImagesRepo) SelectRepoImages(ctx context.Context, imageNames [
 	}
 }
 
-func (repo *DockerImagesRepo) DeleteRepoImage(ctx context.Context, _ DeleteImageOptions, repoImageList ...*image.Info) error {
+func (repo *DockerImagesRepo) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
 	return repo.DockerRegistry.DeleteRepoImage(ctx, repoImageList...)
 }
 
