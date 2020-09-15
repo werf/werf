@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -159,21 +160,23 @@ func (m *imagesCleanupManager) initRepoImages(ctx context.Context) error {
 func (m *imagesCleanupManager) initImageCommitHashImageMetadata(ctx context.Context) error {
 	imageCommitImageMetadata := map[string]map[plumbing.Hash]*storage.ImageMetadata{}
 	for _, imageName := range m.ImageNameList {
-		commits, err := m.StorageManager.StagesStorage.GetImageCommits(ctx, m.ProjectName, imageName)
-		if err != nil {
-			return fmt.Errorf("get image %s commits failed: %s", imageName, err)
-		}
-
+		var mutex sync.Mutex
 		commitImageMetadata := map[plumbing.Hash]*storage.ImageMetadata{}
-		for _, commit := range commits {
-			imageMetadata, err := m.StorageManager.StagesStorage.GetImageMetadataByCommit(ctx, m.ProjectName, imageName, commit)
+		if err := m.StorageManager.ForEachGetImageMetadataByCommit(ctx, m.ProjectName, imageName, func(commit string, imageMetadata *storage.ImageMetadata, err error) error {
 			if err != nil {
-				return fmt.Errorf("get image %s metadata by commit %s failed", imageName, commit)
+				return err
 			}
+
+			mutex.Lock()
+			defer mutex.Unlock()
 
 			if imageMetadata != nil {
 				commitImageMetadata[plumbing.NewHash(commit)] = imageMetadata
 			}
+
+			return nil
+		}); err != nil {
+			return err
 		}
 
 		imageCommitImageMetadata[imageName] = commitImageMetadata

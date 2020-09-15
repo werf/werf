@@ -424,3 +424,19 @@ func (m *stagesStorageManager) GenerateStageUniqueID(signature string, stages []
 		return imageName, uniqueID
 	}
 }
+
+func (m *stagesStorageManager) ForEachGetImageMetadataByCommit(ctx context.Context, projectName, imageName string, f func(commit string, imageMetadata *storage.ImageMetadata, err error) error) error {
+	commits, err := m.StagesStorage.GetImageCommits(ctx, projectName, imageName)
+	if err != nil {
+		return fmt.Errorf("get image %s commits failed: %s", imageName, err)
+	}
+
+	return parallel.DoTasks(ctx, len(commits), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		commit := commits[taskId]
+
+		imageMetadata, err := m.StagesStorage.GetImageMetadataByCommit(ctx, projectName, imageName, commit)
+		return f(commit, imageMetadata, err)
+	})
+}
