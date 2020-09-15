@@ -5,6 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/secret"
+
+	"helm.sh/helm/v3/pkg/cli/values"
+
+	"helm.sh/helm/v3/pkg/chart"
+
+	"helm.sh/helm/v3/pkg/chart/loader"
+
 	"github.com/werf/werf/pkg/deploy_v2/helm_v3"
 
 	"github.com/werf/werf/pkg/deploy"
@@ -118,6 +126,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSetFiles(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
@@ -291,51 +300,67 @@ func runDeploy() error {
 
 	logboek.LogOptionalLn()
 
-	wc := werf_chart.NewWerfChart()
-	wc.ValueOpts.ValueFiles = append(wc.ValueOpts.ValueFiles, *commonCmdData.Values...)
-	wc.ValueOpts.StringValues = append(wc.ValueOpts.StringValues, *commonCmdData.SetString...)
-	wc.ValueOpts.Values = append(wc.ValueOpts.Values, *commonCmdData.Set...)
+	var secretsManager secret.Manager
+	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+		return err
+	} else {
+		secretsManager = m
+	}
+
+	var lockManager *lock_manager.LockManager
+	if m, err := lock_manager.NewLockManager(namespace); err != nil {
+		return fmt.Errorf("unable to create lock manager: %s", err)
+	} else {
+		lockManager = m
+	}
+
+	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+		ReleaseName: releaseName,
+		ChartDir:    chartDir,
+
+		SecretValueFiles: *commonCmdData.SecretValues,
+		ExtraAnnotations: userExtraAnnotations,
+		ExtraLabels:      userExtraLabels,
+
+		LockManager:    lockManager,
+		SecretsManager: secretsManager,
+	})
 
 	actionConfig := new(action.Configuration)
-
 	*cmd_helm.Settings.GetNamespaceP() = namespace
-
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
-		PostRenderer:    wc.ExtraAnnotationsAndLabelsPostRenderer,
-		ValueOpts:       wc.ValueOpts,
+		LoadOptions: loader.LoadOptions{
+			ChartExtender:               wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+		},
+		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
+		ValueOpts: &values.Options{
+			ValueFiles:   *commonCmdData.Values,
+			StringValues: *commonCmdData.SetString,
+			Values:       *commonCmdData.Set,
+		},
 		CreateNamespace: NewBool(true),
 		Install:         NewBool(true),
 		Wait:            NewBool(true),
 		Atomic:          NewBool(false),
 	})
 
-	helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
+	if err := helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-	})
-
-	werfChartInitOpts := werf_chart.WerfChartInitOptions{
-		ReleaseName:       releaseName,
-		ChartDir:          chartDir,
-		ExtraAnnotations:  userExtraAnnotations,
-		ExtraLabels:       userExtraLabels,
-		SecretValuesFiles: *commonCmdData.SecretValues,
-	}
-
-	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, werfChartInitOpts.ChartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	}); err != nil {
 		return err
-	} else {
-		werfChartInitOpts.SecretsManager = m
 	}
 
-	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
-	} else {
-		werfChartInitOpts.LockManager = m
+	_ = imagesRepository
+	_ = cmdData.Timeout
+
+	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+		return err
 	}
 
-	if err := wc.Init(werfChartInitOpts); err != nil {
-		return fmt.Errorf("unable to init werf chart: %s", err)
+	if err := wc.SetWerfConfig(werfConfig); err != nil {
+		return err
 	}
 
 	_ = imagesRepository
