@@ -16,7 +16,7 @@ import (
 	"github.com/werf/werf/pkg/util/secretvalues"
 	"github.com/werf/werf/pkg/werf"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 const (
@@ -24,67 +24,76 @@ const (
 	SecretDirName               = "secret"
 )
 
-func NewWerfChart() *WerfChart {
-	return &WerfChart{
+type WerfChartOptions struct {
+	ReleaseName string
+	ChartDir    string
+
+	SecretValueFiles []string
+	ExtraAnnotations map[string]string
+	ExtraLabels      map[string]string
+
+	LockManager    *lock_manager.LockManager
+	SecretsManager secret.Manager
+}
+
+func NewWerfChart(opts WerfChartOptions) *WerfChart {
+	wc := &WerfChart{
+		ReleaseName: opts.ReleaseName,
+		ChartDir:    opts.ChartDir,
+
+		SecretValueFiles: opts.SecretValueFiles,
 		ExtraAnnotationsAndLabelsPostRenderer: helm_v3.NewExtraAnnotationsAndLabelsPostRenderer(
 			map[string]string{"werf.io/version": werf.Version},
 			nil,
 		),
-		ValueOpts:              &values.Options{},
+
+		LockManager:    opts.LockManager,
+		SecretsManager: opts.SecretsManager,
+
 		decodedSecretFilesData: make(map[string]string, 0),
 	}
+
+	wc.ExtraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
+
+	return wc
 }
 
 type WerfChart struct {
-	ReleaseName                           string
-	ChartDir                              string
-	ChartConfig                           *chart.Metadata
+	HelmChart *chart.Chart
+
+	ReleaseName      string
+	ChartDir         string
+	SecretValueFiles []string
+
 	ExtraAnnotationsAndLabelsPostRenderer *helm_v3.ExtraAnnotationsAndLabelsPostRenderer
-	ValueOpts                             *values.Options
+	LockManager                           *lock_manager.LockManager
+	SecretsManager                        secret.Manager
 
-	LockManager    *lock_manager.LockManager
-	SecretsManager secret.Manager
-
-	decodedSecretFilesData map[string]string
-	secretValuesToMask     []string
-	initialized            bool
+	chartMetadataFromWerfConfig *chart.Metadata
+	decodedSecretValues         map[string]interface{}
+	decodedSecretFilesData      map[string]string
+	secretValuesToMask          []string
 }
 
-type WerfChartInitOptions struct {
-	LockManager    *lock_manager.LockManager
-	SecretsManager secret.Manager
-
-	ReleaseName       string
-	ChartDir          string
-	SecretValuesFiles []string
-	ExtraAnnotations  map[string]string
-	ExtraLabels       map[string]string
+func (wc *WerfChart) SetupChart(c *chart.Chart) error {
+	wc.HelmChart = c
+	return nil
 }
 
-// Load secrets, validate, etc.
-func (wc *WerfChart) Init(opts WerfChartInitOptions) error {
-	if wc.initialized {
-		panic(fmt.Sprintf("werf chart %#v already initialized", *wc))
-	}
-
-	wc.LockManager = opts.LockManager
-	wc.SecretsManager = opts.SecretsManager
-	wc.ReleaseName = opts.ReleaseName
-	wc.ChartDir = opts.ChartDir
-
+func (wc *WerfChart) AfterLoad() error {
 	secretValuesFiles := []string{}
 	defaultSecretValuesFile := filepath.Join(wc.ChartDir, DefaultSecretValuesFileName)
 	if _, err := os.Stat(defaultSecretValuesFile); !os.IsNotExist(err) {
 		secretValuesFiles = append(secretValuesFiles, defaultSecretValuesFile)
 	}
-	for _, path := range opts.SecretValuesFiles {
+	for _, path := range wc.SecretValueFiles {
 		secretValuesFiles = append(secretValuesFiles, path)
 	}
 	for _, path := range secretValuesFiles {
 		if decodedValues, err := DecodeSecretValuesFile(path, wc.SecretsManager); err != nil {
 			return fmt.Errorf("unable to decode secret values file %q: %s", path, err)
 		} else {
-			wc.ValueOpts.RawValues = append(wc.ValueOpts.RawValues, decodedValues)
+			wc.decodedSecretValues = chartutil.CoalesceTables(decodedValues, wc.decodedSecretValues)
 			wc.secretValuesToMask = append(wc.secretValuesToMask, secretvalues.ExtractSecretValuesFromMap(decodedValues)...)
 		}
 	}
@@ -124,10 +133,18 @@ func (wc *WerfChart) Init(opts WerfChartInitOptions) error {
 		}
 	}
 
-	wc.ExtraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
+	if wc.HelmChart.Metadata == nil && wc.chartMetadataFromWerfConfig != nil {
+		wc.HelmChart.Metadata = wc.chartMetadataFromWerfConfig
+	}
 
-	wc.initialized = true
 	return nil
+}
+
+func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
+	vals := make(map[string]interface{})
+	chartutil.CoalesceTables(vals, wc.decodedSecretValues)
+	chartutil.CoalesceTables(vals, inputVals)
+	return vals, nil
 }
 
 func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
@@ -135,10 +152,10 @@ func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
 		"project.werf.io/name": werfConfig.Meta.Project,
 	}, nil)
 
-	wc.ChartConfig = &chart.Metadata{
+	wc.chartMetadataFromWerfConfig = &chart.Metadata{
 		APIVersion: "v1",
 		Name:       werfConfig.Meta.Project,
-		Version:    "0.1.0", // FIXME
+		Version:    "1.0.0",
 	}
 
 	return nil

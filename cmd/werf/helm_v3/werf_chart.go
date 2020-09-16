@@ -24,38 +24,34 @@ func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.Cmd
 	cmd_werf_common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 
-func InitWerfChart(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, setupWerfChartInitOptionsFunc func(opts *werf_chart.WerfChartInitOptions, args []string) error, args []string) error {
-	werfChartInitOpts := werf_chart.WerfChartInitOptions{
-		SecretValuesFiles: *commonCmdData.SecretValues,
-	}
+func InitWerfChartParams(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, chartDir string) error {
+	wc.SecretValueFiles = *commonCmdData.SecretValues
+
 	if extraAnnotations, err := cmd_werf_common.GetUserExtraAnnotations(commonCmdData); err != nil {
 		return err
 	} else {
-		werfChartInitOpts.ExtraAnnotations = extraAnnotations
+		wc.ExtraAnnotationsAndLabelsPostRenderer.Add(extraAnnotations, nil)
 	}
+
 	if extraLabels, err := cmd_werf_common.GetUserExtraLabels(commonCmdData); err != nil {
 		return err
 	} else {
-		werfChartInitOpts.ExtraLabels = extraLabels
-	}
-
-	if err := setupWerfChartInitOptionsFunc(&werfChartInitOpts, args); err != nil {
-		return err
+		wc.ExtraAnnotationsAndLabelsPostRenderer.Add(nil, extraLabels)
 	}
 
 	// NOTE: project-dir is the same as chart-dir for werf helm-v3 install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf deploy/dismiss commands
-	if m, err := deploy.GetSafeSecretManager(context.Background(), werfChartInitOpts.ChartDir, werfChartInitOpts.ChartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(context.Background(), chartDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
-		werfChartInitOpts.SecretsManager = m
+		wc.SecretsManager = m
 	}
 
 	if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
 		return fmt.Errorf("unable to create lock manager: %s", err)
 	} else {
-		werfChartInitOpts.LockManager = m
+		wc.LockManager = m
 	}
 
-	return wc.Init(werfChartInitOpts)
+	return nil
 }

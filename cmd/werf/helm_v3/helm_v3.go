@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	"helm.sh/helm/v3/pkg/chart/loader"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/deploy_v2/helm_v3"
 
@@ -29,6 +31,8 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
+	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
+
 	cmd.PersistentFlags().StringVarP(cmd_helm.Settings.GetNamespaceP(), "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
 	cmd_werf_common.SetupKubeConfig(&commonCmdData, cmd)
 	cmd_werf_common.SetupKubeConfigBase64(&commonCmdData, cmd)
@@ -43,7 +47,8 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),
 		cmd_helm.NewLintCmd(os.Stdout),
 		cmd_helm.NewListCmd(actionConfig, os.Stdout),
-		cmd_helm.NewTemplateCmd(actionConfig, os.Stdout),
+		// FIXME
+		cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{LoadOptions: loader.LoadOptions{}}),
 		cmd_helm.NewRepoCmd(os.Stdout),
 		cmd_helm.NewRollbackCmd(actionConfig, os.Stdout),
 		NewInstallCmd(actionConfig),
@@ -59,6 +64,7 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewTestCmd(actionConfig, os.Stdout),
 		cmd_helm.NewVerifyCmd(os.Stdout),
 		cmd_helm.NewVersionCmd(os.Stdout),
+		cmd_helm.NewChartCmd(actionConfig, os.Stdout),
 	)
 
 	cmd_helm.LoadPlugins(cmd, os.Stdout)

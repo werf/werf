@@ -3,11 +3,14 @@ package helm_v3
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/logboek"
 
@@ -73,14 +76,16 @@ type InitActionConfigOptions struct {
 
 func NewActionConfig(ctx context.Context, envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
 	actionConfig := &action.Configuration{}
-	InitActionConfig(ctx, envSettings, actionConfig, opts)
+	if err := InitActionConfig(ctx, envSettings, actionConfig, opts); err != nil {
+		log.Fatal(err)
+	}
 	return actionConfig
 }
 
-func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) {
+func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	helmDriver := os.Getenv("HELM_DRIVER")
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("action config init failed: %s", err)
 	}
 	if helmDriver == "memory" {
 		loadReleasesInMemory(envSettings, actionConfig)
@@ -88,6 +93,14 @@ func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionC
 
 	kubeClient := actionConfig.KubeClient.(*helm_kube.Client)
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
+
+	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), logboek.Context(ctx).ProxyOutStream()); err != nil {
+		return fmt.Errorf("unable to create registry client: %s", err)
+	} else {
+		actionConfig.RegistryClient = registryClient
+	}
+
+	return nil
 }
 
 // This function loads releases into the memory storage if the

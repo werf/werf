@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/deploy_v2/werf_chart"
@@ -18,32 +21,32 @@ import (
 var upgradeCmdData cmd_werf_common.CmdData
 
 func NewUpgradeCmd(actionConfig *action.Configuration) *cobra.Command {
-	wc := werf_chart.NewWerfChart()
+	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{})
 
 	cmd, helmAction := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
+		LoadOptions: loader.LoadOptions{
+			ChartExtender:               wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
-		ValueOpts:    wc.ValueOpts,
 	})
 
 	SetupWerfChartParams(cmd, &upgradeCmdData)
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		if err := werf.Init(*upgradeCmdData.TmpDir, *upgradeCmdData.HomeDir); err != nil {
 			return err
 		}
 
-		if err := InitWerfChart(&upgradeCmdData, wc, func(opts *werf_chart.WerfChartInitOptions, args []string) error {
-			if chartDir, err := helmAction.ChartPathOptions.LocateChart(args[1], cmd_helm.Settings); err != nil {
-				return err
-			} else {
-				opts.ChartDir = chartDir
-			}
+		if chartDir, err := helmAction.ChartPathOptions.LocateChart(args[1], cmd_helm.Settings); err != nil {
+			return err
+		} else {
+			wc.ChartDir = chartDir
+		}
+		wc.ReleaseName = args[0]
 
-			opts.ReleaseName = args[0]
-
-			return nil
-		}, args); err != nil {
+		if err := InitWerfChartParams(&upgradeCmdData, wc, wc.ChartDir); err != nil {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 

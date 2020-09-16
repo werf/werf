@@ -64,6 +64,7 @@ type CmdData struct {
 	Set             *[]string
 	SetString       *[]string
 	Values          *[]string
+	SetFile         *[]string
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
@@ -717,6 +718,14 @@ func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Values = &values
 	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", values, `Specify helm values in a YAML file or a URL (can specify multiple).
 Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
+}
+
+func SetupSetFiles(cmdData *CmdData, cmd *cobra.Command) {
+	setFile := predefinedValuesByEnvNamePrefix("WERF_SET_FILE")
+
+	cmdData.SetFile = &setFile
+	cmd.Flags().StringArrayVarP(cmdData.SetFile, "set-file", "", setFile, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
+Also, can be defined with $WERF_SET_FILE* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 }
 
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
