@@ -202,7 +202,7 @@ entries:
               - title: ci-env
                 url: /documentation/cli/toolbox/ci_env.html
 
-          - title: Lowlevel Management Commands
+          - title: Low-level Management Commands
             sfi:
 
               - title: config render
