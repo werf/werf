@@ -404,7 +404,17 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 				"Discarding newly built image for stage %s by signature %s: detected already existing image %s in the stages storage\n",
 				stg.LogDetailedName(), stg.GetSignature(), stageDesc.Info.Name,
 			)
-			i := phase.Conveyor.GetOrCreateStageImage(phase.StagesIterator.GetPrevImage(img, stg).(*container_runtime.StageImage), stageDesc.Info.Name)
+
+			var i *container_runtime.StageImage
+			switch fromImage := phase.StagesIterator.GetPrevImage(img, stg).(type) {
+			case *container_runtime.StageImage:
+				i = phase.Conveyor.GetOrCreateStageImage(fromImage, stageDesc.Info.Name)
+			case nil:
+				i = phase.Conveyor.GetOrCreateStageImage(nil, stageDesc.Info.Name)
+			default:
+				panic(fmt.Sprintf("runtime error: unexpected type %T", fromImage))
+			}
+
 			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
 			return nil
