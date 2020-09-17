@@ -63,23 +63,46 @@ func (repo *DockerImagesRepo) DeleteImageRepo(ctx context.Context, imageName str
 }
 
 func (repo *DockerImagesRepo) GetRepoImage(ctx context.Context, imageName, tag string) (*image.Info, error) {
-	return repo.DockerRegistry.GetRepoImage(ctx, repo.ImageRepositoryNameWithTag(imageName, tag))
+	repoImage, err := repo.DockerRegistry.GetRepoImage(ctx, repo.ImageRepositoryNameWithTag(imageName, tag))
+	if err != nil {
+		return nil, err
+	}
+
+	if !repo.IsRepoImage(imageName, repoImage) {
+		return nil, fmt.Errorf("%s: tag %s is not associated with image %s", tagNotAssociatedWithImageErrorCode, repo.imageRepoTagFunc(imageName, tag), imageName)
+	}
+
+	return repoImage, nil
 }
 
-func (repo *DockerImagesRepo) GetRepoImages(ctx context.Context, imageNames []string) (map[string][]*image.Info, error) {
-	return repo.SelectRepoImages(ctx, imageNames, nil)
-}
+func (repo *DockerImagesRepo) IsRepoImage(imageName string, repoImage *image.Info) bool {
+	if !repo.isRepoImage(repoImage) {
+		return false
+	}
 
-func (repo *DockerImagesRepo) SelectRepoImages(ctx context.Context, imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
 	if repo.imagesRepoManager.IsMonorepo() {
-		return repo.getRepoImagesFromMonorepo(ctx, imageNames, f)
+		metaImageName, ok := repoImage.Labels[image.WerfImageNameLabel]
+		if !ok {
+			return false
+		}
+
+		return metaImageName == imageName
 	} else {
-		return repo.getRepoImagesFromMultirepo(ctx, imageNames, f)
+		return true
 	}
 }
 
-func (repo *DockerImagesRepo) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	return repo.DockerRegistry.DeleteRepoImage(ctx, repoImageList...)
+func (repo *DockerImagesRepo) isRepoImage(repoImage *image.Info) bool {
+	werfImageLabel, ok := repoImage.Labels[image.WerfImageLabel]
+	if !ok || werfImageLabel != "true" {
+		return false
+	}
+
+	return true
+}
+
+func (repo *DockerImagesRepo) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+	return repo.DockerRegistry.DeleteRepoImage(ctx, repoImage)
 }
 
 func (repo *DockerImagesRepo) GetAllImageRepoTags(ctx context.Context, imageName string) ([]string, error) {
@@ -100,84 +123,22 @@ func (repo *DockerImagesRepo) ImageRepositoryName(imageName string) string {
 	return repo.imagesRepoManager.ImageRepo(imageName)
 }
 
-func (repo *DockerImagesRepo) ImageRepositoryNameWithTag(imageName, tag string) string {
-	return repo.imagesRepoManager.ImageRepoWithTag(imageName, tag)
+func (repo *DockerImagesRepo) ImageRepositoryNameWithTag(imageName, metaTag string) string {
+	return repo.imagesRepoManager.ImageRepoWithTag(imageName, metaTag)
 }
 
-func (repo *DockerImagesRepo) ImageRepositoryTag(imageName, tag string) string {
-	return repo.imagesRepoManager.ImageRepoTag(imageName, tag)
+func (repo *DockerImagesRepo) ImageRepositoryTag(imageName, metaTag string) string {
+	return repo.imagesRepoManager.ImageRepoTag(imageName, metaTag)
+}
+
+func (repo *DockerImagesRepo) ImageRepositoryMetaTag(imageName, tag string) string {
+	return repo.imagesRepoManager.ImageRepoMetaTag(imageName, tag)
+}
+
+func (repo *DockerImagesRepo) IsImageRepositoryTag(imageName, tag string) bool {
+	return repo.imagesRepoManager.isImageRepoTag(imageName, tag)
 }
 
 func (repo *DockerImagesRepo) String() string {
 	return repo.imagesRepoManager.ImagesRepo()
-}
-
-func (repo *DockerImagesRepo) getRepoImagesFromMonorepo(ctx context.Context, imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
-	tags, err := repo.selectImages(ctx, repo.imagesRepoManager.imagesRepo, f)
-	if err != nil {
-		return nil, err
-	}
-
-	imageTags := map[string][]*image.Info{}
-
-loop:
-	for _, info := range tags {
-		for _, imageName := range imageNames {
-			metaImageName, ok := info.Labels[image.WerfImageNameLabel]
-			if !ok {
-				continue
-			}
-
-			if metaImageName == imageName {
-				imageTags[imageName] = append(imageTags[imageName], info)
-				continue loop
-			}
-		}
-	}
-
-	return imageTags, nil
-}
-
-func (repo *DockerImagesRepo) getRepoImagesFromMultirepo(ctx context.Context, imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
-	imageTags := map[string][]*image.Info{}
-	for _, imageName := range imageNames {
-		tags, err := repo.selectImages(ctx, repo.imagesRepoManager.ImageRepo(imageName), f)
-		if err != nil {
-			return nil, err
-		}
-
-		imageTags[imageName] = tags
-	}
-
-	return imageTags, nil
-}
-
-func (repo *DockerImagesRepo) selectImages(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	return repo.DockerRegistry.SelectRepoImageList(ctx, reference, func(ref string, info *image.Info, err error) (bool, error) {
-		if err != nil {
-			if f != nil {
-				return f(ref, info, err)
-			}
-
-			return false, err
-		}
-
-		werfImageLabel, ok := info.Labels[image.WerfImageLabel]
-		if !ok || werfImageLabel != "true" {
-			return false, nil
-		}
-
-		if f != nil {
-			ok, err := f(ref, info, err)
-			if err != nil {
-				return false, err
-			}
-
-			if !ok {
-				return false, nil
-			}
-		}
-
-		return true, nil
-	})
 }

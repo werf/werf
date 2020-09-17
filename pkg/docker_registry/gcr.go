@@ -30,17 +30,7 @@ func newGcr(options GcrOptions) (*gcr, error) {
 	return gcr, nil
 }
 
-func (r *gcr) DeleteRepoImage(_ context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(repoImage); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *gcr) deleteRepoImage(repoImage *image.Info) error {
+func (r *gcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 	return r.api.deleteImageByReference(reference)
 }

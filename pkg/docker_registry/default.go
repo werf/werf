@@ -24,44 +24,6 @@ func newDefaultImplementation(options defaultImplementationOptions) (*defaultImp
 	return d, nil
 }
 
-func (r *defaultImplementation) GetRepoImageList(ctx context.Context, reference string) ([]*image.Info, error) {
-	return r.SelectRepoImageList(ctx, reference, nil)
-}
-
-func (r *defaultImplementation) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.api.Tags(ctx, reference)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.selectRepoImageListByTags(ctx, reference, tags, f)
-}
-
-func (r *defaultImplementation) selectRepoImageListByTags(ctx context.Context, reference string, tags []string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	var repoImageList []*image.Info
-	for _, tag := range tags {
-		ref := strings.Join([]string{reference, tag}, ":")
-		repoImage, err := r.GetRepoImage(ctx, ref)
-
-		if f != nil {
-			ok, err := f(ref, repoImage, err)
-			if err != nil {
-				return nil, err
-			}
-
-			if !ok {
-				continue
-			}
-		} else if err != nil {
-			return nil, err
-		}
-
-		repoImageList = append(repoImageList, repoImage)
-	}
-
-	return repoImageList, nil
-}
-
 func (r *defaultImplementation) CreateRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
@@ -70,17 +32,7 @@ func (r *defaultImplementation) DeleteRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
 
-func (r *defaultImplementation) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *defaultImplementation) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+func (r *defaultImplementation) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
 	return r.api.deleteImageByReference(reference)
 }

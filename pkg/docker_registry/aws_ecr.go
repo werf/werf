@@ -40,50 +40,24 @@ func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
 	return awsEcr, nil
 }
 
-func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImageList ...*image.Info) error {
-	repositoriesByRegion := map[string]map[string][]*ecr.ImageIdentifier{}
-
-	for _, repoImage := range repoImageList {
-		_, region, repository, err := r.parseReference(repoImage.Repository)
-		if err != nil {
-			return err
-		}
-
-		imageIdentifiersByRepository, ok := repositoriesByRegion[region]
-		if !ok {
-			repositoriesByRegion[region] = map[string][]*ecr.ImageIdentifier{}
-			imageIdentifiersByRepository = repositoriesByRegion[region]
-		}
-
-		imageIdentifiers, ok := imageIdentifiersByRepository[repository]
-		if !ok {
-			imageIdentifiers = []*ecr.ImageIdentifier{}
-		}
-
-		imageIdentifiers = append(imageIdentifiers, &ecr.ImageIdentifier{
-			ImageDigest: &repoImage.RepoDigest,
-		})
-
-		repositoriesByRegion[region][repository] = imageIdentifiers
+func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
+	_, region, repository, err := r.parseReference(repoImage.Repository)
+	if err != nil {
+		return err
 	}
 
-	for region, imageIdentifiersByRepository := range repositoriesByRegion {
-		mySession := session.Must(session.NewSession())
-		service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
+	mySession := session.Must(session.NewSession())
+	service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
+	_, err = service.BatchDeleteImage(&ecr.BatchDeleteImageInput{
+		ImageIds: []*ecr.ImageIdentifier{
+			{
+				ImageDigest: &repoImage.RepoDigest,
+			},
+		},
+		RepositoryName: &repository,
+	})
 
-		for repository, imageIdentifiers := range imageIdentifiersByRepository {
-			_, err := service.BatchDeleteImage(&ecr.BatchDeleteImageInput{
-				ImageIds:       imageIdentifiers,
-				RepositoryName: &repository,
-			})
-
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return err
 }
 
 func (r *awsEcr) CreateRepo(_ context.Context, reference string) error {

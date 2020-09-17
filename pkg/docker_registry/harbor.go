@@ -80,15 +80,6 @@ func (r *harbor) TryGetRepoImage(ctx context.Context, reference string) (*image.
 	return res, err
 }
 
-func (r *harbor) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.Tags(ctx, reference)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.selectRepoImageListByTags(ctx, reference, tags, f)
-}
-
 func (r *harbor) DeleteRepo(ctx context.Context, reference string) error {
 	return r.deleteRepo(ctx, reference)
 }

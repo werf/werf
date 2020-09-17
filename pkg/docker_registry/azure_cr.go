@@ -38,17 +38,7 @@ func newAzureCr(options azureCrOptions) (*azureCr, error) {
 	return azureCr, nil
 }
 
-func (r *azureCr) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *azureCr) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+func (r *azureCr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	registryName, repository, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err

@@ -52,17 +52,7 @@ func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
 	return gitLab, nil
 }
 
-func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *gitLabRegistry) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	deleteRepoImageFunc := r.deleteRepoImageFunc
 	if deleteRepoImageFunc != nil {
 		return deleteRepoImageFunc(ctx, repoImage)
@@ -109,12 +99,12 @@ func (r *gitLabRegistry) deleteRepoImage(ctx context.Context, repoImage *image.I
 		return nil
 	}
 
-	err = r.defaultImplementation.deleteRepoImage(ctx, repoImage)
+	err = r.defaultImplementation.DeleteRepoImage(ctx, repoImage)
 	if err != nil {
 		return err
 	}
 
-	r.deleteRepoImageFunc = r.defaultImplementation.deleteRepoImage
+	r.deleteRepoImageFunc = r.defaultImplementation.DeleteRepoImage
 	return nil
 }
 

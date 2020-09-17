@@ -71,26 +71,7 @@ func (r *gitHubPackages) exceptMetaTag(tags []string) []string {
 	return result
 }
 
-func (r *gitHubPackages) SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
-	tags, err := r.Tags(ctx, reference)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.defaultImplementation.selectRepoImageListByTags(ctx, reference, tags, f)
-}
-
-func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *gitHubPackages) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	owner, project, packageName, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
