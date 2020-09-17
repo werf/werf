@@ -46,8 +46,8 @@ type ImagesCleanupOptions struct {
 	DryRun                                  bool
 }
 
-func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
-	m := newImagesCleanupManager(projectName, imagesRepo, storageManager, options)
+func ImagesCleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
+	m := newImagesCleanupManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -64,10 +64,9 @@ func ImagesCleanup(ctx context.Context, projectName string, imagesRepo storage.I
 		})
 }
 
-func newImagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options ImagesCleanupOptions) *imagesCleanupManager {
+func newImagesCleanupManager(projectName string, storageManager *manager.StorageManager, options ImagesCleanupOptions) *imagesCleanupManager {
 	return &imagesCleanupManager{
 		ProjectName:                             projectName,
-		ImagesRepo:                              imagesRepo,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
 		DryRun:                                  options.DryRun,
@@ -87,7 +86,6 @@ type imagesCleanupManager struct {
 	imageCommitHashImageMetadata *map[string]map[plumbing.Hash]*storage.ImageMetadata
 
 	ProjectName                             string
-	ImagesRepo                              storage.ImagesRepo
 	StorageManager                          *manager.StorageManager
 	ImageNameList                           []string
 	LocalGit                                GitRepo
@@ -147,7 +145,7 @@ func (m *imagesCleanupManager) initRepoImagesData(ctx context.Context) error {
 }
 
 func (m *imagesCleanupManager) initRepoImages(ctx context.Context) error {
-	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.ImagesRepo, m.ImageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.StorageManager, m.ImageNameList)
 	if err != nil {
 		return err
 	}
@@ -225,7 +223,7 @@ outerLoop:
 }
 
 func (m *imagesCleanupManager) run(ctx context.Context) error {
-	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", m.ImagesRepo.String())
+	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", m.StorageManager.ImagesRepo.String())
 	return werf.WithHostLock(ctx, imagesCleanupLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		if err := logboek.Context(ctx).LogProcess("Fetching repo images data").DoError(func() error {
 			return m.initRepoImagesData(ctx)
@@ -604,7 +602,7 @@ func (m *imagesCleanupManager) repoImagesGitHistoryBasedCleanup(ctx context.Cont
 
 					if len(repoImageListToCleanup) != 0 {
 						if err := logboek.Context(ctx).Default().LogProcess("Deleting tags").DoError(func() error {
-							return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, repoImageListToCleanup...)
+							return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, repoImageListToCleanup...)
 						}); err != nil {
 							return err
 						}
@@ -763,7 +761,7 @@ Loop:
 
 	if len(nonexistentGitTagRepoImages) != 0 {
 		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-tag policy").DoError(func() error {
-			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitTagRepoImages...)
+			return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, nonexistentGitTagRepoImages...)
 		}); err != nil {
 			return nil, err
 		}
@@ -773,7 +771,7 @@ Loop:
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
 		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-branch policy").DoError(func() error {
-			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitBranchRepoImages...)
+			return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, nonexistentGitBranchRepoImages...)
 		}); err != nil {
 			return nil, err
 		}
@@ -783,7 +781,7 @@ Loop:
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
 		if err := logboek.Context(ctx).Default().LogBlock("Removed tags by nonexistent git-commit policy").DoError(func() error {
-			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, nonexistentGitCommitRepoImages...)
+			return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, nonexistentGitCommitRepoImages...)
 		}); err != nil {
 			return nil, err
 		}
@@ -898,7 +896,7 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicy(ctx context.Context, re
 	if len(expiredRepoImages) != 0 {
 		logBlockMessage := fmt.Sprintf("Removed tags by %s date policy (created before %s)", options.schemeName, expiryTime.Format("2006-01-02T15:04:05-0700"))
 		if err := logboek.Context(ctx).Default().LogBlock(logBlockMessage).DoError(func() error {
-			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, expiredRepoImages...)
+			return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, expiredRepoImages...)
 		}); err != nil {
 			return nil, err
 		}
@@ -911,7 +909,7 @@ func (m *imagesCleanupManager) repoImagesCleanupByPolicy(ctx context.Context, re
 
 		logBlockMessage := fmt.Sprintf("Removed tags by %s limit policy (> %d)", options.schemeName, options.limit)
 		if err := logboek.Context(ctx).Default().LogBlock(logBlockMessage).DoError(func() error {
-			return deleteRepoImageInImagesRepo(ctx, m.ImagesRepo, m.DryRun, excessImagesByLimit...)
+			return deleteRepoImageInImagesRepo(ctx, m.StorageManager, m.DryRun, excessImagesByLimit...)
 		},
 		); err != nil {
 			return nil, err

@@ -152,6 +152,9 @@ func runPurge() error {
 		return err
 	}
 
+	storageManager.SetImageRepo(imagesRepo)
+	storageManager.ImagesRepoManager.EnableParallel()
+
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
@@ -170,7 +173,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(ctx, projectName, imagesRepo, storageLockManager, storageManager, purgeOptions); err != nil {
+	if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
 		return err
 	}
 

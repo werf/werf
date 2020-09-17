@@ -184,6 +184,9 @@ func runCleanup() error {
 		return err
 	}
 
+	storageManager.SetImageRepo(imagesRepo)
+	storageManager.ImagesRepoManager.EnableParallel()
+
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
@@ -225,7 +228,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(ctx, projectName, imagesRepo, storageLockManager, storageManager, cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(ctx, projectName, storageManager, storageLockManager, cleanupOptions); err != nil {
 		return err
 	}
 

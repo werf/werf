@@ -26,8 +26,8 @@ type StagesCleanupOptions struct {
 	DryRun        bool
 }
 
-func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
-	m := newStagesCleanupManager(projectName, imagesRepo, storageManager, options)
+func StagesCleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options StagesCleanupOptions) error {
+	m := newStagesCleanupManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -44,9 +44,8 @@ func StagesCleanup(ctx context.Context, projectName string, imagesRepo storage.I
 		})
 }
 
-func newStagesCleanupManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options StagesCleanupOptions) *stagesCleanupManager {
+func newStagesCleanupManager(projectName string, storageManager *manager.StorageManager, options StagesCleanupOptions) *stagesCleanupManager {
 	return &stagesCleanupManager{
-		ImagesRepo:     imagesRepo,
 		ImageNameList:  options.ImageNameList,
 		StorageManager: storageManager,
 		ProjectName:    projectName,
@@ -65,7 +64,7 @@ type stagesCleanupManager struct {
 }
 
 func (m *stagesCleanupManager) initImagesRepoImageList(ctx context.Context) error {
-	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.ImagesRepo, m.ImageNameList)
+	repoImages, err := selectRepoImagesFromImagesRepo(ctx, m.StorageManager, m.ImageNameList)
 	if err != nil {
 		return err
 	}
@@ -247,6 +246,7 @@ func deleteStageInStagesStorage(ctx context.Context, storageManager *manager.Sto
 			if err := handleDeleteStageOrImageError(ctx, err, stageDesc.Info.Name); err != nil {
 				return err
 			}
+			return nil
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)

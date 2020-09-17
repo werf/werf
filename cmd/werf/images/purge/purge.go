@@ -3,8 +3,6 @@ package purge
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -13,6 +11,9 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -124,12 +125,23 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	_ = stagesStorageCache
+
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		return err
+	}
+
+	if stagesStorage.Address() != storage.LocalStorageAddress {
+		storageManager.EnableParallel()
+	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
+
+	storageManager.SetImageRepo(imagesRepo)
+	storageManager.ImagesRepoManager.EnableParallel()
 
 	imageNameList, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
@@ -143,7 +155,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesPurge(ctx, projectName, imagesRepo, storageLockManager, imagesPurgeOptions); err != nil {
+	if err := cleaning.ImagesPurge(ctx, projectName, storageManager, storageLockManager, imagesPurgeOptions); err != nil {
 		return err
 	}
 

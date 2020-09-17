@@ -17,8 +17,8 @@ type PurgeOptions struct {
 	StagesPurgeOptions
 }
 
-func Purge(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, storageManager *manager.StorageManager, options PurgeOptions) error {
-	m := newPurgeManager(projectName, imagesRepo, storageManager, options)
+func Purge(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options PurgeOptions) error {
+	m := newPurgeManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -45,9 +45,9 @@ func Purge(ctx context.Context, projectName string, imagesRepo storage.ImagesRep
 	return nil
 }
 
-func newPurgeManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options PurgeOptions) *purgeManager {
+func newPurgeManager(projectName string, storageManager *manager.StorageManager, options PurgeOptions) *purgeManager {
 	return &purgeManager{
-		imagesPurgeManager: newImagesPurgeManager(imagesRepo, options.ImagesPurgeOptions),
+		imagesPurgeManager: newImagesPurgeManager(storageManager, options.ImagesPurgeOptions),
 		stagesPurgeManager: newStagesPurgeManager(projectName, storageManager, options.StagesPurgeOptions),
 	}
 }

@@ -17,8 +17,8 @@ type CleanupOptions struct {
 	StagesCleanupOptions
 }
 
-func Cleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, storageManager *manager.StorageManager, options CleanupOptions) error {
-	m := newCleanupManager(projectName, imagesRepo, storageManager, options)
+func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options CleanupOptions) error {
+	m := newCleanupManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -52,10 +52,10 @@ func Cleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesR
 	return nil
 }
 
-func newCleanupManager(projectName string, imagesRepo storage.ImagesRepo, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
+func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
-		imagesCleanupManager: newImagesCleanupManager(projectName, imagesRepo, storageManager, options.ImagesCleanupOptions),
-		stagesCleanupManager: newStagesCleanupManager(projectName, imagesRepo, storageManager, options.StagesCleanupOptions),
+		imagesCleanupManager: newImagesCleanupManager(projectName, storageManager, options.ImagesCleanupOptions),
+		stagesCleanupManager: newStagesCleanupManager(projectName, storageManager, options.StagesCleanupOptions),
 	}
 }
 

@@ -141,13 +141,16 @@ func runSync() error {
 	}
 
 	if stagesStorage.Address() != storage.LocalStorageAddress {
-		storageManager.EnableParallel()
+		storageManager.StagesStorageManager.EnableParallel()
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
 	}
+
+	storageManager.SetImageRepo(imagesRepo)
+	storageManager.ImagesRepoManager.EnableParallel()
 
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
@@ -161,5 +164,5 @@ func runSync() error {
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.StagesCleanup(ctx, projectName, imagesRepo, storageManager, storageLockManager, stagesCleanupOptions)
+	return cleaning.StagesCleanup(ctx, projectName, storageManager, storageLockManager, stagesCleanupOptions)
 }
