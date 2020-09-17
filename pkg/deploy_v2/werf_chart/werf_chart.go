@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"unicode"
+
+	"github.com/werf/werf/pkg/deploy/helm"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/secret"
@@ -73,6 +77,7 @@ type WerfChart struct {
 	decodedSecretValues         map[string]interface{}
 	decodedSecretFilesData      map[string]string
 	secretValuesToMask          []string
+	serviceValues               map[string]interface{}
 }
 
 func (wc *WerfChart) SetupChart(c *chart.Chart) error {
@@ -137,14 +142,52 @@ func (wc *WerfChart) AfterLoad() error {
 		wc.HelmChart.Metadata = wc.chartMetadataFromWerfConfig
 	}
 
+	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
+		Name: "templates/_werf_helpers.tpl",
+		Data: []byte(helm.WerfEngineHelpers),
+	})
+
 	return nil
 }
 
 func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
+	chartutil.CoalesceTables(vals, wc.serviceValues) // NOTE: service values will not be saved into the marshalled release
 	chartutil.CoalesceTables(vals, wc.decodedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
 	return vals, nil
+}
+
+func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
+	funcMap["werf_secret_file"] = func(secretRelativePath string) (string, error) {
+		if path.IsAbs(secretRelativePath) {
+			return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
+		}
+
+		decodedData, ok := wc.decodedSecretFilesData[secretRelativePath]
+
+		if !ok {
+			var secretFiles []string
+			for key := range wc.decodedSecretFilesData {
+				secretFiles = append(secretFiles, key)
+			}
+
+			return "", fmt.Errorf("secret file '%s' not found, you may use one of the following: '%s'", secretRelativePath, strings.Join(secretFiles, "', '"))
+		}
+
+		return decodedData, nil
+	}
+
+	helmIncludeFunc := funcMap["include"].(func(name string, data interface{}) (string, error))
+	setupIncludeWrapperFunc := func(name string) {
+		funcMap[name] = func(data interface{}) (string, error) {
+			return helmIncludeFunc(name, data)
+		}
+	}
+
+	for _, name := range []string{"image", "image_id", "werf_container_image", "werf_container_env"} {
+		setupIncludeWrapperFunc(name)
+	}
 }
 
 func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
@@ -166,6 +209,11 @@ func (wc *WerfChart) SetEnv(env string) error {
 		"project.werf.io/env": env,
 	}, nil)
 
+	return nil
+}
+
+func (wc *WerfChart) SetServiceValues(vals map[string]interface{}) error {
+	wc.serviceValues = vals
 	return nil
 }
 
