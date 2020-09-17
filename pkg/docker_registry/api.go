@@ -4,13 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/pkg/image"
@@ -141,7 +145,38 @@ func (api *api) deleteImageByReference(reference string) error {
 	return nil
 }
 
-func (api *api) PushImage(_ context.Context, reference string, opts PushImageOptions) error {
+func (api *api) PushImage(ctx context.Context, reference string, opts PushImageOptions) error {
+	retriesLimit := 5
+
+attemptLoop:
+	for attempt := 1; attempt <= retriesLimit; attempt++ {
+		if err := api.pushImage(ctx, reference, opts); err != nil {
+			for _, substr := range []string{
+				"REDACTED: UNKNOWN",
+				"http2: server sent GOAWAY and closed the connection",
+				"http2: Transport received Server's graceful shutdown GOAWAY",
+			} {
+				if strings.Contains(err.Error(), substr) {
+					seconds := rand.Intn(5) + 1
+
+					msg := fmt.Sprintf("Retrying publishing in %d seconds (%d/%d) ...\n", seconds, attempt, retriesLimit)
+					logboek.Context(ctx).Warn().LogLn(msg)
+
+					time.Sleep(time.Duration(seconds) * time.Second)
+					continue attemptLoop
+				}
+			}
+
+			return err
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+func (api *api) pushImage(_ context.Context, reference string, opts PushImageOptions) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
