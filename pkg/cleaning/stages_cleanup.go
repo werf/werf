@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -16,7 +15,6 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/werf"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -100,72 +98,69 @@ func (m *stagesCleanupManager) run(ctx context.Context) error {
 		},
 	}
 
-	lockName := fmt.Sprintf("stages-cleanup.%s-%s", m.StorageManager.StagesStorage.String(), m.ProjectName)
-	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		var stagesImageList []*image.Info
-		stagesByImageName := map[string]*image.StageDescription{}
+	var stagesImageList []*image.Info
+	stagesByImageName := map[string]*image.StageDescription{}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Fetching stages").DoError(func() error {
-			stages, err := m.StorageManager.GetAllStages(ctx)
-			if err != nil {
-				return err
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching stages").DoError(func() error {
+		stages, err := m.StorageManager.GetAllStages(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, stageDesc := range stages {
+			stagesImageList = append(stagesImageList, stageDesc.Info)
+			stagesByImageName[stageDesc.Info.Name] = stageDesc
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	var repoImageList []*image.Info
+	var err error
+
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching repo images").DoError(func() error {
+		repoImageList, err = m.getOrInitImagesRepoImageList(ctx)
+		return err
+	}); err != nil {
+		return err
+	}
+
+	for _, repoImage := range repoImageList {
+		stagesImageList = exceptRepoImageAndRelativesByImageID(stagesImageList, repoImage.ParentID)
+	}
+
+	var repoImageListToExcept []*image.Info
+	if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
+		for _, repoImage := range stagesImageList {
+			if time.Now().Unix()-repoImage.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
+				repoImageListToExcept = append(repoImageListToExcept, repoImage)
 			}
-
-			for _, stageDesc := range stages {
-				stagesImageList = append(stagesImageList, stageDesc.Info)
-				stagesByImageName[stageDesc.Info.Name] = stageDesc
-			}
-
-			return nil
-		}); err != nil {
-			return err
 		}
 
-		var repoImageList []*image.Info
-		var err error
-
-		if err := logboek.Context(ctx).Default().LogProcess("Fetching repo images").DoError(func() error {
-			repoImageList, err = m.getOrInitImagesRepoImageList(ctx)
-			return err
-		}); err != nil {
-			return err
-		}
-
-		for _, repoImage := range repoImageList {
-			stagesImageList = exceptRepoImageAndRelativesByImageID(stagesImageList, repoImage.ParentID)
-		}
-
-		var repoImageListToExcept []*image.Info
-		if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
-			for _, repoImage := range stagesImageList {
-				if time.Now().Unix()-repoImage.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
-					repoImageListToExcept = append(repoImageListToExcept, repoImage)
+		if len(repoImageListToExcept) != 0 {
+			logboek.Context(ctx).Default().LogBlock("Skipping stages that were built within last two hours").Do(func() {
+				for _, repoImageToExcept := range repoImageListToExcept {
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImageToExcept.Tag)
+					logboek.Context(ctx).LogOptionalLn()
 				}
-			}
-
-			if len(repoImageListToExcept) != 0 {
-				logboek.Context(ctx).Default().LogBlock("Skipping stages that were built within last two hours").Do(func() {
-					for _, repoImageToExcept := range repoImageListToExcept {
-						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", repoImageToExcept.Tag)
-						logboek.Context(ctx).LogOptionalLn()
-					}
-				})
-			}
+			})
 		}
+	}
 
-		stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)
+	stagesImageList = exceptRepoImageList(stagesImageList, repoImageListToExcept...)
 
-		var stagesToDeleteList []*image.StageDescription
-		for _, imgInfo := range stagesImageList {
-			if stagesByImageName[imgInfo.Name] == nil || stagesByImageName[imgInfo.Name].Info != imgInfo {
-				panic(fmt.Sprintf("inconsistent state detected: %#v != %#v", stagesByImageName[imgInfo.Name].Info, imgInfo))
-			}
-			stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
+	var stagesToDeleteList []*image.StageDescription
+	for _, imgInfo := range stagesImageList {
+		if stagesByImageName[imgInfo.Name] == nil || stagesByImageName[imgInfo.Name].Info != imgInfo {
+			panic(fmt.Sprintf("inconsistent state detected: %#v != %#v", stagesByImageName[imgInfo.Name].Info, imgInfo))
 		}
+		stagesToDeleteList = append(stagesToDeleteList, stagesByImageName[imgInfo.Name])
+	}
 
-		return logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
-			return deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stagesToDeleteList...)
-		})
+	return logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
+		return deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stagesToDeleteList...)
 	})
 }
 
