@@ -13,7 +13,8 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -54,6 +55,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -164,14 +166,23 @@ func runCleanup() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
+	}
+
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
+	}
+
+	storageManager.SetImageRepo(imagesRepo)
+	if *commonCmdData.Parallel {
+		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
@@ -209,7 +220,7 @@ func runCleanup() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesCleanup(ctx, projectName, imagesRepo, stagesManager, storageLockManager, imagesCleanupOptions); err != nil {
+	if err := cleaning.ImagesCleanup(ctx, projectName, storageManager, storageLockManager, imagesCleanupOptions); err != nil {
 		return err
 	}
 

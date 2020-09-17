@@ -79,7 +79,7 @@ func (storage *RepoStagesStorage) ConstructStageImageName(_, signature string, u
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
 }
 
-func (storage *RepoStagesStorage) GetAllStages(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
 	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
@@ -109,12 +109,12 @@ func (storage *RepoStagesStorage) GetAllStages(ctx context.Context, projectName 
 	}
 }
 
-func (storage *RepoStagesStorage) DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error {
-	var imageInfoList []*image.Info
-	for _, stageDesc := range stages {
-		imageInfoList = append(imageInfoList, stageDesc.Info)
-	}
-	return storage.DockerRegistry.DeleteRepoImage(ctx, imageInfoList...)
+func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {
+	return storage.DockerRegistry.DeleteRepoImage(ctx, stageDescription.Info)
+}
+
+func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(_ context.Context, stageDescriptions []*image.StageDescription, _ FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+	return stageDescriptions, nil
 }
 
 func (storage *RepoStagesStorage) CreateRepo(ctx context.Context) error {
@@ -125,7 +125,7 @@ func (storage *RepoStagesStorage) DeleteRepo(ctx context.Context) error {
 	return storage.DockerRegistry.DeleteRepo(ctx, storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetStagesBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
 	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {

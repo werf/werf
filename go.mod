@@ -47,7 +47,6 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8.0.20190926000215-3e425f80a8c9 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
-	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect

@@ -8,8 +8,8 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 )
 
 type CleanupOptions struct {
@@ -17,8 +17,8 @@ type CleanupOptions struct {
 	StagesCleanupOptions
 }
 
-func Cleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, stagesManager *stages_manager.StagesManager, options CleanupOptions) error {
-	m := newCleanupManager(projectName, imagesRepo, stagesManager, options)
+func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options CleanupOptions) error {
+	m := newCleanupManager(projectName, storageManager, options)
 
 	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
 		return fmt.Errorf("unable to lock stages and images: %s", err)
@@ -52,10 +52,10 @@ func Cleanup(ctx context.Context, projectName string, imagesRepo storage.ImagesR
 	return nil
 }
 
-func newCleanupManager(projectName string, imagesRepo storage.ImagesRepo, stagesManager *stages_manager.StagesManager, options CleanupOptions) *cleanupManager {
+func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
-		imagesCleanupManager: newImagesCleanupManager(projectName, imagesRepo, stagesManager, options.ImagesCleanupOptions),
-		stagesCleanupManager: newStagesCleanupManager(projectName, imagesRepo, stagesManager, options.StagesCleanupOptions),
+		imagesCleanupManager: newImagesCleanupManager(projectName, storageManager, options.ImagesCleanupOptions),
+		stagesCleanupManager: newStagesCleanupManager(projectName, storageManager, options.StagesCleanupOptions),
 	}
 }
 

@@ -12,7 +12,8 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -56,6 +57,7 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -137,14 +139,23 @@ func runPurge() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-	if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 		return err
+	}
+
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
+	}
+
+	storageManager.SetImageRepo(imagesRepo)
+	if *commonCmdData.Parallel {
+		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
@@ -165,7 +176,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Purge(ctx, projectName, imagesRepo, storageLockManager, stagesManager, purgeOptions); err != nil {
+	if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
 		return err
 	}
 

@@ -55,11 +55,28 @@ func (r *dockerHub) DeleteRepo(ctx context.Context, reference string) error {
 	return r.deleteRepo(ctx, reference)
 }
 
-func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error {
-	for _, repoImage := range repoImageList {
-		if err := r.deleteRepoImage(ctx, repoImage); err != nil {
-			return err
+func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
+	token, err := r.getToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	account, project, err := r.parseReference(repoImage.Repository)
+	if err != nil {
+		return err
+	}
+
+	resp, err := r.dockerHubApi.deleteTag(ctx, account, project, repoImage.Tag, token)
+	if resp != nil {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return DockerHubUnauthorizedError{error: err}
+		} else if resp.StatusCode == http.StatusNotFound {
+			return DockerHubNotFoundError{error: err}
 		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -77,33 +94,6 @@ func (r *dockerHub) deleteRepo(ctx context.Context, reference string) error {
 	}
 
 	resp, err := r.dockerHubApi.deleteRepository(ctx, account, project, token)
-	if resp != nil {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return DockerHubUnauthorizedError{error: err}
-		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError{error: err}
-		}
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *dockerHub) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	token, err := r.getToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	account, project, err := r.parseReference(repoImage.Repository)
-	if err != nil {
-		return err
-	}
-
-	resp, err := r.dockerHubApi.deleteTag(ctx, account, project, repoImage.Tag, token)
 	if resp != nil {
 		if resp.StatusCode == http.StatusUnauthorized {
 			return DockerHubUnauthorizedError{error: err}

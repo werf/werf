@@ -17,7 +17,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -245,8 +245,8 @@ func runDeploy() error {
 			return err
 		}
 
-		stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-		if err := stagesManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+		if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
 			return err
 		}
 
@@ -274,7 +274,7 @@ func runDeploy() error {
 
 		logboek.LogOptionalLn()
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, stagesManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

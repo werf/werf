@@ -3,16 +3,15 @@ package sync
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/stages_manager"
-
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	stages_common "github.com/werf/werf/cmd/werf/stages/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -134,5 +133,5 @@ func runSync() error {
 	}
 	_ = stagesStorageCache
 
-	return stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
+	return manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, manager.SyncStagesOptions{RemoveSource: *cmdData.RemoveSource, CleanupLocalCache: *cmdData.CleanupLocalCache})
 }

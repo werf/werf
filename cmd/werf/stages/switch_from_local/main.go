@@ -3,17 +3,15 @@ package switch_from_local
 import (
 	"fmt"
 
-	stages_common "github.com/werf/werf/cmd/werf/stages/common"
-
-	"github.com/werf/werf/pkg/storage"
-
 	"github.com/spf13/cobra"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
+	stages_common "github.com/werf/werf/cmd/werf/stages/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stages_manager"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -130,9 +128,8 @@ func runSwitch() error {
 		return err
 	}
 
-	stagesManager := stages_manager.NewStagesManager(projectName, storageLockManager, stagesStorageCache)
-
-	if err := stagesManager.UseStagesStorage(ctx, fromStagesStorage); err != nil {
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, fromStagesStorage); err != nil {
 		return err
 	}
 
@@ -144,7 +141,7 @@ func runSwitch() error {
 		return fmt.Errorf("cannot switch to local stages storage, specify repo address --to=REPO")
 	}
 
-	if err := stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{}); err != nil {
+	if err := manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, manager.SyncStagesOptions{}); err != nil {
 		return err
 	}
 
@@ -154,9 +151,9 @@ func runSwitch() error {
 		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	if err := stagesManager.SetStagesSwitchFromLocalBlock(ctx, toStagesStorage); err != nil {
+	if err := storageManager.SetStagesSwitchFromLocalBlock(ctx, toStagesStorage); err != nil {
 		return err
 	}
 
-	return stages_manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, stages_manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
+	return manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
 }

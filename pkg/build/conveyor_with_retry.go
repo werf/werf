@@ -5,8 +5,8 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 )
 
 type ConveyorWithRetryWrapper struct {
@@ -16,14 +16,14 @@ type ConveyorWithRetryWrapper struct {
 	BaseTmpDir          string
 	SshAuthSock         string
 	ContainerRuntime    container_runtime.ContainerRuntime
-	StagesManager       *stages_manager.StagesManager
+	StorageManager      *manager.StorageManager
 	ImagesRepo          storage.ImagesRepo
 	StorageLockManager  storage.LockManager
 
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
 		ImageNamesToProcess: imageNamesToProcess,
@@ -31,7 +31,7 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProc
 		BaseTmpDir:          baseTmpDir,
 		SshAuthSock:         sshAuthSock,
 		ContainerRuntime:    containerRuntime,
-		StagesManager:       stagesManager,
+		StorageManager:      storageManager,
 		ImagesRepo:          imagesRepo,
 		StorageLockManager:  storageLockManager,
 		ConveyorOptions:     opts,
@@ -51,7 +51,7 @@ Retry:
 		wrapper.BaseTmpDir,
 		wrapper.SshAuthSock,
 		wrapper.ContainerRuntime,
-		wrapper.StagesManager,
+		wrapper.StorageManager,
 		wrapper.ImagesRepo,
 		wrapper.StorageLockManager,
 		wrapper.ConveyorOptions,
@@ -63,8 +63,8 @@ Retry:
 	if shouldRetry, err := func() (bool, error) {
 		defer newConveyor.Terminate(ctx)
 
-		if err := f(newConveyor); stages_manager.ShouldResetStagesStorageCache(err) {
-			if err := newConveyor.StagesManager.ResetStagesStorageCache(ctx); err != nil {
+		if err := f(newConveyor); manager.ShouldResetStagesStorageCache(err) {
+			if err := newConveyor.StorageManager.ResetStagesStorageCache(ctx); err != nil {
 				return false, err
 			}
 			return true, nil

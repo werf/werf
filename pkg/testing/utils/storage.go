@@ -53,7 +53,7 @@ func ImagesRepoAllImageRepoTags(ctx context.Context, imagesRepo storage.ImagesRe
 }
 
 func StagesStorageRepoImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
-	repoImages, err := stagesStorage.GetAllStages(ctx, ProjectName())
+	repoImages, err := stagesStorage.GetStagesIDs(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }

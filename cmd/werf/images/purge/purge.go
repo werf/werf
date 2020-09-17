@@ -3,8 +3,6 @@ package purge
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -13,6 +11,9 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -46,6 +47,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -124,11 +126,24 @@ func runPurge() error {
 	if err != nil {
 		return err
 	}
-	_ = stagesStorageCache
+
+	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
+	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		return err
+	}
+
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
+	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
 	if err != nil {
 		return err
+	}
+
+	storageManager.SetImageRepo(imagesRepo)
+	if *commonCmdData.Parallel {
+		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imageNameList, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
@@ -143,7 +158,7 @@ func runPurge() error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.ImagesPurge(ctx, projectName, imagesRepo, storageLockManager, imagesPurgeOptions); err != nil {
+	if err := cleaning.ImagesPurge(ctx, projectName, storageManager, storageLockManager, imagesPurgeOptions); err != nil {
 		return err
 	}
 

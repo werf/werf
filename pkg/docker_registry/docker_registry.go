@@ -24,9 +24,7 @@ type DockerRegistry interface {
 	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	IsRepoImageExists(ctx context.Context, reference string) (bool, error)
-	GetRepoImageList(ctx context.Context, reference string) ([]*image.Info, error)
-	SelectRepoImageList(ctx context.Context, reference string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error)
-	DeleteRepoImage(ctx context.Context, repoImageList ...*image.Info) error
+	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts PushImageOptions) error
 
 	ResolveRepoMode(ctx context.Context, registryOrRepositoryAddress, repoMode string) (string, error)

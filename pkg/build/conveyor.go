@@ -32,8 +32,8 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/stages_manager"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/parallel"
@@ -67,7 +67,7 @@ type Conveyor struct {
 
 	ImagesRepo         storage.ImagesRepo
 	StorageLockManager storage.LockManager
-	StagesManager      *stages_manager.StagesManager
+	StorageManager     *manager.StorageManager
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
@@ -87,7 +87,7 @@ type ConveyorOptions struct {
 	AllowGitShallowClone            bool
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, stagesManager *stages_manager.StagesManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -111,7 +111,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		ContainerRuntime:   containerRuntime,
 		ImagesRepo:         imagesRepo,
 		StorageLockManager: storageLockManager,
-		StagesManager:      stagesManager,
+		StorageManager:     storageManager,
 
 		ConveyorOptions: opts,
 
@@ -377,7 +377,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	if opts.FetchLastStage {
 		for _, imageName := range c.imageNamesToProcess {
 			lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
-			if err := c.StagesManager.FetchStage(ctx, lastImageStage); err != nil {
+			if err := c.StorageManager.FetchStage(ctx, lastImageStage); err != nil {
 				return err
 			}
 		}

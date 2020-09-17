@@ -61,7 +61,7 @@ func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectNa
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetAllStages(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -71,27 +71,16 @@ func (storage *LocalDockerServerStagesStorage) GetAllStages(ctx context.Context,
 	return convertToStagesList(images)
 }
 
-func (storage *LocalDockerServerStagesStorage) DeleteStages(ctx context.Context, options DeleteImageOptions, stages ...*image.StageDescription) error {
-	var imageInfoList []*image.Info
-	for _, stageDesc := range stages {
-		imageInfoList = append(imageInfoList, stageDesc.Info)
-	}
+func (storage *LocalDockerServerStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {
+	return deleteRepoImageListInLocalDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
+}
 
-	var err error
-	imageInfoList, err = processRelatedContainers(ctx, imageInfoList, processRelatedContainersOptions{
+func (storage *LocalDockerServerStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+	return processRelatedContainers(ctx, stageDescriptions, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,
 		rmContainersThatUseImage: options.RmContainersThatUseImage,
 		rmForce:                  options.RmForce,
 	})
-	if err != nil {
-		return err
-	}
-
-	if err := deleteRepoImageListInLocalDockerServerStagesStorage(ctx, imageInfoList, options.RmiForce); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (storage *LocalDockerServerStagesStorage) CreateRepo(_ context.Context) error {
@@ -196,7 +185,7 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(ctx context.Cont
 	return res, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStagesBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE signature already depends on build-cache-version
@@ -399,10 +388,10 @@ type processRelatedContainersOptions struct {
 	rmForce                  bool
 }
 
-func processRelatedContainers(ctx context.Context, imageInfoList []*image.Info, options processRelatedContainersOptions) ([]*image.Info, error) {
+func processRelatedContainers(ctx context.Context, stageDescriptionList []*image.StageDescription, options processRelatedContainersOptions) ([]*image.StageDescription, error) {
 	filterSet := filters.NewArgs()
-	for _, imgInfo := range imageInfoList {
-		filterSet.Add("ancestor", imgInfo.ID)
+	for _, stageDescription := range stageDescriptionList {
+		filterSet.Add("ancestor", stageDescription.Info.ID)
 	}
 
 	containerList, err := containerListByFilterSet(ctx, filterSet)
@@ -410,18 +399,20 @@ func processRelatedContainers(ctx context.Context, imageInfoList []*image.Info, 
 		return nil, err
 	}
 
-	var imageInfoListToExcept []*image.Info
+	var stageDescriptionListToExcept []*image.StageDescription
 	var containerListToRemove []types.Container
 	for _, container := range containerList {
-		for _, imgInfo := range imageInfoList {
-			if imgInfo.ID == container.ImageID {
+		for _, stageDescription := range stageDescriptionList {
+			imageInfo := stageDescription.Info
+
+			if imageInfo.ID == container.ImageID {
 				if options.skipUsedImages {
-					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(imgInfo), logContainerName(container))
-					imageInfoListToExcept = append(imageInfoListToExcept, imgInfo)
+					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(imageInfo), logContainerName(container))
+					stageDescriptionListToExcept = append(stageDescriptionListToExcept, stageDescription)
 				} else if options.rmContainersThatUseImage {
 					containerListToRemove = append(containerListToRemove, container)
 				} else {
-					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imgInfo), logContainerName(container), ImageDeletionFailedDueToUsedByContainerErrorTip)
+					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imageInfo), logContainerName(container), ImageDeletionFailedDueToUsedByContainerErrorTip)
 				}
 			}
 		}
@@ -431,7 +422,7 @@ func processRelatedContainers(ctx context.Context, imageInfoList []*image.Info, 
 		return nil, err
 	}
 
-	return exceptRepoImageList(imageInfoList, imageInfoListToExcept...), nil
+	return exceptStageDescriptionList(stageDescriptionList, stageDescriptionListToExcept...), nil
 }
 
 func containerListByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
@@ -453,21 +444,21 @@ func deleteContainers(ctx context.Context, containers []types.Container, rmForce
 	return nil
 }
 
-func exceptRepoImageList(imageInfoList []*image.Info, imageInfoListToExcept ...*image.Info) []*image.Info {
-	var newImageInfoList []*image.Info
+func exceptStageDescriptionList(stageDescriptionList []*image.StageDescription, stageDescriptionListToExcept ...*image.StageDescription) []*image.StageDescription {
+	var result []*image.StageDescription
 
 loop:
-	for _, imgInfo := range imageInfoList {
-		for _, repoImageToExcept := range imageInfoListToExcept {
-			if repoImageToExcept == imgInfo {
+	for _, sd1 := range stageDescriptionList {
+		for _, sd2 := range stageDescriptionListToExcept {
+			if sd2 == sd1 {
 				continue loop
 			}
 		}
 
-		newImageInfoList = append(newImageInfoList, imgInfo)
+		result = append(result, sd1)
 	}
 
-	return newImageInfoList
+	return result
 }
 
 func localStagesStorageFilterSetBase(projectName string) filters.Args {
@@ -517,20 +508,20 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID
 	return stagesList, nil
 }
 
-func deleteRepoImageListInLocalDockerServerStagesStorage(ctx context.Context, imageInfoList []*image.Info, rmiForce bool) error {
+func deleteRepoImageListInLocalDockerServerStagesStorage(ctx context.Context, stageDescription *image.StageDescription, rmiForce bool) error {
 	var imageReferences []string
-	for _, imgInfo := range imageInfoList {
-		if imgInfo.Name == "" {
-			imageReferences = append(imageReferences, imgInfo.ID)
-		} else {
-			isDanglingImage := imgInfo.Name == "<none>:<none>"
-			isTaglessImage := !isDanglingImage && imgInfo.Tag == "<none>"
+	imageInfo := stageDescription.Info
 
-			if isDanglingImage || isTaglessImage {
-				imageReferences = append(imageReferences, imgInfo.ID)
-			} else {
-				imageReferences = append(imageReferences, imgInfo.Name)
-			}
+	if imageInfo.Name == "" {
+		imageReferences = append(imageReferences, imageInfo.ID)
+	} else {
+		isDanglingImage := imageInfo.Name == "<none>:<none>"
+		isTaglessImage := !isDanglingImage && imageInfo.Tag == "<none>"
+
+		if isDanglingImage || isTaglessImage {
+			imageReferences = append(imageReferences, imageInfo.ID)
+		} else {
+			imageReferences = append(imageReferences, imageInfo.Name)
 		}
 	}
 
