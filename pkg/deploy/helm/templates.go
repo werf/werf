@@ -261,7 +261,7 @@ func NewWerfEngine() *WerfEngine {
 
 func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles map[string]string) {
 	e.AlterFuncMapHookFunc = func(t *template.Template, funcMap template.FuncMap) template.FuncMap {
-		if _, err := t.Funcs(funcMap).Parse(werfEngineHelpers); err != nil {
+		if _, err := t.Funcs(funcMap).Parse(WerfEngineHelpers); err != nil {
 			panic(fmt.Errorf("parse werf engine helpers failed: %s", err))
 		}
 
@@ -338,7 +338,7 @@ func (e *WerfEngine) InitWerfEngineExtraTemplatesFunctions(decodedSecretFiles ma
 	}
 }
 
-var werfEngineHelpers = `{{- define "_image" -}}
+var WerfEngineHelpers = `{{- define "_image" -}}
 {{-   $context := index . 0 -}}
 {{-   if not $context.Values.global.werf.is_nameless_image -}}
 {{-     required "No image specified for template" nil -}}

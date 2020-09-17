@@ -363,10 +363,13 @@ func runDeploy() error {
 		return err
 	}
 
-	_ = imagesRepository
-	_ = *commonCmdData.Environment
+	if vals, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	} else if err := wc.SetServiceValues(vals); err != nil {
+		return err
+	}
+
 	_ = cmdData.Timeout
-	_ = imagesInfoGetters
 
 	return wc.WrapUpgrade(context.Background(), func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
