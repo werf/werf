@@ -18,7 +18,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -30,7 +29,6 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tag_strategy"
-	"github.com/werf/werf/pkg/werf"
 )
 
 type ImagesCleanupOptions struct {
@@ -223,59 +221,56 @@ outerLoop:
 }
 
 func (m *imagesCleanupManager) run(ctx context.Context) error {
-	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", m.StorageManager.ImagesRepo.String())
-	return werf.WithHostLock(ctx, imagesCleanupLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		if err := logboek.Context(ctx).LogProcess("Fetching repo images data").DoError(func() error {
-			return m.initRepoImagesData(ctx)
+	if err := logboek.Context(ctx).LogProcess("Fetching repo images data").DoError(func() error {
+		return m.initRepoImagesData(ctx)
+	}); err != nil {
+		return err
+	}
+
+	repoImagesToCleanup := m.getImageRepoImageList()
+	exceptedRepoImages := map[string][]*image.Info{}
+	resultRepoImages := map[string][]*image.Info{}
+
+	if m.LocalGit == nil {
+		logboek.Context(ctx).Default().LogLnDetails("Images cleanup skipped due to local git repository was not detected")
+		return nil
+	}
+
+	var err error
+
+	if !m.WithoutKube {
+		if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in Kubernetes").DoError(func() error {
+			repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextClients, m.KubernetesNamespaceRestrictionByContext)
+			return err
 		}); err != nil {
 			return err
 		}
+	}
 
-		repoImagesToCleanup := m.getImageRepoImageList()
-		exceptedRepoImages := map[string][]*image.Info{}
-		resultRepoImages := map[string][]*image.Info{}
-
-		if m.LocalGit == nil {
-			logboek.Context(ctx).Default().LogLnDetails("Images cleanup skipped due to local git repository was not detected")
-			return nil
+	if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
+		resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(ctx, repoImagesToCleanup)
+		if err != nil {
+			return err
 		}
-
-		var err error
-
-		if !m.WithoutKube {
-			if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in Kubernetes").DoError(func() error {
-				repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextClients, m.KubernetesNamespaceRestrictionByContext)
-				return err
-			}); err != nil {
-				return err
-			}
+	} else {
+		resultRepoImages, err = m.repoImagesCleanup(ctx, repoImagesToCleanup)
+		if err != nil {
+			return err
 		}
+	}
 
-		if m.GitHistoryBasedCleanup || m.GitHistoryBasedCleanupV12 {
-			resultRepoImages, err = m.repoImagesGitHistoryBasedCleanup(ctx, repoImagesToCleanup)
-			if err != nil {
-				return err
-			}
+	for imageName, repoImageList := range exceptedRepoImages {
+		_, ok := resultRepoImages[imageName]
+		if !ok {
+			resultRepoImages[imageName] = repoImageList
 		} else {
-			resultRepoImages, err = m.repoImagesCleanup(ctx, repoImagesToCleanup)
-			if err != nil {
-				return err
-			}
+			resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImageList...)
 		}
+	}
 
-		for imageName, repoImageList := range exceptedRepoImages {
-			_, ok := resultRepoImages[imageName]
-			if !ok {
-				resultRepoImages[imageName] = repoImageList
-			} else {
-				resultRepoImages[imageName] = append(resultRepoImages[imageName], repoImageList...)
-			}
-		}
+	m.setImageRepoImageList(resultRepoImages)
 
-		m.setImageRepoImageList(resultRepoImages)
-
-		return nil
-	})
+	return nil
 }
 
 func exceptRepoImagesByWhitelist(ctx context.Context, repoImages map[string][]*image.Info, kubernetesContextClients []*kube.ContextClient, kubernetesNamespaceRestrictionByContext map[string]string) (map[string][]*image.Info, map[string][]*image.Info, error) {

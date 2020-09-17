@@ -3,16 +3,12 @@ package cleaning
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/werf"
 )
 
 type StagesPurgeOptions struct {
@@ -66,51 +62,48 @@ func (m *stagesPurgeManager) run(ctx context.Context) error {
 		},
 	}
 
-	lockName := fmt.Sprintf("stages-purge.%s", m.ProjectName)
-	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		logProcess := logboek.Context(ctx).Default().LogProcess("Deleting stages")
-		logProcess.Start()
+	logProcess := logboek.Context(ctx).Default().LogProcess("Deleting stages")
+	logProcess.Start()
 
-		stages, err := m.StorageManager.GetAllStages(ctx)
-		if err != nil {
-			logProcess.Fail()
-			return err
-		}
+	stages, err := m.StorageManager.GetAllStages(ctx)
+	if err != nil {
+		logProcess.Fail()
+		return err
+	}
 
-		if err := deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stages...); err != nil {
-			logProcess.Fail()
-			return err
-		} else {
-			logProcess.End()
-		}
-
-		logProcess = logboek.Context(ctx).Default().LogProcess("Deleting managed images")
-		logProcess.Start()
-
-		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
-		if err != nil {
-			logProcess.Fail()
-			return err
-		}
-
-		for _, managedImage := range managedImages {
-			if !m.DryRun {
-				if err := m.StorageManager.StagesStorage.RmManagedImage(ctx, m.ProjectName, managedImage); err != nil {
-					return err
-				}
-			}
-
-			logTag := managedImage
-			if logTag == "" {
-				logTag = storage.NamelessImageRecordTag
-			}
-
-			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", logTag)
-			logboek.Context(ctx).LogOptionalLn()
-		}
-
+	if err := deleteStageInStagesStorage(ctx, m.StorageManager, deleteStageOptions, m.DryRun, stages...); err != nil {
+		logProcess.Fail()
+		return err
+	} else {
 		logProcess.End()
+	}
 
-		return nil
-	})
+	logProcess = logboek.Context(ctx).Default().LogProcess("Deleting managed images")
+	logProcess.Start()
+
+	managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
+	if err != nil {
+		logProcess.Fail()
+		return err
+	}
+
+	for _, managedImage := range managedImages {
+		if !m.DryRun {
+			if err := m.StorageManager.StagesStorage.RmManagedImage(ctx, m.ProjectName, managedImage); err != nil {
+				return err
+			}
+		}
+
+		logTag := managedImage
+		if logTag == "" {
+			logTag = storage.NamelessImageRecordTag
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", logTag)
+		logboek.Context(ctx).LogOptionalLn()
+	}
+
+	logProcess.End()
+
+	return nil
 }
