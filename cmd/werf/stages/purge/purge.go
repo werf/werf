@@ -52,6 +52,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -137,8 +138,8 @@ func runPurge() error {
 		return err
 	}
 
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		storageManager.EnableParallel()
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	stagesPurgeOptions := cleaning.StagesPurgeOptions{

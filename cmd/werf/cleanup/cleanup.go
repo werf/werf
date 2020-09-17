@@ -61,6 +61,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -175,8 +176,8 @@ func runCleanup() error {
 		return err
 	}
 
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		storageManager.EnableParallel()
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
@@ -185,7 +186,9 @@ func runCleanup() error {
 	}
 
 	storageManager.SetImageRepo(imagesRepo)
-	storageManager.ImagesRepoManager.EnableParallel()
+	if *commonCmdData.Parallel {
+		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
+	}
 
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {

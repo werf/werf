@@ -47,6 +47,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -131,8 +132,8 @@ func runPurge() error {
 		return err
 	}
 
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		storageManager.EnableParallel()
+	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
 	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
@@ -141,7 +142,9 @@ func runPurge() error {
 	}
 
 	storageManager.SetImageRepo(imagesRepo)
-	storageManager.ImagesRepoManager.EnableParallel()
+	if *commonCmdData.Parallel {
+		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
+	}
 
 	imageNameList, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {

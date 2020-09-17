@@ -4,8 +4,6 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-const MaxNumberOfWorkersDefault = 20
-
 type StorageManager struct {
 	*ImagesRepoManager
 	*StagesStorageManager
@@ -22,16 +20,18 @@ func (m *StorageManager) SetImageRepo(imagesRepo storage.ImagesRepo) {
 }
 
 type baseManager struct {
-	parallel bool
+	parallel           bool
+	parallelTasksLimit int
 }
 
-func (m *baseManager) EnableParallel() {
+func (m *baseManager) EnableParallel(parallelTasksLimit int) {
 	m.parallel = true
+	m.parallelTasksLimit = parallelTasksLimit
 }
 
 func (m *baseManager) MaxNumberOfWorkers() int {
-	if m.parallel {
-		return MaxNumberOfWorkersDefault
+	if m.parallel && m.parallelTasksLimit > 0 {
+		return m.parallelTasksLimit
 	}
 
 	return 1

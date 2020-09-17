@@ -128,6 +128,11 @@ werf cleanup [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -p, --parallel=true:
+            Run in parallel (default $WERF_PARALLEL)
+      --parallel-tasks-limit=5:
+            Parallel tasks limit, set -1 to remove the limitation (default                          
+            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --repo-docker-hub-password='':
             Common Docker Hub password for any stages storage or images repo specified for the      
             command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
