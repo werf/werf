@@ -138,7 +138,7 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200916183710-52cc604f86fa
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200917163411-aa36ce853669
 
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
