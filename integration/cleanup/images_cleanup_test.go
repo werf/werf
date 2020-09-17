@@ -698,7 +698,10 @@ var _ = forEachDockerRegistryImplementation("cleaning images", func() {
 
 							imageCommits, err = stagesStorage.GetImageCommits(context.Background(), utils.ProjectName(), "image")
 							Ω(err).ShouldNot(HaveOccurred(), err)
-							Ω(imageCommits).Should(HaveLen(after))
+
+							if testImplementation != docker_registry.QuayImplementationName {
+								Ω(imageCommits).Should(HaveLen(after))
+							}
 
 							for _, check := range afterExtraChecks {
 								check(imageCommits)
