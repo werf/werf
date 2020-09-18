@@ -13,18 +13,6 @@ werf uses the following values for werf environment variables:
 
 The value of [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
-### WERF_TAG_BY_STAGES_SIGNATURE
-
-The value of [`WERF_TAG_BY_STAGES_SIGNATURE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_by_stages_signature) is set to `true` when using [`stages-signature`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#stages-signature) tagging strategy (which is default).
-
-### WERF_TAG_GIT_TAG
-
-The value of [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag) is taken from the [`CI_COMMIT_TAG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
-
-### WERF_TAG_GIT_BRANCH
-
-The value of [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch) is taken from the [`CI_COMMIT_REF_NAME`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
-
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 
 The value of [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git) is based on the [`CI_PROJECT_URL`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed as follows:

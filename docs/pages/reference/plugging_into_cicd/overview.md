@@ -13,7 +13,6 @@ werf plugs into a CI/CD system via the so-called *ci-env command*. Ci-env comman
 
 In the sections below you will learn:
  * [what is ci-env](#what-is-ci-env) — what information werf gathers from the CI/CD system and why;
- * [ci-env tagging modes](#ci-env-tagging-modes) — what [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) tagging modes are available;
  * [how ci-env works](#how-ci-env-works) — how *ci-env command* should be used and how it passes information to other werf commands;
  * [complete list of ci-env params and customizing](#a-complete-list-of-ci-env-parameters) — the complete list of all ci-env params passed to other werf commands and how to customize common parameters.
 
@@ -21,7 +20,6 @@ In the sections below you will learn:
 
 werf gathers data from CI/CD systems with the *ci-env command* and sets modes of operation to accomplish the following tasks:
  * Docker registry integration;
- * Git integration;
  * CI/CD pipelines integration;
  * CI/CD configuration integration;
  * Configuring modes of operation in CI/CD systems.
@@ -35,14 +33,6 @@ Typically, a CI/CD system can provide each job with:
 werf ci-env command should provide authorization for all subsequent commands, allowing them to log in to the detected Docker registry using discovered credentials. Learn more [about the docker login below](#docker-registry-login). Also, the [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) variable will be set as a result.
 
 The address of the Docker registry will also be used as the basis for the `--images-repo` parameter. Thus, the [`WERF_IMAGES_REPO=DOCKER_REGISTRY_REPO`](#werf_images_repo) variable will be set.
-
-### Git integration
-
-Typically, a CI/CD system that uses git runs each job in the detached commit state of the git worktree. And the current git-commit, git-tag, or git-branch is passed to the job via environment variables.
-
-The werf ci-env command detects the current git-commit, git-tag, or git-branch and uses them to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` configuration file. The particular use of the information provided by git depends on the chosen tagging scheme, [see more info below](#ci-env-tagging-modes).
-
-In this case, the [`WERF_TAG_GIT_TAG=GIT_TAG`](#werf_tag_git_tag) or [`WERF_TAG_GIT_BRANCH=GIT_BRANCH`](#werf_tag_git_branch) variable will be set.
 
 ### CI/CD pipelines integration
 
@@ -76,27 +66,6 @@ The `werf ci-env` command enables the so-called process exterminator. Some CI/CD
 
 The `werf ci-env` command sets the logging output width to 100 symbols since it is an experimentally proven universal width that fits most modern screens. In this case, the [`WERF_LOG_TERMINAL_WIDTH=100`](#werf_log_terminal_width) variable will be set.
 
-### stages-signature
-
-Werf uses image _stages signature_ to tag result images. Each image defined in the `werf.yaml` config will have an own _stages signature_ which depends on the content of the image and git history which lead to this content.
-
-This is default and recommended tagging strategy. By omitting `--tagging-strategy`  option of the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) werf will use `stages-signature` strategy, or user may explicitly specify an option `--tagging-strategy=stages-signature`.
-
-### tag-or-branch
-
-The current git-tag or git-branch is used to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` and built by werf.
-
-This mode uses [werf publishing parameters]({{ site.baseurl }}/documentation/reference/publish_process.html#naming-images) such as `--tag-git-tag` or `--tag-git-branch` and automatically selects the appropriate one. These parameters are also used in the [werf deploy command]({{ site.baseurl }}/documentation/cli/main/deploy.html).
-
-The above tagging mode is selected by setting the `--tagging-strategy=tag-or-branch` option of the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html).
-
-> If the value of tag or branch used does not match a regular expression `^[\w][\w.-]*$` or consists of more than 128 characters, then werf would slugify this tag (read more in the [slug reference]({{ site.baseurl }}/documentation/reference/toolbox/slug.html)).
-  <br />
-  <br />
-  For example:
-  - the branch `developer-feature` is valid, and the tag would remain unchanged;
-  - the branch `developer/feature` is not valid, and the resulting tag will be corrected to `developer-feature-6e0628fc`.
-
 ## How ci-env works
 
 The ci-env command passes all parameters to werf via environment variables, see the [pass cli params as environment variables](#pass-cli-parameters-as-environment-variables) section below.
@@ -125,12 +94,6 @@ echo
 echo '### IMAGES REPO'
 export WERF_IMAGES_REPO="registry.domain.com/project/x"
 echo 'export WERF_IMAGES_REPO="registry.domain.com/project/x"'
-
-### TAGGING
-echo
-echo '### TAGGING'
-export WERF_TAG_GIT_TAG="v1.0.3"
-echo 'export WERF_TAG_GIT_TAG="v1.0.3"'
 
 ### DEPLOY
 echo
@@ -166,7 +129,6 @@ Any parameter of any werf command (except ci-env command itself) that can be pas
 There is a common rule of conversion of a CLI parameter into the name of an environment variable: an environment variable gets `WERF_` prefix, consists of capital letters, and dashes `-` are replaced with underscores `_`.
 
 Examples:
- * `--tag-git-tag=mytag` is the same as `WERF_TAG_GIT_TAG=mytag`;
  * `--env=staging` may be replaced by `WERF_ENV=staging`;
  * `--images-repo=myregistry.myhost.com/project/x` is the same as `WERF_IMAGES_REPO=myregistry.myhost.com/project/x`; and so on.
 
@@ -214,18 +176,6 @@ As part of the [Docker registry integration](#docker-registry-integration) proce
 #### WERF_IMAGES_REPO
 
 As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) identifies the Docker registry and defines the `--images-repo` parameter using `WERF_IMAGES_REPO` environment variable.
-
-#### WERF_TAG_BY_STAGES_SIGNATURE
-
-When `--tagging-strategy=stages-signature` is set explicitly or omitted werf uses `stages-signature` tagging strategy. Werf sets `WERF_TAG_BY_STAGES_SIGNATURE=true` in this case.
-
-#### WERF_TAG_GIT_TAG
-
-As part of the [git integration](#git-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects if this job is running for a git-tag and optionally defines the `--tag-git-tag` parameter using the `WERF_TAG_GIT_TAG` environment variable.
-
-#### WERF_TAG_GIT_BRANCH
-
-Within the [git integration](#git-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) checks if this job is running for a git-branch and optionally defines the `--tag-git-branch` parameter using the `WERF_TAG_GIT_BRANCH` environment variable.
 
 #### WERF_ENV
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util/parallel"
 )
 
@@ -38,10 +37,8 @@ func (m *ImagesRepoManager) GetRepoImage(ctx context.Context, imageName, tag str
 			return nil, err
 		}
 
-		if label, ok := imageInfo.Labels[image.WerfTagStrategyLabel]; ok && label == string(tag_strategy.StagesSignature) {
-			if err := image.CommonManifestCache.StoreImageInfo(ctx, m.ImagesRepo.String(), imageInfo); err != nil {
-				return nil, fmt.Errorf("store image manifest into cache failed: %s", err)
-			}
+		if err := image.CommonManifestCache.StoreImageInfo(ctx, m.ImagesRepo.String(), imageInfo); err != nil {
+			return nil, fmt.Errorf("store image manifest into cache failed: %s", err)
 		}
 	} else {
 		logboek.Context(ctx).Info().LogF("Got image %s info from manifest cache (CACHE HIT)\n", fullImageName)

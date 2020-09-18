@@ -16,9 +16,6 @@ import (
 	helm_env "k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
-
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 func GetEnvironmentOrStub(environmentOption string) string {
@@ -26,19 +23,6 @@ func GetEnvironmentOrStub(environmentOption string) string {
 		return "env"
 	}
 	return environmentOption
-}
-
-func GetTagOrStub(commonCmdData *common.CmdData) (string, tag_strategy.TagStrategy, error) {
-	tag, tagStrategy, err := common.GetDeployTag(commonCmdData, common.TagOptionsGetterOptions{Optional: true})
-	if err != nil {
-		return "", "", err
-	}
-
-	if tag == "" {
-		tag, tagStrategy = "TAG", tag_strategy.Custom
-	}
-
-	return tag, tagStrategy, nil
 }
 
 var (

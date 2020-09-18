@@ -75,11 +75,6 @@ werf ci-env CI_SYSTEM [options]
       --shell='':
             Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
             shell (default $WERF_SHELL).
-      --tagging-strategy='stages-signature':
-            * stages-signature: always use '--tag-by-stages-signature' option to tag all published  
-            images by corresponding stages-signature;
-            * tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified   
-            CI_SYSTEM environment variables.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

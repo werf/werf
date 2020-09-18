@@ -36,7 +36,6 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -94,7 +93,6 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupTag(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
@@ -208,8 +206,6 @@ func runDeploy() error {
 	}
 
 	var imagesRepository string
-	var tag string
-	var tagStrategy tag_strategy.TagStrategy
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 
 	projectName := werfConfig.Meta.Project
@@ -246,11 +242,6 @@ func runDeploy() error {
 
 		imagesRepository = imagesRepo.String()
 
-		tag, tagStrategy, err = common.GetDeployTag(&commonCmdData, common.TagOptionsGetterOptions{})
-		if err != nil {
-			return err
-		}
-
 		if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 			return fmt.Errorf("cannot initialize ssh agent: %s", err)
 		}
@@ -271,7 +262,7 @@ func runDeploy() error {
 				return err
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, tag, tagStrategy, false)
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
 			return nil
 		}); err != nil {
 			return err
@@ -363,7 +354,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if vals, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+	if vals, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err

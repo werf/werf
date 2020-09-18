@@ -9,7 +9,6 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/images_manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 )
 
 type RenderOptions struct {
@@ -26,7 +25,7 @@ type RenderOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts RenderOptions) error {
+func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, opts RenderOptions) error {
 	logboek.Context(ctx).Debug().LogF("Render options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
@@ -34,7 +33,7 @@ func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir stri
 		return err
 	}
 
-	serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, opts.Namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, opts.Namespace, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return err
 	}
