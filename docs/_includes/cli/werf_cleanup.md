@@ -44,15 +44,6 @@ werf cleanup [options]
             stages storage and images repo
       --dry-run=false:
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
-      --git-commit-strategy-expiry-days=-1:
-            Keep images published with the git-commit tagging strategy in the images repo for the   
-            specified maximum days since image published. Republished image will be kept specified  
-            maximum days since new publication date. No days limit by default, -1 disables the      
-            limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS
-      --git-commit-strategy-limit=-1:
-            Keep max number of images published with the git-commit tagging strategy in the images  
-            repo. No limit by default, -1 disables the limit. Value can be specified by the         
-            $WERF_GIT_COMMIT_STRATEGY_LIMIT
       --git-history-based-cleanup=true:
             Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)
       --git-history-based-cleanup-v1.2=false:
@@ -61,15 +52,6 @@ werf cleanup [options]
       --git-history-synchronization=false:
             Synchronize git branches and tags with remote origin (default                           
             $WERF_GIT_HISTORY_SYNCHRONIZATION)
-      --git-tag-strategy-expiry-days=-1:
-            Keep images published with the git-tag tagging strategy in the images repo for the      
-            specified maximum days since image published. Republished image will be kept specified  
-            maximum days since new publication date. No days limit by default, -1 disables the      
-            limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS
-      --git-tag-strategy-limit=-1:
-            Keep max number of images published with the git-tag tagging strategy in the images     
-            repo. No limit by default, -1 disables the limit. Value can be specified by the         
-            $WERF_GIT_TAG_STRATEGY_LIMIT
   -h, --help=false:
             help for cleanup
       --home-dir='':

@@ -39,46 +39,6 @@ werf can automate the cleaning of the _images repo_.
 It works according to special rules called **cleanup policies**.
 These policies determine which _images_ will be deleted while leaving all others intact.
 
-#### Tagging scheme-based cleanup algorithm
-
-> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
-
-#### Cleanup policies
-
-* **by branches:**
-    * Each new commit updates an image for the corresponding git branch (in other words, there is the only one docker tag for each published git branch).
-    * werf deletes an image from the _images repo_ if the corresponding git branch does not exist. The image is never removed as long as the corresponding git branch exists.
-    * The policy covers images tagged by werf with the `--tag-git-branch` option.
-* **by commits:**
-    * werf deletes an image from the _images repo_ if the corresponding git commit does not exist.
-    * For the remaining images, the following policies apply:
-      * _git-commit-strategy-expiry-days_.
-      Keep published _images_ in the _images repo_ for the **specified maximum number of days** since the image was published.
-      The republished image will be kept for the **specified maximum number of days** since the new publication date.
-      No days limit is set by default; -1 disables the limit.
-      The value can be specified by `--git-commit-strategy-expiry-days` option or `$WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS`.
-      * _git-commit-strategy-limit_.
-      Keep the **specified max number** of published _images_ in the _images repo_.
-      No limit is set by default; -1 disables the limit.
-      Value can be specified by `--git-commit-strategy-limit` or `$WERF_GIT_COMMIT_STRATEGY_LIMIT`.
-    * The policy covers images tagged by werf with the `--tag-git-commit` flag.
-* **by tags:**
-    * werf deletes an image from the _images repo_ when the corresponding git tag does not exist.
-    * For the remaining images, the following policies apply:
-       * _git-tag-strategy-expiry-days_.
-       Keep published _images_ in the _images repo_ for the **specified maximum number of days** since the image was published.
-       The republished image will be kept for the **specified maximum number of days** since the new publication date.
-       No days limit is set by default; -1 disables the limit.
-       Value can be specified by `--git-tag-strategy-expiry-days` option or `$WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`.
-       * _git-tag-strategy-limit_.
-       Keep the **specified max number** of published _images_ in the _images repo_.
-       No limit is set by default; -1 disables the limit.
-       Value can be specified by `--git-tag-strategy-limit` or `$WERF_GIT_TAG_STRATEGY_LIMIT`.
-    * The policy covers images tagged by werf with `--tag-git-tag` flag.
-
-**Please note** that the cleanup affects only images built and published by werf with one of the following arguments: `--tag-git-branch`, `--tag-git-tag` or `--tag-git-commit`.
-All other images in the _images repo_ stay intact.
-
 #### Git history-based cleanup algorithm
 
 > In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.

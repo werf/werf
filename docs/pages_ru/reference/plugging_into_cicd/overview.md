@@ -68,10 +68,6 @@ werf автоматически добавляет и другие аннота�
 
 ### Настройка режима работы в CI/CD системе
 
-Команда `werf ci-env` настраивает политики очистки следующим образом:
- * Хранить не более чем 10 образов, собранных для git-тегов. Такое поведение определяется установкой переменной окружения [`WERF_GIT_TAG_STRATEGY_LIMIT=10`](#werf_git_tag_strategy_limit);
- * Хранить образы собранные для git-тегов не более чем 30 дней. Такое поведение определяется установкой переменной окружения [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30`](#werf_git_tag_strategy_expiry_days).
-
 Если CI/CD система поддерживает вывод текста разных цветов, то команда `werf ci-env` должна устанавливать переменную окружения [`WERF_LOG_COLOR_MODE=on`](#werf_log_color_mode).
 
 По умолчанию, werf не выводит, например, в момент сборки папку проекта, где запущен процесс сборки.
@@ -160,14 +156,6 @@ export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-ur
 echo 'export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://gitlab.domain.com/project/x/pipelines/43107"'
 export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://gitlab.domain.com/project/x/-/jobs/110681"
 echo 'export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://gitlab.domain.com/project/x/-/jobs/110681"'
-
-### IMAGE CLEANUP POLICIES
-echo
-echo '### IMAGE CLEANUP POLICIES'
-export WERF_GIT_TAG_STRATEGY_LIMIT="10"
-echo 'export WERF_GIT_TAG_STRATEGY_LIMIT="10"'
-export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"
-echo 'export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"'
 
 ### OTHER
 echo
@@ -264,14 +252,6 @@ export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 #### WERF_ADD_ANNOTATION_CI_COMMIT
 
 Согласно процедуре [интеграции с настройками CI/CD pipeline](#интеграция-с-настройками-cicd-pipeline), команда [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) определяет хэш git-коммита и устанавливает параметр `--add-annotation`, используя переменную окружения `WERF_ADD_ANNOTATION_CI_COMMIT`.
-
-#### WERF_GIT_TAG_STRATEGY_LIMIT
-
-Согласно процедуре [настройки режима работы в CI/CD системе](#настройка-режима-работы-в-cicd-системе), команда [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) устанавливает параметр `--git-tag-strategy-limit`, используя переменную окружения `WERF_GIT_TAG_STRATEGY_LIMIT`.
-
-#### WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS
-
-Согласно процедуре [настройки режима работы в CI/CD системе](#настройка-режима-работы-в-cicd-системе), команда [`werf ci-env`]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) устанавливает параметр `--git-tag-strategy-expiry-days`, используя переменную окружения `WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`.
 
 #### WERF_LOG_COLOR_MODE
 

@@ -68,10 +68,6 @@ Also, the [`WERF_ENV=ENV`](#werf_env) environment variable will be set.
 
 ### Configure modes of operation in CI/CD systems
 
-The ci-env command configures [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) in the following manner:
- * keep no more than 10 images built for git-tags. You can control this behaviour by setting the [`WERF_GIT_TAG_STRATEGY_LIMIT=10`](#werf_git_tag_strategy_limit) environmental variable;
- * keep images built for git-tags for no more than 30 days. You can control this behaviour by setting the [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=30`](#werf_git_tag_strategy_expiry_days) environmental variable.
-
 If the CI/CD system has support for the output of text in different colors, the `werf ci-env` will then set the [`WERF_LOG_COLOR_MODE=on`](#werf_log_color_mode) environment variable.
 
 Logging the project directory where werf runs will be forced if the [`WERF_LOG_PROJECT_DIR=1`](#werf_log_project_dir) environment variable is set (by default, werf does not print the contents of the directory). Such logging helps to debug problems within the CI/CD system by providing a convenient standard output.
@@ -157,14 +153,6 @@ export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-ur
 echo 'export WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL="gitlab.ci.werf.io/pipeline-url=https://gitlab.domain.com/project/x/pipelines/43107"'
 export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://gitlab.domain.com/project/x/-/jobs/110681"
 echo 'export WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL="gitlab.ci.werf.io/job-url=https://gitlab.domain.com/project/x/-/jobs/110681"'
-
-### IMAGE CLEANUP POLICIES
-echo
-echo '### IMAGE CLEANUP POLICIES'
-export WERF_GIT_TAG_STRATEGY_LIMIT="10"
-echo 'export WERF_GIT_TAG_STRATEGY_LIMIT="10"'
-export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"
-echo 'export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS="30"'
 
 ### OTHER
 echo
@@ -258,14 +246,6 @@ Within the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure,
 #### WERF_ADD_ANNOTATION_CI_COMMIT
 
 Under the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) detects the current commit and sets an`--add-annotation` parameter using the `WERF_ADD_ANNOTATION_CI_COMMIT` environment variable.
-
-#### WERF_GIT_TAG_STRATEGY_LIMIT
-
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets a `--git-tag-strategy-limit` parameter using the `WERF_GIT_TAG_STRATEGY_LIMIT` environment variable.
-
-#### WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS
-
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) sets an `--git-tag-strategy-expiry-days` parameter using the `WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS` environment variable.
 
 #### WERF_LOG_COLOR_MODE
 
