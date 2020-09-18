@@ -13,7 +13,7 @@ summary: |
   <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-  <span class="na">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
+  <span class="na">fromArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
   </code></pre></div>
   </div>
 ---
@@ -29,7 +29,7 @@ from: alpine
 
 Приведенная конфигурация описывает _образ_ `example`, _базовым образом_ для которого является образ с именем `alpine`.
 
-_Базовый образ_ может быть указан с помощью директив `from`, `fromImage` или `fromImageArtifact`.
+_Базовый образ_ может быть указан с помощью директив `from`, `fromImage` или `fromArtifact`.
 
 ## from, fromLatest
 
@@ -63,13 +63,13 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 >
 > **Крайне не рекоммендуется использовать актуальный базовый образ таким способом**. Используйте конкретный неизменный tag или переодически обновляйте значение [fromCacheVersion](#fromcacheversion) для обеспечения предсказуемого и контролируемого жизненного цикла приложения
 
-## fromImage и fromImageArtifact
+## fromImage и fromArtifact
 
-В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromImageArtifact` соответственно.
+В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
 
 ```yaml
 fromImage: <image name>
-fromImageArtifact: <artifact name>
+fromArtifact: <artifact name>
 ```
 
 Если _базовый образ_ уникален для конкретного приложения, то рекомендуемый способ — хранить его описание в конфигурации приложения (в файле `werf.yaml`) как отдельный _образ_ или _артефакт_, вместо того, чтобы ссылаться на Docker-образ.

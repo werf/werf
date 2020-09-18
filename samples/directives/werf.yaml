@@ -2,7 +2,7 @@ image: <image_name... || ~>
 from: <image>
 fromCacheVersion: <version>
 fromImage: <image_name>
-fromImageArtifact: <artifact_name>
+fromArtifact: <artifact_name>
 git:
 # local git
   - add: <absolute_path>
@@ -107,7 +107,7 @@ artifact: <artifact_name>
 from: <image>
 fromCacheVersion: <version>
 fromImage: <image_name>
-fromImageArtifact: <artifact_name>
+fromArtifact: <artifact_name>
 git:
 # local git
   - add: <absolute_path>

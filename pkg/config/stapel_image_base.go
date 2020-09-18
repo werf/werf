@@ -10,7 +10,7 @@ type StapelImageBase struct {
 	FromLatest                                          bool
 	HerebyIAdmitThatFromLatestMightBreakReproducibility bool
 	FromImageName                                       string
-	FromImageArtifactName                               string
+	FromArtifactName                                    string
 	FromCacheVersion                                    string
 	Git                                                 *GitManager
 	Shell                                               *Shell
@@ -89,8 +89,8 @@ We do not recommend using the actual base image such way. Use a particular uncha
 		return newDetailedConfigError(msg, nil, c.raw.doc)
 	}
 
-	if c.From == "" && c.raw.FromImage == "" && c.raw.FromImageArtifact == "" && c.FromImageName == "" && c.FromImageArtifactName == "" {
-		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromImageArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
+	if c.From == "" && c.raw.FromImage == "" && c.raw.FromArtifact == "" && c.FromImageName == "" && c.FromArtifactName == "" {
+		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}
 
 	mountByTo := map[string]bool{}
@@ -103,8 +103,8 @@ We do not recommend using the actual base image such way. Use a particular uncha
 		mountByTo[mount.To] = true
 	}
 
-	if !oneOrNone([]bool{c.From != "", c.raw.FromImage != "", c.raw.FromImageArtifact != ""}) {
-		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromImageArtifact` directives!", nil, c.raw.doc)
+	if !oneOrNone([]bool{c.From != "", c.raw.FromImage != "", c.raw.FromArtifact != ""}) {
+		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromArtifact` directives!", nil, c.raw.doc)
 	}
 
 	// TODO: валидацию формата `From`

@@ -13,7 +13,7 @@ summary: |
   <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-  <span class="na">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
+  <span class="na">fromArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
   </code></pre></div>
   </div>
 ---
@@ -28,7 +28,7 @@ image: example
 from: alpine
 ```
 
-_Base image_ can be declared with `from`, `fromImage` or `fromImageArtifact` directive.
+_Base image_ can be declared with `from`, `fromImage` or `fromArtifact` directive.
 
 ## from, fromLatest
 
@@ -58,13 +58,13 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 >
 > **We do not recommend using the actual base image such way**. Use a particular unchangeable tag or periodically change [fromCacheVersion](#fromcacheversion) value to provide controllable and predictable lifecycle of software       
 
-## fromImage and fromImageArtifact
+## fromImage and fromArtifact
 
 Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
-fromImageArtifact: <artifact name>
+fromArtifact: <artifact name>
 ```
 
 If a _base image_ is specific to a particular application,
@@ -73,7 +73,7 @@ it is reasonable to store its description with _images_ and _artifacts_ which ar
 Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
 <a class="google-drawings" href="../../../images/configuration/base_image2.png" data-featherlight="image">
-<img src="../../../images/configuration/base_image2_preview.png" alt="Conveyor with fromImage and fromImageArtifact stages">
+<img src="../../../images/configuration/base_image2_preview.png" alt="Conveyor with fromImage and fromArtifact stages">
 </a>
 
 ## fromCacheVersion

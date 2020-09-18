@@ -205,4 +205,4 @@ image: stapel_image_from_image
 fromImage: stapel_image_shell
 ---
 image: stapel_image_from_artifact
-fromImageArtifact: stapel_artifact_shell
+fromArtifact: stapel_artifact_shell
