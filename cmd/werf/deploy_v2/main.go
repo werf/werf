@@ -338,6 +338,7 @@ func runDeploy() error {
 			ValueFiles:   *commonCmdData.Values,
 			StringValues: *commonCmdData.SetString,
 			Values:       *commonCmdData.Set,
+			FileValues:   *commonCmdData.SetFile,
 		},
 		CreateNamespace: NewBool(true),
 		Install:         NewBool(true),

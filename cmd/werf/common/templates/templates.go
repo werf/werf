@@ -9,7 +9,7 @@ const (
 	// SectionVars is the help template section that declares variables to be used in the template.
 	SectionVars = `{{$isRootCmd := isRootCmd .}}` +
 		`{{$rootCmd := rootCmd .}}` +
-		`{{$visibleFlags := visibleFlags (flagsNotIntersected .LocalFlags .PersistentFlags)}}` +
+		`{{$visibleFlags := visibleFlags .Flags}}` +
 		`{{$explicitlyExposedFlags := exposed .}}` +
 		`{{$environment := environment .}}` +
 		`{{$optionsCmdFor := optionsCmdFor .}}` +
