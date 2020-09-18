@@ -43,7 +43,8 @@ import (
 )
 
 var cmdData struct {
-	Timeout int
+	Timeout      int
+	AutoRollback bool
 }
 
 var commonCmdData common.CmdData
@@ -138,6 +139,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -328,6 +331,7 @@ func runDeploy() error {
 
 	actionConfig := new(action.Configuration)
 	*cmd_helm.Settings.GetNamespaceP() = namespace
+
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
@@ -343,7 +347,8 @@ func runDeploy() error {
 		CreateNamespace: NewBool(true),
 		Install:         NewBool(true),
 		Wait:            NewBool(true),
-		Atomic:          NewBool(false),
+		Atomic:          NewBool(cmdData.AutoRollback),
+		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
 	})
 
 	if err := helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
@@ -352,9 +357,6 @@ func runDeploy() error {
 	}); err != nil {
 		return err
 	}
-
-	_ = imagesRepository
-	_ = cmdData.Timeout
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
@@ -370,11 +372,18 @@ func runDeploy() error {
 		return err
 	}
 
-	_ = cmdData.Timeout
-
 	return wc.WrapUpgrade(context.Background(), func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
 	})
+}
+
+func NewDuration(value time.Duration) *time.Duration {
+	if value != 0 {
+		res := new(time.Duration)
+		*res = value
+		return res
+	}
+	return nil
 }
 
 func NewBool(value bool) *bool {
