@@ -35,7 +35,6 @@ sidebar: documentation
 Раздел [**Справочник**]({{ site.baseurl }}/documentation/reference/stages_and_images.html) посвящен описанию основных процессов werf:
 
 * [Сборка]({{ site.baseurl }}/documentation/reference/build_process.html)
-* [Публикация]({{ site.baseurl }}/documentation/reference/publish_process.html)
 * [Деплой]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html)
 * [Очистка]({{ site.baseurl }}/documentation/reference/cleaning_process.html)
 

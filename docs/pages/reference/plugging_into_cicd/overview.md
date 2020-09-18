@@ -76,23 +76,15 @@ The `werf ci-env` command enables the so-called process exterminator. Some CI/CD
 
 The `werf ci-env` command sets the logging output width to 100 symbols since it is an experimentally proven universal width that fits most modern screens. In this case, the [`WERF_LOG_TERMINAL_WIDTH=100`](#werf_log_terminal_width) variable will be set.
 
-## Ci-env tagging modes
-
-The tagging mode determines how [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) that are described in the `werf.yaml` and built by werf will be named during the [publishing process]({{ site.baseurl }}/documentation/reference/publish_process.html).
-
 ### stages-signature
 
 Werf uses image _stages signature_ to tag result images. Each image defined in the `werf.yaml` config will have an own _stages signature_ which depends on the content of the image and git history which lead to this content.
-
-Learn more about stages signature tagging in the [publish process article]({{ site.baseurl }}/documentation/reference/publish_process.html#content-based-tagging). With this tagging strategy werf automatically enables `--tag-by-stages-signature=true` option of `werf publish` command.
 
 This is default and recommended tagging strategy. By omitting `--tagging-strategy`  option of the [`werf ci-env` command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) werf will use `stages-signature` strategy, or user may explicitly specify an option `--tagging-strategy=stages-signature`.
 
 ### tag-or-branch
 
 The current git-tag or git-branch is used to tag [images]({{ site.baseurl }}/documentation/reference/stages_and_images.html#images) described in the `werf.yaml` and built by werf.
-
-An image, associated with a corresponding git-tag or git-branch, will be kept in the Docker registry in accordance with [cleanup policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies).
 
 This mode uses [werf publishing parameters]({{ site.baseurl }}/documentation/reference/publish_process.html#naming-images) such as `--tag-git-tag` or `--tag-git-branch` and automatically selects the appropriate one. These parameters are also used in the [werf deploy command]({{ site.baseurl }}/documentation/cli/main/deploy.html).
 

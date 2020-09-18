@@ -245,18 +245,15 @@ The ***stage signature*** is calculated as the checksum of:
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
-This signature used in [content based tagging]({{ site.baseurl }}/documentation/reference/publish_process.html#content-based-tagging) and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
+This signature used in content based tagging and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
 
 ## Images
 
-_Image_ is a **ready-to-use** Docker image corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
+_Image_ is a **ready-to-use** Docker image corresponding to a specific application state and tagging strategy.
 
 As mentioned [above](#stages), _stages_ are steps in the assembly process. They act as building blocks for constructing _images_.
-Unlike images, _stages_ are not intended for the direct use. The main difference between images and stages is in [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to the stored meta-information.
+Unlike images, _stages_ are not intended for the direct use.
 The process of cleaning up the _stages storage_ is only based on the related images in the _images repo_.
-
-werf creates _images_ using the _stages storage_.
-Currently, _images_ can only be created during the [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and saved in the _images repo_.
 
 Images should be defined in the werf configuration file `werf.yaml`.
 

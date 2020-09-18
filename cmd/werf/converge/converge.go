@@ -109,6 +109,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	common.SetupReportPath(&commonCmdData, cmd)
+	common.SetupReportFormat(&commonCmdData, cmd)
+
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
@@ -241,13 +244,9 @@ func runConverge() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	buildAndPublishOptions := build.BuildAndPublishOptions{
-		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: container_runtime.BuildOptions{},
-		},
-		PublishImagesOptions: build.PublishImagesOptions{
-			TagOptions: build.TagOptions{TagByStagesSignature: true}, // always content based tagging
-		},
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	if err != nil {
+		return err
 	}
 
 	logboek.LogOptionalLn()
@@ -285,7 +284,7 @@ func runConverge() error {
 		}
 		imagesRepository = imagesRepo.String()
 
-		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildAndPublishOptions.BuildStagesOptions)
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {
 			return err
 		}
@@ -294,7 +293,7 @@ func runConverge() error {
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if err := c.BuildAndPublish(ctx, buildAndPublishOptions); err != nil {
+			if err := c.Build(ctx, buildOptions); err != nil {
 				return err
 			}
 

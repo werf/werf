@@ -84,7 +84,6 @@ author: Artem Kladov <artem.kladov@flant.com>
 * [werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
 * [Dockerfile Image: complete directive list]({{ site.base_url}}/documentation/configuration/dockerfile_image.html).
 * [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
-* [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).
 
 Либо переходите к знакомству со следующими примерами:
 * [Deploy an application to a Kubernetes cluster]({{ site.base_url}}/documentation/guides/deploy_into_kubernetes.html).
