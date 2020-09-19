@@ -88,6 +88,25 @@ werf helm-v3 list [flags] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --log-color-mode='auto':
+            Set log color mode.
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
+            terminal) modes.
+            Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=false:
+            Enable debug (default $WERF_LOG_DEBUG).
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
+            true).
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
   -n, --namespace='':
             namespace scope for this request
       --status-progress-period=5:

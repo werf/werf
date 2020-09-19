@@ -39,6 +39,7 @@ func NewCmd() *cobra.Command {
 	cmd_werf_common.SetupKubeContext(&commonCmdData, cmd)
 	cmd_werf_common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	cmd_werf_common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	cmd_werf_common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.AddCommand(
 		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout),
@@ -84,6 +85,11 @@ func NewCmd() *cobra.Command {
 
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
 				// NOTE: Common init block for all runnable commands.
+
+				if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+					common.PrintHelp(cmd)
+					return err
+				}
 
 				// FIXME: setup namespace env var for helm diff plugin
 
