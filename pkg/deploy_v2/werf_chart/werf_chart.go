@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/Masterminds/sprig"
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"github.com/werf/werf/pkg/config"
@@ -187,6 +188,10 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 
 	for _, name := range []string{"image", "image_id", "werf_container_image", "werf_container_env"} {
 		setupIncludeWrapperFunc(name)
+	}
+
+	for _, name := range []string{"env", "expandenv"} {
+		funcMap[name] = sprig.TxtFuncMap()[name]
 	}
 }
 
