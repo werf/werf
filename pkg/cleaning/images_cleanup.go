@@ -321,7 +321,7 @@ func getDeployedDockerImagesNames(ctx context.Context, kubernetesContextClients 
 			DoError(func() error {
 				kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(contextClient.Client, kubernetesNamespaceRestrictionByContext[contextClient.ContextName])
 				if err != nil {
-					return fmt.Errorf("cannot get deployed imagesRepoImageList: %s", err)
+					return fmt.Errorf("cannot get deployed images: %s", err)
 				}
 
 				deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
