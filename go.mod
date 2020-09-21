@@ -1,5 +1,7 @@
 module github.com/werf/werf
 
+go 1.14
+
 require (
 	bou.ke/monkey v1.0.1
 	github.com/Masterminds/goutils v1.1.0
@@ -58,7 +60,7 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.4.1-0.20200907160731-10aec4300377
+	github.com/werf/kubedog v0.4.1-0.20200923112210-4079add7a93c
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.4.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -74,10 +76,10 @@ require (
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.2.4
-	k8s.io/api v0.18.6
-	k8s.io/apimachinery v0.18.6
-	k8s.io/cli-runtime v0.18.6
-	k8s.io/client-go v0.18.6
+	k8s.io/api v0.19.2
+	k8s.io/apimachinery v0.19.2
+	k8s.io/cli-runtime v0.19.2
+	k8s.io/client-go v0.19.2
 	k8s.io/helm v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.6
@@ -138,8 +140,6 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200919163358-78a70cd74f38
-
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
@@ -148,4 +148,4 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-containerregistry v0.1.3-0.20200901133051-a73cc6cd741c
 
-go 1.14
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b

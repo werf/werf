@@ -455,6 +455,8 @@ github.com/evanphx/json-patch v4.2.0+incompatible h1:fUDGZCv/7iAN7u0puUVhvKCcsR6
 github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.5.0+incompatible h1:ouOWdg56aJriqS0huScTkVXPC5IcNrDCXZ6OoTAWu7M=
 github.com/evanphx/json-patch v4.5.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
+github.com/evanphx/json-patch v4.9.0+incompatible h1:kLcOMZeuLAJvL2BPWLMIj5oaZQobrkAqrL+WFZwQses=
+github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d h1:105gxyaGwCFad8crR9dcMQWvV9Hvulu6hwUh4tWPJnM=
 github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d/go.mod h1:ZZMPRZwes7CROmyNKgQzC3XPs6L/G2EJLHddWejkmf4=
 github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwoZc+/fpc=
@@ -1482,10 +1484,16 @@ github.com/werf/helm/v3 v3.0.0-20200917163411-aa36ce853669 h1:zhpvOBkrKtCzQYwuo/
 github.com/werf/helm/v3 v3.0.0-20200917163411-aa36ce853669/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
 github.com/werf/helm/v3 v3.0.0-20200919163358-78a70cd74f38 h1:XG9woxPBycedowKdc6HpWfdG7G3K4r9QMoKKlDHWC6c=
 github.com/werf/helm/v3 v3.0.0-20200919163358-78a70cd74f38/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
+github.com/werf/helm/v3 v3.0.0-20200923112939-5e7f681fcb0a h1:NX61qolkkyQZEuFq9R94xvJPY2tZtxA5FE7YewP5kYQ=
+github.com/werf/helm/v3 v3.0.0-20200923112939-5e7f681fcb0a/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
+github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b h1:OaPrTvZEDLY3RNx6l2U0XxJqquFjGKzO0iUsOrVF5fs=
+github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
 github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07 h1:pKU78lxdl5Ck4zkWzwH74FOnAC3uf/5u5rbS8SRcXwk=
 github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/kubedog v0.4.1-0.20200907160731-10aec4300377 h1:bQgmFAC6Q7FEVR0Xa8I875LgTTxlHnWM/qGtHAK3OZQ=
 github.com/werf/kubedog v0.4.1-0.20200907160731-10aec4300377/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
+github.com/werf/kubedog v0.4.1-0.20200923112210-4079add7a93c h1:aM9Gs5CF9YuCFs25mCNfZKTx+3dNe97YGQGKLIumW5U=
+github.com/werf/kubedog v0.4.1-0.20200923112210-4079add7a93c/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea h1:R5tJUhL5a3YfHTrHWyuAdJW3h//fmONrpHJjjAZ79e4=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea/go.mod h1:/CeY6KDiBSCU9PUmjt7zGhqpzp8FAPg/wNVfLZHQGWI=
 github.com/werf/logboek v0.4.3 h1:aXAVLlGT/ZiD8Srj+B71Tw20PtDyuYZSEJZjODNraeA=
