@@ -63,8 +63,6 @@ func NewCmd() *cobra.Command {
 
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
-	common.SetupTag(&commonCmdData, cmd)
-
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
@@ -141,11 +139,6 @@ func runRender(outputFilePath string) error {
 		return err
 	}
 
-	tag, tagStrategy, err := helm_common.GetTagOrStub(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
 	if err != nil {
 		return err
@@ -167,7 +160,7 @@ func runRender(outputFilePath string) error {
 	for _, imageName := range imagesNames {
 		d := &images_manager.ImageInfo{
 			ImagesRepo:      imagesRepo,
-			Tag:             tag,
+			Tag:             "TAG",
 			Name:            imageName,
 			WithoutRegistry: withoutImagesRepo,
 		}
@@ -175,7 +168,7 @@ func runRender(outputFilePath string) error {
 	}
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(ctx, buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.RenderOptions{
+	if err := deploy.RunRender(ctx, buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
 		WithoutImagesRepo:    withoutImagesRepo,

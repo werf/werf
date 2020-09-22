@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -280,7 +279,7 @@ func runDiff() error {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, "", tag_strategy.StagesSignature, false)
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
 
 		return nil
 	}); err != nil {
@@ -288,7 +287,7 @@ func runDiff() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

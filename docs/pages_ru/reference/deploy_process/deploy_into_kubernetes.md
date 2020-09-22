@@ -289,22 +289,13 @@ global:
   env: stage
   namespace: myapp-stage
   werf:
-    ci:
-      branch: mybranch
-      is_branch: true
-      is_tag: false
-      tag: '"-"'
-    docker_tag: mybranch
     image:
       assets:
-        docker_image: registry.domain.com/apps/myapp/assets:mybranch
-        docker_image_id: sha256:ddaec322ee2c622aa0591177062a81009d9e52785be6915c5a37e822c2019755
-        docker_image_digest: sha256:81009d9e52785be6915c5a37e822c2019755ddaec322ee2c622aa0591177062a
+        docker_image: registry.domain.com/apps/myapp/assets:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+        docker_tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
       rails:
-        docker_image: registry.domain.com/apps/myapp/rails:mybranch
-        docker_image_id: sha256:646c56c828beaf26e67e84a46bcdb6ab555c6bce8ebeb066b79a9075d0e87f50
-        docker_image_digest: sha256:555c6bce8ebeb066b79a9075d0e87f50646c56c828beaf26e67e84a46bcdb6ab
-    is_nameless_image: false
+        docker_image: registry.domain.com/apps/myapp/rails:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+        docker_image_id: e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
     name: myapp
     repo: registry.domain.com/apps/myapp
 ```
@@ -312,12 +303,9 @@ global:
 Существуют следующие сервисные данные:
  * Название окружения CI/CD системы, используемое во время деплоя: `.Values.global.env`.
  * Namespace Kubernetes используемый во время деплоя: `.Values.global.namespace`.
- * Данные используемой стратегии тегирования: `.Values.global.werf.ci.is_branch`, `.Values.global.werf.ci.branch`, `.Values.global.werf.ci.is_tag`, `.Values.global.werf.ci.tag`.
- * `.Values.global.ci.ref` — содержит либо название git-ветки, либо название git-тега (опционально).
- * Полное имя Docker-образа и его ID, для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.global.werf.image.IMAGE_NAME.docker_image` и `.Values.global.werf.image.IMAGE_NAME.docker_image_id` и `.Values.global.werf.image.IMAGE_NAME.docker_image_digest`.
+ * Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.global.werf.image.IMAGE_NAME.docker_image` и `.Values.global.werf.image.IMAGE_NAME.docker_image_tag`.
  * `.Values.global.werf.is_nameless_image` — устанавливается если в файле конфигурации `werf.yaml` описан безымянный образ.
  * Имя проекта из файла конфигурации `werf.yaml`: `.Values.global.werf.name`.
- * Docker-тег, используемый при деплое образа, описанного в файле конфигурации `werf.yaml` (соответственно выбранной стратегии тегирования): `.Values.global.werf.docker_tag`.
  * Docker-репозиторий образа используемый при деплое: `.Values.global.werf.repo`.
 
 #### Итоговое объединение данных

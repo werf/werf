@@ -50,7 +50,6 @@ These values includes project name, docker images ids and other`),
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupTag(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 
@@ -134,11 +133,6 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	tag, tagStrategy, err := helm_common.GetTagOrStub(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -161,13 +155,13 @@ func runGetServiceValues() error {
 		d := &images_manager.ImageInfo{
 			ImagesRepo:      imagesRepo,
 			Name:            imageName,
-			Tag:             tag,
+			Tag:             "TAG",
 			WithoutRegistry: withoutRepo,
 		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	serviceValues, err := deploy.GetServiceValues(ctx, projectName, imagesRepo.String(), namespace, tag, tagStrategy, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(ctx, projectName, imagesRepo.String(), namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

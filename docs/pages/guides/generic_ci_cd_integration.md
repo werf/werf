@@ -33,12 +33,6 @@ export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
 export WERF_IMAGES_REPO=registry.company.com/project
 ```
 
-### Git integration
-
-According to [git integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#git-integration) procedure, variables to define:
- * [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag);
- * [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch).
-
 ### CI/CD pipelines integration
 
 According to [CI/CD pipelines integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#cicd-pipelines-integration) procedure, variables to define:
@@ -73,8 +67,6 @@ export WERF_IMAGES_REPO=registry.company.com/project
 
 docker login -u USER -p PASSWORD $WERF_IMAGES_REPO
 
-export WERF_TAG_GIT_TAG=GIT_TAG
-export WERF_TAG_GIT_BRANCH=GIT_BRANCH
 export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://cicd.domain.com/project/x"
 export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=b9a1ddd366aa6a20a0fd43fb6612f349d33465ff"
 export WERF_ENV=ENV
