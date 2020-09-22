@@ -138,6 +138,11 @@ werf build [IMAGE_NAME...] [options]
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --report-format='json':
+            Report format (only json available for now, $WERF_REPORT_FORMAT by default)
+      --report-path='':
+            Report contains image info: full docker repo, tag, ID — for each image                  
+            ($WERF_REPORT_PATH by default)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

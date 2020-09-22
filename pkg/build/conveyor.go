@@ -422,61 +422,19 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	return images
 }
 
-func (c *Conveyor) BuildStages(ctx context.Context, opts BuildStagesOptions) error {
+func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err := c.determineStages(ctx); err != nil {
 		return err
 	}
 
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{
-			IntrospectOptions: opts.IntrospectOptions,
-			ImageBuildOptions: opts.ImageBuildOptions,
+			BuildOptions: opts,
 		}),
 	}
 
-	return c.runPhases(ctx, phases, true)
-}
-
-type PublishImagesOptions struct {
-	ImagesToPublish []string
-	TagOptions
-
-	PublishReportPath   string
-	PublishReportFormat PublishReportFormat
-}
-
-func (c *Conveyor) PublishImages(ctx context.Context, opts PublishImagesOptions) error {
-	if err := c.determineStages(ctx); err != nil {
-		return err
-	}
-
-	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
-		NewPublishImagesPhase(c, c.ImagesRepo, opts),
-	}
-
-	return c.runPhases(ctx, phases, true)
-}
-
-type BuildAndPublishOptions struct {
-	BuildStagesOptions
-	PublishImagesOptions
-
-	DryRun bool
-}
-
-func (c *Conveyor) BuildAndPublish(ctx context.Context, opts BuildAndPublishOptions) error {
-	if err := c.determineStages(ctx); err != nil {
-		return err
-	}
-
-	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
-		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
-	}
-
 	if opts.DryRun {
-		fmt.Printf("BuildAndPublish DryRun\n")
+		fmt.Printf("Build DryRun\n")
 		return nil
 	}
 

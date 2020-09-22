@@ -37,7 +37,6 @@ Other section articles provide detailed information about [Dockerfile Image]({{ 
 The **Reference** section covers essential werf processes:
 
 * [Building process]({{ site.baseurl }}/documentation/reference/build_process.html).
-* [Publishing process]({{ site.baseurl }}/documentation/reference/publish_process.html).
 * [Deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
 * [Cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
 

@@ -263,16 +263,11 @@ func runDiff() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	opts := build.BuildAndPublishOptions{
-		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: container_runtime.BuildOptions{},
-		},
-		PublishImagesOptions: build.PublishImagesOptions{
-			TagOptions: build.TagOptions{TagByStagesSignature: true}, // always content based tagging
-		},
-		DryRun: true,
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	if err != nil {
+		return err
 	}
-
+	buildOptions.DryRun = true
 	logboek.LogOptionalLn()
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
@@ -281,7 +276,7 @@ func runDiff() error {
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if err := c.BuildAndPublish(ctx, opts); err != nil {
+		if err := c.Build(ctx, buildOptions); err != nil {
 			return err
 		}
 

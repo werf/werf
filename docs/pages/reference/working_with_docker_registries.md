@@ -8,13 +8,12 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 There are several types of commands that are working with the Docker registries and require the appropriate authorization:
 
 * [During the building process]({{ site.baseurl }}/documentation/reference/build_process.html), werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
-* [During the publishing process]({{ site.baseurl }}/documentation/reference/publish_process.html), werf creates and updates _images_ in the Docker registry.
 * [During the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html), werf deletes _images_ and _stages_ from the Docker registry.
 * [During the deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
 
 ## Supported implementations
 
-|                 	                    | Build and Publish 	    | Cleanup                         	                                    |
+|                 	                    | Build              	    | Cleanup                         	                                    |
 | -------------------------------------	| :-----------------------:	| :-------------------------------------------------------------------:	|
 | [_AWS ECR_](#aws-ecr)             	|         **ok**        	|                    **ok (with native API)**                   	    |
 | [_Azure CR_](#azure-cr)            	|         **ok**        	|                            **ok (with native API)**                   |
@@ -41,8 +40,6 @@ Therefore, werf may require extra credentials for [cleanup commands]({{ site.bas
 2. Some implementations do not support nested repositories (_Docker Hub_, _GitHub Packages_ and _Quay_) or support, but the user should create repositories manually using UI or API (_AWS ECR_). Thus, _multirepo_ images repo mode might require specific use.
 
 ## How to store images
-
-The _images repo_ and _images repo mode_ params define where and how to store images (read more about [image naming]({{ site.baseurl }}/documentation/reference/publish_process.html#naming-images)).
 
 The _images repo_ can be **registry** or **repository** address.
 

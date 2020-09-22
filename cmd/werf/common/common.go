@@ -104,8 +104,8 @@ type CmdData struct {
 
 	ThreeWayMergeMode *string
 
-	PublishReportPath   *string
-	PublishReportFormat *string
+	ReportPath   *string
+	ReportFormat *string
 
 	VirtualMerge           *bool
 	VirtualMergeFromCommit *string
@@ -162,22 +162,22 @@ Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa", 
 Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
-func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PublishReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", os.Getenv("WERF_PUBLISH_REPORT_PATH"), "Publish report contains image info: full docker repo, tag, ID — for each published image ($WERF_PUBLISH_REPORT_PATH by default)")
+func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.ReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "Report contains image info: full docker repo, tag, ID — for each image ($WERF_REPORT_PATH by default)")
 }
 
-func SetupPublishReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PublishReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by default)")
+func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReportFormat = new(string)
+	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", "json", "Report format (only json available for now, $WERF_REPORT_FORMAT by default)")
 }
 
-func GetPublishReportFormat(cmdData *CmdData) (build.PublishReportFormat, error) {
-	switch format := build.PublishReportFormat(*cmdData.PublishReportFormat); format {
-	case build.PublishReportJSON:
+func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
+	switch format := build.ReportFormat(*cmdData.ReportFormat); format {
+	case build.ReportJSON:
 		return format, nil
 	default:
-		return "", fmt.Errorf("bad --publish-report-format given %q, expected: \"json\"", format)
+		return "", fmt.Errorf("bad --report-format given %q, expected: \"json\"", format)
 	}
 }
 

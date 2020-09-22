@@ -21,7 +21,7 @@ func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
 	}
 }
 
-func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions build.BuildStagesOptions) (build.ConveyorOptions, error) {
+func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
 	conveyorOptions := GetConveyorOptions(commonCmdData)
 	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && *commonCmdData.Parallel
 
@@ -35,19 +35,26 @@ func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions b
 	return conveyorOptions, nil
 }
 
-func GetBuildStagesOptions(commonCmdData *CmdData, werfConfig *config.WerfConfig) (build.BuildStagesOptions, error) {
+func GetBuildOptions(commonCmdData *CmdData, werfConfig *config.WerfConfig) (buildOptions build.BuildOptions, err error) {
 	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
 	if err != nil {
-		return build.BuildStagesOptions{}, err
+		return buildOptions, err
 	}
 
-	options := build.BuildStagesOptions{
+	reportFormat, err := GetReportFormat(commonCmdData)
+	if err != nil {
+		return buildOptions, err
+	}
+
+	buildOptions = build.BuildOptions{
 		ImageBuildOptions: container_runtime.BuildOptions{
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
 		IntrospectOptions: introspectOptions,
+		ReportPath:        *commonCmdData.ReportPath,
+		ReportFormat:      reportFormat,
 	}
 
-	return options, nil
+	return buildOptions, nil
 }

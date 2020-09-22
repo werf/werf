@@ -60,9 +60,6 @@ entries:
         - title: Build Process
           url: /documentation/reference/build_process.html
 
-        - title: Publish Process
-          url: /documentation/reference/publish_process.html
-
         - title: Deploy Process
           sfi:
 
@@ -172,12 +169,6 @@ entries:
               - title: build
                 url: /documentation/cli/main/build.html
 
-              - title: publish
-                url: /documentation/cli/main/publish.html
-
-              - title: build-and-publish
-                url: /documentation/cli/main/build_and_publish.html
-
               - title: run
                 url: /documentation/cli/main/run.html
 
@@ -211,17 +202,11 @@ entries:
               - title: config list
                 url: /documentation/cli/management/config/list.html
 
-              - title: stages build
-                url: /documentation/cli/management/stages/build.html
-
               - title: stages cleanup
                 url: /documentation/cli/management/stages/cleanup.html
 
               - title: stages purge
                 url: /documentation/cli/management/stages/purge.html
-
-              - title: images publish
-                url: /documentation/cli/management/images/publish.html
 
               - title: images cleanup
                 url: /documentation/cli/management/images/cleanup.html
@@ -415,9 +400,6 @@ entries:
 
         - title: Сборка
           url: /documentation/reference/build_process.html
-
-        - title: Публикация (Publish)
-          url: /documentation/reference/publish_process.html
 
         - title: Деплой
           sfi:
