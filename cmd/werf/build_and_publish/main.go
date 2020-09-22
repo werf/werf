@@ -109,7 +109,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
-	common.SetupParallelOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	return cmd
 }

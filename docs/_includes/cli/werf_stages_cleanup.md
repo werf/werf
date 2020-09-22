@@ -89,7 +89,7 @@ werf stages cleanup [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
   -p, --parallel=true:
             Run in parallel (default $WERF_PARALLEL)
-      --parallel-tasks-limit=5:
+      --parallel-tasks-limit=10:
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --repo-docker-hub-password='':

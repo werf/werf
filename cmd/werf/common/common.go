@@ -132,6 +132,9 @@ const (
 	CiEnvGitCommitStrategyExpiryDaysDefault       = 30
 	CiEnvStagesSignatureStrategyLimitDefault      = -1
 	CiEnvStagesSignatureStrategyExpiryDaysDefault = -1
+
+	DefaultBuildParallelTasksLimit   = 5
+	DefaultCleanupParallelTasksLimit = 10
 )
 
 func GetLongCommandDescription(text string) string {
@@ -746,9 +749,9 @@ func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
 }
 
-func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command) {
+func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	SetupParallel(cmdData, cmd)
-	SetupParallelTasksLimit(cmdData, cmd)
+	SetupParallelTasksLimit(cmdData, cmd, defaultValue)
 }
 
 func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
@@ -756,9 +759,9 @@ func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
 }
 
-func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command) {
+func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	cmdData.ParallelTasksLimit = new(int64)
-	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", 5, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
+	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", defaultValue, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
 }
 
 func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {
