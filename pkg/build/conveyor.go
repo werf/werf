@@ -794,8 +794,8 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 		from = imageBaseConfig.From
 	} else if imageBaseConfig.FromImageName != "" {
 		fromImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromImageArtifactName != "" {
-		fromImageName = imageBaseConfig.FromImageArtifactName
+	} else if imageBaseConfig.FromArtifactName != "" {
+		fromImageName = imageBaseConfig.FromArtifactName
 	}
 
 	return from, fromImageName, imageBaseConfig.FromLatest

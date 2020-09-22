@@ -13,7 +13,7 @@ type rawStapelImage struct {
 	HerebyIAdmitThatFromLatestMightBreakReproducibility bool         `yaml:"herebyIAdmitThatFromLatestMightBreakReproducibility,omitempty"`
 	FromCacheVersion                                    string       `yaml:"fromCacheVersion,omitempty"`
 	FromImage                                           string       `yaml:"fromImage,omitempty"`
-	FromImageArtifact                                   string       `yaml:"fromImageArtifact,omitempty"`
+	FromArtifact                                        string       `yaml:"fromArtifact,omitempty"`
 	RawGit                                              []*rawGit    `yaml:"git,omitempty"`
 	RawShell                                            *rawShell    `yaml:"shell,omitempty"`
 	RawAnsible                                          *rawAnsible  `yaml:"ansible,omitempty"`
@@ -196,7 +196,7 @@ func (c *rawStapelImage) toImageAsLayersDirective(name string) (imageLayers []*S
 		if prevImageLayer == nil {
 			layer.From = c.From
 			layer.FromImageName = c.FromImage
-			layer.FromImageArtifactName = c.FromImageArtifact
+			layer.FromArtifactName = c.FromArtifact
 			layer.FromLatest = c.FromLatest
 			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
@@ -400,12 +400,12 @@ func (c *rawStapelImage) toStapelImageArtifactAsLayersDirective() (imageArtifact
 		if prevImageLayer == nil {
 			layer.From = c.From
 			layer.FromImageName = c.FromImage
-			layer.FromImageArtifactName = c.FromImageArtifact
+			layer.FromArtifactName = c.FromArtifact
 			layer.FromLatest = c.FromLatest
 			layer.HerebyIAdmitThatFromLatestMightBreakReproducibility = c.HerebyIAdmitThatFromLatestMightBreakReproducibility
 			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
-			layer.FromImageArtifactName = prevImageLayer.Name
+			layer.FromArtifactName = prevImageLayer.Name
 		}
 
 		prevImageLayer = layer
@@ -601,7 +601,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(name string) (imageBase *Sta
 
 	imageBase.From = c.From
 	imageBase.FromImageName = c.FromImage
-	imageBase.FromImageArtifactName = c.FromImageArtifact
+	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.HerebyIAdmitThatFromLatestMightBreakReproducibility = c.HerebyIAdmitThatFromLatestMightBreakReproducibility
 	imageBase.FromCacheVersion = c.FromCacheVersion

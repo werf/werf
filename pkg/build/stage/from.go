@@ -22,8 +22,8 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId 
 	var fromImageOrArtifactImageName string
 	if imageBaseConfig.FromImageName != "" {
 		fromImageOrArtifactImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromImageArtifactName != "" {
-		fromImageOrArtifactImageName = imageBaseConfig.FromImageArtifactName
+	} else if imageBaseConfig.FromArtifactName != "" {
+		fromImageOrArtifactImageName = imageBaseConfig.FromArtifactName
 	}
 
 	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)

@@ -128,7 +128,7 @@ import:
 artifact: promicher builder
 # artifact: ARTIFACT_NAME
 from: golang:latest
-# fromImageArtifact: ANOTHER_ARTIFACT_NAME
+# fromArtifact: ANOTHER_ARTIFACT_NAME
 git:
 ## Add remote git artifact
 - url: https://github.com/flant/promicher.git

@@ -40,7 +40,7 @@ en:
         fromLatest: <bool>
         fromCacheVersion: <arbitrary string>
         fromImage: <image name>
-        fromImageArtifact: <artifact name>
+        fromArtifact: <artifact name>
         mount:
         - from: build_dir
           to: <absolute or relative path>

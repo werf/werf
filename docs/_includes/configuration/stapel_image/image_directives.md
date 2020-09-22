@@ -5,7 +5,7 @@ fromLatest: <bool>
 herebyIAdmitThatFromLatestMightBreakReproducibility: <bool>
 fromCacheVersion: <arbitrary string>
 fromImage: <image name>
-fromImageArtifact: <artifact name>
+fromArtifact: <artifact name>
 git:
 # local git
 - add: <absolute path in git repository>
