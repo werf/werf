@@ -2,7 +2,6 @@ package diff
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -82,8 +79,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmChartDir(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
@@ -197,53 +192,6 @@ func runDiff() error {
 		}
 	}()
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
-	}
-
-	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	deployInitOptions := deploy.InitOptions{
-		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *commonCmdData.KubeConfig,
-			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-			KubeContext:                 *commonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
-			HelmReleaseStorageType:      helmReleaseStorageType,
-			StatusProgressPeriod:        common.GetStatusProgressPeriod(&commonCmdData),
-			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&commonCmdData),
-			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
-			InitNamespace:               true,
-		},
-	}
-	if err := deploy.Init(ctx, deployInitOptions); err != nil {
-		return err
-	}
-
 	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
@@ -280,17 +228,6 @@ func runDiff() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(ctx, projectDir, helmChartDir, stagesStorage.String(), imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
-		Set:                  *commonCmdData.Set,
-		SetString:            *commonCmdData.SetString,
-		Values:               *commonCmdData.Values,
-		SecretValues:         *commonCmdData.SecretValues,
-		Timeout:              time.Duration(cmdData.Timeout) * time.Second,
-		Env:                  *commonCmdData.Environment,
-		UserExtraAnnotations: userExtraAnnotations,
-		UserExtraLabels:      userExtraLabels,
-		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
-		ThreeWayMergeMode:    helm.ThreeWayMergeEnabled,
-		DryRun:               true,
-	})
+
+	return fmt.Errorf("NOT IMPLEMENTED")
 }

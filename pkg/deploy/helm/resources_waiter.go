@@ -3,16 +3,18 @@ package helm
 import (
 	"context"
 	"fmt"
-	"io"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/werf/kubedog/pkg/trackers/elimination"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
 	"github.com/werf/logboek"
+	helm_kube "helm.sh/helm/v3/pkg/kube"
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
@@ -23,16 +25,23 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/kubernetes/scheme"
-	helmKube "k8s.io/helm/pkg/kube"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 type ResourcesWaiter struct {
-	Ctx                       context.Context
-	Client                    *helmKube.Client
+	Client                    *helm_kube.Client
 	LogsFromTime              time.Time
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
+}
+
+func NewResourcesWaiter(client *helm_kube.Client, logsFromTime time.Time, statusProgressPeriod, hooksStatusProgressPeriod time.Duration) *ResourcesWaiter {
+	return &ResourcesWaiter{
+		Client:                    client,
+		LogsFromTime:              logsFromTime,
+		StatusProgressPeriod:      statusProgressPeriod,
+		HooksStatusProgressPeriod: hooksStatusProgressPeriod,
+	}
 }
 
 func extractSpecReplicas(specReplicas *int32) int {
@@ -42,13 +51,13 @@ func extractSpecReplicas(specReplicas *int32) int {
 	return 1
 }
 
-func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
+func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
 	specs := multitrack.MultitrackSpecs{}
 
-	for _, v := range created {
+	for _, v := range resources {
 		switch value := asVersioned(v).(type) {
 		case *appsv1.Deployment:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -56,7 +65,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta1.Deployment:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -64,7 +73,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *appsv1beta2.Deployment:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -72,7 +81,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
 		case *extensions.Deployment:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -82,7 +91,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 		case *extensions.DaemonSet:
 			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -92,7 +101,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 		case *appsv1.DaemonSet:
 			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -102,7 +111,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 		case *appsv1beta2.DaemonSet:
 			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -110,7 +119,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.StatefulSet:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -118,7 +127,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta1.StatefulSet:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -126,7 +135,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *appsv1beta2.StatefulSet:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -134,7 +143,7 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
 			}
 		case *batchv1.Job:
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -151,16 +160,17 @@ func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created h
 	}
 
 	// NOTE: use context from resources-waiter object here, will be changed in helm 3
-	logboek.Context(waiter.Ctx).LogOptionalLn()
-	return logboek.Context(waiter.Ctx).LogProcess("Waiting for release resources to become ready").DoError(func() error {
-		return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
-			StatusProgressPeriod: waiter.StatusProgressPeriod,
-			Options: tracker.Options{
-				Timeout:      timeout,
-				LogsFromTime: waiter.LogsFromTime,
-			},
+	logboek.Context(ctx).LogOptionalLn()
+	return logboek.Context(ctx).LogProcess("Waiting for release resources to become ready").
+		DoError(func() error {
+			return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
+				StatusProgressPeriod: waiter.StatusProgressPeriod,
+				Options: tracker.Options{
+					Timeout:      timeout,
+					LogsFromTime: waiter.LogsFromTime,
+				},
+			})
 		})
-	})
 }
 
 func makeMultitrackSpec(ctx context.Context, objMeta *metav1.ObjectMeta, failuresCountOptions allowedFailuresCountOptions, kind string) (*multitrack.MultitrackSpec, error) {
@@ -309,13 +319,8 @@ mainLoop:
 	return multitrackSpec, nil
 }
 
-func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reader, timeout time.Duration) error {
-	infos, err := waiter.Client.BuildUnstructured(namespace, reader)
-	if err != nil {
-		return err
-	}
-
-	for _, info := range infos {
+func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+	for _, info := range resources {
 		name := info.Name
 		kind := info.Mapping.GroupVersionKind.Kind
 
@@ -323,7 +328,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 		case *batchv1.Job:
 			specs := multitrack.MultitrackSpecs{}
 
-			spec, err := makeMultitrackSpec(waiter.Ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
 				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
 			}
@@ -331,18 +336,19 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 				specs.Jobs = append(specs.Jobs, *spec)
 			}
 
-			return logboek.Context(waiter.Ctx).LogProcess(fmt.Sprintf("Waiting for helm hook job/%s termination", name)).DoError(func() error {
-				return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
-					StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
-					Options: tracker.Options{
-						Timeout:      timeout,
-						LogsFromTime: waiter.LogsFromTime,
-					},
+			return logboek.Context(ctx).LogProcess("Waiting for helm hook job/%s termination", name).
+				DoError(func() error {
+					return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
+						StatusProgressPeriod: waiter.HooksStatusProgressPeriod,
+						Options: tracker.Options{
+							Timeout:      timeout,
+							LogsFromTime: waiter.LogsFromTime,
+						},
+					})
 				})
-			})
 
 		default:
-			logboek.Context(waiter.Ctx).Default().LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
+			logboek.Context(ctx).Default().LogFDetails("Will not track helm hook %s/%s: %s kind not supported for tracking\n", strings.ToLower(kind), name, kind)
 		}
 	}
 
@@ -350,14 +356,33 @@ func (waiter *ResourcesWaiter) WatchUntilReady(namespace string, reader io.Reade
 }
 
 func asVersioned(info *resource.Info) runtime.Object {
-	converter := runtime.ObjectConvertor(scheme.Scheme)
+	convertor := runtime.ObjectConvertor(scheme.Scheme)
 	groupVersioner := runtime.GroupVersioner(schema.GroupVersions(scheme.Scheme.PrioritizedVersionsAllGroups()))
 	if info.Mapping != nil {
 		groupVersioner = info.Mapping.GroupVersionKind.GroupVersion()
 	}
-
-	if obj, err := converter.ConvertToVersion(info.Object, groupVersioner); err == nil {
+	if obj, err := convertor.ConvertToVersion(info.Object, groupVersioner); err == nil {
 		return obj
 	}
 	return info.Object
+}
+
+func (waiter *ResourcesWaiter) WaitUntilDeleted(ctx context.Context, specs []*helm_kube.ResourcesWaiterDeleteResourceSpec, timeout time.Duration) error {
+	var eliminationSpecs []*elimination.EliminationTrackerSpec
+	for _, spec := range specs {
+		eliminationSpecs = append(eliminationSpecs, &elimination.EliminationTrackerSpec{
+			ResourceName:         spec.ResourceName,
+			Namespace:            spec.Namespace,
+			GroupVersionResource: spec.GroupVersionResource,
+		})
+	}
+
+	var resourcesDescParts []string
+	for _, spec := range specs {
+		resourcesDescParts = append(resourcesDescParts, fmt.Sprintf("%s/%s", strings.ToLower(spec.GroupVersionResource.Resource), spec.ResourceName))
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Waiting for resources elimination: %s", strings.Join(resourcesDescParts, ", ")).DoError(func() error {
+		return elimination.TrackUntilEliminated(ctx, kube.DynamicClient, eliminationSpecs, elimination.EliminationTrackerOptions{Timeout: timeout, StatusProgressPeriod: waiter.StatusProgressPeriod})
+	})
 }

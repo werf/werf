@@ -1,8 +1,15 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/spf13/cobra"
 
@@ -13,6 +20,9 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -23,7 +33,8 @@ import (
 )
 
 var cmdData struct {
-	Timeout int
+	Timeout      int
+	AutoRollback bool
 }
 
 var commonCmdData common.CmdData
@@ -84,11 +95,9 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
@@ -104,10 +113,9 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSetFiles(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
-
-	common.SetupThreeWayMergeMode(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
@@ -117,6 +125,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -137,34 +147,6 @@ func runDeploy() error {
 		return err
 	}
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	threeWayMergeMode, err := common.GetThreeWayMergeMode(*commonCmdData.ThreeWayMergeMode)
-	if err != nil {
-		return err
-	}
-
-	deployInitOptions := deploy.InitOptions{
-		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *commonCmdData.KubeConfig,
-			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-			KubeContext:                 *commonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
-			HelmReleaseStorageType:      helmReleaseStorageType,
-			StatusProgressPeriod:        common.GetStatusProgressPeriod(&commonCmdData),
-			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&commonCmdData),
-			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
-			InitNamespace:               true,
-		},
-	}
-
-	if err := deploy.Init(ctx, deployInitOptions); err != nil {
-		return err
-	}
-
 	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
@@ -173,13 +155,13 @@ func runDeploy() error {
 		return err
 	}
 
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
+	if ctxWithDockerCli, err := docker.NewContext(ctx); err != nil {
 		return err
+	} else {
+		ctx = ctxWithDockerCli
 	}
-	ctx = ctxWithDockerCli
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
 		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
@@ -198,7 +180,7 @@ func runDeploy() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
@@ -277,7 +259,7 @@ func runDeploy() error {
 		}
 	}
 
-	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
+	releaseName, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -298,16 +280,92 @@ func runDeploy() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
-		Set:                  *commonCmdData.Set,
-		SetString:            *commonCmdData.SetString,
-		Values:               *commonCmdData.Values,
-		SecretValues:         *commonCmdData.SecretValues,
-		Timeout:              time.Duration(cmdData.Timeout) * time.Second,
-		Env:                  *commonCmdData.Environment,
-		UserExtraAnnotations: userExtraAnnotations,
-		UserExtraLabels:      userExtraLabels,
-		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
-		ThreeWayMergeMode:    threeWayMergeMode,
+
+	var secretsManager secret.Manager
+	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+		return err
+	} else {
+		secretsManager = m
+	}
+
+	var lockManager *lock_manager.LockManager
+	if m, err := lock_manager.NewLockManager(namespace); err != nil {
+		return fmt.Errorf("unable to create lock manager: %s", err)
+	} else {
+		lockManager = m
+	}
+
+	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+		ReleaseName: releaseName,
+		ChartDir:    chartDir,
+
+		SecretValueFiles: *commonCmdData.SecretValues,
+		ExtraAnnotations: userExtraAnnotations,
+		ExtraLabels:      userExtraLabels,
+
+		LockManager:    lockManager,
+		SecretsManager: secretsManager,
 	})
+
+	actionConfig := new(action.Configuration)
+	*cmd_helm.Settings.GetNamespaceP() = namespace
+
+	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
+		LoadOptions: loader.LoadOptions{
+			ChartExtender:               wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+		},
+		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
+		ValueOpts: &values.Options{
+			ValueFiles:   *commonCmdData.Values,
+			StringValues: *commonCmdData.SetString,
+			Values:       *commonCmdData.Set,
+			FileValues:   *commonCmdData.SetFile,
+		},
+		CreateNamespace: NewBool(true),
+		Install:         NewBool(true),
+		Wait:            NewBool(true),
+		Atomic:          NewBool(cmdData.AutoRollback),
+		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
+	})
+
+	if err := helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+	}); err != nil {
+		return err
+	}
+
+	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+		return err
+	}
+
+	if err := wc.SetWerfConfig(werfConfig); err != nil {
+		return err
+	}
+
+	if vals, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	} else if err := wc.SetServiceValues(vals); err != nil {
+		return err
+	}
+
+	return wc.WrapUpgrade(context.Background(), func() error {
+		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
+	})
+}
+
+func NewDuration(value time.Duration) *time.Duration {
+	if value != 0 {
+		res := new(time.Duration)
+		*res = value
+		return res
+	}
+	return nil
+}
+
+func NewBool(value bool) *bool {
+	res := new(bool)
+	*res = value
+	return res
 }

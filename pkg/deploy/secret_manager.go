@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 )

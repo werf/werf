@@ -1,8 +1,20 @@
 package converge
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy/secret"
+
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/spf13/cobra"
 
@@ -12,8 +24,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -27,6 +37,7 @@ var cmdData struct {
 	PullUsername string
 	PullPassword string
 	Timeout      int
+	AutoRollback bool
 }
 
 var commonCmdData common.CmdData
@@ -88,8 +99,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupHelmChartDir(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
@@ -118,6 +127,8 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -166,6 +177,11 @@ func runConverge() error {
 
 	projectName := werfConfig.Meta.Project
 
+	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
+	}
+
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
@@ -182,17 +198,7 @@ func runConverge() error {
 		}
 	}()
 
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
-	}
-
-	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
+	releaseName, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -209,23 +215,6 @@ func runConverge() error {
 
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
-		return err
-	}
-
-	deployInitOptions := deploy.InitOptions{
-		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *commonCmdData.KubeConfig,
-			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-			KubeContext:                 *commonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
-			HelmReleaseStorageType:      helmReleaseStorageType,
-			StatusProgressPeriod:        common.GetStatusProgressPeriod(&commonCmdData),
-			HooksStatusProgressPeriod:   common.GetHooksStatusProgressPeriod(&commonCmdData),
-			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
-			InitNamespace:               true,
-		},
-	}
-	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -304,16 +293,72 @@ func runConverge() error {
 		logboek.LogOptionalLn()
 	}
 
-	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
-		Set:                  *commonCmdData.Set,
-		SetString:            *commonCmdData.SetString,
-		Values:               *commonCmdData.Values,
-		SecretValues:         *commonCmdData.SecretValues,
-		Timeout:              time.Duration(cmdData.Timeout) * time.Second,
-		Env:                  *commonCmdData.Environment,
-		UserExtraAnnotations: userExtraAnnotations,
-		UserExtraLabels:      userExtraLabels,
-		IgnoreSecretKey:      *commonCmdData.IgnoreSecretKey,
-		ThreeWayMergeMode:    helm.ThreeWayMergeEnabled,
+	var secretsManager secret.Manager
+	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+		return err
+	} else {
+		secretsManager = m
+	}
+
+	var lockManager *lock_manager.LockManager
+	if m, err := lock_manager.NewLockManager(namespace); err != nil {
+		return fmt.Errorf("unable to create lock manager: %s", err)
+	} else {
+		lockManager = m
+	}
+
+	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+		ReleaseName: releaseName,
+		ChartDir:    chartDir,
+
+		SecretValueFiles: *commonCmdData.SecretValues,
+		ExtraAnnotations: userExtraAnnotations,
+		ExtraLabels:      userExtraLabels,
+
+		LockManager:    lockManager,
+		SecretsManager: secretsManager,
 	})
+
+	actionConfig := new(action.Configuration)
+	*cmd_helm.Settings.GetNamespaceP() = namespace
+
+	_ = imagesRepository
+
+	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
+		LoadOptions: loader.LoadOptions{
+			ChartExtender:               wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+		},
+		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
+		ValueOpts: &values.Options{
+			ValueFiles:   *commonCmdData.Values,
+			StringValues: *commonCmdData.SetString,
+			Values:       *commonCmdData.Set,
+			FileValues:   *commonCmdData.SetFile,
+		},
+		CreateNamespace: NewBool(true),
+		Install:         NewBool(true),
+		Wait:            NewBool(true),
+		Atomic:          NewBool(cmdData.AutoRollback),
+		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
+	})
+
+	return wc.WrapUpgrade(context.Background(), func() error {
+		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
+	})
+}
+
+func NewDuration(value time.Duration) *time.Duration {
+	if value != 0 {
+		res := new(time.Duration)
+		*res = value
+		return res
+	}
+	return nil
+}
+
+func NewBool(value bool) *bool {
+	res := new(bool)
+	*res = value
+	return res
 }

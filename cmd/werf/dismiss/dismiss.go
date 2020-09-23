@@ -1,7 +1,18 @@
 package dismiss
 
 import (
+	"context"
 	"fmt"
+	"time"
+
+	"github.com/werf/werf/pkg/deploy/helm"
+
+	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	"github.com/spf13/cobra"
 
@@ -9,8 +20,6 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -75,9 +84,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
+
+	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
@@ -99,26 +108,6 @@ func runDismiss() error {
 	}
 
 	if err := image.Init(); err != nil {
-		return err
-	}
-
-	helmReleaseStorageType, err := common.GetHelmReleaseStorageType(*commonCmdData.HelmReleaseStorageType)
-	if err != nil {
-		return err
-	}
-
-	deployInitOptions := deploy.InitOptions{
-		HelmInitOptions: helm.InitOptions{
-			KubeConfig:                  *commonCmdData.KubeConfig,
-			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-			KubeContext:                 *commonCmdData.KubeContext,
-			HelmReleaseStorageNamespace: *commonCmdData.HelmReleaseStorageNamespace,
-			HelmReleaseStorageType:      helmReleaseStorageType,
-			ReleasesMaxHistory:          *commonCmdData.ReleasesHistoryMax,
-		},
-	}
-
-	if err := deploy.Init(ctx, deployInitOptions); err != nil {
 		return err
 	}
 
@@ -147,8 +136,6 @@ func runDismiss() error {
 	}
 	logboek.LogOptionalLn()
 
-	projectName := werfConfig.Meta.Project
-
 	err = kube.Init(kube.InitOptions{kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
@@ -162,7 +149,7 @@ func runDismiss() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	release, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
+	releaseName, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -172,8 +159,39 @@ func runDismiss() error {
 		return err
 	}
 
-	return deploy.RunDismiss(ctx, projectName, release, namespace, *commonCmdData.KubeContext, deploy.DismissOptions{
-		WithNamespace: cmdData.WithNamespace,
-		WithHooks:     cmdData.WithHooks,
+	var lockManager *lock_manager.LockManager
+	if m, err := lock_manager.NewLockManager(namespace); err != nil {
+		return fmt.Errorf("unable to create lock manager: %s", err)
+	} else {
+		lockManager = m
+	}
+
+	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+		ReleaseName: releaseName,
+		LockManager: lockManager,
+	})
+
+	actionConfig := new(action.Configuration)
+	*cmd_helm.Settings.GetNamespaceP() = namespace
+
+	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream())
+
+	if err := helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+	}); err != nil {
+		return err
+	}
+
+	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+		return err
+	}
+
+	if err := wc.SetWerfConfig(werfConfig); err != nil {
+		return err
+	}
+
+	return wc.WrapUninstall(context.Background(), func() error {
+		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
 	})
 }

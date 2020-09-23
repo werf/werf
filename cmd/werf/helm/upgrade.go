@@ -1,4 +1,4 @@
-package helm_v3
+package helm
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/werf/werf/pkg/werf"
 
-	"github.com/werf/werf/pkg/deploy_v2/werf_chart"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	"github.com/spf13/cobra"
 	cmd_werf_common "github.com/werf/werf/cmd/werf/common"

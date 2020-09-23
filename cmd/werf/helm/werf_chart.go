@@ -1,12 +1,12 @@
-package helm_v3
+package helm
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
-	"github.com/werf/werf/pkg/deploy_v2/werf_chart"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/spf13/cobra"

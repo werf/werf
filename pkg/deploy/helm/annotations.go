@@ -1,4 +1,4 @@
-package helm_v3
+package helm
 
 const (
 	TrackTerminationModeAnnoName = "werf.io/track-termination-mode"
