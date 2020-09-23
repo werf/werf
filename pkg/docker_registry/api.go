@@ -145,7 +145,7 @@ func (api *api) deleteImageByReference(reference string) error {
 	return nil
 }
 
-func (api *api) PushImage(ctx context.Context, reference string, opts PushImageOptions) error {
+func (api *api) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
 	retriesLimit := 5
 
 attemptLoop:
@@ -176,13 +176,18 @@ attemptLoop:
 	return nil
 }
 
-func (api *api) pushImage(_ context.Context, reference string, opts PushImageOptions) error {
+func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOptions) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
-	img := container_registry_extensions.NewManifestOnlyImage(opts.Labels)
+	labels := map[string]string{}
+	if opts != nil {
+		labels = opts.Labels
+	}
+
+	img := container_registry_extensions.NewManifestOnlyImage(labels)
 
 	oldDefaultTransport := http.DefaultTransport
 	http.DefaultTransport = api.getHttpTransport()

@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/util"
 )
 
 const (
@@ -22,8 +22,8 @@ const (
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 
-	RepoImageMetadataByCommitRecord_ImageTagPrefix = "image-metadata-by-commit-"
-	RepoImageMetadataByCommitRecord_TagFormat      = "image-metadata-by-commit-%s-%s"
+	RepoImageMetadataByCommitRecord_ImageTagPrefix = "meta-"
+	RepoImageMetadataByCommitRecord_TagFormat      = "meta-%s_%s_%s"
 
 	RepoClientIDRecrod_ImageTagPrefix  = "client-id-"
 	RepoClientIDRecrod_ImageNameFormat = "%s:client-id-%s-%d"
@@ -191,7 +191,7 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, docker_registry.PushImageOptions{}); err != nil {
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 
@@ -280,103 +280,140 @@ func (storage *RepoStagesStorage) ShouldFetchImage(_ context.Context, img contai
 	}
 }
 
-func (storage *RepoStagesStorage) PutImageCommit(ctx context.Context, projectName, imageName, commit string, metadata *ImageMetadata) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageCommit %s %s %s %#v\n", projectName, imageName, commit, metadata)
+func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageName, commit, stageID)
 
-	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageCommit full image name: %s\n", fullImageName)
+	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageName, commit, stageID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
-	opts := docker_registry.PushImageOptions{
-		Labels: map[string]string{"ContentSignature": metadata.ContentSignature},
-	}
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
 		return fmt.Errorf("unable to push image %s with metadata: %s", fullImageName, err)
 	}
-
-	logboek.Context(ctx).Info().LogF("Put content-signature %q into metadata for image %q by commit %s\n", metadata.ContentSignature, imageName, commit)
-
-	return nil
-}
-
-func (storage *RepoStagesStorage) RmImageCommit(ctx context.Context, projectName, imageName, commit string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageCommit %s %s %s\n", projectName, imageName, commit)
-
-	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageCommit full image name: %s\n", fullImageName)
-
-	if img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
-	} else if img != nil {
-		if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
-			return fmt.Errorf("unable to remove repo image %s: %s", fullImageName, err)
-		}
-
-		logboek.Context(ctx).Info().LogF("Removed image %q metadata by commit %s\n", imageName, commit)
-	}
+	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageName, commit, stageID)
 
 	return nil
 }
 
-func (storage *RepoStagesStorage) GetImageMetadataByCommit(ctx context.Context, projectName, imageName, commit string) (*ImageMetadata, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit %s %s %s\n", projectName, imageName, commit)
+func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrID, commit, stageID string) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata %s %s %s %s\n", projectName, imageNameOrID, commit, stageID)
 
-	fullImageName := makeRepoImageMetadataByCommitImageRecord(storage.RepoAddress, imageName, commit)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageStagesSignatureByCommit full image name: %s\n", fullImageName)
-
-	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName); err != nil {
-		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
-	} else if imgInfo != nil && imgInfo.Labels != nil {
-		metadata := &ImageMetadata{ContentSignature: imgInfo.Labels["ContentSignature"]}
-
-		logboek.Context(ctx).Debug().LogF("Got content-signature %q from image %q metadata by commit %s\n", metadata.ContentSignature, imageName, commit)
-
-		return metadata, nil
-	} else {
-		logboek.Context(ctx).Debug().LogF("imgInfo = %v\n", imgInfo)
-		if imgInfo != nil {
-			logboek.Context(ctx).Debug().LogF("imgInfo.Labels = %v\n", imgInfo.Labels)
-		}
-
-		logboek.Context(ctx).Info().LogF("No metadata found for image %q by commit %s\n", imageName, commit)
-		return nil, nil
+	img, err := storage.selectMetadataNameImage(ctx, imageNameOrID, commit, stageID)
+	if err != nil {
+		return err
 	}
+
+	if img == nil {
+		return nil
+	}
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
+
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
+		return fmt.Errorf("unable to remove repo image %s: %s", img.Tag, err)
+	}
+
+	logboek.Context(ctx).Info().LogF("Removed image %s commit %s stage ID %s\n", imageNameOrID, commit, stageID)
+
+	return nil
 }
 
-func (storage *RepoStagesStorage) GetImageCommits(ctx context.Context, projectName, imageName string) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageCommits %s %s\n", projectName, imageName)
-
-	var res []string
-
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
-	} else {
-		for _, tag := range tags {
-			if !strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
-				continue
-			}
-
-			sluggedImageAndCommit := strings.TrimPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix)
-			sluggedImageAndCommitParts := strings.Split(sluggedImageAndCommit, "-")
-			if len(sluggedImageAndCommitParts) < 2 {
-				// unexpected
-				continue
-			}
-
-			commit := sluggedImageAndCommitParts[len(sluggedImageAndCommitParts)-1]
-			if slugRepoImageMetadataByCommitImageRecordTag(imageName, commit) == tag {
-				logboek.Context(ctx).Debug().LogF("Found image %q metadata by commit %s, full image name: %s:%s\n", imageName, commit, storage.RepoAddress, tag)
-				res = append(res, commit)
-			}
+func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, imageNameOrID, commit, stageID string) (*image.Info, error) {
+	for _, fullImageName := range []string{
+		makeRepoImageMetadataName(storage.RepoAddress, imageNameOrID, commit, stageID),
+		makeRepoImageMetadataNameByImageID(storage.RepoAddress, imageNameOrID, commit, stageID),
+	} {
+		if img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName); err != nil {
+			return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+		} else if img != nil {
+			return img, nil
 		}
 	}
 
-	return res, nil
+	return nil, nil
 }
 
-func makeRepoImageMetadataByCommitImageRecord(repoAddress, imageName, commit string) string {
+func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageName, commit, stageID string) (bool, error) {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist %s %s %s %s\n", projectName, imageName, commit, stageID)
+
+	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageName, commit, stageID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist full image name: %s\n", fullImageName)
+
+	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	return img != nil, err
+}
+
+func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
+
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+	}
+
+	return groupImageMetadataTagsByImageName(ctx, imageNameList, tags, RepoImageMetadataByCommitRecord_ImageTagPrefix)
+}
+
+func groupImageMetadataTagsByImageName(ctx context.Context, imageNameList []string, tags []string, imageTagPrefix string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+	imageNameNameByID := map[string]string{}
+	for _, imageName := range imageNameList {
+		imageNameNameByID[imageNameID(imageName)] = imageName
+	}
+
+	result := map[string]map[string][]string{}
+	resultNotManagedImageName := map[string]map[string][]string{}
+	for _, tag := range tags {
+		var res map[string]map[string][]string
+
+		if !strings.HasPrefix(tag, imageTagPrefix) {
+			continue
+		}
+
+		sluggedImageAndCommit := strings.TrimPrefix(tag, imageTagPrefix)
+		sluggedImageAndCommitParts := strings.Split(sluggedImageAndCommit, "_")
+		if len(sluggedImageAndCommitParts) != 3 {
+			// unexpected
+			continue
+		}
+
+		tagImageNameID := sluggedImageAndCommitParts[0]
+		tagCommit := sluggedImageAndCommitParts[1]
+		tagStageID := sluggedImageAndCommitParts[2]
+
+		logboek.Context(ctx).Debug().LogF("Found image ID %s commit %s stage ID %s\n", tagImageNameID, tagCommit, tagStageID)
+
+		imageName, ok := imageNameNameByID[tagImageNameID]
+		if !ok {
+			res = resultNotManagedImageName
+			imageName = tagImageNameID
+		} else {
+			res = result
+		}
+
+		stageIDCommitList, ok := res[imageName]
+		if !ok {
+			stageIDCommitList = map[string][]string{}
+		}
+
+		commitList, ok := stageIDCommitList[tagStageID]
+		if !ok {
+			commitList = []string{}
+		}
+
+		commitList = append(commitList, tagCommit)
+		stageIDCommitList[tagStageID] = commitList
+		res[imageName] = stageIDCommitList
+	}
+
+	return result, resultNotManagedImageName, nil
+}
+
+func makeRepoImageMetadataName(repoAddress, imageNameOrID, commit, stageID string) string {
+	return makeRepoImageMetadataNameByImageID(repoAddress, imageNameID(imageNameOrID), commit, stageID)
+}
+
+func makeRepoImageMetadataNameByImageID(repoAddress, imageID, commit, stageID string) string {
 	return strings.Join([]string{
 		repoAddress,
-		slugRepoImageMetadataByCommitImageRecordTag(imageName, commit),
+		fmt.Sprintf(RepoImageMetadataByCommitRecord_TagFormat, imageID, commit, stageID),
 	}, ":")
 }
 
@@ -392,26 +429,8 @@ func makeRepoManagedImageRecord(repoAddress, imageName string) string {
 	return fmt.Sprintf(RepoManagedImageRecord_ImageNameFormat, repoAddress, slugImageNameAsDockerImageTag(imageName))
 }
 
-func slugRepoImageMetadataByCommitImageRecordTag(imageName string, commit string) string {
-	return slugImageMetadataByCommitImageRecordTag(RepoImageMetadataByCommitRecord_TagFormat, imageName, commit)
-}
-
-func slugLocalImageMetadataByCommitImageRecordTag(imageName string, commit string) string {
-	return slugImageMetadataByCommitImageRecordTag(LocalImageMetadataByCommitRecord_TagFormat, imageName, commit)
-}
-
-func slugImageMetadataByCommitImageRecordTag(tagFormat string, imageName string, commit string) string {
-	formattedImageName := slugImageNameAsDockerImageTag(imageName)
-
-	tag := fmt.Sprintf(tagFormat, formattedImageName, commit)
-	if len(tag) <= 128 {
-		return tag
-	} else {
-		extraSize := len(tag) - 128
-		formattedImageName = slug.LimitedSlug(formattedImageName, len(formattedImageName)-extraSize)
-		formattedImageName = strings.ReplaceAll(formattedImageName, "-", "_")
-		return fmt.Sprintf(tagFormat, formattedImageName, commit)
-	}
+func imageNameID(imageName string) string {
+	return util.MurmurHash(imageName)
 }
 
 func slugImageNameAsDockerImageTag(imageName string) string {
@@ -495,7 +514,7 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 		return nil
 	}
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, docker_registry.PushImageOptions{}); err != nil {
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 
