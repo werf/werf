@@ -41,11 +41,10 @@ var _ = Describe("cleaning images and stages", func() {
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"build-and-publish", "--tag-git-commit", "none",
+				"build",
 			)
 
-			tags := imagesRepoAllImageRepoTags("")
-			Ω(len(tags)).Should(Equal(1))
+			Ω(len(ImageMetadata(imageName))).Should(Equal(1))
 
 			werfDeployArgs := []string{
 				"deploy",
@@ -65,7 +64,7 @@ var _ = Describe("cleaning images and stages", func() {
 		It("should not remove stages that are related with deployed image (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
 			stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", "1")
 
-			count := stagesStorageRepoImagesCount()
+			count := StagesCount()
 			Ω(count).Should(Equal(2))
 
 			utils.RunSucceedCommand(
@@ -74,7 +73,7 @@ var _ = Describe("cleaning images and stages", func() {
 				"cleanup",
 			)
 
-			Ω(stagesStorageRepoImagesCount()).Should(Equal(count))
+			Ω(StagesCount()).Should(Equal(count))
 		})
 	})
 })

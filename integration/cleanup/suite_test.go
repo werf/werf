@@ -46,6 +46,8 @@ import (
 // export WERF_TEST_QUAY_REGISTRY
 // export WERF_TEST_QUAY_TOKEN
 
+const imageName = "image"
+
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
 		fmt.Println("Missing required tools")
@@ -64,21 +66,20 @@ var testImplementation string
 var testDirPath string
 var werfBinPath string
 var stubs = gostub.New()
-var localImagesRepoAddress, localImagesRepoContainerName string
+var localRegistryRepoAddress, localRegistryContainerName string
 
 var stagesStorage storage.StagesStorage
-var imagesRepo storage.ImagesRepo
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
 	return []byte(computedPathToWerf)
 }, func(computedPathToWerf []byte) {
 	werfBinPath = string(computedPathToWerf)
-	localImagesRepoAddress, localImagesRepoContainerName = utilsDocker.LocalDockerRegistryRun()
+	localRegistryRepoAddress, localRegistryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
 var _ = SynchronizedAfterSuite(func() {
-	utilsDocker.ContainerStopAndRemove(localImagesRepoContainerName)
+	utilsDocker.ContainerStopAndRemove(localRegistryContainerName)
 }, func() {
 	gexec.CleanupBuildArtifacts()
 })
@@ -109,29 +110,16 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				var stagesStorageImplementationName string
 				var stagesStorageDockerRegistryOptions docker_registry.DockerRegistryOptions
 
-				var imagesRepoAddress string
-				var imagesRepoMode string
-				var imagesRepoImplementationName string
-				var imagesRepoDockerRegistryOptions docker_registry.DockerRegistryOptions
-
 				if implementationName == ":local" || implementationName == ":local_with_stages_storage_repo" {
 					if implementationName == ":local" {
 						stagesStorageAddress = ":local"
 					} else {
-						stagesStorageAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName(), "stages"}, "/")
+						stagesStorageAddress = strings.Join([]string{localRegistryRepoAddress, utils.ProjectName(), "stages"}, "/")
 						stagesStorageDockerRegistryOptions = docker_registry.DockerRegistryOptions{}
 					}
-
-					imagesRepoAddress = strings.Join([]string{localImagesRepoAddress, utils.ProjectName()}, "/")
-					imagesRepoMode = docker_registry.MultirepoRepoMode
 				} else {
 					stagesStorageAddress = implementationStagesStorageAddress(implementationName)
-
-					imagesRepoAddress = implementationImagesRepoAddress(implementationName)
-					imagesRepoMode = "auto"
-
 					implementationDockerRegistryOptions := implementationDockerRegistryOptionsAndSetEnvs(implementationName)
-					imagesRepoDockerRegistryOptions = implementationDockerRegistryOptions
 					stagesStorageDockerRegistryOptions = implementationDockerRegistryOptions
 				}
 
@@ -143,21 +131,17 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				}
 
 				if isNotSupported {
-					imagesRepoImplementationName = "default"
 					stagesStorageImplementationName = "default"
 					stubs.SetEnv("WERF_STAGES_STORAGE_IMPLEMENTATION", stagesStorageImplementationName)
-					stubs.SetEnv("WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementationName)
 				}
 
 				initStagesStorage(stagesStorageAddress, stagesStorageImplementationName, stagesStorageDockerRegistryOptions)
-				initImagesRepo(imagesRepoAddress, imagesRepoMode, imagesRepoImplementationName, imagesRepoDockerRegistryOptions)
 
 				stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageAddress)
-				stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
-			})
 
-			BeforeEach(func() {
-				implementationBeforeEach(implementationName)
+				if implementationName == docker_registry.QuayImplementationName {
+					stubs.SetEnv("WERF_PARALLEL", "0")
+				}
 			})
 
 			AfterEach(func() {
@@ -189,24 +173,20 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 	return true
 }
 
-func initImagesRepo(imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	imagesRepo = utils.NewImagesRepo(context.Background(), imagesRepoAddress, imageRepoMode, implementationName, dockerRegistryOptions)
-}
-
 func initStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
 	stagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
-func imagesRepoAllImageRepoTags(imageName string) []string {
-	return utils.ImagesRepoAllImageRepoTags(context.Background(), imagesRepo, imageName)
+func StagesCount() int {
+	return utils.StagesCount(context.Background(), stagesStorage)
 }
 
-func stagesStorageRepoImagesCount() int {
-	return utils.StagesStorageRepoImagesCount(context.Background(), stagesStorage)
+func ManagedImagesCount() int {
+	return utils.ManagedImagesCount(context.Background(), stagesStorage)
 }
 
-func stagesStorageManagedImagesCount() int {
-	return utils.StagesStorageManagedImagesCount(context.Background(), stagesStorage)
+func ImageMetadata(imageName string) map[string][]string {
+	return utils.ImageMetadata(context.Background(), stagesStorage, imageName)
 }
 
 func implementationListToCheck() []string {
@@ -265,20 +245,6 @@ func implementationStagesStorageAddress(implementationName string) string {
 	registry := getRequiredEnv(registryEnvName)
 
 	return fmt.Sprintf("%s/%s-stages", registry, projectName)
-}
-
-func implementationImagesRepoAddress(implementationName string) string {
-	projectName := utils.ProjectName()
-	implementationCode := strings.ToUpper(implementationName)
-
-	registryEnvName := fmt.Sprintf(
-		"WERF_TEST_%s_REGISTRY",
-		implementationCode,
-	)
-
-	registry := getRequiredEnv(registryEnvName)
-
-	return strings.Join([]string{registry, projectName}, "/")
 }
 
 func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) docker_registry.DockerRegistryOptions {
@@ -352,51 +318,16 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 	}
 }
 
-func implementationBeforeEach(implementationName string) {
-	switch implementationName {
-	case docker_registry.AwsEcrImplementationName:
-		err := imagesRepo.CreateImageRepo(context.Background(), "image")
-		Ω(err).Should(Succeed())
-
-		err = stagesStorage.CreateRepo(context.Background())
-		Ω(err).Should(Succeed())
-	case docker_registry.QuayImplementationName:
-		stubs.SetEnv("WERF_PARALLEL", "0")
-	default:
-	}
-}
-
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
 	case docker_registry.AzureCrImplementationName, docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
-		if implementationName == docker_registry.HarborImplementationName {
-			// API cannot delete repository without any tags
-			// {"code":404,"message":"no tags found for repository test2/werf-test-none-7872-wfdy8uyupu/image"}
-
-			Ω(utilsDocker.Pull("flant/werf-test:hello-world")).Should(Succeed(), "docker pull")
-			Ω(utilsDocker.CliTag("flant/werf-test:hello-world", imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker tag")
-			defer func() {
-				Ω(utilsDocker.CliRmi(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker rmi")
-			}()
-
-			Ω(utilsDocker.CliPush(imagesRepo.ImageRepositoryName("image"))).Should(Succeed(), "docker push")
+		err := stagesStorage.DeleteRepo(context.Background())
+		switch err := err.(type) {
+		case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
+		default:
+			Ω(err).Should(Succeed())
 		}
-
-		for _, action := range []func() error{
-			func() error {
-				return imagesRepo.DeleteImageRepo(context.Background(), "image")
-			},
-			func() error {
-				return stagesStorage.DeleteRepo(context.Background())
-			},
-		} {
-			err := action()
-			switch err := err.(type) {
-			case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
-			default:
-				Ω(err).Should(Succeed())
-			}
-		}
+	default:
 	}
 }
 
