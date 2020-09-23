@@ -42,3 +42,35 @@ func IsStringsContainValue(arr []string, value string) bool {
 	}
 	return false
 }
+
+func ExcludeFromStringArray(list []string, elmsToRemove ...string) []string {
+	var resultList []string
+
+outerLoop:
+	for _, elm := range list {
+		for _, elmToExclude := range elmsToRemove {
+			if elmToExclude == elm {
+				continue outerLoop
+			}
+		}
+
+		resultList = append(resultList, elm)
+	}
+
+	return resultList
+}
+
+func AddNewStringsToStringArray(list []string, elmsToAdd ...string) []string {
+outerLoop:
+	for _, elmToAdd := range elmsToAdd {
+		for _, elm := range list {
+			if elm == elmToAdd {
+				continue outerLoop
+			}
+		}
+
+		list = append(list, elmToAdd)
+	}
+
+	return list
+}

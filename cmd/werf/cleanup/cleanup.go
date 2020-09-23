@@ -55,7 +55,6 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
@@ -171,16 +170,6 @@ func runCleanup() error {
 		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
-	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	storageManager.SetImageRepo(imagesRepo)
-	if *commonCmdData.Parallel {
-		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
-	}
-
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
@@ -198,19 +187,13 @@ func runCleanup() error {
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{
-		ImagesCleanupOptions: cleaning.ImagesCleanupOptions{
-			ImageNameList:                           imagesNames,
-			LocalGit:                                localGitRepo,
-			KubernetesContextClients:                kubernetesContextClients,
-			KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
-			WithoutKube:                             *commonCmdData.WithoutKube,
-			GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
-			DryRun:                                  *commonCmdData.DryRun,
-		},
-		StagesCleanupOptions: cleaning.StagesCleanupOptions{
-			ImageNameList: imagesNames,
-			DryRun:        *commonCmdData.DryRun,
-		},
+		ImageNameList:                           imagesNames,
+		LocalGit:                                localGitRepo,
+		KubernetesContextClients:                kubernetesContextClients,
+		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
+		WithoutKube:                             *commonCmdData.WithoutKube,
+		GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
+		DryRun:                                  *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()

@@ -10,26 +10,6 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func NewImagesRepo(ctx context.Context, imagesRepoAddress, imageRepoMode, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.ImagesRepo {
-	projectName := ProjectName()
-
-	i, err := storage.NewImagesRepo(
-		ctx,
-		projectName,
-		imagesRepoAddress,
-		imageRepoMode,
-		storage.ImagesRepoOptions{
-			DockerImagesRepoOptions: storage.DockerImagesRepoOptions{
-				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
-			},
-		},
-	)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	return i
-}
-
 func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
 	s, err := storage.NewStagesStorage(
 		stagesStorageAddress,
@@ -46,20 +26,20 @@ func NewStagesStorage(stagesStorageAddress string, implementationName string, do
 	return s
 }
 
-func ImagesRepoAllImageRepoTags(ctx context.Context, imagesRepo storage.ImagesRepo, imageName string) []string {
-	tags, err := imagesRepo.GetAllImageRepoTags(ctx, imageName)
-	Ω(err).ShouldNot(HaveOccurred())
-	return tags
-}
-
-func StagesStorageRepoImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+func StagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
 	repoImages, err := stagesStorage.GetStagesIDs(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }
 
-func StagesStorageManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
 	managedImages, err := stagesStorage.GetManagedImages(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(managedImages)
+}
+
+func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, imageName string) map[string][]string {
+	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, ProjectName(), []string{imageName})
+	Ω(err).ShouldNot(HaveOccurred())
+	return imageMetadataByImageName[imageName]
 }

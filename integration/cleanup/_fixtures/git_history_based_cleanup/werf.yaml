@@ -74,6 +74,14 @@ cleanup:
         last: 1
         operator: And
   {{ end }}
+  {{ with (eq $policySetNumber "9") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: /.*/
+      imagesPerReference:
+        last: 1
+  {{ end }}
 
 ---
 image: image

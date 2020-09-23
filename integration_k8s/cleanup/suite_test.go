@@ -17,6 +17,8 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
+const imageName = "image"
+
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
 		fmt.Println("Missing required tools")
@@ -40,7 +42,6 @@ var werfBinPath string
 var stubs = gostub.New()
 
 var stagesStorage storage.StagesStorage
-var imagesRepo storage.ImagesRepo
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	computedPathToWerf := utils.ProcessWerfBinPath()
@@ -60,14 +61,10 @@ var _ = BeforeEach(func() {
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 
-	imagesRepoAddress := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
-	imagesRepo = utils.NewImagesRepo(context.Background(), imagesRepoAddress, "multirepo", "default", docker_registry.DockerRegistryOptions{})
-
 	stagesStorageRepoAddress := fmt.Sprintf("%s/%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName(), "stages")
 	stagesStorage = utils.NewStagesStorage(stagesStorageRepoAddress, "default", docker_registry.DockerRegistryOptions{})
 
 	stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageRepoAddress)
-	stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
 })
 
 var _ = AfterEach(func() {
@@ -83,10 +80,10 @@ var _ = AfterEach(func() {
 	stubs.Reset()
 })
 
-func imagesRepoAllImageRepoTags(imageName string) []string {
-	return utils.ImagesRepoAllImageRepoTags(context.Background(), imagesRepo, imageName)
+func StagesCount() int {
+	return utils.StagesCount(context.Background(), stagesStorage)
 }
 
-func stagesStorageRepoImagesCount() int {
-	return utils.StagesStorageRepoImagesCount(context.Background(), stagesStorage)
+func ImageMetadata(imageName string) map[string][]string {
+	return utils.ImageMetadata(context.Background(), stagesStorage, imageName)
 }

@@ -1,4 +1,4 @@
-package cleaning
+package git_history_based_cleanup
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 )
 
-type referenceToScan struct {
+type ReferenceToScan struct {
 	*plumbing.Reference
 	CreatedAt  time.Time
 	HeadCommit *object.Commit
@@ -29,7 +29,7 @@ type referenceScanOptions struct {
 	imagesCleanupKeepPolicy config.MetaCleanupKeepPolicyImagesPerReference
 }
 
-func (r *referenceToScan) String() string {
+func (r *ReferenceToScan) String() string {
 	imagesCleanupKeepPolicy := r.imagesCleanupKeepPolicy.String()
 	if imagesCleanupKeepPolicy != "" {
 		imagesCleanupKeepPolicy = fmt.Sprintf(" (%s)", imagesCleanupKeepPolicy)
@@ -38,13 +38,13 @@ func (r *referenceToScan) String() string {
 	return fmt.Sprintf("%s%s", r.Name().Short(), imagesCleanupKeepPolicy)
 }
 
-func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*referenceToScan, error) {
+func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*ReferenceToScan, error) {
 	rs, err := gitRepository.References()
 	if err != nil {
 		return nil, fmt.Errorf("get repository references failed: %s", err)
 	}
 
-	var refs []*referenceToScan
+	var refs []*ReferenceToScan
 	if err := rs.ForEach(func(reference *plumbing.Reference) error {
 		n := reference.Name()
 
@@ -98,7 +98,7 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 			}
 		}
 
-		refs = append(refs, &referenceToScan{
+		refs = append(refs, &ReferenceToScan{
 			Reference:  reference,
 			CreatedAt:  modifiedAt,
 			HeadCommit: refCommit,
@@ -113,7 +113,7 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 	}
 
 	// Split branches and tags references
-	var branchesRefs, tagsRefs []*referenceToScan
+	var branchesRefs, tagsRefs []*ReferenceToScan
 	for _, ref := range refs {
 		if ref.Name().IsTag() {
 			tagsRefs = append(tagsRefs, ref)
@@ -169,9 +169,9 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 		})
 	}
 
-	var resultTagsRefs, resultBranchesRefs []*referenceToScan
+	var resultTagsRefs, resultBranchesRefs []*ReferenceToScan
 	for _, policy := range keepPolicies {
-		var policyRefs []*referenceToScan
+		var policyRefs []*ReferenceToScan
 
 		if policy.References.BranchRegexp != nil {
 			policyRefs = selectBranchReferencesByRegexp(branchesRefs, policy.References.BranchRegexp)
@@ -204,8 +204,8 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 	return result, nil
 }
 
-func selectBranchReferencesByRegexp(branchesRefs []*referenceToScan, regexp *regexp.Regexp) []*referenceToScan {
-	var result []*referenceToScan
+func selectBranchReferencesByRegexp(branchesRefs []*ReferenceToScan, regexp *regexp.Regexp) []*ReferenceToScan {
+	var result []*ReferenceToScan
 
 	for _, branchRef := range branchesRefs {
 		refShortNameWithoutRemote := strings.SplitN(branchRef.Name().Short(), "/", 2)[1]
@@ -217,8 +217,8 @@ func selectBranchReferencesByRegexp(branchesRefs []*referenceToScan, regexp *reg
 	return result
 }
 
-func selectTagReferencesByRegexp(tagsRefs []*referenceToScan, regexp *regexp.Regexp) []*referenceToScan {
-	var result []*referenceToScan
+func selectTagReferencesByRegexp(tagsRefs []*ReferenceToScan, regexp *regexp.Regexp) []*ReferenceToScan {
+	var result []*ReferenceToScan
 
 	for _, tagRef := range tagsRefs {
 		if regexp.MatchString(tagRef.Name().Short()) {
@@ -229,24 +229,24 @@ func selectTagReferencesByRegexp(tagsRefs []*referenceToScan, regexp *regexp.Reg
 	return result
 }
 
-func applyCleanupKeepPolicy(refs []*referenceToScan, policy *config.MetaCleanupKeepPolicy) []*referenceToScan {
+func applyCleanupKeepPolicy(refs []*ReferenceToScan, policy *config.MetaCleanupKeepPolicy) []*ReferenceToScan {
 	refs = applyReferencesLimit(refs, policy.References.Limit)
 	applyImagesPerReference(refs, policy.ImagesPerReference)
 
 	return refs
 }
 
-func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeepPolicyLimit) []*referenceToScan {
+func applyReferencesLimit(refs []*ReferenceToScan, limit *config.MetaCleanupKeepPolicyLimit) []*ReferenceToScan {
 	if limit == nil {
 		return refs
 	}
 
-	var policyInRefs []*referenceToScan
+	var policyInRefs []*ReferenceToScan
 	if limit.In != nil {
 		policyInRefs = filterReferencesByIn(refs, *limit.In)
 	}
 
-	var policyLastRefs []*referenceToScan
+	var policyLastRefs []*ReferenceToScan
 	if limit.Last != nil {
 		policyLastRefs = filterReferencesByLast(refs, *limit.Last)
 	}
@@ -257,7 +257,7 @@ func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeep
 		return policyInRefs
 	}
 
-	var policyRefs []*referenceToScan
+	var policyRefs []*ReferenceToScan
 	if limit.Operator != nil && *limit.Operator == config.OrOperator {
 		policyRefs = referencesOr(policyInRefs, policyLastRefs)
 	} else {
@@ -267,18 +267,18 @@ func applyReferencesLimit(refs []*referenceToScan, limit *config.MetaCleanupKeep
 	return policyRefs
 }
 
-func applyImagesPerReference(policyBranchesRefs []*referenceToScan, imagesPerReference config.MetaCleanupKeepPolicyImagesPerReference) {
+func applyImagesPerReference(policyBranchesRefs []*ReferenceToScan, imagesPerReference config.MetaCleanupKeepPolicyImagesPerReference) {
 	for _, ref := range policyBranchesRefs {
 		ref.imagesCleanupKeepPolicy = imagesPerReference
 	}
 }
 
-func referencesOr(refs1 []*referenceToScan, refs2 []*referenceToScan) []*referenceToScan {
+func referencesOr(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
 	return mergeReferences(refs1, refs2)
 }
 
-func referencesAnd(refs1 []*referenceToScan, refs2 []*referenceToScan) []*referenceToScan {
-	var result []*referenceToScan
+func referencesAnd(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
+	var result []*ReferenceToScan
 
 outerLoop:
 	for _, ref1 := range refs1 {
@@ -293,7 +293,7 @@ outerLoop:
 	return result
 }
 
-func filterReferencesByIn(refs []*referenceToScan, in time.Duration) (result []*referenceToScan) {
+func filterReferencesByIn(refs []*ReferenceToScan, in time.Duration) (result []*ReferenceToScan) {
 	for _, ref := range refs {
 		if ref.CreatedAt.After(time.Now().Add(-in)) {
 			result = append(result, ref)
@@ -303,7 +303,7 @@ func filterReferencesByIn(refs []*referenceToScan, in time.Duration) (result []*
 	return
 }
 
-func filterReferencesByLast(refs []*referenceToScan, last int) []*referenceToScan {
+func filterReferencesByLast(refs []*ReferenceToScan, last int) []*ReferenceToScan {
 	if last == -1 {
 		return refs
 	}
@@ -319,7 +319,7 @@ func filterReferencesByLast(refs []*referenceToScan, last int) []*referenceToSca
 	return refs[:last]
 }
 
-func mergeReferences(refs1 []*referenceToScan, refs2 []*referenceToScan) []*referenceToScan {
+func mergeReferences(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
 	result := refs2[:]
 
 outerLoop:

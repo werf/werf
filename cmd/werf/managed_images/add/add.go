@@ -3,13 +3,12 @@ package add
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )

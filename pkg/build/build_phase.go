@@ -22,7 +22,6 @@ import (
 	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -156,6 +155,10 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
 	img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
 
+	if img.isArtifact {
+		return nil
+	}
+
 	if err := phase.addManagedImage(ctx, img); err != nil {
 		return err
 	}
@@ -168,7 +171,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 }
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error {
-	if phase.ShouldAddManagedImageRecord && !img.isArtifact {
+	if phase.ShouldAddManagedImageRecord {
 		if err := phase.Conveyor.StorageManager.StagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
 		}
@@ -187,19 +190,16 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 					return err
 				}
 
-				if metadata, err := phase.Conveyor.StorageManager.StagesStorage.GetImageMetadataByCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
-					return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
-				} else if metadata != nil {
-					if metadata.ContentSignature != img.GetContentSignature() {
-						// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
-						// TODO: allowInconsistentPublish: true option for werf.yaml
-						// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
-						return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
-					}
-					return nil
-				} else {
-					return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+				exists, err := phase.Conveyor.StorageManager.StagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, img.GetStageID())
+				if err != nil {
+					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %s", img.GetName(), headCommit, img.GetStageID(), err)
 				}
+
+				if !exists {
+					return phase.Conveyor.StorageManager.StagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, img.GetStageID())
+				}
+
+				return nil
 			}); err != nil {
 			return err
 		}

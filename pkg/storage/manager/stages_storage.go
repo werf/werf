@@ -143,7 +143,7 @@ func (m *StagesStorageManager) UseStagesStorage(ctx context.Context, stagesStora
 	return nil
 }
 
-func (m *StagesStorageManager) GetAllStages(ctx context.Context) ([]*image.StageDescription, error) {
+func (m *StagesStorageManager) GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error) {
 	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName)
 	if err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ type ForEachDeleteStageOptions struct {
 	storage.FilterStagesAndProcessRelatedDataOptions
 }
 
-func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(stageDesc *image.StageDescription, err error) error) error {
+func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error {
 	var err error
 	stagesDescriptions, err = m.StagesStorage.FilterStagesAndProcessRelatedData(ctx, stagesDescriptions, options.FilterStagesAndProcessRelatedDataOptions)
 	if err != nil {
@@ -194,11 +194,12 @@ func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options F
 	}
 
 	return parallel.DoTasks(ctx, len(stagesDescriptions), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+		MaxNumberOfWorkers:         m.MaxNumberOfWorkers(),
+		InitDockerCLIForEachWorker: true,
 	}, func(ctx context.Context, taskId int) error {
 		stageDescription := stagesDescriptions[taskId]
 		err := m.StagesStorage.DeleteStage(ctx, stageDescription, options.DeleteImageOptions)
-		return f(stageDescription, err)
+		return f(ctx, stageDescription, err)
 	})
 }
 
@@ -431,48 +432,37 @@ func (m *StagesStorageManager) GenerateStageUniqueID(signature string, stages []
 	}
 }
 
-func (m *StagesStorageManager) ForEachGetImageMetadataByCommit(ctx context.Context, projectName, imageName string, f func(commit string, imageMetadata *storage.ImageMetadata, err error) error) error {
-	commits, err := m.StagesStorage.GetImageCommits(ctx, projectName, imageName)
-	if err != nil {
-		return fmt.Errorf("get image %s commits failed: %s", imageName, err)
+type rmImageMetadataTask struct {
+	commit  string
+	stageID string
+}
+
+func (m *StagesStorageManager) ForEachRmImageMetadata(ctx context.Context, projectName, imageNameOrID string, stageIDCommitList map[string][]string, f func(ctx context.Context, commit, stageID string, err error) error) error {
+	var tasks []rmImageMetadataTask
+	for stageID, commitList := range stageIDCommitList {
+		for _, commit := range commitList {
+			tasks = append(tasks, rmImageMetadataTask{
+				commit:  commit,
+				stageID: stageID,
+			})
+		}
 	}
 
-	return parallel.DoTasks(ctx, len(commits), parallel.DoTasksOptions{
+	return parallel.DoTasks(ctx, len(tasks), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
-		commit := commits[taskId]
-
-		imageMetadata, err := storage.GetImageMetadataCache().GetImageMetadata(ctx, m.StagesStorage.Address(), imageName, commit)
-		if err != nil {
-			return fmt.Errorf("get image metadata failed: %s", err)
-		}
-
-		if imageMetadata == nil {
-			logboek.Context(ctx).Info().LogF("Not found image metadata image %s commit %s in cache (CACHE MISS)\n", imageName, commit)
-
-			imageMetadata, err = m.StagesStorage.GetImageMetadataByCommit(ctx, projectName, imageName, commit)
-			if err != nil {
-				return f(commit, imageMetadata, err)
-			}
-
-			err = storage.GetImageMetadataCache().StoreImageMetadata(ctx, m.StagesStorage.Address(), imageName, commit, imageMetadata)
-			if err != nil {
-				return fmt.Errorf("store image metadata failed: %s", err)
-			}
-		} else {
-			logboek.Context(ctx).Info().LogF("Got image metadata image %s commit from cache (CACHE HIT)\n", imageName, commit)
-		}
-
-		return f(commit, imageMetadata, nil)
+		task := tasks[taskId]
+		err := m.StagesStorage.RmImageMetadata(ctx, projectName, imageNameOrID, task.commit, task.stageID)
+		return f(ctx, task.commit, task.stageID, err)
 	})
 }
 
-func (m *StagesStorageManager) ForEachRmImageCommit(ctx context.Context, projectName, imageName string, commits []string, f func(commit string, err error) error) error {
-	return parallel.DoTasks(ctx, len(commits), parallel.DoTasksOptions{
+func (m *StagesStorageManager) ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error {
+	return parallel.DoTasks(ctx, len(managedImages), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
-		commit := commits[taskId]
-		err := m.StagesStorage.RmImageCommit(ctx, projectName, imageName, commit)
-		return f(commit, err)
+		managedImage := managedImages[taskId]
+		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
+		return f(ctx, managedImage, err)
 	})
 }

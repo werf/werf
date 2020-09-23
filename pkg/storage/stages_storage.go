@@ -36,10 +36,10 @@ type StagesStorage interface {
 	RmManagedImage(ctx context.Context, projectName, imageName string) error
 	GetManagedImages(ctx context.Context, projectName string) ([]string, error)
 
-	PutImageCommit(ctx context.Context, projectName, imageName, commit string, metadata *ImageMetadata) error
-	RmImageCommit(ctx context.Context, projectName, imageName, commit string) error
-	GetImageCommits(ctx context.Context, projectName, imageName string) ([]string, error)
-	GetImageMetadataByCommit(ctx context.Context, projectName, imageName, commit string) (*ImageMetadata, error)
+	PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error
+	RmImageMetadata(ctx context.Context, projectName, imageNameOrID, commit, stageID string) error
+	IsImageMetadataExist(ctx context.Context, projectName, imageName, commit, stageID string) (bool, error)
+	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error)
 
 	GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error

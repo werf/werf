@@ -202,18 +202,6 @@ entries:
               - title: config list
                 url: /documentation/cli/management/config/list.html
 
-              - title: stages cleanup
-                url: /documentation/cli/management/stages/cleanup.html
-
-              - title: stages purge
-                url: /documentation/cli/management/stages/purge.html
-
-              - title: images cleanup
-                url: /documentation/cli/management/images/cleanup.html
-
-              - title: images purge
-                url: /documentation/cli/management/images/purge.html
-
               - title: managed-images add
                 url: /documentation/cli/management/managed-images/add.html
 
