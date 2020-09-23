@@ -67,12 +67,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for diff
       --home-dir='':

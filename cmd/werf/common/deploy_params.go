@@ -10,7 +10,6 @@ import (
 	"github.com/Masterminds/sprig"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 )
@@ -101,15 +100,6 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	return renderedNamespace, nil
-}
-
-func GetHelmReleaseStorageType(helmReleaseStorageType string) (string, error) {
-	switch helmReleaseStorageType {
-	case helm.ConfigMapStorage, helm.SecretStorage:
-		return helmReleaseStorageType, nil
-	default:
-		return "", fmt.Errorf("bad --helm-release-storage-type value '%s'. Use one of '%s' or '%s'", helmReleaseStorageType, helm.ConfigMapStorage, helm.SecretStorage)
-	}
 }
 
 func GetStatusProgressPeriod(cmdData *CmdData) time.Duration {

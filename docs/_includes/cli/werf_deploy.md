@@ -63,6 +63,12 @@ werf deploy [options]
       --allow-git-shallow-clone=false:
             Sign the intention of using shallow clone despite restrictions (default                 
             $WERF_ALLOW_GIT_SHALLOW_CLONE)
+      --atomic=false:
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_ATOMIC by default)
+  -R, --auto-rollback=false:
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --config='':
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir='':
@@ -81,12 +87,6 @@ werf deploy [options]
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for deploy
       --home-dir='':
@@ -133,9 +133,6 @@ werf deploy [options]
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
-      --releases-history-max=0:
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --repo='':
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password='':
@@ -166,6 +163,11 @@ werf deploy [options]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+      --set-file=[]:
+            Set values from respective files specified via the command line (can specify multiple   
+            or separate values with commas: key1=path1,key2=path2).
+            Also, can be defined with $WERF_SET_FILE* (e.g. $WERF_SET_FILE_1=key1=path1,            
+            $WERF_SET_FILE_2=key2=val2)
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -189,10 +191,6 @@ werf deploy [options]
             if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
             address should be specified for all werf processes that work with a single stages       
             storage. :local address allows execution of werf processes from a single host only.
-      --three-way-merge-mode='':
-            Set three way merge mode for release.
-            Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           
-            https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':

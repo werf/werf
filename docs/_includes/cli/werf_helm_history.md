@@ -3,29 +3,45 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Fetch release history
+
+History prints historical revisions for a given release.
+
+A default maximum of 256 revisions will be returned. Setting '--max'
+configures the maximum length of the revision list returned.
+
+The historical release set is printed as a formatted table, e.g:
+
+    $ helm history angry-bird
+    REVISION    UPDATED                     STATUS          CHART             APP VERSION     DESCRIPTION
+    1           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Initial install
+    2           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Upgraded successfully
+    3           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Rolled back to 2
+    4           Mon Oct 3 10:15:13 2016     deployed        alpine-0.1.0      1.0             Upgraded successfully
+
 
 {{ header }} Syntax
 
 ```shell
-werf helm history RELEASE_NAME [options]
+werf helm history RELEASE_NAME [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
-      --col-width=60:
-            Specifies the max column width of output
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for history
-      --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --max=256:
+            maximum number of revision to include in history
+  -o, --output=table:
+            prints the output in the specified format. Allowed values: table, json, yaml
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -53,11 +69,10 @@ werf helm history RELEASE_NAME [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -m, --max=256:
-            Maximum number of releases to fetch
-      --output='table':
-            Output the specified format (json, yaml or table)
-      --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

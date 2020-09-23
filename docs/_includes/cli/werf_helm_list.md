@@ -3,35 +3,83 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List werf releases
+
+This command lists all of the releases for a specified namespace (uses current namespace context if namespace not specified).
+
+By default, it lists only releases that are deployed or failed. Flags like
+'--uninstalled' and '--all' will alter this behavior. Such flags can be combined:
+'--uninstalled --failed'.
+
+By default, items are sorted alphabetically. Use the '-d' flag to sort by
+release date.
+
+If the --filter flag is provided, it will be treated as a filter. Filters are
+regular expressions (Perl compatible) that are applied to the list of releases.
+Only items that match the filter will be returned.
+
+    $ helm list --filter 'ara[a-z]+'
+    NAME                UPDATED                     CHART
+    maudlin-arachnid    Mon May  9 16:07:08 2016    alpine-0.1.0
+
+If no results are found, 'helm list' will exit 0, but with no output (or in
+the case of no '-q' flag, only headers).
+
+By default, up to 256 items may be returned. To limit this, use the '--max' flag.
+Setting '--max' to 0 will not return all results. Rather, it will return the
+server's default, which may be much higher than 256. Pairing the '--max'
+flag with the '--offset' flag allows you to page through results.
+
 
 {{ header }} Syntax
 
 ```shell
-werf helm list [FILTER] [options]
+werf helm list [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
   -a, --all=false:
-            Show all releases, not just the ones marked DEPLOYED
-      --col-width=60:
-            Specifies the max column width of output
-      --deleted=false:
-            Show deleted releases
-      --deleting=false:
-            Show releases that are currently being deleted
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
+            show all releases without any filter applied
+  -A, --all-namespaces=false:
+            list releases across all namespaces
+  -d, --date=false:
+            sort by release date
+      --deployed=false:
+            show deployed releases. If no other is specified, this will be automatically enabled
+      --failed=false:
+            show failed releases
+  -f, --filter='':
+            a regular expression (Perl compatible). Any releases that match the expression will be  
+            included in the results
   -h, --help=false:
             help for list
-      --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+  -m, --max=256:
+            maximum number of releases to fetch
+      --offset=0:
+            next release name in the list, used to offset from start value
+  -o, --output=table:
+            prints the output in the specified format. Allowed values: table, json, yaml
+      --pending=false:
+            show pending releases
+  -r, --reverse=false:
+            reverse the sort order
+  -q, --short=false:
+            output short (quiet) listing format
+      --superseded=false:
+            show superseded releases
+      --uninstalled=false:
+            show uninstalled releases (if 'helm uninstall --keep-history' was used)
+      --uninstalling=false:
+            show releases that are currently being uninstalled
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -59,21 +107,10 @@ werf helm list [FILTER] [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -m, --max=256:
-            Maximum number of releases to fetch
-      --namespace='':
-            Show releases within a specific namespace
-  -o, --offset='':
-            Next release name in the list, used to offset from start value
-      --output='table':
-            Output the specified format (json, yaml or table)
-      --pending=false:
-            Show pending releases
-  -r, --reverse=false:
-            Reverse the sort order (descending by default)
-  -q, --short=false:
-            Output short listing format
-      --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

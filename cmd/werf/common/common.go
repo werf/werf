@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/logging"
@@ -48,8 +47,6 @@ type CmdData struct {
 	KubeContext                      *string
 	KubeConfig                       *string
 	KubeConfigBase64                 *string
-	HelmReleaseStorageNamespace      *string
-	HelmReleaseStorageType           *string
 	StatusProgressPeriodSeconds      *int64
 	HooksStatusProgressPeriodSeconds *int64
 	ReleasesHistoryMax               *int
@@ -89,8 +86,6 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
-
-	ThreeWayMergeMode *string
 
 	ReportPath   *string
 	ReportFormat *string
@@ -258,37 +253,6 @@ func getFirstExistingEnvVarAsString(envNames ...string) string {
 	}
 
 	return ""
-}
-
-func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.HelmReleaseStorageNamespace = new(string)
-
-	defaultValues := []string{
-		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
-		os.Getenv("TILLER_NAMESPACE"),
-		helm.DefaultReleaseStorageNamespace,
-	}
-
-	var defaultValue string
-	for _, value := range defaultValues {
-		if value != "" {
-			defaultValue = value
-			break
-		}
-	}
-
-	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageNamespace, "helm-release-storage-namespace", "", defaultValue, fmt.Sprintf("Helm release storage namespace (same as --tiller-namespace for regular helm, default $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or '%s')", helm.DefaultReleaseStorageNamespace))
-}
-
-func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.HelmReleaseStorageType = new(string)
-
-	defaultValue := os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE")
-	if defaultValue == "" {
-		defaultValue = helm.ConfigMapStorage
-	}
-
-	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
 func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
@@ -689,29 +653,6 @@ func allStagesNames() []string {
 	}
 
 	return stageNames
-}
-
-func SetupThreeWayMergeMode(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ThreeWayMergeMode = new(string)
-
-	modeEnvironmentValue := os.Getenv("WERF_THREE_WAY_MERGE_MODE")
-
-	defaultValue := ""
-	if modeEnvironmentValue != "" {
-		defaultValue = modeEnvironmentValue
-	}
-
-	cmd.Flags().StringVarP(cmdData.ThreeWayMergeMode, "three-way-merge-mode", "", defaultValue, `Set three way merge mode for release.
-Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html`)
-}
-
-func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeModeType, error) {
-	switch threeWayMergeModeParam {
-	case "enabled", "disabled", "onlyNewReleases", "":
-		return helm.ThreeWayMergeModeType(threeWayMergeModeParam), nil
-	}
-
-	return "", fmt.Errorf("bad three-way-merge-mode '%s': enabled, disabled or  onlyNewReleases modes can be specified", threeWayMergeModeParam)
 }
 
 func GetBoolEnvironmentDefaultFalse(environmentName string) bool {

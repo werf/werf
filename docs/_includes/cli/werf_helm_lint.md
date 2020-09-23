@@ -3,48 +3,57 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run lint procedure for the werf chart
+
+This command takes a path to a chart and runs a series of tests to verify that
+the chart is well-formed.
+
+If the linter encounters things that will cause the chart to fail installation,
+it will emit [ERROR] messages. If it encounters issues that break with convention
+or recommendation, it will emit [WARNING] messages.
+
 
 {{ header }} Syntax
 
 ```shell
-werf helm lint [options]
-```
-
-{{ header }} Environments
-
-```shell
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
-                    set secret key in CI-system. 
-                    
-                    Secret key also can be defined in files:
-                    * ~/.werf/global_secret_key (globally),
-                    * .werf_secret_key (per project)
+werf helm lint PATH [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
-      --config='':
-            Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
-      --config-templates-dir='':
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
-      --dir='':
-            Use custom working directory (default $WERF_DIR or current directory)
-      --docker-config='':
-            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
-            ~/.docker (in the order of priority)
-      --env='':
-            Use specified environment (default $WERF_ENV)
-      --helm-chart-dir='':
-            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
   -h, --help=false:
             help for lint
-      --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --ignore-secret-key=false:
-            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --set=[]:
+            set values on the command line (can specify multiple or separate values with commas:    
+            key1=val1,key2=val2)
+      --set-file=[]:
+            set values from respective files specified via the command line (can specify multiple   
+            or separate values with commas: key1=path1,key2=path2)
+      --set-string=[]:
+            set STRING values on the command line (can specify multiple or separate values with     
+            commas: key1=val1,key2=val2)
+      --strict=false:
+            fail on lint warnings
+  -f, --values=[]:
+            specify values in a YAML file or a URL (can specify multiple)
+      --with-subcharts=false:
+            lint dependent charts
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --kube-config='':
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
+      --kube-config-base64='':
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -64,25 +73,10 @@ werf helm lint [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --secret-values=[]:
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)
-      --set=[]:
-            Set helm values on the command line (can specify multiple or separate values with       
-            commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
-      --set-string=[]:
-            Set STRING helm values on the command line (can specify multiple or separate values     
-            with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1,         
-            $WERF_SET_STRING_2=key2=val2)
-      --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --values=[]:
-            Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
-            $WERF_VALUES_DB=.helm/values_db.yaml)
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 
