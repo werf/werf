@@ -392,7 +392,7 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 		var tag string
 		for _, img := range c.images {
 			if img.GetName() == imageName {
-				tag = img.GetContentSignature()
+				tag = img.GetStageID()
 				break
 			}
 		}
@@ -722,6 +722,10 @@ func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {
 
 func (c *Conveyor) GetImageNameForImageStage(imageName, stageName string) string {
 	return c.getImageStage(imageName, stageName).GetImage().Name()
+}
+
+func (c *Conveyor) GetStageID(imageName string) string {
+	return c.GetImage(imageName).GetStageID()
 }
 
 func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
