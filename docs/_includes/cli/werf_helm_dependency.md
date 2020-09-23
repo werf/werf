@@ -3,12 +3,98 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Manage a chart's dependencies
+
+Manage the dependencies of a chart.
+
+Helm charts store their dependencies in 'charts/'. For chart developers, it is
+often easier to manage dependencies in 'Chart.yaml' which declares all
+dependencies.
+
+The dependency commands operate on that file, making it easy to synchronize
+between the desired dependencies and the actual dependencies stored in the
+'charts/' directory.
+
+For example, this Chart.yaml declares two dependencies:
+
+    # Chart.yaml
+    dependencies:
+    - name: nginx
+      version: "1.2.3"
+      repository: "[https://example.com/charts](https://example.com/charts)"
+    - name: memcached
+      version: "3.2.1"
+      repository: "[https://another.example.com/charts](https://another.example.com/charts)"
+
+
+The 'name' should be the name of a chart, where that name must match the name
+in that chart's 'Chart.yaml' file.
+
+The 'version' field should contain a semantic version or version range.
+
+The 'repository' URL should point to a Chart Repository. Helm expects that by
+appending '/index.yaml' to the URL, it should be able to retrieve the chart
+repository's index. Note: 'repository' can be an alias. The alias must start
+with 'alias:' or '@'.
+
+Starting from 2.2.0, repository can be defined as the path to the directory of
+the dependency charts stored locally. The path should start with a prefix of
+"[file://](file://)". For example,
+
+    # Chart.yaml
+    dependencies:
+    - name: nginx
+      version: "1.2.3"
+      repository: "[file://](file://)../dependency_chart/nginx"
+
+If the dependency chart is retrieved locally, it is not required to have the
+repository added to helm by "helm add repo". Version matching is also supported
+for this case.
+
 
 {{ header }} Options
 
 ```shell
   -h, --help=false:
             help for dependency
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --kube-config='':
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
+      --kube-config-base64='':
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --log-color-mode='auto':
+            Set log color mode.
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
+            terminal) modes.
+            Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=false:
+            Enable debug (default $WERF_LOG_DEBUG).
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
+            true).
+      --log-quiet=false:
+            Disable explanatory output (default $WERF_LOG_QUIET).
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
+      --log-verbose=false:
+            Enable verbose output (default $WERF_LOG_VERBOSE).
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

@@ -47,16 +47,13 @@ werf dismiss [options]
             ~/.docker (in the order of priority)
       --env='':
             Use specified environment (default $WERF_ENV)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for dismiss
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':
@@ -94,9 +91,6 @@ werf dismiss [options]
       --release='':
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
-      --releases-history-max=0:
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --repo='':
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password='':
@@ -121,6 +115,9 @@ werf dismiss [options]
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
   -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
             storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 

@@ -9,27 +9,36 @@ List all of the dependencies declared in a chart.
 This can take chart archives and chart directories as input. It will not alter
 the contents of a chart.
 
-This will produce an error if the chart cannot be loaded. It will emit a warning
-if it cannot find a requirements.yaml.
+This will produce an error if the chart cannot be loaded.
 
 
 {{ header }} Syntax
 
 ```shell
-werf helm dependency list [options]
+werf helm dependency list CHART [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
-      --dir='':
-            Use custom working directory (default $WERF_DIR or current directory)
-      --helm-chart-dir='':
-            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
-      --helm-home='~/.helm':
-            location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
   -h, --help=false:
             help for list
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --kube-config='':
+            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            $KUBECONFIG)
+      --kube-config-base64='':
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -49,5 +58,10 @@ werf helm dependency list [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

@@ -3,31 +3,51 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Rollback a release to the specified revision
+
+This command rolls back a release to a previous revision.
+
+The first argument of the rollback command is the name of a release, and the
+second is a revision (version) number. If this argument is omitted, it will
+roll back to the previous release.
+
+To see revision numbers, run 'helm history RELEASE'.
+
 
 {{ header }} Syntax
 
 ```shell
-werf helm rollback RELEASE_NAME REVISION [options]
+werf helm rollback <RELEASE> [REVISION] [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
       --cleanup-on-fail=false:
-            Allow deletion of new resources created in this rollback when rollback failed
+            allow deletion of new resources created in this rollback when rollback fails
+      --dry-run=false:
+            simulate a rollback
       --force=false:
-            Force resource update through delete/recreate if needed
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
+            force resource update through delete/recreate if needed
   -h, --help=false:
             help for rollback
-      --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --no-hooks=false:
+            prevent hooks from running during rollback
+      --recreate-pods=false:
+            performs pods restart for the resource if applicable
+      --timeout=5m0s:
+            time to wait for any individual Kubernetes operation (like Jobs for hooks)
+      --wait=false:
+            if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
+            Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
+            as successful. It will wait for as long as --timeout
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5:
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -55,20 +75,10 @@ werf helm rollback RELEASE_NAME REVISION [options]
             * interactive terminal width or 140
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --no-hooks=false:
-            Prevent hooks from running during rollback
-      --recreate-pods=false:
-            Perform pods restart for the resource if applicable
-      --releases-history-max=0:
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
-      --timeout=300:
-            Time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)
-      --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --wait=false:
-            If set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
-            Deployment are in a ready state before marking the release as successful. It will wait  
-            for as long as --timeout
+  -n, --namespace='':
+            namespace scope for this request
+      --status-progress-period=5:
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

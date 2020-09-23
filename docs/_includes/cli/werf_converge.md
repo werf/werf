@@ -59,6 +59,12 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
       --allow-git-shallow-clone=false:
             Sign the intention of using shallow clone despite restrictions (default                 
             $WERF_ALLOW_GIT_SHALLOW_CLONE)
+      --atomic=false:
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_ATOMIC by default)
+  -R, --auto-rollback=false:
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --config='':
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir='':
@@ -77,12 +83,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir='':
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
-      --helm-release-storage-namespace='kube-system':
-            Helm release storage namespace (same as --tiller-namespace for regular helm, default    
-            $WERF_HELM_RELEASE_STORAGE_NAMESPACE, $TILLER_NAMESPACE or 'kube-system')
-      --helm-release-storage-type='configmap':
-            helm storage driver to use. One of 'configmap' or 'secret' (default                     
-            $WERF_HELM_RELEASE_STORAGE_TYPE or 'configmap')
   -h, --help=false:
             help for converge
       --home-dir='':
