@@ -16,7 +16,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -69,7 +68,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -165,7 +163,8 @@ func runDiff() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -185,11 +184,6 @@ func runDiff() error {
 
 	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
 	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
-		return err
-	}
-
-	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
-	if err != nil {
 		return err
 	}
 
@@ -269,17 +263,16 @@ func runDiff() error {
 	buildOptions.DryRun = true
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
-	var imagesInfoGetters []images_manager.ImageInfoGetter
-
+	var imagesInfoGetters []*image.InfoGetter
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 		if err := c.Build(ctx, buildOptions); err != nil {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
 
 		return nil
 	}); err != nil {
@@ -287,7 +280,7 @@ func runDiff() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(ctx, projectDir, helmChartDir, stagesStorage.String(), imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

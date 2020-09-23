@@ -49,11 +49,6 @@ var _ = BeforeEach(func() {
 	testDirPath = tmpDir
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
-
-	imagesRepoAddress := fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName())
-
-	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
-	stubs.SetEnv("WERF_IMAGES_REPO", imagesRepoAddress)
 })
 
 var _ = AfterEach(func() {

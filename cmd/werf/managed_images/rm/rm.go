@@ -110,9 +110,9 @@ func run(imageNames []string) error {
 		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
 	}
 
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
-	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
@@ -36,7 +36,7 @@ type DeployOptions struct {
 	DryRun               bool
 }
 
-func Deploy(ctx context.Context, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace string, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(ctx context.Context, projectDir, helmChartDir string, imagesRepository string, images []*image.InfoGetter, release, namespace string, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	if opts.DryRun {
 		fmt.Printf("Deploy DryRun\n")
 		return nil

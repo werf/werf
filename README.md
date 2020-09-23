@@ -75,6 +75,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Build images concurrently on a single host (using file locks).
 - Build images simultaneously.
 - Build images distributedly.
+- Content-based tagging.
 - Advanced building process with Stapel:
   - Incremental rebuilds based on git history.
   - Build images with Ansible tasks or Shell scripts.
@@ -83,15 +84,6 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Build one image on top of another based on the same config.
 - Debugging tools for inspecting the build process.
 - Detailed output.
-
-### Publishing
-
-- Store images in one or multiple Docker repositories using the following naming patterns:
-  - `IMAGES_REPO:[IMAGE_NAME-]TAG` using `monorepo` mode.
-  - `IMAGES_REPO[/IMAGE_NAME]:TAG` using `multirepo` mode.
-- Different image tagging strategies:
-  - Tagging images by binding them to git tag, branch, or commit.
-  - Content-based tagging.
 
 ### Deploying
 

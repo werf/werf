@@ -84,9 +84,9 @@ func (m *StagesStorageManager) checkStagesSwitchFromLocalBlock(stagesStorageAddr
 		return fmt.Errorf(
 			`Project %q stages storage has been switched from %s to %s!
 
- 1. Remove --stages-storage=%s param if it is specified explicitly.
- 2. If 'werf ci-env' command is used, then WERF_STAGES_STORAGE already should be exported — make sure that WERF_STAGES_STORAGE equals %s in this case.
- 3. Otherwise explicitly specify --stages-storage=%s (or export WERF_STAGES_STORAGE=%s).`,
+ 1. Remove --repo=%s param if it is specified explicitly.
+ 2. If 'werf ci-env' command is used, then WERF_REPO already should be exported — make sure that WERF_REPO equals %s in this case.
+ 3. Otherwise explicitly specify --repo=%s (or export WERF_REPO=%s).`,
 			m.ProjectName,
 			storage.LocalStorageAddress,
 			switchFromLocalBlock,

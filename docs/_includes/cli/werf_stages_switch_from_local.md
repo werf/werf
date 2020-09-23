@@ -39,12 +39,21 @@ werf stages switch-from-local [options]
       --from-repo-github-token='':
             GitHub token for source stages storage (default $WERF_FROM_REPO_GITHUB_TOKEN,           
             $WERF_REPO_GITHUB_TOKEN)
+      --from-repo-harbor-password='':
+            Harbor password for source stages storage (default $WERF_FROM_REPO_HARBOR_PASSWORD,     
+            $WERF_REPO_HARBOR_PASSWORD)
+      --from-repo-harbor-username='':
+            Harbor username for source stages storage (default $WERF_FROM_REPO_HARBOR_USERNAME,     
+            $WERF_REPO_HARBOR_USERNAME)
       --from-repo-implementation='':
             Choose repo implementation for source stages storage.
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_FROM_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect  
             implementation by a registry).
+      --from-repo-quay-token='':
+            quay.io token for source stages storage (default $WERF_FROM_REPO_QUAY_TOKEN,            
+            $WERF_REPO_QUAY_TOKEN)
   -h, --help=false:
             help for switch-from-local
       --home-dir='':
@@ -81,23 +90,24 @@ werf stages switch-from-local [options]
       --log-verbose=false:
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --repo-docker-hub-password='':
-            Common Docker Hub password for any stages storage or images repo specified for the      
-            command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
+            Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
       --repo-docker-hub-token='':
-            Common Docker Hub token for any stages storage or images repo specified for the command 
-            (default $WERF_REPO_DOCKER_HUB_TOKEN)
+            Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
       --repo-docker-hub-username='':
-            Common Docker Hub username for any stages storage or images repo specified for the      
-            command (default $WERF_REPO_DOCKER_HUB_USERNAME)
+            Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
       --repo-github-token='':
-            Common GitHub token for any stages storage or images repo specified for the command     
-            (default $WERF_REPO_GITHUB_TOKEN)
+            GitHub token (default $WERF_REPO_GITHUB_TOKEN)
+      --repo-harbor-password='':
+            Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
+      --repo-harbor-username='':
+            Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-implementation='':
-            Choose common repo implementation for any stages storage or images repo specified for   
-            the command.
+            Choose repo implementation.
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --repo-quay-token='':
+            quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
@@ -124,11 +134,20 @@ werf stages switch-from-local [options]
       --to-repo-github-token='':
             GitHub token for destination stages storage (default $WERF_TO_REPO_GITHUB_TOKEN,        
             $WERF_REPO_GITHUB_TOKEN)
+      --to-repo-harbor-password='':
+            Harbor password for destination stages storage (default $WERF_TO_REPO_HARBOR_PASSWORD,  
+            $WERF_REPO_HARBOR_PASSWORD)
+      --to-repo-harbor-username='':
+            Harbor username for destination stages storage (default $WERF_TO_REPO_HARBOR_USERNAME,  
+            $WERF_REPO_HARBOR_USERNAME)
       --to-repo-implementation='':
             Choose repo implementation for destination stages storage.
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_TO_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode (detect    
             implementation by a registry).
+      --to-repo-quay-token='':
+            quay.io token for destination stages storage (default $WERF_TO_REPO_QUAY_TOKEN,         
+            $WERF_REPO_QUAY_TOKEN)
 ```
 

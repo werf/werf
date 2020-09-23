@@ -9,9 +9,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Для получения данных, необходимых при интеграции с GitLab CI, werf использует переменные окружения CI-задания приведенные далее.
 
-### WERF_IMAGES_REPO
+### WERF_REPO
 
-Значение для установки переменной окружения [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
+Значение для установки переменной окружения [`WERF_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
 
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 

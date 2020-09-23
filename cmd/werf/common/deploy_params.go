@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 )
 
@@ -189,4 +190,20 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 	}
 
 	return buf.String(), nil
+}
+
+func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGetter) {
+	var imagesNames []string
+	for _, imageConfig := range werfConfig.StapelImages {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
+		imagesNames = append(imagesNames, imageConfig.Name)
+	}
+
+	for _, imageName := range imagesNames {
+		list = append(list, image.NewInfoGetter(imageName, fmt.Sprintf("%s:%s", StubRepoAddress, StubTag), StubTag))
+	}
+
+	return list
 }

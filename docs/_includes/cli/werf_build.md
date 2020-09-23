@@ -21,16 +21,16 @@ werf build [IMAGE_NAME...] [options]
 
 ```shell
   # Build stages of all images from werf.yaml, built stages will be placed locally
-  $ werf stages build --stages-storage :local
+  $ werf stages build
 
   # Build stages of image 'backend' from werf.yaml
-  $ werf stages build --stages-storage :local backend
+  $ werf stages build backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf build --stages-storage :local --introspect-error
+  $ werf build --introspect-error
 
-  # Set --stages-storage default value using $WERF_STAGES_STORAGE param
-  $ export WERF_STAGES_STORAGE=:local
+  # Set --repo default value using $WERF_REPO param
+  $ export WERF_REPO=harbor.company.io/werf
   $ werf build
 ```
 
@@ -120,24 +120,27 @@ werf build [IMAGE_NAME...] [options]
       --parallel-tasks-limit=5:
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --repo='':
+            Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password='':
-            Common Docker Hub password for any stages storage or images repo specified for the      
-            command (default $WERF_REPO_DOCKER_HUB_PASSWORD)
+            Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
       --repo-docker-hub-token='':
-            Common Docker Hub token for any stages storage or images repo specified for the command 
-            (default $WERF_REPO_DOCKER_HUB_TOKEN)
+            Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
       --repo-docker-hub-username='':
-            Common Docker Hub username for any stages storage or images repo specified for the      
-            command (default $WERF_REPO_DOCKER_HUB_USERNAME)
+            Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
       --repo-github-token='':
-            Common GitHub token for any stages storage or images repo specified for the command     
-            (default $WERF_REPO_GITHUB_TOKEN)
+            GitHub token (default $WERF_REPO_GITHUB_TOKEN)
+      --repo-harbor-password='':
+            Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
+      --repo-harbor-username='':
+            Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-implementation='':
-            Choose common repo implementation for any stages storage or images repo specified for   
-            the command.
+            Choose repo implementation.
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --repo-quay-token='':
+            quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --report-format='json':
             Report format (only json available for now, $WERF_REPORT_FORMAT by default)
       --report-path='':
@@ -152,28 +155,6 @@ werf build [IMAGE_NAME...] [options]
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
-  -s, --stages-storage='':
-            Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
-      --stages-storage-repo-docker-hub-password='':
-            Docker Hub password for stages storage (default                                         
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --stages-storage-repo-docker-hub-token='':
-            Docker Hub token for stages storage (default                                            
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_TOKEN, $WERF_REPO_DOCKER_HUB_TOKEN)
-      --stages-storage-repo-docker-hub-username='':
-            Docker Hub username for stages storage (default                                         
-            $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_USERNAME, $WERF_REPO_DOCKER_HUB_USERNAME)
-      --stages-storage-repo-github-token='':
-            GitHub token for stages storage (default $WERF_STAGES_STORAGE_REPO_GITHUB_TOKEN,        
-            $WERF_REPO_GITHUB_TOKEN)
-      --stages-storage-repo-implementation='':
-            Choose repo implementation for stages storage.
-            The following docker registry implementations are supported: ecr, acr, default,         
-            dockerhub, gcr, github, gitlab, harbor, quay.
-            Default $WERF_STAGES_STORAGE_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto     
-            mode (detect implementation by a registry).
   -S, --synchronization='':
             Address of synchronizer for multiple werf processes to work with a single stages        
             storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 

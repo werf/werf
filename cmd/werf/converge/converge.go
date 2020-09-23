@@ -16,7 +16,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -75,7 +74,6 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -250,12 +248,16 @@ func runConverge() error {
 
 	logboek.LogOptionalLn()
 
-	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepository string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+		stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+		if err != nil {
+			return err
+		}
 		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+		stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 		if err != nil {
 			return err
 		}
@@ -277,18 +279,14 @@ func runConverge() error {
 			return err
 		}
 
-		imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		imagesRepository = imagesRepo.String()
+		imagesRepository = storageManager.StagesStorage.String()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -296,7 +294,7 @@ func runConverge() error {
 				return err
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
 
 			return nil
 		}); err != nil {

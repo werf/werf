@@ -13,7 +13,6 @@ import (
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
@@ -52,8 +51,6 @@ These values includes project name, docker images ids and other`),
 
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
-
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -111,21 +108,6 @@ func runGetServiceValues() error {
 
 	projectName := werfConfig.Meta.Project
 
-	imagesRepoAddress, err := common.GetOptionalImagesRepoAddress(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	withoutRepo := true
-	if imagesRepoAddress != "" {
-		withoutRepo = false
-	}
-
-	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(ctx, projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	environment := helm_common.GetEnvironmentOrStub(*commonCmdData.Environment)
 
 	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, environment, werfConfig)
@@ -143,25 +125,9 @@ func runGetServiceValues() error {
 		}
 	}()
 
-	var imagesInfoGetters []images_manager.ImageInfoGetter
-	var imagesNames []string
-	for _, imageConfig := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{
-			ImagesRepo:      imagesRepo,
-			Name:            imageName,
-			Tag:             "TAG",
-			WithoutRegistry: withoutRepo,
-		}
-		imagesInfoGetters = append(imagesInfoGetters, d)
-	}
+	imagesInfoGetters := common.StubImageInfoGetters(werfConfig)
 
-	serviceValues, err := deploy.GetServiceValues(ctx, projectName, imagesRepo.String(), namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := deploy.GetServiceValues(ctx, projectName, common.StubRepoAddress, namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

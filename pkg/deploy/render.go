@@ -8,13 +8,12 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/image"
 )
 
 type RenderOptions struct {
 	ReleaseName          string
 	Namespace            string
-	WithoutImagesRepo    bool
 	Values               []string
 	SecretValues         []string
 	Set                  []string
@@ -25,7 +24,7 @@ type RenderOptions struct {
 	IgnoreSecretKey      bool
 }
 
-func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, opts RenderOptions) error {
+func RunRender(ctx context.Context, out io.Writer, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []*image.InfoGetter, opts RenderOptions) error {
 	logboek.Context(ctx).Debug().LogF("Render options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)

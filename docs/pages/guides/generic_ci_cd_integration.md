@@ -21,7 +21,7 @@ Below, we will outline the most important things to consider while you're creati
 
 According to [Docker registry integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker-registry-integration) procedure, variables to define:
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
- * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
+ * [`WERF_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_repo).
 
 Create temporal docker config and define images repo:
 
@@ -30,7 +30,7 @@ TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
 export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
-export WERF_IMAGES_REPO=registry.company.com/project
+export WERF_REPO=registry.company.com/project/werf
 ```
 
 ### CI/CD pipelines integration
@@ -63,9 +63,9 @@ TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 [[ -d "$DOCKER_CONFIG" ]] && cp -a $DOCKER_CONFIG/. $TMP_DOCKER_CONFIG
 export DOCKER_CONFIG=$TMP_DOCKER_CONFIG
-export WERF_IMAGES_REPO=registry.company.com/project
+export WERF_REPO=registry.company.com/project/werf
 
-docker login -u USER -p PASSWORD $WERF_IMAGES_REPO
+docker login -u USER -p PASSWORD $WERF_REPO
 
 export WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git=https://cicd.domain.com/project/x"
 export WERF_ADD_ANNOTATION_CI_COMMIT="ci.werf.io/commit=b9a1ddd366aa6a20a0fd43fb6612f349d33465ff"

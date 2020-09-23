@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage to be in sync with the images repo.
 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
-		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
+		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
@@ -143,7 +143,8 @@ func runCleanup() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
