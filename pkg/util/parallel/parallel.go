@@ -155,13 +155,17 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 
 				return taskResult.err
 			case *lifeWorkerTaskResult:
-				if logboek.Context(ctx).Info().IsAccepted() {
-					for _, data := range doneTaskDataList {
-						processTaskResultData(ctx, data)
-					}
+				if len(workersBuffs) != 0 {
+					if logboek.Context(ctx).Info().IsAccepted() {
+						logboek.Context(liveContext).LogLn()
 
-					for _, buf := range workersBuffs {
-						processTaskResultData(ctx, buf.Bytes())
+						for _, data := range doneTaskDataList {
+							processTaskResultData(ctx, data)
+						}
+
+						for _, buf := range workersBuffs {
+							processTaskResultData(ctx, buf.Bytes())
+						}
 					}
 				}
 
@@ -201,11 +205,6 @@ func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) in
 
 func processTaskResultData(ctx context.Context, data []byte) {
 	logboek.Streams().DoWithoutIndent(func() {
-		if logboek.Context(ctx).Streams().IsPrefixWithTimeEnabled() {
-			logboek.Context(ctx).Streams().DisablePrefixWithTime()
-			defer logboek.Context(ctx).Streams().EnablePrefixWithTime()
-		}
-
 		_, _ = logboek.Context(ctx).ProxyOutStream().Write(data)
 		logboek.Context(ctx).LogOptionalLn()
 	})

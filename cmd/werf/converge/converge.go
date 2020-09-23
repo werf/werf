@@ -117,7 +117,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 
 	common.SetupGitUnshallow(&commonCmdData, cmd)
 	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
-	common.SetupParallelOptions(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/cmd/werf/dismiss_v2"
+
 	"github.com/werf/werf/cmd/werf/deploy_v2"
 
 	"github.com/sirupsen/logrus"
@@ -117,10 +119,13 @@ Find more information at https://werf.io`),
 	}
 
 	var deployCmd *cobra.Command
+	var dismissCmd *cobra.Command
 	if os.Getenv("WERF_DEPLOY_HELM_V3") == "1" {
 		deployCmd = deploy_v2.NewCmd()
+		dismissCmd = dismiss_v2.NewCmd()
 	} else {
 		deployCmd = deploy.NewCmd()
+		dismissCmd = dismiss.NewCmd()
 	}
 
 	groups := templates.CommandGroups{
@@ -132,7 +137,7 @@ Find more information at https://werf.io`),
 				build.NewCmd(),
 				run.NewCmd(),
 				deployCmd,
-				dismiss.NewCmd(),
+				dismissCmd,
 				cleanup.NewCmd(),
 				purge.NewCmd(),
 				synchronization.NewCmd(),

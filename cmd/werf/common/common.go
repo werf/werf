@@ -526,7 +526,7 @@ func setupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 		"log-debug": "WERF_LOG_DEBUG",
 		"debug":     "WERF_DEBUG",
 	} {
-		cmd.Flags().BoolVarP(
+		cmd.PersistentFlags().BoolVarP(
 			cmdData.LogDebug,
 			alias,
 			"",
@@ -535,7 +535,7 @@ func setupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 		)
 	}
 
-	if err := cmd.Flags().MarkHidden("debug"); err != nil {
+	if err := cmd.PersistentFlags().MarkHidden("debug"); err != nil {
 		panic(err)
 	}
 }
@@ -550,7 +550,7 @@ func setupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 		defaultValue = logColorEnvironmentValue
 	}
 
-	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
+	cmd.PersistentFlags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
 Supported on, off and auto (based on the stdout’s file descriptor referring to a terminal) modes.
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
@@ -573,7 +573,7 @@ func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 		"log-quiet": "WERF_LOG_QUIET",
 		"quiet":     "WERF_QUIET",
 	} {
-		cmd.Flags().BoolVarP(
+		cmd.PersistentFlags().BoolVarP(
 			cmdData.LogQuiet,
 			alias,
 			"",
@@ -582,7 +582,7 @@ func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
 		)
 	}
 
-	if err := cmd.Flags().MarkHidden("quiet"); err != nil {
+	if err := cmd.PersistentFlags().MarkHidden("quiet"); err != nil {
 		panic(err)
 	}
 }
@@ -605,7 +605,7 @@ func setupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 		"log-verbose": "WERF_LOG_VERBOSE",
 		"verbose":     "WERF_VERBOSE",
 	} {
-		cmd.Flags().BoolVarP(
+		cmd.PersistentFlags().BoolVarP(
 			cmdData.LogVerbose,
 			alias,
 			"",
@@ -614,7 +614,7 @@ func setupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 		)
 	}
 
-	if err := cmd.Flags().MarkHidden("verbose"); err != nil {
+	if err := cmd.PersistentFlags().MarkHidden("verbose"); err != nil {
 		panic(err)
 	}
 }
@@ -629,12 +629,12 @@ func setupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 		defaultValue = true
 	}
 
-	cmd.Flags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
+	cmd.PersistentFlags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
 }
 
 func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogTerminalWidth = new(int64)
-	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
+	cmd.PersistentFlags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
 * $WERF_LOG_TERMINAL_WIDTH
 * interactive terminal width or %d`, 140))
@@ -690,9 +690,9 @@ func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
 }
 
-func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command) {
+func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	SetupParallel(cmdData, cmd)
-	SetupParallelTasksLimit(cmdData, cmd)
+	SetupParallelTasksLimit(cmdData, cmd, defaultValue)
 }
 
 func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
@@ -700,9 +700,9 @@ func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL)")
 }
 
-func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command) {
+func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	cmdData.ParallelTasksLimit = new(int64)
-	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", 5, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
+	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", defaultValue, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
 }
 
 func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {

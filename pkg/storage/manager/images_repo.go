@@ -47,7 +47,7 @@ func (m *ImagesRepoManager) GetRepoImage(ctx context.Context, imageName, tag str
 	return imageInfo, nil
 }
 
-func (m *ImagesRepoManager) SelectRepoImages(ctx context.Context, imageNames []string, f func(*image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
+func (m *ImagesRepoManager) SelectRepoImages(ctx context.Context, imageNames []string, f func(string, *image.Info, error) (bool, error)) (map[string][]*image.Info, error) {
 	var mutex sync.Mutex
 	imageRepoTags := map[string][]string{}
 	if err := parallel.DoTasks(ctx, len(imageNames), parallel.DoTasksOptions{
@@ -83,7 +83,7 @@ func (m *ImagesRepoManager) SelectRepoImages(ctx context.Context, imageNames []s
 	return imageRepoImages, nil
 }
 
-func (m *ImagesRepoManager) selectImages(ctx context.Context, imageName string, tags []string, f func(*image.Info, error) (bool, error)) ([]*image.Info, error) {
+func (m *ImagesRepoManager) selectImages(ctx context.Context, imageName string, tags []string, f func(string, *image.Info, error) (bool, error)) ([]*image.Info, error) {
 	var mutex sync.Mutex
 	var repoImageList []*image.Info
 	if err := parallel.DoTasks(ctx, len(tags), parallel.DoTasksOptions{
@@ -95,13 +95,14 @@ func (m *ImagesRepoManager) selectImages(ctx context.Context, imageName string, 
 			return nil
 		}
 
-		repoImage, err := m.GetRepoImage(ctx, imageName, m.ImagesRepo.ImageRepositoryMetaTag(imageName, tag))
+		reference := m.ImagesRepo.ImageRepositoryMetaTag(imageName, tag)
+		repoImage, err := m.GetRepoImage(ctx, imageName, reference)
 		if err != nil && storage.IsTagNotAssociatedWithImageError(err) {
 			return nil
 		}
 
 		if f != nil {
-			ok, err := f(repoImage, err)
+			ok, err := f(reference, repoImage, err)
 			if err != nil {
 				return err
 			}

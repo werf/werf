@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/Masterminds/sprig"
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"github.com/werf/werf/pkg/config"
@@ -188,6 +189,10 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 	for _, name := range []string{"image", "image_id", "werf_container_image", "werf_container_env"} {
 		setupIncludeWrapperFunc(name)
 	}
+
+	for _, name := range []string{"env", "expandenv"} {
+		funcMap[name] = sprig.TxtFuncMap()[name]
+	}
 }
 
 func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
@@ -223,6 +228,10 @@ func (wc *WerfChart) WrapInstall(ctx context.Context, installFunc func() error) 
 
 func (wc *WerfChart) WrapUpgrade(ctx context.Context, upgradeFunc func() error) error {
 	return wc.lockReleaseWrapper(ctx, upgradeFunc)
+}
+
+func (wc *WerfChart) WrapUninstall(ctx context.Context, uninstallFunc func() error) error {
+	return wc.lockReleaseWrapper(ctx, uninstallFunc)
 }
 
 func (wc *WerfChart) lockReleaseWrapper(ctx context.Context, commandFunc func() error) error {

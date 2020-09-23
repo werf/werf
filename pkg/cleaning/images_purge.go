@@ -70,9 +70,9 @@ func (m *imagesPurgeManager) run(ctx context.Context) error {
 }
 
 func selectRepoImagesFromImagesRepo(ctx context.Context, storageManager *manager.StorageManager, imageNameList []string) (map[string][]*image.Info, error) {
-	return storageManager.SelectRepoImages(ctx, imageNameList, func(info *image.Info, err error) (bool, error) {
+	return storageManager.SelectRepoImages(ctx, imageNameList, func(reference string, _ *image.Info, err error) (bool, error) {
 		if err != nil && docker_registry.IsManifestUnknownError(err) {
-			logboek.Context(ctx).Warn().LogF("Skip image %s: %s\n", info.Name, err)
+			logboek.Context(ctx).Warn().LogF("Skip image %s: %s\n", reference, err)
 			return false, nil
 		}
 

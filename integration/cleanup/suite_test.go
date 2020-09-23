@@ -360,6 +360,8 @@ func implementationBeforeEach(implementationName string) {
 
 		err = stagesStorage.CreateRepo(context.Background())
 		Ω(err).Should(Succeed())
+	case docker_registry.QuayImplementationName:
+		stubs.SetEnv("WERF_PARALLEL", "0")
 	default:
 	}
 }
