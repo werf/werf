@@ -132,12 +132,12 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 				if isNotSupported {
 					stagesStorageImplementationName = "default"
-					stubs.SetEnv("WERF_STAGES_STORAGE_IMPLEMENTATION", stagesStorageImplementationName)
+					stubs.SetEnv("WERF_REPO_IMPLEMENTATION", stagesStorageImplementationName)
 				}
 
 				initStagesStorage(stagesStorageAddress, stagesStorageImplementationName, stagesStorageDockerRegistryOptions)
 
-				stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageAddress)
+				stubs.SetEnv("WERF_REPO", stagesStorageAddress)
 
 				if implementationName == docker_registry.QuayImplementationName {
 					stubs.SetEnv("WERF_PARALLEL", "0")

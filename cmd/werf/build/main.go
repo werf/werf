@@ -27,16 +27,16 @@ func NewCmd() *cobra.Command {
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build stages",
 		Example: `  # Build stages of all images from werf.yaml, built stages will be placed locally
-  $ werf stages build --stages-storage :local
+  $ werf stages build
 
   # Build stages of image 'backend' from werf.yaml
-  $ werf stages build --stages-storage :local backend
+  $ werf stages build backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf build --stages-storage :local --introspect-error
+  $ werf build --introspect-error
 
-  # Set --stages-storage default value using $WERF_STAGES_STORAGE param
-  $ export WERF_STAGES_STORAGE=:local
+  # Set --repo default value using $WERF_REPO param
+  $ export WERF_REPO=harbor.company.io/werf
   $ werf build`,
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
 
@@ -160,7 +160,8 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorage, err := common.GetStagesStorage(containerRuntime, commonCmdData)
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -205,7 +206,7 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, nil, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

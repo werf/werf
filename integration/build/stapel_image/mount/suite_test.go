@@ -48,7 +48,6 @@ var _ = BeforeEach(func() {
 	testDirPath = tmpDir
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
-	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 })
 
 var _ = AfterEach(func() {

@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -60,8 +59,6 @@ func NewCmd() *cobra.Command {
 	common.SetupValues(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
-
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -110,23 +107,6 @@ func runRender(outputFilePath string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	projectName := werfConfig.Meta.Project
-
-	optionalImagesRepo, err := common.GetOptionalImagesRepoAddress(projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	withoutImagesRepo := true
-	if optionalImagesRepo != "" {
-		withoutImagesRepo = false
-	}
-
-	imagesRepo, err := common.GetImagesRepoWithOptionalStubRepoAddress(ctx, projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	env := helm_common.GetEnvironmentOrStub(*commonCmdData.Environment)
 
 	release, err := common.GetHelmRelease(*commonCmdData.Release, env, werfConfig)
@@ -149,29 +129,12 @@ func runRender(outputFilePath string) error {
 		return err
 	}
 
-	var imagesInfoGetters []images_manager.ImageInfoGetter
-	var imagesNames []string
-	for _, imageConfig := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{
-			ImagesRepo:      imagesRepo,
-			Tag:             "TAG",
-			Name:            imageName,
-			WithoutRegistry: withoutImagesRepo,
-		}
-		imagesInfoGetters = append(imagesInfoGetters, d)
-	}
+	imagesInfoGetters := common.StubImageInfoGetters(werfConfig)
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := deploy.RunRender(ctx, buf, projectDir, helmChartDir, werfConfig, imagesRepo.String(), imagesInfoGetters, deploy.RenderOptions{
+	if err := deploy.RunRender(ctx, buf, projectDir, helmChartDir, werfConfig, common.StubRepoAddress, imagesInfoGetters, deploy.RenderOptions{
 		ReleaseName:          release,
 		Namespace:            namespace,
-		WithoutImagesRepo:    withoutImagesRepo,
 		Values:               *commonCmdData.Values,
 		SecretValues:         *commonCmdData.SecretValues,
 		Set:                  *commonCmdData.Set,

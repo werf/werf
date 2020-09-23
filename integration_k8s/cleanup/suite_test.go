@@ -64,7 +64,7 @@ var _ = BeforeEach(func() {
 	stagesStorageRepoAddress := fmt.Sprintf("%s/%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName(), "stages")
 	stagesStorage = utils.NewStagesStorage(stagesStorageRepoAddress, "default", docker_registry.DockerRegistryOptions{})
 
-	stubs.SetEnv("WERF_STAGES_STORAGE", stagesStorageRepoAddress)
+	stubs.SetEnv("WERF_REPO", stagesStorageRepoAddress)
 })
 
 var _ = AfterEach(func() {

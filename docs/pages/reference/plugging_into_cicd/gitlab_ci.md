@@ -9,9 +9,9 @@ According to the description of [ci-env command]({{ site.baseurl }}/documentatio
 
 werf uses the following values for werf environment variables:
 
-### WERF_IMAGES_REPO
+### WERF_REPO
 
-The value of [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
+The value of [`WERF_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 

@@ -154,8 +154,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
-	var stagesStorageRepoImplementation string
-	var imagesRepoImplementation string
+	var repo, repoImplementation string
 	var imagesUsername, imagesPassword string
 	var doLogin bool
 	if ciRegistryImageEnv != "" {
@@ -166,15 +165,26 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		}
 
 		ciRegistryEnv := os.Getenv("CI_REGISTRY")
-		werfStagesStorageEnv := os.Getenv("WERF_STAGES_STORAGE")
-		werfImagesRepoEnv := os.Getenv("WERF_IMAGES_REPO")
+		werfRepoEnv := os.Getenv("WERF_REPO")
 
-		if werfStagesStorageEnv == "" || strings.HasPrefix(werfStagesStorageEnv, ciRegistryEnv) {
-			stagesStorageRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		if werfRepoEnv == "" {
+			projectDir, err := common.GetProjectDir(&commonCmdData)
+			if err != nil {
+				return fmt.Errorf("getting project dir failed: %s", err)
+			}
+
+			werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, true)
+			if err != nil {
+				return fmt.Errorf("unable to load werf config: %s", err)
+			}
+
+			if werfConfig != nil {
+				repo = defaultCIRepoAddress(ciRegistryEnv, werfConfig.Meta.Project)
+			}
 		}
 
-		if werfImagesRepoEnv == "" || strings.HasPrefix(werfImagesRepoEnv, ciRegistryEnv) {
-			imagesRepoImplementation = docker_registry.GitLabRegistryImplementationName
+		if werfRepoEnv == "" || strings.HasPrefix(werfRepoEnv, ciRegistryEnv) {
+			repoImplementation = docker_registry.GitLabRegistryImplementationName
 		}
 	}
 
@@ -188,16 +198,10 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeHeader(w, "DOCKER CONFIG", false)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
-	writeHeader(w, "STAGES_STORAGE", true)
-	writeEnv(w, "WERF_STAGES_STORAGE", fmt.Sprintf("%s/stages", ciRegistryImageEnv), false)
-	if stagesStorageRepoImplementation != "" {
-		writeEnv(w, "WERF_STAGES_STORAGE_REPO_IMPLEMENTATION", stagesStorageRepoImplementation, false)
-	}
-
-	writeHeader(w, "IMAGES REPO", true)
-	writeEnv(w, "WERF_IMAGES_REPO", ciRegistryImageEnv, false)
-	if imagesRepoImplementation != "" {
-		writeEnv(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
+	writeHeader(w, "REPO", true)
+	writeEnv(w, "WERF_REPO", repo, false)
+	if repoImplementation != "" {
+		writeEnv(w, "WERF_REPO_IMPLEMENTATION", repoImplementation, false)
 	}
 
 	writeHeader(w, "DEPLOY", true)
@@ -271,7 +275,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	ciGithubOwnerWithProject := os.Getenv("GITHUB_REPOSITORY")
 	ciGithubDockerPackage := strings.ToLower(ciGithubOwnerWithProject)
 
-	var imagesRepo, stagesStorageRepo string
+	var repo string
 	if ciGithubDockerPackage != "" {
 		projectDir, err := common.GetProjectDir(&commonCmdData)
 		if err != nil {
@@ -285,27 +289,15 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 		if werfConfig != nil {
 			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubDockerPackage)
-			multirepo := projectRepo
-			monorepo := fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
-
-			if werfConfig.HasNamelessImage() {
-				imagesRepo = monorepo
-			} else {
-				imagesRepo = multirepo
-			}
-
-			stagesStorageRepo = fmt.Sprintf("%s/stages", projectRepo)
+			repo = defaultCIRepoAddress(projectRepo, werfConfig.Meta.Project)
 		}
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
-	writeHeader(w, "STAGES_STORAGE", true)
-	writeEnv(w, "WERF_STAGES_STORAGE", stagesStorageRepo, false)
-
-	writeHeader(w, "IMAGES REPO", true)
-	writeEnv(w, "WERF_IMAGES_REPO", imagesRepo, false)
+	writeHeader(w, "REPO", true)
+	writeEnv(w, "WERF_REPO", repo, false)
 
 	writeHeader(w, "DEPLOY", true)
 	var projectGit string
@@ -519,4 +511,8 @@ func createSourceFile(data []byte) (string, error) {
 	}
 
 	return f.Name(), nil
+}
+
+func defaultCIRepoAddress(repo, projectName string) string {
+	return fmt.Sprintf("%s/%s-werf", repo, projectName)
 }

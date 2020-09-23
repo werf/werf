@@ -29,7 +29,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/storage"
@@ -64,7 +64,6 @@ type Conveyor struct {
 
 	ContainerRuntime container_runtime.ContainerRuntime
 
-	ImagesRepo         storage.ImagesRepo
 	StorageLockManager storage.LockManager
 	StorageManager     *manager.StorageManager
 
@@ -86,7 +85,7 @@ type ConveyorOptions struct {
 	AllowGitShallowClone            bool
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
 	c := &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -108,7 +107,6 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		importServers:          make(map[string]import_server.ImportServer),
 
 		ContainerRuntime:   containerRuntime,
-		ImagesRepo:         imagesRepo,
 		StorageLockManager: storageLockManager,
 		StorageManager:     storageManager,
 
@@ -377,8 +375,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	return nil
 }
 
-func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, withoutRegistry bool) []images_manager.ImageInfoGetter {
-	var images []images_manager.ImageInfoGetter
+func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile) []*image.InfoGetter {
+	var images []*image.InfoGetter
 
 	var imagesNames []string
 	for _, imageConfig := range configImages {
@@ -389,21 +387,7 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	}
 
 	for _, imageName := range imagesNames {
-		var tag string
-		for _, img := range c.images {
-			if img.GetName() == imageName {
-				tag = img.GetStageID()
-				break
-			}
-		}
-
-		d := &images_manager.ImageInfo{
-			ImagesRepo:      c.ImagesRepo,
-			Name:            imageName,
-			Tag:             tag,
-			WithoutRegistry: withoutRegistry,
-		}
-		images = append(images, d)
+		images = append(images, c.GetImage(imageName).GetImageInfoGetter())
 	}
 
 	return images

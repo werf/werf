@@ -17,13 +17,12 @@ type ConveyorWithRetryWrapper struct {
 	SshAuthSock         string
 	ContainerRuntime    container_runtime.ContainerRuntime
 	StorageManager      *manager.StorageManager
-	ImagesRepo          storage.ImagesRepo
 	StorageLockManager  storage.LockManager
 
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, imagesRepo storage.ImagesRepo, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
 		ImageNamesToProcess: imageNamesToProcess,
@@ -32,7 +31,6 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, imageNamesToProc
 		SshAuthSock:         sshAuthSock,
 		ContainerRuntime:    containerRuntime,
 		StorageManager:      storageManager,
-		ImagesRepo:          imagesRepo,
 		StorageLockManager:  storageLockManager,
 		ConveyorOptions:     opts,
 	}
@@ -52,7 +50,6 @@ Retry:
 		wrapper.SshAuthSock,
 		wrapper.ContainerRuntime,
 		wrapper.StorageManager,
-		wrapper.ImagesRepo,
 		wrapper.StorageLockManager,
 		wrapper.ConveyorOptions,
 	)

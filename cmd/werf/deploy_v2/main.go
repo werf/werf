@@ -33,7 +33,6 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -109,7 +108,6 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
@@ -207,14 +205,18 @@ func runDeploy() error {
 	}
 
 	var imagesRepository string
-	var imagesInfoGetters []images_manager.ImageInfoGetter
+	var imagesInfoGetters []*image.InfoGetter
 
 	projectName := werfConfig.Meta.Project
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-		stagesStorage, err := common.GetStagesStorage(containerRuntime, &commonCmdData)
+		stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+		if err != nil {
+			return err
+		}
+		stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 		if err != nil {
 			return err
 		}
@@ -236,12 +238,7 @@ func runDeploy() error {
 			return err
 		}
 
-		imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
-		if err != nil {
-			return err
-		}
-
-		imagesRepository = imagesRepo.String()
+		imagesRepository = storageManager.StagesStorage.String()
 
 		if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 			return fmt.Errorf("cannot initialize ssh agent: %s", err)
@@ -255,7 +252,7 @@ func runDeploy() error {
 
 		logboek.LogOptionalLn()
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -263,7 +260,7 @@ func runDeploy() error {
 				return err
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
 			return nil
 		}); err != nil {
 			return err

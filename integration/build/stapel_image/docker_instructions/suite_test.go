@@ -44,7 +44,6 @@ var _ = SynchronizedAfterSuite(func() {}, func() {
 
 var _ = BeforeEach(func() {
 	utils.BeforeEachOverrideWerfProjectName(stubs)
-	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 })
 
 var _ = AfterEach(func() {

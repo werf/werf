@@ -9,7 +9,7 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/images_manager"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
@@ -22,7 +22,7 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, opts LintOptions) error {
+func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []*image.InfoGetter, opts LintOptions) error {
 	logboek.Context(ctx).Debug().LogF("Lint options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)

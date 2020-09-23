@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
 	"github.com/werf/werf/pkg/docker_registry"
 )
 
@@ -59,7 +60,7 @@ func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
 func SetupImplementationForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usageTitle string
 	if repoData.IsCommon {
-		usageTitle = "Choose common repo implementation for any stages storage or images repo specified for the command"
+		usageTitle = "Choose repo implementation"
 	} else {
 		usageTitle = fmt.Sprintf("Choose repo implementation for %s", repoData.DesignationStorageName)
 	}
@@ -83,7 +84,7 @@ Default %s or auto mode (detect implementation by a registry).`,
 func SetupDockerHubUsernameForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common Docker Hub username for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("Docker Hub username (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("Docker Hub username for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -101,7 +102,7 @@ func SetupDockerHubUsernameForRepoData(repoData *RepoData, cmd *cobra.Command, p
 func SetupDockerHubPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common Docker Hub password for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("Docker Hub password (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("Docker Hub password for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -119,7 +120,7 @@ func SetupDockerHubPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, p
 func SetupDockerHubTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common Docker Hub token for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("Docker Hub token (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("Docker Hub token for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -137,7 +138,7 @@ func SetupDockerHubTokenForRepoData(repoData *RepoData, cmd *cobra.Command, para
 func SetupGithubTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common GitHub token for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("GitHub token (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("GitHub token for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -155,7 +156,7 @@ func SetupGithubTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramNa
 func SetupHarborUsernameForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common Harbor username for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("Harbor username (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("Harbor username for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -168,14 +169,12 @@ func SetupHarborUsernameForRepoData(repoData *RepoData, cmd *cobra.Command, para
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
-
-	_ = cmd.Flags().MarkHidden(paramName)
 }
 
 func SetupHarborPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common Harbor password for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("Harbor password (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
 		usage = fmt.Sprintf("Harbor password for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
@@ -188,16 +187,14 @@ func SetupHarborPasswordForRepoData(repoData *RepoData, cmd *cobra.Command, para
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
-
-	_ = cmd.Flags().MarkHidden(paramName)
 }
 
 func SetupQuayTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	var usage string
 	if repoData.IsCommon {
-		usage = fmt.Sprintf("Common quay.io token for any stages storage or images repo specified for the command (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("quay.io token (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	} else {
-		usage = fmt.Sprintf("Common quay.io token for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+		usage = fmt.Sprintf("quay.io token for %s (default %s)", repoData.DesignationStorageName, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
 	}
 
 	repoData.QuayToken = new(string)
@@ -208,8 +205,6 @@ func SetupQuayTokenForRepoData(repoData *RepoData, cmd *cobra.Command, paramName
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
-
-	_ = cmd.Flags().MarkHidden(paramName)
 }
 
 func getDefaultValueByParamEnvNames(paramEnvNames []string) string {

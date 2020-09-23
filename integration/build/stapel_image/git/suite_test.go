@@ -85,6 +85,4 @@ func commonBeforeEach(testDirPath, fixturePath string) {
 		"git",
 		"commit", "-m", "Initial commit",
 	)
-
-	stubs.SetEnv("WERF_STAGES_STORAGE", ":local")
 }

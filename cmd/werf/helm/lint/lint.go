@@ -9,8 +9,6 @@ import (
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/images_manager"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -96,39 +94,9 @@ func runLint() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	projectName := werfConfig.Meta.Project
+	imagesInfoGetters := common.StubImageInfoGetters(werfConfig)
 
-	stubImagesRepo, err := storage.NewImagesRepo(
-		ctx,
-		projectName,
-		common.StubImagesRepoAddress,
-		"auto",
-		storage.ImagesRepoOptions{},
-	)
-
-	if err != nil {
-		return err
-	}
-
-	var imagesInfoGetters []images_manager.ImageInfoGetter
-	var imagesNames []string
-	for _, imageConfig := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageName := range imagesNames {
-		d := &images_manager.ImageInfo{
-			ImagesRepo:      stubImagesRepo,
-			Name:            imageName,
-			Tag:             "TAG",
-			WithoutRegistry: true,
-		}
-		imagesInfoGetters = append(imagesInfoGetters, d)
-	}
-
-	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, deploy.LintOptions{
+	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, common.StubRepoAddress, imagesInfoGetters, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,
