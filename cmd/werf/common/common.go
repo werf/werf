@@ -111,6 +111,8 @@ type CmdData struct {
 const (
 	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
 	StubImagesRepoAddress                  = "stub/repository"
+	DefaultBuildParallelTasksLimit   = 5
+	DefaultCleanupParallelTasksLimit = 10
 )
 
 func GetLongCommandDescription(text string) string {
