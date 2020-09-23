@@ -39,49 +39,7 @@ werf can automate the cleaning of the _images repo_.
 It works according to special rules called **cleanup policies**.
 These policies determine which _images_ will be deleted while leaving all others intact.
 
-#### Tagging scheme-based cleanup algorithm
-
-> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
-
-#### Cleanup policies
-
-* **by branches:**
-    * Each new commit updates an image for the corresponding git branch (in other words, there is the only one docker tag for each published git branch).
-    * werf deletes an image from the _images repo_ if the corresponding git branch does not exist. The image is never removed as long as the corresponding git branch exists.
-    * The policy covers images tagged by werf with the `--tag-git-branch` option.
-* **by commits:**
-    * werf deletes an image from the _images repo_ if the corresponding git commit does not exist.
-    * For the remaining images, the following policies apply:
-      * _git-commit-strategy-expiry-days_.
-      Keep published _images_ in the _images repo_ for the **specified maximum number of days** since the image was published.
-      The republished image will be kept for the **specified maximum number of days** since the new publication date.
-      No days limit is set by default; -1 disables the limit.
-      The value can be specified by `--git-commit-strategy-expiry-days` option or `$WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS`.
-      * _git-commit-strategy-limit_.
-      Keep the **specified max number** of published _images_ in the _images repo_.
-      No limit is set by default; -1 disables the limit.
-      Value can be specified by `--git-commit-strategy-limit` or `$WERF_GIT_COMMIT_STRATEGY_LIMIT`.
-    * The policy covers images tagged by werf with the `--tag-git-commit` flag.
-* **by tags:**
-    * werf deletes an image from the _images repo_ when the corresponding git tag does not exist.
-    * For the remaining images, the following policies apply:
-       * _git-tag-strategy-expiry-days_.
-       Keep published _images_ in the _images repo_ for the **specified maximum number of days** since the image was published.
-       The republished image will be kept for the **specified maximum number of days** since the new publication date.
-       No days limit is set by default; -1 disables the limit.
-       Value can be specified by `--git-tag-strategy-expiry-days` option or `$WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`.
-       * _git-tag-strategy-limit_.
-       Keep the **specified max number** of published _images_ in the _images repo_.
-       No limit is set by default; -1 disables the limit.
-       Value can be specified by `--git-tag-strategy-limit` or `$WERF_GIT_TAG_STRATEGY_LIMIT`.
-    * The policy covers images tagged by werf with `--tag-git-tag` flag.
-
-**Please note** that the cleanup affects only images built and published by werf with one of the following arguments: `--tag-git-branch`, `--tag-git-tag` or `--tag-git-commit`.
-All other images in the _images repo_ stay intact.
-
 #### Git history-based cleanup algorithm
-
-> In versions prior to `v1.2`, the cleanup policy is based on [tagging schemes](#tagging-scheme-based-cleanup-algorithm). The [git history-based cleanup algorithm](#git-history-based-cleanup-algorithm) is going to be the only one available starting with version `v1.2`. You can use the `--git-history-based-cleanup` flag to forcefully enable the new algorithm.
 
 The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [signature]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature).
 
@@ -98,8 +56,7 @@ Let's review the basic steps of the cleanup algorithm:
     - a set of pairs consisting of the [signature of the image stages]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature) and a commit on which the publication was performed.
 - Obtaining manifests for all tags.
 - Preparing a list of items to clean up:
-    - [tags used in Kubernetes](#whitelisting-images) are ignored;
-    - tags assigned by versions `<v1.1.20` are ignored (and they are deleted starting with `v1.2`; you can force this behaviour by providing the  `--git-history-based-cleanup-v1.2` option).
+    - [tags used in Kubernetes](#whitelisting-images) are ignored.
 - Preparing the data for scanning:
     - tags grouped by the signature of image stages __(1)__;
     - commits grouped by the signature of image stages __(2)__;
@@ -117,7 +74,7 @@ It is worth noting that the algorithm scans the local state of the git repositor
 
 werf saves supplementary data to the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [signature of image stages]({{ site.baseurl }}/documentation/reference/stages_and_images.html#image-stages-signature) and a commit that was used for publishing. It also contains [names of images]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) that were ever built.
 
-Information about commits is the only source of truth for the algorithm, so tags lacking such information are processed separately. Tags assigned by versions lower than `v1.1.20` are ignored (and they are deleted starting with version `v1.2`; you can force this behavior by using the `--git-history-based-cleanup-v1.2` flag).
+Information about commits is the only source of truth for the algorithm, so if tags lacking such information werf deletes them. 
 
 When performing an automatic cleanup, the `werf cleanup` command is executed either on a schedule or manually. To avoid deleting the active cache when adding/deleting images in the `werf.yaml` in neighboring git branches, you can add the name of the image being built to the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) during the build. The user can edit the so-called set of _managed images_ using `werf managed-images ls|add|rm` commands.
 

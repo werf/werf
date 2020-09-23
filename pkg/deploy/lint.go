@@ -10,7 +10,6 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/images_manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
@@ -23,7 +22,7 @@ type LintOptions struct {
 	IgnoreSecretKey bool
 }
 
-func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, commonTag string, tagStrategy tag_strategy.TagStrategy, opts LintOptions) error {
+func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *config.WerfConfig, imagesRepository string, images []images_manager.ImageInfoGetter, opts LintOptions) error {
 	logboek.Context(ctx).Debug().LogF("Lint options: %#v\n", opts)
 
 	m, err := GetSafeSecretManager(ctx, projectDir, helmChartDir, opts.SecretValues, opts.IgnoreSecretKey)
@@ -33,7 +32,7 @@ func RunLint(ctx context.Context, projectDir, helmChartDir string, werfConfig *c
 
 	namespace := "NAMESPACE"
 
-	serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+	serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

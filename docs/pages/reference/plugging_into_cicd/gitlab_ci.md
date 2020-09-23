@@ -13,18 +13,6 @@ werf uses the following values for werf environment variables:
 
 The value of [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
-### WERF_TAG_BY_STAGES_SIGNATURE
-
-The value of [`WERF_TAG_BY_STAGES_SIGNATURE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_by_stages_signature) is set to `true` when using [`stages-signature`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#stages-signature) tagging strategy (which is default).
-
-### WERF_TAG_GIT_TAG
-
-The value of [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag) is taken from the [`CI_COMMIT_TAG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
-
-### WERF_TAG_GIT_BRANCH
-
-The value of [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch) is taken from the [`CI_COMMIT_REF_NAME`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
-
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 
 The value of [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git) is based on the [`CI_PROJECT_URL`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable and composed as follows:
@@ -67,8 +55,6 @@ The value of [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_in
 
 Other variables are configured in the regular way described in the [overview article]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html):
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
- * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
- * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
  * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_color_mode);
  * [`WERF_LOG_PROJECT_DIR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_project_dir);
  * [`WERF_ENABLE_PROCESS_EXTERMINATOR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_enable_process_exterminator);

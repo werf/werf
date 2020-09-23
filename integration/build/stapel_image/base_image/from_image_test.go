@@ -63,12 +63,12 @@ var _ = Describe("fromImage", func() {
 	})
 })
 
-var _ = Describe("fromImageArtifact", func() {
+var _ = Describe("fromArtifact", func() {
 	BeforeEach(func() {
-		testDirPath = utils.FixturePath("from_image_artifact")
+		testDirPath = utils.FixturePath("from_artifact")
 	})
 
 	It("should be rebuilt", func() {
-		fromImageItFunc("app", "fromImageArtifact", func(appConfigName, fromImageConfigName string) {})
+		fromImageItFunc("app", "fromArtifact", func(appConfigName, fromImageConfigName string) {})
 	})
 })

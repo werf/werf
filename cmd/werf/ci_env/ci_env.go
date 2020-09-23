@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -21,17 +20,15 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
 )
 
 var cmdData struct {
-	TaggingStrategy string
-	AsFile          bool
-	AsEnvFile       bool
-	OutputFilePath  string
-	Shell           string
+	AsFile         bool
+	AsEnvFile      bool
+	OutputFilePath string
+	Shell          string
 }
 
 var commonCmdData common.CmdData
@@ -66,8 +63,6 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&cmdData.TaggingStrategy, "tagging-strategy", "", "stages-signature", `* stages-signature: always use '--tag-by-stages-signature' option to tag all published images by corresponding stages-signature;
-* tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables.`)
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
@@ -111,13 +106,6 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
 	}
 
-	switch cmdData.TaggingStrategy {
-	case "tag-or-branch", "stages-signature":
-	default:
-		common.PrintHelp(cmd)
-		return fmt.Errorf("provided tagging-strategy '%s' not supported", cmdData.TaggingStrategy)
-	}
-
 	var w io.Writer
 	if cmdData.AsFile || cmdData.AsEnvFile {
 		w = bytes.NewBuffer(nil)
@@ -128,7 +116,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	ciSystem := args[0]
 	switch ciSystem {
 	case "github":
-		err := generateGithubEnvs(ctx, w, dockerConfig, cmdData.TaggingStrategy)
+		err := generateGithubEnvs(ctx, w, dockerConfig)
 		if err != nil {
 			if !cmdData.AsFile && !cmdData.AsEnvFile {
 				writeError(w, err.Error())
@@ -136,7 +124,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case "gitlab":
-		err := generateGitlabEnvs(ctx, w, dockerConfig, cmdData.TaggingStrategy)
+		err := generateGitlabEnvs(ctx, w, dockerConfig)
 		if err != nil {
 			if !cmdData.AsFile && !cmdData.AsEnvFile {
 				writeError(w, err.Error())
@@ -162,7 +150,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingStrategy string) error {
+func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) error {
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
@@ -212,35 +200,6 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 		writeEnv(w, "WERF_IMAGES_REPO_IMPLEMENTATION", imagesRepoImplementation, false)
 	}
 
-	writeHeader(w, "TAGGING", true)
-	switch taggingStrategy {
-	case "tag-or-branch":
-		var ciGitTag, ciGitBranch string
-
-		if os.Getenv("CI_BUILD_TAG") != "" {
-			ciGitTag = os.Getenv("CI_BUILD_TAG")
-		} else if os.Getenv("CI_COMMIT_TAG") != "" {
-			ciGitTag = os.Getenv("CI_COMMIT_TAG")
-		} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
-			ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
-		} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
-			ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
-		}
-
-		if ciGitTag != "" {
-			writeEnv(w, "WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag), false)
-		}
-		if ciGitBranch != "" {
-			writeEnv(w, "WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch), false)
-		}
-
-		if ciGitTag == "" && ciGitBranch == "" {
-			return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", cmdData.TaggingStrategy)
-		}
-	case "stages-signature":
-		writeEnv(w, "WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
-	}
-
 	writeHeader(w, "DEPLOY", true)
 	writeEnv(w, "WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
@@ -272,10 +231,6 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
 
-	if err := generateImageCleanupPolicies(w); err != nil {
-		return err
-	}
-
 	writeHeader(w, "OTHER", true)
 
 	werfLogColorMode := "on"
@@ -302,7 +257,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	return nil
 }
 
-func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingStrategy string) error {
+func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) error {
 	githubRegistry := "docker.pkg.github.com"
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
@@ -352,14 +307,6 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	writeHeader(w, "IMAGES REPO", true)
 	writeEnv(w, "WERF_IMAGES_REPO", imagesRepo, false)
 
-	writeHeader(w, "TAGGING", true)
-	switch taggingStrategy {
-	case "stages-signature":
-		writeEnv(w, "WERF_TAG_BY_STAGES_SIGNATURE", "true", false)
-	default:
-		return fmt.Errorf("provided tagging-strategy '%s' not supported", taggingStrategy)
-	}
-
 	writeHeader(w, "DEPLOY", true)
 	var projectGit string
 	if ciGithubOwnerWithProject != "" {
@@ -384,10 +331,6 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	writeHeader(w, "CLEANUP", true)
 	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
 
-	if err := generateImageCleanupPolicies(w); err != nil {
-		return err
-	}
-
 	if err := generateOther(w); err != nil {
 		return err
 	}
@@ -407,23 +350,6 @@ func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 	}
 
 	return dockerConfigDir, nil
-}
-
-func generateImageCleanupPolicies(w io.Writer) error {
-	cleanupConfig, err := getCleanupConfig()
-	if err != nil {
-		return fmt.Errorf("unable to get cleanup config: %s", err)
-	}
-
-	writeHeader(w, "IMAGE CLEANUP POLICIES", true)
-	writeEnv(w, "WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit), false)
-	writeEnv(w, "WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays), false)
-	writeEnv(w, "WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit), false)
-	writeEnv(w, "WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays), false)
-	writeEnv(w, "WERF_STAGES_SIGNATURE_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyLimit), false)
-	writeEnv(w, "WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.StagesSignatureStrategyExpiryDays), false)
-
-	return nil
 }
 
 func generateOther(w io.Writer) error {
@@ -532,42 +458,6 @@ func commentLine(message string) string {
 	}
 
 	return fmt.Sprintf("%s %s", commentSign, message)
-}
-
-type CleanupConfig struct {
-	GitTagStrategyLimit               int `yaml:"gitTagStrategyLimit"`
-	GitTagStrategyExpiryDays          int `yaml:"gitTagStrategyExpiryDays"`
-	GitCommitStrategyLimit            int `yaml:"gitCommitStrategyLimit"`
-	GitCommitStrategyExpiryDays       int `yaml:"gitCommitStrategyExpiryDays"`
-	StagesSignatureStrategyExpiryDays int `yaml:"stagesSignatureStrategyExpiryDays"`
-	StagesSignatureStrategyLimit      int `yaml:"stagesSignatureStrategyLimit"`
-}
-
-func getCleanupConfig() (CleanupConfig, error) {
-	configPath := filepath.Join(werf.GetHomeDir(), "config", "cleanup.yaml")
-
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return CleanupConfig{
-			GitTagStrategyLimit:               common.CiEnvGitTagStrategyLimitDefault,
-			GitTagStrategyExpiryDays:          common.CiEnvGitTagStrategyExpiryDaysDefault,
-			GitCommitStrategyLimit:            common.CiEnvGitCommitStrategyLimitDefault,
-			GitCommitStrategyExpiryDays:       common.CiEnvGitCommitStrategyExpiryDaysDefault,
-			StagesSignatureStrategyLimit:      common.CiEnvStagesSignatureStrategyLimitDefault,
-			StagesSignatureStrategyExpiryDays: common.CiEnvStagesSignatureStrategyExpiryDaysDefault,
-		}, nil
-	}
-
-	data, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return CleanupConfig{}, fmt.Errorf("error reading %s: %s", configPath, err)
-	}
-
-	config := CleanupConfig{}
-	if err := yaml.UnmarshalStrict(data, &config); err != nil {
-		return CleanupConfig{}, fmt.Errorf("bad config yaml %s: %s", configPath, err)
-	}
-
-	return config, nil
 }
 
 func createSourceFile(data []byte) (string, error) {

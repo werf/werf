@@ -242,15 +242,15 @@ func (c *WerfConfig) validateImageFrom(i *StapelImageBase) error {
 		if interf := c.GetImage(fromImageName); interf == nil {
 			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", fromImageName), i.raw, i.raw.doc)
 		}
-	} else if i.raw.FromImageArtifact != "" {
-		fromImageArtifactName := i.raw.FromImageArtifact
+	} else if i.raw.FromArtifact != "" {
+		fromArtifactName := i.raw.FromArtifact
 
-		if fromImageArtifactName == i.Name {
-			return newDetailedConfigError(fmt.Sprintf("cannot use own image name as `fromImageArtifact` directive value!"), nil, i.raw.doc)
+		if fromArtifactName == i.Name {
+			return newDetailedConfigError(fmt.Sprintf("cannot use own image name as `fromArtifact` directive value!"), nil, i.raw.doc)
 		}
 
-		if imageArtifact := c.GetArtifact(fromImageArtifactName); imageArtifact == nil {
-			return newDetailedConfigError(fmt.Sprintf("no such image artifact `%s`!", fromImageArtifactName), i.raw, i.raw.doc)
+		if imageArtifact := c.GetArtifact(fromArtifactName); imageArtifact == nil {
+			return newDetailedConfigError(fmt.Sprintf("no such image artifact `%s`!", fromArtifactName), i.raw, i.raw.doc)
 		}
 	}
 
@@ -340,8 +340,8 @@ func (c *WerfConfig) imageDependencies(interf ImageInterface) (deps []ImageInter
 			deps = append(deps, c.GetImage(i.ImageBaseConfig().FromImageName))
 		}
 
-		if i.ImageBaseConfig().FromImageArtifactName != "" {
-			deps = append(deps, c.GetArtifact(i.ImageBaseConfig().FromImageArtifactName))
+		if i.ImageBaseConfig().FromArtifactName != "" {
+			deps = append(deps, c.GetArtifact(i.ImageBaseConfig().FromArtifactName))
 		}
 
 		for _, imp := range i.imports() {
@@ -365,8 +365,8 @@ func (c *WerfConfig) relatedImageImages(interf ImageInterface) (images []ImageIn
 			images = append(images, c.relatedImageImages(c.GetImage(i.ImageBaseConfig().FromImageName))...)
 		}
 
-		if i.ImageBaseConfig().FromImageArtifactName != "" {
-			images = append(images, c.relatedImageImages(c.GetArtifact(i.ImageBaseConfig().FromImageArtifactName))...)
+		if i.ImageBaseConfig().FromArtifactName != "" {
+			images = append(images, c.relatedImageImages(c.GetArtifact(i.ImageBaseConfig().FromArtifactName))...)
 		}
 	case *ImageFromDockerfile:
 	}
@@ -409,8 +409,8 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageOrArtifactName string, image
 		}
 	}
 
-	if imageBaseConfig.FromImageArtifactName != "" {
-		if err, errImagesStack := c.validateImageInfiniteLoop(imageBaseConfig.FromImageArtifactName, imageNameStack); err != nil {
+	if imageBaseConfig.FromArtifactName != "" {
+		if err, errImagesStack := c.validateImageInfiniteLoop(imageBaseConfig.FromArtifactName, imageNameStack); err != nil {
 			return err, append([]string{imageOrArtifactName}, errImagesStack...)
 		}
 	}

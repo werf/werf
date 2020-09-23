@@ -34,7 +34,6 @@ import (
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/parallel"
 )
@@ -338,14 +337,6 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	return c.remoteGitRepos[key]
 }
 
-type TagOptions struct {
-	CustomTags           []string
-	TagsByGitTag         []string
-	TagsByGitBranch      []string
-	TagsByGitCommit      []string
-	TagByStagesSignature bool
-}
-
 type ShouldBeBuiltOptions struct {
 	FetchLastStage bool
 }
@@ -386,7 +377,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	return nil
 }
 
-func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, commonTag string, tagStrategy tag_strategy.TagStrategy, withoutRegistry bool) []images_manager.ImageInfoGetter {
+func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile, withoutRegistry bool) []images_manager.ImageInfoGetter {
 	var images []images_manager.ImageInfoGetter
 
 	var imagesNames []string
@@ -399,15 +390,11 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 
 	for _, imageName := range imagesNames {
 		var tag string
-		if tagStrategy == tag_strategy.StagesSignature {
-			for _, img := range c.images {
-				if img.GetName() == imageName {
-					tag = img.GetContentSignature()
-					break
-				}
+		for _, img := range c.images {
+			if img.GetName() == imageName {
+				tag = img.GetContentSignature()
+				break
 			}
-		} else {
-			tag = commonTag
 		}
 
 		d := &images_manager.ImageInfo{
@@ -422,61 +409,19 @@ func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, confi
 	return images
 }
 
-func (c *Conveyor) BuildStages(ctx context.Context, opts BuildStagesOptions) error {
+func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err := c.determineStages(ctx); err != nil {
 		return err
 	}
 
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{
-			IntrospectOptions: opts.IntrospectOptions,
-			ImageBuildOptions: opts.ImageBuildOptions,
+			BuildOptions: opts,
 		}),
 	}
 
-	return c.runPhases(ctx, phases, true)
-}
-
-type PublishImagesOptions struct {
-	ImagesToPublish []string
-	TagOptions
-
-	PublishReportPath   string
-	PublishReportFormat PublishReportFormat
-}
-
-func (c *Conveyor) PublishImages(ctx context.Context, opts PublishImagesOptions) error {
-	if err := c.determineStages(ctx); err != nil {
-		return err
-	}
-
-	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
-		NewPublishImagesPhase(c, c.ImagesRepo, opts),
-	}
-
-	return c.runPhases(ctx, phases, true)
-}
-
-type BuildAndPublishOptions struct {
-	BuildStagesOptions
-	PublishImagesOptions
-
-	DryRun bool
-}
-
-func (c *Conveyor) BuildAndPublish(ctx context.Context, opts BuildAndPublishOptions) error {
-	if err := c.determineStages(ctx); err != nil {
-		return err
-	}
-
-	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{ImageBuildOptions: opts.ImageBuildOptions, IntrospectOptions: opts.IntrospectOptions}),
-		NewPublishImagesPhase(c, c.ImagesRepo, opts.PublishImagesOptions),
-	}
-
 	if opts.DryRun {
-		fmt.Printf("BuildAndPublish DryRun\n")
+		fmt.Printf("Build DryRun\n")
 		return nil
 	}
 
@@ -849,8 +794,8 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 		from = imageBaseConfig.From
 	} else if imageBaseConfig.FromImageName != "" {
 		fromImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromImageArtifactName != "" {
-		fromImageName = imageBaseConfig.FromImageArtifactName
+	} else if imageBaseConfig.FromArtifactName != "" {
+		fromImageName = imageBaseConfig.FromArtifactName
 	}
 
 	return from, fromImageName, imageBaseConfig.FromLatest

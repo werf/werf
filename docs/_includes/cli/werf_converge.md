@@ -178,6 +178,11 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             The following docker registry implementations are supported: ecr, acr, default,         
             dockerhub, gcr, github, gitlab, harbor, quay.
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
+      --report-format='json':
+            Report format (only json available for now, $WERF_REPORT_FORMAT by default)
+      --report-path='':
+            Report contains image info: full docker repo, tag, ID — for each image                  
+            ($WERF_REPORT_PATH by default)
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    

@@ -231,24 +231,6 @@ werf deploy [options]
             if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
             address should be specified for all werf processes that work with a single stages       
             storage. :local address allows execution of werf processes from a single host only.
-      --tag-by-stages-signature=false:
-            Use stages-signature tagging strategy and tag each image by the corresponding signature 
-            of last image stage (option can be enabled by specifying                                
-            $WERF_TAG_BY_STAGES_SIGNATURE=true)
-      --tag-custom=[]:
-            Use custom tagging strategy and tag by the specified arbitrary tags.
-            Option can be used multiple times to produce multiple images with the specified tags.
-            Also can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
-            $WERF_TAG_CUSTOM_TAG2=tag2)
-      --tag-git-branch='':
-            Use git-branch tagging strategy and tag by the specified git branch (option can be      
-            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
-      --tag-git-commit='':
-            Use git-commit tagging strategy and tag by the specified git commit hash (option can be 
-            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)
-      --tag-git-tag='':
-            Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
-            specifying git tag in the $WERF_TAG_GIT_TAG)
       --three-way-merge-mode='':
             Set three way merge mode for release.
             Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           

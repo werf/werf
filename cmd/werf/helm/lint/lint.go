@@ -11,7 +11,6 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -111,9 +110,6 @@ func runLint() error {
 		return err
 	}
 
-	// TODO: optionally use tags by signatures using conveyor
-	tag := "TAG"
-	tagStrategy := tag_strategy.Custom
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 	var imagesNames []string
 	for _, imageConfig := range werfConfig.StapelImages {
@@ -126,13 +122,13 @@ func runLint() error {
 		d := &images_manager.ImageInfo{
 			ImagesRepo:      stubImagesRepo,
 			Name:            imageName,
-			Tag:             tag,
+			Tag:             "TAG",
 			WithoutRegistry: true,
 		}
 		imagesInfoGetters = append(imagesInfoGetters, d)
 	}
 
-	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
+	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, deploy.LintOptions{
 		Values:          *commonCmdData.Values,
 		SecretValues:    *commonCmdData.SecretValues,
 		Set:             *commonCmdData.Set,

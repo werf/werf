@@ -37,9 +37,6 @@
 /documentation/cli/toolbox:
   title: Toolbox
   url: /documentation/cli/toolbox/slugify.html
-/documentation/cli/management:
-  title: Lowlevel Management Commands
-  url: /documentation/cli/management/stages/build.html
 /documentation/cli/other:
   title: Other
   url: /documentation/cli/other/completion.html

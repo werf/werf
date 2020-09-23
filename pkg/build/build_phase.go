@@ -2,7 +2,9 @@ package build
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -20,19 +22,24 @@ import (
 	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
 type BuildPhaseOptions struct {
+	BuildOptions
 	ShouldBeBuiltMode bool
-	ImageBuildOptions container_runtime.BuildOptions
-	IntrospectOptions IntrospectOptions
 }
 
-type BuildStagesOptions struct {
+type BuildOptions struct {
 	ImageBuildOptions container_runtime.BuildOptions
 	IntrospectOptions
+
+	ReportPath   string
+	ReportFormat ReportFormat
+
+	DryRun bool
 }
 
 type IntrospectOptions struct {
@@ -58,6 +65,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
+		Report:            &Report{Images: make(map[string]ReportImageRecord)},
 	}
 }
 
@@ -67,6 +75,27 @@ type BuildPhase struct {
 
 	StagesIterator              *StagesIterator
 	ShouldAddManagedImageRecord bool
+
+	Report       *Report
+	ReportPath   string
+	ReportFormat ReportFormat
+}
+
+const (
+	ReportJSON ReportFormat = "json"
+)
+
+type ReportFormat string
+
+type Report struct {
+	Images map[string]ReportImageRecord
+}
+
+type ReportImageRecord struct {
+	WerfImageName string
+	DockerRepo    string
+	DockerTag     string
+	DockerImageID string
 }
 
 func (phase *BuildPhase) Name() string {
@@ -77,7 +106,37 @@ func (phase *BuildPhase) BeforeImages(_ context.Context) error {
 	return nil
 }
 
-func (phase *BuildPhase) AfterImages(_ context.Context) error {
+func (phase *BuildPhase) AfterImages(ctx context.Context) error {
+	return phase.createReport(ctx)
+}
+
+func (phase *BuildPhase) createReport(ctx context.Context) error {
+	for _, img := range phase.Conveyor.images {
+		if img.isArtifact {
+			continue
+		}
+
+		desc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
+		phase.Report.Images[img.GetName()] = ReportImageRecord{
+			WerfImageName: desc.Info.Name,
+			DockerRepo:    desc.Info.Repository,
+			DockerTag:     desc.Info.Tag,
+			DockerImageID: desc.Info.ID,
+		}
+	}
+
+	if data, err := json.MarshalIndent(phase.Report, "", "\t"); err != nil {
+		return fmt.Errorf("unable to prepare report: %s", err)
+	} else {
+		logboek.Context(ctx).Debug().LogF("Report:\n%s\n", data)
+
+		if phase.ReportPath != "" && phase.ReportFormat == ReportJSON {
+			if err := ioutil.WriteFile(phase.ReportPath, append(data, []byte("\n")...), 0644); err != nil {
+				return fmt.Errorf("unable to write report to %s: %s", phase.ReportPath, err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -95,19 +154,54 @@ func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *Image) error 
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
+	img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
 
-	if imgContentSig, err := calculateSignature(ctx, "imageStages", "", phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor); err != nil {
-		return fmt.Errorf("unable to calculate image %s content signature: %s", img.GetName(), err)
-	} else {
-		// TODO: in v1.2 use:
-		// img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
-		// — which is incompatible with current signature
-		img.SetContentSignature(imgContentSig)
+	if err := phase.addManagedImage(ctx, img); err != nil {
+		return err
 	}
 
+	if err := phase.publishImageMetadata(ctx, img); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error {
 	if phase.ShouldAddManagedImageRecord && !img.isArtifact {
 		if err := phase.Conveyor.StorageManager.StagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
+		}
+	}
+
+	return nil
+}
+
+func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) error {
+	localGitRepo := phase.Conveyor.GetLocalGitRepo()
+	if localGitRepo != nil {
+		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
+			DoError(func() error {
+				headCommit, err := localGitRepo.HeadCommit(ctx)
+				if err != nil {
+					return err
+				}
+
+				if metadata, err := phase.Conveyor.StorageManager.StagesStorage.GetImageMetadataByCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit); err != nil {
+					return fmt.Errorf("unable to get image %s metadata by commit %s: %s", img.GetName(), headCommit, err)
+				} else if metadata != nil {
+					if metadata.ContentSignature != img.GetContentSignature() {
+						// TODO: Check image existance and automatically allow republish if no images found by this commit. What if multiple images are published by multiple tagging strategies (including custom)?
+						// TODO: allowInconsistentPublish: true option for werf.yaml
+						// FIXME: return fmt.Errorf("inconsistent build: found already published image with stages-signature %s by commit %s, cannot publish a new image with stages-signature %s by the same commit", metadata.ContentSignature, headCommit, img.GetContentSignature())
+						return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+					}
+					return nil
+				} else {
+					return phase.Conveyor.StorageManager.StagesStorage.PutImageCommit(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, &storage.ImageMetadata{ContentSignature: img.GetContentSignature()})
+				}
+			}); err != nil {
+			return err
 		}
 	}
 

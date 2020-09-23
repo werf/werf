@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -263,16 +262,11 @@ func runDiff() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	opts := build.BuildAndPublishOptions{
-		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: container_runtime.BuildOptions{},
-		},
-		PublishImagesOptions: build.PublishImagesOptions{
-			TagOptions: build.TagOptions{TagByStagesSignature: true}, // always content based tagging
-		},
-		DryRun: true,
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	if err != nil {
+		return err
 	}
-
+	buildOptions.DryRun = true
 	logboek.LogOptionalLn()
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, imagesRepo, storageLockManager, common.GetConveyorOptions(&commonCmdData))
@@ -281,11 +275,11 @@ func runDiff() error {
 	var imagesInfoGetters []images_manager.ImageInfoGetter
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if err := c.BuildAndPublish(ctx, opts); err != nil {
+		if err := c.Build(ctx, buildOptions); err != nil {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, "", tag_strategy.StagesSignature, false)
+		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
 
 		return nil
 	}); err != nil {
@@ -293,7 +287,7 @@ func runDiff() error {
 	}
 
 	logboek.LogOptionalLn()
-	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepo.String(), imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

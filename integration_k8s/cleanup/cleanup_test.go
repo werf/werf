@@ -3,7 +3,6 @@ package cleanup_test
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -61,35 +60,6 @@ var _ = Describe("cleaning images and stages", func() {
 				werfBinPath,
 				werfDeployArgs...,
 			)
-		})
-
-		It("should remove image by expiry days policy and skip deployed one (WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS)", func() {
-			out := utils.SucceedCommandOutputString(
-				testDirPath,
-				"git",
-				"rev-parse", "HEAD",
-			)
-			commit := strings.TrimSpace(out)
-
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				"build-and-publish", "--tag-git-commit", commit,
-			)
-
-			tags := imagesRepoAllImageRepoTags("")
-			Ω(len(tags)).Should(Equal(2))
-
-			werfArgs := []string{"cleanup", "--git-commit-strategy-expiry-days", "0"}
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				werfArgs...,
-			)
-
-			tags = imagesRepoAllImageRepoTags("")
-			Ω(len(tags)).Should(Equal(1))
-			Ω(tags).Should(ContainElement(imagesRepo.ImageRepositoryTag("", "none")))
 		})
 
 		It("should not remove stages that are related with deployed image (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {

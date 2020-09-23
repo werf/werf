@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
@@ -108,6 +107,9 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupValues(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
+
+	common.SetupReportPath(&commonCmdData, cmd)
+	common.SetupReportFormat(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
@@ -241,13 +243,9 @@ func runConverge() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
-	buildAndPublishOptions := build.BuildAndPublishOptions{
-		BuildStagesOptions: build.BuildStagesOptions{
-			ImageBuildOptions: container_runtime.BuildOptions{},
-		},
-		PublishImagesOptions: build.PublishImagesOptions{
-			TagOptions: build.TagOptions{TagByStagesSignature: true}, // always content based tagging
-		},
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	if err != nil {
+		return err
 	}
 
 	logboek.LogOptionalLn()
@@ -285,7 +283,7 @@ func runConverge() error {
 		}
 		imagesRepository = imagesRepo.String()
 
-		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildAndPublishOptions.BuildStagesOptions)
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {
 			return err
 		}
@@ -294,11 +292,11 @@ func runConverge() error {
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if err := c.BuildAndPublish(ctx, buildAndPublishOptions); err != nil {
+			if err := c.Build(ctx, buildOptions); err != nil {
 				return err
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, "", tag_strategy.StagesSignature, false)
+			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile, false)
 
 			return nil
 		}); err != nil {
@@ -308,7 +306,7 @@ func runConverge() error {
 		logboek.LogOptionalLn()
 	}
 
-	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
+	return deploy.Deploy(ctx, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
 		Set:                  *commonCmdData.Set,
 		SetString:            *commonCmdData.SetString,
 		Values:               *commonCmdData.Values,

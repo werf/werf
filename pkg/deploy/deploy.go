@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
 	"github.com/werf/werf/pkg/images_manager"
-	"github.com/werf/werf/pkg/tag_strategy"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
@@ -37,7 +36,7 @@ type DeployOptions struct {
 	DryRun               bool
 }
 
-func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace, commonTag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
+func Deploy(ctx context.Context, projectDir, helmChartDir string, imagesRepository string, images []images_manager.ImageInfoGetter, release, namespace string, werfConfig *config.WerfConfig, helmReleaseStorageNamespace, helmReleaseStorageType string, opts DeployOptions) error {
 	if opts.DryRun {
 		fmt.Printf("Deploy DryRun\n")
 		return nil
@@ -70,7 +69,7 @@ func Deploy(ctx context.Context, projectName, projectDir, helmChartDir string, i
 			return err
 		}
 
-		serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, commonTag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
+		serviceValues, err := GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, images, ServiceValuesOptions{Env: opts.Env})
 		if err != nil {
 			return fmt.Errorf("error creating service values: %s", err)
 		}

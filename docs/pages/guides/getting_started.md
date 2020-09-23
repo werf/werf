@@ -86,7 +86,6 @@ Firstly, you can plunge into the relevant documentation:
 * [werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
 * [Dockerfile Image: complete directive list]({{ site.base_url}}/documentation/configuration/dockerfile_image.html).
 * [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
-* [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).
 
 Or go further:
 * [Deploy an application to a Kubernetes cluster]({{ site.base_url}}/documentation/guides/deploy_into_kubernetes.html).

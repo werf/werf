@@ -13,8 +13,6 @@ summary: |
 
 ***Artifact*** is a special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
-_Artifact_ cannot be [tagged like _image_]({{ site.baseurl }}/documentation/reference/publish_process.html) and used as standalone application.
-
 Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
 
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.

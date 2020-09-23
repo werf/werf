@@ -13,18 +13,6 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Значение для установки переменной окружения [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
 
-### WERF_TAG_BY_STAGES_SIGNATURE
-
-Значение переменной [`WERF_TAG_BY_STAGES_SIGNATURE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_by_stages_signature) устанавливается в `true` при использовании стратегии тегирования [`stages-signature`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#stages-signature) (эта стратегия тегирования используется по умолчанию).
-
-### WERF_TAG_GIT_TAG
-
-Значение для установки переменной окружения [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag) формируется на основе переменной окружения GitLab [`CI_COMMIT_TAG`](https://docs.gitlab.com/ee/ci/variables/).
-
-### WERF_TAG_GIT_BRANCH
-
-Значение для установки переменной окружения [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch) формируется на основе переменной окружения GitLab [`CI_COMMIT_REF_NAME`](https://docs.gitlab.com/ee/ci/variables/).
-
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 
 Значение для установки переменной окружения [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git) формируется на основе переменной окружения GitLab [`CI_PROJECT_URL`](https://docs.gitlab.com/ee/ci/variables/) следующим образом:
@@ -67,8 +55,6 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 Значения остальных переменных окружения формируются стандартным способом, описанным в [соответствующей статье]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html):
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
- * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
- * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
  * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_color_mode);
  * [`WERF_LOG_PROJECT_DIR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_project_dir);
  * [`WERF_ENABLE_PROCESS_EXTERMINATOR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_enable_process_exterminator);

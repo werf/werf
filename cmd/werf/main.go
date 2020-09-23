@@ -21,11 +21,9 @@ import (
 	"github.com/werf/werf/cmd/werf/helm_v3"
 
 	"github.com/werf/werf/cmd/werf/build"
-	"github.com/werf/werf/cmd/werf/build_and_publish"
 	"github.com/werf/werf/cmd/werf/cleanup"
 	"github.com/werf/werf/cmd/werf/deploy"
 	"github.com/werf/werf/cmd/werf/dismiss"
-	"github.com/werf/werf/cmd/werf/publish"
 	"github.com/werf/werf/cmd/werf/purge"
 	"github.com/werf/werf/cmd/werf/run"
 	"github.com/werf/werf/cmd/werf/synchronization"
@@ -49,10 +47,8 @@ import (
 	managed_images_rm "github.com/werf/werf/cmd/werf/managed_images/rm"
 
 	images_cleanup "github.com/werf/werf/cmd/werf/images/cleanup"
-	images_publish "github.com/werf/werf/cmd/werf/images/publish"
 	images_purge "github.com/werf/werf/cmd/werf/images/purge"
 
-	stages_build "github.com/werf/werf/cmd/werf/stages/build"
 	stages_cleanup "github.com/werf/werf/cmd/werf/stages/cleanup"
 	stages_purge "github.com/werf/werf/cmd/werf/stages/purge"
 	stages_switch "github.com/werf/werf/cmd/werf/stages/switch_from_local"
@@ -139,8 +135,6 @@ Find more information at https://werf.io`),
 				converge.NewCmd(),
 				diff.NewCmd(),
 				build.NewCmd(),
-				publish.NewCmd(),
-				build_and_publish.NewCmd(),
 				run.NewCmd(),
 				deployCmd,
 				dismissCmd,
@@ -216,7 +210,6 @@ func imagesCmd() *cobra.Command {
 		Short: "Work with images",
 	}
 	cmd.AddCommand(
-		images_publish.NewCmd(),
 		images_cleanup.NewCmd(),
 		images_purge.NewCmd(),
 	)
@@ -230,7 +223,6 @@ func stagesCmd() *cobra.Command {
 		Short: "Work with stages, which are cache for images",
 	}
 	cmd.AddCommand(
-		stages_build.NewCmd(),
 		stages_cleanup.NewCmd(),
 		stages_purge.NewCmd(),
 		stages_switch.NewCmd(),

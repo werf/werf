@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/cleaning"
-	cleanup "github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -39,12 +38,6 @@ type CmdData struct {
 	TmpDir             *string
 	HomeDir            *string
 	SSHKeys            *[]string
-
-	TagCustom            *[]string
-	TagGitBranch         *string
-	TagGitTag            *string
-	TagGitCommit         *string
-	TagByStagesSignature *bool
 
 	HelmChartDir                     *string
 	Environment                      *string
@@ -89,13 +82,6 @@ type CmdData struct {
 	SkipTlsVerifyRegistry *bool
 	DryRun                *bool
 
-	GitTagStrategyLimit               *int64
-	GitTagStrategyExpiryDays          *int64
-	GitCommitStrategyLimit            *int64
-	GitCommitStrategyExpiryDays       *int64
-	StagesSignatureStrategyLimit      *int64
-	StagesSignatureStrategyExpiryDays *int64
-
 	WithoutKube *bool
 
 	IntrospectBeforeError *bool
@@ -112,8 +98,8 @@ type CmdData struct {
 
 	ThreeWayMergeMode *string
 
-	PublishReportPath   *string
-	PublishReportFormat *string
+	ReportPath   *string
+	ReportFormat *string
 
 	VirtualMerge           *bool
 	VirtualMergeFromCommit *string
@@ -125,14 +111,6 @@ type CmdData struct {
 const (
 	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
 	StubImagesRepoAddress                  = "stub/repository"
-
-	CiEnvGitTagStrategyLimitDefault               = 10
-	CiEnvGitTagStrategyExpiryDaysDefault          = 30
-	CiEnvGitCommitStrategyLimitDefault            = 50
-	CiEnvGitCommitStrategyExpiryDaysDefault       = 30
-	CiEnvStagesSignatureStrategyLimitDefault      = -1
-	CiEnvStagesSignatureStrategyExpiryDaysDefault = -1
-
 	DefaultBuildParallelTasksLimit   = 5
 	DefaultCleanupParallelTasksLimit = 10
 )
@@ -180,63 +158,28 @@ Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa", 
 Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
-func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PublishReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportPath, "publish-report-path", "", os.Getenv("WERF_PUBLISH_REPORT_PATH"), "Publish report contains image info: full docker repo, tag, ID — for each published image ($WERF_PUBLISH_REPORT_PATH by default)")
+func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.ReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "Report contains image info: full docker repo, tag, ID — for each image ($WERF_REPORT_PATH by default)")
 }
 
-func SetupPublishReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PublishReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.PublishReportFormat, "publish-report-format", "", "json", "Publish report format (only json available for now, $WERF_PUBLISH_REPORT_FORMAT by default)")
+func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReportFormat = new(string)
+	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", "json", "Report format (only json available for now, $WERF_REPORT_FORMAT by default)")
 }
 
-func GetPublishReportFormat(cmdData *CmdData) (build.PublishReportFormat, error) {
-	switch format := build.PublishReportFormat(*cmdData.PublishReportFormat); format {
-	case build.PublishReportJSON:
+func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
+	switch format := build.ReportFormat(*cmdData.ReportFormat); format {
+	case build.ReportJSON:
 		return format, nil
 	default:
-		return "", fmt.Errorf("bad --publish-report-format given %q, expected: \"json\"", format)
+		return "", fmt.Errorf("bad --report-format given %q, expected: \"json\"", format)
 	}
-}
-
-func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.GitTagStrategyLimit = new(int64)
-	cmdData.GitTagStrategyExpiryDays = new(int64)
-	cmdData.GitCommitStrategyLimit = new(int64)
-	cmdData.GitCommitStrategyExpiryDays = new(int64)
-	cmdData.StagesSignatureStrategyLimit = new(int64)
-	cmdData.StagesSignatureStrategyExpiryDays = new(int64)
-
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT")
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS")
-	cmd.Flags().Int64VarP(cmdData.StagesSignatureStrategyLimit, "stages-signature-strategy-limit", "", -1, "Keep max number of images published with the stages-signature tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_STAGES_SIGNATURE_STRATEGY_LIMIT")
-	cmd.Flags().Int64VarP(cmdData.StagesSignatureStrategyExpiryDays, "stages-signature-strategy-expiry-days", "", -1, "Keep images published with the stages-signature tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS")
-
-	_ = cmd.Flags().MarkHidden("stages-signature-strategy-limit")
-	_ = cmd.Flags().MarkHidden("stages-signature-strategy-expiry-days")
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
 	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
-}
-
-func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
-	tagCustom := predefinedValuesByEnvNamePrefix("WERF_TAG_CUSTOM")
-
-	cmdData.TagCustom = &tagCustom
-	cmdData.TagGitBranch = new(string)
-	cmdData.TagGitTag = new(string)
-	cmdData.TagGitCommit = new(string)
-	cmdData.TagByStagesSignature = new(bool)
-
-	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", tagCustom, "Use custom tagging strategy and tag by the specified arbitrary tags.\nOption can be used multiple times to produce multiple images with the specified tags.\nAlso can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1, $WERF_TAG_CUSTOM_TAG2=tag2)")
-	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)")
-	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
-	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
-	cmd.Flags().BoolVarP(cmdData.TagByStagesSignature, "tag-by-stages-signature", "", GetBoolEnvironmentDefaultFalse("WERF_TAG_BY_STAGES_SIGNATURE"), "Use stages-signature tagging strategy and tag each image by the corresponding signature of last image stage (option can be enabled by specifying $WERF_TAG_BY_STAGES_SIGNATURE=true)")
 }
 
 func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
@@ -912,144 +855,6 @@ func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
 	} else {
 		return *v, nil
 	}
-}
-
-func GetGitTagStrategyLimit(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_GIT_TAG_STRATEGY_LIMIT")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.GitTagStrategyLimit, nil
-}
-
-func GetGitTagStrategyExpiryDays(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.GitTagStrategyExpiryDays, nil
-}
-
-func GetGitCommitStrategyLimit(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_GIT_COMMIT_STRATEGY_LIMIT")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.GitCommitStrategyLimit, nil
-}
-
-func GetGitCommitStrategyExpiryDays(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.GitCommitStrategyExpiryDays, nil
-}
-
-func GetStagesSignatureStrategyLimit(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_STAGES_SIGNATURE_STRATEGY_LIMIT")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.StagesSignatureStrategyLimit, nil
-}
-
-func GetStagesSignatureStrategyExpiryDays(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_STAGES_SIGNATURE_STRATEGY_EXPIRY_DAYS")
-	if err != nil {
-		return 0, err
-	}
-	if v != nil {
-		return *v, nil
-	}
-	return *cmdData.StagesSignatureStrategyExpiryDays, nil
-}
-
-func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, error) {
-	tagLimit, err := GetGitTagStrategyLimit(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	tagDays, err := GetGitTagStrategyExpiryDays(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	commitLimit, err := GetGitCommitStrategyLimit(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	commitDays, err := GetGitCommitStrategyExpiryDays(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	stagesSignatureLimit, err := GetStagesSignatureStrategyLimit(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	stagesSignatureDays, err := GetStagesSignatureStrategyExpiryDays(cmdData)
-	if err != nil {
-		return cleanup.ImagesCleanupPolicies{}, err
-	}
-
-	if tagLimit != CiEnvGitTagStrategyLimitDefault && tagLimit != -1 ||
-		tagDays != CiEnvGitTagStrategyExpiryDaysDefault && tagDays != -1 ||
-		commitLimit != CiEnvGitCommitStrategyLimitDefault && commitLimit != -1 ||
-		commitDays != CiEnvGitCommitStrategyExpiryDaysDefault && commitDays != -1 ||
-		stagesSignatureLimit != CiEnvStagesSignatureStrategyLimitDefault ||
-		stagesSignatureDays != CiEnvStagesSignatureStrategyExpiryDaysDefault {
-		logboek.Warn().LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes (https://werf.io/documentation/reference/cleaning_process.html#tagging-scheme-based-cleanup-algorithm) which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
-
-Now werf uses the git history-based cleanup algorithm (https://werf.io/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm) with the following default policies (https://werf.io/documentation/configuration/cleanup.html#default-policies).`)
-	}
-
-	res := cleanup.ImagesCleanupPolicies{}
-
-	if tagLimit >= 0 {
-		res.GitTagStrategyHasLimit = true
-		res.GitTagStrategyLimit = tagLimit
-	}
-	if tagDays >= 0 {
-		res.GitTagStrategyHasExpiryPeriod = true
-		res.GitTagStrategyExpiryPeriod = time.Hour * 24 * time.Duration(tagDays)
-	}
-	if commitLimit >= 0 {
-		res.GitCommitStrategyHasLimit = true
-		res.GitCommitStrategyLimit = commitLimit
-	}
-	if commitDays >= 0 {
-		res.GitCommitStrategyHasExpiryPeriod = true
-		res.GitCommitStrategyExpiryPeriod = time.Hour * 24 * time.Duration(commitDays)
-	}
-	if stagesSignatureLimit >= 0 {
-		res.StagesSignatureStrategyHasLimit = true
-		res.StagesSignatureStrategyLimit = stagesSignatureLimit
-	}
-	if stagesSignatureDays >= 0 {
-		res.StagesSignatureStrategyHasExpiryPeriod = true
-		res.StagesSignatureStrategyExpiryPeriod = time.Hour * 24 * time.Duration(stagesSignatureDays)
-	}
-
-	return res, nil
 }
 
 func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
