@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/kubedog/pkg/trackers/elimination"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
@@ -359,9 +361,28 @@ func asVersioned(info *resource.Info) runtime.Object {
 	if info.Mapping != nil {
 		groupVersioner = info.Mapping.GroupVersionKind.GroupVersion()
 	}
-
 	if obj, err := convertor.ConvertToVersion(info.Object, groupVersioner); err == nil {
 		return obj
 	}
 	return info.Object
+}
+
+func (waiter *ResourcesWaiter) WaitUntilDeleted(ctx context.Context, specs []*helm_kube.ResourcesWaiterDeleteResourceSpec, timeout time.Duration) error {
+	var eliminationSpecs []*elimination.EliminationTrackerSpec
+	for _, spec := range specs {
+		eliminationSpecs = append(eliminationSpecs, &elimination.EliminationTrackerSpec{
+			ResourceName:         spec.ResourceName,
+			Namespace:            spec.Namespace,
+			GroupVersionResource: spec.GroupVersionResource,
+		})
+	}
+
+	var resourcesDescParts []string
+	for _, spec := range specs {
+		resourcesDescParts = append(resourcesDescParts, fmt.Sprintf("%s/%s", strings.ToLower(spec.GroupVersionResource.Resource), spec.ResourceName))
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Waiting for resources elimination: %s", strings.Join(resourcesDescParts, ", ")).DoError(func() error {
+		return elimination.TrackUntilEliminated(ctx, kube.DynamicClient, eliminationSpecs, elimination.EliminationTrackerOptions{Timeout: timeout, StatusProgressPeriod: waiter.StatusProgressPeriod})
+	})
 }

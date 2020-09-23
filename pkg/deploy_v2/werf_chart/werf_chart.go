@@ -230,6 +230,10 @@ func (wc *WerfChart) WrapUpgrade(ctx context.Context, upgradeFunc func() error) 
 	return wc.lockReleaseWrapper(ctx, upgradeFunc)
 }
 
+func (wc *WerfChart) WrapUninstall(ctx context.Context, uninstallFunc func() error) error {
+	return wc.lockReleaseWrapper(ctx, uninstallFunc)
+}
+
 func (wc *WerfChart) lockReleaseWrapper(ctx context.Context, commandFunc func() error) error {
 	if lock, err := wc.LockManager.LockRelease(ctx, wc.ReleaseName); err != nil {
 		return err

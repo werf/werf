@@ -106,11 +106,9 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageNamespace(&commonCmdData, cmd)
-	common.SetupHelmReleaseStorageType(&commonCmdData, cmd)
+
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupImagesRepoOptions(&commonCmdData, cmd)
