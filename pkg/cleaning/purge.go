@@ -5,16 +5,15 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/logboek/pkg/types"
 
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 )
 
 type PurgeOptions struct {
-	ImagesPurgeOptions
-	StagesPurgeOptions
+	RmContainersThatUseWerfImages bool
+	DryRun                        bool
 }
 
 func Purge(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options PurgeOptions) error {
@@ -26,33 +25,113 @@ func Purge(ctx context.Context, projectName string, storageManager *manager.Stor
 		defer storageLockManager.Unlock(ctx, lock)
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Running images purge").DoError(func() error {
-		return m.imagesPurgeManager.run(ctx)
+	return m.run(ctx)
+}
+
+func newPurgeManager(projectName string, storageManager *manager.StorageManager, options PurgeOptions) *purgeManager {
+	return &purgeManager{
+		StorageManager:                storageManager,
+		ProjectName:                   projectName,
+		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
+		DryRun:                        options.DryRun,
+	}
+}
+
+type purgeManager struct {
+	StorageManager                *manager.StorageManager
+	ProjectName                   string
+	RmContainersThatUseWerfImages bool
+	DryRun                        bool
+}
+
+func (m *purgeManager) run(ctx context.Context) error {
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting stages").DoError(func() error {
+		stages, err := m.StorageManager.GetStageDescriptionList(ctx)
+		if err != nil {
+			return err
+		}
+
+		return m.deleteStages(ctx, stages)
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Running stages purge").
-		Options(func(options types.LogProcessOptionsInterface) {
-			options.Style(style.Highlight())
-		}).
-		DoError(func() error {
-			return m.stagesPurgeManager.run(ctx)
-		}); err != nil {
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
+		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
+		if err != nil {
+			return err
+		}
+
+		if err := m.deleteManagedImages(ctx, managedImages); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
+		_, imageMetadataByImageName, err := m.StorageManager.StagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, m.ProjectName, []string{})
+		if err != nil {
+			return err
+		}
+
+		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
+			if err := m.deleteImagesMetadata(ctx, imageNameID, stageIDCommitList); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func newPurgeManager(projectName string, storageManager *manager.StorageManager, options PurgeOptions) *purgeManager {
-	return &purgeManager{
-		imagesPurgeManager: newImagesPurgeManager(storageManager, options.ImagesPurgeOptions),
-		stagesPurgeManager: newStagesPurgeManager(projectName, storageManager, options.StagesPurgeOptions),
+func (m *purgeManager) deleteStages(ctx context.Context, stages []*image.StageDescription) error {
+	deleteStageOptions := manager.ForEachDeleteStageOptions{
+		DeleteImageOptions: storage.DeleteImageOptions{
+			RmiForce: true,
+		},
+		FilterStagesAndProcessRelatedDataOptions: storage.FilterStagesAndProcessRelatedDataOptions{
+			SkipUsedImage:            false,
+			RmForce:                  m.RmContainersThatUseWerfImages,
+			RmContainersThatUseImage: m.RmContainersThatUseWerfImages,
+		},
 	}
+
+	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages)
 }
 
-type purgeManager struct {
-	*imagesPurgeManager
-	*stagesPurgeManager
+func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
+	if m.DryRun {
+		for _, managedImage := range managedImages {
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", managedImage)
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
+
+	return m.StorageManager.ForEachRmManagedImage(ctx, m.ProjectName, managedImages, func(ctx context.Context, managedImage string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Managed image %s deletion failed: %s\n", managedImage, err)
+
+			return nil
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", managedImage)
+
+		return nil
+	})
+}
+
+func (m *purgeManager) deleteImagesMetadata(ctx context.Context, imageNameOrID string, stageIDCommitList map[string][]string) error {
+	return deleteImagesMetadata(ctx, m.ProjectName, m.StorageManager, imageNameOrID, stageIDCommitList, m.DryRun)
 }

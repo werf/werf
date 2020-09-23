@@ -227,7 +227,7 @@ func (storage *LocalDockerServerStagesStorage) PutImageMetadata(ctx context.Cont
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
-	logboek.Context(ctx).Info().LogF("Put stage ID %s image %s commit %s\n", stageID, imageName, commit)
+	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageName, commit, stageID)
 
 	return nil
 }

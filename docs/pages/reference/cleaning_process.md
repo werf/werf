@@ -91,10 +91,10 @@ werf uses the kube configuration file `~/.kube/config` to learn about Kubernetes
 
 ### Cleaning up stages storage
 
-Executing a [stages storage cleanup command]({{ site.baseurl }}/documentation/cli/management/stages/cleanup.html) is necessary to synchronize the state of stages storage with the _images repo_.
+Executing a stages storage cleanup command is necessary to synchronize the state of stages storage with the _images repo_.
 During this step, werf deletes _stages_ that do not relate to _images_ currently present in the _images repo_.
 
-> If the [images cleanup command]({{ site.baseurl }}/documentation/cli/management/images/cleanup.html), — the first step of cleaning by policies, — is skipped, then the [stages storage cleanup]({{ site.baseurl }}/documentation/cli/management/stages/cleanup.html) will not have any effect.
+> If the images cleanup command, — the first step of cleaning by policies, — is skipped, then the stages storage cleanup will not have any effect.
 
 ## Manual cleaning
 
@@ -105,8 +105,8 @@ In general, it is best suited for forceful image removal.
 
 The manual cleaning approach includes the following options:
 
-* The [purge images repo command]({{ site.baseurl }}/documentation/cli/management/images/purge.html) deletes images of the **current project** in the _images repo_.
-* The [purge stages storage command]({{ site.baseurl }}/documentation/cli/management/stages/purge.html) deletes stages of the **current project** in the _stages storage_.
+* The purge images repo command deletes images of the **current project** in the _images repo_.
+* The purge stages storage command deletes stages of the **current project** in the _stages storage_.
 
 These steps are combined in a single top-level command [purge]({{ site.baseurl }}/documentation/cli/main/purge.html).
 

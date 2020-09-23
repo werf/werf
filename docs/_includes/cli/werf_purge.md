@@ -41,29 +41,6 @@ werf purge [options]
             help for purge
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-  -i, --images-repo='':
-            Docker Repo to store images (default $WERF_IMAGES_REPO)
-      --images-repo-docker-hub-password='':
-            Docker Hub password for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_PASSWORD,     
-            $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --images-repo-docker-hub-token='':
-            Docker Hub token for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_TOKEN,           
-            $WERF_REPO_DOCKER_HUB_TOKEN)
-      --images-repo-docker-hub-username='':
-            Docker Hub username for images repo (default $WERF_IMAGES_REPO_DOCKER_HUB_USERNAME,     
-            $WERF_REPO_DOCKER_HUB_USERNAME)
-      --images-repo-github-token='':
-            GitHub token for images repo (default $WERF_IMAGES_REPO_GITHUB_TOKEN,                   
-            $WERF_REPO_GITHUB_TOKEN)
-      --images-repo-implementation='':
-            Choose repo implementation for images repo.
-            The following docker registry implementations are supported: ecr, acr, default,         
-            dockerhub, gcr, github, gitlab, harbor, quay.
-            Default $WERF_IMAGES_REPO_IMPLEMENTATION, $WERF_REPO_IMPLEMENTATION or auto mode        
-            (detect implementation by a registry).
-      --images-repo-mode='auto':
-            Define how to store in images repo: multirepo or monorepo.
-            Default $WERF_IMAGES_REPO_MODE or auto mode
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config='':

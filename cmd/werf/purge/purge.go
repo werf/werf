@@ -56,7 +56,6 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupImagesRepoOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo")
@@ -148,16 +147,6 @@ func runPurge() error {
 		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
-	imagesRepo, err := common.GetImagesRepo(ctx, projectName, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	storageManager.SetImageRepo(imagesRepo)
-	if *commonCmdData.Parallel {
-		storageManager.ImagesRepoManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
-	}
-
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
 	if err != nil {
 		return err
@@ -165,14 +154,8 @@ func runPurge() error {
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	purgeOptions := cleaning.PurgeOptions{
-		ImagesPurgeOptions: cleaning.ImagesPurgeOptions{
-			ImageNameList: imagesNames,
-			DryRun:        *commonCmdData.DryRun,
-		},
-		StagesPurgeOptions: cleaning.StagesPurgeOptions{
-			RmContainersThatUseWerfImages: cmdData.Force,
-			DryRun:                        *commonCmdData.DryRun,
-		},
+		RmContainersThatUseWerfImages: cmdData.Force,
+		DryRun:                        *commonCmdData.DryRun,
 	}
 
 	logboek.LogOptionalLn()

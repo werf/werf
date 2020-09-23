@@ -204,6 +204,10 @@ func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) in
 }
 
 func processTaskResultData(ctx context.Context, data []byte) {
+	if len(data) == 0 { // TODO: fix in logboek
+		return
+	}
+
 	logboek.Streams().DoWithoutIndent(func() {
 		_, _ = logboek.Context(ctx).ProxyOutStream().Write(data)
 		logboek.Context(ctx).LogOptionalLn()

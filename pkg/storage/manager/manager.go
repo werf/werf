@@ -5,7 +5,6 @@ import (
 )
 
 type StorageManager struct {
-	*ImagesRepoManager
 	*StagesStorageManager
 }
 
@@ -13,10 +12,6 @@ func NewStorageManager(projectName string, storageLockManager storage.LockManage
 	return &StorageManager{
 		StagesStorageManager: newStagesStorageManager(projectName, storageLockManager, stagesStorageCache),
 	}
-}
-
-func (m *StorageManager) SetImageRepo(imagesRepo storage.ImagesRepo) {
-	m.ImagesRepoManager = newImagesRepoManager(imagesRepo)
 }
 
 type baseManager struct {

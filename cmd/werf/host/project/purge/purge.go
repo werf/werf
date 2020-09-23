@@ -123,12 +123,12 @@ func run(projectNames ...string) error {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				stagesPurgeOptions := cleaning.StagesPurgeOptions{
+				stagesPurgeOptions := cleaning.PurgeOptions{
 					RmContainersThatUseWerfImages: cmdData.Force,
 					DryRun:                        *commonCmdData.DryRun,
 				}
 
-				return cleaning.StagesPurge(ctx, projectName, storageLockManager, storageManager, stagesPurgeOptions)
+				return cleaning.Purge(ctx, projectName, storageManager, storageLockManager, stagesPurgeOptions)
 			}); err != nil {
 			return err
 		}
