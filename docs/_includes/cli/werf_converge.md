@@ -94,6 +94,26 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-registry=false:
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --introspect-before-error=false:
+            Introspect failed stage in the clean state, before running all assembly instructions of 
+            the stage
+      --introspect-error=false:
+            Introspect failed stage in the state, right after running failed assembly instruction
+      --introspect-stage=[]:
+            Introspect a specific stage. The option can be used multiple times to introspect        
+            several stages.
+            
+            There are the following formats to use:
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
+            artifact IMAGE_NAME
+            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
+            name STAGE_NAME
+            
+            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
+            image specified with ~.
+            STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
+            gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
+            importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
       --kube-config='':
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -172,11 +192,19 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+      --set-file=[]:
+            Set values from respective files specified via the command line (can specify multiple   
+            or separate values with commas: key1=path1,key2=path2).
+            Also, can be defined with $WERF_SET_FILE* (e.g. $WERF_SET_FILE_1=key1=path1,            
+            $WERF_SET_FILE_2=key2=val2)
       --set-string=[]:
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1,         
             $WERF_SET_STRING_2=key2=val2)
+  -Z, --skip-build=false:
+            Disable building of docker images, cached images in the repo should exist in the repo   
+            if werf.yaml contains at least one image description ($WERF_SKIP_BUILD by default)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

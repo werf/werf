@@ -40,6 +40,7 @@ var cmdData struct {
 	PullPassword string
 	Timeout      int
 	AutoRollback bool
+	SkipBuild    bool
 }
 
 var commonCmdData common.CmdData
@@ -136,6 +137,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
+	cmd.Flags().BoolVarP(&cmdData.SkipBuild, "skip-build", "Z", common.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description ($WERF_SKIP_BUILD by default)")
 
 	return cmd
 }
@@ -285,16 +287,29 @@ func runConverge() error {
 		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
-		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if err := c.Build(ctx, buildOptions); err != nil {
+		if cmdData.SkipBuild {
+			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+				if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+					return err
+				}
+
+				imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
+				return nil
+			}); err != nil {
 				return err
 			}
+		} else {
+			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+				if err := c.Build(ctx, buildOptions); err != nil {
+					return err
+				}
 
-			imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
+				imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
 
-			return nil
-		}); err != nil {
-			return err
+				return nil
+			}); err != nil {
+				return err
+			}
 		}
 
 		logboek.LogOptionalLn()
