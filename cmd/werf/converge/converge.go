@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/helm"
+
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secret"
@@ -318,11 +320,27 @@ func runConverge() error {
 		LockManager:    lockManager,
 		SecretsManager: secretsManager,
 	})
+	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+		return err
+	}
+	if err := wc.SetWerfConfig(werfConfig); err != nil {
+		return err
+	}
+	if vals, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	} else if err := wc.SetServiceValues(vals); err != nil {
+		return err
+	}
 
 	actionConfig := new(action.Configuration)
-	*cmd_helm.Settings.GetNamespaceP() = namespace
+	if err := helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+	}); err != nil {
+		return err
+	}
 
-	_ = imagesRepository
+	*cmd_helm.Settings.GetNamespaceP() = namespace
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		LoadOptions: loader.LoadOptions{
@@ -342,7 +360,6 @@ func runConverge() error {
 		Atomic:          NewBool(cmdData.AutoRollback),
 		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
 	})
-
 	return wc.WrapUpgrade(context.Background(), func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
 	})

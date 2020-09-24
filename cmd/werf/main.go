@@ -8,8 +8,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/dismiss"
 
-	"github.com/werf/werf/cmd/werf/deploy"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/werf/logboek"
@@ -94,7 +92,6 @@ Find more information at https://werf.io`),
 				diff.NewCmd(),
 				build.NewCmd(),
 				run.NewCmd(),
-				deploy.NewCmd(),
 				dismiss.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),

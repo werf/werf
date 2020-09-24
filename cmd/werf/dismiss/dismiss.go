@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/werf/werf/pkg/deploy/helm"
-
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
@@ -170,12 +169,14 @@ func runDismiss() error {
 		ReleaseName: releaseName,
 		LockManager: lockManager,
 	})
+	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+		return err
+	}
+	if err := wc.SetWerfConfig(werfConfig); err != nil {
+		return err
+	}
 
 	actionConfig := new(action.Configuration)
-	*cmd_helm.Settings.GetNamespaceP() = namespace
-
-	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream())
-
 	if err := helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
@@ -183,14 +184,9 @@ func runDismiss() error {
 		return err
 	}
 
-	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
-		return err
-	}
+	*cmd_helm.Settings.GetNamespaceP() = namespace
 
-	if err := wc.SetWerfConfig(werfConfig); err != nil {
-		return err
-	}
-
+	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream())
 	return wc.WrapUninstall(context.Background(), func() error {
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
 	})
