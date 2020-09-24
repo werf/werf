@@ -762,7 +762,7 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 		return storage.LocalStorageAddress
 	}
 
-	return ""
+	return *cmdData.StagesStorage
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
