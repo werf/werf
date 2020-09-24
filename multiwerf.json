@@ -50,6 +50,15 @@
           "version": "v1.1.20+fix23"
         }
       ]
+    },
+    {
+      "group": "1.2",
+      "channels": [
+        {
+          "name": "alpha",
+          "version": "v1.2.0-alpha1"
+        }
+      ]
     }
   ]
 }
