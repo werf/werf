@@ -568,7 +568,7 @@ func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
 }
 
-func SetupSetFiles(cmdData *CmdData, cmd *cobra.Command) {
+func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
 	setFile := predefinedValuesByEnvNamePrefix("WERF_SET_FILE")
 
 	cmdData.SetFile = &setFile
