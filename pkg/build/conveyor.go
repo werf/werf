@@ -335,10 +335,6 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	return c.remoteGitRepos[key]
 }
 
-type ShouldBeBuiltOptions struct {
-	FetchLastStage bool
-}
-
 func (c *Conveyor) Init() error {
 	localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
 	if err != nil {
@@ -350,7 +346,7 @@ func (c *Conveyor) Init() error {
 	return nil
 }
 
-func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
+func (c *Conveyor) ShouldBeBuilt(ctx context.Context) error {
 	if err := c.determineStages(ctx); err != nil {
 		return err
 	}
@@ -363,16 +359,12 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		return err
 	}
 
-	if opts.FetchLastStage {
-		for _, imageName := range c.imageNamesToProcess {
-			lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
-			if err := c.StorageManager.FetchStage(ctx, lastImageStage); err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
+}
+
+func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) error {
+	lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
+	return c.StorageManager.FetchStage(ctx, lastImageStage)
 }
 
 func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile) []*image.InfoGetter {

@@ -61,6 +61,8 @@ type CmdData struct {
 	CommonRepoData *RepoData
 	StagesStorage  *string
 
+	SkipBuild *bool
+
 	Synchronization           *string
 	GitHistorySynchronization *bool
 	GitUnshallow              *bool
@@ -644,6 +646,11 @@ There are the following formats to use:
 
 IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless image specified with ~.
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
+}
+
+func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SkipBuild = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "Z", GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)")
 }
 
 func allStagesNames() []string {
