@@ -62,6 +62,7 @@ type CmdData struct {
 	StagesStorage  *string
 
 	SkipBuild *bool
+	StubTags  *bool
 
 	Synchronization           *string
 	GitHistorySynchronization *bool
@@ -653,6 +654,11 @@ func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "Z", GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)")
 }
 
+func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StubTags = new(bool)
+	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")
+}
+
 func allStagesNames() []string {
 	var stageNames []string
 	for _, stageName := range stage.AllStages {
@@ -756,7 +762,7 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 		return storage.LocalStorageAddress
 	}
 
-	return ""
+	return *cmdData.StagesStorage
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {

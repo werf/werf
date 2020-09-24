@@ -220,7 +220,7 @@ func runDiff() error {
 			return err
 		}
 
-		imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
+		imagesInfoGetters = c.GetImageInfoGetters()
 
 		return nil
 	}); err != nil {
