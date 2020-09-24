@@ -177,14 +177,12 @@ func runDismiss() error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 	}); err != nil {
 		return err
 	}
-
-	*cmd_helm.Settings.GetNamespaceP() = namespace
 
 	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream())
 	return wc.WrapUninstall(context.Background(), func() error {

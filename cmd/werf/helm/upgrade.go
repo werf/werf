@@ -50,6 +50,12 @@ func NewUpgradeCmd(actionConfig *action.Configuration) *cobra.Command {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 
+		if vals, err := werf_chart.GetServiceValues(context.Background(), "PROJECT", "REPO", "NAMESPACE", nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
+			return fmt.Errorf("error creating service values: %s", err)
+		} else if err := wc.SetServiceValues(vals); err != nil {
+			return err
+		}
+
 		return wc.WrapUpgrade(context.Background(), func() error {
 			return oldRunE(cmd, args)
 		})

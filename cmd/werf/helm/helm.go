@@ -33,6 +33,7 @@ import (
 var _commonCmdData cmd_werf_common.CmdData
 
 func NewCmd() *cobra.Command {
+	var namespace string
 	actionConfig := new(action.Configuration)
 
 	cmd := &cobra.Command{
@@ -42,7 +43,7 @@ func NewCmd() *cobra.Command {
 
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
-	cmd.PersistentFlags().StringVarP(cmd_helm.Settings.GetNamespaceP(), "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
+	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
 	cmd_werf_common.SetupKubeConfig(&_commonCmdData, cmd)
 	cmd_werf_common.SetupKubeConfigBase64(&_commonCmdData, cmd)
 	cmd_werf_common.SetupKubeContext(&_commonCmdData, cmd)
@@ -109,7 +110,7 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.BackgroundContext()
 
-				helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+				helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 				})

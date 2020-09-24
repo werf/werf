@@ -74,15 +74,9 @@ type InitActionConfigOptions struct {
 	HooksStatusProgressPeriod time.Duration
 }
 
-func NewActionConfig(ctx context.Context, envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
-	actionConfig := &action.Configuration{}
-	if err := InitActionConfig(ctx, envSettings, actionConfig, opts); err != nil {
-		log.Fatal(err)
-	}
-	return actionConfig
-}
+func InitActionConfig(ctx context.Context, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+	*envSettings.GetNamespaceP() = namespace
 
-func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	helmDriver := os.Getenv("HELM_DRIVER")
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
 		return fmt.Errorf("action config init failed: %s", err)
