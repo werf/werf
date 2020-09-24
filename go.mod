@@ -148,4 +148,5 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-containerregistry v0.1.3-0.20200901133051-a73cc6cd741c
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200924081050-640f02b0b068
+//replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200924081050-640f02b0b068
+replace helm.sh/helm/v3 => ../helm

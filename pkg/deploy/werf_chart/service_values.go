@@ -1,7 +1,8 @@
-package deploy
+package werf_chart
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ghodss/yaml"
 
@@ -10,15 +11,21 @@ import (
 )
 
 type ServiceValuesOptions struct {
-	Env string
+	Env    string
+	IsStub bool
 }
 
-func GetServiceValues(ctx context.Context, projectName string, imagesRepository, namespace string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(ctx context.Context, projectName string, repo, namespace string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	werfInfo := map[string]interface{}{
-		"name": projectName,
-		"repo": imagesRepository,
+		"name":    projectName,
+		"repo":    repo,
+		"is_stub": opts.IsStub,
+	}
+
+	if opts.IsStub {
+		werfInfo["stub_image"] = fmt.Sprintf("%s:TAG", repo)
 	}
 
 	globalInfo := map[string]interface{}{

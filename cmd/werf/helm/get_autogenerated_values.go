@@ -3,6 +3,8 @@ package helm
 import (
 	"fmt"
 
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	helm_common "github.com/werf/werf/cmd/werf/helm/common"
-	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -123,7 +124,7 @@ func runGetServiceValues() error {
 
 	imagesInfoGetters := common.StubImageInfoGetters(werfConfig)
 
-	serviceValues, err := deploy.GetServiceValues(ctx, projectName, common.StubRepoAddress, namespace, imagesInfoGetters, deploy.ServiceValuesOptions{Env: environment})
+	serviceValues, err := werf_chart.GetServiceValues(ctx, projectName, common.StubRepoAddress, namespace, imagesInfoGetters, werf_chart.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
