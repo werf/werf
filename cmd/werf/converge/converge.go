@@ -86,6 +86,10 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
+	common.SetupIntrospectStage(&commonCmdData, cmd)
+
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
@@ -113,6 +117,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
+	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)

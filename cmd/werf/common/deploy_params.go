@@ -161,7 +161,7 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 
 	funcMap["env"] = func() (string, error) {
 		if environmentOption == "" {
-			return "", fmt.Errorf("--env option or $WERF_ENV variable required to construct name by template '%s'", templateText)
+			return "default", nil
 		}
 
 		return environmentOption, nil
