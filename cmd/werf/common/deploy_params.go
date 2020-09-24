@@ -26,6 +26,8 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 	var releaseTemplate string
 	if werfConfig.Meta.DeployTemplates.HelmRelease != nil {
 		releaseTemplate = *werfConfig.Meta.DeployTemplates.HelmRelease
+	} else if environmentOption == "" {
+		releaseTemplate = "[[ project ]]"
 	} else {
 		releaseTemplate = "[[ project ]]-[[ env ]]"
 	}
@@ -70,6 +72,8 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	var namespaceTemplate string
 	if werfConfig.Meta.DeployTemplates.Namespace != nil {
 		namespaceTemplate = *werfConfig.Meta.DeployTemplates.Namespace
+	} else if environmentOption == "" {
+		namespaceTemplate = "[[ project ]]"
 	} else {
 		namespaceTemplate = "[[ project ]]-[[ env ]]"
 	}
@@ -160,10 +164,6 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 	}
 
 	funcMap["env"] = func() (string, error) {
-		if environmentOption == "" {
-			return "default", nil
-		}
-
 		return environmentOption, nil
 	}
 
