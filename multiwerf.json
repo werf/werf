@@ -30,15 +30,15 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.1.22+fix25"
+          "version": "v1.1.22+fix26"
         },
         {
           "name": "beta",
-          "version": "v1.1.22+fix24"
+          "version": "v1.1.22+fix26"
         },
         {
           "name": "ea",
-          "version": "v1.1.22+fix23"
+          "version": "v1.1.22+fix26"
         },
         {
           "name": "stable",
