@@ -43,6 +43,7 @@ require (
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/moby/buildkit v0.7.1-0.20200615045306-df35e9818d1f
 	github.com/moby/term v0.0.0-20200611042045-63b9a826fb74 // indirect
+	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
@@ -67,13 +68,11 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	google.golang.org/grpc v1.29.1
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/ini.v1 v1.56.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
-	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.2.4
 	k8s.io/api v0.19.2
@@ -83,7 +82,6 @@ require (
 	k8s.io/helm v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.6
-	k8s.io/kubernetes v1.18.6 // indirect
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0

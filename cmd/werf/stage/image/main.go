@@ -177,7 +177,7 @@ func run(imageName string) error {
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if err = c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+		if err = c.ShouldBeBuilt(ctx); err != nil {
 			return err
 		}
 

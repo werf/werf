@@ -204,7 +204,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             $WERF_SET_STRING_2=key2=val2)
   -Z, --skip-build=false:
             Disable building of docker images, cached images in the repo should exist in the repo   
-            if werf.yaml contains at least one image description ($WERF_SKIP_BUILD by default)
+            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

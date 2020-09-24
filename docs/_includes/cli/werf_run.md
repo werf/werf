@@ -112,6 +112,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --shell=false:
             Use predefined docker options and command for debug
+  -Z, --skip-build=false:
+            Disable building of docker images, cached images in the repo should exist in the repo   
+            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
       --skip-tls-verify-registry=false:
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
