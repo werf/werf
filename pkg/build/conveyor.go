@@ -367,19 +367,12 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) er
 	return c.StorageManager.FetchStage(ctx, lastImageStage)
 }
 
-func (c *Conveyor) GetImageInfoGetters(configImages []*config.StapelImage, configImagesFromDockerfile []*config.ImageFromDockerfile) []*image.InfoGetter {
-	var images []*image.InfoGetter
-
-	var imagesNames []string
-	for _, imageConfig := range configImages {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageConfig := range configImagesFromDockerfile {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-
-	for _, imageName := range imagesNames {
-		images = append(images, c.GetImage(imageName).GetImageInfoGetter())
+func (c *Conveyor) GetImageInfoGetters() (images []*image.InfoGetter) {
+	for _, img := range c.images {
+		if img.isArtifact {
+			continue
+		}
+		images = append(images, img.GetImageInfoGetter())
 	}
 
 	return images

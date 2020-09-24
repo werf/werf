@@ -285,29 +285,22 @@ func runConverge() error {
 		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
-		if *commonCmdData.SkipBuild {
-			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			if *commonCmdData.SkipBuild {
 				if err := c.ShouldBeBuilt(ctx); err != nil {
 					return err
 				}
-
-				imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
-				return nil
-			}); err != nil {
-				return err
-			}
-		} else {
-			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			} else {
 				if err := c.Build(ctx, buildOptions); err != nil {
 					return err
 				}
-
-				imagesInfoGetters = c.GetImageInfoGetters(werfConfig.StapelImages, werfConfig.ImagesFromDockerfile)
-
-				return nil
-			}); err != nil {
-				return err
 			}
+
+			imagesInfoGetters = c.GetImageInfoGetters()
+
+			return nil
+		}); err != nil {
+			return err
 		}
 
 		logboek.LogOptionalLn()

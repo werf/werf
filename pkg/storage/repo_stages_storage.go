@@ -418,7 +418,7 @@ func makeRepoImageMetadataNameByImageID(repoAddress, imageID, commit, stageID st
 }
 
 func (storage *RepoStagesStorage) String() string {
-	return fmt.Sprintf("repo stages storage (%q)", storage.RepoAddress)
+	return storage.RepoAddress
 }
 
 func (storage *RepoStagesStorage) Address() string {
