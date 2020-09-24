@@ -20,12 +20,12 @@ import (
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 )
 
-var installCmdData cmd_werf_common.CmdData
+var templateCmdData cmd_werf_common.CmdData
 
-func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
+func NewTemplateCmd(actionConfig *action.Configuration) *cobra.Command {
 	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{})
 
-	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
+	cmd, helmAction := cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
 			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
@@ -33,11 +33,11 @@ func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
 
-	SetupWerfChartParams(cmd, &installCmdData)
+	SetupWerfChartParams(cmd, &templateCmdData)
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if err := werf.Init(*installCmdData.TmpDir, *installCmdData.HomeDir); err != nil {
+		if err := werf.Init(*templateCmdData.TmpDir, *templateCmdData.HomeDir); err != nil {
 			return err
 		}
 
@@ -48,11 +48,11 @@ func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
 			wc.ChartDir = chartDir
 		}
 
-		if err := InitWerfChartParams(&installCmdData, wc, wc.ChartDir); err != nil {
+		if err := InitWerfChartParams(&templateCmdData, wc, wc.ChartDir); err != nil {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 
-		return wc.WrapInstall(context.Background(), func() error {
+		return wc.WrapTemplate(context.Background(), func() error {
 			return oldRunE(cmd, args)
 		})
 	}

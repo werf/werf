@@ -17,8 +17,6 @@ import (
 	helm_secret_values_edit "github.com/werf/werf/cmd/werf/helm/secret/values/edit"
 	helm_secret_values_encrypt "github.com/werf/werf/cmd/werf/helm/secret/values/encrypt"
 
-	"helm.sh/helm/v3/pkg/chart/loader"
-
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/deploy/helm"
 
@@ -32,7 +30,7 @@ import (
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 )
 
-var commonCmdData cmd_werf_common.CmdData
+var _commonCmdData cmd_werf_common.CmdData
 
 func NewCmd() *cobra.Command {
 	actionConfig := new(action.Configuration)
@@ -45,12 +43,12 @@ func NewCmd() *cobra.Command {
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
 	cmd.PersistentFlags().StringVarP(cmd_helm.Settings.GetNamespaceP(), "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
-	cmd_werf_common.SetupKubeConfig(&commonCmdData, cmd)
-	cmd_werf_common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	cmd_werf_common.SetupKubeContext(&commonCmdData, cmd)
-	cmd_werf_common.SetupStatusProgressPeriod(&commonCmdData, cmd)
-	cmd_werf_common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	cmd_werf_common.SetupLogOptions(&commonCmdData, cmd)
+	cmd_werf_common.SetupKubeConfig(&_commonCmdData, cmd)
+	cmd_werf_common.SetupKubeConfigBase64(&_commonCmdData, cmd)
+	cmd_werf_common.SetupKubeContext(&_commonCmdData, cmd)
+	cmd_werf_common.SetupStatusProgressPeriod(&_commonCmdData, cmd)
+	cmd_werf_common.SetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
+	cmd_werf_common.SetupLogOptions(&_commonCmdData, cmd)
 
 	cmd.AddCommand(
 		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout),
@@ -59,7 +57,7 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),
 		cmd_helm.NewLintCmd(os.Stdout),
 		cmd_helm.NewListCmd(actionConfig, os.Stdout),
-		cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{LoadOptions: loader.LoadOptions{}}),
+		NewTemplateCmd(actionConfig),
 		cmd_helm.NewRepoCmd(os.Stdout),
 		cmd_helm.NewRollbackCmd(actionConfig, os.Stdout),
 		NewInstallCmd(actionConfig),
@@ -100,7 +98,7 @@ func NewCmd() *cobra.Command {
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
 				// NOTE: Common init block for all runnable commands.
 
-				if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				if err := common.ProcessLogOptions(&_commonCmdData); err != nil {
 					common.PrintHelp(cmd)
 					return err
 				}
@@ -112,14 +110,14 @@ func NewCmd() *cobra.Command {
 				ctx := common.BackgroundContext()
 
 				helm.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
-					StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-					HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 				})
 
 				if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-					Context:          *commonCmdData.KubeContext,
-					ConfigPath:       *commonCmdData.KubeConfig,
-					ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+					Context:          *_commonCmdData.KubeContext,
+					ConfigPath:       *_commonCmdData.KubeConfig,
+					ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
 				}}); err != nil {
 					return fmt.Errorf("cannot initialize kube: %s", err)
 				}

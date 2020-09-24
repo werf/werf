@@ -220,6 +220,10 @@ func (wc *WerfChart) SetServiceValues(vals map[string]interface{}) error {
 	return nil
 }
 
+func (wc *WerfChart) WrapTemplate(ctx context.Context, templateFunc func() error) error {
+	return templateFunc()
+}
+
 func (wc *WerfChart) WrapInstall(ctx context.Context, installFunc func() error) error {
 	return wc.lockReleaseWrapper(ctx, installFunc)
 }
