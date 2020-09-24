@@ -184,7 +184,7 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 		}
 	}
 
-	for _, name := range []string{"image", "image_id", "werf_container_image", "werf_container_env"} {
+	for _, name := range []string{"werf_image"} {
 		setupIncludeWrapperFunc(name)
 	}
 
