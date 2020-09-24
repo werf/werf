@@ -105,6 +105,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
+	common.SetupSkipBuild(&commonCmdData, cmd)
+
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -238,7 +240,6 @@ func runRun() error {
 	if err != nil {
 		return err
 	}
-
 	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
@@ -257,20 +258,28 @@ func runRun() error {
 		return err
 	}
 
-	logboek.Info().LogOptionalLn()
-
-	var dockerImageName string
+	logboek.Context(ctx).Info().LogOptionalLn()
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{imageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
+	var dockerImageName string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{FetchLastStage: true}); err != nil {
+		if *commonCmdData.SkipBuild {
+			if err := c.ShouldBeBuilt(ctx); err != nil {
+				return err
+			}
+		} else {
+			if err := c.Build(ctx, build.BuildOptions{}); err != nil {
+				return err
+			}
+		}
+
+		if err := c.FetchLastImageStage(ctx, imageName); err != nil {
 			return err
 		}
 
 		dockerImageName = c.GetImageNameForLastImageStage(imageName)
-
 		return nil
 	}); err != nil {
 		return err
