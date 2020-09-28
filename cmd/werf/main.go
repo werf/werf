@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/cmd/werf/slugify"
+
+	"github.com/werf/werf/cmd/werf/ci_env"
 	"github.com/werf/werf/cmd/werf/dismiss"
 
 	"github.com/sirupsen/logrus"
@@ -15,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/converge"
-	"github.com/werf/werf/cmd/werf/diff"
 	"github.com/werf/werf/cmd/werf/helm"
 
 	"github.com/werf/werf/cmd/werf/build"
@@ -23,9 +25,6 @@ import (
 	"github.com/werf/werf/cmd/werf/purge"
 	"github.com/werf/werf/cmd/werf/run"
 	"github.com/werf/werf/cmd/werf/synchronization"
-
-	"github.com/werf/werf/cmd/werf/ci_env"
-	"github.com/werf/werf/cmd/werf/slugify"
 
 	managed_images_add "github.com/werf/werf/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
@@ -86,15 +85,30 @@ Find more information at https://werf.io`),
 
 	groups := templates.CommandGroups{
 		{
-			Message: "Main Commands:",
+			Message: "Main:",
 			Commands: []*cobra.Command{
 				converge.NewCmd(),
-				diff.NewCmd(),
 				build.NewCmd(),
 				run.NewCmd(),
 				dismiss.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),
+			},
+		},
+		{
+			Message: "Lowlevel Management:",
+			Commands: []*cobra.Command{
+				configCmd(),
+				stagesCmd(),
+				managedImagesCmd(),
+				hostCmd(),
+				helm.NewCmd(),
+			},
+		},
+		{
+			Message: "Service:",
+			Commands: []*cobra.Command{
+				ci_env.NewCmd(),
 				synchronization.NewCmd(),
 			},
 		},
@@ -102,17 +116,6 @@ Find more information at https://werf.io`),
 			Message: "Toolbox:",
 			Commands: []*cobra.Command{
 				slugify.NewCmd(),
-				ci_env.NewCmd(),
-			},
-		},
-		{
-			Message: "Lowlevel Management Commands:",
-			Commands: []*cobra.Command{
-				configCmd(),
-				stagesCmd(),
-				managedImagesCmd(),
-				helm.NewCmd(),
-				hostCmd(),
 			},
 		},
 	}

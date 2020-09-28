@@ -15,7 +15,7 @@ werf includes all the existing Helm functionality (the latter is integrated into
 - also, werf has some unique features which we will discuss below.
 
 werf uses the following two commands to deal with an application in the Kubernetes cluster:
-- [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — to install or update an application;  
+- [converge]({{ site.baseurl }}/documentation/cli/main/converge.html) — to install or update an application;  
 - [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html) — to delete an application from the cluster.
 
 ## Chart
@@ -345,7 +345,7 @@ Each release version is stored in the Kubernetes cluster itself. werf supports s
 
 By default, werf stores releases in the ConfigMaps in the `kube-system` namespace, and this is fully compatible with the default [Helm 2](https://helm.sh) configuration. You can set the release storage by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
-The [werf helm list]({{ site.baseurl }}/documentation/cli/management/helm/list.html) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ site.baseurl }}/documentation/cli/management/helm/history.html) command.
+The [werf helm list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/list.html) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/history.html) command.
 
 #### Helm compatibility notice
 

@@ -89,7 +89,7 @@ By default, werf uses the same _docker config_ as the Docker utility: `~/.docker
 The Docker config directory can be redefined by setting a `--docker-config` option, `$DOCKER_CONFIG`, or `$WERF_DOCKER_CONFIG` environment variables.
 The option and variables are the same as the `docker --config` regular option.
 
-To define the _docker config_, you can use `login` — the regular directive of a Docker client, or, if you are using a CI system, [ci-env command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) in werf ([learn more about how to plug werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html)).
+To define the _docker config_, you can use `login` — the regular directive of a Docker client, or, if you are using a CI system, [ci-env command]({{ site.baseurl }}/documentation/cli/service/ci_env.html) in werf ([learn more about how to plug werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html)).
 
 > In the case of several CI jobs running simultaneously, executing `docker login` can lead to failed jobs because of a race condition and conflicting temporary credentials.
 One job affects another job by overriding temporary credentials in the _Docker config_.

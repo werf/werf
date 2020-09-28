@@ -35,19 +35,18 @@ dependencies:
 Файл `requirements.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
 
 Для работы с файлом зависимостей существуют команды `werf helm dependency`, которые упрощают синхронизацию между желаемыми зависимостями и фактическими зависимостями, указанными в папке чарта:
-* [werf helm dependency list]({{ site.baseurl }}/documentation/cli/management/helm/dependency_list.html) — проверка зависимостей и их статуса.  
-* [werf helm dependency update]({{ site.baseurl }}/documentation/cli/management/helm/dependency_update.html) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
-* [werf helm dependency build]({{ site.baseurl }}/documentation/cli/management/helm/dependency_build.html) — обновление `/charts` согласно содержимому файла `requirements.lock`.
+* [werf helm dependency list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/dependency/list.html) — проверка зависимостей и их статуса.  
+* [werf helm dependency update]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/dependency/update.html) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
+* [werf helm dependency build]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/dependency/build.html) — обновление `/charts` согласно содержимому файла `requirements.lock`.
 
 Все репозитории чартов, используемые в `requirements.yaml`, должны быть настроены в системе. Для работы с репозиториями чартов можно использовать команды `werf helm repo`:
-* [werf helm repo add]({{ site.baseurl }}/documentation/cli/management/helm/repo_add.html) — добавление репозитория чартов.
-* [werf helm repo update]({{ site.baseurl }}/documentation/cli/management/helm/repo_update.html) — обновление локального индекса репозиториев чартов.
-* [werf helm repo remove]({{ site.baseurl }}/documentation/cli/management/helm/repo_remove.html) — удаление репозитория чартов.
-* [werf helm repo list]({{ site.baseurl }}/documentation/cli/management/helm/repo_list.html) — вывод списка существующих репозиториев чартов.
-* [werf helm repo search]({{ site.baseurl }}/documentation/cli/management/helm/repo_search.html) — поиск по ключевому слову чарта в настроенных репозиториях чартов.
-* [werf helm repo fetch]({{ site.baseurl }}/documentation/cli/management/helm/repo_fetch.html) — скачивание чарта по ссылке.
+* [werf helm repo add]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/repo/add.html) — добавление репозитория чартов.
+* [werf helm repo index]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/repo/index.html).
+* [werf helm repo list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/repo/list.html) — вывод списка существующих репозиториев чартов.
+* [werf helm repo remove]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/repo/remove.html) — удаление репозитория чартов.
+* [werf helm repo update]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/repo/update.html) — обновление локального индекса репозиториев чартов.
 
-werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду [werf helm repo init]({{ site.baseurl }}/documentation/cli/management/helm/repo_init.html) для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
+werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду `werf helm repo init` для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
 
 ## Сабчарты и данные
 
