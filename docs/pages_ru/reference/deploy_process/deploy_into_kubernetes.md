@@ -14,7 +14,7 @@ werf включает весь существующий функционал Hel
 - и другие особенности, о которых пойдёт речь далее.
 
 Для работы с приложением в Kubernetes достаточно двух команд: 
-- [deploy]({{ site.baseurl }}/documentation/cli/main/deploy.html) — для установки или обновления приложения в кластере, и 
+- [converge]({{ site.baseurl }}/documentation/cli/main/converge.html) — для установки или обновления приложения в кластере, и 
 - [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html) — для удаления приложения из кластера.
 
 ## Чарт
@@ -342,7 +342,7 @@ global:
 
 По умолчанию, werf хранит информацию о релизах в объектах ConfigMap в namespace `kube-system`, что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
 
-Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ site.baseurl }}/documentation/cli/management/helm/list.html), а для просмотра истории конкретного релиза [werf helm history]({{ site.baseurl }}/documentation/cli/management/helm/history.html). 
+Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/list.html), а для просмотра истории конкретного релиза [werf helm history]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/history.html). 
 
 #### Замечание о совместимости с Helm
 
