@@ -1,7 +1,7 @@
 ---
 title: SSH
 sidebar: documentation
-permalink: documentation/reference/toolbox/ssh.html
+permalink: documentation/advanced/toolbox/ssh.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

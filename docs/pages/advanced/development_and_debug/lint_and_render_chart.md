@@ -1,7 +1,7 @@
 ---
 title: Lint And Render Chart
 sidebar: documentation
-permalink: documentation/reference/development_and_debug/lint_and_render_chart.html
+permalink: documentation/advanced/development_and_debug/lint_and_render_chart.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

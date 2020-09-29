@@ -328,9 +328,33 @@ entries:
           - title: CI/CD workflows overview
             url: /documentation/advanced/ci_cd_workflows_overview.html
 
+          - title: Development And Debug
+            sfi:
+
+              - title: Setup Minikube
+                url: /documentation/advanced/development_and_debug/setup_minikube.html
+
+              - title: Stage Introspection
+                url: /documentation/advanced/development_and_debug/stage_introspection.html
+
+              - title: As Layers
+                url: /documentation/advanced/development_and_debug/as_layers.html
+
+              - title: Lint And Render Chart
+                url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
+
+          - title: Toolbox
+            sfi:
+
+              - title: Slug
+                url: /documentation/advanced/toolbox/slug.html
+
+              - title: SSH
+                url: /documentation/advanced/toolbox/ssh.html
+
       - title: Internals
         sf:
-          
+
           - title: Stapel
             url: /documentation/internals/stapel.html
 
