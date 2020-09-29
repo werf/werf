@@ -1,7 +1,7 @@
 ---
 title: Working with Docker registries
 sidebar: documentation
-permalink: documentation/reference/working_with_docker_registries.html
+permalink: documentation/advanced/working_with_docker_registries.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

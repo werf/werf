@@ -325,6 +325,12 @@ entries:
               - title: Resources update methods and adoption
                 url: /documentation/advanced/deploy/resources_update_methods_and_adoption.html
 
+          - title: Cleanup
+            url: /documentation/advanced/cleanup.html
+
+          - title: Working with Docker registries
+            url: /documentation/advanced/working_with_docker_registries.html
+
           - title: CI/CD workflows overview
             url: /documentation/advanced/ci_cd_workflows_overview.html
 
