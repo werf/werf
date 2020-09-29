@@ -18,14 +18,11 @@ entries:
               - title: Introduction
                 url: /documentation/reference/configuration/introduction.html
 
-              - title: Dockerfile Image
-                url: /documentation/reference/configuration/dockerfile_image.html
+              - title: Image definition
+                url: /documentation/reference/configuration/image_definition.html
 
-              - title: Deploy into Kubernetes
-                url: /documentation/reference/configuration/deploy_into_kubernetes.html
-
-              - title: Cleanup
-                url: /documentation/reference/configuration/cleanup.html
+              - title: Cleanup policies
+                url: /documentation/reference/configuration/cleanup_policies.html
 
           - title: Deploy
             sfi:
@@ -77,6 +74,12 @@ entries:
 
       - title: Advanced
         sf:
+
+          - title: Organizing configuration
+            url: /documentation/advanced/organizing_configuration.html
+
+          - title: Overriding predefined templates for deployment
+            url: /documentation/advanced/overriding_predefined_templates_for_deployment.html
 
           - title: Stapel Image configuration
             sfi:

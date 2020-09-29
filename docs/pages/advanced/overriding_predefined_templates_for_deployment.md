@@ -1,7 +1,7 @@
 ---
-title: Deploy into Kubernetes
+title: Overriding predefined templates for deployment
 sidebar: documentation
-permalink: documentation/reference/configuration/deploy_into_kubernetes.html
+permalink: documentation/advanced/overriding_predefined_templates_for_deployment.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

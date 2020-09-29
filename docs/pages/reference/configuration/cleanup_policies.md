@@ -1,7 +1,7 @@
 ---
-title: Cleanup
+title: Cleanup policies
 sidebar: documentation
-permalink: documentation/reference/configuration/cleanup.html
+permalink: documentation/reference/configuration/cleanup_policies.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">cleanup</span><span class="pi">:</span>

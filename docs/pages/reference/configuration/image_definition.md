@@ -1,7 +1,7 @@
 ---
-title: Dockerfile Image
+title: Image definition
 sidebar: documentation
-permalink: documentation/reference/configuration/dockerfile_image.html
+permalink: documentation/reference/configuration/image_definition.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <a class="google-drawings" href="../../../images/configuration/dockerfile_image1.png" data-featherlight="image">
@@ -58,7 +58,7 @@ dockerfile: dockerfiles/DockerfileFrontend
 
 {% include /configuration/stapel_image/naming.md %}
 
-## Dockerfile directives
+## Other directives
 
 werf as well as Docker builds the image based on a Dockerfile and a context.
 
