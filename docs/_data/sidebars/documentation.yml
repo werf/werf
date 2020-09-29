@@ -39,9 +39,6 @@ entries:
               - title: Working with chart dependencies
                 url: /documentation/reference/deploy/working_with_chart_dependencies.html
 
-              - title: Differences with Helm
-                url: /documentation/reference/deploy/differences_with_helm.html
-
           - title: CI/CD integration
             sfi:
 
@@ -110,12 +107,6 @@ entries:
 
               - title: All directives
                 url: /documentation/advanced/stapel_image_configuration/image_directives.html
-
-          - title: Deploy
-            sfi:
-
-              - title: Resources update methods and adoption
-                url: /documentation/advanced/deploy/resources_update_methods_and_adoption.html
 
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
