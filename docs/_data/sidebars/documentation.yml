@@ -42,18 +42,6 @@ entries:
               - title: Differences with Helm
                 url: /documentation/reference/deploy/differences_with_helm.html
 
-          - title: CI/CD integration
-            sfi:
-
-              - title: Generic
-                url: /documentation/reference/ci_cd_integration/generic.html
-
-              - title: GitLab CI
-                url: /documentation/reference/ci_cd_integration/gitlab_ci.html
-
-              - title: GitHub Actions
-                url: /documentation/reference/ci_cd_integration/github_actions.html
-
           - title: Main CLI commands
             sfi:
 
@@ -125,6 +113,18 @@ entries:
 
           - title: CI/CD workflows overview
             url: /documentation/advanced/ci_cd_workflows_overview.html
+
+          - title: CI/CD integration
+            sfi:
+
+              - title: Generic
+                url: /documentation/advanced/ci_cd_integration/generic.html
+
+              - title: GitLab CI
+                url: /documentation/advanced/ci_cd_integration/gitlab_ci.html
+
+              - title: GitHub Actions
+                url: /documentation/advanced/ci_cd_integration/github_actions.html
 
           - title: Development And Debug
             sfi:
