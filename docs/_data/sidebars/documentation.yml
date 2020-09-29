@@ -39,10 +39,19 @@ entries:
               - title: Working with chart dependencies
                 url: /documentation/reference/deploy/working_with_chart_dependencies.html
 
-              - title: Differences with Helm
-                url: /documentation/reference/deploy/differences_with_helm.html
+          - title: CI/CD integration
+            sfi:
 
-          - title: Main CLI commands
+              - title: Generic
+                url: /documentation/reference/ci_cd_integration/generic.html
+
+              - title: GitLab CI
+                url: /documentation/reference/ci_cd_integration/gitlab_ci.html
+
+              - title: GitHub Actions
+                url: /documentation/reference/ci_cd_integration/github_actions.html
+
+          - title: Main commands
             sfi:
 
               - title: converge
@@ -99,12 +108,6 @@ entries:
               - title: All directives
                 url: /documentation/advanced/stapel_image_configuration/image_directives.html
 
-          - title: Deploy
-            sfi:
-
-              - title: Resources update methods and adoption
-                url: /documentation/advanced/deploy/resources_update_methods_and_adoption.html
-
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
 
@@ -141,15 +144,6 @@ entries:
               - title: Lint And Render Chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
-          - title: Toolbox
-            sfi:
-
-              - title: Slug
-                url: /documentation/advanced/toolbox/slug.html
-
-              - title: SSH
-                url: /documentation/advanced/toolbox/ssh.html
-
       - title: Internals
         sf:
 
@@ -170,6 +164,12 @@ entries:
 
               - title: GitLab CI
                 url: /documentation/internals/plugging_into_cicd/gitlab_ci.html
+
+          - title: Slug
+            url: /documentation/advanced/toolbox/slug.html
+
+          - title: SSH
+            url: /documentation/advanced/toolbox/ssh.html
 
           - title: CLI commands
             sfi:
