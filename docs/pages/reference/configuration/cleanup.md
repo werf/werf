@@ -1,7 +1,7 @@
 ---
 title: Cleanup
 sidebar: documentation
-permalink: documentation/configuration/cleanup.html
+permalink: documentation/reference/configuration/cleanup.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">cleanup</span><span class="pi">:</span>

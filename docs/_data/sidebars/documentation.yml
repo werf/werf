@@ -12,8 +12,20 @@ entries:
       - title: Reference
         sf:
 
-          - title: Introduction
-            url: /documentation/configuration/introduction.html
+          - title: Configuration
+            sfi:
+
+              - title: Introduction
+                url: /documentation/reference/configuration/introduction.html
+
+              - title: Dockerfile Image
+                url: /documentation/reference/configuration/dockerfile_image.html
+
+              - title: Deploy into Kubernetes
+                url: /documentation/reference/configuration/deploy_into_kubernetes.html
+
+              - title: Cleanup
+                url: /documentation/reference/configuration/cleanup.html
 
           - title: CLI Commands
             sf: &cli-commands
@@ -258,6 +270,37 @@ entries:
 
       - title: Advanced
         sf:
+
+          - title: Stapel Image configuration
+            sfi:
+
+              - title: Naming (required)
+                url: /documentation/advanced/stapel_image_configuration/naming.html
+
+              - title: Base image (required)
+                url: /documentation/advanced/stapel_image_configuration/base_image.html
+
+              - title: Adding docker instructions
+                url: /documentation/advanced/stapel_image_configuration/docker_directive.html
+
+              - title: Adding source code from git repositories
+                url: /documentation/advanced/stapel_image_configuration/git_directive.html
+
+              - title: Running assembly instructions
+                url: /documentation/advanced/stapel_image_configuration/assembly_instructions.html
+
+              - title: Reducing image size and speeding up a build by mounts
+                url: /documentation/advanced/stapel_image_configuration/mount_directive.html
+
+              - title: Importing from images and artifacts
+                url: /documentation/advanced/stapel_image_configuration/import_directive.html
+
+              - title: Artifact
+                url: /documentation/advanced/stapel_image_configuration/artifact.html
+
+              - title: All directives
+                url: /documentation/advanced/stapel_image_configuration/image_directives.html
+
           - title: CI/CD workflows overview
             url: /documentation/advanced/ci_cd_workflows_overview.html
 

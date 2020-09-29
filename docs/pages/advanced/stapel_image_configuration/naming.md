@@ -1,7 +1,7 @@
 ---
 title: Naming
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/naming.html
+permalink: documentation/advanced/stapel_image_configuration/naming.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: Base image
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/base_image.html
+permalink: documentation/advanced/stapel_image_configuration/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <a class="google-drawings" href="../../../images/configuration/base_image1.png" data-featherlight="image">
@@ -60,7 +60,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 
 ## fromImage and fromArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), that is described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/advanced/stapel_image_configuration/stapel_artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>

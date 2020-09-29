@@ -1,7 +1,7 @@
 ---
 title: All directives
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/image_directives.html
+permalink: documentation/advanced/stapel_image_configuration/image_directives.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

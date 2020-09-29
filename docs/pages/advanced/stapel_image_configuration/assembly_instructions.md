@@ -1,7 +1,7 @@
 ---
 title: Running assembly instructions
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/assembly_instructions.html
+permalink: documentation/advanced/stapel_image_configuration/assembly_instructions.html
 summary: |
   <a class="google-drawings" href="../../../images/configuration/assembly_instructions1.png" data-featherlight="image">
       <img src="../../../images/configuration/assembly_instructions1_preview.png" alt="Assembly instructions">
@@ -166,7 +166,7 @@ shell:
 
 _Shell assembly instructions_ are made up of arrays. Each array consists of bash commands for the related _user stage_. Commands for each stage are executed as a single `RUN` instruction in Dockerfile. Thus, werf creates one layer for each _user stage_.
 
-werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). 
+werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ site.baseurl }}/documentation/advanced/stapel_image_configuration/base_image.html). 
 
 ```yaml
 beforeInstall:
@@ -295,7 +295,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ site.baseurl }}/documentation/advanced/stapel_image_configuration/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -373,7 +373,7 @@ You can use these dependencies to shape the rebuilding process of _user stages_.
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)
+- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/stapel_image_configuration/stapel_artifact.html)
 
 The first three dependencies are described below in more detail.
 
@@ -557,7 +557,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/advanced/stapel_image_configuration/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml
