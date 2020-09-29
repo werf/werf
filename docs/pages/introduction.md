@@ -4,27 +4,27 @@ permalink: introduction.html
 sidebar: documentation
 ---
 
-Werf is a CLI tool to implement full cycle of deployment of your application using Git as a single source of truth:
+Werf is a CLI tool to implement full cycle of deployment of your application using Git as a single source of truth. Werf supports:
  - Building of docker images.
- - Deploying application into Kubernetes.
- - Making sure that application is up and running well after deploy.
- - Rebuilding docker images when application code changes.
- - Redeploying application into Kubernetes when necessary.
+ - Deploying of the application into Kubernetes.
+ - Making sure application is up and running well after deploy.
+ - Rebuilding of docker images when application code changes.
+ - Redeploying of the application into Kubernetes when necessary.
  - Cleaning up old unused images.
 
 # Define desired state in the Git
 
-Werf configuration should be described in the application Git repository right where application code resides.
+Werf configuration should be described in the application Git repository, right where application code resides.
 
 1. Put Dockerfiles into application repo
 
    ![introduction-1]({% asset introduction/1.png @path %})
 
-2. Create `werf.yaml` main werf configuration file
+2. Create `werf.yaml` configuration file
 
     ![introduction-2]({% asset introduction/2.png @path %})
 
-    Pay attention to an important param `project`, which is a _project name_ — werf will use it during converge process. This name cannot be changed easily later when your application is up and running without downtime and redeploying of the application.
+    Pay attention to an important param `project`, which is a _project name_ — werf will use it during _converge process_. This name cannot be changed easily later when your application is up and running without downtime and redeploying of the application.
 
 3. Describe helm chart templates to deploy your app
 
@@ -34,11 +34,9 @@ Werf configuration should be described in the application Git repository right w
 
 # Converge application
 
-A process of docker images building (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure that application is up and running after deploying we will call a _converge process_.
+Building of docker images (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure application is up and running after deploying we will call a _converge process_. Converge process is called for certain Git commit to perform synchronization of running application with the configuration defined in this commit. When converge process is done it is safe to assume that your application is up and running and conforms to the state defined in the current Git commit.
 
-Converge process is called for certain Git commit to perform synchronization of running application with the configuration defined in this commit. When converge process is done it is safe to assume that your application is up and running and conforms to the state defined in the current Git commit.
-
-Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. Run following command in the root of your project 
+Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. Run following command in the root of your project:
 
 ```
 werf converge --repo myregistry.domain.org/example-app
@@ -48,9 +46,7 @@ Generally, converge command has one required argument: the address of the docker
 
 _NOTE: Your application may not have custom docker images (and use only publicly available images for example), in such case it is not required to pass `--repo` param — just omit it._
 
-Werf will take Kubernetes cluster connection settings from environment (`~/.kube/config` or `KUBECONFIG`) the same way as `kubectl` tool does.
-
-Converge will sync images in the docker repo to the defined state in the Git and sync Kubernetes to the defined state in the current Git commit.
+Converge will sync images of the docker repo to the defined state in the Git and sync running Kubernetes resources to the defined state in the current Git commit.
 
 # What's next?
 
