@@ -54,29 +54,29 @@ entries:
               - title: GitHub Actions
                 url: /documentation/reference/ci_cd_integration/github_actions.html
 
-          - title: Main commands
+          - title: Main CLI commands
             sfi:
 
               - title: converge
-                url: /documentation/reference/main_commands/converge.html
+                url: /documentation/reference/main_cli_commands/converge.html
 
               - title: dismiss
-                url: /documentation/reference/main_commands/dismiss.html
+                url: /documentation/reference/main_cli_commands/dismiss.html
 
               - title: build
-                url: /documentation/reference/main_commands/build.html
+                url: /documentation/reference/main_cli_commands/build.html
 
               - title: run
-                url: /documentation/reference/main_commands/run.html
+                url: /documentation/reference/main_cli_commands/run.html
 
               - title: ci-env
-                url: /documentation/reference/main_commands/ci_env.html
+                url: /documentation/reference/main_cli_commands/ci_env.html
 
               - title: cleanup
-                url: /documentation/reference/main_commands/cleanup.html
+                url: /documentation/reference/main_cli_commands/cleanup.html
 
               - title: purge
-                url: /documentation/reference/main_commands/purge.html
+                url: /documentation/reference/main_cli_commands/purge.html
 
       - title: Advanced
         sf:
