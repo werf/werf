@@ -248,21 +248,23 @@ entries:
                     url: /documentation/cli/other/version.html
 
           - title: Generic CI/CD integration
-            url: /documentation/guides/generic_ci_cd_integration.html
+            url: /documentation/reference/generic_ci_cd_integration.html
 
           - title: GitLab CI integration
-            url: /documentation/guides/gitlab_ci_cd_integration.html
+            url: /documentation/reference/gitlab_ci_cd_integration.html
 
           - title: GitHub Actions integration
-            url: /documentation/guides/github_ci_cd_integration.html
+            url: /documentation/reference/github_ci_cd_integration.html
 
       - title: Advanced
         sf:
+          - title: CI/CD workflows overview
+            url: /documentation/advanced/ci_cd_workflows_overview.html
 
       - title: Internals
         sf:
           - title: Stapel
-            url: /documentation/development/stapel.html
+            url: /documentation/internals/stapel.html
 
   ru:
     f:
