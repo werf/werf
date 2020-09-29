@@ -1,7 +1,7 @@
 ---
 title: GitHub Actions integration
 sidebar: documentation
-permalink: documentation/reference/github_ci_cd_integration.html
+permalink: documentation/reference/ci_cd_integration/github_actions.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

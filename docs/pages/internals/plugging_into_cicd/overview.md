@@ -1,7 +1,7 @@
 ---
 title: Overview
 sidebar: documentation
-permalink: documentation/reference/plugging_into_cicd/overview.html
+permalink: documentation/internals/plugging_into_cicd/overview.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

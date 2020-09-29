@@ -42,6 +42,18 @@ entries:
               - title: Differences with Helm
                 url: /documentation/reference/deploy/differences_with_helm.html
 
+          - title: CI/CD integration
+            sfi:
+
+              - title: Generic
+                url: /documentation/reference/ci_cd_integration/generic.html
+
+              - title: GitLab CI
+                url: /documentation/reference/ci_cd_integration/gitlab_ci.html
+
+              - title: GitHub Actions
+                url: /documentation/reference/ci_cd_integration/github_actions.html
+
           - title: CLI Commands
             sf: &cli-commands
               - title: Main Commands
@@ -274,15 +286,6 @@ entries:
                   - title: version
                     url: /documentation/cli/other/version.html
 
-          - title: Generic CI/CD integration
-            url: /documentation/reference/generic_ci_cd_integration.html
-
-          - title: GitLab CI integration
-            url: /documentation/reference/gitlab_ci_cd_integration.html
-
-          - title: GitHub Actions integration
-            url: /documentation/reference/github_ci_cd_integration.html
-
       - title: Advanced
         sf:
 
@@ -327,8 +330,18 @@ entries:
 
       - title: Internals
         sf:
+          
           - title: Stapel
             url: /documentation/internals/stapel.html
+
+          - title: Plugging into CI/CD
+            sfi:
+
+              - title: Overview
+                url: /documentation/internals/plugging_into_cicd/overview.html
+
+              - title: GitLab CI
+                url: /documentation/internals/plugging_into_cicd/gitlab_ci.html
 
   ru:
     f:

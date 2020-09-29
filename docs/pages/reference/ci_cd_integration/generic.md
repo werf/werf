@@ -1,7 +1,7 @@
 ---
 title: Generic CI/CD systems integration
 sidebar: documentation
-permalink: documentation/reference/generic_ci_cd_integration.html
+permalink: documentation/reference/ci_cd_integration/generic.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
