@@ -39,18 +39,6 @@ entries:
               - title: Working with chart dependencies
                 url: /documentation/reference/deploy/working_with_chart_dependencies.html
 
-          - title: CI/CD integration
-            sfi:
-
-              - title: Generic
-                url: /documentation/reference/ci_cd_integration/generic.html
-
-              - title: GitLab CI
-                url: /documentation/reference/ci_cd_integration/gitlab_ci.html
-
-              - title: GitHub Actions
-                url: /documentation/reference/ci_cd_integration/github_actions.html
-
           - title: Main commands
             sfi:
 
