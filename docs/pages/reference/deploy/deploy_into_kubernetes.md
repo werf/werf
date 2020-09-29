@@ -1,7 +1,7 @@
 ---
 title: Deploy into Kubernetes
 sidebar: documentation
-permalink: documentation/reference/deploy_process/deploy_into_kubernetes.html
+permalink: documentation/reference/deploy/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -192,7 +192,7 @@ spec:
 
 Secret files are excellent for storing sensitive data such as certificates and private keys in the project repository.
 
-Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-file-encryption) describes how to encrypt them.
+Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ site.baseurl }}/documentation/reference/deploy/working_with_secrets.html#secret-file-encryption) describes how to encrypt them.
 
 ##### werf_secret_file
 
@@ -253,9 +253,9 @@ global:
       password: mysql-dev
 ```
 
-Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_chart_dependencies.html).
+Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ site.baseurl }}/documentation/reference/deploy/working_with_chart_dependencies.html).
 
-Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_chart_dependencies.html).
+Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ site.baseurl }}/documentation/reference/deploy/working_with_chart_dependencies.html).
 
 The `.helm/values.yaml` file is the default place to store values. You can also pass additional user-defined regular values via:
 
@@ -277,7 +277,7 @@ global:
       password: 100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123
 ```
 
-Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ site.baseurl }}/documentation/reference/deploy_process/working_with_secrets.html#secret-values-encryption).
+Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ site.baseurl }}/documentation/reference/deploy/working_with_secrets.html#secret-values-encryption).
 
 The `.helm/secret-values.yaml` file is the default place for storing secret values. You can also pass additional user-defined secret values via separate secret value files by specifying `--secret-values=PATH_TO_FILE` (can be used repeatedly to pass multiple files).
 
@@ -431,8 +431,8 @@ werf uses the [kubedog library](https://github.com/werf/kubedog) to track resour
 werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster since it is the best possible option. However, there are different resource update methods available.
 
 See articles for more info:
- - [resource update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html);
- - [differences with the helm resource update method]({{ site.baseurl }}/documentation/reference/deploy_process/differences_with_helm.html#three-way-merge-patches-and-resources-adoption);
+ - [resource update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy/resources_update_methods_and_adoption.html);
+ - [differences with the helm resource update method]({{ site.baseurl }}/documentation/reference/deploy/differences_with_helm.html#three-way-merge-patches-and-resources-adoption);
  - ["3-way merge in werf: deploying to Kubernetes via Helm “on steroids” medium article](https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe).
 
 ### If the deploy failed

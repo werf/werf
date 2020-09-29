@@ -27,6 +27,21 @@ entries:
               - title: Cleanup
                 url: /documentation/reference/configuration/cleanup.html
 
+          - title: Deploy
+            sfi:
+
+              - title: Deploy into Kubernetes
+                url: /documentation/reference/deploy/deploy_into_kubernetes.html
+
+              - title: Working with secrets
+                url: /documentation/reference/deploy/working_with_secrets.html
+
+              - title: Working with chart dependencies
+                url: /documentation/reference/deploy/working_with_chart_dependencies.html
+
+              - title: Differences with Helm
+                url: /documentation/reference/deploy/differences_with_helm.html
+
           - title: CLI Commands
             sf: &cli-commands
               - title: Main Commands
@@ -300,6 +315,12 @@ entries:
 
               - title: All directives
                 url: /documentation/advanced/stapel_image_configuration/image_directives.html
+
+          - title: Deploy
+            sfi:
+
+              - title: Resources update methods and adoption
+                url: /documentation/advanced/deploy/resources_update_methods_and_adoption.html
 
           - title: CI/CD workflows overview
             url: /documentation/advanced/ci_cd_workflows_overview.html
