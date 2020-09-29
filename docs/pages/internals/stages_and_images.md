@@ -1,7 +1,7 @@
 ---
 title: Stages and Images
 sidebar: documentation
-permalink: documentation/reference/stages_and_images.html
+permalink: documentation/internals/stages_and_images.html
 author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 

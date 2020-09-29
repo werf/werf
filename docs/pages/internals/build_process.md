@@ -1,7 +1,7 @@
 ---
 title: Build process
 sidebar: documentation
-permalink: documentation/reference/build_process.html
+permalink: documentation/internals/build_process.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

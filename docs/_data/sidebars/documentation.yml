@@ -361,6 +361,12 @@ entries:
       - title: Internals
         sf:
 
+          - title: Stages and Images
+            url: /documentation/internals/stages_and_images.html
+
+          - title: Build Process
+            url: /documentation/internals/build_process.html
+
           - title: Stapel
             url: /documentation/internals/stapel.html
 
