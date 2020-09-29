@@ -4,12 +4,12 @@ topnav:
   en:
      - title: Introduction
        url: /introduction.html
+     - title: Installation
+       url: /installation.html
      - title: Documentation
        url: /documentation/index.html
      - title: Publications
        url: /publications.html
-     - title: Installation
-       url: /installation.html
   ru:
      - title: Установка
        url: /documentation/guides/installation.html
