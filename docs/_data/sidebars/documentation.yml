@@ -132,15 +132,6 @@ entries:
               - title: Lint And Render Chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
-          - title: Toolbox
-            sfi:
-
-              - title: Slug
-                url: /documentation/advanced/toolbox/slug.html
-
-              - title: SSH
-                url: /documentation/advanced/toolbox/ssh.html
-
       - title: Internals
         sf:
 
@@ -161,6 +152,12 @@ entries:
 
               - title: GitLab CI
                 url: /documentation/internals/plugging_into_cicd/gitlab_ci.html
+
+          - title: Slug
+            url: /documentation/advanced/toolbox/slug.html
+
+          - title: SSH
+            url: /documentation/advanced/toolbox/ssh.html
 
   ru:
     f:
