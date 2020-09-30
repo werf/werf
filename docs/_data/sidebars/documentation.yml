@@ -9,56 +9,53 @@ entries:
       - title: Guides
         url: https://github.com/werf/werf
 
-      - title: Reference
+      - title: Configuration
         sf:
 
-          - title: Configuration
-            sfi:
+          - title: Introduction
+            url: /documentation/reference/configuration/introduction.html
 
-              - title: Introduction
-                url: /documentation/reference/configuration/introduction.html
+          - title: Image definition
+            url: /documentation/reference/configuration/image_definition.html
 
-              - title: Image definition
-                url: /documentation/reference/configuration/image_definition.html
+          - title: Cleanup policies
+            url: /documentation/reference/configuration/cleanup_policies.html
 
-              - title: Cleanup policies
-                url: /documentation/reference/configuration/cleanup_policies.html
+      - title: Deploy
+        sf:
 
-          - title: Deploy
-            sfi:
+          - title: Deploy into Kubernetes
+            url: /documentation/reference/deploy/deploy_into_kubernetes.html
 
-              - title: Deploy into Kubernetes
-                url: /documentation/reference/deploy/deploy_into_kubernetes.html
+          - title: Working with secrets
+            url: /documentation/reference/deploy/working_with_secrets.html
 
-              - title: Working with secrets
-                url: /documentation/reference/deploy/working_with_secrets.html
+          - title: Working with chart dependencies
+            url: /documentation/reference/deploy/working_with_chart_dependencies.html
 
-              - title: Working with chart dependencies
-                url: /documentation/reference/deploy/working_with_chart_dependencies.html
+      - title: CLI
+        sf:
 
-          - title: Main commands
-            sfi:
+          - title: converge
+            url: /documentation/reference/cli/converge.html
 
-              - title: converge
-                url: /documentation/reference/cli/converge.html
+          - title: dismiss
+            url: /documentation/reference/cli/dismiss.html
 
-              - title: dismiss
-                url: /documentation/reference/cli/dismiss.html
+          - title: build
+            url: /documentation/reference/cli/build.html
 
-              - title: build
-                url: /documentation/reference/cli/build.html
+          - title: run
+            url: /documentation/reference/cli/run.html
 
-              - title: run
-                url: /documentation/reference/cli/run.html
+          - title: ci-env
+            url: /documentation/reference/cli/ci_env.html
 
-              - title: ci-env
-                url: /documentation/reference/cli/ci_env.html
+          - title: cleanup
+            url: /documentation/reference/cli/cleanup.html
 
-              - title: cleanup
-                url: /documentation/reference/cli/cleanup.html
-
-              - title: purge
-                url: /documentation/reference/cli/purge.html
+          - title: purge
+            url: /documentation/reference/cli/purge.html
 
       - title: Advanced
         sf:
