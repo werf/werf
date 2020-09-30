@@ -14,7 +14,7 @@ layout: default
                 <ul class="presentation__features">
                     <li>Git as a single source of truth.</li>
                     <li>Build. Deploy to Kubernetes. Stay in sync.</li>
-                    <li>Open Source. Written in Go.</li>
+                    <li>Open Source CLI tool. <a href="https://github.com/werf/werf">Written in Go.</a></li>
                 </ul>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
@@ -33,7 +33,7 @@ layout: default
             </h1>
             <div class="welcome__subtitle">
                 Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent. 
-                You can use it from within your CI or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
+                You can use it manually, from within your CI/CD system or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
             </div>
             <!-- <h1 class="welcome__title">
                 GitOps CLI tool
@@ -55,22 +55,30 @@ layout: default
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
-                            werf is an integrated CLI tool that combines several popular instruments:<br/> <code>git</code>, <code>helm</code>, and <code>docker</code>.
+                            werf is not a SAAS, it is self-contained client-side <b>CLI tool</b>, which does all of CI/CD work.
                         </li>
                         <li>
-                            werf can be embedded into any existing CI/CD system (like GitLab CI) <br>to implement CI/CD pipelines using the built-in building blocks:
+                            werf just works out of the box with minimal familiar configuration,<br/>does not need special knowledge of devops techniques to combine multiple tools<br/>and provides <b>plenty of guides</b> to quickly setup deployment of your application into Kubernetes,<br/>either for local development or production.
+                        </li>
+                        <li>
+                            werf makes use of <code>git</code> and <code>docker</code> external dependencies to build docker images,<br/>yet it implements own <b>advanced distributed building</b> algorithm,<br/>which enables really fast pipelines due to distributed caching.
+                        </li>
+                        <li>
+                            werf implements own fully <b>helm-compatible deployment</b> process<br/>with neat extensions like clear-sighted and sharp <b>deploy process tracking</b><br/>and does not need <code>helm</code> tool to be installed.
+                        </li>
+                        <li>
+                            werf implements smart <b>cleaning of unused docker images</b> algorithm<br/>based on Git-history of your application.
+                        </li>
+                        <li>
+                            werf can be embedded into any existing CI/CD system (like GitLab CI/CD) <br>to construct pipelines using built-in building blocks:
                             <ul>
-                                <li><code>werf build-and-publish</code>;</li>
-                                <li><code>werf deploy</code>;</li>
+                                <li><code>werf converge</code>;</li>
                                 <li><code>werf dismiss</code>;</li>
                                 <li><code>werf cleanup</code>.</li>
                             </ul>
                         </li>
                         <li>
-                            Open Source, written in Go.
-                        </li>
-                        <li>
-                            werf is not a SAAS. werf is the new generation<br/> of high-level CI/CD tools.
+                            Open Source, <a href="https://github.com/werf/werf">written in Go</a>.
                         </li>
                     </ul>
                 </div>
