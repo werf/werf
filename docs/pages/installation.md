@@ -157,3 +157,41 @@ layout: default
     {%- endcomment %}
 </div>
 {%- endfor %}
+
+## Stability channels
+
+All changes in werf go through all stability channels:
+
+- `alpha` channel can bring new features but can be unstable;
+- `beta` channel is for more broad testing of new features to catch regressions;
+- `ea` channel is mostly safe and can be used in non-critical environments or for local development;
+- `stable` channel is mostly safe and we encourage you to use this version everywhere.
+  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests;
+- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
+  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
+
+The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
+
+> When using release channels, you do not specify a version, because the version is managed automatically within the channel
+  
+Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.
+
+### Backward compatibility promise
+
+> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions.
+
+werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_ require to do a full re-deploy of applications or to perform other non-scriptable actions.
+
+Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
+In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
+
+Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
+In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
+
+- We do **not guarantee** backward compatibility between:
+  - `alpha` releases;
+  - `beta` releases;
+  - `ea` releases.
+- We **guarantee** backward compatibility between:
+  - `stable` releases within the minor branch (1.1.x);
+  - `rock-solid` releases within the minor branch (1.1.x).

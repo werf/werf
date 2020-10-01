@@ -39,7 +39,7 @@ layout: default
                 <div class="welcome__extra-content-text">
                     <ul class="intro__list">
                         <li>
-                            werf is not a SAAS, it is self-contained client-side <b>CLI tool</b>, which implements building blocks to construct CI/CD workflow for your application.
+                            werf is not a SAAS, it is self-contained client-side <b>CLI tool</b>,<br/>which implements building blocks to construct CI/CD workflow for your application.
                         </li>
                         <li>
                             werf just works out of the box with minimal familiar configuration,<br/>does not need special knowledge of devops techniques to combine multiple tools<br/>and provides <b>plenty of guides</b> to quickly setup deployment of your application into Kubernetes,<br/>either for local development or production.
@@ -75,14 +75,6 @@ layout: default
     <div class="documentation">
         <div class="documentation__image">
         </div>
-        <div class="documentation__info">
-            <div class="documentation__info-title">
-                Detailed documentation
-            </div>
-            <div class="documentation__info-text">
-                werf documentation comprises over 100 articles covering typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and providing a thorough description of functions & architecture.
-            </div>
-        </div>
         <div class="documentation__btns">
             <a href="{{ site.baseurl }}/introduction.html" target="_blank" class="page__btn page__btn_b documentation__btn">
                 Introduction
@@ -95,12 +87,6 @@ layout: default
             </a>
         </div>
     </div>
-</div>
-
-<div class="page__container">
-    <a href="https://github.com/werf/werf/blob/master/README.md#complete-list-of-features" target="_blank" class="page__btn page__btn_o intro__btn">
-        Check out the complete features list
-    </a>
 </div>
 
 <div class="stats">
