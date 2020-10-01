@@ -114,6 +114,16 @@ layout: default
     </div>
 </div>
 
+<div class="stats">
+    <div class="page__container">
+        <div class="stats__content">
+            <a href="{{ site.baseurl }}/installation.html#stability-channels" class="page__btn page__btn_o documentation__btn">
+                werf is a mature, reliable tool you can trust: read about stability channels and release process
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="community">
     <div class="page__container">
         <div class="community__content">
