@@ -53,18 +53,17 @@ func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
 }
 
 func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	deleteRepoImageFunc := r.deleteRepoImageFunc
-	if deleteRepoImageFunc != nil {
-		return deleteRepoImageFunc(ctx, repoImage)
+	if r.deleteRepoImageFunc != nil {
+		return r.deleteRepoImageFunc(ctx, repoImage)
 	}
 
 	// DELETE /v2/<name>/tags/reference/<reference> method is available since the v2.8.0-gitlab
 	var err error
-	for _, deleteFunc := range []func(repoImage *image.Info) error{
+	for _, deleteFunc := range []func(ctx context.Context, repoImage *image.Info) error{
 		r.deleteRepoImageTagWithFullScope,
 		r.deleteRepoImageTagWithUniversalScope,
 	} {
-		if err := deleteFunc(repoImage); err != nil {
+		if err := deleteFunc(ctx, repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "404 Not Found; 404 page not found") {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
@@ -77,15 +76,15 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 			return err
 		}
 
-		r.deleteRepoImageFunc = deleteRepoImageFunc
+		r.deleteRepoImageFunc = deleteFunc
 		return nil
 	}
 
-	for _, deleteFunc := range []func(repoImage *image.Info) error{
+	for _, deleteFunc := range []func(ctx context.Context, repoImage *image.Info) error{
 		r.deleteRepoImageWithFullScope,
 		r.deleteRepoImageWithUniversalScope,
 	} {
-		if err := deleteFunc(repoImage); err != nil {
+		if err := deleteFunc(ctx, repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
 			if strings.Contains(err.Error(), "UNAUTHORIZED") {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
@@ -95,7 +94,7 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 			return err
 		}
 
-		r.deleteRepoImageFunc = deleteRepoImageFunc
+		r.deleteRepoImageFunc = deleteFunc
 		return nil
 	}
 
@@ -108,19 +107,19 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	return nil
 }
 
-func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(_ context.Context, repoImage *image.Info) error {
 	return r.deleteRepoImageTagWithCustomScope(repoImage, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageTagWithFullScope(repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageTagWithFullScope(_ context.Context, repoImage *image.Info) error {
 	return r.deleteRepoImageTagWithCustomScope(repoImage, fullScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithUniversalScope(repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageWithUniversalScope(_ context.Context, repoImage *image.Info) error {
 	return r.deleteRepoImageWithCustomScope(repoImage, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithFullScope(repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageWithFullScope(_ context.Context, repoImage *image.Info) error {
 	return r.deleteRepoImageWithCustomScope(repoImage, fullScopeFunc)
 }
 
