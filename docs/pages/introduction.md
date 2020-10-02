@@ -16,25 +16,33 @@ Werf is a CLI tool to implement full cycle of deployment of your application usi
 
 Werf configuration should be described in the application Git repository, right where application code resides.
 
+   ![introduction-1]({% asset introduction/1.png @path %})   
+
 1. Put Dockerfiles into application repo
 
-   ![introduction-1]({% asset introduction/1.png @path %})
+   ![introduction-2]({% asset introduction/2.png @path %})
 
 2. Create `werf.yaml` configuration file
 
-    ![introduction-2]({% asset introduction/2.png @path %})
+    ![introduction-3]({% asset introduction/3.png @path %})
 
     Pay attention to an important param `project`, which is a _project name_ — werf will use it during _converge process_. This name cannot be changed easily later when your application is up and running without downtime and redeploying of the application.
 
 3. Describe helm chart templates to deploy your app
 
-    ![introduction-3]({% asset introduction/3.png @path %})
+    ![introduction-4]({% asset introduction/4.png @path %})
 
     `werf_image` is a special template function to generate the full image name which has been built (like `myregistry.domain.org/example-app:f6e683effe19ca5f81b3c6df0ce398dd2ba50f5a991cec47b63c31b8-1601390730191`). This function has name parameter which corresponds to the image defined in the `werf.yaml` (`"frontend"` or `"backend"` in our case).
+
+4. Commit
+
+    ![introduction-5]({% asset introduction/5.png @path %})
 
 # Converge application
 
 Building of docker images (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure application is up and running after deploying we will call a _converge process_. Converge process is called for certain Git commit to perform synchronization of running application with the configuration defined in this commit. When converge process is done it is safe to assume that your application is up and running and conforms to the state defined in the current Git commit.
+
+![introduction-6]({% asset introduction/6.png @path %})
 
 Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. Run following command in the root of your project:
 
