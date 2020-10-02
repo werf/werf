@@ -1,7 +1,7 @@
 ---
 title: Adding source code from git repositories
 sidebar: documentation
-permalink: documentation/advanced/building_images_with_stapelgit_directive.html
+permalink: documentation/advanced/building_images_with_stapel/git_directive.html
 summary: |
   <a class="google-drawings" href="../../../images/configuration/git_directive1.png" data-featherlight="image">
       <img src="../../../images/configuration/git_directive1_preview.png">
@@ -104,7 +104,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
-- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/documentation/advanced/building_images_with_stapelassembly_instructions.html) reference.
+- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/assembly_instructions.html) reference.
 
 The configuration of a _git mapping_ for a remote repository has some additional parameters:
 - `url` — address of the remote repository;

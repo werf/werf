@@ -12,7 +12,7 @@ Start with **[introduction]({{ site.baseurl }}/introduction.html)** to dive into
 
 ---
 
-**[Guides]()** contain plenty of guides to quickly setup deployment of your application into Kubernetes,
+**[Guides](https://ru.werf.io/applications_guide_ru)** contain plenty of guides to quickly setup deployment of your application into Kubernetes,
 either for local development or production. This is recommended section to read after _introduction_.
 
 ---

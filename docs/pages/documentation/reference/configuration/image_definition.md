@@ -1,7 +1,7 @@
 ---
 title: Image definition
 sidebar: documentation
-permalink: documentation/configuration/image_definition.html
+permalink: documentation/reference/configuration/image_definition.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <a class="google-drawings" href="../../../images/configuration/dockerfile_image1.png" data-featherlight="image">
