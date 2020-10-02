@@ -1,7 +1,7 @@
 ---
 title: werf run
 sidebar: documentation
-permalink: documentation/cli/run.html
+permalink: documentation/reference/cli/run.html
 ---
 
 {% include /cli/werf_run.md %}

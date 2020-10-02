@@ -7,19 +7,49 @@ entries:
         url: /documentation/index.html
 
       - title: Guides
-        url: https://github.com/werf/werf
+        url: https://ru.werf.io/applications_guide_ru
 
-      - title: Configuration
+      - title: Reference
         sf:
 
-          - title: Introduction
-            url: /documentation/configuration/introduction.html
+          - title: Configuration
+            sfi:
 
-          - title: Image definition
-            url: /documentation/configuration/image_definition.html
+              - title: Introduction
+                url: /documentation/reference/configuration/introduction.html
 
-          - title: Cleanup policies
-            url: /documentation/configuration/cleanup_policies.html
+              - title: Image definition
+                url: /documentation/reference/configuration/image_definition.html
+
+              - title: Cleanup policies
+                url: /documentation/reference/configuration/cleanup_policies.html
+
+          - title: Command line interface
+            sfi:
+
+              - title: converge
+                url: /documentation/reference/cli/converge.html
+
+              - title: dismiss
+                url: /documentation/reference/cli/dismiss.html
+
+              - title: build
+                url: /documentation/reference/cli/build.html
+
+              - title: run
+                url: /documentation/reference/cli/run.html
+
+              - title: ci-env
+                url: /documentation/reference/cli/ci_env.html
+
+              - title: cleanup
+                url: /documentation/reference/cli/cleanup.html
+
+              - title: purge
+                url: /documentation/reference/cli/purge.html
+
+          - title: Deploy annotations (FIXME)
+            url: /documentation/reference/deploy_annotations.html
 
       - title: Deploy
         sf:
@@ -47,30 +77,6 @@ entries:
 
           - title: Generic CI/CD integration
             url: /documentation/ci_cd/generic_ci_cd_integration.html
-
-      - title: Command line interface
-        sf:
-
-          - title: converge
-            url: /documentation/cli/converge.html
-
-          - title: dismiss
-            url: /documentation/cli/dismiss.html
-
-          - title: build
-            url: /documentation/cli/build.html
-
-          - title: run
-            url: /documentation/cli/run.html
-
-          - title: ci-env
-            url: /documentation/cli/ci_env.html
-
-          - title: cleanup
-            url: /documentation/cli/cleanup.html
-
-          - title: purge
-            url: /documentation/cli/purge.html
 
       - title: Advanced
         sf:
@@ -145,7 +151,7 @@ entries:
                   url: /documentation/internals/building_of_images/build_process.html
 
                 - title: Images storage
-                  url: /documentation/internals/building_of_images/stages_and_images.html
+                  url: /documentation/internals/building_of_images/images_storage.html
 
           - title: How CI/CD integration works
             sfi:
