@@ -48,14 +48,14 @@ entries:
               - title: purge
                 url: /documentation/reference/cli/purge.html
 
-          - title: Deploy annotations (FIXME)
+          - title: Deploy annotations
             url: /documentation/reference/deploy_annotations.html
 
       - title: Deploy
         sf:
 
-          - title: Deploy into Kubernetes
-            url: /documentation/deploy/deploy_into_kubernetes.html
+          - title: Basics
+            url: /documentation/deploy/basics.html
 
           - title: Working with secrets
             url: /documentation/deploy/working_with_secrets.html
