@@ -1,0 +1,108 @@
+meta_section:
+  - name: project
+    value: "string"
+    description: Unique project name
+    details: "#project-name"
+    required: true
+  - name: configVersion
+    value: "string"
+    description: Config syntax version. It should always be 1 for now
+    required: true
+  - name: deploy
+    description: Settings for deployment into various environments
+    collapsible: true
+    isCollapsedByDefault: true
+    directives:
+      - name: helmRelease
+        value: "string with templates"
+        description: Release name template
+        default: "[[ project ]]-[[ env ]]"
+        details: "#release-name"
+      - name: helmReleaseSlug
+        value: "bool"
+        description: Release name slugification
+        default: true
+      - name: namespace
+        value: "string with templates"
+        description: Kubernetes namespace template
+        default: "[[ project ]]-[[ env ]]"
+        details: "#kubernetes-namespace"
+      - name: namespaceSlug
+        value: "bool"
+        description: Kubernetes namespace slugification
+        default: true
+  - name: cleanup
+    description: Settings for cleaning up irrelevant images
+    collapsible: true
+    isCollapsedByDefault: true
+    directives:
+      - name: keepPolicies
+        description: Set of policies to select relevant images using the git history
+        details: "#configuring-cleanup-policies"
+        directiveList:
+          - name: references
+            description: References to perform scanning on
+            directives:
+              - name: branch
+                value: "string || /REGEXP/"
+                description: One or more git origin branches
+              - name: tag
+                value: "string || /REGEXP/"
+                description: One or more git origin tags
+              - name: limit
+                value: "int"
+                description: The limit on the number of images for each reference contained in the set
+                directives:
+                  - name: last
+                    value: "int"
+                    description: To select n last references last n references from those defined in the branch or tag
+                    default: "-1"
+                  - name: in
+                    value: "duration string"
+                    description: To select git tags that were created during the specified period or git branches that were active during the period
+                  - name: operator
+                    value: "And || Or"
+                    default: And
+                    description: Check both conditions or any of them
+          - name: imagesPerReference
+            description: The limit on the number of images for each reference contained in the set
+            directives:
+              - name: last
+                value: "int"
+                description: The number of images to search for each reference
+                default: "-1"
+              - name: in
+                value: "duration string"
+                description: The time frame in which werf searches for images
+              - name: operator
+                value: "And || Or"
+                default: And
+                description: Check both conditions or any of them
+image_section:
+  - name: image
+    value: "string || ~ || [ string, ... ]"
+    description: One or more names for image
+    required: true
+    details: "#naming"
+  - name: dockerfile
+    value: "string"
+    description: Dockerfile path relative to the project directory
+  - name: context
+    value: "string"
+    default: "."
+    description: Build context PATH inside project directory
+  - name: target
+    value: "string"
+    description: Specific Dockerfile stage (last one by default, see docker build --target option)
+  - name: args
+    value: "{ arg name string: arg value string, ... }"
+    description: Build-time variables (see docker build --build-arg option)
+  - name: addHost
+    value: "[ host:ip, ... ]"
+    description: Custom host-to-IP mapping (host:ip) (see docker build --add-host option)
+  - name: network
+    value: "string"
+    description: The networking mode for the RUN instructions during build (see docker build --network option)
+  - name: ssh
+    value: "string"
+    description: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
