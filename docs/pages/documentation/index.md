@@ -17,18 +17,16 @@ either for local development or production. This is recommended section to read 
 
 ---
 
-To use werf, an application should be properly configured via `werf.yaml` file. The **[configuration article]({{ site.baseurl }}/documentation/reference/configuration/introduction.html)** includes:
-
-1. Definition of the project meta information such as a project name (it will affect converge and dismiss commands).
-2. Definition of images to be built.
+**[Reference]()** section explains main configuration aspects of the werf and main commands.
+ - To use werf, an application should be properly configured via `werf.yaml` file. The **[configuration article]({{ site.baseurl }}/documentation/reference/configuration/introduction.html)** includes definition of the project meta information such as a project name and defenition of images to be built.
+ - Werf also uses [annotations in resource definitions]({{ site.baseurl }}/documentation/reference/configuration/deploy_annotations.html) to configure werf behaviour.
+ - **[Command line interface]()** article contains reference of the main werf CLI commands. Full CLI commands list also available in the [internals article]({{ site.baseurl }}/documentation/internals/cli_reference/main/build.html).
 
 **[Deploy section]()** describes deploy essentials: how to configure werf to deploy into Kubernetes, what is chart and release, templating of Kubernetes resources, how to use built images defined in your `werf.yaml` file during deploy process, working with secrets and other. Read this section if you want learn more about deploy process with werf.
 
 **[CI/CD]()** describes main aspects of organizing CI/CD workflows with werf, using GitLab CI/CD or GitHub Actions or any other CI/CD system with werf.
 
 **[Local development]()** describes how to use werf to ease local development of your applications, use the same configuration to deploy application either locally or into production.
-
-Check out **[command line interface]()** article to see reference of the main werf CLI commands. Full CLI commands list also available in [internals section]().
 
 ---
 
