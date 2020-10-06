@@ -425,15 +425,6 @@ werf displays logs of resource Pods until those pods reach the "ready" state. In
 
 werf uses the [kubedog library](https://github.com/werf/kubedog) to track resources. Currently, tracking is implemented for Deployments, StatefulSets, DaemonSets, and Jobs. We plan to implement support for tracking Service, Ingress, PVC, and other resources [in the near future](https://github.com/werf/werf/issues/1637).
 
-### Method of applying changes
-
-werf tries to use 3-way-merge patches to update resources in the Kubernetes cluster since it is the best possible option. However, there are different resource update methods available.
-
-See articles for more info:
- - [resource update methods and adoption]({{ site.baseurl }}/documentation/reference/deploy/resources_update_methods_and_adoption.html);
- - [differences with the helm resource update method]({{ site.baseurl }}/documentation/reference/deploy/differences_with_helm.html#three-way-merge-patches-and-resources-adoption);
- - ["3-way merge in werf: deploying to Kubernetes via Helm “on steroids” medium article](https://medium.com/flant-com/3-way-merge-patches-helm-werf-beb7eccecdfe).
-
 ### If the deploy failed
 
 In the case of failure during the release process, werf would create a new release having the FAILED state. This state can then be inspected by the user to find the problem and solve it on the next deploy invocation.
@@ -458,40 +449,11 @@ A lot of various helm hooks come into play during the deploy process. We have al
 
 Hooks are sorted in the ascending order specified by the `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the name). After that, hooks are created and executed sequentially. werf recreates the Kubernetes resource for each hook if that resource already exists in the cluster. Hooks of Kubernetes resources are not deleted after executing.
 
-### Configuring resource tracking
+### Configure resource tracking
 
-Tracking can be configured for each resource using resource annotations:
+Tracking can be configured for each resource using [resource annotations]({{ site.baseurl }}/documentation/reference/deploy_annotations.html), which should be set in the chart templates.
 
- * [`werf.io/track-termination-mode`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#track-termination-mode);
- * [`werf.io/fail-mode`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#fail-mode);
- * [`werf.io/failures-allowed-per-replica`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#failures-allowed-per-replica);
- * [`werf.io/log-regex`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#log-regex);
- * [`werf.io/log-regex-for-CONTAINER_NAME`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#log-regex-for-container);
- * [`werf.io/skip-logs`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#skip-logs);
- * [`werf.io/skip-logs-for-containers`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#skip-logs-for-containers);
- * [`werf.io/show-logs-only-for-containers`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#show-logs-only-for-containers);
- * [`werf.io/show-service-messages`]({{ site.baseurl }}/documentation/reference/deploy_annotations.html#show-service-messages).
-
-All these annotations can be combined and used together for a resource. See [reference]({{ site.baseurl }}/documentation/reference/deploy_annotations.html) for more info about each mode.
-
-#### Examples of using annotations
-
-<div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'show-service-messages')">show-service-messages</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'skip-logs')">skip-logs</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'track-termination-mode')">NonBlocking track-termination-mode</a>
-</div>
-<div id="show-service-messages" class="tabs__content active">
-  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
-</div>
-<div id="skip-logs" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-2.gif" />
-</div>
-<div id="track-termination-mode" class="tabs__content">
-  <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-3.gif" />
-</div>
-
-### Annotating and labeling chart resources
+### Annotating and labeling of chart resources
 
 #### Auto annotations
 
