@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,6 +113,29 @@ func GenMarkdownTree(cmd *cobra.Command, dir string) error {
 	identity := func(s string) string { return s }
 	emptyStr := func(s string) string { return "" }
 	return GenMarkdownTreeCustom(cmd, dir, emptyStr, identity)
+}
+
+func GenMarkdownShortDescriptions(rootCmd *cobra.Command, dir string) error {
+	var queue []*cobra.Command
+
+	queue = append(queue, rootCmd)
+	for _, c := range rootCmd.Commands() {
+		queue = append(queue, c)
+	}
+
+	for _, cmd := range queue {
+		basename := cmd.CommandPath()
+		basename = strings.Replace(basename, " ", "_", -1)
+		basename = strings.Replace(basename, "-", "_", -1)
+		basename = basename + ".md"
+		path := filepath.Join(dir, basename)
+
+		if err := ioutil.WriteFile(path, []byte(cmd.Short), 0644); err != nil {
+			return fmt.Errorf("unable to write %s: %s", path, err)
+		}
+	}
+
+	return nil
 }
 
 // GenMarkdownTreeCustom is the the same as GenMarkdownTree, but

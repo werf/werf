@@ -4,4 +4,4 @@ sidebar: documentation
 permalink: documentation/reference/cli/dismiss.html
 ---
 
-{% include /cli/werf_dismiss.md %}
+{% include /cli/full/werf_dismiss.md %}

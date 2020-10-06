@@ -4,4 +4,4 @@ sidebar: documentation
 permalink: documentation/internals/cli_reference/lowlevel-management/helm/secret/generate_secret_key.html
 ---
 
-{% include /cli/werf_helm_secret_generate_secret_key.md %}
+{% include /cli/full/werf_helm_secret_generate_secret_key.md %}

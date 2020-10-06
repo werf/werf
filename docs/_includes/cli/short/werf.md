@@ -1,0 +1,1 @@
+werf helps to implement and support Continuous Integration and Continuous Delivery

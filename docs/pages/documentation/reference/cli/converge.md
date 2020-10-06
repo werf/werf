@@ -4,4 +4,4 @@ sidebar: documentation
 permalink: documentation/reference/cli/converge.html
 ---
 
-{% include /cli/werf_converge.md %}
+{% include /cli/full/werf_converge.md %}

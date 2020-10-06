@@ -1,0 +1,1 @@
+Work with managed images which will be preserved during cleanup procedure
