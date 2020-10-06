@@ -12,6 +12,9 @@ entries:
       - title: Guides
         url: https://ru.werf.io/applications_guide_ru
 
+      - title: Using with CI/CD systems
+        url: /documentation/using_with_ci_cd_systems.html
+
       - title: Advanced
         sf:
 
