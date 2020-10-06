@@ -12,17 +12,8 @@ entries:
       - title: Reference
         sf:
 
-          - title: Configuration
-            sfi:
-
-              - title: Introduction
-                url: /documentation/reference/configuration/introduction.html
-
-              - title: Image definition
-                url: /documentation/reference/configuration/image_definition.html
-
-              - title: Cleanup policies
-                url: /documentation/reference/configuration/cleanup_policies.html
+          - title: werf.yaml
+            url: /documentation/reference/werf_yaml.html
 
           - title: Command line interface
             sfi:
@@ -84,11 +75,11 @@ entries:
           - title: Configuration
             sfi:
 
+              - title: Supported Go templates
+                url: /documentation/advanced/configuration/supported_go_templates.html
+
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
-
-              - title: Overriding predefined templates for deployment
-                url: /documentation/advanced/configuration/overriding_predefined_templates_for_deployment.html
 
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
