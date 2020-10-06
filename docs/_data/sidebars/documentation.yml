@@ -12,18 +12,6 @@ entries:
       - title: Guides
         url: https://ru.werf.io/applications_guide_ru
 
-      - title: Deploy
-        sf:
-
-          - title: Basics
-            url: /documentation/deploy/basics.html
-
-          - title: Working with secrets
-            url: /documentation/deploy/working_with_secrets.html
-
-          - title: Working with chart dependencies
-            url: /documentation/deploy/working_with_chart_dependencies.html
-
       - title: Advanced
         sf:
 
@@ -38,6 +26,18 @@ entries:
 
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
+
+          - title: Deploy
+            sf:
+
+              - title: Basics
+                url: /documentation/advanced/deploy/basics.html
+
+              - title: Working with secrets
+                url: /documentation/advanced/deploy/working_with_secrets.html
+
+              - title: Working with chart dependencies
+                url: /documentation/advanced/deploy/working_with_chart_dependencies.html
 
           - title: CI/CD
             sfi:

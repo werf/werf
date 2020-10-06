@@ -1,7 +1,7 @@
 ---
 title: Basics
 sidebar: documentation
-permalink: documentation/deploy/basics.html
+permalink: documentation/advanced/deploy/basics.html
 ---
 
 You can easily start using werf for deploying your projects via the existing [Helm](https://helm.sh) charts since they are fully compatible with werf. The configuration has a format similar to that of [Helm charts](#chart)
