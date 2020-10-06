@@ -18,6 +18,9 @@ entries:
           - title: Command line interface
             sfi:
 
+              - title: INDEX.HTML
+                url: /documentation/reference/cli/index.html
+
               - title: converge
                 url: /documentation/reference/cli/converge.html
 
@@ -170,6 +173,9 @@ entries:
 
           - title: CLI reference
             sfi:
+
+              - title: INDEX.HTML
+                url: /documentation/internals/cli_reference/index.html
 
               - title: converge
                 url: /documentation/internals/cli_reference/main/converge.html

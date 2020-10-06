@@ -4,4 +4,4 @@ sidebar: documentation
 permalink: documentation/reference/cli/run.html
 ---
 
-{% include /cli/werf_run.md %}
+{% include /cli/full/werf_run.md %}

@@ -4,4 +4,4 @@ sidebar: documentation
 permalink: documentation/internals/cli_reference/other/version.html
 ---
 
-{% include /cli/werf_version.md %}
+{% include /cli/full/werf_version.md %}

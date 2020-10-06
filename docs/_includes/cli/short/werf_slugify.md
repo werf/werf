@@ -1,0 +1,1 @@
+Print slugged string by specified format

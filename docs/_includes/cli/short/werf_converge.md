@@ -1,0 +1,1 @@
+Build stages and publish images, then deploy application into Kubernetes

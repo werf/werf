@@ -37,7 +37,18 @@ func NewCmd() *cobra.Command {
 					return err
 				}
 			} else {
-				if err := GenMarkdownTree(cmd.Root(), cmdData.dest); err != nil {
+				if err := os.MkdirAll(filepath.Join(cmdData.dest, "full"), 0777); err != nil {
+					return err
+				}
+				if err := os.MkdirAll(filepath.Join(cmdData.dest, "short"), 0777); err != nil {
+					return err
+				}
+
+				if err := GenMarkdownTree(cmd.Root(), filepath.Join(cmdData.dest, "full")); err != nil {
+					return err
+				}
+
+				if err := GenMarkdownShortDescriptions(cmd.Root(), filepath.Join(cmdData.dest, "short")); err != nil {
 					return err
 				}
 			}
