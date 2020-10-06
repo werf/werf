@@ -1,7 +1,7 @@
 ---
 title: CI/CD workflow basics
 sidebar: documentation
-permalink: documentation/ci_cd/ci_cd_workflow_basics.html
+permalink: documentation/advanced/ci_cd/ci_cd_workflow_basics.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

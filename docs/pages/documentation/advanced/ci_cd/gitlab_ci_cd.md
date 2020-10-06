@@ -1,7 +1,7 @@
 ---
 title: GitLab CI integration
 sidebar: documentation
-permalink: documentation/ci_cd/gitlab_ci_cd.html
+permalink: documentation/advanced/ci_cd/gitlab_ci_cd.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

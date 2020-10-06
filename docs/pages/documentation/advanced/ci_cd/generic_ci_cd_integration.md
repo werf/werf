@@ -1,7 +1,7 @@
 ---
 title: Generic CI/CD systems integration
 sidebar: documentation
-permalink: documentation/ci_cd/generic_ci_cd_integration.html
+permalink: documentation/advanced/ci_cd/generic_ci_cd_integration.html
 ---
 
 Currently, the following CI systems are officialy supported and fully tested to be used with werf:

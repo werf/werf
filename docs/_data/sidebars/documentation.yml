@@ -57,21 +57,6 @@ entries:
           - title: Working with chart dependencies
             url: /documentation/deploy/working_with_chart_dependencies.html
 
-      - title: CI/CD
-        sf:
-
-          - title: CI/CD workflow basics
-            url: /documentation/ci_cd/ci_cd_workflow_basics.html
-
-          - title: GitLab CI/CD
-            url: /documentation/ci_cd/gitlab_ci_cd.html
-
-          - title: GitHub Actions
-            url: /documentation/ci_cd/github_actions.html
-
-          - title: Generic CI/CD integration
-            url: /documentation/ci_cd/generic_ci_cd_integration.html
-
       - title: Advanced
         sf:
 
@@ -86,6 +71,21 @@ entries:
 
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
+
+          - title: CI/CD
+            sfi:
+
+              - title: CI/CD workflow basics
+                url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
+
+              - title: GitLab CI/CD
+                url: /documentation/advanced/ci_cd/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /documentation/advanced/ci_cd/github_actions.html
+
+              - title: Generic CI/CD integration
+                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
 
           - title: Supported registry implementations
             url: /documentation/advanced/supported_registry_implementations.html
