@@ -12,6 +12,96 @@ entries:
       - title: Guides
         url: https://ru.werf.io/applications_guide_ru
 
+      - title: Deploy
+        sf:
+
+          - title: Basics
+            url: /documentation/deploy/basics.html
+
+          - title: Working with secrets
+            url: /documentation/deploy/working_with_secrets.html
+
+          - title: Working with chart dependencies
+            url: /documentation/deploy/working_with_chart_dependencies.html
+
+      - title: Advanced
+        sf:
+
+          - title: Configuration
+            sfi:
+
+              - title: Supported Go templates
+                url: /documentation/advanced/configuration/supported_go_templates.html
+
+              - title: Organizing configuration
+                url: /documentation/advanced/configuration/organizing_configuration.html
+
+          - title: Cleanup
+            url: /documentation/advanced/cleanup.html
+
+          - title: CI/CD
+            sfi:
+
+              - title: CI/CD workflow basics
+                url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
+
+              - title: GitLab CI/CD
+                url: /documentation/advanced/ci_cd/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /documentation/advanced/ci_cd/github_actions.html
+
+              - title: Generic CI/CD integration
+                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
+
+          - title: Supported registry implementations
+            url: /documentation/advanced/supported_registry_implementations.html
+
+          - title: Building images with stapel
+            sfi:
+
+              - title: Naming (required)
+                url: /documentation/advanced/building_images_with_stapel/naming.html
+
+              - title: Base image (required)
+                url: /documentation/advanced/building_images_with_stapel/base_image.html
+
+              - title: Adding docker instructions
+                url: /documentation/advanced/building_images_with_stapel/docker_directive.html
+
+              - title: Adding source code from git repositories
+                url: /documentation/advanced/building_images_with_stapel/git_directive.html
+
+              - title: Running assembly instructions
+                url: /documentation/advanced/building_images_with_stapel/assembly_instructions.html
+
+              - title: Reducing image size and speeding up a build by mounts
+                url: /documentation/advanced/building_images_with_stapel/mount_directive.html
+
+              - title: Importing from images and artifacts
+                url: /documentation/advanced/building_images_with_stapel/import_directive.html
+
+              - title: Artifact
+                url: /documentation/advanced/building_images_with_stapel/artifact.html
+
+              - title: All directives
+                url: /documentation/advanced/building_images_with_stapel/image_directives.html
+
+          - title: Development and debug
+            sfi:
+
+              - title: Setup Minikube
+                url: /documentation/advanced/development_and_debug/setup_minikube.html
+
+              - title: Stage Introspection
+                url: /documentation/advanced/development_and_debug/stage_introspection.html
+
+              - title: As Layers
+                url: /documentation/advanced/development_and_debug/as_layers.html
+
+              - title: Lint And Render Chart
+                url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
+
       - title: Reference
         sf:
 
@@ -245,96 +335,6 @@ entries:
 
           - title: Deploy annotations
             url: /documentation/reference/deploy_annotations.html
-
-      - title: Deploy
-        sf:
-
-          - title: Basics
-            url: /documentation/deploy/basics.html
-
-          - title: Working with secrets
-            url: /documentation/deploy/working_with_secrets.html
-
-          - title: Working with chart dependencies
-            url: /documentation/deploy/working_with_chart_dependencies.html
-
-      - title: Advanced
-        sf:
-
-          - title: Configuration
-            sfi:
-
-              - title: Supported Go templates
-                url: /documentation/advanced/configuration/supported_go_templates.html
-
-              - title: Organizing configuration
-                url: /documentation/advanced/configuration/organizing_configuration.html
-
-          - title: Cleanup
-            url: /documentation/advanced/cleanup.html
-
-          - title: CI/CD
-            sfi:
-
-              - title: CI/CD workflow basics
-                url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
-
-              - title: GitLab CI/CD
-                url: /documentation/advanced/ci_cd/gitlab_ci_cd.html
-
-              - title: GitHub Actions
-                url: /documentation/advanced/ci_cd/github_actions.html
-
-              - title: Generic CI/CD integration
-                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
-
-          - title: Supported registry implementations
-            url: /documentation/advanced/supported_registry_implementations.html
-
-          - title: Building images with stapel
-            sfi:
-
-              - title: Naming (required)
-                url: /documentation/advanced/building_images_with_stapel/naming.html
-
-              - title: Base image (required)
-                url: /documentation/advanced/building_images_with_stapel/base_image.html
-
-              - title: Adding docker instructions
-                url: /documentation/advanced/building_images_with_stapel/docker_directive.html
-
-              - title: Adding source code from git repositories
-                url: /documentation/advanced/building_images_with_stapel/git_directive.html
-
-              - title: Running assembly instructions
-                url: /documentation/advanced/building_images_with_stapel/assembly_instructions.html
-
-              - title: Reducing image size and speeding up a build by mounts
-                url: /documentation/advanced/building_images_with_stapel/mount_directive.html
-
-              - title: Importing from images and artifacts
-                url: /documentation/advanced/building_images_with_stapel/import_directive.html
-
-              - title: Artifact
-                url: /documentation/advanced/building_images_with_stapel/artifact.html
-
-              - title: All directives
-                url: /documentation/advanced/building_images_with_stapel/image_directives.html
-
-          - title: Development and debug
-            sfi:
-
-              - title: Setup Minikube
-                url: /documentation/advanced/development_and_debug/setup_minikube.html
-
-              - title: Stage Introspection
-                url: /documentation/advanced/development_and_debug/stage_introspection.html
-
-              - title: As Layers
-                url: /documentation/advanced/development_and_debug/as_layers.html
-
-              - title: Lint And Render Chart
-                url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
       - title: Internals
         sf:
