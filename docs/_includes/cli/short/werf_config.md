@@ -1,1 +1,0 @@
-Work with werf.yaml

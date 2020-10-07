@@ -1,1 +1,0 @@
-Delete application from Kubernetes

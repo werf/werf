@@ -1,0 +1,1 @@
+update information of available charts locally from chart repositories
