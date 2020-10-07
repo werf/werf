@@ -25,9 +25,9 @@ werf completion [options]
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for completion
-      --shell='bash':
+      --shell='bash'
             Set to bash or zsh (default $WERF_SHELL or bash)
 ```
 

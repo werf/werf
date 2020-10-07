@@ -8,7 +8,7 @@ Work with secret values files
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for values
 ```
 

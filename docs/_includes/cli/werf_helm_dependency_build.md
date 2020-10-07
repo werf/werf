@@ -23,36 +23,36 @@ werf helm dependency build [options]
 {{ header }} Options
 
 ```shell
-      --dir='':
+      --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --helm-chart-dir='':
+      --helm-chart-dir=''
             Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
-      --helm-home='~/.helm':
+      --helm-home='~/.helm'
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
-  -h, --help=false:
+  -h, --help=false
             help for build
-      --keyring='~/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg'
             keyring containing public keys
-      --log-color-mode='auto':
+      --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug=false:
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty=true:
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false:
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width=-1:
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-verbose=false:
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --verify=false:
+      --verify=false
             verify the packages against signatures
 ```
 
