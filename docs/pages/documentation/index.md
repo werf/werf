@@ -1,43 +1,39 @@
 ---
-title: Overview
 permalink: documentation/index.html
 sidebar: documentation
 ---
 
-Documentation of the werf project consists of several parts.
+Start with **[introduction]({{ site.baseurl }}/introduction.html)**.
+ > Dive into werf basics.
+ > (5 min)
 
-Start with **[introduction]({{ site.baseurl }}/introduction.html)** to dive into werf easily. It describes how to use your Dockerfiles  Learn how to integrate werf into your project smoothly and effortlessly.
+Continue with **[installation]({{ site.baseurl }}/installation.html)** and **[quickstart]({{ site.baseurl }}/introduction.html)**.
+ > Install and try werf with example project.
+ > (15 min)
 
-**[Installation]({{ site.baseurl }}/installation.html)** describes werf depedencies and various installation methods, stability channels and backward compatibility promise.
+**[Guides](https://ru.werf.io/applications_guide_ru)** section contains plenty of guides to setup deployment of your application.
+ > Find a guide suitable for your project (by programming language, by framework, by CI/CD system, etc.) and deploy your first real application into Kubernetes with werf.
+ > (several hours)
 
----
+**[Using werf with CI/CD systems]()**
+ > Learn important things to use werf with any CI/CD system.
+ > (15 min)
 
-**[Guides](https://ru.werf.io/applications_guide_ru)** contain plenty of guides to quickly setup deployment of your application into Kubernetes,
-either for local development or production. This is recommended section to read after _introduction_.
+**[Reference]()** contains structured information about werf configuration and commands.
+ - To use werf, an application should be properly configured via [`werf.yaml`]() file.
+ - Werf also uses [annotations]({{ site.baseurl }}/documentation/reference/configuration/deploy_annotations.html) in resources definitions to configure deploy behaviour.
+ - [Command line interface]() article contains reference of werf commands.
 
----
+<!-- **[Local development]()** describes how to use werf to ease local development of your applications, use the same configuration to deploy application either locally or into production. -->
 
-**[Reference]()** section explains main configuration aspects of the werf and main commands.
- - To use werf, an application should be properly configured via `werf.yaml` file. The **[configuration article]({{ site.baseurl }}/documentation/reference/configuration/introduction.html)** includes definition of the project meta information such as a project name and defenition of images to be built.
- - Werf also uses [annotations in resource definitions]({{ site.baseurl }}/documentation/reference/configuration/deploy_annotations.html) to configure werf behaviour.
- - **[Command line interface]()** article contains reference of the main werf CLI commands. Full CLI commands list also available in the [internals article]({{ site.baseurl }}/documentation/internals/cli_reference/main/build.html).
-
-**[Deploy section]()** describes deploy essentials: how to configure werf to deploy into Kubernetes, what is chart and release, templating of Kubernetes resources, how to use built images defined in your `werf.yaml` file during deploy process, working with secrets and other. Read this section if you want learn more about deploy process with werf.
-
-**[CI/CD]()** describes main aspects of organizing CI/CD workflows with werf, using GitLab CI/CD or GitHub Actions or any other CI/CD system with werf.
-
-**[Local development]()** describes how to use werf to ease local development of your applications, use the same configuration to deploy application either locally or into production.
-
----
-
-**[Advanced]()** section covers more complex topics which you will need eventually:
+**[Advanced]()** section covers more complex topics which you will need eventually.
  - [Configuration]() contains information about templating of werf config files, deployment names generation (such as Kubernetes namespace or release name).
+ - [Helm]()** describes deploy essentials: how to configure werf to deploy into Kubernetes, what is helm chart and release, templating of Kubernetes resources, how to use built images defined in your `werf.yaml` file during deploy process, working with secrets and other. Read this section if you want learn more about deploy process with werf.
  - [Cleanup]() contains description of werf cleanup concepts and main commands to perform cleaning tasks.
- - [Supported registry implementation]() contains general info about supporting of implementations and info about authorization when using different implementations.
+ - [CI/CD]() describes main aspects of organizing CI/CD workflows with werf, using GitLab CI/CD or GitHub Actions or any other CI/CD system with werf.
  - [Building images with stapel]() introduces werf custom builder which currently implements distributed building algorithm to enable really fast build pipelines with distributed caching and incremental rebuilds based on Git-history of your application.
  - [Development and debug]() describes how to debug build and deploy processes of your application when something goes wrong, how to setup local development environment.
-
----
+ - [Supported registry implementation]() contains general info about supporting of implementations and info about authorization when using different implementations.
 
 **[Internals]()** section contains general info about how werf works inside. It is not necessary to read through this section to use werf fully. But if you interested how werf really works inside — you will find some useful info here.
  - [Building of images]() — what is images builder and stages, how stages storage works, what is syncrhonization server and other info related to building process.
