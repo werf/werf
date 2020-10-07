@@ -27,11 +27,8 @@ entries:
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
-          - title: Cleanup
-            url: /documentation/advanced/cleanup.html
-
-          - title: Deploy
-            sf:
+          - title: Helm
+            sfi:
 
               - title: Basics
                 url: /documentation/advanced/deploy/basics.html
@@ -41,6 +38,9 @@ entries:
 
               - title: Working with chart dependencies
                 url: /documentation/advanced/deploy/working_with_chart_dependencies.html
+
+          - title: Cleanup
+            url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
             sfi:
@@ -56,9 +56,6 @@ entries:
 
               - title: Generic CI/CD integration
                 url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
-
-          - title: Supported registry implementations
-            url: /documentation/advanced/supported_registry_implementations.html
 
           - title: Building images with stapel
             sfi:
@@ -104,6 +101,9 @@ entries:
 
               - title: Lint And Render Chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
+
+          - title: Supported registry implementations
+            url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Reference
         sf:
