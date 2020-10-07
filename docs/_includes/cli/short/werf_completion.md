@@ -1,1 +1,0 @@
-Generate bash completion scripts

@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/common/templates"
 )
 
 var cmdData struct {
@@ -20,7 +21,16 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
+func initDefaultHelmCmd(cmd *cobra.Command) {
+	cmd.InitDefaultHelpCmd()
+	cmd.InitDefaultHelpFlag()
+
+	for _, c := range cmd.Commands() {
+		initDefaultHelmCmd(c)
+	}
+}
+
+func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "docs",
 		DisableFlagsInUseLine: true,
@@ -37,18 +47,16 @@ func NewCmd() *cobra.Command {
 					return err
 				}
 			} else {
-				if err := os.MkdirAll(filepath.Join(cmdData.dest, "full"), 0777); err != nil {
+				//initDefaultHelmCmd(cmd.Root())
+
+				if err := os.MkdirAll(cmdData.dest, 0777); err != nil {
 					return err
 				}
-				if err := os.MkdirAll(filepath.Join(cmdData.dest, "short"), 0777); err != nil {
+				if err := GenCliPartials(cmd.Root(), cmdData.dest); err != nil {
 					return err
 				}
 
-				if err := GenMarkdownTree(cmd.Root(), filepath.Join(cmdData.dest, "full")); err != nil {
-					return err
-				}
-
-				if err := GenMarkdownShortDescriptions(cmd.Root(), filepath.Join(cmdData.dest, "short")); err != nil {
+				if err := RegenDocumentationReferenceCli(*cmdGroups, cmd.Root()); err != nil {
 					return err
 				}
 			}

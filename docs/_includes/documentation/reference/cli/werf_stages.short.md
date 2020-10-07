@@ -1,0 +1,1 @@
+work with stages, which are cache for images

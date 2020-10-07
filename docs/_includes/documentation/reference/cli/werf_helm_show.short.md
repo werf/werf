@@ -1,0 +1,1 @@
+show information of a chart

@@ -5,7 +5,7 @@ sidebar: documentation
 toc: false
 ---
 
-{% include reference/werf_yaml/table.html %}
+{% include documentation/reference/werf_yaml/table.html %}
 
 ## Project name
 

@@ -1,0 +1,1 @@
+list project names based on local stages storage

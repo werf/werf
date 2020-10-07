@@ -1,1 +1,0 @@
-Generate documentation as markdown

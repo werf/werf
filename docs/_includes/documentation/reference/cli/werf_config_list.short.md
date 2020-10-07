@@ -1,0 +1,1 @@
+list image and artifact names defined in werf.yaml

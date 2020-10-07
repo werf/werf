@@ -3,7 +3,7 @@
 set -e
 
 SOURCE=`dirname ${BASH_SOURCE[0]}`
-CLI_PARTIALS_DIR=$SOURCE/_includes/cli
+CLI_PARTIALS_DIR=$SOURCE/_includes/documentation/reference/cli
 README=$SOURCE/../README.md
 README_PARTIALS_DIR=$SOURCE/_includes/readme
 

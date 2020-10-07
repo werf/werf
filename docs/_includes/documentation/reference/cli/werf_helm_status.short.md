@@ -1,0 +1,1 @@
+display the status of the named release

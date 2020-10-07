@@ -1,0 +1,1 @@
+search for charts in the Helm Hub or an instance of Monocular

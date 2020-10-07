@@ -1,0 +1,1 @@
+list the dependencies for the given chart
