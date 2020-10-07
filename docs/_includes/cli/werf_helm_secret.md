@@ -8,7 +8,7 @@ Work with secrets
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for secret
 ```
 

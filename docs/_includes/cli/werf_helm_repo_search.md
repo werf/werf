@@ -17,36 +17,36 @@ werf helm repo search [keyword] [options]
 {{ header }} Options
 
 ```shell
-      --col-width=60:
+      --col-width=60
             specifies the max column width of output
-      --helm-home='~/.helm':
+      --helm-home='~/.helm'
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
-  -h, --help=false:
+  -h, --help=false
             help for search
-      --log-color-mode='auto':
+      --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug=false:
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty=true:
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false:
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width=-1:
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-verbose=false:
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -r, --regexp=false:
+  -r, --regexp=false
             use regular expressions for searching
-  -v, --version='':
+  -v, --version=''
             search using semantic versioning constraints
-  -l, --versions=false:
+  -l, --versions=false
             show the long listing, with each version of each chart on its own line
 ```
 

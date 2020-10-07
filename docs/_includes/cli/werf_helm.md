@@ -8,7 +8,7 @@ Manage application deployment with helm
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for helm
 ```
 

@@ -8,7 +8,7 @@ Work with managed images which will be preserved during cleanup procedure
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for managed-images
 ```
 

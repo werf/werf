@@ -27,59 +27,59 @@ werf helm repo fetch [chart URL | repo/chartname] [...] [options]
 {{ header }} Options
 
 ```shell
-      --ca-file='':
+      --ca-file=''
             verify certificates of HTTPS-enabled servers using this CA bundle
-      --cert-file='':
+      --cert-file=''
             identify HTTPS client using this SSL certificate file
-  -d, --destination='.':
+  -d, --destination='.'
             location to write the chart. If this and tardir are specified, tardir is appended to    
             this
-      --devel=false:
+      --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored.
-      --helm-home='~/.helm':
+      --helm-home='~/.helm'
             location of your Helm config. Defaults to $WERF_HELM_HOME, $HELM_HOME or ~/.helm
-  -h, --help=false:
+  -h, --help=false
             help for fetch
-      --key-file='':
+      --key-file=''
             identify HTTPS client using this SSL key file
-      --keyring='~/.gnupg/pubring.gpg':
+      --keyring='~/.gnupg/pubring.gpg'
             keyring containing public keys
-      --log-color-mode='auto':
+      --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug=false:
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty=true:
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false:
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width=-1:
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-verbose=false:
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --password='':
+      --password=''
             chart repository password
-      --prov=false:
+      --prov=false
             fetch the provenance file, but don't perform verification
-      --repo='':
+      --repo=''
             chart repository url where to locate the requested chart
-      --untar=false:
+      --untar=false
             if set to true, will untar the chart after downloading it
-      --untardir='.':
+      --untardir='.'
             if untar is specified, this flag specifies the name of the directory into which the     
             chart is expanded
-      --username='':
+      --username=''
             chart repository username
-      --verify=false:
+      --verify=false
             verify the package against its signature
-      --version='':
+      --version=''
             specific version of a chart. Without this, the latest version is fetched
 ```
 

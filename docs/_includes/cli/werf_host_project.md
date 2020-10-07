@@ -8,7 +8,7 @@ Work with projects
 {{ header }} Options
 
 ```shell
-  -h, --help=false:
+  -h, --help=false
             help for project
 ```
 
