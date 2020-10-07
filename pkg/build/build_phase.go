@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -406,8 +407,14 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 		if phase.Conveyor.sshAuthSock != "" {
 			imageRunOptions := stageImage.Container().RunOptions()
-			imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
-			imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+
+			if runtime.GOOS == "darwin" {
+				imageRunOptions.AddVolume("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
+			} else {
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+			}
 		}
 	}
 
