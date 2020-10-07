@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://cloud-native.slack.com/messages/CHY2THYUU"><img src="https://img.shields.io/badge/slack-EN%20chat-611f69.svg?logo=slack" alt="Slack chat EN"></a>
-  <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/badge/twitter-EN-611f69.svg?logo=twitter" alt="Twitter EN"></a>
+  <a href="https://community.flant.com/c/werf/6"><img src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fcommunity.flant.com&style=flat-square" alt="Discourse forum"/></a>
+  <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/twitter/follow/werf_io?label=%40werf_io&style=flat-square" alt="Twitter"></a>
   <a href="https://t.me/werf_ru"><img src="https://img.shields.io/badge/telegram-RU%20chat-179cde.svg?logo=telegram" alt="Telegram chat RU"></a><br>
   <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
   <a href="https://godoc.org/github.com/werf/werf"><img src="https://godoc.org/github.com/werf/werf?status.svg" alt="GoDoc"></a>
@@ -40,6 +40,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - [Production ready](#production-ready)
   - [Stability channels](#stability-channels)
   - [Backward compatibility promise](#backward-compatibility-promise)
+- [Community](#community)
 - [License](#license)
 
 # Features
@@ -317,6 +318,16 @@ In the case of werf, this means that an update to the next patch release should 
 - We **guarantee** backward compatibility between:
   - `stable` releases within the minor branch (1.1.x);
   - `rock-solid` releases within the minor branch (1.1.x).
+
+<!-- WERF DOCS PARTIAL END -->
+
+# Community
+
+<!-- WERF DOCS PARTIAL BEGIN: Community -->
+
+Please feel free to reach us via [Flant Open Source forums](https://community.flant.com/) (based on Discourse). They have a [special category](https://community.flant.com/c/werf/6) dedicated to werf.
+
+You're also welcome to follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, articles, etc.
 
 <!-- WERF DOCS PARTIAL END -->
 
