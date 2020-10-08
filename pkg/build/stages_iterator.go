@@ -59,15 +59,15 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *Image, st
 	}
 
 	iterator.PrevStage = stg
-	logboek.Context(ctx).Debug().LogF("Set prev stage = %q %s\n", iterator.PrevStage.Name(), iterator.PrevStage.GetSignature())
+	logboek.Context(ctx).Debug().LogF("Set prev stage = %q %s\n", iterator.PrevStage.Name(), iterator.PrevStage.GetDigest())
 
 	if !isEmpty {
 		iterator.PrevNonEmptyStage = stg
-		logboek.Context(ctx).Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
+		logboek.Context(ctx).Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 
 		if iterator.PrevNonEmptyStage.GetImage().GetStageDescription() != nil {
 			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetImage().GetStageDescription().Info.Size
-			logboek.Context(ctx).Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetSignature())
+			logboek.Context(ctx).Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 		}
 
 		if stg.GetImage().GetStageDescription() != nil {

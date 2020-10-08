@@ -62,7 +62,7 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 	}
 
 	if s.fromImageOrArtifactImageName != "" {
-		args = append(args, c.GetImageContentSignature(s.fromImageOrArtifactImageName))
+		args = append(args, c.GetImageContentDigest(s.fromImageOrArtifactImageName))
 	} else {
 		args = append(args, prevImage.Name())
 	}

@@ -483,7 +483,7 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 > Первая сборка добавляет файлы из git-репозитория на стадии _gitArchive_. Все последующие сборки обновляют файлы на стадии _gitCache_, _gitLatestPatch_ или на одной из следующих пользовательских стадий: _install_, _beforeSetup_, _setup_.
 <br />
 <br />
-Пример этого этапа (фаза подсчета сигнатур, _calculating signatures_):
+Пример этого этапа (фаза подсчета сигнатур, _calculating digests_):
 ![git files actualized on specific stage]({{ site.baseurl }}/images/build/git_mapping_updated_on_stage.png)
 
 Зависимость _пользовательской стадии_ от изменений в git-репозитории указывается с помощью параметра `git.stageDependencies`. Синтаксис:

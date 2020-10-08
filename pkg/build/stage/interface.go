@@ -21,11 +21,11 @@ type Interface interface {
 
 	PreRunHook(context.Context, Conveyor) error
 
-	SetSignature(signature string)
-	GetSignature() string
+	SetDigest(digest string)
+	GetDigest() string
 
-	SetContentSignature(contentSignature string)
-	GetContentSignature() string
+	SetContentDigest(contentDigest string)
+	GetContentDigest() string
 
 	SetImage(container_runtime.ImageInterface)
 	GetImage() container_runtime.ImageInterface

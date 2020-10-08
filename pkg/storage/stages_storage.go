@@ -16,12 +16,12 @@ const (
 
 type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error)
-	GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error)
-	GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error)
+	GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error)
+	GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error)
 	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
 	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error)
 
-	ConstructStageImageName(projectName, signature string, uniqueID int64) string
+	ConstructStageImageName(projectName, digest string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
 	FetchImage(ctx context.Context, img container_runtime.Image) error
@@ -58,7 +58,7 @@ func (rec *ClientIDRecord) String() string {
 }
 
 type ImageMetadata struct {
-	ContentSignature string
+	ContentDigest string
 }
 
 type StagesStorageOptions struct {

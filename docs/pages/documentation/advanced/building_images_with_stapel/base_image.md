@@ -49,10 +49,10 @@ fromLatest: true
 herebyIAdmitThatFromLatestMightBreakReproducibility: true
 ```
 
-> Pay attention, werf uses actual _base image_ digest in stage signature if _fromLatest_ is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
+> Pay attention, werf uses actual _base image_ digest in stage digest if _fromLatest_ is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
 >
 > * Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
-> * If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages signatures alongside base image digest.
+> * If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages digests alongside base image digest.
 >
 > If you want to use this directive, add _herebyIAdmitThatFromLatestMightBreakReproducibility: true_ alongside _fromLatest_.
 >

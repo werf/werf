@@ -58,8 +58,8 @@ Let's review the basic steps of the cleanup algorithm:
 - Preparing a list of items to clean up:
     - [tags used in Kubernetes](#whitelisting-images) are ignored.
 - Preparing the data for scanning:
-    - tags grouped by the signature of image stages __(1)__;
-    - commits grouped by the signature of image stages __(2)__;
+    - tags grouped by the digest of image stages __(1)__;
+    - commits grouped by the digest of image stages __(2)__;
     - a set of git tags and git branches, as well as the rules and crawl depth for scanning each reference based on [user policies](#custom-policies) __(3)__.
 - Searching for commits __(2)__ using the git history __(3)__. The result is [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) for which no associated commits were found during scanning __(4)__.
 Deleting tags for [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) __(4)__.

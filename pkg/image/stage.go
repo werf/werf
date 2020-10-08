@@ -7,12 +7,12 @@ import (
 )
 
 type StageID struct {
-	Signature string `json:"signature"`
-	UniqueID  int64  `json:"uniqueID"`
+	Digest   string `json:"digest"`
+	UniqueID int64  `json:"uniqueID"`
 }
 
 func (id StageID) String() string {
-	return fmt.Sprintf("signature:%s uniqueID:%d", id.Signature, id.UniqueID)
+	return fmt.Sprintf("%s-%d", id.Digest, id.UniqueID)
 }
 
 func (id StageID) UniqueIDAsTime() time.Time {

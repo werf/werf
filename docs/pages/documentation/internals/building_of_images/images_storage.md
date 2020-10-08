@@ -43,9 +43,9 @@ The werf assembly process involves a sequential build of stages using the _stage
 
 **The user only needs to write a correct configuration: werf performs the rest of the work with stages**
 
-For each _stage_ at every build, werf calculates the unique identifier of the stage called _stage signature_.
+For each _stage_ at every build, werf calculates the unique identifier of the stage called _stage digest_.
 Each _stage_ is assembled in the ***assembly container*** that is based on the previous _stage_ and saved in the [stages storage](#stages-storage).
-The _stage signature_ is used for [tagging](#stage-naming) a _stage_ (signature is the part of image tag) in the _stages storage_.
+The _stage digest_ is used for [tagging](#stage-naming) a _stage_ (digest is the part of image tag) in the _stages storage_.
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
 The ***stage signature*** is calculated as the checksum of:
@@ -64,7 +64,7 @@ It means that the _stage conveyor_ can be reduced to several _stages_ or even to
 
 ## Stage dependencies
 
-_Stage dependency_ is a piece of data that affects the stage _signature_. Stage dependency may be represented by:
+_Stage dependency_ is a piece of data that affects the stage _digest_. Stage dependency may be represented by:
 
  - some file from a git repo with its contents;
  - instructions to build stage defined in the `werf.yaml`;
@@ -207,7 +207,7 @@ localhost:5000/myproject-stages                 f88cb5a1c353a8aed65d7ad797859b39
 localhost:5000/myproject-stages                 796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1589714344546   a02ec3540da5        20 hours ago        64.2MB
 ```
 
-_Signature_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
+_Digest_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
 
 `TIMESTAMP_MILLISEC` is generated during [stage saving procedure](#stage-building-and-saving) after stage built. It is guaranteed that timestamp will be unique within specified stages storage.
 
@@ -215,16 +215,16 @@ _Signature_ identifier of the stage represents content of the stage and depends 
 
 Werf stage selection algorithm is based on the git commits ancestry detection:
 
- 1. Calculate a stage signature for some stage.
- 2. There may be multiple stages in the stages storage by this signature — so select all suitable stages by the signature.
+ 1. Calculate a stage digest for some stage.
+ 2. There may be multiple stages in the stages storage by this digest — so select all suitable stages by the digest.
  3. If current stage is related to git (git-archive, user stage with git patch, git cache or git latest patch), then select only those stages which are related to the commit that is ancestor of current git commit.
  4. Select the _oldest_ by the `TIMESTAMP_MILLISEC` from the remaining stages.
 
-There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from being reused for different branch.
+There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from being reused for different branch.
 
 ### Stage building and saving
 
-If suitable stage has not been found by target signature during stage selection, werf starts building a new image for stage.
+If suitable stage has not been found by target digest during stage selection, werf starts building a new image for stage.
 
 Note that multiple processes (on a single or multiple hosts) may start building the same stage at the same time. Werf uses optimistic locking when saving newly built image into the stages storage: when a new stage has been built werf locks stages storage and saves newly built stage image into storage stages cache only if there are no suitable already existing stages exists. Newly saved image will have a guaranteed unique identifier `TIMESTAMP_MILLISEC`. In the case when already existing stage has been found in the stages storage werf will discard newly built image and use already existing one as a cache.
 
@@ -232,12 +232,12 @@ In other words: the first process which finishes the build (the fastest one) wil
 
 To select stages and save new ones into the stages storage werf uses [synchronization service components](#synchronization-locks-and-stages-storage-cache) to coordinate multiple werf processes and store stages cache needed for werf builder.
 
-### Image stages signature
+### Image stages digest
 
-_Stages signature_ of the image is a signature which represents content of the image and depends on the history of git commits which lead to this content.
+_Stages digest_ of the image is a digest which represents content of the image and depends on the history of git commits which lead to this content.
 
-***Stages signature*** calculated similarly to the regular stage signature as the checksum of:
- - _stage signature_ of last non empty image stage;
+***Stages digest*** calculated similarly to the regular stage digest as the checksum of:
+ - _stage digest_ of last non empty image stage;
  - git commit-id related with the last non empty image stage (if this last stage is git-related).
 
 The ***stage signature*** is calculated as the checksum of:
@@ -245,7 +245,7 @@ The ***stage signature*** is calculated as the checksum of:
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
-This signature used in content based tagging and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
+This digest used in content based tagging and used to import files from artifacts or images (stages digest of artifact or image will affect imports stage digest of the target image).
 
 ## Images
 
@@ -263,14 +263,14 @@ To publish new images into the images repo werf uses [synchronization service co
 
 Synchronization is a group of service components of the werf to coordinate multiple werf processes when selecting and saving stages into stages storage and publishing images into images repo. There are 2 such synchronization components:
 
- 1. _Stages storage cache_ is an internal werf cache, which significantly improves performance of the werf invocations when stages already exists in the stages storage. Stages storage cache contains the mapping of stages existing in stages storage by the signature (or in other words this cache contains precalculated result of stages selection by signature algorithm). This cache should be coherent with stages storage itself and werf will automatically reset this cache automatically when detects an inconsistency between stages storage cache and stages storage.
+ 1. _Stages storage cache_ is an internal werf cache, which significantly improves performance of the werf invocations when stages already exists in the stages storage. Stages storage cache contains the mapping of stages existing in stages storage by the digest (or in other words this cache contains precalculated result of stages selection by digest algorithm). This cache should be coherent with stages storage itself and werf will automatically reset this cache automatically when detects an inconsistency between stages storage cache and stages storage.
  2. _Lock manager_. Locks are needed to organize correct publishing of new stages into stages-storage, publishing images into images-repo and for concurrent deploy processes that uses the same release name.
 
 All commands that requires stages storage (`--stages-storage`) and images repo (`--images-repo`) params also use _synchronization service components_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
 
 There are 3 types of sycnhronization components:
  1. Local. Selected by `--synchronization=:local` param.
-   - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE` files by default, each file contains a mapping of images existing in stages storage by some signature.
+   - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE` files by default, each file contains a mapping of images existing in stages storage by some digest.
    - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.
  2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` param.
   - Kubernetes _stages storage cache_ is stored in the specified `NAMESPACE` in ConfigMap named by project `cm/PROJECT_NAME`.

@@ -18,13 +18,13 @@ type GenericLockManager struct {
 	Locker lockgate.Locker
 }
 
-func (manager *GenericLockManager) LockStage(ctx context.Context, projectName, signature string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+func (manager *GenericLockManager) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+func (manager *GenericLockManager) LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error) {
+	_, lock, err := manager.Locker.Acquire(genericStageCacheLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
@@ -46,12 +46,12 @@ func (manager *GenericLockManager) Unlock(ctx context.Context, lock LockHandle) 
 	return err
 }
 
-func genericStageLockName(projectName, signature string) string {
-	return fmt.Sprintf("%s.%s", projectName, signature)
+func genericStageLockName(projectName, digest string) string {
+	return fmt.Sprintf("%s.%s", projectName, digest)
 }
 
-func genericStageCacheLockName(projectName, signature string) string {
-	return fmt.Sprintf("%s.%s.cache", projectName, signature)
+func genericStageCacheLockName(projectName, digest string) string {
+	return fmt.Sprintf("%s.%s.cache", projectName, digest)
 }
 
 func genericImageLockName(imageName string) string {

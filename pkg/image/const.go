@@ -7,10 +7,10 @@ const (
 	WerfImageLabel                 = "werf-image"
 	WerfImageNameLabel             = "werf-image-name"
 	WerfDockerImageName            = "werf-docker-image-name"
-	WerfStageSignatureLabel        = "werf-stage-signature"
-	WerfStageContentSignatureLabel = "werf-stage-content-signature"
+	WerfStageDigestLabel        = "werf-stage-digest"
+	WerfStageContentDigestLabel = "werf-stage-content-digest"
 	WerfProjectRepoCommitLabel     = "werf-project-repo-commit"
-	WerfContentSignatureLabel      = "werf-content-signature"
+	WerfContentDigestLabel      = "werf-content-digest"
 
 	WerfMountTmpDirLabel          = "werf-mount-type-tmp-dir"
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"

@@ -74,7 +74,7 @@ type Conveyor struct {
 
 	mutex               sync.Mutex
 	serviceRWMutex      map[string]*sync.RWMutex
-	stageSignatureMutex map[string]*sync.Mutex
+	stageDigestMutex map[string]*sync.Mutex
 }
 
 type ConveyorOptions struct {
@@ -113,7 +113,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		ConveyorOptions: opts,
 
 		serviceRWMutex:      map[string]*sync.RWMutex{},
-		stageSignatureMutex: map[string]*sync.Mutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
 	}
 
 	return c, c.Init()
@@ -176,14 +176,14 @@ func (c *Conveyor) SetBaseImagesRepoErrCache(key string, err error) {
 	c.baseImagesRepoErrCache[key] = err
 }
 
-func (c *Conveyor) GetStageSignatureMutex(stage string) *sync.Mutex {
+func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	m, ok := c.stageSignatureMutex[stage]
+	m, ok := c.stageDigestMutex[stage]
 	if !ok {
 		m = &sync.Mutex{}
-		c.stageSignatureMutex[stage] = m
+		c.stageDigestMutex[stage] = m
 	}
 
 	return m
@@ -668,12 +668,12 @@ func (c *Conveyor) GetImage(name string) *Image {
 	panic(fmt.Sprintf("Image '%s' not found!", name))
 }
 
-func (c *Conveyor) GetImageStageContentSignature(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetContentSignature()
+func (c *Conveyor) GetImageStageContentDigest(imageName, stageName string) string {
+	return c.getImageStage(imageName, stageName).GetContentDigest()
 }
 
-func (c *Conveyor) GetImageContentSignature(imageName string) string {
-	return c.GetImage(imageName).GetContentSignature()
+func (c *Conveyor) GetImageContentDigest(imageName string) string {
+	return c.GetImage(imageName).GetContentDigest()
 }
 
 func (c *Conveyor) getImageStage(imageName, stageName string) stage.Interface {

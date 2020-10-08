@@ -7,8 +7,8 @@ import (
 )
 
 type LockManager interface {
-	LockStage(ctx context.Context, projectName, signature string) (LockHandle, error)
-	LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error)
+	LockStage(ctx context.Context, projectName, digest string) (LockHandle, error)
+	LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error)
 	LockImage(ctx context.Context, projectName, imageName string) (LockHandle, error)
 	LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error)
 	Unlock(ctx context.Context, lockHandle LockHandle) error

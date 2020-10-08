@@ -17,8 +17,8 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func RunSynchronizationServer(ctx context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)) error {
-	handler := NewSynchronizationServerHandler(ctx, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
+func RunSynchronizationServer(_ context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)) error {
+	handler := NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
 	return http.ListenAndServe(fmt.Sprintf("%s:%s", ip, port), handler)
 }
 
@@ -28,26 +28,20 @@ type SynchronizationServerHandler struct {
 	DistributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
 	StagesStorageCacheFactoryFunc       func(clientID string) (storage.StagesStorageCache, error)
 
-	ctx                             context.Context
 	mux                             sync.Mutex
 	SynchronizationServerByClientID map[string]*SynchronizationServerHandlerByClientID
 }
 
-func newSynchronizationServerHandler(ctx context.Context, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (storage.StagesStorageCache, error)) *SynchronizationServerHandler {
-	return &SynchronizationServerHandler{
+func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (storage.StagesStorageCache, error)) *SynchronizationServerHandler {
+	srv := &SynchronizationServerHandler{
 		ServeMux:                            http.NewServeMux(),
 		DistributedLockerBackendFactoryFunc: distributedLockerBackendFactoryFunc,
 		StagesStorageCacheFactoryFunc:       stagesStorageCacheFactoryFunc,
 		SynchronizationServerByClientID:     make(map[string]*SynchronizationServerHandlerByClientID),
 	}
-}
-
-func NewSynchronizationServerHandler(ctx context.Context, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (storage.StagesStorageCache, error)) *SynchronizationServerHandler {
-	srv := newSynchronizationServerHandler(ctx, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
 	srv.HandleFunc("/health", srv.handleHealth)
 	srv.HandleFunc("/new-client-id", srv.handleNewClientID)
 	srv.HandleFunc("/", srv.handleRequestByClientID)
-
 	return srv
 }
 
@@ -63,11 +57,12 @@ type HealthResponse struct {
 func (server *SynchronizationServerHandler) handleHealth(w http.ResponseWriter, r *http.Request) {
 	var request HealthRequest
 	var response HealthResponse
+
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- Health request %#v\n", request)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Health request %#v\n", request)
 		response.Echo = request.Echo
 		response.Status = "OK"
-		logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- Health response %#v\n", response)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Health response %#v\n", response)
 	})
 }
 
@@ -81,9 +76,9 @@ func (server *SynchronizationServerHandler) handleNewClientID(w http.ResponseWri
 	var request NewClientIDRequest
 	var response NewClientIDResponse
 	HandleRequest(w, r, &request, &response, func() {
-		logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- NewClientID request %#v\n", request)
+		logboek.Debug().LogF("SynchronizationServerHandler -- NewClientID request %#v\n", request)
 		response.ClientID = uuid.New().String()
-		logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- NewClientID response %#v\n", response)
+		logboek.Debug().LogF("SynchronizationServerHandler -- NewClientID response %#v\n", response)
 	})
 }
 
@@ -109,7 +104,7 @@ func (server *SynchronizationServerHandler) handleLanding(w http.ResponseWriter,
 }
 
 func (server *SynchronizationServerHandler) handleRequestByClientID(w http.ResponseWriter, r *http.Request) {
-	logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- ServeHTTP url path = %q\n", r.URL.Path)
+	logboek.Debug().LogF("SynchronizationServerHandler -- ServeHTTP url path = %q\n", r.URL.Path)
 
 	if r.URL.Path == "/" {
 		server.handleLanding(w, r)
@@ -117,14 +112,14 @@ func (server *SynchronizationServerHandler) handleRequestByClientID(w http.Respo
 	}
 
 	clientID := strings.SplitN(strings.TrimPrefix(r.URL.Path, "/"), "/", 2)[0]
-	logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- ServeHTTP clientID = %q\n", clientID)
+	logboek.Debug().LogF("SynchronizationServerHandler -- ServeHTTP clientID = %q\n", clientID)
 
 	if clientID == "" {
 		http.Error(w, fmt.Sprintf("Bad request: cannot get clientID from URL path %q", r.URL.Path), http.StatusBadRequest)
 		return
 	}
 
-	if clientServer, err := server.getOrCreateHandlerByClientID(server.ctx, clientID); err != nil {
+	if clientServer, err := server.getOrCreateHandlerByClientID(clientID); err != nil {
 		http.Error(w, fmt.Sprintf("Internal error: %s", err), http.StatusInternalServerError)
 		return
 	} else {
@@ -132,7 +127,7 @@ func (server *SynchronizationServerHandler) handleRequestByClientID(w http.Respo
 	}
 }
 
-func (server *SynchronizationServerHandler) getOrCreateHandlerByClientID(ctx context.Context, clientID string) (*SynchronizationServerHandlerByClientID, error) {
+func (server *SynchronizationServerHandler) getOrCreateHandlerByClientID(clientID string) (*SynchronizationServerHandlerByClientID, error) {
 	server.mux.Lock()
 	defer server.mux.Unlock()
 
@@ -149,10 +144,10 @@ func (server *SynchronizationServerHandler) getOrCreateHandlerByClientID(ctx con
 			return nil, fmt.Errorf("unable to create stages storage cache for clientID %q: %s", clientID, err)
 		}
 
-		handler := NewSynchronizationServerHandlerByClientID(ctx, clientID, distributedLockerBackend, stagesStorageCache)
+		handler := NewSynchronizationServerHandlerByClientID(clientID, distributedLockerBackend, stagesStorageCache)
 		server.SynchronizationServerByClientID[clientID] = handler
 
-		logboek.Context(server.ctx).Debug().LogF("SynchronizationServerHandler -- Created new synchronization server handler by clientID %q: %v\n", clientID, handler)
+		logboek.Debug().LogF("SynchronizationServerHandler -- Created new synchronization server handler by clientID %q: %v\n", clientID, handler)
 		return handler, nil
 	}
 }
@@ -163,24 +158,17 @@ type SynchronizationServerHandlerByClientID struct {
 
 	DistributedLockerBackend distributed_locker.DistributedLockerBackend
 	StagesStorageCache       storage.StagesStorageCache
-
-	ctx context.Context
 }
 
-func newSynchronizationServerHandlerByClientID(ctx context.Context, clientID string, distributedLockerBackend distributed_locker.DistributedLockerBackend, stagesStorageCache storage.StagesStorageCache) *SynchronizationServerHandlerByClientID {
-	return &SynchronizationServerHandlerByClientID{
+func NewSynchronizationServerHandlerByClientID(clientID string, distributedLockerBackend distributed_locker.DistributedLockerBackend, stagesStorageCache storage.StagesStorageCache) *SynchronizationServerHandlerByClientID {
+	srv := &SynchronizationServerHandlerByClientID{
 		ServeMux:                 http.NewServeMux(),
 		ClientID:                 clientID,
 		DistributedLockerBackend: distributedLockerBackend,
 		StagesStorageCache:       stagesStorageCache,
-		ctx:                      ctx,
 	}
-}
-
-func NewSynchronizationServerHandlerByClientID(ctx context.Context, clientID string, distributedLockerBackend distributed_locker.DistributedLockerBackend, stagesStorageCache storage.StagesStorageCache) *SynchronizationServerHandlerByClientID {
-	srv := newSynchronizationServerHandlerByClientID(ctx, clientID, distributedLockerBackend, stagesStorageCache)
 	srv.Handle("/locker/", http.StripPrefix("/locker", distributed_locker.NewHttpBackendHandler(srv.DistributedLockerBackend)))
-	srv.Handle("/stages-storage-cache/", http.StripPrefix("/stages-storage-cache", NewStagesStorageCacheHttpHandler(ctx, stagesStorageCache)))
-
+	srv.Handle("/stages-storage-cache/v1/", http.StripPrefix("/stages-storage-cache/v1", NewStagesStorageCacheHttpHandler(stagesStorageCache)))
+	srv.Handle("/stages-storage-cache/", http.StripPrefix("/stages-storage-cache", NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache)))
 	return srv
 }

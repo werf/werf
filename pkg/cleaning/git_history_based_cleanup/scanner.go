@@ -151,7 +151,7 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 		if len(s.reachedStageIDList()) == *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
 		} else if len(s.reachedStageIDList()) > *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
-			logboek.Context(ctx).Info().LogF("Reached more content signatures than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
+			logboek.Context(ctx).Info().LogF("Reached more content digests than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
 
 			latestCommitStageID := s.latestCommitStageID()
 			var latestCommitList []*object.Commit
@@ -254,7 +254,7 @@ latestCommitStageIDLoop:
 	}
 
 	if len(skippedStageIDList) != 0 {
-		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content signatures by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
+		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
 			for _, stageID := range skippedStageIDList {
 				logboek.Context(ctx).Info().LogLn(stageID)
 			}
@@ -279,7 +279,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, la
 		}
 	}
 
-	logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content signatures by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
+	logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
 		for _, stageID := range skippedStageIDList {
 			logboek.Context(ctx).Info().LogLn(stageID)
 		}
@@ -316,7 +316,7 @@ func (s *commitHistoryScanner) scanCommitHistory(ctx context.Context, commit str
 			}
 
 			if len(s.expectedStageIDCommitList) == len(s.reachedStageIDCommitList) {
-				logboek.Context(ctx).Debug().LogLn("Stop scanning due to all expected content signatures reached")
+				logboek.Context(ctx).Debug().LogLn("Stop scanning due to all expected content digests reached")
 				break
 			}
 
@@ -371,13 +371,13 @@ outerLoop:
 
 				if !ok {
 					logboek.Context(ctx).Info().LogF(
-						"Expected content signature %s was reached on commit %s\n",
+						"Expected content digest %s was reached on commit %s\n",
 						stageID,
 						commit,
 					)
 				} else {
 					logboek.Context(ctx).Info().LogF(
-						"Expected content signature %s was reached again on another commit %s\n",
+						"Expected content digest %s was reached again on another commit %s\n",
 						stageID,
 						commit,
 					)
