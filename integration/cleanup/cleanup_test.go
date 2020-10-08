@@ -416,7 +416,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 		})
 
 		Context("images metadata cleanup", func() {
-			When("one content signature", func() {
+			When("one content digest", func() {
 				metaImagesCheckFunc := func(before, after int, afterExtraChecks ...func(commits []string)) {
 					imageMetadata := ImageMetadata(imageName)
 					for _, commitList := range imageMetadata {

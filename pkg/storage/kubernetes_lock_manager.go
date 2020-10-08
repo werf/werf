@@ -66,20 +66,20 @@ func (manager *KuberntesLockManager) getLockerForProject(ctx context.Context, pr
 	return locker, nil
 }
 
-func (manager *KuberntesLockManager) LockStage(ctx context.Context, projectName, signature string) (LockHandle, error) {
+func (manager *KuberntesLockManager) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
 
-func (manager *KuberntesLockManager) LockStageCache(ctx context.Context, projectName, signature string) (LockHandle, error) {
+func (manager *KuberntesLockManager) LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageCacheLockName(projectName, signature), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kubernetesStageCacheLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
@@ -115,12 +115,12 @@ func (manager *KuberntesLockManager) Unlock(ctx context.Context, lock LockHandle
 }
 
 // FIXME: v1.2 use the same locks names as generic lock manager (include project name into lock name)
-func kubernetesStageLockName(_, signature string) string {
-	return fmt.Sprintf("stage/%s", signature)
+func kubernetesStageLockName(_, digest string) string {
+	return fmt.Sprintf("stage/%s", digest)
 }
 
-func kubernetesStageCacheLockName(_, signature string) string {
-	return fmt.Sprintf("stage-cache/%s", signature)
+func kubernetesStageCacheLockName(_, digest string) string {
+	return fmt.Sprintf("stage-cache/%s", digest)
 }
 
 func kuberntesImageLockName(_, imageName string) string {

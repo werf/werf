@@ -168,6 +168,7 @@ func NewSynchronizationServerHandlerByClientID(clientID string, distributedLocke
 		StagesStorageCache:       stagesStorageCache,
 	}
 	srv.Handle("/locker/", http.StripPrefix("/locker", distributed_locker.NewHttpBackendHandler(srv.DistributedLockerBackend)))
-	srv.Handle("/stages-storage-cache/", http.StripPrefix("/stages-storage-cache", NewStagesStorageCacheHttpHandler(stagesStorageCache)))
+	srv.Handle("/stages-storage-cache/v1/", http.StripPrefix("/stages-storage-cache/v1", NewStagesStorageCacheHttpHandler(stagesStorageCache)))
+	srv.Handle("/stages-storage-cache/", http.StripPrefix("/stages-storage-cache", NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache)))
 	return srv
 }

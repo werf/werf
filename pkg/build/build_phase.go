@@ -154,7 +154,7 @@ func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *Image) error 
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
-	img.SetContentSignature(phase.StagesIterator.PrevNonEmptyStage.GetContentSignature())
+	img.SetContentDigest(phase.StagesIterator.PrevNonEmptyStage.GetContentDigest())
 
 	if img.isArtifact {
 		return nil
@@ -239,7 +239,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 			return err
 		}
 
-		defer phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Unlock()
+		defer phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock()
 		return nil
 	} else {
 		if stg.Name() != "from" && stg.Name() != "dockerfile" {
@@ -257,7 +257,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 		if err := phase.calculateStage(ctx, img, stg, false); err != nil {
 			return err
 		}
-		defer phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Unlock()
+		defer phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock()
 
 		// Stage is cached in the stages storage
 		if stg.GetImage().GetStageDescription() != nil {
@@ -326,11 +326,11 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 		return err
 	}
 
-	stageSig, err := calculateSignature(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
+	stageSig, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
 		return err
 	}
-	stg.SetSignature(stageSig)
+	stg.SetDigest(stageSig)
 
 	logboek.Context(ctx).Info().LogProcessInline("Locking stage %s handling", stg.LogDetailedName()).
 		Options(func(options types.LogProcessInlineOptionsInterface) {
@@ -338,9 +338,9 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 				options.Mute()
 			}
 		}).
-		Do(phase.Conveyor.GetStageSignatureMutex(stg.GetSignature()).Lock)
+		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
-	if stages, err := phase.Conveyor.StorageManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stageSig); err != nil {
+	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stageSig); err != nil {
 		return err
 	} else {
 		if stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
@@ -361,13 +361,13 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 		}
 	}
 
-	stageContentSig, err := calculateSignature(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
+	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
-		return fmt.Errorf("unable to calculate stage %s content signature: %s", stg.Name(), err)
+		return fmt.Errorf("unable to calculate stage %s content digest: %s", stg.Name(), err)
 	}
-	stg.SetContentSignature(stageContentSig)
+	stg.SetContentDigest(stageContentSig)
 
-	logboek.Context(ctx).Info().LogF("Stage %s content signature: %s\n", stg.LogDetailedName(), stageContentSig)
+	logboek.Context(ctx).Info().LogF("Stage %s content digest: %s\n", stg.LogDetailedName(), stageContentSig)
 
 	return nil
 }
@@ -383,8 +383,8 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 		imagePkg.WerfVersionLabel:               werf.Version,
 		imagePkg.WerfCacheVersionLabel:          imagePkg.BuildCacheVersion,
 		imagePkg.WerfImageLabel:                 "false",
-		imagePkg.WerfStageSignatureLabel:        stg.GetSignature(),
-		imagePkg.WerfStageContentSignatureLabel: stg.GetContentSignature(),
+		imagePkg.WerfStageDigestLabel:        stg.GetDigest(),
+		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 
 	switch stg.(type) {
@@ -472,38 +472,38 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD"); v != "" {
 		seconds := 0
 		fmt.Sscanf(v, "%d", &seconds)
-		fmt.Printf("Sleeping %d seconds before building new image by signature %s...\n", seconds, stg.GetSignature())
+		fmt.Printf("Sleeping %d seconds before building new image by digest %s...\n", seconds, stg.GetDigest())
 		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
 	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
 		return stageImage.Build(ctx, phase.ImageBuildOptions)
 	}); err != nil {
-		return fmt.Errorf("failed to build image for stage %s with signature %s: %s", stg.Name(), stg.GetSignature(), err)
+		return fmt.Errorf("failed to build image for stage %s with digest %s: %s", stg.Name(), stg.GetDigest(), err)
 	}
 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
 		seconds := 0
 		fmt.Sscanf(v, "%d", &seconds)
-		fmt.Printf("Sleeping %d seconds before saving newly built image %s into stages storage %s by signature %s...\n", seconds, stg.GetImage().GetBuiltId(), phase.Conveyor.StorageManager.StagesStorage.String(), stg.GetSignature())
+		fmt.Printf("Sleeping %d seconds before saving newly built image %s into stages storage %s by digest %s...\n", seconds, stg.GetImage().GetBuiltId(), phase.Conveyor.StorageManager.StagesStorage.String(), stg.GetDigest())
 		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
-	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetSignature()); err != nil {
-		return fmt.Errorf("unable to lock project %s signature %s: %s", phase.Conveyor.projectName(), stg.GetSignature(), err)
+	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
+		return fmt.Errorf("unable to lock project %s digest %s: %s", phase.Conveyor.projectName(), stg.GetDigest(), err)
 	} else {
 		defer phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
 	}
 
-	if stages, err := phase.Conveyor.StorageManager.GetStagesBySignature(ctx, stg.LogDetailedName(), stg.GetSignature()); err != nil {
+	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stg.GetDigest()); err != nil {
 		return err
 	} else {
 		if stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
 			return err
 		} else if stageDesc != nil {
 			logboek.Context(ctx).Default().LogF(
-				"Discarding newly built image for stage %s by signature %s: detected already existing image %s in the stages storage\n",
-				stg.LogDetailedName(), stg.GetSignature(), stageDesc.Info.Name,
+				"Discarding newly built image for stage %s by digest %s: detected already existing image %s in the stages storage\n",
+				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
 			var i *container_runtime.StageImage
@@ -520,7 +520,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stg.SetImage(i)
 			return nil
 		} else { // use newly built image
-			newStageImageName, uniqueID := phase.Conveyor.StorageManager.GenerateStageUniqueID(stg.GetSignature(), stages)
+			newStageImageName, uniqueID := phase.Conveyor.StorageManager.GenerateStageUniqueID(stg.GetDigest(), stages)
 			repository, tag := image.ParseRepositoryAndTag(newStageImageName)
 
 			stageImageObj := phase.Conveyor.GetStageImage(stageImage.Name())
@@ -530,13 +530,13 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stageImageObj.GetStageDescription().Info.Name = newStageImageName
 			stageImageObj.GetStageDescription().Info.Repository = repository
 			stageImageObj.GetStageDescription().Info.Tag = tag
-			stageImageObj.GetStageDescription().StageID = &image.StageID{Signature: stg.GetSignature(), UniqueID: uniqueID}
+			stageImageObj.GetStageDescription().StageID = &image.StageID{Digest: stg.GetDigest(), UniqueID: uniqueID}
 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
 			if err := logboek.Context(ctx).Default().LogProcess("Store into stages storage").DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
-					return fmt.Errorf("unable to store stage %s signature %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetSignature(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+					return fmt.Errorf("unable to store stage %s digest %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				}
 				return nil
 			}); err != nil {
@@ -549,7 +549,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			}
 			stageIDs = append(stageIDs, *stageImage.GetStageDescription().StageID)
 
-			return phase.Conveyor.StorageManager.AtomicStoreStagesBySignatureToCache(ctx, string(stg.Name()), stg.GetSignature(), stageIDs)
+			return phase.Conveyor.StorageManager.AtomicStoreStagesByDigestToCache(ctx, string(stg.Name()), stg.GetDigest(), stageIDs)
 		}
 	}
 }
@@ -622,7 +622,7 @@ func byteCountBinary(b int64) string {
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func calculateSignature(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
+func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
 	checksumArgs := []string{image.BuildCacheVersion, stageName, stageDependencies}
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
@@ -630,18 +630,18 @@ func calculateSignature(ctx context.Context, stageName, stageDependencies string
 			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", prevNonEmptyStage.Name(), stageName, err)
 		}
 
-		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetSignature(), prevStageDependencies)
+		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetDigest(), prevStageDependencies)
 	}
 
-	signature := util.Sha3_224Hash(checksumArgs...)
+	digest := util.Sha3_224Hash(checksumArgs...)
 
-	blockMsg := fmt.Sprintf("Stage %s signature %s", stageName, signature)
+	blockMsg := fmt.Sprintf("Stage %s digest %s", stageName, digest)
 	logboek.Context(ctx).Debug().LogBlock(blockMsg).Do(func() {
 		checksumArgsNames := []string{
 			"BuildCacheVersion",
 			"stageName",
 			"stageDependencies",
-			"prevNonEmptyStage signature",
+			"prevNonEmptyStage digest",
 			"prevNonEmptyStage dependencies for next stage",
 		}
 		for ind, checksumArg := range checksumArgs {
@@ -649,7 +649,7 @@ func calculateSignature(ctx context.Context, stageName, stageDependencies string
 		}
 	})
 
-	return signature, nil
+	return digest, nil
 }
 
 // TODO: move these prints to the after-images hook, print summary over all images
@@ -659,7 +659,7 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image
 			options.Style(style.Highlight())
 		}).
 		Do(func() {
-			logboek.Context(ctx).Warn().LogF("%s with signature %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetSignature())
+			logboek.Context(ctx).Warn().LogF("%s with digest %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetDigest())
 
 			var reasonNumber int
 			reasonNumberFunc := func() string {
@@ -672,19 +672,19 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image
 			logboek.Context(ctx).Warn().LogLn()
 
 			if img.isDockerfileImage {
-				logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage signature:
+				logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage digest:
 - .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
 - auto-generated file`)
 				logboek.Context(ctx).Warn().LogLn()
 			}
 
-			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage signature:
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `werf.yaml has non-permanent data that affects stage digest:
 - environment variable (e.g. {{ env "JOB_ID" }})
 - dynamic go template function (e.g. one of sprig date functions http://masterminds.github.io/sprig/date.html)
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
 			logboek.Context(ctx).Warn().LogLn()
 
-			logboek.Context(ctx).Warn().LogLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+			logboek.Context(ctx).Warn().LogLn(`Stage digest dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
 
 To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.

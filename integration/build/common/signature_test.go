@@ -21,7 +21,7 @@ func init() {
 	}
 }
 
-var _ = Describe("persistent stage signatures", func() {
+var _ = Describe("persistent stage digests", func() {
 	BeforeEach(func() {
 		utils.RunSucceedCommand(
 			testDirPath,
@@ -32,16 +32,16 @@ var _ = Describe("persistent stage signatures", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			"git",
-			"checkout", "-b", "integration-signature-test", "v1.0.10",
+			"checkout", "-b", "integration-digest-test", "v1.0.10",
 		)
 
-		utils.CopyIn(utils.FixturePath("signature"), testDirPath)
+		utils.CopyIn(utils.FixturePath("digest"), testDirPath)
 	})
 
 	type entry struct {
 		imageName                 string
-		expectedSignatures        []string
-		expectedWindowsSignatures []string
+		expectedDigests        []string
+		expectedWindowsDigests []string
 		skipOnWindows             bool
 	}
 
@@ -54,40 +54,40 @@ var _ = Describe("persistent stage signatures", func() {
 
 		Ω(err).NotTo(HaveOccurred())
 
-		var expectedSignatures []string
-		if runtime.GOOS == "windows" && len(e.expectedWindowsSignatures) != 0 {
-			expectedSignatures = e.expectedWindowsSignatures
+		var expectedDigests []string
+		if runtime.GOOS == "windows" && len(e.expectedWindowsDigests) != 0 {
+			expectedDigests = e.expectedWindowsDigests
 		} else {
-			expectedSignatures = e.expectedSignatures
+			expectedDigests = e.expectedDigests
 		}
 
-		for _, signature := range expectedSignatures {
-			Ω(string(output)).Should(ContainSubstring(signature))
+		for _, digest := range expectedDigests {
+			Ω(string(output)).Should(ContainSubstring(digest))
 		}
 	},
 		Entry("dockerfile_image", entry{
 			imageName: "dockerfile_image",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"dockerfile_image/dockerfile", "tag: 66be3adaf40fba215530be3abaa0bdfbc6005abdbd6d5f8957e031db-",
 			},
-			expectedWindowsSignatures: []string{
+			expectedWindowsDigests: []string{
 				"dockerfile_image/dockerfile", "tag: 9642c67560c27be99d21076fcb37dd60959c4269c53870d553e2282b-",
 			},
 			skipOnWindows: true,
 		}),
 		Entry("dockerfile_image_based_on_stage", entry{
 			imageName: "dockerfile_image_based_on_stage",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"dockerfile_image_based_on_stage/dockerfile", "tag: c52464f2235835ba66266d7b7f844fa399aa362706644583b7f32293-",
 			},
-			expectedWindowsSignatures: []string{
+			expectedWindowsDigests: []string{
 				"dockerfile_image_based_on_stage/dockerfile", "tag: c52464f2235835ba66266d7b7f844fa399aa362706644583b7f32293-",
 			},
 			skipOnWindows: true,
 		}),
 		Entry("stapel_image_shell", entry{
 			imageName: "stapel_image_shell",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
 				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
 				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
@@ -105,7 +105,7 @@ var _ = Describe("persistent stage signatures", func() {
 		}),
 		Entry("stapel_image_ansible", entry{
 			imageName: "stapel_image_ansible",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
 				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
 				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
@@ -123,7 +123,7 @@ var _ = Describe("persistent stage signatures", func() {
 		}),
 		Entry("stapel_image_from_image", entry{
 			imageName: "stapel_image_from_image",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
 				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
 				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
@@ -142,7 +142,7 @@ var _ = Describe("persistent stage signatures", func() {
 		}),
 		Entry("stapel_image_from_artifact", entry{
 			imageName: "stapel_image_from_artifact",
-			expectedSignatures: []string{
+			expectedDigests: []string{
 				"import_artifact/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",
 				"import_artifact/install", "tag: f9026091241bb85eac3c2413333b4269cc309dde7a29d7ebffdd05d1-",
 				"import_image/from", "tag: 2bc41fbd00277e3021c613fcfdcef2716ed893bee29b36f928136e47-",

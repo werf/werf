@@ -31,7 +31,7 @@ const (
 	UnexpectedTagFormatErrorPrefix = "unexpected tag format"
 )
 
-func getSignatureAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, int64, error) {
+func getDigestAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 
 	if len(parts) != 2 {
@@ -75,8 +75,8 @@ func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime
 	}, nil
 }
 
-func (storage *RepoStagesStorage) ConstructStageImageName(_, signature string, uniqueID int64) string {
-	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, signature, uniqueID)
+func (storage *RepoStagesStorage) ConstructStageImageName(_, digest string, uniqueID int64) string {
+	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, digest, uniqueID)
 }
 
 func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
@@ -85,23 +85,23 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
 			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
 				continue
 			}
 
-			if signature, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+			if digest, uniqueID, err := getDigestAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
 					logboek.Context(ctx).Debug().LogLn(err.Error())
 					continue
 				}
 				return nil, err
 			} else {
-				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+				res = append(res, image.StageID{Digest: digest, UniqueID: uniqueID})
 
-				logboek.Context(ctx).Debug().LogF("Selected stage by signature %q uniqueID %d\n", signature, uniqueID)
+				logboek.Context(ctx).Debug().LogF("Selected stage by digest %q uniqueID %d\n", digest, uniqueID)
 			}
 		}
 
@@ -125,47 +125,47 @@ func (storage *RepoStagesStorage) DeleteRepo(ctx context.Context) error {
 	return storage.DockerRegistry.DeleteRepo(ctx, storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
 	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 		for _, tag := range tags {
-			if !strings.HasPrefix(tag, signature) {
-				logboek.Context(ctx).Debug().LogF("Discard tag %q: should have prefix %q\n", tag, signature)
+			if !strings.HasPrefix(tag, digest) {
+				logboek.Context(ctx).Debug().LogF("Discard tag %q: should have prefix %q\n", tag, digest)
 				continue
 			}
-			if _, uniqueID, err := getSignatureAndUniqueIDFromRepoStageImageTag(tag); err != nil {
+			if _, uniqueID, err := getDigestAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
 					logboek.Context(ctx).Debug().LogLn(err.Error())
 					continue
 				}
 				return nil, err
 			} else {
-				logboek.Context(ctx).Debug().LogF("Tag %q is suitable for signature %q\n", tag, signature)
-				res = append(res, image.StageID{Signature: signature, UniqueID: uniqueID})
+				logboek.Context(ctx).Debug().LogF("Tag %q is suitable for digest %q\n", tag, digest)
+				res = append(res, image.StageID{Digest: digest, UniqueID: uniqueID})
 			}
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesBySignature result for %q: %#v\n", storage.RepoAddress, res)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest result for %q: %#v\n", storage.RepoAddress, res)
 
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error) {
-	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
+func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, signature, uniqueID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, digest, uniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, stageImageName); err != nil {
 		return nil, err
 	} else if imgInfo != nil {
 		return &image.StageDescription{
-			StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
+			StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
 			Info:    imgInfo,
 		}, nil
 	}

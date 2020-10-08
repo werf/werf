@@ -90,7 +90,7 @@ func (cache *FileStagesStorageCache) GetAllStages(ctx context.Context, projectNa
 		return false, nil, fmt.Errorf("error reading directory %s files: %s", sigDir, err)
 	} else {
 		for _, finfo := range entries {
-			if _, stages, err := cache.GetStagesBySignature(ctx, projectName, finfo.Name()); err != nil {
+			if _, stages, err := cache.GetStagesByDigest(ctx, projectName, finfo.Name()); err != nil {
 				return false, nil, err
 			} else {
 				res = append(res, stages...)
@@ -109,12 +109,12 @@ func (cache *FileStagesStorageCache) DeleteAllStages(_ context.Context, projectN
 	return nil
 }
 
-func (cache *FileStagesStorageCache) GetStagesBySignature(ctx context.Context, projectName, signature string) (bool, []image.StageID, error) {
+func (cache *FileStagesStorageCache) GetStagesByDigest(ctx context.Context, projectName, digest string) (bool, []image.StageID, error) {
 	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
 		return false, nil, err
 	}
 
-	sigFile := filepath.Join(cache.CacheDir, projectName, signature)
+	sigFile := filepath.Join(cache.CacheDir, projectName, digest)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
 		return false, nil, nil
@@ -138,7 +138,7 @@ func (cache *FileStagesStorageCache) GetStagesBySignature(ctx context.Context, p
 	return true, res.Stages, nil
 }
 
-func (cache *FileStagesStorageCache) StoreStagesBySignature(ctx context.Context, projectName, signature string, stages []image.StageID) error {
+func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, projectName, digest string, stages []image.StageID) error {
 	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (cache *FileStagesStorageCache) StoreStagesBySignature(ctx context.Context,
 	}
 
 	sigDir := filepath.Join(cache.CacheDir, projectName)
-	sigFile := filepath.Join(sigDir, signature)
+	sigFile := filepath.Join(sigDir, digest)
 	if err := os.MkdirAll(sigDir, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to create dir %s: %s", sigDir, err)
 	}
@@ -167,7 +167,7 @@ func (cache *FileStagesStorageCache) StoreStagesBySignature(ctx context.Context,
 	return nil
 }
 
-func (cache *FileStagesStorageCache) DeleteStagesBySignature(ctx context.Context, projectName, signature string) error {
+func (cache *FileStagesStorageCache) DeleteStagesByDigest(ctx context.Context, projectName, digest string) error {
 	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (cache *FileStagesStorageCache) DeleteStagesBySignature(ctx context.Context
 	}
 
 	sigDir := filepath.Join(cache.CacheDir, projectName)
-	sigFile := filepath.Join(sigDir, signature)
+	sigFile := filepath.Join(sigDir, digest)
 
 	if err := os.RemoveAll(sigFile); err != nil {
 		return fmt.Errorf("error removing %s: %s", sigFile, err)
