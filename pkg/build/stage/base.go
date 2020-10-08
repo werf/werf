@@ -82,8 +82,8 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 type BaseStage struct {
 	name             StageName
 	imageName        string
-	signature        string
-	contentSignature string
+	digest        string
+	contentDigest string
 	image            container_runtime.ImageInterface
 	gitMappings      []*GitMapping
 	imageTmpDir      string
@@ -427,20 +427,20 @@ func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, 
 	}
 }
 
-func (s *BaseStage) SetSignature(signature string) {
-	s.signature = signature
+func (s *BaseStage) SetDigest(digest string) {
+	s.digest = digest
 }
 
-func (s *BaseStage) GetSignature() string {
-	return s.signature
+func (s *BaseStage) GetDigest() string {
+	return s.digest
 }
 
-func (s *BaseStage) SetContentSignature(contentSignature string) {
-	s.contentSignature = contentSignature
+func (s *BaseStage) SetContentDigest(contentDigest string) {
+	s.contentDigest = contentDigest
 }
 
-func (s *BaseStage) GetContentSignature() string {
-	return s.contentSignature
+func (s *BaseStage) GetContentDigest() string {
+	return s.contentDigest
 }
 
 func (s *BaseStage) SetImage(image container_runtime.ImageInterface) {

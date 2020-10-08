@@ -78,7 +78,7 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 	for _, sourceStageDesc := range existingSourceStages {
 		stageExistsInDestination := false
 		for _, destStageDesc := range existingDestinationStages {
-			if sourceStageDesc.Signature == destStageDesc.Signature && sourceStageDesc.UniqueID == destStageDesc.UniqueID {
+			if sourceStageDesc.Digest == destStageDesc.Digest && sourceStageDesc.UniqueID == destStageDesc.UniqueID {
 				stageExistsInDestination = true
 				break
 			}
@@ -157,7 +157,7 @@ func syncStage(ctx context.Context, projectName string, stageID image.StageID, f
 		opts.CleanupLocalCache = false
 	}
 
-	stageDesc, err := fromStagesStorage.GetStageDescription(ctx, projectName, stageID.Signature, stageID.UniqueID)
+	stageDesc, err := fromStagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
 	if err != nil {
 		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), fromStagesStorage.String(), err)
 	} else if stageDesc == nil {
@@ -165,7 +165,7 @@ func syncStage(ctx context.Context, projectName string, stageID image.StageID, f
 		return nil
 	}
 
-	if destStageDesc, err := toStagesStorage.GetStageDescription(ctx, projectName, stageID.Signature, stageID.UniqueID); err != nil {
+	if destStageDesc, err := toStagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID); err != nil {
 		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), toStagesStorage.String(), err)
 	} else if destStageDesc == nil {
 		img := container_runtime.NewStageImage(nil, stageDesc.Info.Name, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
@@ -175,7 +175,7 @@ func syncStage(ctx context.Context, projectName string, stageID image.StageID, f
 			return fmt.Errorf("unable to fetch %s from %s: %s", stageDesc.Info.Name, fromStagesStorage.String(), err)
 		}
 
-		newImageName := toStagesStorage.ConstructStageImageName(projectName, stageDesc.StageID.Signature, stageDesc.StageID.UniqueID)
+		newImageName := toStagesStorage.ConstructStageImageName(projectName, stageDesc.StageID.Digest, stageDesc.StageID.UniqueID)
 		logboek.Context(ctx).Info().LogF("Renaming image %s to %s\n", img.Name(), newImageName)
 		if err := containerRuntime.RenameImage(ctx, &container_runtime.DockerImage{Image: img}, newImageName, opts.CleanupLocalCache); err != nil {
 			return err

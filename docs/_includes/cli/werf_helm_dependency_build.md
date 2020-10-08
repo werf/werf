@@ -28,7 +28,7 @@ werf helm dependency build CHART [flags] [options]
       --keyring='~/.gnupg/pubring.gpg':
             keyring containing public keys
       --verify=false:
-            verify the packages against signatures
+            verify the packages against digests
 ```
 
 {{ header }} Options inherited from parent commands

@@ -18,7 +18,7 @@ type StageInfo struct {
 	ImageID               string
 	Repository            string
 	Tag                   string
-	Signature             string
+	Digest             string
 	UniqueID              string
 	CreatedAtUnixMillisec int64
 }
@@ -39,7 +39,7 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 		stageInfo.Tag = fields[len(fields)-1]
 
 		sigAndID := strings.SplitN(stageInfo.Tag, "-", 2)
-		stageInfo.Signature = sigAndID[0]
+		stageInfo.Digest = sigAndID[0]
 		stageInfo.UniqueID = sigAndID[1]
 
 		ts, err := strconv.ParseInt(stageInfo.UniqueID, 10, 64)
@@ -151,7 +151,7 @@ var _ = Describe("Build phase", func() {
 
 			Expect(firstCommitInstallStage.ImageID).NotTo(Equal(secondCommitInstallStage.ImageID))
 			Expect(firstCommitInstallStage.Repository).To(Equal(secondCommitInstallStage.Repository))
-			Expect(firstCommitInstallStage.Signature).To(Equal(secondCommitInstallStage.Signature))
+			Expect(firstCommitInstallStage.Digest).To(Equal(secondCommitInstallStage.Digest))
 			Expect(firstCommitInstallStage.UniqueID).NotTo(Equal(secondCommitInstallStage.UniqueID))
 			Expect(firstCommitInstallStage.CreatedAtUnixMillisec > secondCommitInstallStage.CreatedAtUnixMillisec).To(BeTrue(), "second stage should be saved into stages-storage earlier than first")
 
@@ -184,7 +184,7 @@ var _ = Describe("Build phase", func() {
 			Expect(useCachedInstall).To(BeTrue(), "should used cached install stage")
 			Expect(secondCommitInstallStageOnRetry.ImageID).To(Equal(secondCommitInstallStage.ImageID))
 			Expect(secondCommitInstallStageOnRetry.Repository).To(Equal(secondCommitInstallStage.Repository))
-			Expect(secondCommitInstallStageOnRetry.Signature).To(Equal(secondCommitInstallStage.Signature))
+			Expect(secondCommitInstallStageOnRetry.Digest).To(Equal(secondCommitInstallStage.Digest))
 			Expect(secondCommitInstallStageOnRetry.UniqueID).To(Equal(secondCommitInstallStage.UniqueID))
 		})
 	})

@@ -135,7 +135,7 @@ The _builder directive_ includes four directives that define assembly instructio
 - `beforeSetup`
 - `setup`
 
-Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage signatures_. The detailed information is available in the [CacheVersion](#dependency-on-the-cacheversion-value) section.
+Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage digests_. The detailed information is available in the [CacheVersion](#dependency-on-the-cacheversion-value) section.
 
 ## Shell
 
@@ -280,7 +280,7 @@ $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 
 ### Supported modules
 
-One of the ideas at the core of werf is idempotent builds. werf must generate the very same image every time if there are no changes. We solve this task by calculating a _signature_ for _stages_. However, ansible’s modules are non-idempotent, meaning they produce different results even if the input parameters are the same. Thus, werf is unable to correctly calculate a _signature_ in order to determine the need to rebuild _stages_. Because of that, werf currently supports a limited list of modules:
+One of the ideas at the core of werf is idempotent builds. werf must generate the very same image every time if there are no changes. We solve this task by calculating a _digest_ for _stages_. However, ansible’s modules are non-idempotent, meaning they produce different results even if the input parameters are the same. Thus, werf is unable to correctly calculate a _digest_ in order to determine the need to rebuild _stages_. Because of that, werf currently supports a limited list of modules:
 
 - [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
 - [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate, and other.
@@ -295,7 +295,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -366,9 +366,9 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
-You can use these dependencies to shape the rebuilding process of _user stages_. _Signatures_ of user stages  (and, therefore, the rebuilding process) depend on:
+You can use these dependencies to shape the rebuilding process of _user stages_. _Digests_ of user stages  (and, therefore, the rebuilding process) depend on:
 
 - changes in assembly instructions
 - changes of _cacheVersion directives_
@@ -379,7 +379,7 @@ The first three dependencies are described below in more detail.
 
 ## Dependency on changes in assembly instructions
 
-The _signature_ of the user stage depends on the rendered text of assembly instructions. Changes in assembly instructions for the _user stage_ lead to the rebuilding of this _stage_. Say, you have the following _shell-based assembly instructions_:
+The _digest_ of the user stage depends on the rendered text of assembly instructions. Changes in assembly instructions for the _user stage_ lead to the rebuilding of this _stage_. Say, you have the following _shell-based assembly instructions_:
 
 ```yaml
 shell:
@@ -393,7 +393,7 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-On the first build of this image, instructions for all four user stages will be executed. There is no _git mapping_ in this _config_, so assembly instructions will never be executed on subsequent builds since _signatures_ of user stages will be the same, and the build cache will remain valid.
+On the first build of this image, instructions for all four user stages will be executed. There is no _git mapping_ in this _config_, so assembly instructions will never be executed on subsequent builds since _digests_ of user stages will be the same, and the build cache will remain valid.
 
 Let us change assembly instructions for the _install_ user stage:
 
@@ -410,9 +410,9 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-The signature of the install stage has changed, so `werf build` executes assembly instructions in the _install_ stage and instructions defined in subsequent _stages_, i.e., _beforeSetup_ and _setup_.
+The digest of the install stage has changed, so `werf build` executes assembly instructions in the _install_ stage and instructions defined in subsequent _stages_, i.e., _beforeSetup_ and _setup_.
 
-The stage signature may also change due to the use of environment variables and Go templates and that can lead to unforeseen rebuilds. For example:
+The stage digest may also change due to the use of environment variables and Go templates and that can lead to unforeseen rebuilds. For example:
 
 {% raw %}
 ```yaml
@@ -425,13 +425,13 @@ shell:
 ```
 {% endraw %}
 
-The first build will calculate the _signature_ of the _beforeInstall_ stage:
+The first build will calculate the _digest_ of the _beforeInstall_ stage:
 
 ```shell
 echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
 ```
 
-The _signature_ of the _beforeInstall_ stage will change with each subsequent commit:
+The _digest_ of the _beforeInstall_ stage will change with each subsequent commit:
 
 ```shell
 echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
@@ -453,7 +453,7 @@ _install_, _beforeSetup_, and _setup_ user stages also depend on changes in the 
 
 <br />
 <br />
-This stage is pictured on the _Calculation signature phase_
+This stage is pictured on the _Calculation digest phase_
 ![git files actualized on specific stage]({{ site.baseurl }}/images/build/git_mapping_updated_on_stage.png)
 
 You can specify the dependency of the _user stage_ on changes in the git repository via the `git.stageDependencies` parameter. It has the following syntax:
@@ -475,7 +475,7 @@ git:
 
 The `git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup` and `setup`. Each key defines an array of masks for a single user stage. The _user stage_ will be rebuilt if there are changes in the git repository that match one of the masks defined for the _user stage_.
 
-For each _user stage_, werf creates a list of matching files and calculates a checksum over attributes and contents of each file. This checksum is a part of the _stage signature_. Thus, the signature changes in response to any changes in the repository, such as getting new attributes for the file, changing its contents, adding new matching file, deleting a matching file, etc.
+For each _user stage_, werf creates a list of matching files and calculates a checksum over attributes and contents of each file. This checksum is a part of the _stage digest_. Thus, the digest changes in response to any changes in the repository, such as getting new attributes for the file, changing its contents, adding new matching file, deleting a matching file, etc.
 
 `git.stageDependencies` masks work jointly with `git.includePaths` and `git.excludePaths` masks. Only files that match the `includePaths` filter and `stageDependencies` masks are considered suitable. Similarly, only files that do not match the `excludePaths` filter and `stageDependencies` masks are considered suitable by werf.
 
@@ -533,7 +533,7 @@ The _git mapping configuration_ in the above `werf.yaml` requires werf to transf
 There are situations when a user wants to rebuild all or just one _user stage_. This
 can be accomplished by changing `cacheVersion` or `<user stage name>CacheVersion` values.
 
-The signature of the _install_ user stage depends on the value of the
+The digest of the _install_ user stage depends on the value of the
 `installCacheVersion` parameter. To rebuild the _install_ user stage (and
 subsequent stages), you need to change the value of the `installCacheVersion` parameter.
 

@@ -110,10 +110,10 @@ The configuration of a _git mapping_ for a remote repository has some additional
 - `url` — address of the remote repository;
 - `branch`, `tag`, `commit` — the name of a branch, tag, or a commit hash that will be used. If these parameters are omitted, the master branch is used instead.
 
-> Please be aware that werf uses the history of a git repository to calculate stages signatures. The usage of a remote git mapping with a branch (it is a master branch by default) might break the reproducibility of the previous builds. Thus, new commits in the branch will make previously built stages unusable.
+> Please be aware that werf uses the history of a git repository to calculate stages digests. The usage of a remote git mapping with a branch (it is a master branch by default) might break the reproducibility of the previous builds. Thus, new commits in the branch will make previously built stages unusable.
 >
 > * The existing pipeline jobs (e.g., deploy) would not run and would require the rebuilding of an image if a remote git branch has been changed.
-> * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage signatures along with the branch HEAD.
+> * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage digests along with the branch HEAD.
 >
 > If you want to use branches for a remote git mapping instead of a commit or tag, add the _herebyIAdmitThatBranchMightBreakReproducibility: true_ parameter into the remote git mapping section.
 >

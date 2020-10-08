@@ -173,7 +173,7 @@ outerLoop:
 			if onBuild, getRemotelyErr = getBaseImageOnBuildRemotely(); getRemotelyErr != nil {
 				if isUnsupportedMediaTypeError(getRemotelyErr) {
 					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
-					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating signature of image correctly\n")
+					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
 					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
 						return containerRuntime.PullImage(ctx, resolvedBaseName)
 					}); err != nil {

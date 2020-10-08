@@ -39,7 +39,7 @@ func IsImageDeletionFailedDueToUsingByContainerError(err error) bool {
 	return strings.HasSuffix(err.Error(), ImageDeletionFailedDueToUsedByContainerErrorTip)
 }
 
-func getSignatureAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
+func getDigestAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
 		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %s", parts[1], err)
@@ -57,8 +57,8 @@ func NewLocalDockerServerStagesStorage(localDockerServerRuntime *container_runti
 	return &LocalDockerServerStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
 }
 
-func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, signature string, uniqueID int64) string {
-	return fmt.Sprintf(LocalStage_ImageFormat, projectName, signature, uniqueID)
+func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, digest string, uniqueID int64) string {
+	return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest, uniqueID)
 }
 
 func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
@@ -103,14 +103,14 @@ func makeLocalManagedImageRecord(projectName, imageName string) string {
 	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, signature string, uniqueID int64) (*image.StageDescription, error) {
-	stageImageName := storage.ConstructStageImageName(projectName, signature, uniqueID)
+func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
 	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(ctx, stageImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
 	} else if inspect != nil {
 		return &image.StageDescription{
-			StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
+			StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
 			Info:    image.NewInfoFromInspect(stageImageName, inspect),
 		}, nil
 	} else {
@@ -185,11 +185,11 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(ctx context.Cont
 	return res, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStagesIDsBySignature(ctx context.Context, projectName, signature string) ([]image.StageID, error) {
+func (storage *LocalDockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
-	// NOTE signature already depends on build-cache-version
-	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageSignatureLabel, signature))
+	// NOTE digest already depends on build-cache-version
+	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageDigestLabel, digest))
 
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -494,10 +494,10 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID
 
 		for _, repoTag := range repoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
-			if signature, uniqueID, err := getSignatureAndUniqueIDFromLocalStageImageTag(tag); err != nil {
+			if digest, uniqueID, err := getDigestAndUniqueIDFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {
-				stagesList = append(stagesList, image.StageID{Signature: signature, UniqueID: uniqueID})
+				stagesList = append(stagesList, image.StageID{Digest: digest, UniqueID: uniqueID})
 			}
 		}
 	}
