@@ -105,4 +105,4 @@ import:
 
 > Обратите внимание, что путь импортируемых ресурсов и путь указанный в _git mappings_ не должны пересекаться
 
-Подробнее об использовании _артефактов_ можно узнать в [отдельной статье]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html).
+Подробнее об использовании _артефактов_ можно узнать в [отдельной статье]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html).

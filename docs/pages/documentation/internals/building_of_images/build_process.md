@@ -13,14 +13,14 @@ werf uses Dockerfile as the principal way to describe how to build an image. Ima
 
 ### How a dockerfile image is being built
 
-werf creates a single [stage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages) called `dockerfile` to build a dockerfile image.
+werf creates a single [stage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages) called `dockerfile` to build a dockerfile image.
 
 How the `dockerfile` stage is being built:
 
  1. Stage signature is calculated based on specified `Dockerfile` and its contents. This signature represents the resulting image state.
- 2. werf does not perform a new docker build if an image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
- 3. werf performs a regular docker build if there is no image with the specified signature in the [stage storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
- 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) (while tagging the resulting docker image with the calculated signature) if the [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage) parameter is set.
+ 2. werf does not perform a new docker build if an image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage).
+ 3. werf performs a regular docker build if there is no image with the specified signature in the [stage storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
+ 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) (while tagging the resulting docker image with the calculated signature) if the [`:local` stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) parameter is set.
 
 See the [configuration article]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
 
@@ -35,7 +35,7 @@ Also, werf has an alternative tool for building images. The so-called stapel bui
 
 The image built with a stapel builder will be referred to as a **stapel image**.
 
-See [stapel image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) articles for more details.
+See [stapel image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [stapel artifact]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html) articles for more details.
 
 ### How stapel images and artifacts are built
 
@@ -45,9 +45,9 @@ werf generates a specific **list of instructions** needed to build a stage. Inst
 
 All generated instructions to build the current stage are supposed to be run in a container that is based on the previous stage. This container will be referred to as a **build container**.
 
-werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage).
+werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage).
 
-werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ site.baseurl }}/documentation/development/stapel.html).
+werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ site.baseurl }}/documentation/internals/development/stapel_image.html).
 
 `flant/werf-stapel` is mounted into every build container so that all precompiled tools are available in every stage being built and may be used in the instructions list.
 

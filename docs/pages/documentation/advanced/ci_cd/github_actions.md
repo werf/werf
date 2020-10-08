@@ -166,7 +166,7 @@ on:
     types: [closed]
 ```
 
-The review release is deleted at the `Dismiss` step: werf deletes the helm release and the namespace in Kubernetes with all its contents ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)).
+The review release is deleted at the `Dismiss` step: werf deletes the helm release and the namespace in Kubernetes with all its contents ([werf dismiss]({{ site.baseurl }}/documentation/reference/cli/werf_dismiss.html)).
 
 Now, let us explore the main strategies to deploy the review environment.
 

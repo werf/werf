@@ -60,7 +60,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 
 ## fromImage and fromArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/stapel_artifact.html), that is described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>

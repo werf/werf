@@ -49,12 +49,12 @@ The _stage signature_ is used for [tagging](#stage-naming) a _stage_ (signature 
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
 The ***stage signature*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
 Signature identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from
-being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-selection).
+being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-selection).
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
@@ -73,7 +73,7 @@ _Stage dependency_ is a piece of data that affects the stage _signature_. Stage 
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
@@ -176,7 +176,7 @@ Stages will be [named differently](#stage-naming) depending on local or remote s
 
 When docker registry is used as the stages storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
+It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html).
 
 Host requirements to use remote stages storage:
  - Connection to docker registry.
@@ -241,7 +241,7 @@ _Stages signature_ of the image is a signature which represents content of the i
  - git commit-id related with the last non empty image stage (if this last stage is git-related).
 
 The ***stage signature*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
@@ -286,29 +286,6 @@ Werf uses `--synchronization=https://synchronization.werf.io` (http _stages stor
 User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)` param.
 
 **NOTE:** Multiple werf processes working with the same project should use the same _stages storage_ and _synchronization_.
-
-## Working with stages
-
-### Sync command
-
-`werf stages sync --from=:local|REPO --to=:local|REPO`
-
- - Command will copy only difference of stages from one stages-storage to another.
- - Command will copy multiple stages in parallel.
- - Command run result is idempotent: sync can be called multiple times, interrupted, then called again — the result will be the same. Stages that are already synced will not be synced again on subsequent sync calls.
- - There are delete options: `--remove-source` and `--cleanup-local-cache`, which control whether werf will delete synced stages from source stages-storage and whether werf will cleanup localhost from temporary docker images created during sync process.
- - This command can be used to download project stages-storage to the localhost for development purpose as well as backup and migrating purposes.
- 
-### Switch-from-local command
-
-`werf stages switch-from-local --to=REPO`
-
- - Command will automatically [sync](#sync-command) existing stages from :local stages storage to the specified REPO.
- - Command will block project from being used with `:local` stages-storage.
-   - This means after werf stages switch-from-local is done, any werf command that specifies `:local` stages-storage for the project will fail preventing storing and using build results from different stages-storages.
-   - Note that project is blocked after all existing stages has been synced.
-
-See [switching to distributed mode article]({{ site.baseurl }}/documentation/guides/switch_to_distributed_mode.html) for guided steps.
 
 ## Further reading
 

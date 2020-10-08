@@ -2,5 +2,5 @@
   title: Documentation
   url: /documentation/index.html
 /documentation/reference/cli:
-  title: CLI Commands
-  url: /documentation/reference/cli/main/converge.html
+  title: Command line interface
+  url: /documentation/reference/cli/index.html

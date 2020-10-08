@@ -30,5 +30,5 @@ image: [main-front,main-back]
 ```
 
 You can use _image name_ for most commands to execute ones for specific _image(s)_:
-* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build.html)
-* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/cli/main/run.html)
+* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/reference/cli/werf_build.html)
+* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/reference/cli/werf_run.html)

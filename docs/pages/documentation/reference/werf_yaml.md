@@ -27,7 +27,7 @@ werf cannot automatically resolve project name change. Described issues must be 
 
 ### Release name
 
-werf allows to define a custom release name template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name) to generate a release name:
+werf allows to define a custom release name template, which [used during deploy process]({{ site.baseurl }}/documentation/advanced/helm/basics.html#release-name) to generate a release name:
 
 ```yaml
 project: PROJECT_NAME
@@ -39,7 +39,7 @@ deploy:
 
 `deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
 
-`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#slugging-the-release-name) to generated helm release name. Default: `true`.
+`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/advanced/helm/basics.html#slugging-the-release-name) to generated helm release name. Default: `true`.
 
 `TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/reference/configuration/introduction.html#go-templates). E.g. you can mix the value with an environment variable:
 
@@ -53,7 +53,7 @@ deploy:
 
 ### Kubernetes namespace
 
-werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) to generate a Kubernetes Namespace:
+werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ site.baseurl }}/documentation/advanced/helm/basics.html#kubernetes-namespace) to generate a Kubernetes Namespace:
 
 ```yaml
 project: PROJECT_NAME
@@ -65,13 +65,13 @@ deploy:
 
 `deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#slugging-kubernetes-namespace) to generated kubernetes namespace. Default: `true`.
+`deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/advanced/helm/basics.html#slugging-kubernetes-namespace) to generated kubernetes namespace. Default: `true`.
 
 ## Cleanup
 
 ### Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ site.baseurl }}/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ site.baseurl }}/documentation/advanced/cleanup.html#git-history-based-cleanup-algorithm), __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 

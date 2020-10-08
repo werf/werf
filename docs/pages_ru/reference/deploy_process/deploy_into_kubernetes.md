@@ -1,7 +1,7 @@
 ---
 title: Деплой в Kubernetes
 sidebar: documentation
-permalink: documentation/reference/deploy_process/deploy_into_kubernetes.html
+permalink: documentation/advanced/helm/basics.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -14,8 +14,8 @@ werf включает весь существующий функционал Hel
 - и другие особенности, о которых пойдёт речь далее.
 
 Для работы с приложением в Kubernetes достаточно двух команд: 
-- [converge]({{ site.baseurl }}/documentation/cli/main/converge.html) — для установки или обновления приложения в кластере, и 
-- [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html) — для удаления приложения из кластера.
+- [converge]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) — для установки или обновления приложения в кластере, и 
+- [dismiss]({{ site.baseurl }}/documentation/reference/cli/werf_dismiss.html) — для удаления приложения из кластера.
 
 ## Чарт
 
@@ -342,7 +342,7 @@ global:
 
 По умолчанию, werf хранит информацию о релизах в объектах ConfigMap в namespace `kube-system`, что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
 
-Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/list.html), а для просмотра истории конкретного релиза [werf helm history]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/history.html). 
+Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_list.html), а для просмотра истории конкретного релиза [werf helm history]({{ site.baseurl }}/documentation/reference/cli/werf_helm_history.html). 
 
 #### Замечание о совместимости с Helm
 
@@ -374,13 +374,13 @@ werf полностью совместим с уже установленным 
 
 Имя релиза может быть переопределено с помощью параметра `--release NAME` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
 
-Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#имя-релиза).
+Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#имя-релиза).
 
 #### Слагификация имени релиза
 
 Сформированное по шаблону имя Helm-релиза [слагифицируется]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#базовый-алгоритм), в результате чего получается уникальное имя Helm-релиза.
 
-Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#имя-релиза) в файле конфигурации `werf.yaml`.
+Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#имя-релиза) в файле конфигурации `werf.yaml`.
 
 ### Kubernetes namespace
 
@@ -393,13 +393,13 @@ werf полностью совместим с уже установленным 
 
 Имя namespace в Kubernetes может быть переопределено с помощью параметра `--namespace NAMESPACE` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
 
-Имя namespace также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.namespace`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#namespace-в-kubernetes).
+Имя namespace также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.namespace`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#namespace-в-kubernetes).
 
 #### Слагификация namespace Kubernetes
 
 Сформированное по шаблону имя namespace [слагифицируется]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#базовый-алгоритм), чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
 
-Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#namespace-в-kubernetes) в файле конфигурации `werf.yaml`.
+Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#namespace-в-kubernetes) в файле конфигурации `werf.yaml`.
 
 ## Процесс деплоя
 
