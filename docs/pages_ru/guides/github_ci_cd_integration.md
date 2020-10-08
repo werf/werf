@@ -165,7 +165,7 @@ on:
     types: [closed]
 ```
 
-На шаге `Dismiss` выполняется удаление review-релиза: werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)).
+На шаге `Dismiss` выполняется удаление review-релиза: werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/reference/cli/werf_dismiss.html)).
 
 Далее разберём основные стратегии при организации выката review окружения. 
 

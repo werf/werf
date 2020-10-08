@@ -58,7 +58,7 @@ summary: |
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/reference/stages_and_images.html) containing _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html) containing _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
@@ -366,14 +366,14 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Signatures_ of user stages  (and, therefore, the rebuilding process) depend on:
 
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/stapel_artifact.html)
+- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifact.html)
 
 The first three dependencies are described below in more detail.
 
@@ -557,7 +557,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml

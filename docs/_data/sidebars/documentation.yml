@@ -195,10 +195,10 @@ entries:
                 url: /documentation/configuration/stapel_image/image_directives.html
 
           - title: Stapel-артефакт
-            url: /documentation/configuration/stapel_artifact.html
+            url: /documentation/internals/building_images_with_stapel/artifact.html
 
           - title: Деплой в Kubernetes
-            url: /documentation/configuration/deploy_into_kubernetes.html
+            url: /documentation/advanced/helm/basics.html
 
           - title: Очистка
             url: /documentation/configuration/cleanup.html
@@ -207,7 +207,7 @@ entries:
         sf:
 
         - title: Стадии и образы
-          url: /documentation/reference/stages_and_images.html
+          url: /documentation/internals/building_of_images/images_storage.html
 
         - title: Сборка
           url: /documentation/reference/build_process.html
@@ -216,7 +216,7 @@ entries:
           sfi:
 
             - title: Деплой в Kubernetes
-              url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
+              url: /documentation/advanced/helm/basics.html
 
             - title: Работа с зависимостями чарта
               url: /documentation/reference/deploy_process/working_with_chart_dependencies.html

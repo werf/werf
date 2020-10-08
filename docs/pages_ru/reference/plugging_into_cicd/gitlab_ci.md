@@ -62,7 +62,7 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 ## Как использовать
 
-Интеграция с GitLab CI включается указанием параметра `gitlab` в команде [`werf ci-env`]({{ site.baseurl }}/documentation/cli/service/ci_env.html):
+Интеграция с GitLab CI включается указанием параметра `gitlab` в команде [`werf ci-env`]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html):
 
 ```shell
 werf ci-env gitlab

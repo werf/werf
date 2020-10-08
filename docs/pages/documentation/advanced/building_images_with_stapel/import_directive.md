@@ -72,13 +72,13 @@ CMD ["--spring.profiles.active=postgres"]
 
 The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
 
-We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/introduction.html#image-config-section) and [_artifacts_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/introduction.html#artifact-config-section).
+We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html) and [_artifacts_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html).
 
 > Why is werf not using multi-stage?
 * Historically, _imports_ appeared much earlier than Docker multi-stage, and
 * werf gives more flexibility working with auxiliary images
 
-Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/introduction.html#image-config-section) or [_artifact_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/introduction.html#artifact-config-section)). `import` is an array of records. Each record should contain the following:
+Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html) or [_artifact_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html)). `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
 - `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.
@@ -103,4 +103,4 @@ Read more about these in the [git directive article]({{ site.baseurl }}/document
 
 > Import paths and _git mappings_ must not overlap with each other
 
-Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/stapel_artifact.html).
+Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifact.html).

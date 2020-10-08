@@ -5,8 +5,8 @@ permalink: documentation/advanced/ci_cd/generic_ci_cd_integration.html
 ---
 
 Currently, the following CI systems are officialy supported and fully tested to be used with werf:
- * [GitLab CI]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
- * [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+ * [GitLab CI]({{ site.baseurl }}/documentation/advanced/ci_cd/gitlab_ci_cd.html);
+ * [GitHub Actions]({{ site.baseurl }}/documentation/advanced/ci_cd/github_actions.html).
 
 Please refer to relevant guides if you're using one of them. This list will be extended with other CI systems. If you are particularly interested in any of them, please let us know via [this issue](https://github.com/werf/werf/issues/1617).
 

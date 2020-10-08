@@ -28,5 +28,5 @@ image: [main-front,main-back]
 ```
 
 Имя образа может быть использовано в большинстве команд:
-* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build.html)
-* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/cli/main/run.html)
+* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/reference/cli/werf_build.html)
+* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/reference/cli/werf_run.html)

@@ -14,8 +14,8 @@ werf includes all the existing Helm functionality (the latter is integrated into
 - also, werf has some unique features which we will discuss below.
 
 werf uses the following two commands to deal with an application in the Kubernetes cluster:
-- [converge]({{ site.baseurl }}/documentation/cli/main/converge.html) — to install or update an application;  
-- [dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html) — to delete an application from the cluster.
+- [converge]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) — to install or update an application;  
+- [dismiss]({{ site.baseurl }}/documentation/reference/cli/werf_dismiss.html) — to delete an application from the cluster.
 
 ## Chart
 
@@ -191,7 +191,7 @@ spec:
 
 Secret files are excellent for storing sensitive data such as certificates and private keys in the project repository.
 
-Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ site.baseurl }}/documentation/reference/deploy/working_with_secrets.html#secret-file-encryption) describes how to encrypt them.
+Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ site.baseurl }}/documentation/advanced/helm/working_with_secrets.html#secret-file-encryption) describes how to encrypt them.
 
 ##### werf_secret_file
 
@@ -252,9 +252,9 @@ global:
       password: mysql-dev
 ```
 
-Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ site.baseurl }}/documentation/reference/deploy/working_with_chart_dependencies.html).
+Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ site.baseurl }}/documentation/advanced/helm/working_with_chart_dependencies.html).
 
-Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ site.baseurl }}/documentation/reference/deploy/working_with_chart_dependencies.html).
+Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ site.baseurl }}/documentation/advanced/helm/working_with_chart_dependencies.html).
 
 The `.helm/values.yaml` file is the default place to store values. You can also pass additional user-defined regular values via:
 
@@ -276,7 +276,7 @@ global:
       password: 100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123
 ```
 
-Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ site.baseurl }}/documentation/reference/deploy/working_with_secrets.html#secret-values-encryption).
+Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ site.baseurl }}/documentation/advanced/helm/working_with_secrets.html#secret-values-encryption).
 
 The `.helm/secret-values.yaml` file is the default place for storing secret values. You can also pass additional user-defined secret values via separate secret value files by specifying `--secret-values=PATH_TO_FILE` (can be used repeatedly to pass multiple files).
 
@@ -344,7 +344,7 @@ Each release version is stored in the Kubernetes cluster itself. werf supports s
 
 By default, werf stores releases in the ConfigMaps in the `kube-system` namespace, and this is fully compatible with the default [Helm 2](https://helm.sh) configuration. You can set the release storage by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
-The [werf helm list]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/list.html) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ site.baseurl }}/documentation/cli/lowlevel-management/helm/history.html) command.
+The [werf helm list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_list.html) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ site.baseurl }}/documentation/reference/cli/werf_helm_history.html) command.
 
 #### Helm compatibility notice
 
@@ -363,7 +363,7 @@ Using this environment, werf determines:
  1. Release name.
  2. Kubernetes namespace.
 
-The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used. See the [CI/CD configuration integration]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#cicd-configuration-integration) for more info.
+The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used. See the [CI/CD configuration integration]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#cicd-configuration-integration) for more info.
 
 ### Release name
 
@@ -376,13 +376,13 @@ For example, for the project named `symfony-demo`, the following Helm Release na
 
 You can redefine the release using the `--release NAME` deploy option. In that case werf would use the specified name as is.
 
-You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#release-name).
+You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#release-name).
 
 #### Slugging the release name
 
-The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
+The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ site.baseurl }}/documentation/internals/names_slug_algorithm.html#basic-algorithm) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
 
-This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#release-name) in the `werf.yaml` configuration.
+This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#release-name) in the `werf.yaml` configuration.
 
 ### Kubernetes namespace
 
@@ -396,13 +396,13 @@ For example, for the project named `symfony-demo`, there can be the following Ku
 
 You can redefine the Kubernetes Namespace using the `--namespace NAMESPACE` deploy option. In that case, werf would use the specified name as is.
 
-You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace) parameter.
+You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#kubernetes-namespace) parameter.
 
 #### Slugging Kubernetes namespace
 
-The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ site.baseurl }}/documentation/reference/toolbox/slug.html#basic-algorithm) that generates a unique and valid Kubernetes Namespace.
+The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ site.baseurl }}/documentation/internals/names_slug_algorithm.html#basic-algorithm) that generates a unique and valid Kubernetes Namespace.
 
-This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html#kubernetes-namespace) in the werf.yaml configuration.
+This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ site.baseurl }}/documentation/advanced/helm/basics.html#kubernetes-namespace) in the werf.yaml configuration.
 
 ## Deploy process
 
@@ -463,12 +463,12 @@ werf automatically sets the following built-in annotations to all deployed chart
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
  * `"project.werf.io/env": ENV` — environment name specified via the `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf deploy` command. For example, [`project.werf.io/git`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html#werf_add_annotation_gitlab_ci_job_url).
+werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf deploy` command. For example, [`project.werf.io/git`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git), [`ci.werf.io/commit`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit), [`gitlab.ci.werf.io/pipeline-url`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url) and [`gitlab.ci.werf.io/job-url`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url).
 
 For more information about the CI/CD integration, please refer to the following pages:
 
- * [plugging into CI/CD overview]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html);
- * [plugging into GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
+ * [plugging into CI/CD overview]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html);
+ * [plugging into GitLab CI]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html).
 
 #### Custom annotations and labels
 
