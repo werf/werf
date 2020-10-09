@@ -534,7 +534,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			if err := logboek.Context(ctx).Default().LogProcess("Store into stages storage").DoError(func() error {
+			if err := logboek.Context(ctx).Info().LogProcess("Store into stages storage").DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				}
@@ -571,21 +571,20 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 var (
-	logImageInfoLeftPartWidth = 12
+	logImageInfoLeftPartWidth = 8
 	logImageInfoFormat        = fmt.Sprintf("  %%%ds: %%s\n", logImageInfoLeftPartWidth)
 )
 
 func logImageInfo(ctx context.Context, img container_runtime.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
 	repository, tag := image.ParseRepositoryAndTag(img.Name())
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "repository", repository)
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "tag", tag)
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", fmt.Sprintf("%s:%s", repository, tag))
+	logboek.Context(ctx).Info().LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
+	logboek.Context(ctx).Info().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
 
 	if prevStageImageSize == 0 {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
 	} else {
-		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "diff", byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize))
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDescription().Info.Size), byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize)))
 	}
 
 	if !isUsingCache {
