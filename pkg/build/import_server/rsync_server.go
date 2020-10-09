@@ -53,8 +53,8 @@ func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) 
 	if err := ioutil.WriteFile(rsyncConfPath, []byte(fmt.Sprintf(`pid file = /.werf/rsyncd.pid
 lock file = /.werf/rsyncd.lock
 log file = /.werf/rsyncd.log
-uid = root
-gid = root
+uid = 0
+gid = 0
 port = %s
 
 [import]
