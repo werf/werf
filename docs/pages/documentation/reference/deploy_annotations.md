@@ -2,6 +2,7 @@
 title: Deploy annotations
 permalink: documentation/reference/deploy_annotations.html
 sidebar: documentation
+toc: false
 ---
 
 This article contains description of annotations which control werf tracking of resources during deploy process. Annotations should be configured in the chart templates.
