@@ -9,11 +9,11 @@ entries:
       - title: Quickstart
         url: /documentation/quickstart.html
 
-      - title: Guides
-        url: https://ru.werf.io/applications_guide_ru
-
       - title: Using with CI/CD systems
         url: /documentation/using_with_ci_cd_systems.html
+
+      - title: Guides
+        url: https://ru.werf.io/applications_guide_ru
 
       - title: Reference
         sf:
@@ -60,14 +60,14 @@ entries:
               - title: CI/CD workflow basics
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
 
+              - title: Generic CI/CD integration
+                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
+
               - title: GitLab CI/CD
                 url: /documentation/advanced/ci_cd/gitlab_ci_cd.html
 
               - title: GitHub Actions
                 url: /documentation/advanced/ci_cd/github_actions.html
-
-              - title: Generic CI/CD integration
-                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
 
           - title: Building images with stapel
             sfi:
