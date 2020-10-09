@@ -14,8 +14,19 @@ layout: default
                 <ul class="presentation__features">
                     <li>Git as a single source of truth.</li>
                     <li>Build. Deploy to Kubernetes. Stay in sync.</li>
-                    <li>Open Source CLI tool. <a href="https://github.com/werf/werf">Written in Go.</a></li>
+                    <li>Open Source CLI tool. <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>.</li>
                 </ul>
+                <div class="presentation__btns page__btn-group">
+                    <a href="{{ site.baseurl }}/introduction.html" target="_blank" class="page__btn page__btn_b page__btn_small">
+                        Introduction
+                    </a>
+                    <a href="{{ site.baseurl }}/installation.html" class="page__btn page__btn_b page__btn_small">
+                        Installation
+                    </a>
+                    <a href="{{ site.baseurl }}/documentation/index.html" class="page__btn page__btn_b page__btn_small">
+                        Documentation
+                    </a>
+                </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
                 {% include scheme.md %}
@@ -32,60 +43,70 @@ layout: default
                 but done <span>another way</span>!
             </h1>
             <div class="welcome__subtitle">
-                Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent. 
+                Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent.
                 You can use it manually, from within your CI/CD system or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
-            </div>
-            <div class="welcome__extra-content">
-                <div class="welcome__extra-content-text">
-                    <ul class="intro__list">
-                        <li>
-                            werf is not a SAAS, it is self-contained client-side <b>CLI tool</b>,<br/>which implements building blocks to construct CI/CD workflow for your application.
-                        </li>
-                        <li>
-                            werf just works out of the box with minimal familiar configuration,<br/>does not need special knowledge of devops techniques to combine multiple tools<br/>and provides <b>plenty of guides</b> to quickly setup deployment of your application into Kubernetes,<br/>either for local development or production.
-                        </li>
-                        <li>
-                            werf makes use of <code>git</code> and <code>docker</code> external dependencies to build docker images,<br/>yet it implements own <b>advanced distributed building</b> algorithm,<br/>which enables really fast pipelines due to distributed caching.
-                        </li>
-                        <li>
-                            werf uses builtin helm binary to implement <b>helm-compatible deployment</b> process<br/>with neat extensions like clear-sighted and sharp <b>deploy process tracking</b><br/>and does not need <code>helm</code> tool to be installed.
-                        </li>
-                        <li>
-                            werf implements smart <b>cleaning of unused docker images</b> algorithm<br/>based on Git-history of your application.
-                        </li>
-                        <li>
-                            werf can be embedded into any existing CI/CD system (like GitLab CI/CD) <br>to construct pipelines using built-in building blocks:
-                            <ul>
-                                <li><code>werf converge</code>;</li>
-                                <li><code>werf dismiss</code>;</li>
-                                <li><code>werf cleanup</code>.</li>
-                            </ul>
-                        </li>
-                        <li>
-                            Open Source, <a href="https://github.com/werf/werf">written in Go</a>.
-                        </li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="page__container">
-    <div class="documentation">
-        <div class="documentation__image">
-        </div>
-        <div class="documentation__btns">
-            <a href="{{ site.baseurl }}/introduction.html" target="_blank" class="page__btn page__btn_b documentation__btn">
-                Introduction
-            </a>
-            <a href="{{ site.baseurl }}/installation.html" class="page__btn page__btn_o documentation__btn">
-                Installation
-            </a>
-            <a href="{{ site.baseurl }}/documentation/index.html" class="page__btn page__btn_o documentation__btn">
-                Documentation
-            </a>
-        </div>
+<div class="features">
+    <div class="page__container">
+        <ul class="features__list">
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
+                <div class="features__list-item-title">It’s a CLI tool</div>
+                <div class="features__list-item-text">
+                    werf is not a SAAS, it is self-contained client-side <b>CLI&nbsp;tool</b>, which implements building blocks to construct CI/CD workflow for your application.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
+                <div class="features__list-item-title">Easy to use</div>
+                <div class="features__list-item-text">
+                    werf just works out of the box with minimal familiar configuration, does not need special knowledge of devops techniques to combine multiple tools and provides <b>plenty of guides</b> to quickly setup deployment of your application into Kubernetes, either for local development or production.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-title">Distributed building</div>
+                <div class="features__list-item-text">
+                    werf makes use of <code>git</code> and <code>docker</code> external dependencies to build docker images, yet it implements own <b>advanced distributed building</b> algorithm, which enables really fast pipelines due to distributed caching.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_helm"></div>
+                <div class="features__list-item-title">Helm-compatitable</div>
+                <div class="features__list-item-text">
+                    werf uses builtin helm binary to implement <b>helm-compatible deployment</b> process with neat extensions like clear-sighted and sharp <b>deploy process tracking</b> and does not need <code>helm</code> tool to be installed.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_debug"></div>
+                <div class="features__list-item-title">Built-in cleaning</div>
+                <div class="features__list-item-text">
+                    werf implements smart <b>cleaning of unused docker images</b> algorithm based on Git-history of your application.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_config"></div>
+                <div class="features__list-item-title">Embeddable</div>
+                <div class="features__list-item-text">
+                    werf can be embedded into any existing CI/CD system (like GitLab CI/CD) to construct pipelines using built-in building&nbsp;blocks:
+                    <ul>
+                        <li><code>werf converge</code>;</li>
+                        <li><code>werf dismiss</code>;</li>
+                        <li><code>werf cleanup</code>.</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="features__list-item features__list-item_special">
+                <div class="features__list-item-title">Open Source</div>
+                <div class="features__list-item-description">
+                    <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>
+                </div>
+            </li>
+        </ul>
     </div>
 </div>
 
@@ -114,12 +135,21 @@ layout: default
     </div>
 </div>
 
-<div class="stats">
+<div class="reliability">
     <div class="page__container">
-        <div class="stats__content">
-            <a href="{{ site.baseurl }}/installation.html#stability-channels" class="page__btn page__btn_o documentation__btn">
-                werf is a mature, reliable tool you can trust: read about stability channels and release process
-            </a>
+        <div class="reliability__content">
+            <div class="reliability__column">
+                <div class="reliability__title">
+                    werf is a mature,<br>
+                    reliable tool you can trust
+                </div>
+                <a href="{{ site.baseurl }}/installation.html#stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                    read about stability channels and release process
+                </a>
+            </div>
+            <div class="reliability__column reliability__column_image">
+                <div class="reliability__image"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -143,3 +173,28 @@ layout: default
     </div>
 </div>
 
+<div class="page__container">
+    <div class="documentation">
+        <div class="documentation__image">
+        </div>
+        <div class="documentation__info">
+            <div class="documentation__info-title">
+                Detailed documentation
+            </div>
+            <div class="documentation__info-text">
+                werf documentation comprises over 100 articles covering typical use cases (getting started, deploying to Kubernetes, CI/CD integration, and more), CLI, commands, and providing a thorough description of functions & architecture.
+            </div>
+        </div>
+        <div class="documentation__btns">
+            <a href="{{ site.baseurl }}/introduction.html" class="page__btn page__btn_b documentation__btn">
+                Introduction
+            </a>
+            <a href="{{ site.baseurl }}/installation.html" class="page__btn page__btn_o documentation__btn">
+                Installation
+            </a>
+            <a href="{{ site.baseurl }}/documentation/index.html" class="page__btn page__btn_o documentation__btn">
+                Documentation
+            </a>
+        </div>
+    </div>
+</div>
