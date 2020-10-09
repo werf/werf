@@ -143,7 +143,11 @@ body,
 }
 
 .page__icon_rss {
-  background-image: url('../images/icons/rss.svg');
+    background-image: url('../images/icons/rss.svg');
+}
+
+.page__icon_discourse {
+    background-image: url('../images/icons/discourse.svg');
 }
 
 .page__icon_block-title {
