@@ -15,6 +15,18 @@ entries:
       - title: Using with CI/CD systems
         url: /documentation/using_with_ci_cd_systems.html
 
+      - title: Reference
+        sf:
+
+          - title: werf.yaml
+            url: /documentation/reference/werf_yaml.html
+
+          - title: Deploy annotations
+            url: /documentation/reference/deploy_annotations.html
+
+          - title: Command line interface
+            url: /documentation/reference/cli/index.html
+
       - title: Advanced
         sf:
 
@@ -104,18 +116,6 @@ entries:
 
           - title: Supported registry implementations
             url: /documentation/advanced/supported_registry_implementations.html
-
-      - title: Reference
-        sf:
-
-          - title: werf.yaml
-            url: /documentation/reference/werf_yaml.html
-
-          - title: Deploy annotations
-            url: /documentation/reference/deploy_annotations.html
-
-          - title: Command line interface
-            url: /documentation/reference/cli/index.html
 
       - title: Internals
         sf:
