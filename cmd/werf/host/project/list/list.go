@@ -3,7 +3,6 @@ package list
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gosuri/uitable"
@@ -18,7 +17,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
 	imagePkg "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -111,25 +109,27 @@ func getProjects(ctx context.Context) (map[string]*projectFields, error) {
 	projects := map[string]*projectFields{}
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
-			repo := strings.Split(tag, ":")[0]
-			if strings.HasPrefix(repo, storage.LocalStage_ImageRepoPrefix) {
-				projectName := strings.TrimPrefix(repo, storage.LocalStage_ImageRepoPrefix)
-				project, exist := projects[projectName]
-				if !exist {
-					projects[projectName] = &projectFields{
-						Created:  image.Created,
-						Modified: image.Created,
-					}
-				} else {
-					if image.Created < project.Created {
-						project.Created = image.Created
-					}
-
-					if image.Created > project.Modified {
-						project.Modified = image.Created
-					}
-				}
-			}
+			//repo := strings.Split(tag, ":")[0]
+			//if strings.HasPrefix(repo, storage.LocalStage_ImageRepoPrefix) {
+			//	projectName := strings.TrimPrefix(repo, storage.LocalStage_ImageRepoPrefix)
+			//	project, exist := projects[projectName]
+			//	if !exist {
+			//		projects[projectName] = &projectFields{
+			//			Created:  image.Created,
+			//			Modified: image.Created,
+			//		}
+			//	} else {
+			//		if image.Created < project.Created {
+			//			project.Created = image.Created
+			//		}
+			//
+			//		if image.Created > project.Modified {
+			//			project.Modified = image.Created
+			//		}
+			//	}
+			//}
+			_ = tag
+			// TODO: check docker label for project name
 		}
 	}
 

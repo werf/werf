@@ -30,11 +30,6 @@ import (
 	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/cmd/werf/managed_images/rm"
 
-	stages_switch "github.com/werf/werf/cmd/werf/stages/switch_from_local"
-	stages_sync "github.com/werf/werf/cmd/werf/stages/sync"
-
-	stage_image "github.com/werf/werf/cmd/werf/stage/image"
-
 	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
 	host_project_list "github.com/werf/werf/cmd/werf/host/project/list"
 	host_project_purge "github.com/werf/werf/cmd/werf/host/project/purge"
@@ -99,7 +94,6 @@ Find more information at https://werf.io`),
 			Message: "Lowlevel Management:",
 			Commands: []*cobra.Command{
 				configCmd(),
-				stagesCmd(),
 				managedImagesCmd(),
 				hostCmd(),
 				helm.NewCmd(),
@@ -127,7 +121,6 @@ Find more information at https://werf.io`),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
 		docs.NewCmd(),
-		stageCmd(),
 	)
 
 	return rootCmd
@@ -155,31 +148,6 @@ func managedImagesCmd() *cobra.Command {
 		managed_images_add.NewCmd(),
 		managed_images_ls.NewCmd(),
 		managed_images_rm.NewCmd(),
-	)
-
-	return cmd
-}
-
-func stagesCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "stages",
-		Short: "Work with stages, which are cache for images",
-	}
-	cmd.AddCommand(
-		stages_switch.NewCmd(),
-		stages_sync.NewCmd(),
-	)
-
-	return cmd
-}
-
-func stageCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:    "stage",
-		Hidden: true,
-	}
-	cmd.AddCommand(
-		stage_image.NewCmd(),
 	)
 
 	return cmd
