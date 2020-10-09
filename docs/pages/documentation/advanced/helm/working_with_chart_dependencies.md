@@ -40,11 +40,11 @@ The `werf helm dependency` commands operate on that file, making it easy to sync
 * Use [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/build.html) to update `/charts` based on the `requirements.lock` file.
 
 All Chart Repositories that are used in `requirements.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
-* Use [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/add.html) to add Chart Repository.
-* Use [werf helm repo index]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/index.html).
-* Use [werf helm repo list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/list.html) to list existing Chart Repositories.
-* Use [werf helm repo remove]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/remove.html) to remove Chart Repository.
-* Use [werf helm repo update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/update.html) to update local Chart Repositories indexes.
+* Use [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_add.html) to add Chart Repository.
+* Use [werf helm repo index]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_index.html).
+* Use [werf helm repo list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_list.html) to list existing Chart Repositories.
+* Use [werf helm repo remove]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_remove.html) to remove Chart Repository.
+* Use [werf helm repo update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_update.html) to update local Chart Repositories indexes.
 
 werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
 

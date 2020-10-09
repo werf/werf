@@ -40,11 +40,11 @@ dependencies:
 * [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/build.html) — обновление `/charts` согласно содержимому файла `requirements.lock`.
 
 Все репозитории чартов, используемые в `requirements.yaml`, должны быть настроены в системе. Для работы с репозиториями чартов можно использовать команды `werf helm repo`:
-* [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/add.html) — добавление репозитория чартов.
-* [werf helm repo index]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/index.html).
-* [werf helm repo list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/list.html) — вывод списка существующих репозиториев чартов.
-* [werf helm repo remove]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/remove.html) — удаление репозитория чартов.
-* [werf helm repo update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_/update.html) — обновление локального индекса репозиториев чартов.
+* [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_add.html) — добавление репозитория чартов.
+* [werf helm repo index]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_index.html).
+* [werf helm repo list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_list.html) — вывод списка существующих репозиториев чартов.
+* [werf helm repo remove]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_remove.html) — удаление репозитория чартов.
+* [werf helm repo update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_update.html) — обновление локального индекса репозиториев чартов.
 
 werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду `werf helm repo init` для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
 
