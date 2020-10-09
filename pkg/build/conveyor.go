@@ -72,8 +72,8 @@ type Conveyor struct {
 
 	ConveyorOptions
 
-	mutex               sync.Mutex
-	serviceRWMutex      map[string]*sync.RWMutex
+	mutex            sync.Mutex
+	serviceRWMutex   map[string]*sync.RWMutex
 	stageDigestMutex map[string]*sync.Mutex
 }
 
@@ -112,7 +112,7 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 		ConveyorOptions: opts,
 
-		serviceRWMutex:      map[string]*sync.RWMutex{},
+		serviceRWMutex:   map[string]*sync.RWMutex{},
 		stageDigestMutex: map[string]*sync.Mutex{},
 	}
 
