@@ -19,9 +19,8 @@ import (
 )
 
 const (
-	LocalStage_ImageRepoPrefix = "werf-stages-storage/"
-	LocalStage_ImageRepoFormat = "werf-stages-storage/%s"
-	LocalStage_ImageFormat     = "werf-stages-storage/%s:%s-%d"
+	LocalStage_ImageRepoFormat = "%s"
+	LocalStage_ImageFormat     = "%s:%s-%d"
 
 	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
 	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
