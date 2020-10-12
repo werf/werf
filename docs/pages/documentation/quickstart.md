@@ -4,9 +4,9 @@ permalink: documentation/quickstart.html
 sidebar: documentation
 ---
 
-In this article we will show how to setup deployment of [example application](https://github.com/werf/quickstart-application) with werf.
+In this article we will show how to setup deployment of [example application](https://github.com/werf/quickstart-application) — which is a cool voting application — with werf. It is better to start with [short introduction]({{ site.baseurl }}/introduction.html) first if you haven't read it yet.
 
-[Install werf]({{ site.baseurl }}/installation.html) first.
+It is required to [install werf]({{ site.baseurl }}/installation.html) for this quickstart guide.
 
 ## Setup local Kubernetes and Docker Registry
 
