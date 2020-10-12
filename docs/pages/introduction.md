@@ -12,7 +12,7 @@ Werf is a CLI tool to implement full cycle of deployment of your application usi
  - Redeploying of the application into Kubernetes when necessary.
  - Cleaning up old unused images.
 
-# Define desired state in the Git
+## Define the desired state in the Git
 
 Werf configuration should be described in the application Git repository, right where application code resides.
 
@@ -38,7 +38,7 @@ Werf configuration should be described in the application Git repository, right 
 
     ![define-desired-state-5]({% asset introduction/define-desired-state-5.png @path %})
 
-# Converge your commit
+## Converge your commit
 
 Next step is to _converge_ our Git commit that contains defined state of the application.
 
@@ -100,12 +100,10 @@ There is of course such optional param as [env](TODO) to deploy application into
 
 _NOTE: Your application may not have custom docker images (and use only publicly available images for example), in such case it is not required to pass `--docker-repo` param — just omit it._
 
-# What's next?
+## What's next?
 
-## Check out guides
+Deploy your first example application with [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or checkout available [guides](https://ru.werf.io/applications_guide_ru/) which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
 
-There are [guides](https://ru.werf.io/applications_guide_ru/) available which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
-
-## Converge your production
+### Converge your production
 
 If you feel ready to dig into general overview of CI/CD workflows, which could be implemented with werf, then go [this article]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html).
