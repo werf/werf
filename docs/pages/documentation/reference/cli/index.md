@@ -21,7 +21,6 @@ Helper commands:
 
 Lowlevel management commands:
  - [werf config]({{ site.baseurl }}/documentation/reference/cli/werf_config.html) — {% include /documentation/reference/cli/werf_config.short.md %}.
- - [werf stages]({{ site.baseurl }}/documentation/reference/cli/werf_stages.html) — {% include /documentation/reference/cli/werf_stages.short.md %}.
  - [werf managed-images]({{ site.baseurl }}/documentation/reference/cli/werf_managed_images.html) — {% include /documentation/reference/cli/werf_managed_images.short.md %}.
  - [werf host]({{ site.baseurl }}/documentation/reference/cli/werf_host.html) — {% include /documentation/reference/cli/werf_host.short.md %}.
  - [werf helm]({{ site.baseurl }}/documentation/reference/cli/werf_helm.html) — {% include /documentation/reference/cli/werf_helm.short.md %}.
@@ -31,4 +30,3 @@ Other commands:
  - [werf completion]({{ site.baseurl }}/documentation/reference/cli/werf_completion.html) — {% include /documentation/reference/cli/werf_completion.short.md %}.
  - [werf version]({{ site.baseurl }}/documentation/reference/cli/werf_version.html) — {% include /documentation/reference/cli/werf_version.short.md %}.
  - [werf docs]({{ site.baseurl }}/documentation/reference/cli/werf_docs.html) — {% include /documentation/reference/cli/werf_docs.short.md %}.
- - [werf stage]({{ site.baseurl }}/documentation/reference/cli/werf_stage.html) — {% include /documentation/reference/cli/werf_stage.short.md %}.

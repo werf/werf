@@ -54,12 +54,6 @@ entries:
           - title: werf slugify
             url: /documentation/reference/cli/werf_slugify.html
 
-          - title: werf stage
-            url: /documentation/reference/cli/werf_stage.html
-
-          - title: werf stages
-            url: /documentation/reference/cli/werf_stages.html
-
           - title: werf synchronization
             url: /documentation/reference/cli/werf_synchronization.html
 
@@ -170,15 +164,6 @@ entries:
 
           - title: werf managed-images rm
             url: /documentation/reference/cli/werf_managed_images_rm.html
-
-          - title: werf stage image
-            url: /documentation/reference/cli/werf_stage_image.html
-
-          - title: werf stages switch-from-local
-            url: /documentation/reference/cli/werf_stages_switch_from_local.html
-
-          - title: werf stages sync
-            url: /documentation/reference/cli/werf_stages_sync.html
 
           - title: werf helm chart export
             url: /documentation/reference/cli/werf_helm_chart_export.html

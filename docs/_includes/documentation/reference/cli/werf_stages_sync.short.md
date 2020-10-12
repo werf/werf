@@ -1,1 +1,0 @@
-sync project stages from one stages storage to another
