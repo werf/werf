@@ -2,196 +2,225 @@
 title: Installation
 permalink: installation.html
 layout: default
+versions:
+  - 1.2
+  - 1.1
+  - 1.0
+channels:
+  - alpha
+  - beta
+  - ea
+  - stable
+  - rock-solid
 ---
+{%- asset installation.css %}
 
-{%- asset releases.css %}
+<div class="page__container page_installation">
 
-{%- assign releases = site.data.releases.releases %}
-
-[Installation.]({{ site.base_url}}/installation_old.html)
-
-<div class="page__container page_releases">
-
-<div class="releases__block-title">
-    Release channels <a href="/feed.xml" title="RSS" target="_blank" class="page__icon page__icon_rss page__icon_block-title page__icon_link"></a>
-</div>
-
-<!-- Releases description -->
-<div class="releases__info">
-    Each werf release progresses through all release channels, starting with Alpha → Beta → Early-Access → Stable → Rock-Solid. You can think of each release on a lower channel as a release-candidate for the higher one. Once a release is considered bug-free, it is promoted to the next channel.
-</div>
-
-{%- assign groups = site.data.releases_history.history | map: "group" | uniq | reverse %}
-{%- assign channels_sorted = site.data.channels_info.channels | sort: "stability" %}
-{%- assign channels_sorted_reverse = site.data.channels_info.channels | sort: "stability" | reverse  %}
-
-<div class="releases__menu">
-{%- for channel in channels_sorted_reverse %}
-{%- assign channel_latest_versions = site.data.releases_history.latest | where: "name",  channel.name | first| map: "versions" | first | reverse | default: nil %}
-    <div class="releases__menu-item">
-        <div class="releases__menu-item-header">            
-            <div class="releases__menu-item-title">
-                {{ channel.title }}
-            </div>
-            <div class="releases__menu-item-versions">
-            {%- for version in channel_latest_versions %}
-            {%- if version != nil  %}
-            {%- assign version_info = site.data.releases.releases | where: "tag_name", version | first %}
-                <a href="{{ version_info.html_url }}" class="releases__btn">
-                {{ version }}
-                </a>
-            {%- endif %}
-            {%- endfor %}
-            </div>
-        </div>        
-        <div class="releases__menu-item-description">
-            {{ channel.description[page.lang] }}
-        </div>
-    </div>
-{%- endfor %}
-</div>
-
-<div class="releases__block-title">
-    Changelog history of releases within channels
-</div>
-
-<div class="releases">
-
-<div class="releases__block-subtitle">
-    Release:
-</div>
-
-<div class="tabs">
-  {%- for group in groups %}
-  <a href="javascript:void(0)" class="tabs__btn tabs__group__btn{% if group == groups[0] %} active{% endif %}" onclick="openTab(event, 'tabs__group__btn', 'tabs__group__content', 'group-{{group}}')">{{group}}</a>
-  {%- endfor %}
-</div>
-
-{%- for group in groups %}
-<div id="group-{{group}}" class="tabs__content tabs__group__content{% if group == groups[0] %} active{% endif %}">
-    <div class="releases__block-subtitle">
-        Channel:
-    </div>
-    <div class="tabs">
-      {%- assign not_activated = true %}
-      {%- assign active_channels = 0 %}
-      {%- for channel in channels_sorted_reverse %}
-        {%- assign channel_activity = site.data.releases_history.history | reverse | where: "group", group | where: "name", channel.name | size %}
-        {%- if channel_activity < 1 %}
-          {%- continue %} 
-        {%- endif %}
-        <a href="javascript:void(0)" class="tabs__btn tabs__{{group}}__channel__btn{% if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0] %} active{% endif %}" onclick="openTab(event, 'tabs__{{group}}__channel__btn', 'tabs__{{group}}__channel__content', 'id-{{group}}-{{channel.name}}')">{{channel.title}}</a>
-        {%- if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0] %}
-        {%- assign not_activated = false %}
-        {% endif %}
-        {%- assign active_channels = active_channels | plus: 1 %}
-      {%- endfor %}
-      {%- if active_channels > 10 %}
-        <a href="javascript:void(0)" class="tabs__btn tabs__{{group}}__channel__btn" onclick="openTab(event, 'tabs__{{group}}__channel__btn', 'tabs__{{group}}__channel__content', 'id-{{group}}-all')">All channels</a>
-      {%- endif %}
-    </div>
-
-    {%- assign not_activated = true %}
-    {%- assign active_channels = 0 %}
-    {%- for channel in channels_sorted_reverse %}
-    {%- assign channel_activity = site.data.releases_history.history | reverse | where: "group", group | where: "name", channel.name | size %}
-    {%- if channel_activity < 1 %}
-      {% continue %} 
-    {% endif %}
-    <div id="id-{{group}}-{{ channel.name }}" class="tabs__content tabs__{{group}}__channel__content{% if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0]  %} active{% endif %}">
-      <div class="releases__info">
-        <p>
-          {{ channel.tooltip[page.lang] }}
-          <a href="/feed-{{group}}-{{ channel.name }}.xml" title="RSS" target="_blank" class="page__icon page__icon_rss page__icon_text page__icon_link"></a>
-        </p>
-        <p class="releases__info-text">{{ channel.description[page.lang] }}</p>
+  <div class="installation-selector-row">
+    <div class="installation-selector">
+      <div class="installation-selector__title">Version</div>
+      <div class="tabs">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="version" data-install-tab="1.2">1.2</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="version" data-install-tab="1.1">1.1</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="version" data-install-tab="1.0">1.0</a>
       </div>
-
-      {%- assign group_history = site.data.releases_history.history | reverse | where: "group", group %}
-      {%- assign channel_history = group_history | where: "name", channel.name %}
-  
-      {%- if channel_history.size > 0 %}
-        {%- for channel_action in channel_history %}
-           {%- assign release = site.data.releases.releases | where: "tag_name", channel_action.version | first %}            
-            <div class="releases__header">
-                <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>
-                <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
-            </div>
-            <div class="releases__body">
-                {{ release.body | markdownify }}
-            </div>
-        {%- endfor %}
-      {%- else %}
-        <div class="releases__info releases__info_notification">
-            <p>There are no versions on the channel yet, but they will appear soon.</p>
-        </div>
-      {%- endif %}
-
-    </div>
-    {%- if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0] %}
-      {%- assign not_activated = false %}
-    {%- endif %}
-    {%- assign active_channels = active_channels | plus: 1 %}
-
-    {%- endfor %}
-
-    {%- comment %}
-    {%- if active_channels > 10 %}
-    <div id="id-{{group}}-all" class="tabs__content tabs__{{group}}__channel__content">
-      <div class="releases__info">
-          <p>This is a list of all of the releases (Alpha, Beta, Early-Access, Stable and Rock-Solid) combined in chronological order.</p>
+    </div><!-- /selector -->
+    <div class="installation-selector">
+      <div class="installation-selector__title">Stability channel</div>
+      <div class="tabs">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="channel" data-install-tab="rock-solid">Rock-Solid</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="channel" data-install-tab="stable">Stable</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="channel" data-install-tab="ea">Early-Access</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="channel" data-install-tab="beta">Beta</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="channel" data-install-tab="alpha">Alpha</a>
       </div>
-      {%- assign group_history = site.data.releases_history.history | reverse | where: "group", group | map: "version" | reverse | uniq %}
-      {%- for release_data in group_history %}
-          {%- assign release = site.data.releases.releases | where: "tag_name", release_data | first %}
-          <div class="releases__header">
-              <div class="releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
-              <a href="{{ release.html_url }}" class="releases__title">{{ release.tag_name }}</a>              
-          </div>
-          <div class="releases__body">
-              {{ release.body | markdownify }}
-          </div>
-      {%- endfor %}
-    </div>
-    {%- endif %}
-    {%- endcomment %}
+    </div><!-- /selector -->
+    <div class="installation-selector">
+      <div class="installation-selector__title">OS</div>
+      <div class="tabs">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="unix">Unix</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="windows">Windows</a>
+      </div>
+    </div><!-- /selector -->
+  </div><!-- /selector-row -->
+  <div class="installation-selector-row">
+    <div class="installation-selector">
+      <div class="installation-selector__title">Installation method</div>
+      <div class="tabs">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="method" data-install-tab="multiwerf">using multiwerf (recommended)</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="method" data-install-tab="binary">downloading binary package</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="method" data-install-tab="source">compiling from source</a>
+      </div>
+    </div><!-- /selector -->
+  </div><!-- /selector-row -->
+
+  <div class="installation-instruction">
+      <h1 class="installation-instruction__title">
+        Install <span data-install-info="channel"></span> werf <span data-install-info="version"></span><br>
+        for <span data-install-info="os"></span> by <span data-install-info="method"></span>
+      </h1>
+      <div class="docs">
+<div markdown="1">
+{% include installation/multiwerf_dependencies.md %}
+## Installing werf
 </div>
-{%- endfor %}
+        <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
+          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="unix">
+            {% for version in page.versions %}
+              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+                {% for channel in page.channels %}
+                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div><!-- /os -->
+          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
+            {% for version in page.versions %}
+              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+                {% for channel in page.channels %}
+                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div><!-- /os -->
+          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
+            {% for version in page.versions %}
+              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+                {% for channel in page.channels %}
+                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include installation/multiwerf_windows.md version=version channel=channel %}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div><!-- /os -->
+<div markdown="1">
+{% include installation/multiwerf_usage.md %}
+</div>
+      </div><!-- /method -->
+      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
+<div markdown="1">
+The latest release can be found at [this page](https://bintray.com/flant/werf/werf/_latestVersion)
+</div>
+        <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="unix">
+<div markdown="1">
+{% include installation/binary_unix.md %}
+</div>
+        </div>
+        <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
+<div markdown="1">
+{% include installation/binary_macos.md %}
+</div>
+        </div>
+        <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
+<div markdown="1">
+{% include installation/binary_windows.md %}
+</div>
+        </div>
+      </div><!-- /method -->
+      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="source">
+<div markdown="1">
+{% include installation/source.md %}
+</div>
+      </div><!-- /method -->
+    </div>
+  </div>
 
-## Stability channels
-
-All changes in werf go through all stability channels:
-
-- `alpha` channel can bring new features but can be unstable;
-- `beta` channel is for more broad testing of new features to catch regressions;
-- `ea` channel is mostly safe and can be used in non-critical environments or for local development;
-- `stable` channel is mostly safe and we encourage you to use this version everywhere.
-  We **guarantee** that `ea` release should become `stable` not earlier than 1 week after internal tests;
-- `rock-solid` channel is a generally available version and recommended for use in critical environments with tight SLAs.
-  We **guarantee** that `stable` release should become a `rock-solid` release not earlier than after 2 weeks of extensive testing.
-
-The relations between channels and werf releases are described in [multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). The usage of werf within the channel should be carried out with [multiwerf](https://github.com/werf/multiwerf). 
-
-> When using release channels, you do not specify a version, because the version is managed automatically within the channel
-  
-Stability channels and frequent releases allow receiving continuous feedback on new changes, quickly rolling problem changes back, ensuring the high stability of the software, and preserving an acceptable development speed at the same time.
-
-### Backward compatibility promise
-
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions.
-
-werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_ require to do a full re-deploy of applications or to perform other non-scriptable actions.
-
-Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
-In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
-
-Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
-In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
-
-- We do **not guarantee** backward compatibility between:
-  - `alpha` releases;
-  - `beta` releases;
-  - `ea` releases.
-- We **guarantee** backward compatibility between:
-  - `stable` releases within the minor branch (1.1.x);
-  - `rock-solid` releases within the minor branch (1.1.x).
+  <div class="installation-channels">
+    <h2 class="installation-channels__title">
+      All changes in werf<br>
+      go through all stability channels
+    </h2>
+    <ul class="installation-channels__channels">
+      <li class="installation-channels__channel">
+        <div class="installation-channels__channel-title">
+          Alpha
+        </div>
+        <div class="installation-channels__channel-description">
+          can bring new features<br>
+          but can be unstable
+        </div>
+      </li>
+      <li class="installation-channels__channel installation-channels__channel_beta">
+        <div class="installation-channels__channel-title">
+          Beta
+        </div>
+        <div class="installation-channels__channel-description">
+          for more broad testing<br>
+          of new features to catch<br>
+          regressions
+        </div>
+      </li>
+      <li class="installation-channels__channel installation-channels__channel_ea">
+        <div class="installation-channels__channel-title">
+          Early-Access
+        </div>
+        <div class="installation-channels__channel-description">
+          is mostly safe and can be used<br>
+          in non-critical environments<br>
+          or for local development
+        </div>
+      </li>
+      <li class="installation-channels__channel installation-channels__channel_stable">
+        <div class="installation-channels__channel-title">
+          Stable
+        </div>
+        <div class="installation-channels__channel-description">
+          is mostly safe and we<br>
+          encourage you to use<br>
+          this version everywhere
+        </div>
+      </li>
+      <li class="installation-channels__channel installation-channels__channel_rocksolid">
+        <div class="installation-channels__channel-title">
+          Rock-Solid
+        </div>
+        <div class="installation-channels__channel-description">
+          the most stable channel<br>
+          and recommended for usage<br>
+          in critical environments with tight SLA
+        </div>
+      </li>
+    </ul>
+    <div class="installation-channels__info">
+      <div class="installation-channels__info-versions">
+        <p>When using release channels, you do not specify a&nbsp;version, because the version is&nbsp;managed automatically within the&nbsp;channel Stability channels and&nbsp;frequent releases allow receiving continuous feedback on&nbsp;new changes, quickly rolling problem changes back, ensuring the&nbsp;high stability of&nbsp;the&nbsp;software, and&nbsp;preserving an&nbsp;acceptable development speed at&nbsp;the&nbsp;same time.</p>
+        <p>The relations between channels&nbsp;and werf releases are&nbsp;described in&nbsp;<a href="https://github.com/werf/werf/blob/multiwerf/multiwerf.json">multiwerf.json</a>.</p>
+      </div>
+      <div class="installation-channels__info-guarantees">
+        <div class="installation-channels__info-guarantee">
+          <strong>We guarantee</strong> that <i>Early-Access</i> release should become <i>Stable</i> not earlier than 1 week after internal tests.
+        </div>
+        <div class="installation-channels__info-guarantee">
+          <strong>We guarantee</strong> that <i>Stable</i> release should become <i>Rock-Solid</i> release not earlier than after 2 weeks of&nbsp;extensive testing.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="installation-compatibility">
+    <h2 class="installation-compatibility__title">Backward compatibility promise</h2>
+<div markdown="1" class="docs">
+{% include installation/backward-compatibility.md %}
+</div>
+  </div>
+</div>
