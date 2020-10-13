@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sync"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -56,7 +57,20 @@ const (
 )
 
 type PublishReport struct {
+	mux    sync.Mutex
 	Images map[string]PublishReportImageRecord
+}
+
+func (report *PublishReport) SetImageRecord(name string, imageRecord PublishReportImageRecord) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+	report.Images[name] = imageRecord
+}
+
+func (report *PublishReport) ToJson() ([]byte, error) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+	return json.Marshal(report)
 }
 
 type PublishReportImageRecord struct {
@@ -75,8 +89,8 @@ func (phase *PublishImagesPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *PublishImagesPhase) AfterImages(ctx context.Context) error {
-	if data, err := json.Marshal(phase.PublishReport); err != nil {
-		return fmt.Errorf("unable to prepare publish report: %s", err)
+	if data, err := phase.PublishReport.ToJson(); err != nil {
+		return fmt.Errorf("unable to prepare publish report json: %s", err)
 	} else {
 		logboek.Context(ctx).Debug().LogF("Publish report:\n%s\n", data)
 
@@ -241,12 +255,12 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 
 		logboek.Context(ctx).LogOptionalLn()
 
-		phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+		phase.PublishReport.SetImageRecord(img.GetName(), PublishReportImageRecord{
 			WerfImageName: img.GetName(),
 			DockerRepo:    imageRepository,
 			DockerTag:     imageActualTag,
 			DockerImageID: alreadyExistingDockerImageID,
-		}
+		})
 
 		return nil
 	}
@@ -310,12 +324,12 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 
 			logboek.Context(ctx).LogOptionalLn()
 
-			phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+			phase.PublishReport.SetImageRecord(img.GetName(), PublishReportImageRecord{
 				WerfImageName: img.GetName(),
 				DockerRepo:    imageRepository,
 				DockerTag:     imageActualTag,
 				DockerImageID: alreadyExistingImageID,
-			}
+			})
 
 			return nil
 		}
@@ -324,12 +338,12 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 			return err
 		}
 
-		phase.PublishReport.Images[img.GetName()] = PublishReportImageRecord{
+		phase.PublishReport.SetImageRecord(img.GetName(), PublishReportImageRecord{
 			WerfImageName: img.GetName(),
 			DockerRepo:    imageRepository,
 			DockerTag:     imageActualTag,
 			DockerImageID: publishImage.MustGetBuiltId(),
-		}
+		})
 
 		return nil
 	}
