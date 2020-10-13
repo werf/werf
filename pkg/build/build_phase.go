@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -65,7 +66,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
-		Report:            &Report{Images: make(map[string]ReportImageRecord)},
+		ImagesReport:      &ImagesReport{Images: make(map[string]ReportImageRecord)},
 	}
 }
 
@@ -76,7 +77,7 @@ type BuildPhase struct {
 	StagesIterator              *StagesIterator
 	ShouldAddManagedImageRecord bool
 
-	Report       *Report
+	ImagesReport *ImagesReport
 	ReportPath   string
 	ReportFormat ReportFormat
 }
@@ -87,8 +88,21 @@ const (
 
 type ReportFormat string
 
-type Report struct {
+type ImagesReport struct {
+	mux    sync.Mutex
 	Images map[string]ReportImageRecord
+}
+
+func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageRecord) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+	report.Images[name] = imageRecord
+}
+
+func (report *ImagesReport) ToJson() ([]byte, error) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+	return json.MarshalIndent(report, "", "\t")
 }
 
 type ReportImageRecord struct {
@@ -117,18 +131,18 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		}
 
 		desc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
-		phase.Report.Images[img.GetName()] = ReportImageRecord{
+		phase.ImagesReport.SetImageRecord(img.GetName(), ReportImageRecord{
 			WerfImageName: desc.Info.Name,
 			DockerRepo:    desc.Info.Repository,
 			DockerTag:     desc.Info.Tag,
 			DockerImageID: desc.Info.ID,
-		}
+		})
 	}
 
-	if data, err := json.MarshalIndent(phase.Report, "", "\t"); err != nil {
-		return fmt.Errorf("unable to prepare report: %s", err)
+	if data, err := phase.ImagesReport.ToJson(); err != nil {
+		return fmt.Errorf("unable to prepare report json: %s", err)
 	} else {
-		logboek.Context(ctx).Debug().LogF("Report:\n%s\n", data)
+		logboek.Context(ctx).Debug().LogF("ImagesReport:\n%s\n", data)
 
 		if phase.ReportPath != "" && phase.ReportFormat == ReportJSON {
 			if err := ioutil.WriteFile(phase.ReportPath, append(data, []byte("\n")...), 0644); err != nil {
@@ -378,11 +392,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 	stageImage := stg.GetImage()
 
 	serviceLabels := map[string]string{
-		imagePkg.WerfDockerImageName:            stageImage.Name(),
-		imagePkg.WerfLabel:                      phase.Conveyor.projectName(),
-		imagePkg.WerfVersionLabel:               werf.Version,
-		imagePkg.WerfCacheVersionLabel:          imagePkg.BuildCacheVersion,
-		imagePkg.WerfImageLabel:                 "false",
+		imagePkg.WerfDockerImageName:         stageImage.Name(),
+		imagePkg.WerfLabel:                   phase.Conveyor.projectName(),
+		imagePkg.WerfVersionLabel:            werf.Version,
+		imagePkg.WerfCacheVersionLabel:       imagePkg.BuildCacheVersion,
+		imagePkg.WerfImageLabel:              "false",
 		imagePkg.WerfStageDigestLabel:        stg.GetDigest(),
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
