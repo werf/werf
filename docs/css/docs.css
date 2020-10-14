@@ -493,6 +493,11 @@
     border-radius: 0px;
 }
 
+#details_link a:link {color: black;}
+#details_link a:visited {color: black;}
+#details_link a:hover {color: black;}
+#details_link a:active {color: black;}
+
 .docs .details {
     margin-bottom: 10px;
 }
@@ -505,11 +510,12 @@
     background: url('../images/icons/dropdown.svg');
     background-repeat: no-repeat;
     background-size: contain;
+    transform: rotate(-90deg);
     margin-right: 5px;
 }
 
 .docs .details.active .details__summary::before {
-    transform: rotate(-180deg);
+    transform: rotate(0deg);
 }
 
 .docs .details .details__content {

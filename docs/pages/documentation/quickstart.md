@@ -8,10 +8,22 @@ In this article we will show how to setup deployment of [example application](ht
 
 It is required to [install werf]({{ site.baseurl }}/installation.html) for this quickstart guide.
 
-## Setup local Kubernetes and Docker Registry
+## Prepare your Kubernetes and Docker Registry
 
-_NOTE: Skip this section if you already have running Kubernetes instance and Docker Registry, which are available from your host._
+You should have access to the Kubernetes cluster and be able to push images to your Docker Registry. Docker Registry should also be accessible from the Kubernetes cluster to pull images.
 
+If you have already running Kubernetes and Docker Registry:
+
+ 1. Perform standard docker login procedure into your Docker Registry from your host.
+ 2. Make sure your Kubernetes cluster is accessible from your host (if `kubectl` tool is already set up and working then `werf` will also work).
+
+<br>
+
+<div class="details">
+<div id="details_link">
+<a href="javascript:void(0)" class="details__summary">Or follow these steps to setup local Kubernetes and Docker Registry.</a>
+</div>
+<div class="details__content" markdown="1">
  1. Install [minikube](https://github.com/kubernetes/minikube#installation).
  2. Start minikube:
 
@@ -44,6 +56,8 @@ _NOTE: Skip this section if you already have running Kubernetes instance and Doc
     kubectl port-forward --namespace kube-system service/werf-registry 5000
     ```
     {% endraw %}
+</div>
+</div>
 
 ## Deploy example application
 
@@ -56,13 +70,15 @@ _NOTE: Skip this section if you already have running Kubernetes instance and Doc
     ```
     {% endraw %}
 
- 2. Run converge using `localhost:5000/quickstart-application` docker repository to store images.
+ 2. Run converge using your Docker Registry to store images (`localhost:5000/quickstart-application` repository in the case of using local Docker Registry).
 
     {% raw %}
     ```shell
     werf converge --repo localhost:5000/quickstart-application
     ```
     {% endraw %}
+
+_NOTE: `werf` tool respects the same settings to connect to the Kubernetes cluster as `kubectl` tool uses: `~/.kube/config`, `KUBECONFIG` environment variable. Werf also supports `--kube-config` and `--kube-config-base64` params to setup custom kube config._
 
 ## Check result
 
@@ -86,7 +102,7 @@ minikube service --namespace quickstart-application --url result
 
 ## How it works
 
-Due to the [introduction]({{ site.baseurl }}/introduction.html) we should define the desired state in the Git.
+To deploy application using werf we should define the desired state in the Git (as described in the [introduction]({{ site.baseurl }}/introduction.html)).
 
  1. We have following dockerfiles in our repo:
 
@@ -98,7 +114,7 @@ Due to the [introduction]({{ site.baseurl }}/introduction.html) we should define
     ```
     {% endraw %}
 
- 2. `werf.yaml` which uses these dockerfiles:
+ 2. We have `werf.yaml` which references these dockerfiles:
 
     {% raw %}
     ```
