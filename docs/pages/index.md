@@ -57,7 +57,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">It’s a CLI tool</div>
                 <div class="features__list-item-text">
-                    werf is not a SAAS, it is self-contained client-side <b>CLI&nbsp;tool</b>. Use this single tool for local development or embed it into any existing CI/CD system using following commands as building blocks:
+                    werf is not a SAAS, it is an Open Souce, self-contained client-side CLI&nbsp;tool. Use this single tool for <b>local development</b> or <b>embed it</b> into <b>any existing CI/CD system</b> using its main commands as building blocks:
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
@@ -69,41 +69,35 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with minimal familiar configuration, does not need special knowledge of devops techniques to combine multiple tools and provides <b>plenty of guides</b> to quickly setup deployment of your application into Kubernetes, either for local development or production.
+                    werf just works out of the box with a minimal configuration, does not need special knowledge of DevOps/SRE techniques to combine multiple tools and provides a <b>plenty of guides</b> to quickly deploy your app into Kubernetes, either for local development or production.
                 </div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_config"></div>
                 <div class="features__list-item-title">Combining the best</div>
                 <div class="features__list-item-text">
-                    werf glues well-established software forming a transparent, integrated CI/CD platform. Benefit from a conveniently controlled, smooth interaction of Docker, Git, your CI system, Helm, and Kubernetes!
+                    werf glues well-established software forming a transparent, <b>integrated CI/CD platform</b>. Benefit from a conveniently controlled, smooth interaction of Git, Docker, your container registry &amp; existing CI system, Helm, Kubernetes!
                 </div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
                 <div class="features__list-item-title">Distributed building</div>
                 <div class="features__list-item-text">
-                    werf implements <b>advanced distributed building</b> algorithm, which enables really fast pipelines due to distributed caching.
+                    werf implements an <b>advanced builder</b> boasting a distributed algorithm that makes your pipelines really fast thanks to distributed caching.
                 </div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_helm"></div>
-                <div class="features__list-item-title">Helm-compatitable</div>
+                <div class="features__list-item-title">Helm-compatible</div>
                 <div class="features__list-item-text">
-                    werf uses builtin helm binary to implement <b>helm-compatible deployment</b> process with neat extensions like clear-sighted and sharp <b>deploy process tracking</b> and does not need <code>helm</code> tool to be installed.
+                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment process with additional features. It provides you a descriptive and clear <b>deploy process tracking</b> and doesn't require to have <code>helm</code> separately installed.
                 </div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_debug"></div>
                 <div class="features__list-item-title">Built-in cleaning</div>
                 <div class="features__list-item-text">
-                    werf implements smart <b>cleaning of unused docker images</b> algorithm based on Git-history of your application.
-                </div>
-            </li>
-            <li class="features__list-item features__list-item_special">
-                <div class="features__list-item-title">Open Source</div>
-                <div class="features__list-item-description">
-                    <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>
+                    werf implements a sophisticated algorithm to <b>clean unused Docker images</b> that is based on the Git history of your application.
                 </div>
             </li>
         </ul>
