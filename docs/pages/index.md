@@ -83,14 +83,14 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
                 <div class="features__list-item-title">Distributed building</div>
                 <div class="features__list-item-text">
-                    werf implements an <b>advanced builder</b> boasting a distributed algorithm that makes your pipelines really fast thanks to distributed caching.
+                    werf implements an advanced builder boasting a distributed algorithm that <b>makes your pipelines really fast</b> thanks to distributed caching.
                 </div>
             </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_helm"></div>
-                <div class="features__list-item-title">Helm-compatible</div>
+                <div class="features__list-item-title">Extended Helm</div>
                 <div class="features__list-item-text">
-                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment process with additional features. It provides you a descriptive and clear <b>deploy process tracking</b> and doesn't require to have <code>helm</code> separately installed.
+                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>robust and reliable</b>.
                 </div>
             </li>
             <li class="features__list-item">
