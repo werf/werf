@@ -102,7 +102,7 @@ _NOTE: Your application may not have custom docker images (and use only publicly
 
 ## What's next?
 
-Deploy your first example application with [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or checkout available [guides](https://ru.werf.io/applications_guide_ru/) which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
+Deploy your first example application with [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or checkout available [guides]({{ site.baseurl }}/documentation/guides.html) which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
 
 ### Converge your production
 
