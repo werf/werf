@@ -181,4 +181,4 @@ To control output during deploy check out [this section]({{ site.baseurl }}/docu
 
 You can also check out [CI/CD workflow basics article]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html), which describes how to setup your CI/CD workflows in a different ways.
 
-Find a guide which is suitable for you project in the [guides section](https://ru.werf.io/applications_guide_ru). These guides also contain detailed information about setting up concrete CI/CD systems.
+Find a guide which is suitable for you project in the [guides section]({{ site.baseurl }}/documentation/guides.html). These guides also contain detailed information about setting up concrete CI/CD systems.

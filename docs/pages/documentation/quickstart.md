@@ -147,4 +147,4 @@ To deploy application using werf we should define the desired state in the Git (
 
 ## What's next?
 
-Checkout [using werf with CI/CD systems article]({{ site.baseurl }}/documentation/using_with_ci_cd_systems.html) or go to the [guides](https://ru.werf.io/applications_guide_ru).
+Checkout [using werf with CI/CD systems article]({{ site.baseurl }}/documentation/using_with_ci_cd_systems.html) or go to the [guides]({{ site.baseurl }}/documentation/guides.html).
