@@ -4,6 +4,17 @@ permalink: introduction.html
 sidebar: documentation
 ---
 
+{% asset introduction.css %}
+{% asset introduction.js %}
+
+<div id="introduction-presentation" class="introduction-presentation">
+    <div class="introduction-presentation__container">
+        <div id="ip_1" class="introduction-presentation__slide"></div>
+        <div id="ip_2" class="introduction-presentation__slide"></div>
+        <div id="ip_3" class="introduction-presentation__slide"></div>
+    </div>
+</div>
+
 Werf is a CLI tool to implement full cycle of deployment of your application using Git as a single source of truth. Werf supports:
  - Building of docker images.
  - Deploying of the application into Kubernetes.

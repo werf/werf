@@ -277,120 +277,120 @@ $(document).ready(function(){
 
 // Presentation
 
-$(document).ready(function() {
-  var magic = gsap.timeline({repeat: -1, repeatDelay: 10});
-  var magic_delay = 3;
-  var magic_duration = {};
+// $(document).ready(function() {
+//   var magic = gsap.timeline({repeat: -1, repeatDelay: 10});
+//   var magic_delay = 3;
+//   var magic_duration = {};
 
-  // Werf -> Kubernetes, sync
-  magic_duration['werf_k8s_sync'] = 2;
-  gsap.to('#scheme_smart_icon_update_arrows', {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out", duration: magic_duration['werf_k8s_sync']})
+//   // Werf -> Kubernetes, sync
+//   magic_duration['werf_k8s_sync'] = 2;
+//   gsap.to('#scheme_smart_icon_update_arrows', {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out", duration: magic_duration['werf_k8s_sync']})
 
-  // Werf -> Docker Registry, sync
-  magic_duration['werf_dr_sync'] = 2;
-  gsap.to('#scheme_smart_icon_update_arrows_2', {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out", duration: magic_duration['werf_dr_sync']})
+//   // Werf -> Docker Registry, sync
+//   magic_duration['werf_dr_sync'] = 2;
+//   gsap.to('#scheme_smart_icon_update_arrows_2', {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out", duration: magic_duration['werf_dr_sync']})
 
-  // Hide arrows & smart
-  magic_duration['arrows_smart_hide'] = 1;
-  magic
-  .to('#scheme_git', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_docker_registry', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_k8s', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_werf', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_arrows_gw', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_arrows_wd', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_arrows_wk', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_smart_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_smart', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step_connector_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step_connector', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_arrows_gw', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step_3', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_step_connector_3', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_smart_icon_check', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
-  .to('#scheme_smart_icon_check_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   // Hide arrows & smart
+//   magic_duration['arrows_smart_hide'] = 1;
+//   magic
+//   .to('#scheme_git', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_docker_registry', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_k8s', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_werf', {opacity: '0.2', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_arrows_gw', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_arrows_wd', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_arrows_wk', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_smart_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_smart', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step_connector_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step_connector', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_arrows_gw', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step_3', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_step_connector_3', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_smart_icon_check', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
+//   .to('#scheme_smart_icon_check_2', {opacity: '0', duration: magic_duration['arrows_smart_hide']}, magic_delay)
 
-  // Git, show step
-  magic_duration['git_step_show'] = 1;
-  magic_delay = magic_delay + 2;
-  magic
-  .to('#scheme_git', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
-  .to('#scheme_step_3', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
-  .to('#scheme_step_connector_3', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
+//   // Git, show step
+//   magic_duration['git_step_show'] = 1;
+//   magic_delay = magic_delay + 2;
+//   magic
+//   .to('#scheme_git', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
+//   .to('#scheme_step_3', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
+//   .to('#scheme_step_connector_3', {opacity: '1', duration: magic_duration['git_step_show']}, magic_delay)
 
-  // Git -> Werf, show
-  magic_duration['git_werf_show'] = 1;
-  magic_delay = magic_delay + 3;
-  magic
-  .to('#scheme_git', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_arrows_gw', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_werf', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_step_3', {opacity: '0.2', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_step_connector_3', {opacity: '0.2', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_smart_icon_check_2', {opacity: '0', duration: magic_duration['git_werf_show']}, magic_delay)
-  .to('#scheme_smart_icon_update_2', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
+//   // Git -> Werf, show
+//   magic_duration['git_werf_show'] = 1;
+//   magic_delay = magic_delay + 3;
+//   magic
+//   .to('#scheme_git', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_arrows_gw', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_werf', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_step_3', {opacity: '0.2', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_step_connector_3', {opacity: '0.2', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_smart_icon_check_2', {opacity: '0', duration: magic_duration['git_werf_show']}, magic_delay)
+//   .to('#scheme_smart_icon_update_2', {opacity: '1', duration: magic_duration['git_werf_show']}, magic_delay)
 
-  // Werf -> Docker Registry, show
-  magic_duration['werf_dr_show'] = 1;
-  magic_delay = magic_delay + 2;
-  magic
-  .to('#scheme_git', {opacity: '0.2', duration: magic_duration['werf_dr_show']}, magic_delay)
-  .to('#scheme_docker_registry', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
-  .to('#scheme_arrows_gw', {opacity: '0.2', duration: magic_duration['werf_dr_show']}, magic_delay)
-  .to('#scheme_arrows_wd', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
-  .to('#scheme_smart_2', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
+//   // Werf -> Docker Registry, show
+//   magic_duration['werf_dr_show'] = 1;
+//   magic_delay = magic_delay + 2;
+//   magic
+//   .to('#scheme_git', {opacity: '0.2', duration: magic_duration['werf_dr_show']}, magic_delay)
+//   .to('#scheme_docker_registry', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
+//   .to('#scheme_arrows_gw', {opacity: '0.2', duration: magic_duration['werf_dr_show']}, magic_delay)
+//   .to('#scheme_arrows_wd', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
+//   .to('#scheme_smart_2', {opacity: '1', duration: magic_duration['werf_dr_show']}, magic_delay)
 
-  // Werf -> Docker Registry, show info
-  magic_duration['werf_dr_info_show'] = 1;
-  magic_delay = magic_delay + 3;
-  magic
-  .to('#scheme_smart_icon_update_2', {opacity: '0', duration: magic_duration['werf_dr_info_show']}, magic_delay)
-  .to('#scheme_smart_icon_check_2', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
-  .to('#scheme_step_2', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
-  .to('#scheme_step_connector', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
+//   // Werf -> Docker Registry, show info
+//   magic_duration['werf_dr_info_show'] = 1;
+//   magic_delay = magic_delay + 3;
+//   magic
+//   .to('#scheme_smart_icon_update_2', {opacity: '0', duration: magic_duration['werf_dr_info_show']}, magic_delay)
+//   .to('#scheme_smart_icon_check_2', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
+//   .to('#scheme_step_2', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
+//   .to('#scheme_step_connector', {opacity: '1', duration: magic_duration['werf_dr_info_show']}, magic_delay)
 
-  // Werf -> Kubernetes, show
-  magic_duration['werf_k8s_show'] = 1;
-  magic_delay = magic_delay + 3;
-  magic
-  .to('#scheme_docker_registry', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_arrows_wd', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_step_2', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_step_connector', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_arrows_wk', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_smart', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_smart_2', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_k8s', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_smart_icon_check', {opacity: '0', duration: magic_duration['werf_k8s_show']}, magic_delay)
-  .to('#scheme_smart_icon_update', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   // Werf -> Kubernetes, show
+//   magic_duration['werf_k8s_show'] = 1;
+//   magic_delay = magic_delay + 3;
+//   magic
+//   .to('#scheme_docker_registry', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_arrows_wd', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_step_2', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_step_connector', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_arrows_wk', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_smart', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_smart_2', {opacity: '0.2', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_k8s', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_smart_icon_check', {opacity: '0', duration: magic_duration['werf_k8s_show']}, magic_delay)
+//   .to('#scheme_smart_icon_update', {opacity: '1', duration: magic_duration['werf_k8s_show']}, magic_delay)
 
-  // Werf -> Docker Registry, show info
-  magic_duration['werf_k8s_info_show'] = 1;
-  magic_delay = magic_delay + 3;
-  magic
-  .to('#scheme_smart_icon_update', {opacity: '0', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
-  .to('#scheme_smart_icon_check', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
-  .to('#scheme_step', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
-  .to('#scheme_step_connector_2', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
+//   // Werf -> Docker Registry, show info
+//   magic_duration['werf_k8s_info_show'] = 1;
+//   magic_delay = magic_delay + 3;
+//   magic
+//   .to('#scheme_smart_icon_update', {opacity: '0', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
+//   .to('#scheme_smart_icon_check', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
+//   .to('#scheme_step', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
+//   .to('#scheme_step_connector_2', {opacity: '1', duration: magic_duration['werf_k8s_info_show']}, magic_delay)
 
-  // Full
-  magic_duration['full'] = 1;
-  magic_delay = magic_delay + 3;
-  magic
-  .to('#scheme_smart_icon_update', {opacity: '0', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_smart_icon_check', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step_connector_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_docker_registry', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_arrows_wd', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step_connector', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_git', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_arrows_gw', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step_3', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_step_connector_3', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_smart', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-  .to('#scheme_smart_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
-});
+//   // Full
+//   magic_duration['full'] = 1;
+//   magic_delay = magic_delay + 3;
+//   magic
+//   .to('#scheme_smart_icon_update', {opacity: '0', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_smart_icon_check', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step_connector_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_docker_registry', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_arrows_wd', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step_connector', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_git', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_arrows_gw', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step_3', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_step_connector_3', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_smart', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+//   .to('#scheme_smart_2', {opacity: '1', duration: magic_duration['full']}, magic_delay)
+// });
