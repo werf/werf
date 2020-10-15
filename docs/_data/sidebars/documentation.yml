@@ -7,7 +7,7 @@ entries:
         url: /documentation/index.html
 
       - title: Introduction
-        url: /documentation/introduction.html
+        url: /introduction.html
 
       - title: Quickstart
         url: /documentation/quickstart.html

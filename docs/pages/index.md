@@ -69,7 +69,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration, does not need special knowledge of DevOps/SRE techniques to combine multiple tools and provides a <a href="{{ site.baseurl }}/guides.html"><b>plenty of guides</b></a> to quickly deploy your app into Kubernetes, either for local development or production.
+                    werf just works out of the box with a minimal configuration, does not need special knowledge of DevOps/SRE techniques to combine multiple tools and provides a <a href="{{ site.baseurl }}/documentation/guides.html"><b>plenty of guides</b></a> to quickly deploy your app into Kubernetes, either for local development or production.
                 </div>
             </li>
             <li class="features__list-item">

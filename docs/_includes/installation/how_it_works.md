@@ -1,5 +1,3 @@
-## multiwerf use command in details
-
 The command `multiwerf use MAJOR.MINOR CHANNEL` allows using the actual werf binary and to be always up-to-date. 
 You can use this command both in **CI** and **on the local machine**. 
 The command returns a script or a path to the script file (when used with an `--as-file` option) that must be used as an argument to the `source` command. As a result, the current version of werf will be available **during the shell session**.

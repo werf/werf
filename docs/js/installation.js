@@ -5,7 +5,7 @@ $(document).ready(function() {
   else if (bowser.mac)
     default_os = 'macos'
   else
-    default_os = 'unix'
+    default_os = 'linux'
 
   var defaults = {
     version: '1.2',

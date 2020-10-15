@@ -1,7 +1,5 @@
 ##### PowerShell
 
-###### Installing multiwerf
-
 ```shell
 $MULTIWERF_BIN_PATH = "C:\ProgramData\multiwerf\bin"
 mkdir $MULTIWERF_BIN_PATH
@@ -16,7 +14,7 @@ Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-wind
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 ```
 
-###### Adding werf alias to the current shell session
+###### Using werf in the current shell
 
 ```shell
 Invoke-Expression -Command "multiwerf use {{ include.version }} {{ include.channel }} --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
@@ -24,8 +22,6 @@ Invoke-Expression -Command "multiwerf use {{ include.version }} {{ include.chann
 ```
 
 ##### cmd.exe
-
-###### Installing multiwerf
 
 Run cmd.exe as Administrator and then do the following:
 
@@ -38,7 +34,7 @@ setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 # after that open new cmd.exe session and start using multiwerf
 ```
 
-###### Adding werf alias to the current shell session
+###### Using werf in the current shell
 
 ```shell
 FOR /F "tokens=*" %g IN ('multiwerf use {{ include.version }} {{ include.channel }} --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)
