@@ -320,7 +320,7 @@ layout: default
             <a href="{{ site.baseurl }}/documentation/guides/getting_started.html" class="page__btn page__btn_o documentation__btn">
                 Руководства для старта
             </a>
-            <a href="{{ site.baseurl }}/documentation/cli/main/build.html" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ site.baseurl }}/documentation/reference/cli/werf_build.html" class="page__btn page__btn_o documentation__btn">
                 CLI-команды
             </a>
         </div>

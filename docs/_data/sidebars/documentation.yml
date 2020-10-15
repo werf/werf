@@ -6,395 +6,155 @@ entries:
       - title: Overview
         url: /documentation/index.html
 
-      - title: Configuration
-        sf:
+      - title: Introduction
+        url: /documentation/introduction.html
 
-          - title: Introduction
-            url: /documentation/configuration/introduction.html
+      - title: Quickstart
+        url: /documentation/quickstart.html
 
-          - title: Dockerfile Image
-            url: /documentation/configuration/dockerfile_image.html
+      - title: Using with CI/CD systems
+        url: /documentation/using_with_ci_cd_systems.html
 
-          - title: Stapel Image
-            sfi:
-
-              - title: Naming (required)
-                url: /documentation/configuration/stapel_image/naming.html
-
-              - title: Base image (required)
-                url: /documentation/configuration/stapel_image/base_image.html
-
-              - title: Adding docker instructions
-                url: /documentation/configuration/stapel_image/docker_directive.html
-
-              - title: Adding source code from git repositories
-                url: /documentation/configuration/stapel_image/git_directive.html
-
-              - title: Running assembly instructions
-                url: /documentation/configuration/stapel_image/assembly_instructions.html
-
-              - title: Reducing image size and speeding up a build by mounts
-                url: /documentation/configuration/stapel_image/mount_directive.html
-
-              - title: Importing from images and artifacts
-                url: /documentation/configuration/stapel_image/import_directive.html
-
-              - title: All directives
-                url: /documentation/configuration/stapel_image/image_directives.html
-
-          - title: Stapel Artifact
-            url: /documentation/configuration/stapel_artifact.html
-
-          - title: Deploy into Kubernetes
-            url: /documentation/configuration/deploy_into_kubernetes.html
-
-          - title: Cleanup
-            url: /documentation/configuration/cleanup.html
+      - title: Guides
+        url: /documentation/guides.html
 
       - title: Reference
         sf:
 
-        - title: Stages and Images
-          url: /documentation/reference/stages_and_images.html
+          - title: werf.yaml
+            url: /documentation/reference/werf_yaml.html
 
-        - title: Build Process
-          url: /documentation/reference/build_process.html
+          - title: Deploy annotations
+            url: /documentation/reference/deploy_annotations.html
 
-        - title: Deploy Process
-          sfi:
+          - title: Command line interface
+            url: /documentation/reference/cli/index.html
 
-            - title: Deploy into Kubernetes
-              url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
-
-            - title: Working with secrets
-              url: /documentation/reference/deploy_process/working_with_secrets.html
-
-            - title: Working with chart dependencies
-              url: /documentation/reference/deploy_process/working_with_chart_dependencies.html
-
-            - title: Differences with Helm
-              url: /documentation/reference/deploy_process/differences_with_helm.html
-
-            - title: Resources update methods and adoption
-              url: /documentation/reference/deploy_process/resources_update_methods_and_adoption.html
-
-        - title: Cleaning Process
-          url: /documentation/reference/cleaning_process.html
-
-        - title: Working with Docker registries
-          url: /documentation/reference/working_with_docker_registries.html
-
-        - title: CI/CD workflows overview
-          url: /documentation/reference/ci_cd_workflows_overview.html
-
-        - title: Plugging into CI/CD
-          sfi:
-
-            - title: Overview
-              url: /documentation/reference/plugging_into_cicd/overview.html
-
-            - title: GitLab CI
-              url: /documentation/reference/plugging_into_cicd/gitlab_ci.html
-
-        - title: Development And Debug
-          sfi:
-
-            - title: Setup Minikube
-              url: /documentation/reference/development_and_debug/setup_minikube.html
-
-            - title: Stage Introspection
-              url: /documentation/reference/development_and_debug/stage_introspection.html
-
-            - title: As Layers
-              url: /documentation/reference/development_and_debug/as_layers.html
-
-            - title: Lint And Render Chart
-              url: /documentation/reference/development_and_debug/lint_and_render_chart.html
-
-        - title: Toolbox
-          sfi:
-
-            - title: Slug
-              url: /documentation/reference/toolbox/slug.html
-
-            - title: SSH
-              url: /documentation/reference/toolbox/ssh.html
-
-      - title: Guides
+      - title: Advanced
         sf:
-          - title: Installation
-            url: /documentation/guides/installation.html
 
-          - title: Getting started
-            url: /documentation/guides/getting_started.html
-
-          - title: Deploy into Kubernetes
-            url: /documentation/guides/deploy_into_kubernetes.html
-
-          - title: Generic CI/CD integration
-            url: /documentation/guides/generic_ci_cd_integration.html
-
-          - title: GitLab CI integration
-            url: /documentation/guides/gitlab_ci_cd_integration.html
-
-          - title: GitHub Actions integration
-            url: /documentation/guides/github_ci_cd_integration.html
-
-          - title: Switch to distributed mode
-            url: /documentation/guides/switch_to_distributed_mode.html
-
-          - title: Advanced build
+          - title: Configuration
             sfi:
 
-              - title: First application
-                url: /documentation/guides/advanced_build/first_application.html
+              - title: Supported Go templates
+                url: /documentation/advanced/configuration/supported_go_templates.html
 
-              - title: Multi-images application
-                url: /documentation/guides/advanced_build/multi_images.html
+              - title: Organizing configuration
+                url: /documentation/advanced/configuration/organizing_configuration.html
 
-              - title: Mounts
-                url: /documentation/guides/advanced_build/mounts.html
-
-              - title: Artifacts
-                url: /documentation/guides/advanced_build/artifacts.html
-
-      - title: CLI Commands
-        sf: &cli-commands
-          - title: Main Commands
+          - title: Helm
             sfi:
 
-              - title: converge
-                url: /documentation/cli/main/converge.html
+              - title: Basics
+                url: /documentation/advanced/helm/basics.html
 
-              - title: build
-                url: /documentation/cli/main/build.html
+              - title: Working with secrets
+                url: /documentation/advanced/helm/working_with_secrets.html
 
-              - title: run
-                url: /documentation/cli/main/run.html
+              - title: Working with chart dependencies
+                url: /documentation/advanced/helm/working_with_chart_dependencies.html
 
-              - title: dismiss
-                url: /documentation/cli/main/dismiss.html
+          - title: Cleanup
+            url: /documentation/advanced/cleanup.html
 
-              - title: cleanup
-                url: /documentation/cli/main/cleanup.html
-
-              - title: purge
-                url: /documentation/cli/main/purge.html
-
-          - title: Toolbox
+          - title: CI/CD
             sfi:
 
-              - title: slugify
-                url: /documentation/cli/toolbox/slugify.html
+              - title: CI/CD workflow basics
+                url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
 
-              - title: ci-env
-                url: /documentation/cli/service/ci_env.html
+              - title: Generic CI/CD integration
+                url: /documentation/advanced/ci_cd/generic_ci_cd_integration.html
 
-          - title: Low-level Management Commands
+              - title: GitLab CI/CD
+                url: /documentation/advanced/ci_cd/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /documentation/advanced/ci_cd/github_actions.html
+
+          - title: Building images with stapel
             sfi:
 
-              - title: config render
-                url: /documentation/cli/lowlevel-management/config/render.html
+              - title: Naming (required)
+                url: /documentation/advanced/building_images_with_stapel/naming.html
 
-              - title: config list
-                url: /documentation/cli/lowlevel-management/config/list.html
+              - title: Base image (required)
+                url: /documentation/advanced/building_images_with_stapel/base_image.html
 
-              - title: managed-images add
-                url: /documentation/cli/lowlevel-management/managed-images/add.html
+              - title: Adding docker instructions
+                url: /documentation/advanced/building_images_with_stapel/docker_directive.html
 
-              - title: managed-images ls
-                url: /documentation/cli/lowlevel-management/managed-images/ls.html
+              - title: Adding source code from git repositories
+                url: /documentation/advanced/building_images_with_stapel/git_directive.html
 
-              - title: managed-images rm
-                url: /documentation/cli/lowlevel-management/managed-images/rm.html
+              - title: Running assembly instructions
+                url: /documentation/advanced/building_images_with_stapel/assembly_instructions.html
 
-              - title: helm chart export
-                url: /documentation/cli/lowlevel-management/helm/chart/export.html
+              - title: Reducing image size and speeding up a build by mounts
+                url: /documentation/advanced/building_images_with_stapel/mount_directive.html
 
-              - title: helm chart list
-                url: /documentation/cli/lowlevel-management/helm/chart/list.html
+              - title: Importing from images and artifacts
+                url: /documentation/advanced/building_images_with_stapel/import_directive.html
 
-              - title: helm chart pull
-                url: /documentation/cli/lowlevel-management/helm/chart/pull.html
+              - title: Artifact
+                url: /documentation/advanced/building_images_with_stapel/artifact.html
 
-              - title: helm chart push
-                url: /documentation/cli/lowlevel-management/helm/chart/push.html
+              - title: All directives
+                url: /documentation/advanced/building_images_with_stapel/image_directives.html
 
-              - title: helm chart remove
-                url: /documentation/cli/lowlevel-management/helm/chart/remove.html
-
-              - title: helm chart save
-                url: /documentation/cli/lowlevel-management/helm/chart/save.html
-
-              - title: helm create
-                url: /documentation/cli/lowlevel-management/helm/create.html
-
-              - title: helm dependency build
-                url: /documentation/cli/lowlevel-management/helm/dependency/build.html
-
-              - title: helm dependency list
-                url: /documentation/cli/lowlevel-management/helm/dependency/list.html
-
-              - title: helm dependency update
-                url: /documentation/cli/lowlevel-management/helm/dependency/update.html
-
-              - title: helm env
-                url: /documentation/cli/lowlevel-management/helm/env.html
-
-              - title: helm get all
-                url: /documentation/cli/lowlevel-management/helm/get/all.html
-
-              - title: helm get hooks
-                url: /documentation/cli/lowlevel-management/helm/get/hooks.html
-
-              - title: helm get manifest
-                url: /documentation/cli/lowlevel-management/helm/get/manifest.html
-
-              - title: helm get notes
-                url: /documentation/cli/lowlevel-management/helm/get/notes.html
-
-              - title: helm get values
-                url: /documentation/cli/lowlevel-management/helm/get/values.html
-
-              - title: helm get-autogenerated-values
-                url: /documentation/cli/lowlevel-management/helm/get_autogenerated_values.html
-
-              - title: helm get-release
-                url: /documentation/cli/lowlevel-management/helm/get_release.html
-
-              - title: helm get-namespace
-                url: /documentation/cli/lowlevel-management/helm/get_namespace.html
-
-              - title: helm history
-                url: /documentation/cli/lowlevel-management/helm/history.html
-
-              - title: helm install
-                url: /documentation/cli/lowlevel-management/helm/install.html
-
-              - title: helm lint
-                url: /documentation/cli/lowlevel-management/helm/lint.html
-
-              - title: helm list
-                url: /documentation/cli/lowlevel-management/helm/list.html
-
-              - title: helm package
-                url: /documentation/cli/lowlevel-management/helm/package.html
-
-              - title: helm plugin install
-                url: /documentation/cli/lowlevel-management/helm/plugin/install.html
-
-              - title: helm plugin list
-                url: /documentation/cli/lowlevel-management/helm/plugin/list.html
-
-              - title: helm plugin uninstall
-                url: /documentation/cli/lowlevel-management/helm/plugin/uninstall.html
-
-              - title: helm plugin update
-                url: /documentation/cli/lowlevel-management/helm/plugin/update.html
-
-              - title: helm pull
-                url: /documentation/cli/lowlevel-management/helm/pull.html
-
-              - title: helm repo add
-                url: /documentation/cli/lowlevel-management/helm/repo/add.html
-
-              - title: helm repo index
-                url: /documentation/cli/lowlevel-management/helm/repo/index.html
-
-              - title: helm repo list
-                url: /documentation/cli/lowlevel-management/helm/repo/list.html
-
-              - title: helm repo remove
-                url: /documentation/cli/lowlevel-management/helm/repo/remove.html
-
-              - title: helm repo update
-                url: /documentation/cli/lowlevel-management/helm/repo/update.html
-
-              - title: helm rollback
-                url: /documentation/cli/lowlevel-management/helm/rollback.html
-
-              - title: helm search
-                url: /documentation/cli/lowlevel-management/helm/search.html
-
-              - title: helm secret generate-secret-key
-                url: /documentation/cli/lowlevel-management/helm/secret/generate_secret_key.html
-
-              - title: helm secret encrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/encrypt.html
-
-              - title: helm secret decrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/decrypt.html
-
-              - title: helm secret file encrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/file/encrypt.html
-
-              - title: helm secret file decrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/file/decrypt.html
-
-              - title: helm secret file edit
-                url: /documentation/cli/lowlevel-management/helm/secret/file/edit.html
-
-              - title: helm secret values encrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/values/encrypt.html
-
-              - title: helm secret values decrypt
-                url: /documentation/cli/lowlevel-management/helm/secret/values/decrypt.html
-
-              - title: helm secret values edit
-                url: /documentation/cli/lowlevel-management/helm/secret/values/edit.html
-
-              - title: helm secret rotate-secret-key
-                url: /documentation/cli/lowlevel-management/helm/secret/rotate_secret_key.html
-
-              - title: helm show
-                url: /documentation/cli/lowlevel-management/helm/show.html
-
-              - title: helm status
-                url: /documentation/cli/lowlevel-management/helm/status.html
-
-              - title: helm template
-                url: /documentation/cli/lowlevel-management/helm/template.html
-
-              - title: helm test
-                url: /documentation/cli/lowlevel-management/helm/test.html
-
-              - title: helm uninstall
-                url: /documentation/cli/lowlevel-management/helm/uninstall.html
-
-              - title: helm upgrade
-                url: /documentation/cli/lowlevel-management/helm/upgrade.html
-
-              - title: helm verify
-                url: /documentation/cli/lowlevel-management/helm/verify.html
-
-              - title: helm version
-                url: /documentation/cli/lowlevel-management/helm/version.html
-
-              - title: host cleanup
-                url: /documentation/cli/lowlevel-management/host/cleanup.html
-
-              - title: host project list
-                url: /documentation/cli/lowlevel-management/host/project/list.html
-
-              - title: host project purge
-                url: /documentation/cli/lowlevel-management/host/project/purge.html
-
-              - title: host purge
-                url: /documentation/cli/lowlevel-management/host/purge.html
-
-          - title: Other Commands
+          - title: Development and debug
             sfi:
 
-              - title: completion
-                url: /documentation/cli/other/completion.html
+              - title: Setup Minikube
+                url: /documentation/advanced/development_and_debug/setup_minikube.html
 
-              - title: version
-                url: /documentation/cli/other/version.html
+              - title: Stage Introspection
+                url: /documentation/advanced/development_and_debug/stage_introspection.html
 
-      - title: Development
+              - title: As Layers
+                url: /documentation/advanced/development_and_debug/as_layers.html
+
+              - title: Lint And Render Chart
+                url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
+
+          - title: Supported registry implementations
+            url: /documentation/advanced/supported_registry_implementations.html
+
+      - title: Internals
         sf:
-          - title: Stapel
-            url: /documentation/development/stapel.html
+
+          - title: Building of images
+            sfi:
+
+                - title: Build process
+                  url: /documentation/internals/building_of_images/build_process.html
+
+                - title: Images storage
+                  url: /documentation/internals/building_of_images/images_storage.html
+
+          - title: How CI/CD integration works
+            sfi:
+
+              - title: General overview
+                url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
+
+              - title: GitLab CI/CD
+                url: /documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /documentation/internals/how_ci_cd_integration_works/github_actions.html
+
+          - title: Names slug algorithm
+            url: /documentation/internals/names_slug_algorithm.html
+
+          - title: Integration with SSH agent
+            url: /documentation/internals/integration_with_ssh_agent.html
+
+          - title: Development
+            sfi:
+
+              - title: Stapel image
+                url: /documentation/internals/development/stapel_image.html
 
   ru:
     f:
@@ -438,10 +198,10 @@ entries:
                 url: /documentation/configuration/stapel_image/image_directives.html
 
           - title: Stapel-артефакт
-            url: /documentation/configuration/stapel_artifact.html
+            url: /documentation/internals/building_images_with_stapel/artifact.html
 
           - title: Деплой в Kubernetes
-            url: /documentation/configuration/deploy_into_kubernetes.html
+            url: /documentation/advanced/helm/basics.html
 
           - title: Очистка
             url: /documentation/configuration/cleanup.html
@@ -450,7 +210,7 @@ entries:
         sf:
 
         - title: Стадии и образы
-          url: /documentation/reference/stages_and_images.html
+          url: /documentation/internals/building_of_images/images_storage.html
 
         - title: Сборка
           url: /documentation/reference/build_process.html
@@ -459,7 +219,7 @@ entries:
           sfi:
 
             - title: Деплой в Kubernetes
-              url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
+              url: /documentation/advanced/helm/basics.html
 
             - title: Работа с зависимостями чарта
               url: /documentation/reference/deploy_process/working_with_chart_dependencies.html

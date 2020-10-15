@@ -6,9 +6,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/cmd/werf/synchronization"
+
 	"github.com/werf/werf/cmd/werf/slugify"
 
+	"github.com/werf/werf/cmd/werf/build"
 	"github.com/werf/werf/cmd/werf/ci_env"
+	"github.com/werf/werf/cmd/werf/run"
+
+	"github.com/werf/werf/cmd/werf/cleanup"
+	"github.com/werf/werf/cmd/werf/purge"
+
 	"github.com/werf/werf/cmd/werf/dismiss"
 
 	"github.com/sirupsen/logrus"
@@ -19,12 +27,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/helm"
-
-	"github.com/werf/werf/cmd/werf/build"
-	"github.com/werf/werf/cmd/werf/cleanup"
-	"github.com/werf/werf/cmd/werf/purge"
-	"github.com/werf/werf/cmd/werf/run"
-	"github.com/werf/werf/cmd/werf/synchronization"
 
 	managed_images_add "github.com/werf/werf/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
@@ -78,20 +80,33 @@ Find more information at https://werf.io`),
 		SilenceErrors: true,
 	}
 
-	groups := templates.CommandGroups{
+	groups := &templates.CommandGroups{}
+	*groups = append(*groups, templates.CommandGroups{
 		{
-			Message: "Main:",
+			Message: "Delivery commands",
 			Commands: []*cobra.Command{
 				converge.NewCmd(),
-				build.NewCmd(),
-				run.NewCmd(),
 				dismiss.NewCmd(),
+			},
+		},
+		{
+			Message: "Cleaning commands",
+			Commands: []*cobra.Command{
 				cleanup.NewCmd(),
 				purge.NewCmd(),
 			},
 		},
 		{
-			Message: "Lowlevel Management:",
+			Message: "Helper commands",
+			Commands: []*cobra.Command{
+				ci_env.NewCmd(),
+				build.NewCmd(),
+				run.NewCmd(),
+				slugify.NewCmd(),
+			},
+		},
+		{
+			Message: "Lowlevel management commands",
 			Commands: []*cobra.Command{
 				configCmd(),
 				managedImagesCmd(),
@@ -100,28 +115,18 @@ Find more information at https://werf.io`),
 			},
 		},
 		{
-			Message: "Service:",
+			Message: "Other commands",
 			Commands: []*cobra.Command{
-				ci_env.NewCmd(),
 				synchronization.NewCmd(),
+				completion.NewCmd(rootCmd),
+				version.NewCmd(),
+				docs.NewCmd(groups),
 			},
 		},
-		{
-			Message: "Toolbox:",
-			Commands: []*cobra.Command{
-				slugify.NewCmd(),
-			},
-		},
-	}
+	}...)
 	groups.Add(rootCmd)
 
-	templates.ActsAsRootCommand(rootCmd, groups...)
-
-	rootCmd.AddCommand(
-		completion.NewCmd(rootCmd),
-		version.NewCmd(),
-		docs.NewCmd(),
-	)
+	templates.ActsAsRootCommand(rootCmd, *groups...)
 
 	return rootCmd
 }

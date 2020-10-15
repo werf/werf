@@ -109,11 +109,11 @@ func (t *templater) templateFuncs(exposedFlags ...string) template.FuncMap {
 
 func (t *templater) cmdGroups(c *cobra.Command, all []*cobra.Command) []CommandGroup {
 	if len(t.CommandGroups) > 0 && c == t.RootCmd {
-		return AddAdditionalCommands(t.CommandGroups, "Other Commands:", all)
+		return t.CommandGroups
 	}
 	return []CommandGroup{
 		{
-			Message:  "Available Commands:",
+			Message:  "Available Commands",
 			Commands: all,
 		},
 	}
@@ -122,7 +122,7 @@ func (t *templater) cmdGroups(c *cobra.Command, all []*cobra.Command) []CommandG
 func (t *templater) cmdGroupsString(c *cobra.Command) string {
 	var groups []string
 	for _, cmdGroup := range t.cmdGroups(c, c.Commands()) {
-		cmds := []string{cmdGroup.Message}
+		cmds := []string{fmt.Sprintf("%s:", cmdGroup.Message)}
 		for _, cmd := range cmdGroup.Commands {
 			if cmd.IsAvailableCommand() {
 				indent := "  "

@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="835px" height="1122px" viewBox="0 0 835 1122" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
-    <title>Path 3 Copy</title>
-    <desc>Created with Sketch.</desc>
-    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.0481305804">
-        <g id="Design" transform="translate(-605.000000, -3238.000000)" fill="#0066FF">
-            <path d="M803.506221,3061.66135 C1200.51866,3294.14768 1992.94755,3326.76497 2082.76853,3725.68089 C2172.58952,4124.5968 1584.45894,4269.72439 1294.56019,4354.08742 C1101.29436,4410.32943 937.609703,4585.96696 803.506221,4881 C538.83126,3513.11668 538.83126,2906.67047 803.506221,3061.66135 Z" id="Path-3-Copy" transform="translate(1348.500000, 3959.500000) scale(-1, 1) translate(-1348.500000, -3959.500000) "></path>
-        </g>
-    </g>
+<svg width="522" height="834" viewBox="0 0 522 834" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0)">
+<path opacity="0.0481306" fill-rule="evenodd" clip-rule="evenodd" d="M928.027 -152.988C642.082 23.995 71.3417 48.825 6.64891 352.503C-58.044 656.181 365.552 766.661 574.35 830.88C713.548 873.7 831.44 1007.4 928.027 1232C1118.66 190.687 1118.66 -270.976 928.027 -152.988Z" fill="#0066FF"/>
+</g>
+<defs>
+<clipPath id="clip0">
+<rect width="522" height="834" fill="white"/>
+</clipPath>
+</defs>
 </svg>

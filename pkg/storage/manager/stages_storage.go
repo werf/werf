@@ -334,7 +334,7 @@ func (m *StagesStorageManager) atomicGetStagesByDigestWithCacheReset(ctx context
 	}
 
 	var stageIDs []image.StageID
-	if err := logboek.Context(ctx).Default().LogProcess("Get %s stages by digest %s from stages storage", stageName, stageSig).
+	if err := logboek.Context(ctx).Info().LogProcess("Get %s stages by digest %s from stages storage", stageName, stageSig).
 		DoError(func() error {
 			var err error
 			stageIDs, err = m.StagesStorage.GetStagesIDsByDigest(ctx, m.ProjectName, stageSig)

@@ -1,0 +1,201 @@
+.page_installation {
+  margin-top: 30px;
+}
+
+.installation-selector-row {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+}
+
+.installation-selector-row > * {
+  margin-right: 40px;
+}
+
+.installation-selector__title {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 19px;
+  color: rgba(0, 18, 44, 0.25);
+}
+
+.installation-instruction__title {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 45px;
+  line-height: 60px;
+  margin: 45px 0;
+}
+
+.installation-instruction__title span {
+  color: #0066FF;
+}
+
+.installation-instruction__tab-content {
+  display: none;
+}
+
+.installation-instruction__tab-content.active {
+  display: block;
+}
+
+.installation-channels {
+  margin-top: 100px;
+}
+
+.installation-channels__title {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 45px;
+  line-height: 60px;
+  margin: 45px 0;
+}
+
+.installation-channels__channels {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.installation-channels__channel {
+}
+
+.installation-channels__channel-title {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 36px;
+  line-height: 49px;
+  color: #0066FF;
+  margin-bottom: 5px;
+  position: relative;
+}
+
+.installation-channels__channel-title::after {
+  content: '';
+  display: block;
+  height: 50px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 0px;
+}
+
+.installation-channels__channel_beta .installation-channels__channel-title::after {
+  width: 85px;
+  background-image: url('../images/installation/arrow-beta.svg');
+}
+
+.installation-channels__channel_ea .installation-channels__channel-title::after {
+  width: 110px;
+  background-image: url('../images/installation/arrow-ea.svg');
+}
+
+.installation-channels__channel_stable .installation-channels__channel-title::after {
+  width: 33px;
+  background-image: url('../images/installation/arrow-stable.svg');
+}
+
+.installation-channels__channel_rocksolid .installation-channels__channel-title::after {
+  width: 75px;
+  background-image: url('../images/installation/arrow-rocksolid.svg');
+}
+
+.installation-channels__channel-description {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 19px;
+  color: rgba(0, 18, 44, 0.75);
+}
+
+.installation-channels__info {
+  margin-top: 130px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.installation-channels__info-versions {
+  width: 436px;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 28px;
+  color: #00122C;
+  position: relative;
+}
+
+.installation-channels__info-versions::before {
+  content: '';
+  z-index: -1;
+  position: absolute;
+  left: -120px;
+  top: -82px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-image: url('../images/installation/bg-versions.svg');
+  width: 544px;
+  height: 459px;
+}
+
+.installation-channels__info-versions p {
+  margin: 0 0 20px 0;
+}
+
+.installation-channels__info-versions a {
+  color: #0066FF;
+  text-decoration: none;
+}
+
+.installation-channels__info-versions a:hover {
+  text-decoration: underline;
+}
+
+.installation-channels__info-guarantees {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.installation-channels__info-guarantee {
+  box-sizing: border-box;
+  width: 600px;
+  padding: 30px 40px;
+  background: #FFFFFF;
+  box-shadow: 0px 0px 45px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+
+  font-style: normal;
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 25px;
+  color: #00122C;
+}
+
+.installation-channels__info-guarantee i {
+  font-style: normal;
+  color: #0066FF;
+}
+
+.installation-channels__info-guarantee:first-child {
+  margin-right: 40px;
+  margin-bottom: 50px;
+}
+
+.installation-compatibility {
+  margin-top: 100px;
+}
+
+.installation-compatibility__title {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 45px;
+  line-height: 60px;
+  margin: 45px 0;
+}

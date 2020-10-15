@@ -7,4 +7,4 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 Страница была перемещена [сюда]({{ site.baseurl }}/documentation/reference/deploy_process/resources_update_methods_and_adoption.html).
 
-Информация о проверке манифестов ресурсов доступна [здесь]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#проверка-манифестов-ресурсов).
+Информация о проверке манифестов ресурсов доступна [здесь]({{ site.baseurl }}/documentation/advanced/helm/basics.html#проверка-манифестов-ресурсов).

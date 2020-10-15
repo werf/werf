@@ -1,0 +1,1 @@
+list installed Helm plugins

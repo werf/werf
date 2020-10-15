@@ -1,0 +1,1 @@
+download all information for a named release

@@ -2,14 +2,14 @@
 ## if you want to list an external url, use external_url instead of url. the theme will apply a different link base.
 topnav:
   en:
+     - title: Introduction
+       url: /introduction.html
      - title: Installation
-       url: /documentation/guides/installation.html
+       url: /installation.html
      - title: Documentation
-       url: /documentation/
+       url: /documentation/index.html
      - title: Publications
        url: /publications.html
-     - title: Releases
-       url: /releases.html
   ru:
      - title: Установка
        url: /documentation/guides/installation.html

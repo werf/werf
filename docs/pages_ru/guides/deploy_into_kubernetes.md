@@ -168,11 +168,11 @@ spec:
 В нашем случае образ безымянный (`~`), поэтому функция принимает только контекст без имени. 
 Функция добавит тег на основе используемой схемы тегирования. 
 В зависимости от схемы тегирования функция также может вернуть поле `imagePullPolicy` с определённым значением.
-Более подробно о функции можно прочитать [в соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+Более подробно о функции можно прочитать [в соответствующей статье]({{ site.baseurl }}/documentation/advanced/helm/basics.html#werf_container_image).
 
 Функция `werf_container_env` позволяет сгенерировать служебные значения в секции `env`, которые влияют на перезапуск pod'ов при изменении образа.
 В качестве аргументов также принимаются контекст и имя образа из `werf.yaml`.
-Подробнее про логику работы и особенности можно прочитать в [статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env)).
+Подробнее про логику работы и особенности можно прочитать в [статье]({{ site.baseurl }}/documentation/advanced/helm/basics.html#werf_container_env)).
 
 ### Frontend
 
@@ -216,15 +216,15 @@ werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp -
 
 После запуска команды, werf создаст соответствующие ресурсы в Kubernetes и будет отслеживать статус Deployment `myapp-backend` до его готовности (готовности всех pod'ов) либо ошибки.
 
-Для того чтобы сформировать правильные имя Helm-релиза и namespace требуется указать [окружение]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#окружение) с помощью параметра `--env`.
+Для того чтобы сформировать правильные имя Helm-релиза и namespace требуется указать [окружение]({{ site.baseurl }}/documentation/advanced/helm/basics.html#окружение) с помощью параметра `--env`.
 
 В результате будет создан Helm-релиз с именем `myapp-dev`. 
 Название Helm-релиза состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. 
-Более подробно про формирование имен Helm-релизов можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза).
+Более подробно про формирование имен Helm-релизов можно посмотреть в [документации]({{ site.baseurl }}/documentation/advanced/helm/basics.html#имя-релиза).
 
 При создании объектов Kubernetes будет использоваться namespace `myapp-dev`. 
 Имя namespace также по умолчанию состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. 
-Более подробно про формирование namespace в Kubernetes можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
+Более подробно про формирование namespace в Kubernetes можно посмотреть в [документации]({{ site.baseurl }}/documentation/advanced/helm/basics.html#kubernetes-namespace).
 
 ## Проверка работы приложения
 
@@ -251,4 +251,4 @@ werf dismiss --env dev --with-namespace
 
 ## Читайте также
 
-Более подробно об особенностях и возможностях деплоя приложений с помощью werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+Более подробно об особенностях и возможностях деплоя приложений с помощью werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/documentation/advanced/helm/basics.html).
