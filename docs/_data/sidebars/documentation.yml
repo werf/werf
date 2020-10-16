@@ -6,6 +6,9 @@ entries:
       - title: Overview
         url: /documentation/index.html
 
+      - title: Introduction
+        url: /introduction.html
+
       - title: Quickstart
         url: /documentation/quickstart.html
 
@@ -13,7 +16,7 @@ entries:
         url: /documentation/using_with_ci_cd_systems.html
 
       - title: Guides
-        url: https://ru.werf.io/applications_guide_ru
+        url: /documentation/guides.html
 
       - title: Reference
         sf:
