@@ -105,9 +105,6 @@ entries:
           - title: Development and debug
             sfi:
 
-              - title: Setup Minikube
-                url: /documentation/advanced/development_and_debug/setup_minikube.html
-
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
 
