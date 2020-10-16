@@ -1,5 +1,5 @@
 ---
-title: Working with Docker registries
+title: Supported registry implementations
 sidebar: documentation
 permalink: documentation/advanced/supported_registry_implementations.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
@@ -10,6 +10,8 @@ There are several types of commands that are working with the Docker registries 
 * During the building process, werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
 * [During the cleaning process]({{ site.baseurl }}/documentation/advanced/cleanup.html), werf deletes _images_ and _stages_ from the Docker registry.
 * [During the deploying process]({{ site.baseurl }}/documentation/advanced/helm/basics.html), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
+
+**NOTE** You should specify your implementation by `--repo-implementation` CLI option.
 
 ## Supported implementations
 
