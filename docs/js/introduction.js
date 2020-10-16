@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  if ($('#introduction-presentation')) {
+  if ($('#introduction-presentation').length) {
     var ip_slides = [];
     var ip_magic = new ScrollMagic.Controller();
     var ip_offset = ($('#introduction-presentation').position().top - window.innerHeight/2) + 300;

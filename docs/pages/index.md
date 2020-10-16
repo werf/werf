@@ -57,7 +57,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">It’s a CLI tool</div>
                 <div class="features__list-item-text">
-                    werf is not a SAAS, it is an Open Souce, self-contained client-side CLI&nbsp;tool. Use this single tool for <b>local development</b> or <b>embed it</b> into <b>any existing CI/CD system</b> using its main commands as building blocks:
+                    werf is not a SAAS, it is an Open Source, self-contained client-side CLI&nbsp;tool. Use this single tool for <b>local development</b> or <b>embed it</b> into <b>any existing CI/CD system</b> using its main commands as building blocks:
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
@@ -69,7 +69,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration, does not need special knowledge of DevOps/SRE techniques to combine multiple tools and provides a <a href="{{ site.baseurl }}/documentation/guides.html"><b>plenty of guides</b></a> to quickly deploy your app into Kubernetes, either for local development or production.
+                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ site.baseurl }}/documentation/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes, either for local development or production.
                 </div>
             </li>
             <li class="features__list-item">
@@ -87,17 +87,23 @@ layout: default
                 </div>
             </li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_helm"></div>
-                <div class="features__list-item-title">Extended Helm</div>
-                <div class="features__list-item-text">
-                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>robust and reliable</b>.
-                </div>
-            </li>
-            <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_debug"></div>
                 <div class="features__list-item-title">Built-in cleaning</div>
                 <div class="features__list-item-text">
                     werf implements a sophisticated algorithm to <b>clean unused Docker images</b> that is based on the Git history of your application.
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_helm"></div>
+                <div class="features__list-item-title">Extended Helm</div>
+                <div class="features__list-item-text">
+                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>clear and reliable</b>.
+                </div>
+            </li>
+            <li class="features__list-item features__list-item_special">
+                <div class="features__list-item-title">Open Source</div>
+                <div class="features__list-item-description">
+                    <a href="https://github.com/werf/werf" target="_blank">Open Source</a> project since its launch in 2016. Written in Go. Proud of its strong &amp; growing community of users.
                 </div>
             </li>
         </ul>
@@ -115,7 +121,7 @@ layout: default
                     <div class="stats__list-item-subtitle">on average during the last year</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1400</div>
+                    <div class="stats__list-item-num">2000+</div>
                     <div class="stats__list-item-title">installations</div>
                     <div class="stats__list-item-subtitle">for large and small projects</div>
                 </li>
@@ -137,8 +143,8 @@ layout: default
                     werf is a mature,<br>
                     reliable tool you can trust
                 </div>
-                <a href="{{ site.baseurl }}/installation.html#stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
-                    read about stability channels and release process
+                <a href="{{ site.baseurl }}/installation.html#all-changes-in-werf-go-through-all-stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                    Read about stability channels and release process
                 </a>
             </div>
             <div class="reliability__column reliability__column_image">
@@ -152,15 +158,15 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly and rapidly growing community</div>
-            <div class="community__subtitle">werf’s developers are always in contact with the community.<br/> You can reach us in Twitter and Slack.</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community.<br/> You can reach us in Twitter and Discourse.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
                     Join us in Twitter
                 </a>
-                <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
-                    <span class="page__icon page__icon_slack"></span>
-                    Join us in Slack
+                <a href="https://community.flant.com/c/werf/6" rel="noopener noreferrer" target="_blank" class="page__btn page__btn_w community__btn">
+                    <span class="page__icon page__icon_discourse"></span>
+                    Join us in Discourse
                 </a>
             </div>
         </div>

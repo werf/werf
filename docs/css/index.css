@@ -317,7 +317,7 @@ body,
   opacity: 1;
 }
 
-/* #presentation-scheme #scheme_step,
+#presentation-scheme #scheme_step,
 #presentation-scheme #scheme_step_2,
 #presentation-scheme #scheme_step_3,
 #presentation-scheme #scheme_step_connector,
@@ -326,14 +326,10 @@ body,
 #presentation-scheme #scheme_smart_icon_check,
 #presentation-scheme #scheme_smart_icon_check_2 {
     opacity: 0;
-} */
-
-#presentation-scheme #scheme_smart_icon_update,
-#presentation-scheme #scheme_smart_icon_update_2 {
-  opacity: 0;
 }
 
 .welcome {
+  margin-top: 75px;
   min-height: 500px;
   position: relative;
 }
@@ -596,11 +592,13 @@ body,
   color: rgba(0, 18, 44, 0.75);
 }
 
+.features__list-item-text a,
 .features__list-item-description a {
   color: #0066FF;
   text-decoration: none;
 }
 
+.features__list-item-text a:hover,
 .features__list-item-description a:hover {
   text-decoration: underline;
 }
