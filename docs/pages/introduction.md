@@ -71,25 +71,11 @@ Pay attention to an important param `project`, which is a _project name_ — wer
             </div>
         </div>
         <div class="introduction-presentation__slide">
-            <div class="introduction-presentation__slide-text">
-                <div class="introduction-presentation__slide-title">
-                    Converge your commit
-                </div>
-<div markdown="1">
-Next step is to _converge_ our Git commit that contains defined state of the application.
-
-Building of docker images (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure application is up and running after deploying we will call a **converge process**.
-
-Converge process is called for certain Git commit to perform synchronization of running application with the configuration defined in this commit. When converge process is done successfully it is safe to assume that your application is up and running and conforms to the state defined in the current Git commit.
-</div>
-            </div>
-        </div>
-        <div class="introduction-presentation__slide">
             <img src="{% asset introduction/c-1.png @path %}"
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    1. Calculate configured images from current Git commit state.
+                    5. Calculate configured images from current Git commit state.
                 </div>
 <div markdown="1">
 During this step werf calculates needed images names. Images names may change or not change from one commit to another depending on the changes made into the Git repo. It is important to know, that each Git commit will have deterministic reproducible images names.
@@ -101,7 +87,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    2. Read images existing in the Docker Registry.
+                    6. Read images existing in the Docker Registry.
                 </div>
             </div>
         </div>
@@ -110,7 +96,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    3. Calculate the difference between images needed for current Git commit state and images which are already exist in the Docker Registry.
+                    7. Calculate the difference between images needed for current Git commit state and images which are already exist in the Docker Registry.
                 </div>
             </div>
         </div>
@@ -119,7 +105,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    4. Build and publish only those images which do not exist in the Docker Registry (if any).
+                    8. Build and publish only those images which do not exist in the Docker Registry (if any).
                 </div>
             </div>
         </div>
@@ -128,7 +114,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    5. Read needed configuration of Kubernetes resources from current Git commit state.
+                    9. Read needed configuration of Kubernetes resources from current Git commit state.
                 </div>
             </div>
         </div>
@@ -137,7 +123,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    6. Read configuration of existing Kubernetes resources from the cluster.
+                    10. Read configuration of existing Kubernetes resources from the cluster.
                 </div>
             </div>
         </div>
@@ -146,7 +132,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    7. Calculate the difference between needed configuration of Kubernetes resources defined for current Git commit state and configuration of existing Kubernetes resources of the cluster.
+                    11. Calculate the difference between needed configuration of Kubernetes resources defined for current Git commit state and configuration of existing Kubernetes resources of the cluster.
                 </div>
             </div>
         </div>
@@ -155,7 +141,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    8. Apply needed changes (if any) to the Kubernetes resources to conform with the state defined in the Git commit.
+                    12. Apply needed changes (if any) to the Kubernetes resources to conform with the state defined in the Git commit.
                 </div>
             </div>
         </div>
@@ -164,7 +150,7 @@ During this step werf calculates needed images names. Images names may change or
             class="introduction-presentation__slide-img" />
             <div class="introduction-presentation__slide-text">
                 <div class="introduction-presentation__slide-title">
-                    9. Make sure all resources are ready to work and report any errors immediately (optionally rollback to the previous state if error occurred).
+                    13. Make sure all resources are ready to work and report any errors immediately (optionally rollback to the previous state if error occurred).
                 </div>
             </div>
         </div>
