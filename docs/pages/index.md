@@ -87,17 +87,23 @@ layout: default
                 </div>
             </li>
             <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_debug"></div>
+                <div class="features__list-item-title">Built-in cleaning</div>
+                <div class="features__list-item-text">
+                    werf implements a sophisticated algorithm to <b>clean unused Docker images</b> that is based on the Git history of your application.
+                </div>
+            </li>
+            <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_helm"></div>
                 <div class="features__list-item-title">Extended Helm</div>
                 <div class="features__list-item-text">
                     werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>robust and reliable</b>.
                 </div>
             </li>
-            <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_debug"></div>
-                <div class="features__list-item-title">Built-in cleaning</div>
-                <div class="features__list-item-text">
-                    werf implements a sophisticated algorithm to <b>clean unused Docker images</b> that is based on the Git history of your application.
+            <li class="features__list-item features__list-item_special">
+                <div class="features__list-item-title">Open Source</div>
+                <div class="features__list-item-description">
+                    <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>
                 </div>
             </li>
         </ul>
@@ -137,7 +143,7 @@ layout: default
                     werf is a mature,<br>
                     reliable tool you can trust
                 </div>
-                <a href="{{ site.baseurl }}/installation.html#stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                <a href="{{ site.baseurl }}/installation.html#all-changes-in-werf-go-through-all-stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
                     read about stability channels and release process
                 </a>
             </div>
@@ -152,15 +158,15 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Friendly and rapidly growing community</div>
-            <div class="community__subtitle">werf’s developers are always in contact with the community.<br/> You can reach us in Twitter and Slack.</div>
+            <div class="community__subtitle">werf’s developers are always in contact with the community.<br/> You can reach us in Twitter and Discourse.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
                     Join us in Twitter
                 </a>
-                <a href="#" data-open-popup="slack" class="page__btn page__btn_w community__btn">
-                    <span class="page__icon page__icon_slack"></span>
-                    Join us in Slack
+                <a href="https://community.flant.com/c/werf/6" rel="noopener noreferrer" target="_blank" class="page__btn page__btn_w community__btn">
+                    <span class="page__icon page__icon_discourse"></span>
+                    Join us in Discourse
                 </a>
             </div>
         </div>
