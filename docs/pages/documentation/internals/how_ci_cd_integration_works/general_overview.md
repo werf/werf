@@ -1,5 +1,5 @@
 ---
-title: Overview
+title: General overview
 sidebar: documentation
 permalink: documentation/internals/how_ci_cd_integration_works/general_overview.html
 ---

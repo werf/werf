@@ -105,16 +105,13 @@ entries:
           - title: Development and debug
             sfi:
 
-              - title: Setup Minikube
-                url: /documentation/advanced/development_and_debug/setup_minikube.html
-
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
 
-              - title: As Layers
+              - title: As layers
                 url: /documentation/advanced/development_and_debug/as_layers.html
 
-              - title: Lint And Render Chart
+              - title: Lint and render chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
           - title: Supported registry implementations

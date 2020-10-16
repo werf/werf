@@ -1,5 +1,5 @@
 ---
-title: Generic CI/CD systems integration
+title: Generic CI/CD integration
 sidebar: documentation
 permalink: documentation/advanced/ci_cd/generic_ci_cd_integration.html
 ---
