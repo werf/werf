@@ -16,44 +16,33 @@ type ServiceValuesOptions struct {
 }
 
 func GetServiceValues(ctx context.Context, projectName string, repo, namespace string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
-	res := make(map[string]interface{})
-
 	werfInfo := map[string]interface{}{
-		"name":    projectName,
-		"repo":    repo,
-		"is_stub": opts.IsStub,
+		"name":      projectName,
+		"repo":      repo,
+		"namespace": namespace,
+		"is_stub":   opts.IsStub,
 	}
 
 	if opts.IsStub {
 		werfInfo["stub_image"] = fmt.Sprintf("%s:TAG", repo)
 	}
 
-	globalInfo := map[string]interface{}{
-		"namespace": namespace,
-		"werf":      werfInfo,
-	}
 	if opts.Env != "" {
-		globalInfo["env"] = opts.Env
+		werfInfo["env"] = opts.Env
 	}
-	res["global"] = globalInfo
-
-	imagesInfo := make(map[string]interface{})
-	werfInfo["image"] = imagesInfo
 
 	for _, imageInfoGetter := range imageInfoGetters {
-		imageData := make(map[string]interface{})
-
 		if imageInfoGetter.IsNameless() {
-			werfInfo["is_nameless_image"] = true
-			werfInfo["image"] = imageData
+			werfInfo["image"] = imageInfoGetter.GetName()
 		} else {
-			werfInfo["is_nameless_image"] = false
-			imagesInfo[imageInfoGetter.GetWerfImageName()] = imageData
+			if werfInfo["image"] == nil {
+				werfInfo["image"] = map[string]interface{}{}
+			}
+			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
 		}
-
-		imageData["docker_image"] = imageInfoGetter.GetName()
-		imageData["docker_tag"] = imageInfoGetter.GetTag()
 	}
+
+	res := map[string]interface{}{"werf": werfInfo}
 
 	data, err := yaml.Marshal(res)
 	logboek.Context(ctx).Debug().LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
