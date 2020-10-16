@@ -97,7 +97,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_helm"></div>
                 <div class="features__list-item-title">Extended Helm</div>
                 <div class="features__list-item-text">
-                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>clear and reliable</b>.
+                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>clear, robust and reliable</b>.
                 </div>
             </li>
             <li class="features__list-item features__list-item_special">
