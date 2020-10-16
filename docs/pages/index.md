@@ -69,7 +69,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration, does not need special knowledge of DevOps/SRE techniques to combine multiple tools and provides a <a href="{{ site.baseurl }}/documentation/guides.html"><b>plenty of guides</b></a> to quickly deploy your app into Kubernetes, either for local development or production.
+                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ site.baseurl }}/documentation/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes, either for local development or production.
                 </div>
             </li>
             <li class="features__list-item">
@@ -97,13 +97,13 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_helm"></div>
                 <div class="features__list-item-title">Extended Helm</div>
                 <div class="features__list-item-text">
-                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>robust and reliable</b>.
+                    werf uses a built-in <code>helm</code> binary to implement a Helm-compatible deployment with additional features. It doesn't require to have <code>helm</code> separately installed. It provides you a descriptive and sharp <b>deploy logging</b>, fast <b>failures detection</b> during deploy process, secrets support and other extensions making deploy process <b>clear and reliable</b>.
                 </div>
             </li>
             <li class="features__list-item features__list-item_special">
                 <div class="features__list-item-title">Open Source</div>
                 <div class="features__list-item-description">
-                    <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>
+                    <a href="https://github.com/werf/werf" target="_blank">Open Source</a> project since its launch in 2016. Written in Go. Proud of its strong &amp; growing community of users.
                 </div>
             </li>
         </ul>
@@ -121,7 +121,7 @@ layout: default
                     <div class="stats__list-item-subtitle">on average during the last year</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num">1400</div>
+                    <div class="stats__list-item-num">2000+</div>
                     <div class="stats__list-item-title">installations</div>
                     <div class="stats__list-item-subtitle">for large and small projects</div>
                 </li>
@@ -144,7 +144,7 @@ layout: default
                     reliable tool you can trust
                 </div>
                 <a href="{{ site.baseurl }}/installation.html#all-changes-in-werf-go-through-all-stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
-                    read about stability channels and release process
+                    Read about stability channels and release process
                 </a>
             </div>
             <div class="reliability__column reliability__column_image">
