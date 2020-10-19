@@ -20,6 +20,12 @@ en:
   #  created: ISO format date, yyyy-mm-dd
   #  comment: COMMENT
 
+  - title: "Overcoming the challenges of cleaning up container images"
+    url: "https://medium.com/flant-com/cleaning-up-container-images-with-werf-ec35b5d46569"
+    img: "/images/publications/en_051020.png"
+    created: 2020-10-05
+    comment: |
+      <p>While implementing CI/CD processes for a variety of developer teams, we've realised that container registries (Docker Registry, GitLab Container Registry, etc.) usually don't provide flexible & powerful policies to clean up the images that are not in use. As modern cloud-native applications development requires to deliver a huge amount of builds (images) to Kubernetes, you might end up with either an overfilled registry or lacking an important image in your infrastructure (or registry) when it's needed. Here are our thoughts on this issue and how we have resolved it away from the registries themselves, in our Open Source tool (werf).</p>
   - title: "Werf: Fully customizable GitOps"
     url: "https://kubesandclouds.com/index.php/2020/09/01/werf-gitops/"
     img: "/images/publications/en_010920.png"
@@ -113,6 +119,12 @@ ru:
   #  url: URL
   #  comment: COMMENT
   #  created: ISO format date, yyyy-mm-dd
+  - title: "Проблема «умной» очистки образов контейнеров и её решение в werf"
+    habr_url: "https://habr.com/ru/company/flant/blog/522024/"
+    img: "/images/publications/ru_061020.png"
+    created: 2020-10-06
+    comment: |
+      <p>В статье рассмотрена проблематика очистки образов, которые накапливаются в реестрах контейнеров (Docker Registry и его аналогах) в реалиях современных CI/CD-пайплайнов для cloud native-приложений, доставляемых в Kubernetes. Приведены основные критерии актуальности образов и вытекающие из них сложности при автоматизации очистки, сохранения места и удовлетворения потребностям команд. Наконец, на примере нашего Open Source-проекта werf мы расскажем, как эти сложности можно преодолеть.</p>
   - title: "Организация распределенного CI/CD с помощью werf"
     habr_url: "https://habr.com/ru/company/flant/blog/504390/"
     img: "/images/publications/ru_020620.png"
