@@ -62,6 +62,11 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			continue
 		}
 
+		if obj.GetKind() == "" {
+			logboek.Debug().LogF("Skipping emty object\n")
+			continue
+		}
+
 		if len(pr.ExtraAnnotations) > 0 {
 			annotations := obj.GetAnnotations()
 			if annotations == nil {
