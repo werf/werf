@@ -30,7 +30,7 @@ require (
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/example v0.0.0-20170904185048-46695d81d1fa
-	github.com/google/go-containerregistry v0.1.1
+	github.com/google/go-containerregistry v0.1.3
 	github.com/google/uuid v1.1.1
 	github.com/gosuri/uitable v0.0.4
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
@@ -143,7 +143,5 @@ replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.2
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
-
-replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-containerregistry v0.1.3-0.20200901133051-a73cc6cd741c
 
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200924122332-260bd217b2c3

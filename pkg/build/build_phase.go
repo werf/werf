@@ -535,22 +535,19 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			return nil
 		} else { // use newly built image
 			newStageImageName, uniqueID := phase.Conveyor.StorageManager.GenerateStageUniqueID(stg.GetDigest(), stages)
-			repository, tag := image.ParseRepositoryAndTag(newStageImageName)
-
 			stageImageObj := phase.Conveyor.GetStageImage(stageImage.Name())
 			phase.Conveyor.UnsetStageImage(stageImageObj.Name())
-
 			stageImageObj.SetName(newStageImageName)
-			stageImageObj.GetStageDescription().Info.Name = newStageImageName
-			stageImageObj.GetStageDescription().Info.Repository = repository
-			stageImageObj.GetStageDescription().Info.Tag = tag
-			stageImageObj.GetStageDescription().StageID = &image.StageID{Digest: stg.GetDigest(), UniqueID: uniqueID}
-
 			phase.Conveyor.SetStageImage(stageImageObj)
 
 			if err := logboek.Context(ctx).Info().LogProcess("Store into stages storage").DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+				}
+				if desc, err := phase.Conveyor.StorageManager.StagesStorage.GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
+					return fmt.Errorf("unable to get stage %s digest %s image %s description from stages storage %s after stages has been stored into stages storage: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+				} else {
+					stageImageObj.SetStageDescription(desc)
 				}
 				return nil
 			}); err != nil {

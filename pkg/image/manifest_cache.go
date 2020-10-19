@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	ManifestCacheVersion = "2"
+	ManifestCacheVersion = "4"
 )
 
 type ManifestCache struct {

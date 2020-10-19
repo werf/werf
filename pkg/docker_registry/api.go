@@ -98,6 +98,19 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		return nil, err
 	}
 
+	var totalSize int64
+	if layers, err := imageInfo.Layers(); err != nil {
+		return nil, err
+	} else {
+		for _, l := range layers {
+			if lSize, err := l.Size(); err != nil {
+				return nil, err
+			} else {
+				totalSize += lSize
+			}
+		}
+	}
+
 	parsedReference, err := name.NewTag(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return nil, err
@@ -111,6 +124,7 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		RepoDigest: digest.String(),
 		ParentID:   configFile.Config.Image,
 		Labels:     configFile.Config.Labels,
+		Size:       totalSize,
 	}
 
 	repoImage.SetCreatedAtUnix(configFile.Created.Unix())
