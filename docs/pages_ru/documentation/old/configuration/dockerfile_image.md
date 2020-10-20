@@ -53,10 +53,6 @@ image: frontend
 dockerfile: dockerfiles/DockerfileFrontend
 ```
 
-## Именование
-
-{% include /configuration/stapel_image/naming_ru.md %}
-
 ## Директивы Dockerfile
 
 werf, так же как и `docker build`, собирает образы, используя Dockerfile-инструкции, контекст и дополнительные опции:
