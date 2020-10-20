@@ -159,24 +159,22 @@ During this step werf calculates needed images names. Images names may change or
 
 ## What is converge?
 
-Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. Run following command in the root of your project:
+**Converge** is the process of building of docker images (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure application is up and running.
+
+Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. `werf converge` command behaviour is fully deterministic and transparent from the git repo standpoint. After converge is done your application is up and running in the state defined in the target Git commit. Typically to rollback your application to the previous version you just need to run converge on the corresponding previous commit (werf will use correct images for this commit).
+
+Run following command in the root of your project to converge:
 
 ```
 werf converge --docker-repo myregistry.domain.org/example-app [--kube-config ~/.kube/config]
 ```
 
-Generally, converge command has one required argument: the address of the docker repo. Werf will use this docker repo to store built images and use them in Kubernetes (so, this docker repo should be accessible from within Kubernetes cluster).
-
-Kube-config optional argument defines Kubernetes cluster to connect to.
-
-There is of course such optional param as [env](TODO) to deploy application into different environments of the same kubernetes cluster. By default werf will use _the project name_ as a Kubernetes namespace.
+Generally, converge command has one required argument: the address of the docker repo. Werf will use this docker repo to store built images and use them in Kubernetes (so, this docker repo should be accessible from within Kubernetes cluster). Kube-config optional argument defines Kubernetes cluster to connect to. There is of course such optional param as `--env` (and environment variable `WERF_ENV`) to deploy application into different [environments]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment).
 
 _NOTE: Your application may not have custom docker images (and use only publicly available images for example), in such case it is not required to pass `--docker-repo` param — just omit it._
 
 ## What's next?
 
 Deploy your first example application with [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or checkout available [guides]({{ site.baseurl }}/documentation/guides.html) which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
-
-### Converge your production
 
 If you feel ready to dig into general overview of CI/CD workflows, which could be implemented with werf, then go [this article]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html).

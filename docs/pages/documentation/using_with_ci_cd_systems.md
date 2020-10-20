@@ -127,7 +127,7 @@ werf converge
 
 Usually CI/CD system checkout current git commit completely automatically and you don't have to make anything. But some systems may not perform this step automatically. In such case it is required to checkout target git commit of the project repo before running main werf commands (`werf converge`, `werf dismiss` or `werf cleanup`).
 
-_NOTE: `werf converge` command behaviour is fully deterministic and transparent from the git repo standpoint. After converge is done your application is up and running in the state defined in the target git commit. Typically to rollback your application to the previous version you just need to run converge job on the corresponding previous commit (werf will use correct images for this commit)._
+Read more about converge process in the [introduction]({{ site.baseurl }}/introduction.html#what-is-converge).
 
 ### Other configuration of werf for CI/CD
 
