@@ -75,9 +75,6 @@ entries:
           - title: Building images with stapel
             sfi:
 
-              - title: Naming (required)
-                url: /documentation/advanced/building_images_with_stapel/naming.html
-
               - title: Base image (required)
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
 
@@ -169,9 +166,6 @@ entries:
 
           - title: Stapel-образ
             sfi:
-
-              - title: Именование (обязательно)
-                url: /documentation/configuration/stapel_image/naming.html
 
               - title: Базовый образ (обязательно)
                 url: /documentation/configuration/stapel_image/base_image.html
