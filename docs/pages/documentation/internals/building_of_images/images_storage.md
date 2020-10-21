@@ -1,8 +1,7 @@
 ---
-title: Stages and Images
+title: Images storage
 sidebar: documentation
 permalink: documentation/internals/building_of_images/images_storage.html
-author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 
 We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.

@@ -2,7 +2,6 @@
 title: Supported Go templates
 sidebar: documentation
 permalink: documentation/advanced/configuration/supported_go_templates.html
-author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 ## Processing of config

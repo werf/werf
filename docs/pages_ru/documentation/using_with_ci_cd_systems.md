@@ -1,5 +1,5 @@
 ---
-title: Using with CI/CD systems
+title: Использование в CI/CD системах
 permalink: documentation/using_with_ci_cd_systems.html
 sidebar: documentation
 ---

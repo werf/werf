@@ -2,7 +2,6 @@
 title: Cleanup
 sidebar: documentation
 permalink: documentation/advanced/cleanup.html
-author: Artem Kladov <artem.kladov@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 During building and publishing, werf creates sets of docker layers, however, it does not delete them.
