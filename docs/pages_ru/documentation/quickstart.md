@@ -1,5 +1,5 @@
 ---
-title: Quickstart
+title: Быстрый старт
 permalink: documentation/quickstart.html
 sidebar: documentation
 ---

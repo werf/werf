@@ -1,16 +1,18 @@
 ---
-title: Organizing configuration
+title: Организация конфигурации
 sidebar: documentation
 permalink: documentation/advanced/configuration/organizing_configuration.html
 ---
 
-## With templates dir
+## Использование директории шаблонов
 
-Part of the configuration can be moved in ***separate template files*** and then included into __werf.yaml__. _Template files_ should live in the ***.werf*** directory with **.tmpl** extension (any nesting is supported).
+Часть конфигурации может быть вынесена в ***отдельные файлы шаблонов*** и затем включаться в __werf.yaml__. 
+_Файлы шаблонов_ должны размещаться в папке ***.werf*** и иметь расширение **.tmpl** (поддерживается вложенность).
 
-> **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects
+> **Совет:** вы можете скачать или сгенерировать шаблоны до запуска werf. 
+> Например, это может быть удобно при вынесении общей логики нескольких проектов в общие шаблоны
 
-werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
+werf обрабатывает все файлы в одном окружении, поэтому [define](#include) в одном шаблоне, доступен в любом другом, включая сам _werf.yaml_.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>
@@ -101,9 +103,9 @@ ansible:
 </div>
 </div>
 
-> If there are templates with the same name werf will use template defined in _werf.yaml_ or the latest described in _templates files_
+> При существовании нескольких шаблонов с одинаковым именем, werf будет использовать шаблон определенный в _werf.yaml_, либо последний описанный в _файлах шаблонов_
 
-If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in [include](#include) function.
+Если нужно обратиться непосредственно к _файлу шаблона_, например, в функции [include](#include), то можно использовать путь к соответствующему файлу относительно папки _.werf_.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>
@@ -186,11 +188,11 @@ shell:
 </div>
 </div>
 
-## With tpl function
+## Использование функции tpl
 
-The `tpl` function allows the user to evaluate strings as Go templates inside a template. Thus, werf partials can be located anywhere in the project and be included in `werf.yaml`.
+Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта. Таким образом, шаблоны могут располагаться в произвольном месте в проекте и добавляться в `werf.yaml`.
 
-It is worth noting that these files can use anything defined in `werf.yaml` and templates in `.werf` ([templates dir](#with-templates-dir)).
+Стоит отметить, что шаблоны выполняются в общем контексте, поэтому в них доступны все шаблоны и значения из `werf.yaml` и [директории шаблонов](#при-использовании-директории-шаблонов). 
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>

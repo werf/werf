@@ -19,8 +19,6 @@ This article contains description of annotations which control werf tracking of 
 
 More info about chart templates and other stuff is available in the [deploy basics article.]({{ site.baseurl }}/documentation/deploy/basics.html)
 
-See also [demo examples]({{ site.baseurl }}/documentation/deploy/basics.html#configuring-resource-tracking) of using annotations.
-
 ## Track termination mode
 
 `"werf.io/track-termination-mode": WaitUntilResourceReady|NonBlocking`
