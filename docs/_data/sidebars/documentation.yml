@@ -96,9 +96,6 @@ entries:
               - title: Artifact
                 url: /documentation/advanced/building_images_with_stapel/artifact.html
 
-              - title: All directives
-                url: /documentation/advanced/building_images_with_stapel/image_directives.html
-
           - title: Development and debug
             sfi:
 

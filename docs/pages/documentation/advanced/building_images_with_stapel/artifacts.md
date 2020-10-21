@@ -34,11 +34,11 @@ The remaining _stages_ and instructions are considered further separately.
 
 <div class="summary" markdown="1">
 ```yaml
-artifact: <artifact name>
+artifact: string
 ```
 </div>
 
-_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the [naming of the _image_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
+_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the [name of the _image_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"
@@ -106,7 +106,3 @@ git:
 In this case every change in git files will result in artifact rebuild, all *stapel images* that import this artifact will also be rebuilt.
 
 **NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/assembly_instructions.html) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.
-
-## All directives
-
-{% include /documentation/advanced/building_images_with_stapel/artifact_directives.md %}

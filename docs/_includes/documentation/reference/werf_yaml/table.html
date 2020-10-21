@@ -20,18 +20,38 @@ table tr td span {
 span.btn {
     cursor: pointer;
 }
+
+table tr[class*="collapsed-"] {
+    display: none;
+}
 </style>
 
 <table>
-    <tr><td colspan="2">--- # Meta section</td></tr>
-{% for directive in site.data.werf_yaml.meta_section %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive %}
-{% endfor %}
-</table>
+{% for section in site.data.werf_yaml.sections %}
+    <tr id="{{ section.id }}" class="{{ section.id }}">
+        <td colspan="2">--- # {{ section.description }} <span id="{{ section.id }}-btn" class="btn">{% if section.isCollapsedByDefault %}(+){% else %}(-){% endif %}</span></td>
+    </tr>
 
-<table>
-    <tr><td colspan="2">--- # Image section: optional, define as many image sections as you need</td></tr>
-{% for directive in site.data.werf_yaml.image_section %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive %}
+    {% assign sectionCollapsedClass = "collapsed" | append: "-" | append: section.id %}
+
+    <script>
+    $( "#{{ section.id }}-btn" ).click(function() {
+        $( this ).text(function(i, oldText) {
+            return oldText === '(+)' ? '(-)' : '(+)';
+        });
+
+        $( "tr.{{ section.id }}:not(#{{ section.id }})" ).toggleClass("{{ sectionCollapsedClass }}", $( this ).text() === '(+)');
+    });
+    </script>
+
+    {% for directive in section.directives %}
+    {% assign directiveClasses = '' | split: '' %}
+    {% assign directiveClasses = directiveClasses | push: section.id %}
+    {% assign directiveCollapsedClasses = '' | split: '' %}
+    {% if section.isCollapsedByDefault %}
+    {% assign directiveCollapsedClasses = directiveCollapsedClasses | push: sectionCollapsedClass %}
+    {% endif %}
+    {% include documentation/reference/werf_yaml/directive.html directive=directive directiveClasses=directiveClasses directiveCollapsedClasses=directiveCollapsedClasses %}
+    {% endfor %}
 {% endfor %}
 </table>

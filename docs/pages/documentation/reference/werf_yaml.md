@@ -23,9 +23,8 @@ Werf cannot automatically resolve project name change. Described issues must be 
 
 ## Image section
 
-Images are declared with _image_ directive: `image: <image name>`. 
+Images are declared with _image_ directive: `image: string`. 
 The _image_ directive starts a description for building an application image.
-The _image name_ is a string, similar to the image name in Docker:
 
 ```yaml
 image: frontend
@@ -54,7 +53,7 @@ An _image_ can have several names, set as a list in YAML syntax
 image: [main-front,main-back]
 ```
 
-You will need an image name when setting up helm templates to refer to the specific image defined in the `werf.yaml`.
+You will need an image name when setting up helm templates or running werf commands to refer to the specific image defined in the `werf.yaml`.
 
 ### Dockerfile builder
 
@@ -97,8 +96,6 @@ context: frontend/
 ### Stapel builder
 
 Another alternative to building images with Dockerfiles is werf stapel builder, which is tightly integrated with Git and allows really fast incremental rebuilds on changes in the Git files.
-
-
 
 ## Deploy
 
@@ -162,7 +159,7 @@ Each policy consists of two parts:
 - `references` defines a set of references, git tags, or git branches to perform scanning on.
 - `imagesPerReference` defines the limit on the number of images for each reference contained in the set.
 
-Each policy should be linked to some set of git tags (`tag: <string|/REGEXP/>`) or git branches (`branch: <string|/REGEXP/>`). You can specify the name/group of a reference using the [Golang's regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
+Each policy should be linked to some set of git tags (`tag: string || /REGEXP/`) or git branches (`branch: string || /REGEXP/`). You can specify the name/group of a reference using the [Golang's regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
 
 ```yaml
 tag: v1.1.1
@@ -186,22 +183,22 @@ You can limit the set of references on the basis of the date when the git tag wa
 
 In the example above, werf selects no more than 10 latest branches that have the `features/` prefix in the name and have shown any activity during the last week.
 
-- The `last: <int>` parameter allows you to select n last references from those defined in the `branch` / `tag`.
-- The `in: <duration string>` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) allows you to select git tags that were created during the specified period or git branches that were active during the period. You can also do that for the specific set of `branches` / `tags`.
-- The `operator: <And|Or>` parameter defines if references should satisfy both conditions or either of them (`And` is set by default).
+- The `last: int` parameter allows you to select n last references from those defined in the `branch` / `tag`.
+- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) allows you to select git tags that were created during the specified period or git branches that were active during the period. You can also do that for the specific set of `branches` / `tags`.
+- The `operator: And || Or` parameter defines if references should satisfy both conditions or either of them (`And` is set by default).
 
 When scanning references, the number of images is not limited by default. However, you can configure this behavior using the `imagesPerReference` set of parameters:
 
 ```yaml
 imagesPerReference:
-  last: <int>
-  in: <duration string>
-  operator: <And|Or>
+  last: int
+  in: duration string
+  operator: And || Or
 ```
 
-- The `last: <int>` parameter defines the number of images to search for each reference. Their amount is unlimited by default (`-1`).
-- The `in: <duration string>` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) defines the time frame in which werf searches for images.
-- The `operator: <And|Or>` parameter defines what images will stay after applying the policy: those that satisfy both conditions or either of them (`And` is set by default).
+- The `last: int` parameter defines the number of images to search for each reference. Their amount is unlimited by default (`-1`).
+- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) defines the time frame in which werf searches for images.
+- The `operator: And || Or` parameter defines what images will stay after applying the policy: those that satisfy both conditions or either of them (`And` is set by default).
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
