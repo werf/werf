@@ -109,4 +109,4 @@ In this case every change in git files will result in artifact rebuild, all *sta
 
 ## All directives
 
-{% include /configuration/stapel_image/artifact_directives.md %}
+{% include /documentation/advanced/building_images_with_stapel/artifact_directives.md %}

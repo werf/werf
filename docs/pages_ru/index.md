@@ -30,7 +30,7 @@ layout: default
                 </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
-                {% include scheme_ru.md %}
+                {% include ru/scheme.md %}
             </div>
         </div>
     </div>

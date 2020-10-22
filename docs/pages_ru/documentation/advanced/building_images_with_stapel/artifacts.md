@@ -107,4 +107,4 @@ git:
 
 ## Все директивы
 
-{% include /configuration/stapel_image/artifact_directives.md %}
+{% include /documentation/advanced/building_images_with_stapel/artifact_directives.md %}
