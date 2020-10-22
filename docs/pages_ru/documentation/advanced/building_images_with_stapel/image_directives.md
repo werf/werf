@@ -5,7 +5,7 @@ permalink: documentation/advanced/building_images_with_stapel/image_directives.h
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-{% include /configuration/stapel_image/image_directives.md %}
+{% include /documentation/advanced/building_images_with_stapel/image_directives.md %}
 ---
 title: Импорт из артефактов и образов
 sidebar: documentation

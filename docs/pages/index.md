@@ -29,7 +29,7 @@ layout: default
                 </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
-                {% include scheme.md %}
+                {% include en/scheme.md %}
             </div>
         </div>
     </div>

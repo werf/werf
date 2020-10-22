@@ -5,7 +5,7 @@ set -e
 SOURCE=`dirname ${BASH_SOURCE[0]}`
 CLI_PARTIALS_DIR=$SOURCE/_includes/documentation/reference/cli
 README=$SOURCE/../README.md
-README_PARTIALS_DIR=$SOURCE/_includes/readme
+README_PARTIALS_DIR=$SOURCE/_includes/en/readme
 
 $SOURCE/../go-build.sh
 rm -rf $CLI_PARTIALS_DIR
@@ -17,6 +17,6 @@ HOME='~' werf docs --dir $CLI_PARTIALS_DIR --log-terminal-width=100
 werf docs --split-readme --readme $README --dir $README_PARTIALS_DIR
 
 README=$SOURCE/../README_ru.md
-README_PARTIALS_DIR=$SOURCE/_includes/readme_ru
+README_PARTIALS_DIR=$SOURCE/_includes/ru/readme
 
 werf docs --split-readme --readme $README --dir $README_PARTIALS_DIR

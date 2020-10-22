@@ -48,11 +48,11 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Прежде всего необходимо описать некий шаблон задания, общую часть для выката в любой контур, что позволит сосредоточиться далее на правилах выката и предложенных workflow.
 
-{% include /guides/github_ci_cd_integration/converge_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/converge_base.md %}
 
 > Данное задание можно разбить на два независимых, но в нашем случае (сборка и публикации вызывается не на каждый коммит, а используется только совместно с выкатом) это избыточно и ухудшит читаемость конфигурации и время выполнения.
 >
-{% include /guides/github_ci_cd_integration/build_and_publish_note.md %}
+{% include /documentation/advanced/ci_cd/github_actions/build_and_publish_note.md %}
 
 Первый шаг, с которого начинается задание — `Checkout code`, добавление исходных кодов приложения. При использовании сборщика werf (основная особенность которого — инкрементальная сборка) недостаточно, так называемого, `shallow clone` с единственным коммитом, который создаёт action `actions/checkout@v2` при использовании без параметров. 
 
@@ -136,7 +136,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Сначала разберём файл `.github/workflows/review_deployment.yml`.
 
-{% include /guides/github_ci_cd_integration/review_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_base.md %}
 
 В нём пропущено условие запуска, т.к. оно зависит от выбранного варианта организации.
 
@@ -155,7 +155,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Далее файл `.github/workflows/review_deployment_dismiss.yml`.
 
-{% include /guides/github_ci_cd_integration/review_dismiss_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_dismiss_base.md %}
 
 Данный GitHub workflow будет выполняться при закрытии PR.
 
@@ -180,7 +180,7 @@ on:
 Он самый простой и может быть удобен в случае, когда выкаты происходят редко и review окружение не используется при разработке.
 По сути, для проверки перед принятием PR. 
 
-{% include /guides/github_ci_cd_integration/review_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_1.md %}
 
 В данном варианте оба GitHub workflow ожидают проставление лейбла в PR. 
 
@@ -217,7 +217,7 @@ labels:
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в PR, в случае, если имя git-ветки содержит `review`. 
 
-{% include /guides/github_ci_cd_integration/review_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_2.md %}
 
 Выкат инициируется при коммите в ветку, открытии и переоткрытии PR, что соответствует набору событий по умолчанию для `pull_request`:
 ```yaml
@@ -243,7 +243,7 @@ on:
 При проставлении специального лейбла, в примере ниже `review`, пользователь активирует автоматический выкат в review окружения для каждого коммита. 
 При снятии лейбла автоматически запускается удаление review-релиза.    
 
-{% include /guides/github_ci_cd_integration/review_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_3.md %}
 
 Выкат инициируется при коммите в ветку, добавлении и снятии лейбла в PR, что соответствует следующему набору событий для `pull_request`:
 
@@ -267,7 +267,7 @@ pull_request:
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно только проставив соответствующий лейбл в PR.
 
-{% include /guides/github_ci_cd_integration/production_staging_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_1.md %}
 
 Варианты отката изменений в production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
@@ -277,11 +277,11 @@ pull_request:
 
 > Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+{% include /ru/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 Выкат **production** осуществляется вручную на master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
-{% include /guides/github_ci_cd_integration/production_staging_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_2.md %}
 
 Имеем следующее условие для релиза в production:
 
@@ -314,11 +314,11 @@ curl \
 
 > Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+{% include /ru/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** осуществляется вручную на master.
 
-{% include /guides/github_ci_cd_integration/production_staging_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_3.md %}
 
 ```yaml
 on:
@@ -351,7 +351,7 @@ curl \
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
-{% include /guides/github_ci_cd_integration/production_staging_4.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_4.md %}
 
 Варианты отката изменений в production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в ветке production;
@@ -360,7 +360,7 @@ curl \
 
 ## Очистка образов
 
-{% include /guides/github_ci_cd_integration/cleanup_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/cleanup_base.md %}
 
 Первый шаг, с которого начинается задание — `Checkout code`, добавление исходных кодов приложения. 
 
@@ -400,7 +400,7 @@ curl \
 ### Конфигурации
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_1.md %}
 
 </div>
 
@@ -411,7 +411,7 @@ curl \
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+{% include /ru/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№2 Push the Button](#2-push-the-button-).
@@ -420,7 +420,7 @@ curl \
 ### Конфигурации
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_2.md %}
 
 </div>
 
@@ -431,7 +431,7 @@ curl \
 
 > Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
+{% include /ru/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
 * Выкат на staging и production контуры осуществляется по стратегии [№3 Tag everything](#3-tag-everything-).
@@ -440,7 +440,7 @@ curl \
 ### Конфигурации
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_3.md %}
 
 </div>
 
@@ -458,6 +458,6 @@ curl \
 ### Конфигурации
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_4.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_4.md %}
 
 </div>

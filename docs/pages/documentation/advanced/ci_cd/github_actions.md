@@ -49,11 +49,11 @@ We provide various configuration options for deploying to review, staging, and p
 
 First of all, you need to define a template — the general part of the deployment process suitable for any tier. It will allow you to focus on the rules of the deployment process and the workflows suggested. 
 
-{% include /guides/github_ci_cd_integration/converge_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/converge_base.md %}
 
 > This job can be split into two independent jobs. However, in our case (when building and publishing are performed jointly with deploying as opposed to invoking for every commit), this is redundant and would worsen the readability of the configuration as well as execution time.
 >
-{% include /guides/github_ci_cd_integration/build_and_publish_note.md %}
+{% include /documentation/advanced/ci_cd/github_actions/build_and_publish_note.md %}
 
 First of all, you have to perform a `Checkout code` step — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the action `actions/checkout@v2` creates when used with no parameters specified. 
 werf generates stages on the basis of the git history. So, if there is no history, then each build would run without previously built images. Therefore, it is essential to use the `fetch-depth: 0` parameter to access the entire history when building, publishing (`werf build-and-publish`), deploying (`werf deploy`), and running (`werf run`). In other words, for all commands that stages use.
@@ -138,7 +138,7 @@ Let us consider some basic GitHub workflow files that would serve as a basis for
 
 First, let's analyze the `.github\workflows\review_deployment.yml` file.
 
-{% include /guides/github_ci_cd_integration/review_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_base.md %}
 
 It lacks the triggering condition since it depends on the chosen approach to setting up environments.
 
@@ -156,7 +156,7 @@ This job is identical to the basic configuration except for the `Define environm
 
 Now, let's analyze `.github\workflows\review_deployment_dismiss.yml`.
 
-{% include /guides/github_ci_cd_integration/review_dismiss_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_dismiss_base.md %}
 
 This GitHub workflow will be run when closing the PR.
 
@@ -180,7 +180,7 @@ In this approach, the user deploys and deletes the environment by assigning the 
 
 It is the most simplistic approach that can be useful when deployments are rare, and the review environment is not used during development. In essence, this approach is used for testing before accepting a PR.
 
-{% include /guides/github_ci_cd_integration/review_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_1.md %}
 
 In this case, both GitHub workflows expect the label to be assigned to the PR.
 
@@ -215,7 +215,7 @@ labels:
 
 In the configuration below, the code is automatically released with every commit in the PR (if the name of the git branch contains the `review` prefix).
 
-{% include /guides/github_ci_cd_integration/review_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_2.md %}
 
 The deployment is triggered when there is a new commit to the branch, or a PR is opened (re-opened), which corresponds to the default set of types for the `pull_request` event:
 
@@ -241,7 +241,7 @@ Semi-automatic mode with a label is a comprehensive solution that combines the p
 
 By assigning a specific label (`review` in the example below), the user activates the automatic deployment to review environments for each commit. When a label is removed, the process of deleting the review release is triggered automatically.
 
-{% include /guides/github_ci_cd_integration/review_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/review_3.md %}
 
 The deployment process is triggered by a commit to the branch or by assigning/removing a label in the PR. All these actions correspond to the following set of pull_request events:
 
@@ -265,7 +265,7 @@ In our case, these environments are the most important ones. Thus, the names of 
 
 The code is automatically deployed to **production** in response to any changes in master. At the same time, you can deploy an application to **staging** by clicking the button in the PR.
 
-{% include /guides/github_ci_cd_integration/production_staging_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_1.md %}
 
 Options for rolling back changes in production:
 
@@ -276,11 +276,11 @@ Options for rolling back changes in production:
 
 > This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#automatically-deploy-to-staging-from-master) sections
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
+{% include /en/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 Deploying to **production** is triggered by clicking the button associated with the commit in master, and rolling out to **staging** is performed automatically in response to changes in master.
 
-{% include /guides/github_ci_cd_integration/production_staging_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_2.md %}
 
 We have the following condition for releasing to production:
 
@@ -311,11 +311,11 @@ Options for rolling back changes in production: by rolling out a stable PR and t
 
 > This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
+{% include /en/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 The rollout to **production** is triggered when the tag is assigned; deploying to **staging** is performed manually on master.
 
-{% include /guides/github_ci_cd_integration/production_staging_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_3.md %}
 
 ```yaml
 on:
@@ -346,7 +346,7 @@ Options for rolling back changes in production: by assigning a new tag to the ol
 
 The code is deployed to **production** automatically; rolling out to **staging** is performed in response to changes in the master branch.
 
-{% include /guides/github_ci_cd_integration/production_staging_4.md %}
+{% include /documentation/advanced/ci_cd/github_actions/production_staging_4.md %}
 
 Options for rolling back changes in production:
 
@@ -356,7 +356,7 @@ Options for rolling back changes in production:
 
 ## Cleaning up Images
 
-{% include /guides/github_ci_cd_integration/cleanup_base.md %}
+{% include /documentation/advanced/ci_cd/github_actions/cleanup_base.md %}
 
 First of all, you need to perform a code checkout - add the source code of an application. It is the initial step of a job.
 
@@ -395,7 +395,7 @@ Workflow details
 ### Related configuration files
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_1.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_1.md %}
 
 </div>
 
@@ -406,7 +406,7 @@ Workflow details
 
 > You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#2-push-the-button)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
+{% include /en/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers is carried out according to the strategy [No. 2 Push the Button](#2-push-the-button-).
@@ -415,7 +415,7 @@ Workflow details
 Related configuration files
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_2.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_2.md %}
 
 </div>
 
@@ -426,7 +426,7 @@ Related configuration files
 
 > You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html#3-tag-everything)
 
-{% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
+{% include /en/documentation/advanced/ci_cd/github_actions/not_recommended_approach.md %}
 
 * Deploying to the review tier using the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers is carried out according to the strategy [No. 3 Tag everything](#3-tag-everything-).
@@ -435,7 +435,7 @@ Related configuration files
 ### Related configuration files
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_3.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_3.md %}
 
 </div>
 
@@ -453,6 +453,6 @@ Related configuration files
 ### Related configuration files
 {:.no_toc}
 
-{% include /guides/github_ci_cd_integration/workflow_4.md %}
+{% include /documentation/advanced/ci_cd/github_actions/workflow_4.md %}
 
 </div>

@@ -81,7 +81,7 @@ channels:
 <h2><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
 </div>
 <div class="details__content" markdown="1">
-{% include installation/multiwerf_dependencies.md %}
+{% include en/installation/multiwerf_dependencies.md %}
 </div>
 </div>
 <h2>Install werf</h2>
@@ -92,13 +92,13 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div markdown="1">{% include en/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
 <div id="details_link">
 <h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
 </div>
 <div class="details__content" markdown="1">
-{% include installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
 </div>
 </div>
         </div>
@@ -111,13 +111,13 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div markdown="1">{% include en/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
 <div id="details_link">
 <h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
 </div>
 <div class="details__content" markdown="1">
-{% include installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
 </div>
 </div>
         </div>
@@ -130,7 +130,7 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_windows.md version=version channel=channel %}</div>
+<div markdown="1">{% include en/installation/multiwerf_windows.md version=version channel=channel %}</div>
         </div>
       {% endfor %}
     </div>
@@ -144,7 +144,7 @@ channels:
 
 </div>
 <div class="details__content" markdown="1">
-{% include installation/how_it_works.md %}
+{% include en/installation/how_it_works.md %}
 </div>
 </div>
       </div><!-- /method -->
@@ -250,7 +250,7 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
   <div class="installation-compatibility">
     <h2 class="installation-compatibility__title">Backward compatibility promise</h2>
 <div markdown="1" class="docs">
-{% include installation/backward-compatibility.md %}
+{% include en/installation/backward-compatibility.md %}
 </div>
   </div>
 </div>
