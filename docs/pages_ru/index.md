@@ -10,12 +10,24 @@ layout: default
         <div class="presentation__row">
             <div class="presentation__row-item" id="presentation-title">
                 <div class="presentation__subtitle">Инструмент консистентной доставки</div>
-                <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Что ты git'ишь, то и видишь!">*</span></h1>
+                <h1 class="presentation__title">What you Git<br/> is what you get!</h1>
+                <!-- <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Что ты git'ишь, то и видишь!">*</span></h1> -->
                 <ul class="presentation__features">
-                    <li>Git — единый источник истины.</li>
-                    <li>Сборка. Деплой в Kubernetes. Постоянная синхронизация.</li>
-                    <li>Open Source. Написано на Go.</li>
+                    <li>Используем Git как единый источник истины.</li>
+                    <li>Собираем. Деплоим в Kubernetes. Синхронизируем изменения.</li>
+                    <li>Open Source CLI-инструмент. <a href="https://github.com/werf/werf" target="_blank">Написан на Go</a>.</li>
                 </ul>
+                <div class="presentation__btns page__btn-group">
+                    <a href="{{ site.baseurl }}/introduction.html" target="_blank" class="page__btn page__btn_b page__btn_small">
+                        Введение
+                    </a>
+                    <a href="{{ site.baseurl }}/documentation/quickstart.html" target="_blank" class="page__btn page__btn_b page__btn_small">
+                        Быстрый старт
+                    </a>
+                    <a href="{{ site.baseurl }}/documentation/index.html" target="_blank" class="page__btn page__btn_b page__btn_small">
+                        Документация
+                    </a>
+                </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
                 {% include scheme_ru.md %}
@@ -31,8 +43,8 @@ layout: default
                 Это GitOps, но <span>по-другому</span>!
             </h1>
             <div class="welcome__subtitle">
-                Git, будучи единым источником истины, позволяет добиться детерминированного и&nbsp;идемпотентного процесса доставки по&nbsp;всему пайплайну. 
-                Возможно применение как из&nbsp;CI-системы, так&nbsp;и&nbsp;с&nbsp;оператором (фича в&nbsp;разработке и&nbsp;будет доступна в&nbsp;ближайшее время).
+                werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну. 
+                Возможно использование вручную, из CI/CD-системы или в качестве оператора (фича в разработке и скоро будет доступна).
             </div>
         </div>
     </div>
@@ -51,7 +63,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Консольная утилита</div>
                 <div class="features__list-item-text">
-                    werf — это не SAAS, а самодостаточная CLI-утилита с открытым кодом, запускаемая на стороне клиента. Её можно использовать как для <b>локальной разработки</b>, так и для <b>встраивания в любую существующую CI/CD-систему</b>, оперируя основными командами как составляющими пайплайна:
+                    werf — это не SAAS, а самодостаточная CLI-утилита с открытым кодом, запускаемая на стороне клиента. Werf можно использовать как для <b>локальной разработки</b>, так и для <b>встраивания в любую CI/CD-систему</b> (GitLab CI/CD, GitHub Actions, Jenkins, CircleCI и т.д.), оперируя основными командами как составляющими пайплайна:
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
@@ -63,7 +75,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Простая в использовании</div>
                 <div class="features__list-item-text">
-                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="{{ site.baseurl }}/documentation/guides.html"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes и для целей разработки, и для production.
+                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="{{ site.baseurl }}/documentation/guides.html"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
@@ -185,13 +197,13 @@ layout: default
         </div>
         <div class="documentation__btns">
             <a href="{{ site.baseurl }}/introduction.html" class="page__btn page__btn_b documentation__btn">
-                Знакомство
+                Введение
             </a>
             <a href="{{ site.baseurl }}/documentation/quickstart.html" class="page__btn page__btn_o documentation__btn">
-                Начало работы
+                Быстрый старт
             </a>
-            <a href="{{ site.baseurl }}/applications_guide_ru/" class="page__btn page__btn_o documentation__btn">
-                Самоучители
+            <a href="{{ site.baseurl }}/documentation/guides.html" class="page__btn page__btn_o documentation__btn">
+                Руководства
             </a>
         </div>
     </div>

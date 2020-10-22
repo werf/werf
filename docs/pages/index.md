@@ -20,10 +20,10 @@ layout: default
                     <a href="{{ site.baseurl }}/introduction.html" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Introduction
                     </a>
-                    <a href="{{ site.baseurl }}/documentation/quickstart.html" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ site.baseurl }}/documentation/quickstart.html" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Quickstart
                     </a>
-                    <a href="{{ site.baseurl }}/documentation/index.html" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ site.baseurl }}/documentation/index.html" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Documentation
                     </a>
                 </div>
@@ -57,7 +57,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">It’s a CLI tool</div>
                 <div class="features__list-item-text">
-                    werf is not a SAAS, it is an Open Source, self-contained client-side CLI&nbsp;tool. Use this single tool for <b>local development</b> or <b>embed it</b> into <b>any existing CI/CD system</b> using its main commands as building blocks:
+                    werf is not a SAAS, it is an Open Source, self-contained client-side CLI&nbsp;tool. Use this single tool for <b>local development</b> or <b>embed it into any CI/CD system</b> (like GitLab CI/CD, GitHub Actions, Jenkins, CircleCI, etc.) using its main commands as building blocks:
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
@@ -69,7 +69,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ site.baseurl }}/documentation/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes, either for local development or production.
+                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ site.baseurl }}/documentation/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
