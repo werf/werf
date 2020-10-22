@@ -40,7 +40,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Это GitOps, но <span>по-другому</span>!
+                Это GitOps,<br/>но реализованный <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>по-другому</b></a>!
             </h1>
             <div class="welcome__subtitle">
                 werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну. 

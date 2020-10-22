@@ -363,6 +363,15 @@ body,
   margin: 0 0 30px 0;
 }
 
+.welcome__title a {
+  color: #0066FF;
+  text-decoration: none;
+}
+
+.welcome__title a:hover {
+  text-decoration: underline;
+}
+
 .welcome__title span {
   color: #0066FF;
 }
