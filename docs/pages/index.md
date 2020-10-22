@@ -40,7 +40,7 @@ layout: default
         <div class="welcome__content">
             <h1 class="welcome__title">
                 It’s GitOps,<br/>
-                but done <span>another way</span>!
+                but done <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>another way</b></a>!
             </h1>
             <div class="welcome__subtitle">
                 Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent.
