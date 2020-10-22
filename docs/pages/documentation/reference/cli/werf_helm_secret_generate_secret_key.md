@@ -1,6 +1,6 @@
 ---
 title: werf helm secret generate-secret-key
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_secret_generate_secret_key.html
 ---
 

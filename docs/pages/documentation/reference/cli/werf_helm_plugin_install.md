@@ -1,6 +1,6 @@
 ---
 title: werf helm plugin install
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_plugin_install.html
 ---
 

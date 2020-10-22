@@ -1,6 +1,6 @@
 ---
 title: werf purge
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_purge.html
 ---
 

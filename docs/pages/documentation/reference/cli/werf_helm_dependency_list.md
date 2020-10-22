@@ -1,6 +1,6 @@
 ---
 title: werf helm dependency list
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_dependency_list.html
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: werf helm
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm.html
 ---
 

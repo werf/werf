@@ -1,6 +1,6 @@
 ---
 title: werf helm secret values encrypt
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_secret_values_encrypt.html
 ---
 

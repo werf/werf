@@ -14,8 +14,10 @@ werf docs [options]
 {{ header }} Options
 
 ```shell
-      --dir='./'
-            directory to which documentation is written
+      --dest=''
+            The destination of readme partials
+      --dir=''
+            Use custom working directory (default $WERF_DIR or current directory)
   -h, --help=false
             help for docs
       --log-color-mode='auto'
@@ -38,8 +40,8 @@ werf docs [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --readme='README.md'
-            path to README.md
+            Path to README.md
       --split-readme=false
-            split README.md by top headers
+            To split README.md by top headers
 ```
 

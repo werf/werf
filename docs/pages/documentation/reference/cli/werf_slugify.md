@@ -1,6 +1,6 @@
 ---
 title: werf slugify
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_slugify.html
 ---
 

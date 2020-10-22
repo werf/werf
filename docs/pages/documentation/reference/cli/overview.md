@@ -1,7 +1,7 @@
 ---
 title: Command line interface
-sidebar: cli
-permalink: documentation/reference/cli/index.html
+sidebar: documentation
+permalink: documentation/reference/cli/overview.html
 toc: false
 ---
 
@@ -19,7 +19,7 @@ Helper commands:
  - [werf run]({{ site.baseurl }}/documentation/reference/cli/werf_run.html) — {% include /documentation/reference/cli/werf_run.short.md %}.
  - [werf slugify]({{ site.baseurl }}/documentation/reference/cli/werf_slugify.html) — {% include /documentation/reference/cli/werf_slugify.short.md %}.
 
-Lowlevel management commands:
+Low-level management commands:
  - [werf config]({{ site.baseurl }}/documentation/reference/cli/werf_config.html) — {% include /documentation/reference/cli/werf_config.short.md %}.
  - [werf managed-images]({{ site.baseurl }}/documentation/reference/cli/werf_managed_images.html) — {% include /documentation/reference/cli/werf_managed_images.short.md %}.
  - [werf host]({{ site.baseurl }}/documentation/reference/cli/werf_host.html) — {% include /documentation/reference/cli/werf_host.short.md %}.
