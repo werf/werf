@@ -9,12 +9,12 @@ $(document).ready(function() {
 
   var defaults = {
     version: '1.2',
-    channel: 'stable',
+    channel: 'alpha',
     os: default_os,
     method: 'multiwerf'
   }
 
-  function installSelect(group, param) {
+  function doInstallSelect(group, param) {
     $(`[data-install-tab-group="${group}"]`).removeClass('active');
     $(`[data-install-tab="${param}"]`).addClass('active');
 
@@ -22,6 +22,26 @@ $(document).ready(function() {
     $(`[data-install-content="${param}"]`).addClass('active');
 
     $(`[data-install-info="${group}"]`).text($(`[data-install-tab="${param}"]`).text());
+  }
+
+  function installSelect(group, param) {
+    if (group == "version" && param == "1.2") {
+        $(`[data-install-tab="rock-solid"]`).hide();
+        $(`[data-install-tab="stable"]`).hide();
+        $(`[data-install-tab="ea"]`).hide();
+        $(`[data-install-tab="beta"]`).hide();
+
+        doInstallSelect(group, param)
+        doInstallSelect("channel", "alpha")
+        return
+    } else if (group == "version") {
+        $(`[data-install-tab="rock-solid"]`).show();
+        $(`[data-install-tab="stable"]`).show();
+        $(`[data-install-tab="ea"]`).show();
+        $(`[data-install-tab="beta"]`).show();
+    }
+
+    doInstallSelect(group, param)
   }
 
   $('[data-install-tab]').on('click', function() {
