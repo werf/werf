@@ -156,7 +156,7 @@ entries:
         url: /documentation/index.html
 
       - title: Введение
-        url: /documentation/introduction.html
+        url: /introduction.html
 
       - title: Быстрый старт
         url: /documentation/quickstart.html
@@ -243,7 +243,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/import_directive.html
 
               - title: Артефакты
-                url: /documentation/advanced/building_images_with_stapel/artifact.html
+                url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Разработка и отладка
             sfi:
