@@ -1,6 +1,6 @@
 ---
 title: werf completion
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_completion.html
 ---
 

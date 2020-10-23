@@ -1,6 +1,6 @@
 ---
 title: werf converge
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_converge.html
 ---
 

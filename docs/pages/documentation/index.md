@@ -22,7 +22,7 @@ The **[Guides]({{ site.baseurl }}/documentation/guides.html)** section contains 
 The **[Reference]({{ site.baseurl }}/documentation/reference/werf_yaml.html)** list contains structured information about the werf configuration and commands.
  - An application should be properly configured via the [`werf.yaml`]({{ site.baseurl }}/documentation/reference/werf_yaml.html) file to use werf.
  - werf also uses [annotations]({{ site.baseurl }}/documentation/reference/deploy_annotations.html) in resources definitions to configure the deploy behaviour.
- - The [command line interface]({{ site.baseurl }}/documentation/reference/cli/index.html) article contains the full list of werf commands with a description.
+ - The [command line interface]({{ site.baseurl }}/documentation/reference/cli/overview.html) article contains the full list of werf commands with a description.
 
 <!-- The **[Local development]()** section describes how werf simplifies and facilitates the local development of your applications, allowing you to use the same configuration to deploy an application either locally or remotely (into production). -->
 

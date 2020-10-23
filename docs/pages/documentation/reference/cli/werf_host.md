@@ -1,6 +1,6 @@
 ---
 title: werf host
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_host.html
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: werf helm repo index
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_repo_index.html
 ---
 

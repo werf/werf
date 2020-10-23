@@ -1,6 +1,6 @@
 ---
 title: werf helm secret file
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_secret_file.html
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: werf host project purge
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_host_project_purge.html
 ---
 

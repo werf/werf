@@ -1,6 +1,6 @@
 ---
 title: werf helm plugin update
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_plugin_update.html
 ---
 
