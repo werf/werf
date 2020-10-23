@@ -8,52 +8,54 @@ sidebar: documentation
 
 In this article we are covering the basics of using werf with any CI/CD system.
 
-A more advanced article [generic CI/CD integration]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html) exists, if you need such.
+Also, there is an article discussing the more advanced topic of [generic CI/CD integration]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html).
 
-There is also a special support for GitLab CI/CD and GitHub Actions in werf and special command `werf ci-env` (this command is optional, but allows automatic configuration of all werf params described in this article in a common way). Following articles contain more details:
+werf supports GitLab CI/CD and GitHub Actions out-of-the-box as well as a dedicated `werf ci-env` command (this command is optional and allows you to configure all werf parameters discussed in this article universally and automatically). You may find additional details in the following documents:
+
  - [GitLab CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/gitlab_ci_cd.html);
  - [GitHub Actions]({{ site.baseurl }}/documentation/advanced/ci_cd/github_actions.html).
 
 ## Werf commands you will need
 
-Werf provides following main commands as building blocks to construct your pipelines:
+Werf provides the following basic commands that serve as building blocks to construct your pipelines:
 
  - `werf converge`;
  - `werf dismiss`;
  - `werf cleanup`.
 
-There are actually more werf commands which you may need eventually, such as:
- - `werf build` to just build needed images;
- - `werf run` to run unit tests in built images.
+Also, there are some more specific werf commands, such as:
 
-## Steps to embed werf into CI/CD system
+ - `werf build` to build the images;
+ - `werf run` for unit testing of built images.
 
-Generally it is really easy to emded werf into any CI/CD system job with following steps:
+## Embedding werf into a CI/CD system
 
- 1. Setup CI/CD job access to the Kubernetes cluster and Docker Registry.
- 2. Checkout target git commit of the project repo.
- 3. Call `werf converge` command to deploy app, or `werf dismiss` command to terminate app, or `werf cleanup` to clean unused docker images from the Docker Registry.
+Usually, the process of embedding werf into some job of the CI/CD system is smooth and uncomplicated. To do this, follow these steps:
 
-### Prepare Kubernetes access
+ 1. Configure a CI/CD job to access the Kubernetes cluster and the Docker Registry.
+ 2. Checkout the target git commit in the project repository.
+ 3. Call the `werf converge` command to deploy an app, or `werf dismiss` command to terminate the app, or `werf cleanup` to clean up unused docker images from the Docker Registry.
 
-Werf need a [kube config](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) to connect and interract with the Kubernetes cluster.
+### Connecting to the Kubernetes cluster
 
-If you already have set up `kubectl` tool to work with your Kubernetes cluster, then `werf` tool will also work out of box, because werf respects the same kube config settings (`~/.kube/config` default config file and `KUBECONFIG` environment variable).
+werf requires [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) in order to connect to the Kubernetes cluster and interact with it.
 
-Otherwise you should setup kube config and pass it to the werf using `--kube-config` param (or `WERF_KUBE_CONFIG` environment variable), `--kube-context` param (or `WERF_KUBE_CONTEXT` environment variable) or `--kube-config-base64` param (or `WERF_KUBE_CONFIG_BASE64` environment variable) to pass base64 encoded kube config data directly into werf.
+If you have already installed and set up a `kubectl` tool to work with your Kubernetes cluster, then `werf` would also work out-of-the-box since it uses the same kubeconfig settings (the default `~/.kube/config` configuration file and the `KUBECONFIG` environment variable).
+
+Otherwise, you should create the kubeconfig file and pass it to the werf by setting the `--kube-config` flag (or `WERF_KUBE_CONFIG` environment variable), `--kube-context` flag (or `WERF_KUBE_CONTEXT` environment variable) or `--kube-config-base64` flag (or `WERF_KUBE_CONFIG_BASE64` environment variable) to pass the base64-encoded kubeconfig data directly into werf.
 
 <div class="details">
 <div id="details_link">
-<a href="javascript:void(0)" class="details__summary">See example</a>
+<a href="javascript:void(0)" class="details__summary">Example</a>
 </div>
 <div class="details__content" markdown="1">
-Use custom kube config file `./my-kube-config`:
+Use a custom kubeconfig file `./my-kube-config`:
 
 ```shell
 werf converge --kube-config ./my-kube-config
 ```
 
-Pass base64 encoded config using environment variable:
+Pass the base64-encoded config using the environment variable:
 
 ```shell
 export WERF_KUBE_CONFIG_BASE64="$(cat ./my-kube-config | base64 -w0)"
@@ -62,22 +64,22 @@ werf converge
 </div>
 </div>
 
-### Prepare Docker Registry access
+### Configure a CI/CD job to access the Docker Registry
 
-If your project use any custom images, which should be built specifically for the project (rather than using publicly available), then you need a private Docker Registry. In such case a Docker Registry instance should be available from the CI/CD runner host (to publish built images) and from within your Kubernetes cluster (to pull images).
+You are forced to use a private Docker Registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the Docker Registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
 
-If you already have set up `docker` tool with access for your Docker Registry from your host, then `werf` tool will also work with this Docker Registry out of the box, because werf respects the same docker config settings (`~/.docker/` default config directory or `DOCKER_CONFIG` environment variable).
+If you have configured the `docker` tool to access the private Docker Registry from your host, then `werf` would work with this Docker Registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
 
 <div class="details">
 <div id="details_link">
-<a href="javascript:void(0)" class="details__summary">Otherwise perform standard docker login procedure into Docker Registry.</a>
+<a href="javascript:void(0)" class="details__summary">Otherwise, perform the standard docker login procedure into your Docker Registry.</a>
 </div>
 <div class="details__content" markdown="1">
 ```shell
 docker login registry.mydomain.org/application -uUSER -pPASSWORD
 ```
 
-If you don't want your runner host to be logged into Docker Registry all the time then perform docker login procedure in each CI/CD job. Usually it is important to create a temporal docker config for each CI/CD job (instead of using default `~/.docker/` config directory) to prevent multiple jobs from conflicting with each other when performing login from multiple jobs running at the same runner host at the same time.
+If you don't want your runner host to be logged into the Docker Registry all the time, perform the docker login procedure in each CI/CD job individually. It is recommended to create a temporary docker config for each CI/CD job (instead of using the default `~/.docker/` config directory) to prevent a conflict of different jobs running on the same runner host while logging in at the same time.
 
 ```shell
 # Job 1
@@ -90,31 +92,31 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 </div>
 </div>
 
-### Setup destination environment for werf
+### Configure the destination environment for werf
 
-Typically an application should be deployed into different [environments]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment) (such as `production`, `staging`, `testing`, etc.).
+Typically, an application is deployed into different [environments]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment) (`production`, `staging`, `testing`, etc.).
 
-Werf supports an optional `--env` param (or environment variable `WERF_ENV`) which specifies the name of the used environment. This environment name will affect used [Kubernetes namespace]() and [Helm release name](). It is recommended to detect environment in the CI/CD job (for example using builtin environment variables of your CI/CD system) and set werf env param correspondingly.
+werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]() and the [Helm release name](). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
 
 <div class="details">
 <div id="details_link">
-<a href="javascript:void(0)" class="details__summary">See example</a>
+<a href="javascript:void(0)" class="details__summary">Example</a>
 </div>
 <div class="details__content" markdown="1">
-Specify `WERF_ENV` environment variable:
+Specify the `WERF_ENV` environment variable:
 
 ```shell
 export WERF_ENV=production
 werf converge
 ```
 
-Or use cli param:
+Or use the cli parameter:
 
 ```shell
 werf converge --env staging
 ```
 
-Or take environment from variables built into your CI/CD system:
+Or make use of built-in variables of your CI/CD system:
 
 ```shell
 export WERF_ENV=$CI_ENVIRONMENT_NAME
@@ -123,15 +125,15 @@ werf converge
 </div>
 </div>
 
-### Checkout git commit and run werf
+### Checkout the git commit and run werf
 
-Usually CI/CD system checkout current git commit completely automatically and you don't have to make anything. But some systems may not perform this step automatically. In such case it is required to checkout target git commit of the project repo before running main werf commands (`werf converge`, `werf dismiss` or `werf cleanup`).
+Usually, a CI/CD system checks out to the current git commit in a fully automatic manner, and you don’t have to do anything. But some systems may not perform this step automatically. If this is the case, then you have to check out the target git commit in the project repository before running main werf commands (`werf converge`, `werf dismiss`, or `werf cleanup`).
 
-Read more about converge process in the [introduction]({{ site.baseurl }}/introduction.html#what-is-converge).
+Read more about the converge process in the [introduction]({{ site.baseurl }}/introduction.html#what-is-converge).
 
-### Other configuration of werf for CI/CD
+### Other werf CI/CD settings
 
-There is other stuff which is optional, but typically configured for werf in CI/CD.
+There are other optional settings (they are typically configured for werf in CI/CD):
 
  1. Custom annotations and labels for all deployed Kubernetes resources:
    - application name;
@@ -143,20 +145,20 @@ There is other stuff which is optional, but typically configured for werf in CI/
    - git branch;
    - etc.
 
-    Custom annotations and labels can be set with `--add-annotation`, `--add-label` options (or `WERF_ADD_ANNOTATION_<ARBITRARY_STRING>`, `WERF_ADD_LABEL_<ARBITRARY_STRING>` environment variables).
+    Custom annotations and labels can be set via `--add-annotation`, `--add-label` options (or `WERF_ADD_ANNOTATION_<ARBITRARY_STRING>`, `WERF_ADD_LABEL_<ARBITRARY_STRING>` environment variables).
 
- 2. Colorized log output mode, log output width and custom logging options which can be set with `--log-color-mode=on|off`, `--log-terminal-width=N`, `--log-project-dir` options (or `WERF_COLOR_MODE=on|off`, `WERF_LOG_TERMINAL_WIDTH=N`, `WERF_LOG_PROJECT_DIR=1` environment variables).
+ 2. Colorized log output mode, log output width and custom logging options can be set via `--log-color-mode=on|off`, `--log-terminal-width=N`, `--log-project-dir` options (or `WERF_COLOR_MODE=on|off`, `WERF_LOG_TERMINAL_WIDTH=N`, `WERF_LOG_PROJECT_DIR=1` environment variables).
 
- 3. Special werf process mode call "werf process exterminator", which detects cancelled CI/CD job and terminates werf process automatically. Not all CI/CD systems need this, but some systems does not send correct termination signal to spawned processes (for example GitLab CI/CD). In such case it is bettern to enable werf `--enable-process-exterminator` option (or `WERF_ENABLE_PROCESS_EXTERMINATOR=1` environment variable).
+ 3. Special werf process mode called "werf process exterminator". It detects the canceled CI/CD job and terminates the werf process automatically. Not all CI/CD systems require this, but some systems do not send the correct termination signal to spawned processes (such as GitLab CI/CD). In this case, it is better to enable the `--enable-process-exterminator` option (or the `WERF_ENABLE_PROCESS_EXTERMINATOR=1` environment variable).
 
 <br>
 
 <div class="details">
 <div id="details_link">
-<a href="javascript:void(0)" class="details__summary">See example</a>
+<a href="javascript:void(0)" class="details__summary">Example</a>
 </div>
 <div class="details__content" markdown="1">
-Setup custom annotations, logging options and werf process exterminator mode with environment variables:
+Let's set up custom annotations, logging options, and the process exterminator mode using environment variables:
 
 ```shell
 export WERF_ADD_ANNOTATION_APPLICATION_NAME="project.werf.io/name=myapp"
@@ -177,8 +179,8 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 
 ## What's next?
 
-To control output during deploy check out [this section]({{ site.baseurl }}/documentation/reference/deploy_annotations.html).
+[This section]({{ site.baseurl }}/documentation/reference/deploy_annotations.html) shows you how to control output during the deploy process.
 
-You can also check out [CI/CD workflow basics article]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html), which describes how to setup your CI/CD workflows in a different ways.
+You can also check out the [CI/CD workflow basics article]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html) that describes setting up your CI/CD workflows in a variety of ways.
 
-Find a guide which is suitable for you project in the [guides section]({{ site.baseurl }}/documentation/guides.html). These guides also contain detailed information about setting up concrete CI/CD systems.
+You may find a guide suitable for you project in the [guides section]({{ site.baseurl }}/documentation/guides.html). These guides also contain detailed information about setting up specific CI/CD systems.
