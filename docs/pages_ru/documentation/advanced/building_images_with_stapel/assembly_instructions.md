@@ -8,11 +8,11 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
   </div>
 
-  <div id="shell" class="tabs__content active">
+  <div id="shell_tab" class="tabs__content active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
@@ -30,7 +30,7 @@ summary: |
     </div>
   </div>
 
-  <div id="ansible" class="tabs__content">
+  <div id="ansible_tab" class="tabs__content">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Запуск инструкций сборки при изменениях в git-репозитории</b>
 
-  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
+  <a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
   </a>
 ---
 
@@ -469,8 +469,8 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 ## Зависимость от изменений в git-репозитории
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
+<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
   </a>
 
 Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 
