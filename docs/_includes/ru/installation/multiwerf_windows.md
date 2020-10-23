@@ -14,7 +14,7 @@ Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-wind
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 ```
 
-###### Using werf in the current shell
+###### Использование werf в текущей сессии shell
 
 ```shell
 Invoke-Expression -Command "multiwerf use {{ include.version }} {{ include.channel }} --as-file --shell powershell" | Out-String -OutVariable WERF_USE_SCRIPT_PATH
@@ -23,18 +23,18 @@ Invoke-Expression -Command "multiwerf use {{ include.version }} {{ include.chann
 
 ##### cmd.exe
 
-Run cmd.exe as Administrator and then do the following:
+Необходимо запустить `cmd.exe` от имени администратора и затем выполнить следующие команды:
 
 ```shell
 set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
 mkdir %MULTIWERF_BIN_PATH%
 bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
 setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
-
-# after that open new cmd.exe session and start using multiwerf
 ```
 
-###### Using werf in the current shell
+После этого можно открыть новую сессию `cmd.exe` и начать пользоваться multiwerf.
+
+###### Использование werf в текущей сессии shell
 
 ```shell
 FOR /F "tokens=*" %g IN ('multiwerf use {{ include.version }} {{ include.channel }} --as-file --shell cmdexe') do (SET WERF_USE_SCRIPT_PATH=%g)

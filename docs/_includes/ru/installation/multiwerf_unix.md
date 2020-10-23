@@ -9,9 +9,9 @@ cd ~/bin
 curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
 ```
 
-##### Using werf in the current shell
+##### Использование werf в текущей сессии shell
 
-This will create `werf` shell function which calls to the werf binary which multiwerf has been prepared for your session:
+Следующий вызов создаст shell-функцию `werf`, которая вызывает бинарный файл той версии werf, которую multiwerf скачал и активировал:
 
 ```shell
 source $(multiwerf use {{ include.version }} {{ include.channel }} --as-file)
@@ -19,7 +19,7 @@ werf version
 ...
 ```
 
-##### Optional: run command on terminal startup
+##### Опционально: автоматически активировать werf при запуске терминала
 
 ```shell
 echo '. $(multiwerf use {{ include.version }} {{ include.channel }} --as-file)' >> ~/.bashrc

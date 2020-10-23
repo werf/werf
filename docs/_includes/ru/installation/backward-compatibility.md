@@ -1,17 +1,13 @@
-> _Note:_ This promise was introduced with werf 1.0 and does not apply to previous versions.
+werf использует [семантическое версионирование](https://semver.org). Мажорные релизы могут ломать обратную совместимость (совместимость между 1.0 и 2.0, между 2.0 и 3.0 и т.д.). Для werf следующий мажорный релиз _может_ потребовать полный перезапуск приложений или других ручных действий, которые не могут быть выполнены автоматически.
 
-werf follows a versioning strategy called [Semantic Versioning](https://semver.org). It means that major releases (1.0, 2.0) can break backward compatibility. In the case of werf, an update to the next major release _may_ require to do a full re-deploy of applications or to perform other non-scriptable actions.
+Минорные релизы (1.1, 1.2, и т.д.) могут содержать новые глобальные возможности. Изменения, вносимые в минорных релизах не могут значительно менять обратную совместимость в рамках текущей мажорной ветки версий (например, 1.x). Для werf это означает, что обновление между минорными версиями происходит незаметно в большинстве случаев. Однако такое обновление может потребовать от пользователя запуска некоторых инструкций, которые должны быть предоставлены при выходе новой версии werf.
 
-Minor releases (1.1, 1.2, etc.) may introduce new global features, but have to do so without significant backward compatibility breaks with a major branch (1.x).
-In the case of werf, this means that an update to the next minor release goes smoothly most of the time. However, it _may_ require running a provided upgrade script.
+Патч релизы (1.1.0, 1.1.1, 1.1.2) могут содержать как исправления, так и новые возможности. Однако данные изменения обязаны быть полностью обратно совместимыми с в рамках текущей минорной ветки версий (например, 1.1.х). Для werf это означает, что обновление на следующий патч релиз всегда происходит незаметно и может производится автоматически.
 
-Patch releases (1.1.0, 1.1.1, 1.1.2) may introduce new features, but must do so without breaking backward compatibility within the minor branch (1.1.x).
-In the case of werf, this means that an update to the next patch release should be smooth and can be done automatically.
-
-- We do **not guarantee** backward compatibility between:
-  - `alpha` releases;
-  - `beta` releases;
-  - `ea` releases.
-- We **guarantee** backward compatibility between:
-  - `stable` releases within the minor branch (1.1.x);
-  - `rock-solid` releases within the minor branch (1.1.x).
+ - Мы **не гарантируем** обратную совместимость между:
+    - `alpha` релизами;
+    - `beta` релизами;
+    - `ea` релизами.
+ - Мы **гарантируем** обратную совместимость между:
+    - `stable` релизами в рамках минорной ветки версий (например 1.1.x);
+    - `rock-solid` релизами в рамках минорной ветки версий (например 1.1.x).

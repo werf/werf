@@ -1,5 +1,9 @@
-First ensure that multiwerf exists and is executable, use the `type` command. The command prints a message to stderr if multiwerf is not found. Thus, diagnostics in a CI/CD environment becomes simpler. Second enable werf in the CI/CD shell.
+Во-первых необходимо удостовериться, что бинарный файл `multiwerf` доступен для исполнения с помощью команды `type`. Данная команда печатает сообщение в поток вывода ошибок в случае, если `multiwerf` по каким-то причинам недоступен для использования, тем самым упрощая диагностику проблем в CI/CD системах.
+
+Во-вторых необходимо активировать исполняемую команду `werf` в текущем экземпляре shell в CI/CD.
 
 ```shell
 type multiwerf && . $(multiwerf use {{ include.version }} {{ include.channel }} --as-file)
+# Теперь можно использовать werf
+werf ...
 ```

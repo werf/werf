@@ -1,12 +1,10 @@
 The command `multiwerf use MAJOR.MINOR CHANNEL` allows using the actual werf binary and to be always up-to-date. 
-You can use this command both in **CI** and **on the local machine**. 
-The command returns a script or a path to the script file (when used with an `--as-file` option) that must be used as an argument to the `source` command. As a result, the current version of werf will be available **during the shell session**.
+You can use this command both in **CI/CD system** and **on the local machine**. 
+The command returns a script or a path to the script file (when used with an `--as-file` option) that must be used as an argument to the `source` statement in the case of using shell. As a result, the current version of werf will be available **during the shell session**.
 
-The script can be divided into two logic parts: updating and creating werf alias or the definition of the function depending on shell type. 
-The update part performs multiwerf self-update and gets the actual werf binary for the specified `MAJOR.MINOR` version and `CHANNEL` (read more about werf versioning in the [Backward Compatibility Promise](https://github.com/werf/werf#backward-compatibility-promise) section).
-The update is performed by the `multiwerf update` command. 
-If the script is launched for the first time or there is no suitable werf binary found locally, these steps are being run consistently. 
-Otherwise, the update runs in the background, and werf alias or a function binds to the existing werf binary based on local channel mapping.
+The script can be divided into two logic parts: updating and creating werf alias or the definition of the function depending on shell type. The update part performs multiwerf self-update and gets the actual werf binary for the specified `MAJOR.MINOR` version and `CHANNEL` (read more about werf versioning in the [Backward Compatibility Promise]({{ site.baseurl }}/installation.html#backward-compatibility-promise) section). The update is performed by the `multiwerf update` command. 
+
+If the script is launched for the first time or there is no suitable werf binary found locally, this script will wait until multiwerf downloads new werf binary. Otherwise, the update runs in the background, and werf alias or a function binds to the existing werf binary based on local channel mapping.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'unix_tab')">Unix shell</a>
@@ -71,7 +69,7 @@ DOSKEY werf=%WERF_PATH% $*
 
 During the update, multiwerf tries to download the desirable werf version based on a channel mapping. 
 The channel mapping is a special file that keeps relations between channels and werf versions.
-By default, multiwerf uses the mapping file which is maintained in the werf repository ([https://github.com/werf/werf/blob/multiwerf/multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json))
+By default, multiwerf uses the mapping file which is maintained in the werf repository: [https://github.com/werf/werf/blob/multiwerf/multiwerf.json](https://github.com/werf/werf/blob/multiwerf/multiwerf.json). You can always use `--channel-mapping-url` option and specify arbitrary url with channel mapping which you can control by yourself.
 
 Such an approach allows a user not to worry about updates and use the same werf binary version on CI and the local machine. 
 We create new releases with fixes and features and manage channels while you simply use a single command everywhere.
