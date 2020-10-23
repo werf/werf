@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Запуск инструкций сборки при изменениях в git-репозитории</b>
 
-  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
+  <a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
   </a>
 ---
 
@@ -469,8 +469,8 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 ## Зависимость от изменений в git-репозитории
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
+<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
   </a>
 
 Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 

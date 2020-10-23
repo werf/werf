@@ -48,8 +48,8 @@ artifact: "application assets"
 
 <div class="summary">
 
-<a class="google-drawings" href="../../../images/configuration/stapel_artifact2.png" data-featherlight="image">
-  <img src="../../../images/configuration/stapel_artifact2_preview.png">
+<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/stapel_artifact2.png" data-featherlight="image">
+  <img src="{{ site.baseurl }}/images/configuration/stapel_artifact2_preview.png">
 </a>
 
 </div>
@@ -64,8 +64,8 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 
 <div class="summary">
 
-<a class="google-drawings" href="../../../images/configuration/stapel_artifact3.png" data-featherlight="image">
-  <img src="../../../images/configuration/stapel_artifact3_preview.png">
+<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/stapel_artifact3.png" data-featherlight="image">
+  <img src="{{ site.baseurl }}/images/configuration/stapel_artifact3_preview.png">
 </a>
 
 </div>
