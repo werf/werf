@@ -33,11 +33,11 @@ summary: |
 
 <div class="summary" markdown="1">
 ```yaml
-artifact: <artifact name>
+artifact: string
 ```
 </div>
 
-_Образ артефакта_ объявляется с помощью директивы `artifact`. Синтаксис: `artifact: <artifact name>`. Так как артефакты используются только самим werf, отсутствуют какие-либо ограничения на именование артефактов, в отличие от ограничений на [именование обычных _образов_]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html).
+_Образ артефакта_ объявляется с помощью директивы `artifact`. Синтаксис: `artifact: string`. Так как артефакты используются только самим werf, отсутствуют какие-либо ограничения на именование артефактов, в отличие от ограничений на [именование обычных _образов_]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html).
 
 Пример:
 ```yaml
