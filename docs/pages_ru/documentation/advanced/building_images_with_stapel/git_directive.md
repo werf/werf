@@ -8,11 +8,11 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'local')">Local</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'remote')">Remote</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'local_tab')">Local</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'remote_tab')">Remote</a>
   </div>
 
-  <div id="local" class="tabs__content active">
+  <div id="local_tab" class="tabs__content active">
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
     <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
@@ -32,7 +32,7 @@ summary: |
   </div></div>
   </div>
 
-  <div id="remote" class="tabs__content">
+  <div id="remote_tab" class="tabs__content">
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
     <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>

@@ -21,82 +21,6 @@ Project name should be unique within group of projects that shares build hosts a
 
 Werf cannot automatically resolve project name change. Described issues must be resolved manually in such case.
 
-## Image section
-
-Images are declared with _image_ directive: `image: string`. 
-The _image_ directive starts a description for building an application image.
-
-```yaml
-image: frontend
-```
-
-If there is only one _image_ in the config, it can be nameless:
-
-```yaml
-image: ~
-```
-
-In the config with multiple images, **all images** must have names:
-
-```yaml
-image: frontend
-...
----
-image: backend
-...
-```
-
-An _image_ can have several names, set as a list in YAML syntax
-(this usage is equal to describing similar images with different names):
-
-```yaml
-image: [main-front,main-back]
-```
-
-You will need an image name when setting up helm templates or running werf commands to refer to the specific image defined in the `werf.yaml`.
-
-### Dockerfile builder
-
-Werf supports building images using Dockerfiles. Building image from Dockerfiles is the easiest way to start using werf in an existing project.
-
-`werf.yaml` below describes an unnamed image built from `Dockerfile` which reside in the root of the project dir:
-
-```yaml
-project: my-project
-configVersion: 1
----
-image: ~
-dockerfile: Dockerfile
-```
-
-To build multiple named stages from a single Dockerfile:
-
-```yaml
-image: backend
-dockerfile: Dockerfile
-target: backend
----
-image: frontend
-dockerfile: Dockerfile
-target: frontend
-```
-
-And also build multiple images from different Dockerfiles:
-
-```yaml
-image: backend
-dockerfile: backend/Dockerfile
-context: backend/
----
-image: frontend
-dockerfile: frontend/Dockerfile
-context: frontend/
-```
-
-### Stapel builder
-
-Another alternative to building images with Dockerfiles is werf stapel builder, which is tightly integrated with Git and allows really fast incremental rebuilds on changes in the Git files.
-
 ## Deploy
 
 ### Release name
@@ -249,3 +173,79 @@ Let us examine each policy individually:
 1. Keep an image for the last 10 tags (by date of creation).
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
 3. Keep the 10 latest images for master, staging, and production branches.
+
+## Image section
+
+Images are declared with _image_ directive: `image: string`. 
+The _image_ directive starts a description for building an application image.
+
+```yaml
+image: frontend
+```
+
+If there is only one _image_ in the config, it can be nameless:
+
+```yaml
+image: ~
+```
+
+In the config with multiple images, **all images** must have names:
+
+```yaml
+image: frontend
+...
+---
+image: backend
+...
+```
+
+An _image_ can have several names, set as a list in YAML syntax
+(this usage is equal to describing similar images with different names):
+
+```yaml
+image: [main-front,main-back]
+```
+
+You will need an image name when setting up helm templates or running werf commands to refer to the specific image defined in the `werf.yaml`.
+
+### Dockerfile builder
+
+Werf supports building images using Dockerfiles. Building image from Dockerfiles is the easiest way to start using werf in an existing project.
+
+`werf.yaml` below describes an unnamed image built from `Dockerfile` which reside in the root of the project dir:
+
+```yaml
+project: my-project
+configVersion: 1
+---
+image: ~
+dockerfile: Dockerfile
+```
+
+To build multiple named stages from a single Dockerfile:
+
+```yaml
+image: backend
+dockerfile: Dockerfile
+target: backend
+---
+image: frontend
+dockerfile: Dockerfile
+target: frontend
+```
+
+And also build multiple images from different Dockerfiles:
+
+```yaml
+image: backend
+dockerfile: backend/Dockerfile
+context: backend/
+---
+image: frontend
+dockerfile: frontend/Dockerfile
+context: frontend/
+```
+
+### Stapel builder
+
+Another alternative to building images with Dockerfiles is werf stapel builder, which is tightly integrated with Git and allows really fast incremental rebuilds on changes in the Git files.

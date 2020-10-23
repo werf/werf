@@ -8,11 +8,11 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
   </div>
 
-  <div id="shell" class="tabs__content active">
+  <div id="shell_tab" class="tabs__content active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
@@ -30,7 +30,7 @@ summary: |
     </div>
   </div>
 
-  <div id="ansible" class="tabs__content">
+  <div id="ansible_tab" class="tabs__content">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;task&gt;</span>

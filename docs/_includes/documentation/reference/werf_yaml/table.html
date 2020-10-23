@@ -27,7 +27,7 @@ table tr[class*="collapsed-"] {
 </style>
 
 <table>
-{% for section in site.data.werf_yaml.sections %}
+{% for section in site.data.werf_yaml[page.lang].sections %}
     <tr id="{{ section.id }}" class="{{ section.id }}">
         <td colspan="2">--- # {{ section.description }} <span id="{{ section.id }}-btn" class="btn">{% if section.isCollapsedByDefault %}(+){% else %}(-){% endif %}</span></td>
     </tr>
