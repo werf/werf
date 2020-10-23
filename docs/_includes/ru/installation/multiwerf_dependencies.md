@@ -2,16 +2,16 @@
 
 [Docker CE installation guide](https://docs.docker.com/install/).
 
-Manage Docker as a non-root user. Create the **docker** group and add your user to the group:
+Чтобы получить доступ к использованию docker-server для текущего пользователя системы, необходимо добавить его в группу `docker`:
 
 ```shell
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-### Git command line utility
+### Утилита Git
 
 [Git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
-- Minimum required version is 1.9.0.
-- Version 2.14.0 or newer is required to use [Git Submodules](https://git-scm.com/docs/gitsubmodules).
+ - Минимальная требуемая версия: 1.9.0.
+ - Минимальная версия для использования функционала [Git Submodules](https://git-scm.com/docs/gitsubmodules): 2.14.0

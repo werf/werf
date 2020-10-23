@@ -19,7 +19,7 @@ werf version
 ...
 ```
 
-##### Optional: run command on terminal startup
+##### Optional: activate werf on terminal startup
 
 ```shell
 echo '. $(multiwerf use {{ include.version }} {{ include.channel }} --as-file)' >> ~/.bashrc

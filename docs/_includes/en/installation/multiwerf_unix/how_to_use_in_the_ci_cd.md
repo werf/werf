@@ -2,4 +2,6 @@ First ensure that multiwerf exists and is executable, use the `type` command. Th
 
 ```shell
 type multiwerf && . $(multiwerf use {{ include.version }} {{ include.channel }} --as-file)
+# We can use werf now
+werf ...
 ```
