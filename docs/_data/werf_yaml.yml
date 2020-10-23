@@ -1,108 +1,396 @@
-meta_section:
-  - name: project
-    value: "string"
-    description: Unique project name
-    details: "#project-name"
-    required: true
-  - name: configVersion
-    value: "string"
-    description: Config syntax version. It should always be 1 for now
-    required: true
-  - name: deploy
-    description: Settings for deployment into various environments
-    collapsible: true
-    isCollapsedByDefault: true
-    directives:
-      - name: helmRelease
-        value: "string with templates"
-        description: Release name template
-        default: "[[ project ]]-[[ env ]]"
-        details: "#release-name"
-      - name: helmReleaseSlug
-        value: "bool"
-        description: Release name slugification
-        default: true
-      - name: namespace
-        value: "string with templates"
-        description: Kubernetes namespace template
-        default: "[[ project ]]-[[ env ]]"
-        details: "#kubernetes-namespace"
-      - name: namespaceSlug
-        value: "bool"
-        description: Kubernetes namespace slugification
-        default: true
-  - name: cleanup
-    description: Settings for cleaning up irrelevant images
-    collapsible: true
-    isCollapsedByDefault: true
-    directives:
-      - name: keepPolicies
-        description: Set of policies to select relevant images using the git history
-        details: "#configuring-cleanup-policies"
-        directiveList:
-          - name: references
-            description: References to perform scanning on
-            directives:
-              - name: branch
-                value: "string || /REGEXP/"
-                description: One or more git origin branches
-              - name: tag
-                value: "string || /REGEXP/"
-                description: One or more git origin tags
-              - name: limit
-                value: "int"
-                description: The limit on the number of images for each reference contained in the set
-                directives:
-                  - name: last
-                    value: "int"
-                    description: To select n last references last n references from those defined in the branch or tag
-                    default: "-1"
-                  - name: in
-                    value: "duration string"
-                    description: To select git tags that were created during the specified period or git branches that were active during the period
-                  - name: operator
-                    value: "And || Or"
-                    default: And
-                    description: Check both conditions or any of them
-          - name: imagesPerReference
-            description: The limit on the number of images for each reference contained in the set
-            directives:
-              - name: last
-                value: "int"
-                description: The number of images to search for each reference
-                default: "-1"
-              - name: in
-                value: "duration string"
-                description: The time frame in which werf searches for images
-              - name: operator
-                value: "And || Or"
-                default: And
-                description: Check both conditions or any of them
-image_section:
-  - name: image
-    value: "string || ~ || [ string, ... ]"
-    description: One or more names for image
-    required: true
-    details: "#naming"
-  - name: dockerfile
-    value: "string"
-    description: Dockerfile path relative to the project directory
-  - name: context
-    value: "string"
-    default: "."
-    description: Build context PATH inside project directory
-  - name: target
-    value: "string"
-    description: Specific Dockerfile stage (last one by default, see docker build --target option)
-  - name: args
-    value: "{ arg name string: arg value string, ... }"
-    description: Build-time variables (see docker build --build-arg option)
-  - name: addHost
-    value: "[ host:ip, ... ]"
-    description: Custom host-to-IP mapping (host:ip) (see docker build --add-host option)
-  - name: network
-    value: "string"
-    description: The networking mode for the RUN instructions during build (see docker build --network option)
-  - name: ssh
-    value: "string"
-    description: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
+sections:
+- id: meta-section
+  description: Meta section
+  directives:
+    - name: project
+      value: "string"
+      description: Unique project name
+      detailsAnchor: "#project-name"
+      required: true
+    - name: configVersion
+      value: "string"
+      description: Config syntax version. It should always be 1 for now
+      required: true
+    - name: deploy
+      description: Settings for deployment into various environments
+      collapsible: true
+      isCollapsedByDefault: true
+      directives:
+        - name: helmRelease
+          value: "string"
+          description: Release name template
+          default: "[[ project ]]-[[ env ]]"
+          detailsAnchor: "#release-name"
+        - name: helmReleaseSlug
+          value: "bool"
+          description: Release name slugification
+          default: true
+        - name: namespace
+          value: "string"
+          description: Kubernetes namespace template
+          default: "[[ project ]]-[[ env ]]"
+          detailsAnchor: "#kubernetes-namespace"
+        - name: namespaceSlug
+          value: "bool"
+          description: Kubernetes namespace slugification
+          default: true
+    - name: cleanup
+      description: Settings for cleaning up irrelevant images
+      collapsible: true
+      isCollapsedByDefault: true
+      directives:
+        - name: keepPolicies
+          description: Set of policies to select relevant images using the git history
+          detailsAnchor: "#configuring-cleanup-policies"
+          directiveList:
+            - name: references
+              description: References to perform scanning on
+              directives:
+                - name: branch
+                  value: "string || /REGEXP/"
+                  description: One or more git origin branches
+                - name: tag
+                  value: "string || /REGEXP/"
+                  description: One or more git origin tags
+                - name: limit
+                  description: The limit on the number of images for each reference contained in the set
+                  directives:
+                    - name: last
+                      value: "int"
+                      description: To select n last references last n references from those defined in the branch or tag
+                      default: "-1"
+                    - name: in
+                      value: "duration string"
+                      description: To select git tags that were created during the specified period or git branches that were active during the period
+                    - name: operator
+                      value: "And || Or"
+                      default: And
+                      description: Check both conditions or any of them
+            - name: imagesPerReference
+              description: The limit on the number of images for each reference contained in the set
+              directives:
+                - name: last
+                  value: "int"
+                  description: The number of images to search for each reference
+                  default: "-1"
+                - name: in
+                  value: "duration string"
+                  description: The time frame in which werf searches for images
+                - name: operator
+                  value: "And || Or"
+                  default: And
+                  description: Check both conditions or any of them
+- id: dockerfile-image-section
+  description: "Dockerfile image section: optional, define as many image sections as you need"
+  directives:
+    - name: image
+      value: "string || [ string, ... ] || ~"
+      description: One or more unique names for image
+      detailsAnchor: "#image-section"
+      required: true
+    - name: dockerfile
+      value: "string"
+      description: Dockerfile path relative to the project directory
+    - name: context
+      value: "string"
+      default: "."
+      description: Build context PATH inside project directory
+    - name: target
+      value: "string"
+      description: Specific Dockerfile stage (last one by default, see docker build --target option)
+    - name: args
+      value: "{ name string: value string, ... }"
+      description: Build-time variables (see docker build --build-arg option)
+    - name: addHost
+      value: "[ string, ... ]"
+      description: Custom host-to-IP mapping (host:ip) (see docker build --add-host option)
+    - name: network
+      value: "string"
+      description: The networking mode for the RUN instructions during build (see docker build --network option)
+    - name: ssh
+      value: "string"
+      description: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
+- id: stapel-section
+  description: "Stapel image/artifact section: optional, define as many image sections as you need"
+  isCollapsedByDefault: true
+  directives:
+    - name: image
+      value: "string || [ string, ... ] || ~"
+      description: One or more unique names for image
+      detailsAnchor: "#image-section"
+      required: true
+    - name: artifact
+      value: "string"
+      description: The unique name for artifact
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/artifact.html"
+    - name: from
+      value: "string"
+      description: "The name of a base image"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#from-fromlatest"
+    - name: fromLatest
+      value: "bool"
+      description: "To use actual base image without caching"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#from-fromlatest"
+    - name: herebyIAdmitThatFromLatestMightBreakReproducibility
+      value: "bool"
+      description: "The confirmation of understanding the problem of using fromLatest directive"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#from-fromlatest"
+    - name: fromImage
+      value: "string"
+      description: "To use image as base image by short image name"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
+    - name: fromArtifact
+      value: "string"
+      description: "To use artifact as base image by short artifact name"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
+    - name: fromCacheVersion
+      value: "string"
+      description: "Cache version"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/base_image.html#fromcacheversion"
+    - name: git
+      description: "Set of directives to add source files from git repositories"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directiveList:
+        - name: url
+          value: "string"
+          description: "The address of the remote repository"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#working-with-remote-repositories"
+        - name: branch
+          value: "string"
+          description: "The branch name"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#syntax-of-a-git-mapping"
+        - name: herebyIAdmitThatBranchMightBreakReproducibility
+          value: "bool"
+          description: "The confirmation of understanding the problem of using branch directive"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#syntax-of-a-git-mapping"
+        - name: commit
+          value: "string"
+          description: "The commit"
+        - name: tag
+          value: "string"
+          description: "The tag name"
+        - name: add
+          value: "string"
+          description: "A source path in a repository"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#copying-directories"
+        - name: to
+          value: "string"
+          description: "A destination path in image"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#copying-directories"
+        - name: owner
+          value: "string"
+          description: "The name or uid of the owner"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
+        - name: group
+          value: "string"
+          description: "The name or gid of the owner’s group"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
+        - name: includePaths
+          value: "[ string, ... ]"
+          description: "Masks for including"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#using-filters"
+        - name: excludePaths
+          value: "[ string, ... ]"
+          description: "Masks for excluding"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#using-filters"
+        - name: stageDependencies
+          description: "The organization of restarting assembly instructions when defined changes occur in the git repository"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
+          directives:
+            - name: install
+              value: "[ string, ... ]"
+              description: "Masks for install stage"
+            - name: beforeSetup
+              value: "[ string, ... ]"
+              description: "Masks for beforeSetup stage"
+            - name: setup
+              value: "[ string, ... ]"
+              description: "Masks for setup stage"
+    - name: shell
+      description: "Shell assembly instructions"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directives:
+        - name: beforeInstall
+          value: "[ string, ... ]"
+          description: "Commands for beforeInstall stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+        - name: install
+          value: "[ string, ... ]"
+          description: "Commands for install stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+        - name: beforeSetup
+          value: "[ string, ... ]"
+          description: "Commands for beforeSetup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+        - name: setup
+          value: "[ string, ... ]"
+          description: "Commands for setup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+        - name: cacheVersion
+          value: "string"
+          description: "Common cache version"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: beforeInstallCacheVersion
+          value: "string"
+          description: "Cache version for beforeInstall stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: installCacheVersion
+          value: "string"
+          description: "Cache version for install stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: beforeSetupCacheVersion
+          value: "string"
+          description: "Cache version for beforeSetup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: setupCacheVersion
+          value: "string"
+          description: "Cache version for setup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+    - name: ansible
+      description: "Ansible assembly instructions"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directives:
+        - name: beforeInstall
+          value: "[ task, ... ]"
+          description: "Tasks for beforeInstall stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+        - name: install
+          value: "[ task, ... ]"
+          description: "Tasks for install stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+        - name: beforeSetup
+          value: "[ task, ... ]"
+          description: "Tasks for beforeSetup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+        - name: setup
+          value: "[ task, ... ]"
+          description: "Tasks for setup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+        - name: cacheVersion
+          value: "string"
+          description: "Common cache version"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: beforeInstallCacheVersion
+          value: "string"
+          description: "Cache version for beforeInstall stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: installCacheVersion
+          value: "string"
+          description: "Cache version for install stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: beforeSetupCacheVersion
+          value: "string"
+          description: "Cache version for beforeSetup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+        - name: setupCacheVersion
+          value: "string"
+          description: "Cache version for setup stage"
+          detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+    - name: docker
+      description: "Set of directives to effect on an image manifest"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/docker_directive.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directives:
+        - name: USER
+          value: "string"
+          description: "The user and the group to use when running the image"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
+        - name: WORKDIR
+          value: "string"
+          description: "The working directory"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#workdir"
+        - name: VOLUME
+          value: "[ string, ... ]"
+          description: "Mount points"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
+        - name: ENV
+          value: "{ name string: value string, ... }"
+          description: "The environment variables"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
+        - name: LABEL
+          value: "{ name string: value string, ... }"
+          description: "The metadata to an image"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#label"
+        - name: EXPOSE
+          value: "[ string, ... ]"
+          description: "To inform Docker that the container listens on the specified network ports at runtime"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
+        - name: ENTRYPOINT
+          value: "string"
+          description: "To configure a container that will run as an executable"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
+          detailsCustomLinks:
+            - text: "How stapel builder processes CMD and ENTRYPOINT"
+              article: "/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+        - name: CMD
+          value: "string"
+          description: "To provide default arguments for the ENTRYPOINT to configure a container that will run as an executable"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
+          detailsCustomLinks:
+            - text: "How stapel builder processes CMD and ENTRYPOINT"
+              article: "/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+        - name: HEALTHCHECK
+          value: string
+          description: "To tell Docker how to test a container to check that it is still working"
+          detailsLink: "https://docs.docker.com/engine/reference/builder/#healthcheck"
+    - name: mount
+      description: "Mount points"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/mount_directive.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directiveList:
+        - name: from
+          value: "tmp_dir || build_dir"
+          description: "Service folder name"
+        - name: fromPath
+          value: "string"
+          description: "Absolute or relative path to an arbitrary file or folder on host"
+        - name: to
+          value: "string"
+          description: "Absolute path in image"
+    - name: import
+      description: "Imports"
+      detailsArticle: "/documentation/advanced/building_images_with_stapel/import_directive.html"
+      collapsible: true
+      isCollapsedByDefault: true
+      directiveList:
+        - name: artifact
+          value: "string"
+          description: "The artifact name from which you want to copy files"
+        - name: image
+          value: "string"
+          description: "The image name from which you want to copy files"
+        - name: stage
+          value: "string"
+          description: "The stage name from which you want to copy files (the latest one by default)"
+        - name: before
+          value: "string"
+          description: "The stage name before which to perform importing files. At present, only install and setup stages are supported"
+        - name: after
+          value: "string"
+          description: "The stage name after which to perform importing files. At present, only install and setup stages are supported"
+        - name: add
+          value: "string"
+          description: "The absolute file or folder path in source image for copying"
+        - name: to
+          value: "string"
+          description: "The absolute path in destination image. In case of absence, destination path equals source path"
+        - name: owner
+          value: "string"
+          description: "The name or uid of the owner"
+        - name: group
+          value: "string"
+          description: "The name or gid of the owner’s group"
+        - name: includePaths
+          value: "[ string, ... ]"
+          description: "Masks for including"
+        - name: excludePaths
+          value: "[ string, ... ]"
+          description: "Masks for excluding"
