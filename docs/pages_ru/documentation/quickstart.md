@@ -4,9 +4,9 @@ permalink: documentation/quickstart.html
 sidebar: documentation
 ---
 
-В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ site.baseurl }}/pages_ru/introduction.html), если вы этого еще не сделали.
+В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ site.baseurl }}/introduction.html), если вы этого еще не сделали.
 
-Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ site.baseurl }}/pages_ru/installation.html).
+Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ site.baseurl }}/installation.html).
 
 ## Подготовьте свою инсталляцию Kubernetes и реестр Docker
 
@@ -102,7 +102,7 @@ minikube service --namespace quickstart-application --url result
 
 ## Принципы работы
 
-Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ site.baseurl }}/pages_ru/introduction.html)).
+Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ site.baseurl }}/introduction.html)).
 
  1. В нашем репозитории имеются следующие Dockerfile'ы:
 
@@ -148,4 +148,4 @@ minikube service --namespace quickstart-application --url result
 
 ## Что дальше?
 
-Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ site.baseurl }}/pages_ru/documentation/using_with_ci_cd_systems.html) или обратиться к соответствующим [руководствам]({{ site.baseurl }}/pages_ru/documentation/guides.html).
+Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ site.baseurl }}/documentation/using_with_ci_cd_systems.html) или обратиться к соответствующим [руководствам]({{ site.baseurl }}/documentation/guides.html).
