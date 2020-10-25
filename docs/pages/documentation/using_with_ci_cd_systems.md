@@ -10,7 +10,7 @@ In this article we are covering the basics of using werf with any CI/CD system.
 
 Also, there is an article discussing the more advanced topic of [generic CI/CD integration]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html).
 
-werf supports GitLab CI/CD and GitHub Actions out-of-the-box as well as a dedicated `werf ci-env` command (this command is optional and allows you to configure all werf parameters discussed in this article universally and automatically). You may find additional details in the following documents:
+werf supports any CI/CD system out-of-the-box. Furthermore, there is enhanced support for GitLab CI/CD and GitHub Actions in the form of the `werf ci-env` shortcut command that simplifies the configuration of these two systems even more (this command allows you to configure all werf parameters discussed in this article universally and automatically). You may find additional details in the following documents:
 
  - [GitLab CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/gitlab_ci_cd.html);
  - [GitHub Actions]({{ site.baseurl }}/documentation/advanced/ci_cd/github_actions.html).
@@ -30,7 +30,7 @@ Also, there are some more specific werf commands, such as:
 
 ## Embedding werf into a CI/CD system
 
-Usually, the process of embedding werf into some job of the CI/CD system is smooth and uncomplicated. To do this, follow these steps:
+werf is designed to be easily embedded into any CI/CD system. The process is simple and intuitive - just follow the steps below:
 
  1. Configure a CI/CD job to access the Kubernetes cluster and the Docker Registry.
  2. Checkout the target git commit in the project repository.
@@ -66,7 +66,7 @@ werf converge
 
 ### Configure a CI/CD job to access the Docker Registry
 
-You are forced to use a private Docker Registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the Docker Registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
+You probably need a private Docker Registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the Docker Registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
 
 If you have configured the `docker` tool to access the private Docker Registry from your host, then `werf` would work with this Docker Registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
 
