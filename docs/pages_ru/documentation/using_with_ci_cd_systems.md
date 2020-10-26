@@ -8,12 +8,12 @@ sidebar: documentation
 
 В этой статье мы рассмотрим основы использования werf в рамках различных систем CI/CD.
 
-Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ site.baseurl }}/pages_ru/documentation/advanced/ci_cd/generic_ci_cd_integration.html).
+Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html).
 
 werf изначально поддерживает GitLab CI/CD и GitHub Actions, а также предлагает специальную команду `werf ci-env` (она необязательна и позволяет настраивать параметры werf, описываемые в этой статье, автоматически и единобразно). Дополнительные сведения можно найти в следующих документах:
 
- - [GitLab CI/CD]({{ site.baseurl }}/pages_ru/documentation/advanced/ci_cd/gitlab_ci_cd.html);
- - [GitHub Actions]({{ site.baseurl }}/pages_ru/documentation/advanced/ci_cd/github_actions.html).
+ - [GitLab CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/gitlab_ci_cd.html);
+ - [GitHub Actions]({{ site.baseurl }}/documentation/advanced/ci_cd/github_actions.html).
 
 ## Команды werf, которые понадобятся
 
@@ -55,7 +55,7 @@ werf подключается и работает с кластером Kubernet
 werf converge --kube-config ./my-kube-config
 ```
 
-Передаем закодированный в base64 конфиг с помощью переменной среды:
+Передаем закодированный в base64 конфиг с помощью переменной окружения:
 
 ```shell
 export WERF_KUBE_CONFIG_BASE64="$(cat ./my-kube-config | base64 -w0)"
@@ -94,7 +94,7 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 
 ### Настройка целевого окружения для werf
 
-Обычно приложение развертывается в различные [окружения]({{ site.baseurl }}/pages_ru/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#окружение) (`production`, `staging`, `testing`, и т.д.).
+Обычно приложение развертывается в различные [окружения]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#окружение) (`production`, `staging`, `testing`, и т.д.).
 
 В werf имеется опциональный параметр `--env` (или переменная среды `WERF_ENV`), с помощью которого можно задать имя используемого окружения. Оно влияет на название соответствующего [пространства имен Kubernetes]() и [название Helm-релиза](). Мы рекомендуем проверять имя окружения в процессе выполнения CI/CD-задания (например, с помощью встроенных переменных окружения вашей CI/CD-системы) и соответствующим образом устанавливать параметр `--env`.
 
@@ -130,7 +130,7 @@ werf converge
 
 Обычно CI/CD-система производит checkout на текущий git-коммит полностью автоматически, и пользователю не приходится этим заниматься самостоятельно. Однако некоторые системы могут быть лишены подобного функционала. В этом случае вы должны самостоятельно произвести checkout на целевой git-коммит в репозитории проекта перед запуском основных команд werf (`werf converge`, `werf dismiss`, `werf cleanup`).
 
-Дополнительная информация о converge доступна во [введении]({{ site.baseurl }}/pages_ru/introduction.html#что-такое-converge). 
+Дополнительная информация о converge доступна во [введении]({{ site.baseurl }}/introduction.html#что-такое-converge). 
 
 Примечание: поведение команды werf converge полностью детерминировано и прозрачно с точки зрения репозитория git. После завершения ее работы приложение будет запущено. Оно будет соответствовать состоянию, определенному в целевом git-коммите. -
 
@@ -182,8 +182,8 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 
 ## Что дальше?
 
-В [этом разделе]({{ site.baseurl }}/pages_ru/documentation/reference/deploy_annotations.html) рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.
+В [этом разделе]({{ site.baseurl }}/documentation/reference/deploy_annotations.html) рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.
 
-Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]({{ site.baseurl }}/pages_ru/documentation/advanced/ci_cd/ci_cd_workflow_basics.html). В ней описываются различные способы настройки рабочих процессов CI/CD.
+Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html). В ней описываются различные способы настройки рабочих процессов CI/CD.
 
-В разделе ["Руководства"]({{ site.baseurl }}/pages_ru/documentation/guides.html) можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.
+В разделе ["Руководства"]({{ site.baseurl }}/documentation/guides.html) можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.
