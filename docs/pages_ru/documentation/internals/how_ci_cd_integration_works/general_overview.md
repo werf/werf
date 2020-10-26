@@ -208,5 +208,5 @@ export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 
 ## Что почитать дальше
 
- * [Как работает интеграция с GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html).
- * [Общая инструкция, как использовать werf с CI/CD-системами]({{ site.baseurl }}/documentation/guides/generic_ci_cd_integration.html).
+ * [Как работает интеграция с GitLab CI]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html).
+ * [Общая инструкция, как использовать werf с CI/CD-системами]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html).

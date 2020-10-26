@@ -10,7 +10,7 @@ Part of the configuration can be moved in ***separate template files*** and then
 
 > **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects
 
-werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
+werf parses all files in one environment, thus described _define_ of one _template file_ becomes available in other files, including _werf.yaml_.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>
@@ -103,7 +103,7 @@ ansible:
 
 > If there are templates with the same name werf will use template defined in _werf.yaml_ or the latest described in _templates files_
 
-If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in [include](#include) function.
+If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in _include_ function.
 
 <div class="details active">
 <a href="javascript:void(0)" class="details__summary">werf.yaml</a>

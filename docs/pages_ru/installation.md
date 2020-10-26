@@ -78,13 +78,13 @@ channels:
       <div class="docs">
 <div class="details">
 <div id="details_link">
-<h2><a href="javascript:void(0)" class="details__summary">Установка зависимостей</a></h2>
+<h2 name="установка-зависимостей"><a href="javascript:void(0)" class="details__summary">Установка зависимостей</a></h2>
 </div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_dependencies.md %}
 </div>
 </div>
-<h2>Установка werf</h2>
+<h2 name="установка-werf">Установка werf</h2>
 <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
 <h3>Установка multiwerf</h3>
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
@@ -95,7 +95,7 @@ channels:
 <div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
 <div id="details_link">
-<h2><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
+<h2 name="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
 </div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
@@ -114,7 +114,7 @@ channels:
 <div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
 <div id="details_link">
-<h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
+<h2 name="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
 </div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
@@ -177,7 +177,7 @@ channels:
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title">
+    <h2 class="installation-channels__title" name="все-изменения-в-werf-проходят-через-цепочку-каналов-стабильности">
       Все изменения в werf<br>
       проходят через цепочку каналов стабильности
     </h2>
@@ -252,7 +252,7 @@ channels:
     </div>
   </div>
   <div class="installation-compatibility">
-    <h2 class="installation-compatibility__title">Гарантии обратной совместимости</h2>
+    <h2 class="installation-compatibility__title" name="гарантии-обратной-совместимости">Гарантии обратной совместимости</h2>
 <div markdown="1" class="docs">
 {% include ru/installation/backward-compatibility.md %}
 </div>

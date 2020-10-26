@@ -9,7 +9,7 @@ werf uses the Build process to build images defined in the werf configuration.
 
 ## Dockerfile image
 
-werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
+werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ site.baseurl }}/documentation/reference/werf_yaml.html#dockerfile-builder)).
 
 ### How a dockerfile image is being built
 
@@ -22,7 +22,7 @@ How the `dockerfile` stage is being built:
  3. werf performs a regular docker build if there is no image with the specified signature in the [stage storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
  4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) (while tagging the resulting docker image with the calculated signature) if the [`:local` stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) parameter is set.
 
-See the [configuration article]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html) for the werf.yaml configuration details.
+See the [configuration article]({{ site.baseurl }}/documentation/reference/werf_yaml.html#dockerfile-builder) for the werf.yaml configuration details.
 
 ## Stapel image and artifact
 
@@ -35,7 +35,7 @@ Also, werf has an alternative tool for building images. The so-called stapel bui
 
 The image built with a stapel builder will be referred to as a **stapel image**.
 
-See [stapel image]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) and [stapel artifact]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html) articles for more details.
+See [stapel image]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) and [stapel artifact]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html) articles for more details.
 
 ### How stapel images and artifacts are built
 
@@ -53,7 +53,7 @@ werf has a special service image called `flant/werf-stapel`. It contains a chroo
 
 ### How stapel builder processes CMD and ENTRYPOINT
 
-To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) values. If the base image does not have corresponding values, werf resets service to the special empty values:
+To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html) values. If the base image does not have corresponding values, werf resets service to the special empty values:
 * `[]` for `CMD`;
 * `[""]` for `ENTRYPOINT`.
 
