@@ -228,12 +228,12 @@ en:
             - &stapel-section-git-owner
               name: owner
               value: "string"
-              description: "The name or uid of the owner"
+              description: "The name or UID of the owner"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
             - &stapel-section-git-group
               name: group
               value: "string"
-              description: "The name or gid of the owner’s group"
+              description: "The name or GID of the owner’s group"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
             - &stapel-section-git-includePaths
               name: includePaths
@@ -376,7 +376,7 @@ en:
             - &stapel-section-docker-USER
               name: USER
               value: "string"
-              description: "The user and the group to use when running the image"
+              description: "The user name (or UID) and optionally the user group (or GID)"
               detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
             - &stapel-section-docker-WORKDIR
               name: WORKDIR
@@ -481,11 +481,11 @@ en:
             - &stapel-section-import-owner
               name: owner
               value: "string"
-              description: "The name or uid of the owner"
+              description: "The name or UID of the owner"
             - &stapel-section-import-group
               name: group
               value: "string"
-              description: "The name or gid of the owner’s group"
+              description: "The name or GID of the owner’s group"
             - &stapel-section-import-includePaths
               name: includePaths
               value: "[ string, ... ]"
@@ -620,10 +620,10 @@ ru:
               description: "Путь назначения в образе"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#копирование-директорий"
             - << : *stapel-section-git-owner
-              description: "Имя или uid владельца"
+              description: "Имя или UID владельца"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#изменение-владельца"
             - << : *stapel-section-git-group
-              description: "Имя или gid группы"
+              description: "Имя или GID группы"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#изменение-владельца"
             - << : *stapel-section-git-includePaths
               description: "Маски для добавления"
@@ -632,7 +632,7 @@ ru:
               description: "Маски для исключения"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/git_directive.html#использование-фильтров"
             - << : *stapel-section-git-stageDependencies
-              description: "Настройка перевыполнения сборочных инструкций при изменениях в определённых файлах в репозитории"
+              description: "Настройка перевыполнения сборочных инструкций при изменениях определённых файлов в репозитории"
               detailsArticle: "/documentation/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
               directives:
                 - <<: *stapel-section-git-stageDependencies-install
@@ -697,9 +697,9 @@ ru:
           description: "Набор директив для изменения манифеста образа"
           directives:
             - << : *stapel-section-docker-USER
-              description: "Пользователь и группа, которые необходимо использовать при запуске контейнера"
+              description: "Имя пользователя (или UID) и опционально пользовательская группа (или GID)"
             - << : *stapel-section-docker-WORKDIR
-              description: "Рабочая директория, используемая при запуске контейнера"
+              description: "Рабочая директория"
             - << : *stapel-section-docker-VOLUME
               description: "Точки монтирования"
             - << : *stapel-section-docker-ENV
@@ -740,17 +740,17 @@ ru:
             - << : *stapel-section-import-stage
               description: "Имя стадии, из которой выполнять копирование файлов (по умолчанию последняя)"
             - << : *stapel-section-import-before
-              description: "Выбор момента импортирования файлов при сборке, до стадии install или setup"
+              description: "Выбор стадии импортирования файлов при сборке, до стадии install или setup"
             - << : *stapel-section-import-after
-              description: "Выбор момента импортирования файлов при сборке, после стадии install или setup"
+              description: "Выбор стадии импортирования файлов при сборке, после стадии install или setup"
             - << : *stapel-section-import-add
               description: "Абсолютный путь до файла или директории в выбранном образе/артефакте"
             - << : *stapel-section-import-to
               description: "Абсолютный путь в конечном образе. По умолчанию соответствует пути add"
             - << : *stapel-section-import-owner
-              description: "Имя или uid владельца"
+              description: "Имя или UID владельца"
             - << : *stapel-section-import-group
-              description: "Имя или gid группы"
+              description: "Имя или GID группы"
             - << : *stapel-section-import-includePaths
               description: "Маски для добавления"
             - << : *stapel-section-import-excludePaths
