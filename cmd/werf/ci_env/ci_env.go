@@ -179,7 +179,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 			}
 
 			if werfConfig != nil {
-				repo = defaultCIRepoAddress(ciRegistryEnv, werfConfig.Meta.Project)
+				repo = fmt.Sprintf("%s/werf", ciRegistryImageEnv)
 			}
 		}
 
@@ -289,7 +289,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 		if werfConfig != nil {
 			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubDockerPackage)
-			repo = defaultCIRepoAddress(projectRepo, werfConfig.Meta.Project)
+			repo = fmt.Sprintf("%s/%s-werf", projectRepo, werfConfig.Meta.Project)
 		}
 	}
 
@@ -511,8 +511,4 @@ func createSourceFile(data []byte) (string, error) {
 	}
 
 	return f.Name(), nil
-}
-
-func defaultCIRepoAddress(repo, projectName string) string {
-	return fmt.Sprintf("%s/%s-werf", repo, projectName)
 }
