@@ -13,14 +13,6 @@ function regen() {
   # regen CLI partials, pages and sidebar
   HOME='~' werf docs --log-terminal-width=100
 
-  # regen README partials
-  readme_en_partials_dir="docs/_includes/en/readme"
-  readme_ru_partials_dir="docs/_includes/ru/readme"
-  rm -rf "$readme_en_partials_dir" "$readme_ru_partials_dir"
-  mkdir -p "$readme_en_partials_dir" "$readme_ru_partials_dir"
-  werf docs --split-readme --readme "README.md" --dest "$readme_en_partials_dir"
-  werf docs --split-readme --readme "README_ru.md" --dest "$readme_ru_partials_dir"
-
   cd "$saved_dir"
 }
 

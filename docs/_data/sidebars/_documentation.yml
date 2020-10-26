@@ -93,7 +93,7 @@ entries:
               - title: Importing from images and artifacts
                 url: /documentation/advanced/building_images_with_stapel/import_directive.html
 
-              - title: Artifact
+              - title: Artifacts
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Development and debug
