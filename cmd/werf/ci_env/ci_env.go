@@ -374,12 +374,12 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig, taggingS
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
 
-	var workflowUrl string
+	var workflowRunUrl string
 	ciWorkflowRunIdEnv := os.Getenv("GITHUB_RUN_ID")
 	if ciGithubOwnerWithProject != "" && ciWorkflowRunIdEnv != "" {
-		workflowUrl = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s/actions/runs/%s", ciGithubOwnerWithProject, ciWorkflowRunIdEnv))
+		workflowRunUrl = fmt.Sprintf("github.ci.werf.io/workflow-run-url=%s", fmt.Sprintf("https://github.com/%s/actions/runs/%s", ciGithubOwnerWithProject, ciWorkflowRunIdEnv))
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL", workflowUrl, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL", workflowRunUrl, false)
 
 	writeHeader(w, "CLEANUP", true)
 	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
