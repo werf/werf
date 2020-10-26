@@ -10,7 +10,11 @@ werf uses the following values for werf environment variables:
 
 ### WERF_REPO
 
-The value of [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
+The value of [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo) is derived from the [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable: `$CI_REGISTRY_IMAGE/werf`.
+
+### WERF_REPO_IMPLEMENTATION
+
+The value of [`WERF_REPO_IMPLEMENTATION`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo_implementation) is set together with [`WERF_REPO`](#werf_repo) when using built-in GitLab Container Registry.
 
 ### WERF_ADD_ANNOTATION_PROJECT_GIT
 
