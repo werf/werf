@@ -65,7 +65,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 
 ## fromImage и fromArtifact
 
-В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
+В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
 
 ```yaml
 fromImage: <image name>

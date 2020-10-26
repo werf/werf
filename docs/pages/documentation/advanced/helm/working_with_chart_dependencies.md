@@ -35,9 +35,9 @@ dependencies:
 The `requirements.lock` file lists the exact versions of immediate dependencies and their dependencies and so forth.
 
 The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies and the actual dependencies stored in the `charts` directory:
-* Use [werf helm dependency list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/list.html) to check dependencies and their statuses.  
-* Use [werf helm dependency update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/update.html) to update `/charts` based on the contents of `requirements.yaml`.
-* Use [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/build.html) to update `/charts` based on the `requirements.lock` file.
+* Use [werf helm dependency list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_list.html) to check dependencies and their statuses.  
+* Use [werf helm dependency update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_update.html) to update `/charts` based on the contents of `requirements.yaml`.
+* Use [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_build.html) to update `/charts` based on the `requirements.lock` file.
 
 All Chart Repositories that are used in `requirements.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
 * Use [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_add.html) to add Chart Repository.

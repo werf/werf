@@ -48,9 +48,9 @@ mysql:
 ```
 
 Для управления файлами с секретными переменными используйте следующие команды:
-- [werf helm secret values edit]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/edit.html)
-- [werf helm secret values encrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/encrypt.html)
-- [werf helm secret values decrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/decrypt.html)
+- [werf helm secret values edit]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_edit.html)
+- [werf helm secret values encrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_encrypt.html)
+- [werf helm secret values decrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_decrypt.html)
 
 ### Использование в шаблонах чарта
 
@@ -74,9 +74,9 @@ env:
 Чтобы использовать файлы содержащие секретную информацию в шаблонах Helm, вы должны сохранить их в соответствующем виде в каталоге `.helm/secret`.
 
 Для управления файлами, содержащими секретную информацию, используйте следующие команды:
-- [werf helm secret file edit]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/edit.html)
-- [werf helm secret file encrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/encrypt.html)
-- [werf helm secret file decrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/decrypt.html)
+- [werf helm secret file edit]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_edit.html)
+- [werf helm secret file encrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_encrypt.html)
+- [werf helm secret file decrypt]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_decrypt.html)
 
 ### Использование в шаблонах чарта
 

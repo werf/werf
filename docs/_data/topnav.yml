@@ -11,11 +11,11 @@ topnav:
      - title: Publications
        url: /publications.html
   ru:
+     - title: Введение
+       url: /introduction.html
      - title: Установка
-       url: /documentation/guides/installation.html
+       url: /installation.html
      - title: Документация
        url: /documentation/
      - title: Публикации
        url: /publications.html
-     - title: Релизы
-       url: /releases.html

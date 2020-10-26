@@ -26,7 +26,7 @@ summary: |
 
 [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/) can be divided into two groups: build-time instructions and other instructions that effect on an image manifest. Build-time instructions do not make sense in a werf build process. Therefore, werf supports only following instructions:
 
-* `USER` to set the user and the group to use when running the image (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
+* `USER` to set the user name (or UID) and optionally the user group (or GID) (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
 * `WORKDIR` to set the working directory (read more [here](https://docs.docker.com/engine/reference/builder/#workdir)).
 * `VOLUME` to add mount point (read more [here](https://docs.docker.com/engine/reference/builder/#volume)).
 * `ENV` to set the environment variable (read more [here](https://docs.docker.com/engine/reference/builder/#env)).

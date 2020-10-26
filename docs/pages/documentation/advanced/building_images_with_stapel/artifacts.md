@@ -38,7 +38,7 @@ artifact: string
 ```
 </div>
 
-_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the [name of the _image_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
+_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the [name of the _image_]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section), the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"

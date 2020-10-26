@@ -141,7 +141,7 @@ sudo usermod -aG docker $USER
 
 There are a lot of ways to install werf, but using [multiwerf](https://github.com/werf/multiwerf) is a recommended practice both for local development and CI usage. 
 
-> The other approaches are also available in [Installation guide](https://werf.io/documentation/guides/installation.html).
+> The other approaches are also available in [Installation section](https://werf.io/installation.html).
 
 <!-- WERF DOCS PARTIAL BEGIN: Installing with multiwerf -->
 
@@ -238,9 +238,9 @@ FOR /F "tokens=*" %g IN ('multiwerf use 1.1 stable --as-file --shell cmdexe') do
 <!-- WERF DOCS PARTIAL BEGIN: Getting started -->
 
 Following guides demonstrate the key features of werf and help you to start using it:
-- [Getting started](https://werf.io/documentation/guides/getting_started.html) — start using werf with an existing Dockerfile.
+- [Getting started](https://werf.io/documentation/quickstart.html) — start using werf with an existing Dockerfile.
 - [First application](https://werf.io/documentation/guides/advanced_build/first_application.html) — build your first application (PHP Symfony) with werf builder.
-- [Deploy into Kubernetes](https://werf.io/documentation/guides/deploy_into_kubernetes.html) — deploy an application to the Kubernetes cluster using werf built images.
+- [Deploy into Kubernetes](https://werf.io/documentation/advanced/helm/basics.html) — deploy an application to the Kubernetes cluster using werf built images.
 - CI/CD systems integration: [generic](https://werf.io/documentation/guides/generic_ci_cd_integration.html), [GitLab CI](https://werf.io/documentation/guides/gitlab_ci_cd_integration.html), [GitHub Actions](https://werf.io/documentation/guides/github_ci_cd_integration.html).
 - [Multi-images application](https://werf.io/documentation/guides/advanced_build/multi_images.html) — build multi-images application (Java/ReactJS).
 - [Mounts](https://werf.io/documentation/guides/advanced_build/mounts.html) — reduce image size and speed up your build with mounts (Go/Revel).

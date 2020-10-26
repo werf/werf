@@ -50,9 +50,9 @@ mysql:
 ```
 
 To manage secret values files use the following commands:
-- [werf helm secret values edit command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/edit.html)
-- [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/encrypt.html)
-- [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_/decrypt.html)
+- [werf helm secret values edit command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_edit.html)
+- [werf helm secret values encrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_encrypt.html)
+- [werf helm secret values decrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_values_decrypt.html)
 
 ### Using in a chart template
 
@@ -76,9 +76,9 @@ Besides secret values, templates also use files that may not be stored unencrypt
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
 To manage secret files use the following commands:
-- [werf helm secret file edit command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/edit.html)
-- [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/encrypt.html)
-- [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file/decrypt.html)
+- [werf helm secret file edit command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_edit.html)
+- [werf helm secret file encrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_encrypt.html)
+- [werf helm secret file decrypt command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_secret_file_decrypt.html)
 
 ### Using in a chart template
 

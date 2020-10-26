@@ -10,7 +10,7 @@ permalink: documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html
 
 ### WERF_REPO
 
-Значение для установки переменной окружения [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/): `$CI_REGISTRY_IMAGE/werf`.
+Значение для установки переменной окружения [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
 
 ### WERF_REPO_IMPLEMENTATION
 

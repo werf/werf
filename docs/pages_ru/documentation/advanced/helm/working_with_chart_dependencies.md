@@ -35,9 +35,9 @@ dependencies:
 Файл `requirements.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
 
 Для работы с файлом зависимостей существуют команды `werf helm dependency`, которые упрощают синхронизацию между желаемыми зависимостями и фактическими зависимостями, указанными в папке чарта:
-* [werf helm dependency list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/list.html) — проверка зависимостей и их статуса.  
-* [werf helm dependency update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/update.html) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
-* [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency/build.html) — обновление `/charts` согласно содержимому файла `requirements.lock`.
+* [werf helm dependency list]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_list.html) — проверка зависимостей и их статуса.  
+* [werf helm dependency update]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_update.html) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
+* [werf helm dependency build]({{ site.baseurl }}/documentation/reference/cli/werf_helm_dependency_build.html) — обновление `/charts` согласно содержимому файла `requirements.lock`.
 
 Все репозитории чартов, используемые в `requirements.yaml`, должны быть настроены в системе. Для работы с репозиториями чартов можно использовать команды `werf helm repo`:
 * [werf helm repo add]({{ site.baseurl }}/documentation/reference/cli/werf_helm_repo_add.html) — добавление репозитория чартов.

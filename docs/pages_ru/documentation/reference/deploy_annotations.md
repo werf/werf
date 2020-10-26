@@ -17,7 +17,7 @@ toc: false
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — включить логирование вывода только для указанных контейнеров ресурса.
  - [`werf.io/show-service-messages`](#show-service-messages) — включить вывод сервисных сообщений и событий Kubernetes для данного ресурса.
 
-Больше информации о том, что такое чарт, шаблоны и пр. доступно в [базовой статье о деплое]({{ site.baseurl }}/documentation/deploy/basics.html).
+Больше информации о том, что такое чарт, шаблоны и пр. доступно в [базовой статье о деплое]({{ site.baseurl }}/documentation/advanced/helm/basics.html).
 
 ## Track termination mode
 
