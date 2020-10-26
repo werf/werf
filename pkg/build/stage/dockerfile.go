@@ -72,19 +72,21 @@ type DockerRunArgs struct {
 	ssh            string
 }
 
-func NewDockerStages(dockerStages []instructions.Stage, dockerArgsHash map[string]string, dockerTargetStageIndex int) *DockerStages {
+func NewDockerStages(dockerStages []instructions.Stage, dockerTopLevelArgsHash map[string]string, dockerTopLevelArgsArray []string, dockerTargetStageIndex int) *DockerStages {
 	return &DockerStages{
 		dockerStages:             dockerStages,
 		dockerTargetStageIndex:   dockerTargetStageIndex,
-		dockerArgsHash:           dockerArgsHash,
+		dockerTopLevelArgsHash:   dockerTopLevelArgsHash,
+		dockerTopLevelArgsArray:  dockerTopLevelArgsArray,
 		imageOnBuildInstructions: map[string][]string{},
 	}
 }
 
 type DockerStages struct {
-	dockerStages           []instructions.Stage
-	dockerArgsHash         map[string]string
-	dockerTargetStageIndex int
+	dockerStages            []instructions.Stage
+	dockerTopLevelArgsHash  map[string]string
+	dockerTopLevelArgsArray []string
+	dockerTargetStageIndex  int
 
 	imageOnBuildInstructions map[string][]string
 }
@@ -114,11 +116,6 @@ type dockerfileInstructionInterface interface {
 func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, cr container_runtime.ContainerRuntime) error {
 	containerRuntime := cr.(*container_runtime.LocalDockerServerRuntime)
 
-	var dockerMetaArgsString []string
-	for key, value := range s.dockerArgsHash {
-		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", key, value))
-	}
-
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
 
 outerLoop:
@@ -133,7 +130,7 @@ outerLoop:
 			}
 		}
 
-		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, dockerMetaArgsString)
+		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, s.dockerTopLevelArgsArray)
 		if err != nil {
 			return err
 		}
@@ -202,11 +199,6 @@ func isUnsupportedMediaTypeError(err error) bool {
 var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
-	var dockerMetaArgsString []string
-	for key, value := range s.dockerArgsHash {
-		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%s", key, value))
-	}
-
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
 
 	var stagesDependencies [][]string
@@ -218,7 +210,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 
 		dependencies = append(dependencies, s.addHost...)
 
-		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, dockerMetaArgsString)
+		resolvedBaseName, err := shlex.ProcessWord(stage.BaseName, s.dockerTopLevelArgsArray)
 		if err != nil {
 			return "", err
 		}
@@ -286,7 +278,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	switch c := cmd.(type) {
 	case *instructions.ArgCommand:
 		dependencies = append(dependencies, c.String())
-		if argValue, exist := s.dockerArgsHash[c.Key]; exist {
+		if argValue, exist := s.dockerTopLevelArgsHash[c.Key]; exist {
 			dependencies = append(dependencies, argValue)
 		}
 	case *instructions.AddCommand:

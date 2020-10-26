@@ -1220,23 +1220,30 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	dockerTargetStage := dockerStages[dockerTargetIndex]
 
-	dockerArgsHash := map[string]string{}
-	var dockerMetaArgsString []string
-	for _, arg := range dockerMetaArgs {
-		dockerArgsHash[arg.Key] = arg.ValueString()
-	}
-
+	dockerTopLevelArgsHash := map[string]string{}
+	var dockerTopLevelArgsArray []string
 	for key, valueInterf := range imageFromDockerfileConfig.Args {
 		value := fmt.Sprintf("%v", valueInterf)
-		dockerArgsHash[key] = value
-	}
-
-	for key, value := range dockerArgsHash {
-		dockerMetaArgsString = append(dockerMetaArgsString, fmt.Sprintf("%s=%v", key, value))
+		dockerTopLevelArgsHash[key] = value
+		dockerTopLevelArgsArray = append(dockerTopLevelArgsArray, fmt.Sprintf("%s=%v", key, value))
 	}
 
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
-	resolvedBaseName, err := shlex.ProcessWord(dockerTargetStage.BaseName, dockerMetaArgsString)
+	for _, arg := range dockerMetaArgs {
+		// skip predefined ARG value if defined by the user with args directive
+		if _, ok := dockerTopLevelArgsHash[arg.Key]; ok {
+			continue
+		}
+
+		resolvedValue, err := shlex.ProcessWord(arg.ValueString(), dockerTopLevelArgsArray)
+		if err != nil {
+			return nil, fmt.Errorf("resolve dockerfile ARG %s=%s failed: %s", arg.Key, arg.ValueString(), err)
+		}
+		dockerTopLevelArgsHash[arg.Key] = resolvedValue
+		dockerTopLevelArgsArray = append(dockerTopLevelArgsArray, fmt.Sprintf("%s=%s", arg.Key, resolvedValue))
+	}
+
+	resolvedBaseName, err := shlex.ProcessWord(dockerTargetStage.BaseName, dockerTopLevelArgsArray)
 	if err != nil {
 		return nil, err
 	}
@@ -1260,7 +1267,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			imageFromDockerfileConfig.Network,
 			imageFromDockerfileConfig.SSH,
 		),
-		stage.NewDockerStages(dockerStages, dockerArgsHash, dockerTargetIndex),
+		stage.NewDockerStages(dockerStages, dockerTopLevelArgsHash, dockerTopLevelArgsArray, dockerTargetIndex),
 		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, localGitRepo),
 		baseStageOptions,
 	)
