@@ -182,7 +182,7 @@ export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 
 #### WERF_REPO_IMPLEMENTATION
 
-Согласно процедуре [интеграции с Docker registry](#интеграция-с-docker-registry), команда [`werf ci-env`]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html) устанавливает параметр `--repo-implementation`, используя переменную окружения `WERF_REPO_IMPLEMENTATION`, вдобавок к [`WERF_REPO`](werf_repo).
+Согласно процедуре [интеграции с Docker registry](#интеграция-с-docker-registry), команда [`werf ci-env`]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html) устанавливает параметр `--repo-implementation`, используя переменную окружения `WERF_REPO_IMPLEMENTATION`, вдобавок к [`WERF_REPO`](#werf_repo).
 
 #### WERF_ENV
 

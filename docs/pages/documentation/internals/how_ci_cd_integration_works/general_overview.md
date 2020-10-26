@@ -176,7 +176,7 @@ As part of the [Docker registry integration](#docker-registry-integration) proce
 
 #### WERF_REPO_IMPLEMENTATION
 
-As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html) defines the `--repo-implementation` parameter using `WERF_REPO_IMPLEMENTATION` in addition to [`WERF_REPO`](werf_repo).
+As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html) defines the `--repo-implementation` parameter using `WERF_REPO_IMPLEMENTATION` in addition to [`WERF_REPO`](#werf_repo).
 
 #### WERF_ENV
 
