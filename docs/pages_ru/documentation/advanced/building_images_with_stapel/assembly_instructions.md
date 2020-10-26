@@ -51,14 +51,14 @@ summary: |
   <br/>
   <b>Запуск инструкций сборки при изменениях в git-репозитории</b>
 
-  <a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions2.png" data-featherlight="image">
-    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Запуск инструкций сборки при изменениях в git-репозитории">
   </a>
 ---
 
 ## Пользовательские стадии
 
-***Пользовательские стадии*** — это [_стадии_]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html) со сборочными инструкциями из [конфигурации]({{ site.baseurl}}/documentation/configuration/introduction.html#что-такое-конфигурация-werf). Другими словами, — это стадии, которые конфигурирует пользователь (существуют также служебные стадии, которые пользователь конфигурировать не может). В настоящее время существует два вида сборочных инструкций: _shell_ и _ansible_.
+***Пользовательские стадии*** — это [_стадии_]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html) со сборочными инструкциями из [конфигурации]({{ site.baseurl}}/documentation/reference/werf_yaml.html#секция-image). Другими словами, — это стадии, которые конфигурирует пользователь (существуют также служебные стадии, которые пользователь конфигурировать не может). В настоящее время существует два вида сборочных инструкций: _shell_ и _ansible_.
 
 werf поддерживает четыре _пользовательские стадии_, которые выполняются последовательно, в следующем порядке: _beforeInstall_, _install_, _beforeSetup_ и _setup_. В результате выполнения инструкций пользовательской стадии создается один Docker-слой. Т.е. по одному слою на каждую стадию, в независимости от количества инструкций.
 
@@ -185,7 +185,7 @@ shell:
 
 Сборочные инструкции _shell_ — это массив bash-команд для соответствующей _пользовательской стадии_. Все команды одной стадии выполняются как одна инструкция `RUN` в Dockerfile, т.е. в результате создается один слой на каждую _пользовательскую стадию_.
 
-werf при сборке использует собственный исполняемый файл bash и вам не нужно отдельно добавлять его в образ (или [базовый образ]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html)) при сборке.
+werf при сборке использует собственный исполняемый файл bash и вам не нужно отдельно добавлять его в образ (или [базовый образ]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html)) при сборке.
 
 Пример описания стадии _beforeInstall_ содержащей команды `apt-get update` и `apt-get install`:
 
@@ -318,7 +318,7 @@ $ ansible-playbook /.werf/ansible-workdir/playbook.yml
 
 ### Копирование файлов
 
-Предпочтительный способ копирования файлов в образ — использование [_git mapping_]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html). 
+Предпочтительный способ копирования файлов в образ — использование [_git mapping_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/git_directive.html). 
 werf не может определять изменения в копируемых файлах при использовании модуля `copy`. 
 Единственный вариант копирования внешнего файла в образ на текущий момент — использовать метод `.Files.Get` Go-шаблона. 
 Данный метод возвращает содержимое файла как строку, что дает возможность использовать содержимое как часть _пользовательской стадии_. 
@@ -400,7 +400,7 @@ _Сигнатура пользовательских стадий_ и соотв
 - в инструкциях сборки
 - в директивах семейства _cacheVersion_
 - в git-репозитории (или git-репозиториях)
-- в файлах, импортируемых из [артефактов]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html)
+- в файлах, импортируемых из [артефактов]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html)
 
 Первые три описанных варианта зависимостей, рассматриваются подробно далее.
 
@@ -469,11 +469,11 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 ## Зависимость от изменений в git-репозитории
 
-<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
+<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
   </a>
 
-Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/configuration/stapel_image/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 
+Как описывалось в статье про [_git mapping_]({{ site.baseurl}}/documentation/advanced/building_images_with_stapel/git_directive.html), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 
 Стадия _gitArchive_ выполняется после пользовательской стадии _beforeInstall_, а стадия _gitLatestPatch_ после пользовательской стадии _setup_, если в локальном git-репозитории есть изменения. 
 Таким образом, чтобы выполнить сборку с последней версией исходного кода, можно пересобрать стадию _beforeInstall_, изменив значение директивы _cacheVersion_ либо изменив сами инструкции стадии _beforeInstall_.
 
@@ -508,7 +508,7 @@ git:
 
 Для каждой _пользовательской стадии_ werf создает список подпадающих под маску файлов и вычисляет контрольную сумму каждого файла с учетом его аттрибутов и содержимого. Эти контрольные суммы являются частью _сигнатуры стадии_, поэтому любое изменение файлов в репозитории, подпадающее под маску, приводит к изменениям _сигнатуры стадии_. К этим изменениям относятся: изменение атрибутов файла, изменение содержимого файла, добавление или удаление подпадающего под маску файла и т.п.
 
-При применении маски указанной в `git.stageDependencies` учитываются значения параметров `git.includePaths` и `git.excludePaths` (смотри подробнее про них в соответствующем [разделе]({{site.baseurl}}/documentation/configuration/stapel_image/git_directive.html#использование-фильтров). werf считает подпадающими под маску только файлы удовлетворяющие фильтру `includePaths` и подпадающие под маску `stageDependencies`. Аналогично, werf считает подпадающими под маску только файлы не удовлетворяющие фильтру `excludePaths` и не подпадающие под маску `stageDependencies`.
+При применении маски указанной в `git.stageDependencies` учитываются значения параметров `git.includePaths` и `git.excludePaths` (смотри подробнее про них в соответствующем [разделе]({{site.baseurl}}/documentation/advanced/building_images_with_stapel/git_directive.html#использование-фильтров). werf считает подпадающими под маску только файлы удовлетворяющие фильтру `includePaths` и подпадающие под маску `stageDependencies`. Аналогично, werf считает подпадающими под маску только файлы не удовлетворяющие фильтру `excludePaths` и не подпадающие под маску `stageDependencies`.
 
 Правила описания маски в параметре `stageDependencies` аналогичны описанию параметров `includePaths` и `excludePaths`. Маска определяет шаблон для файлов и путей, и может содержать следующие шаблоны:
 
@@ -589,7 +589,7 @@ shell:
 
 ### Пример использования внешних зависимостей
 
-Параметры _CacheVersion_ можно использовать совместно с [шаблонами Go]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates), чтобы определить зависимость _пользовательской стадии_ от файлов, не находящихся в git-репозитории.
+Параметры _CacheVersion_ можно использовать совместно с [шаблонами Go]({{ site.baseurl }}/documentation/advanced/configuration/supported_go_templates.html#шаблоны-go), чтобы определить зависимость _пользовательской стадии_ от файлов, не находящихся в git-репозитории.
 
 {% raw %}
 ```yaml

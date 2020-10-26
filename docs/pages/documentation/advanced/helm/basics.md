@@ -367,7 +367,7 @@ The environment is a required parameter for deploying and should be specified ei
 
 ### Release name
 
-The release name is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#project-name) and `[[ env ]]` refers to the specified or detected environment.
+The release name is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/reference/werf_yaml.html#project-name) and `[[ env ]]` refers to the specified or detected environment.
 
 For example, for the project named `symfony-demo`, the following Helm Release names can be constructed depending on the environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -386,7 +386,7 @@ This is the default behavior. You can disable it by [setting `deploy.helmRelease
 
 ### Kubernetes namespace
 
-The Kubernetes namespace is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) and `[[ env ]]` refers to the environment.
+The Kubernetes namespace is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ site.baseurl }}/documentation/reference/werf_yaml.html#project-name) and `[[ env ]]` refers to the environment.
 
 For example, for the project named `symfony-demo`, there can be the following Kubernetes namespaces depending on the environment specified:
 
@@ -417,9 +417,9 @@ When running the `werf deploy` command, werf starts the deployment process that 
 
 **NOTE:** werf would delete all newly created resources immediately during the ongoing deploy process if this process fails at any of the steps described above!
 
-When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#configuring-resource-tracking) for each hook resource.
+When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#configure-resource-tracking) for each hook resource.
 
-On step 5, werf would track all release resources until each resource reaches the "ready" state. All resources are tracked simultaneously. During tracking, werf aggregates information obtained from all release resources into the single text output in real-time, and periodically prints the so-called status progress table. Tracking [can be configured](#configuring-resource-tracking) for each resource.
+On step 5, werf would track all release resources until each resource reaches the "ready" state. All resources are tracked simultaneously. During tracking, werf aggregates information obtained from all release resources into the single text output in real-time, and periodically prints the so-called status progress table. Tracking [can be configured](#configure-resource-tracking) for each resource.
 
 werf displays logs of resource Pods until those pods reach the "ready" state. In the case of Job pods, logs are shown until Pods are terminated.
 
@@ -428,10 +428,6 @@ werf uses the [kubedog library](https://github.com/werf/kubedog) to track resour
 ### If the deploy failed
 
 In the case of failure during the release process, werf would create a new release having the FAILED state. This state can then be inspected by the user to find the problem and solve it on the next deploy invocation.
-
-On the next deploy invocation, werf would roll back the release to the last successful version. During the rollback, all release resources will be restored to the previous working version before applying any new changes to the resource manifests.
-
-This rollback step will be abandoned when a [3-way-merge method](#method-of-applying-changes) of applying changes will be implemented.
 
 ### Helm hooks
 

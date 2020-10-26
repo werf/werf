@@ -28,7 +28,7 @@ werf не поддерживает изменение имени проекта 
 
 ### Имя релиза
 
-werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза) для генерации имени релиза:
+werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/documentation/advanced/helm/basics.html#имя-релиза) для генерации имени релиза:
 
 ```yaml
 project: PROJECT_NAME
@@ -49,13 +49,13 @@ deploy:
 ```
 {% endraw %}
 
-`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#слагификация-имени-релиза) имени Helm-релиза (включен по умолчанию).
+`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/advanced/helm/basics.html#слагификация-имени-релиза) имени Helm-релиза (включен по умолчанию).
 
 ### Namespace в Kubernetes 
 
-werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) для генерации имени namespace.
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/documentation/advanced/helm/basics.html#namespace-в-kubernetes) для генерации имени namespace.
 
-Пользовательский шаблон namespace Kubernetes определяется в [секции мета-информации]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации) в файле `werf.yaml`:
+Пользовательский шаблон namespace Kubernetes определяется в секции мета-информации в файле `werf.yaml`:
 
 ```yaml
 project: PROJECT_NAME
@@ -67,13 +67,13 @@ deploy:
 
 В качестве значения для `deploy.namespace` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени namespace по умолчанию: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#слагификация-namespace-kubernetes) имени namespace Kubernetes. Включен по умолчанию.
+`deploy.namespaceSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/advanced/helm/basics.html#слагификация-namespace-kubernetes) имени namespace Kubernetes. Включен по умолчанию.
 
 ## Очистка
 
 ## Конфигурация политик очистки
 
-Конфигурация очистки состоит из набора политик, `keepPolicies`, по которым выполняется выборка значимых образов на основе истории git. Таким образом, в результате [очистки]({{ site.baseurl }}/documentation/reference/cleaning_process.html#алгоритм-работы-очистки-по-истории-git) __неудовлетворяющие политикам образы удаляются__.
+Конфигурация очистки состоит из набора политик, `keepPolicies`, по которым выполняется выборка значимых образов на основе истории git. Таким образом, в результате [очистки]({{ site.baseurl }}/documentation/advanced/cleanup.html#алгоритм-работы-очистки-по-истории-git) __неудовлетворяющие политикам образы удаляются__.
 
 Каждая политика состоит из двух частей: 
 - `references` определяет множество references, git-тегов или git-веток, которые будут использоваться при сканировании.
@@ -202,7 +202,7 @@ image: [main-front,main-back]
 
 Имя образа требуется при использовании в helm-шаблонах, а также при запуске команд для определённого образа, описанного в `werf.yaml`.
 
-### Dockerfile сборщик
+### Сборщик Dockerfile
 
 Сборка образа с использованием имеющегося Dockerfile — самый простой путь начать использовать werf в существующем проекте. Ниже приведен пример минимального файла `werf.yaml`, описывающего образ `example` проекта:
 

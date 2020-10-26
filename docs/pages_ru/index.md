@@ -149,7 +149,7 @@ layout: default
                     werf — это зрелый, надежный<br>
                     инструмент, которому можно доверять
                 </div>
-                <a href="{{ site.baseurl }}/installation.html#all-changes-in-werf-go-through-all-stability-channels" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                <a href="{{ site.baseurl }}/installation.html#все-изменения-в-werf-проходят-через-цепочку-каналов-стабильности" class="page__btn page__btn_b page__btn_small page__btn_inline">
                     Подробнее об уровнях стабильности и релизах
                 </a>
             </div>

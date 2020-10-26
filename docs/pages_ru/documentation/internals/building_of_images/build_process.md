@@ -9,7 +9,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ## Dockerfile-образ
 
-werf использует Dockerfile как главный способ описания того, как должен быть собран образ. Образ, собранный из Dockerfile далее будет упоминаться как **Dockerfile-образ** (более подробно об использовании Dockerfile-образа читай в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html)).
+werf использует Dockerfile как главный способ описания того, как должен быть собран образ. Образ, собранный из Dockerfile далее будет упоминаться как **Dockerfile-образ** (более подробно об использовании Dockerfile-образа читай в [соответствующем разделе]({{ site.baseurl }}/documentation/reference/werf_yaml.html#сборщик-dockerfile)).
 
 ### Как собирается Dockerfile-образ
 
@@ -22,7 +22,7 @@ werf использует Dockerfile как главный способ опис
  3. Если образ с такой сигнатурой отсутствует в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий), то werf запускает обычную сборку образа с помощью Docker, используя стандартные команды встроенного в Docker клиента (это аналогично выполнению команды `docker build`). Кэш, создаваемый при сборке используется как и при обычной сборке без помощи werf.
  4. После сборки стадии, werf помещает ее в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий) (при этом тегируя соответствующий Docker-образ сигнатурой стадии), если используется параметр [`--stages-storage :local`]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий).
 
-Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html).
+Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/reference/werf_yaml.html#сборщик-dockerfile).
 
 ## Stapel-образ и Stapel-артефакт
 
@@ -35,7 +35,7 @@ werf использует Dockerfile как главный способ опис
 
 Образ, собранный с помощью сборщика Stapel далее будет упоминаться как **Stapel-образ** или **Stapel-артефакт** в зависимости от контекста.
 
-Читай более подробно про [Stapel-образ]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) и [Stapel-артефакт]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html) в соответствующих разделах.
+Читай более подробно про [Stapel-образ]({{ site.baseurl }}/documentation/reference/werf_yaml.html#секция-image) и [Stapel-артефакт]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html) в соответствующих разделах.
 
 ### Как происходит сборка Stapel-образа и Stapel-артефакта
 
@@ -47,13 +47,13 @@ werf использует Dockerfile как главный способ опис
 
 werf запускает в сборочном контейнере инструкции из подготовленного списка, и сохраняет результат в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий).
 
-werf использует специальный сервисный образ `flant/werf-stapel` содержащий инструменты и библиотеки, необходимые для сборки Stapel-образа или Stapel-артефакта. Подробнее о самом образе Stapel читай в [соответствующей статье]({{ site.baseurl }}/documentation/development/stapel.html).
+werf использует специальный сервисный образ `flant/werf-stapel` содержащий инструменты и библиотеки, необходимые для сборки Stapel-образа или Stapel-артефакта. Подробнее о самом образе Stapel читай в [соответствующей статье]({{ site.baseurl }}/documentation/internals/development/stapel_image.html).
 
 Сервисный образ `flant/werf-stapel` монтируется в каждый сборочный контейнер, и все инструменты Stapel доступны при сборке на любой стадии.
 
 ### Как сборщик Stapel работает с CMD и ENTRYPOINT
 
-Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT` а затем, заменяет их значениями [базового образа]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
+Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT` а затем, заменяет их значениями [базового образа]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 * `[]` для `CMD`;
 * `[""]` для `ENTRYPOINT`.
 

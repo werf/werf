@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Running assembly instructions with git</b>
 
-  <a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions2.png" data-featherlight="image">
-    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions2_preview.png" alt="Running assembly instructions with git">
+  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Running assembly instructions with git">
   </a>
 ---
 
@@ -373,7 +373,7 @@ You can use these dependencies to shape the rebuilding process of _user stages_.
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifact.html)
+- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html)
 
 The first three dependencies are described below in more detail.
 
@@ -441,8 +441,8 @@ In other words, the contents of assembly instructions will change with each subs
 
 ## Dependency on changes in the git repo
 
-<a class="google-drawings" href="{{ site.baseurl }}/images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="{{ site.baseurl }}/images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
+<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
   </a>
 
 The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
@@ -557,7 +557,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml

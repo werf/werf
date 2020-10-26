@@ -13,6 +13,7 @@ channels:
   - stable
   - rock-solid
 ---
+
 {%- asset installation.css %}
 
 <div class="page__container page_installation">
@@ -78,7 +79,7 @@ channels:
       <div class="docs">
 <div class="details">
 <div id="details_link">
-<h2><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
+<h2 name="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
 </div>
 <div class="details__content" markdown="1">
 {% include en/installation/multiwerf_dependencies.md %}
@@ -177,7 +178,7 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title">
+    <h2 class="installation-channels__title" name="all-changes-in-werf-go-through-all-stability-channels">
       All changes in werf<br>
       go through all stability channels
     </h2>
@@ -248,7 +249,7 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
     </div>
   </div>
   <div class="installation-compatibility">
-    <h2 class="installation-compatibility__title">Backward compatibility promise</h2>
+    <h2 class="installation-compatibility__title" name="backward-compatibility-promise">Backward compatibility promise</h2>
 <div markdown="1" class="docs">
 {% include en/installation/backward-compatibility.md %}
 </div>
