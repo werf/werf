@@ -409,7 +409,16 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLogDebug(cmdData, cmd)
 	setupLogVerbose(cmdData, cmd)
-	setupLogQuiet(cmdData, cmd)
+	setupLogQuiet(cmdData, cmd, false)
+	setupLogColor(cmdData, cmd)
+	setupLogPretty(cmdData, cmd)
+	setupTerminalWidth(cmdData, cmd)
+}
+
+func SetupLogOptionsDefaultQuiet(cmdData *CmdData, cmd *cobra.Command) {
+	setupLogDebug(cmdData, cmd)
+	setupLogVerbose(cmdData, cmd)
+	setupLogQuiet(cmdData, cmd, true)
 	setupLogColor(cmdData, cmd)
 	setupLogPretty(cmdData, cmd)
 	setupTerminalWidth(cmdData, cmd)
@@ -462,16 +471,22 @@ Supported on, off and auto (based on the stdout’s file descriptor referring to
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
-func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command) {
+func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command, isDefaultQuiet bool) {
 	cmdData.LogQuiet = new(bool)
 
-	var defaultValue bool
+	var defaultValue = isDefaultQuiet
+
 	for _, envName := range []string{
 		"WERF_LOG_QUIET",
 		"WERF_QUIET",
 	} {
 		if os.Getenv(envName) != "" {
-			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			if defaultValue {
+				defaultValue = GetBoolEnvironmentDefaultTrue(envName)
+			} else {
+				defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			}
+
 			break
 		}
 	}
@@ -959,12 +974,45 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	}
 
 	if *cmdData.LogQuiet {
+		logboek.SetAcceptedLevel(level.Error)
 		logboek.Streams().Mute()
 	} else if *cmdData.LogDebug {
 		logboek.SetAcceptedLevel(level.Debug)
 		logboek.Streams().EnablePrefixWithTime()
 		logboek.Streams().SetPrefixStyle(style.Details())
 	} else if *cmdData.LogVerbose {
+		logboek.SetAcceptedLevel(level.Info)
+	}
+
+	if !*cmdData.LogPretty {
+		logboek.Streams().DisablePrettyLog()
+		logging.DisablePrettyLog()
+	}
+
+	if err := ProcessLogTerminalWidth(cmdData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ProcessLogOptionsDefaultQuiet(cmdData *CmdData) error {
+	if !*cmdData.LogQuiet {
+		logboek.Streams().Unmute()
+		logboek.SetAcceptedLevel(level.Default)
+	}
+
+	if err := ProcessLogColorMode(cmdData); err != nil {
+		return err
+	}
+
+	if *cmdData.LogDebug {
+		logboek.Streams().Unmute()
+		logboek.SetAcceptedLevel(level.Debug)
+		logboek.Streams().EnablePrefixWithTime()
+		logboek.Streams().SetPrefixStyle(style.Details())
+	} else if *cmdData.LogVerbose {
+		logboek.Streams().Unmute()
 		logboek.SetAcceptedLevel(level.Info)
 	}
 
