@@ -52,7 +52,6 @@ jobs:
         if: matrix.lang == 'ru'
         run: |
           cd docs
-          #cp -rf pages/cli pages_ru
           bundle exec jekyll build --config _config.yml,_config_ru.yml
 
       - name: Build (en)
@@ -64,10 +63,10 @@ jobs:
       - name: Check links
         run: |
           cd docs
-          #bundle exec htmlproofer \
-          #--allow-hash-href \
-          #--empty-alt-ignore \
-          #--check_html \
-          #--url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/,/twitter.com/,/example.com/,/dothings.sh/" \
-          #--url_swap  "https\://ru.werf.io:,https\://werf.io:" \
-          #./_site/
+          bundle exec htmlproofer \
+          --allow-hash-href \
+          --empty-alt-ignore \
+          --check_html \
+          --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/" \
+          --url_swap  "https\://ru.werf.io:,https\://werf.io:" \
+          ./_site/

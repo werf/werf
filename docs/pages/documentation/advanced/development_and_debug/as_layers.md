@@ -1,5 +1,5 @@
 ---
-title: Caching each instruction separately with asLayers
+title: As layers
 sidebar: documentation
 permalink: documentation/advanced/development_and_debug/as_layers.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
@@ -8,6 +8,8 @@ summary: |
   </code></pre>
   </div>
 ---
+
+In this stage we describe the ability to cache each instruction separately with `asLayers` directive.
 
 User stages, `beforeInstall`, `install`, `beforeSetup`, `setup`, depend upon the appropriate instructions in the configuration. Any modification in _stage_ instructions leads to re-assembling the appropriate _stage_ with all instructions. Therefore, if the instructions are heavy and time-consuming, development of the configuration may take much time.
 

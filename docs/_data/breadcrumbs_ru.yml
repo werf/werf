@@ -1,6 +1,6 @@
 /documentation:
-  title: Documentation
+  title: Документация
   url: /documentation/index.html
 /documentation/reference/cli:
   title: Интерфейс командной строки
-  url: /documentation/reference/cli/index.html
+  url: /documentation/reference/cli/overview.html

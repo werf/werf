@@ -8,11 +8,11 @@ summary: |
   </a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
   </div>
 
-  <div id="shell" class="tabs__content active">
+  <div id="shell_tab" class="tabs__content active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
@@ -30,7 +30,7 @@ summary: |
     </div>
   </div>
 
-  <div id="ansible" class="tabs__content">
+  <div id="ansible_tab" class="tabs__content">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
@@ -373,7 +373,7 @@ You can use these dependencies to shape the rebuilding process of _user stages_.
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifact.html)
+- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html)
 
 The first three dependencies are described below in more detail.
 
@@ -557,7 +557,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/image_directives.html) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml

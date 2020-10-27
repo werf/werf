@@ -17,9 +17,7 @@ This article contains description of annotations which control werf tracking of 
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
 
-More info about chart templates and other stuff is available in the [deploy basics article.]({{ site.baseurl }}/documentation/deploy/basics.html)
-
-See also [demo examples]({{ site.baseurl }}/documentation/deploy/basics.html#configuring-resource-tracking) of using annotations.
+More info about chart templates and other stuff is available in the [deploy basics article.]({{ site.baseurl }}/documentation/advanced/helm/basics.html)
 
 ## Track termination mode
 

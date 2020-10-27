@@ -1,9 +1,7 @@
 ---
-title: Guides WIP
+title: Guides
 permalink: documentation/guides.html
 sidebar: documentation
 ---
 
-Guides section is **under development now**.
-
-Current progress is available at [this address](https://ru.werf.io/applications_guide_ru) (in russian only).
+Guides section is **under development now**. Current progress is available at [this address](https://ru.werf.io/applications_guide_ru) (in russian only).

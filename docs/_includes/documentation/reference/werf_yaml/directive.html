@@ -6,7 +6,12 @@
 {% assign directiveClasses = '' | split: '' %}
 {% endif %}
 
-{{/* Prepare directive ID */}}
+{% if include.directiveCollapsedClasses %}
+{% assign directiveCollapsedClasses = include.directiveCollapsedClasses %}
+{% else %}
+{% assign directiveCollapsedClasses = '' | split: '' %}
+{% endif %}
+
 {% assign directiveIDParts = '' | split: '' %}
 {% assign directiveIDParts = directiveIDParts | concat: directiveClasses %}
 {% if include.elmIndex %}
@@ -19,20 +24,20 @@
 
 {% if directive.collapsible and (directive.directives or directive.directiveList) %}
 {% assign shouldAddBtn = true %}
+{% assign directiveCollapsedClass = "collapsed" | append: "-" | append: directiveID | append: "-" | append: include.indent %}
 {% else %}
 {% assign shouldAddBtn = false %}
 {% endif %}
 
-{{/* Render directive */}}
-<tr id="{{ directiveID }}" class="{{ directiveClasses | join: ' ' }}">
+<tr id="{{ directiveID }}" class="{{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }}">
     <td>
-        {%- if include.indent > 1 %}{% for i in (1..include.indent) %}&nbsp;&nbsp;{% endfor %}{% endif -%}
+        {% for i in (2..include.indent) %}&nbsp;&nbsp;{% endfor %}
         {%- if include.isElm and include.elmIndex == 1 %}-&nbsp;{% elsif include.isAttr or include.isElm %}&nbsp;&nbsp;{% endif -%}
 
         <span style="color: #008080;">{{ directive.name }}</span>:
 
         {%- if directive.value %} <span style="color: #d14;">{{ directive.value | escape }}</span>{% endif -%}
-        {%- if shouldAddBtn %} <span id="{{ directiveID }}-btn" class="btn">(-)</span>{% endif -%}
+        {%- if shouldAddBtn %} <span id="{{ directiveID }}-btn" class="btn">{% if directive.isCollapsedByDefault %}(+){% else %}(-){% endif %}</span>{% endif -%}
         {%- if directive.required %} <i style="float: right;">required</i>{% endif -%}
 
         {% if shouldAddBtn %}
@@ -41,34 +46,58 @@
             $( this ).text(function(i, oldText) {
                 return oldText === '(+)' ? '(-)' : '(+)';
             });
-            $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggle();
-        });
 
-        {% if directive.isCollapsedByDefault %}
-            $( document ).ready(function() {
-                $( "#{{ directiveID }}-btn" ).click()
-            });
-        {% endif %}
+            $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}", $( this ).text() === '(+)');
+        });
         </script>
         {% endif %}
     </td>
     <td>
         <span>
+            {% if page.lang == "en" %}
+            {% assign defaultText = "default" %}
+            {% assign moreDetailsText = "More details" %}
+            {% assign moreDetailsHereText = "here" %}
+            {% elsif page.lang == "ru" %}
+            {% assign defaultText = "значение по умолчанию" %}
+            {% assign moreDetailsText = "Подробнее" %}
+            {% assign moreDetailsHereText = "здесь" %}
+            {% endif %}
+
             {{ directive.description }}
-            {%- if directive.default %} (default <code class="language-plaintext highlighter-rouge">{{ directive.default | escape }}</code>){% endif -%}
-            {%- if directive.details %}. More details <a href="{{ directive.details }}">here</a>{% endif -%}
+            {%- if directive.default %} ({{ defaultText }} <code class="language-plaintext highlighter-rouge">{{ directive.default | escape }}</code>){% endif -%}
+            {% for link in directive.detailsCustomLinks %}
+            {%- if link.anchor %}. <a href="{{ link.anchor }}">{{ link.text }}</a>
+            {%- elsif link.article %}. <a href="{{ site.baseurl }}{{ link.article }}">{{ link.text }}</a>
+            {%- elsif link.link %}. <a href="{{ link.link }}">{{ link.text }}</a>{% endif -%}
+            {% endfor %}
+            {%- if directive.detailsAnchor %}. {{ moreDetailsText }} <a href="{{ directive.detailsAnchor }}">{{ moreDetailsHereText }}</a>
+            {%- elsif directive.detailsArticle %}. {{ moreDetailsText }} <a href="{{ site.baseurl }}{{ directive.detailsArticle }}">{{ moreDetailsHereText }}</a>
+            {%- elsif directive.detailsLink %}. {{ moreDetailsText }} <a href="{{ directive.detailsLink }}">{{ moreDetailsHereText }}</a>{% endif -%}
         </span>
     </td>
 </tr>
 
+{% if directive.isCollapsedByDefault %}
+{% assign directiveCollapsedClasses = directiveCollapsedClasses | push: directiveCollapsedClass %}
+{% endif %}
+
 {%- if directive.directives %}
 {% for directive in directive.directives %}
 {% assign nestedElmIndent = include.indent | plus: 1 %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isAttr=true directiveClasses=directiveClasses %}
+{% assign nestedDirectiveClasses = directiveClasses %}
+{% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
+{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isAttr=true directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% assign directiveClasses = nestedDirectiveClasses %}
+{% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
 {% endfor %}
 {% elsif directive.directiveList %}
 {% for directive in directive.directiveList %}
 {% assign nestedElmIndent = include.indent | plus: 1 %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isElm=true elmIndex=forloop.index directiveClasses=directiveClasses %}
+{% assign nestedDirectiveClasses = directiveClasses %}
+{% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
+{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isElm=true elmIndex=forloop.index directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% assign directiveClasses = nestedDirectiveClasses %}
+{% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
 {% endfor %}
 {% endif -%}

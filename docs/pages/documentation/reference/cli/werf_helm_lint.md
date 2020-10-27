@@ -1,6 +1,6 @@
 ---
 title: werf helm lint
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_lint.html
 ---
 

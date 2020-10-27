@@ -13,6 +13,7 @@ channels:
   - stable
   - rock-solid
 ---
+
 {%- asset installation.css %}
 
 <div class="page__container page_installation">
@@ -48,7 +49,7 @@ channels:
       <div class="installation-selector__title">OS</div>
       <div class="tabs">
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="unix">Unix</a>
+          data-install-tab-group="os" data-install-tab="linux">Linux</a>
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -76,55 +77,85 @@ channels:
         for <span data-install-info="os"></span> by <span data-install-info="method"></span>
       </h1>
       <div class="docs">
-<div markdown="1">
-{% include installation/multiwerf_dependencies.md %}
-## Installing werf
+<div class="details">
+<div id="details_link">
+<h2 name="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
 </div>
-        <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
-          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="unix">
-            {% for version in page.versions %}
-              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
-                {% for channel in page.channels %}
-                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% endfor %}
-          </div><!-- /os -->
-          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
-            {% for version in page.versions %}
-              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
-                {% for channel in page.channels %}
-                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_unix.md version=version channel=channel %}</div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% endfor %}
-          </div><!-- /os -->
-          <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
-            {% for version in page.versions %}
-              <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
-                {% for channel in page.channels %}
-                  <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include installation/multiwerf_windows.md version=version channel=channel %}</div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% endfor %}
-          </div><!-- /os -->
-<div markdown="1">
-{% include installation/multiwerf_usage.md %}
+<div class="details__content" markdown="1">
+{% include en/installation/multiwerf_dependencies.md %}
+</div>
+</div>
+<h2>Install werf</h2>
+<div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
+<h3>Installing multiwerf</h3>
+<div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include en/installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div class="details">
+<div id="details_link">
+<h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
+</div>
+<div class="details__content" markdown="1">
+{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+</div>
+</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div><!-- /os -->
+<div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include en/installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div class="details">
+<div id="details_link">
+<h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
+</div>
+<div class="details__content" markdown="1">
+{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+</div>
+</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div><!-- /os -->
+<div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+<div markdown="1">{% include en/installation/multiwerf_windows.md version=version channel=channel %}</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div><!-- /os -->
+
+<div class="details">
+<div id="details_link">
+
+<h2><a href="javascript:void(0)" class="details__summary">How it works?</a></h2>
+
+</div>
+<div class="details__content" markdown="1">
+{% include en/installation/how_it_works.md %}
+</div>
 </div>
       </div><!-- /method -->
       <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
 <div markdown="1">
-The latest release can be found at [this page](https://bintray.com/flant/werf/werf/_latestVersion)
+The latest release can be found [at this page](https://bintray.com/flant/werf/werf/_latestVersion)
 </div>
-        <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="unix">
+        <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
 <div markdown="1">
-{% include installation/binary_unix.md %}
+{% include installation/binary_linux.md %}
 </div>
         </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
@@ -147,7 +178,7 @@ The latest release can be found at [this page](https://bintray.com/flant/werf/we
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title">
+    <h2 class="installation-channels__title" name="all-changes-in-werf-go-through-all-stability-channels">
       All changes in werf<br>
       go through all stability channels
     </h2>
@@ -218,9 +249,9 @@ The latest release can be found at [this page](https://bintray.com/flant/werf/we
     </div>
   </div>
   <div class="installation-compatibility">
-    <h2 class="installation-compatibility__title">Backward compatibility promise</h2>
+    <h2 class="installation-compatibility__title" name="backward-compatibility-promise">Backward compatibility promise</h2>
 <div markdown="1" class="docs">
-{% include installation/backward-compatibility.md %}
+{% include en/installation/backward-compatibility.md %}
 </div>
   </div>
 </div>

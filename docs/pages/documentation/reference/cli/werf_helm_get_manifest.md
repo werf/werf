@@ -1,6 +1,6 @@
 ---
 title: werf helm get manifest
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_get_manifest.html
 ---
 

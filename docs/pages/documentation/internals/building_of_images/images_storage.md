@@ -1,8 +1,7 @@
 ---
-title: Stages and Images
+title: Images storage
 sidebar: documentation
 permalink: documentation/internals/building_of_images/images_storage.html
-author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 
 We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.
@@ -24,20 +23,20 @@ The werf assembly process involves a sequential build of stages using the _stage
 </div>
 
 <div id="dockerfile-image-tab" class="tabs__content active">
-<a class="google-drawings" href="../../images/reference/stages_and_images1.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images1_preview.png">
+<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images1.png" data-featherlight="image">
+<img src="{{ site.baseurl }}/images/reference/stages_and_images1_preview.png">
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
-<a class="google-drawings" href="../../images/reference/stages_and_images2.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images2_preview.png" >
+<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images2.png" data-featherlight="image">
+<img src="{{ site.baseurl }}/images/reference/stages_and_images2_preview.png" >
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="../../images/reference/stages_and_images3.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images3_preview.png">
+<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images3.png" data-featherlight="image">
+<img src="{{ site.baseurl }}/images/reference/stages_and_images3_preview.png">
 </a>
 </div>
 
@@ -58,8 +57,8 @@ being reused for totally different branches, [see stage selection algorithm]({{ 
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
-<a class="google-drawings" href="../../images/reference/stages_and_images4.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images4_preview.png">
+<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images4.png" data-featherlight="image">
+<img src="{{ site.baseurl }}/images/reference/stages_and_images4_preview.png">
 </a>
 
 ## Stage dependencies
@@ -73,7 +72,7 @@ _Stage dependency_ is a piece of data that affects the stage _digest_. Stage dep
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/internals/building_images_with_stapel/artifact.html) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
@@ -289,4 +288,4 @@ User may force arbitrary non-default address of synchronization service componen
 
 ## Further reading
 
-Learn more about the [build process of stapel and Dockerfile builders]({{ site.baseurl }}/documentation/reference/build_process.html).
+Learn more about the [build process of stapel and Dockerfile builders]({{ site.baseurl }}/documentation/internals/building_of_images/build_process.html).

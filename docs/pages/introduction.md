@@ -4,106 +4,178 @@ permalink: introduction.html
 sidebar: documentation
 ---
 
-Werf is a CLI tool to implement full cycle of deployment of your application using Git as a single source of truth. Werf supports:
- - Building of docker images.
- - Deploying of the application into Kubernetes.
- - Making sure application is up and running well after deploy.
- - Rebuilding of docker images when application code changes.
- - Redeploying of the application into Kubernetes when necessary.
- - Cleaning up old unused images.
+{% asset introduction.css %}
+{% asset introduction.js %}
 
-## Define the desired state in the Git
+## What is werf?
 
-Werf configuration should be described in the application Git repository, right where application code resides.
+werf is a CLI tool for implementing a full deployment cycle for your application using Git as a single source of truth. werf can:
 
-   ![define-desired-state-1]({% asset introduction/define-desired-state-1.png @path %})   
+ - Build docker images.
+ - Deploy the application into the Kubernetes cluster.
+ - Make sure the application is up and running well after the deploy is complete.
+ - Re-build docker images when application code changes.
+ - Re-deploy the application into the Kubernetes cluster when necessary.
+ - Clean up irrelevant and unused images.
 
-1. Put Dockerfiles into application repo
+## How it works?
 
-   ![define-desired-state-2]({% asset introduction/define-desired-state-2.png @path %})
+<div id="introduction-presentation" class="introduction-presentation">
+    <div class="introduction-presentation__container">
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/dds-1.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                werf configuration should be stored in the application Git repository along with the application code.
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/dds-2.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    1. Put Dockerfiles into the application repository
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/dds-3.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    2. Create the <code>werf.yaml</code> configuration file
+                </div>
+<div markdown="1">
+Pay attention to the crucial `project` parameter that stores a _project name_ since werf will be using it  extensively during the _converge process_. Changing this name later, when your application is up and running, involves downtime, and requires re-deploying the application.
+</div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/dds-4.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    3. Describe helm chart templates to deploy your app
+                </div>
+<div markdown="1">
+`werf_image` is a special template function for generating the full name of the image that was built. This function has a name parameter that corresponds to the image defined in the `werf.yaml` (`"frontend"` or `"backend"` in our case).
+</div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/dds-5.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    4. Commit
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-1.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    5. Calculate configured images based on the current Git commit state.
+                </div>
+<div markdown="1">
+At this step, werf calculates the target image names. Image names may change or stay the same after the new commit is made depending on the changes in the Git repository. Note that each Git commit is associated with deterministic and reproducible image names.
+</div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-2.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    6. Read images that are already available in the Docker Registry.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-3.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    7. Calculate the difference between images required for the current Git commit state and those that are already available in the Docker Registry.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-4.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    8. Build and publish only those images that do not exist in the Docker Registry (if any).
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-5.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    9. Read the target configuration of Kubernetes resources based on the current Git commit state.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-6.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    10. Read the configuration of existing Kubernetes resources from the cluster.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-7.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    11. Calculate the difference between the target configuration of Kubernetes resources defined for the current Git commit state and the configuration of existing Kubernetes resources in the cluster.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-8.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    12. Apply changes (if any) to Kubernetes resources so that they conform to the state defined in the Git commit.
+                </div>
+            </div>
+        </div>
+        <div class="introduction-presentation__slide">
+            <img src="{% asset introduction/c-9.png @path %}"
+            class="introduction-presentation__slide-img" />
+            <div class="introduction-presentation__slide-text">
+                <div class="introduction-presentation__slide-title">
+                    13. Make sure all resources are ready to operate and report any errors immediately (with an option to roll back to the previous state if an error occurred).
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-2. Create `werf.yaml` configuration file
+## What is converge?
 
-    ![define-desired-state-3]({% asset introduction/define-desired-state-3.png @path %})
+**Converge** is the process of building docker images (and re-building them in response to changes), deploying an application into the Kubernetes cluster (and re-deploying it when necessary), and making sure that the application is up and running.
 
-    Pay attention to an important param `project`, which is a _project name_ — werf will use it during _converge process_. This name cannot be changed easily later when your application is up and running without downtime and redeploying of the application.
+The `werf converge` command starts the converging process. The command can be invoked by a user, by a CI/CD system, or by an operator in response to changes in the state of an application in Git. The behavior of the `werf converge` command is fully deterministic and transparent from the standpoint of the Git repository. After the converge is complete, your application will be up and running in the state defined in the target Git commit. Typically, to roll back your application to the previous version, you only need to run the converge on the corresponding earlier commit (werf will use correct images for this commit).
 
-3. Describe helm chart templates to deploy your app
-
-    ![define-desired-state-4]({% asset introduction/define-desired-state-4.png @path %})
-
-    `werf_image` is a special template function to generate the full image name which has been built (like `myregistry.domain.org/example-app:f6e683effe19ca5f81b3c6df0ce398dd2ba50f5a991cec47b63c31b8-1601390730191`). This function has name parameter which corresponds to the image defined in the `werf.yaml` (`"frontend"` or `"backend"` in our case).
-
-4. Commit
-
-    ![define-desired-state-5]({% asset introduction/define-desired-state-5.png @path %})
-
-## Converge your commit
-
-Next step is to _converge_ our Git commit that contains defined state of the application.
-
-Building of docker images (and rebuilding when something changes), deploying an application into the Kubernetes (and redeploying when necessary) and making sure application is up and running after deploying we will call a **converge process**.
-
-Converge process is called for certain Git commit to perform synchronization of running application with the configuration defined in this commit. When converge process is done successfully it is safe to assume that your application is up and running and conforms to the state defined in the current Git commit.
-
-Converge process goes through the following steps:
-
-1. Calculate configured images from current Git commit state. During this step werf calculates needed images names. Images names may change or not change from one commit to another depending on the changes made into the Git repo. It is important to know, that each Git commit will have deterministic reproducible images names.
-
-    ![converge-1]({% asset introduction/converge-1.png @path %})
-
-2. Read images existing in the Docker Registry.
-
-    ![converge-2]({% asset introduction/converge-2.png @path %})
-
-3. Calculate the difference between images needed for current Git commit state and images which are already exist in the Docker Registry.
-
-    ![converge-3]({% asset introduction/converge-3.png @path %})
-
-4. Build and publish only those images which do not exist in the Docker Registry (if any).
-
-    ![converge-4]({% asset introduction/converge-4.png @path %})
-
-5. Read needed configuration of Kubernetes resources from current Git commit state.
-
-    ![converge-5]({% asset introduction/converge-5.png @path %})
-
-6. Read configuration of existing Kubernetes resources from the cluster.
-
-    ![converge-6]({% asset introduction/converge-6.png @path %})
-
-7. Calculate the difference between needed configuration of Kubernetes resources defined for current Git commit state and configuration of existing Kubernetes resources of the cluster.
-
-    ![converge-7]({% asset introduction/converge-7.png @path %})
-
-8. Apply needed changes (if any) to the Kubernetes resources to conform with the state defined in the Git commit.
-
-    ![converge-8]({% asset introduction/converge-8.png @path %})
-
-9. Make sure all resources are ready to work and report any errors immediately (optionally rollback to the previous state if error occurred).
-
-    ![converge-9]({% asset introduction/converge-9.png @path %})
-
-### Converge command
-
-Werf implements converge process by `werf converge` command. Converge command should be called either manually, by CI/CD system or operator when a state of the application has been altered in the Git. Run following command in the root of your project:
+Run the following command in the root of your project to converge:
 
 ```
 werf converge --docker-repo myregistry.domain.org/example-app [--kube-config ~/.kube/config]
 ```
 
-Generally, converge command has one required argument: the address of the docker repo. Werf will use this docker repo to store built images and use them in Kubernetes (so, this docker repo should be accessible from within Kubernetes cluster).
+Generally, the converge command has only one mandatory argument: the address of the docker repository. werf will use this docker repository to store built images and use them in Kubernetes (thus, this docker repository must be accessible from within the Kubernetes cluster). Kube-config is another optional argument that defines the Kubernetes cluster to connect to. Also, there is an optional `--env` parameter (and the `WERF_ENV` environment variable) allowing you to deploy an application into various [environments]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment).
 
-Kube-config optional argument defines Kubernetes cluster to connect to.
-
-There is of course such optional param as [env](TODO) to deploy application into different environments of the same kubernetes cluster. By default werf will use _the project name_ as a Kubernetes namespace.
-
-_NOTE: Your application may not have custom docker images (and use only publicly available images for example), in such case it is not required to pass `--docker-repo` param — just omit it._
+_NOTE: If your application does not use custom docker images (e.g., it uses only publicly available ones), you do not have to pass `--docker-repo` parameter to the command and may just omit it._
 
 ## What's next?
 
-Deploy your first example application with [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or checkout available [guides]({{ site.baseurl }}/documentation/guides.html) which cover configuration of wide variety of applications which use different programming languages and frameworks. It is recommended to find a suitable guide for your application and follow instructions.
+Deploy your first demo application with this [quickstart]({{ site.baseurl }}/documentation/quickstart.html) or check the [guides]({{ site.baseurl }}/documentation/guides.html) – they cover the configuration of a wide variety of applications based on different programming languages and frameworks. We recommend finding a manual suitable for your application and follow instructions.
 
-### Converge your production
-
-If you feel ready to dig into general overview of CI/CD workflows, which could be implemented with werf, then go [this article]({{ site.baseurl }}/documentation/advanced/ci_cd_workflows_overview.html).
+Refer to [this article]({{ site.baseurl }}/documentation/advanced/ci_cd/ci_cd_workflow_basics.html) if you feel like you are ready to dig deeper into the general overview of CI/CD workflows that can be implemented with werf.

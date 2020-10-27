@@ -1,6 +1,6 @@
 ---
 title: werf run
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_run.html
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: werf dismiss
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_dismiss.html
 ---
 

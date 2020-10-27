@@ -9,19 +9,17 @@ toc: false
 
 ## Project name
 
-`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/reference/configuration/deploy_into_kubernetes.html)). This is single required field of meta configuration.
+`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm release name and other derived names. This is a required field of meta configuration.
 
-Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab).
+Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab). Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
 
-Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
+### Warning on changing project name
 
-**WARNING**. You should never change project name, once it has been set up, unless you know what you are doing.
-
-Changing project name leads to issues:
+**WARNING**. You should never change project name, once it has been set up, unless you know what you are doing. Changing project name leads to issues:
 1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and Docker registry manually.
-2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
+2. Creation of completely new Helm release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
 
-werf cannot automatically resolve project name change. Described issues must be resolved manually.
+Werf cannot automatically resolve project name change. Described issues must be resolved manually in such case.
 
 ## Deploy
 
@@ -37,19 +35,18 @@ deploy:
   helmReleaseSlug: false
 ```
 
-`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
-
-`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/advanced/helm/basics.html#slugging-the-release-name) to generated helm release name. Default: `true`.
-
-`TEMPLATE` as well as any value of the config can include [werf Go templates functions]({{ site.baseurl }}/documentation/reference/configuration/introduction.html#go-templates). E.g. you can mix the value with an environment variable:
+`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`. Template can be customized as follows:
 
 {% raw %}
 ```yaml
 deploy:
   helmRelease: >-
-    [[ project ]]-{{ env "HELM_RELEASE_EXTRA" }}-[[ env ]]
+    [[ project ]]-[[ env ]]
 ```
 {% endraw %}
+
+`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/advanced/helm/basics.html#slugging-the-release-name) to generated helm release name. Default: `true`.
+
 
 ### Kubernetes namespace
 
@@ -63,7 +60,15 @@ deploy:
   namespaceSlug: true|false
 ```
 
-`deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`.
+`deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`. Template can be customized as follows:
+
+{% raw %}
+```yaml
+deploy:
+  namespace: >-
+    [[ project ]]-[[ env ]]
+```
+{% endraw %}
 
 `deploy.namespaceSlug` defines whether to apply or not [slug]({{ site.baseurl }}/documentation/advanced/helm/basics.html#slugging-kubernetes-namespace) to generated kubernetes namespace. Default: `true`.
 
@@ -78,7 +83,7 @@ Each policy consists of two parts:
 - `references` defines a set of references, git tags, or git branches to perform scanning on.
 - `imagesPerReference` defines the limit on the number of images for each reference contained in the set.
 
-Each policy should be linked to some set of git tags (`tag: <string|/REGEXP/>`) or git branches (`branch: <string|/REGEXP/>`). You can specify the name/group of a reference using the [Golang's regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
+Each policy should be linked to some set of git tags (`tag: string || /REGEXP/`) or git branches (`branch: string || /REGEXP/`). You can specify the name/group of a reference using the [Golang's regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
 
 ```yaml
 tag: v1.1.1
@@ -102,22 +107,22 @@ You can limit the set of references on the basis of the date when the git tag wa
 
 In the example above, werf selects no more than 10 latest branches that have the `features/` prefix in the name and have shown any activity during the last week.
 
-- The `last: <int>` parameter allows you to select n last references from those defined in the `branch` / `tag`.
-- The `in: <duration string>` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) allows you to select git tags that were created during the specified period or git branches that were active during the period. You can also do that for the specific set of `branches` / `tags`.
-- The `operator: <And|Or>` parameter defines if references should satisfy both conditions or either of them (`And` is set by default).
+- The `last: int` parameter allows you to select n last references from those defined in the `branch` / `tag`.
+- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) allows you to select git tags that were created during the specified period or git branches that were active during the period. You can also do that for the specific set of `branches` / `tags`.
+- The `operator: And || Or` parameter defines if references should satisfy both conditions or either of them (`And` is set by default).
 
 When scanning references, the number of images is not limited by default. However, you can configure this behavior using the `imagesPerReference` set of parameters:
 
 ```yaml
 imagesPerReference:
-  last: <int>
-  in: <duration string>
-  operator: <And|Or>
+  last: int
+  in: duration string
+  operator: And || Or
 ```
 
-- The `last: <int>` parameter defines the number of images to search for each reference. Their amount is unlimited by default (`-1`).
-- The `in: <duration string>` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) defines the time frame in which werf searches for images.
-- The `operator: <And|Or>` parameter defines what images will stay after applying the policy: those that satisfy both conditions or either of them (`And` is set by default).
+- The `last: int` parameter defines the number of images to search for each reference. Their amount is unlimited by default (`-1`).
+- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) defines the time frame in which werf searches for images.
+- The `operator: And || Or` parameter defines what images will stay after applying the policy: those that satisfy both conditions or either of them (`And` is set by default).
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
@@ -171,18 +176,53 @@ Let us examine each policy individually:
 
 ## Image section
 
-Building image from Dockerfile is the easiest way to start using werf in an existing project.
-Minimal `werf.yaml` below describes an image named `example` related with a project `Dockerfile`:
+Images are declared with _image_ directive: `image: string`. 
+The _image_ directive starts a description for building an application image.
+
+```yaml
+image: frontend
+```
+
+If there is only one _image_ in the config, it can be nameless:
+
+```yaml
+image: ~
+```
+
+In the config with multiple images, **all images** must have names:
+
+```yaml
+image: frontend
+...
+---
+image: backend
+...
+```
+
+An _image_ can have several names, set as a list in YAML syntax
+(this usage is equal to describing similar images with different names):
+
+```yaml
+image: [main-front,main-back]
+```
+
+You will need an image name when setting up helm templates or running werf commands to refer to the specific image defined in the `werf.yaml`.
+
+### Dockerfile builder
+
+Werf supports building images using Dockerfiles. Building image from Dockerfiles is the easiest way to start using werf in an existing project.
+
+`werf.yaml` below describes an unnamed image built from `Dockerfile` which reside in the root of the project dir:
 
 ```yaml
 project: my-project
 configVersion: 1
 ---
-image: example
+image: ~
 dockerfile: Dockerfile
 ```
 
-To specify some images from one Dockerfile:
+To build multiple named stages from a single Dockerfile:
 
 ```yaml
 image: backend
@@ -194,16 +234,18 @@ dockerfile: Dockerfile
 target: frontend
 ```
 
-And also from different Dockerfiles:
+And also build multiple images from different Dockerfiles:
 
 ```yaml
 image: backend
-dockerfile: dockerfiles/DockerfileBackend
+dockerfile: backend/Dockerfile
+context: backend/
 ---
 image: frontend
-dockerfile: dockerfiles/DockerfileFrontend
+dockerfile: frontend/Dockerfile
+context: frontend/
 ```
 
-### Naming
+### Stapel builder
 
-{% include /configuration/stapel_image/naming.md %}
+Another alternative to building images with Dockerfiles is werf stapel builder, which is tightly integrated with Git and allows really fast incremental rebuilds on changes in the Git files.

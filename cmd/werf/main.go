@@ -106,7 +106,7 @@ Find more information at https://werf.io`),
 			},
 		},
 		{
-			Message: "Lowlevel management commands",
+			Message: "Low-level management commands",
 			Commands: []*cobra.Command{
 				configCmd(),
 				managedImagesCmd(),

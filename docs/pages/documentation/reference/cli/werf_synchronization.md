@@ -1,6 +1,6 @@
 ---
 title: werf synchronization
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_synchronization.html
 ---
 

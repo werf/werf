@@ -26,14 +26,14 @@ summary: |
 
 [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/) can be divided into two groups: build-time instructions and other instructions that effect on an image manifest. Build-time instructions do not make sense in a werf build process. Therefore, werf supports only following instructions:
 
-* `USER` to set the user and the group to use when running the image (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
+* `USER` to set the user name (or UID) and optionally the user group (or GID) (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
 * `WORKDIR` to set the working directory (read more [here](https://docs.docker.com/engine/reference/builder/#workdir)).
 * `VOLUME` to add mount point (read more [here](https://docs.docker.com/engine/reference/builder/#volume)).
 * `ENV` to set the environment variable (read more [here](https://docs.docker.com/engine/reference/builder/#env)).
 * `LABEL` to add metadata to an image (read more [here](https://docs.docker.com/engine/reference/builder/#label)).
 * `EXPOSE` to inform Docker that the container listens on the specified network ports at runtime (read more [here](https://docs.docker.com/engine/reference/builder/#expose))
-* `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)).
-* `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)).
+* `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ site.baseurl }}/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint).
+* `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ site.baseurl }}/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint).
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 These instructions can be specified in the `docker` config directive.
@@ -43,7 +43,7 @@ Here is an example of using docker instructions:
 ```yaml
 docker:
   WORKDIR: /app
-  CMD: ['python', './index.py']
+  CMD: "['python', './index.py']"
   EXPOSE: '5000'
   ENV:
     TERM: xterm

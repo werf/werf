@@ -1,6 +1,6 @@
 ---
 title: werf build
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_build.html
 ---
 

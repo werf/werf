@@ -1,6 +1,6 @@
 ---
 title: werf managed-images rm
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_managed_images_rm.html
 ---
 

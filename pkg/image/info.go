@@ -38,12 +38,19 @@ func (info *Info) GetCreatedAt() time.Time {
 func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 	repository, tag := ParseRepositoryAndTag(ref)
 
+	var repoDigest string
+	if len(inspect.RepoDigests) > 0 {
+		// NOTE: suppose we have a single repo for each stage
+		repoDigest = inspect.RepoDigests[0]
+	}
+
 	return &Info{
 		Name:              ref,
 		Repository:        repository,
 		Tag:               tag,
 		Labels:            inspect.Config.Labels,
 		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
+		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
 		ParentID:          inspect.Parent,
 		Size:              inspect.Size,

@@ -2,7 +2,6 @@
 title: Cleanup
 sidebar: documentation
 permalink: documentation/advanced/cleanup.html
-author: Artem Kladov <artem.kladov@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 During building and publishing, werf creates sets of docker layers, however, it does not delete them.
@@ -41,19 +40,19 @@ These policies determine which _images_ will be deleted while leaving all others
 
 #### Git history-based cleanup algorithm
 
-The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [signature]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature).
+The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [signature]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest).
 
-The cleanup algorithm is based on the fact that the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) has information about commits related to publishing tags associated with a specific [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _signature_ for a specific `image` in the `werf.yaml`. 
+The cleanup algorithm is based on the fact that the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) has information about commits related to publishing tags associated with a specific [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _signature_ for a specific `image` in the `werf.yaml`. 
 
-Following the results of building and publishing of some commit, the end-image may stay unchanged. However, information about the publishing of a [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) because of that commit will be added to the stages storage.
+Following the results of building and publishing of some commit, the end-image may stay unchanged. However, information about the publishing of a [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) because of that commit will be added to the stages storage.
 
-This ensures that the [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) (of an arbitrary number of associated Docker tags) relates to the git history. Also, this opens up the possibility to effectively clean up outdated images based on the git state and [chosen policies](#custom-policies).  The algorithm scans the git history, selects relevant images, and deletes those that do not fall under any policy. At the same time, the [tags used in Kubernetes](#whitelisting-images) are ignored.
+This ensures that the [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) (of an arbitrary number of associated Docker tags) relates to the git history. Also, this opens up the possibility to effectively clean up outdated images based on the git state and [chosen policies](#custom-policies).  The algorithm scans the git history, selects relevant images, and deletes those that do not fall under any policy. At the same time, the [tags used in Kubernetes](#whitelisting-images) are ignored.
 
 Let's review the basic steps of the cleanup algorithm:
 
 - [Extracting the data required for a cleanup from the stages storage](#keeping-the-data-in-the-stages-storage-to-use-when-performing-a-cleanup):
-    - all [names of the images]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) ever built;
-    - a set of pairs consisting of the [signature of the image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) and a commit on which the publication was performed.
+    - all [names of the images]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) ever built;
+    - a set of pairs consisting of the [signature of the image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) and a commit on which the publication was performed.
 - Obtaining manifests for all tags.
 - Preparing a list of items to clean up:
     - [tags used in Kubernetes](#whitelisting-images) are ignored.
@@ -61,18 +60,18 @@ Let's review the basic steps of the cleanup algorithm:
     - tags grouped by the digest of image stages __(1)__;
     - commits grouped by the digest of image stages __(2)__;
     - a set of git tags and git branches, as well as the rules and crawl depth for scanning each reference based on [user policies](#custom-policies) __(3)__.
-- Searching for commits __(2)__ using the git history __(3)__. The result is [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) for which no associated commits were found during scanning __(4)__.
-Deleting tags for [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) __(4)__.
+- Searching for commits __(2)__ using the git history __(3)__. The result is [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) for which no associated commits were found during scanning __(4)__.
+Deleting tags for [signatures of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) __(4)__.
 
 ##### Custom policies
 
-The user can specify images that will not be deleted during a cleanup using `keepPolicies` [cleanup policies]({{ site.baseurl }}/documentation/configuration/cleanup.html). If there is no configuration provided in the `werf.yaml`, werf will use the [default policy set]({{ site.baseurl }}/documentation/configuration/cleanup.html#default-policies).
+The user can specify images that will not be deleted during a cleanup using `keepPolicies` [cleanup policies]({{ site.baseurl }}/documentation/advanced/cleanup.html). If there is no configuration provided in the `werf.yaml`, werf will use the [default policy set]({{ site.baseurl }}/documentation/reference/werf_yaml.html#default-policies).
 
 It is worth noting that the algorithm scans the local state of the git repository. Therefore, it is essential to keep all git branches and git tags up-to-date. You can use the `--git-history-synchronization` flag to synchronize the git state (it is enabled by default when running in CI systems).
 
 ##### Keeping the data in the stages storage to use when performing a cleanup
 
-werf saves supplementary data to the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-signature) and a commit that was used for publishing. It also contains [names of images]({{ site.baseurl }}/documentation/configuration/stapel_image/naming.html) that were ever built.
+werf saves supplementary data to the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [signature of image stages]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#image-stages-digest) and a commit that was used for publishing. It also contains [names of images]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) that were ever built.
 
 Information about commits is the only source of truth for the algorithm, so if tags lacking such information werf deletes them. 
 
@@ -114,5 +113,5 @@ These steps are combined in a single top-level command [purge]({{ site.baseurl }
 
 You can clean up the host machine with the following commands:
 
-* The [cleanup host machine command]({{ site.baseurl }}/documentation/reference/cli/werf_/cleanup.html) deletes an obsolete non-used werf cache and data for **all projects** on the host machine.
-* The [purge host machine command]({{ site.baseurl }}/documentation/reference/cli/werf_/purge.html) purges werf _images_, _stages_, cache, and other data for **all projects** on the host machine.
+* The [cleanup host machine command]({{ site.baseurl }}/documentation/reference/cli/werf_cleanup.html) deletes an obsolete non-used werf cache and data for **all projects** on the host machine.
+* The [purge host machine command]({{ site.baseurl }}/documentation/reference/cli/werf_purge.html) purges werf _images_, _stages_, cache, and other data for **all projects** on the host machine.

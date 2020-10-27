@@ -1,6 +1,6 @@
 ---
 title: werf helm chart pull
-sidebar: cli
+sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_chart_pull.html
 ---
 
