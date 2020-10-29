@@ -60,19 +60,12 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
-			if cmdData.RenderOutput != "" {
-				if err := common.ProcessLogOptionsDefaultQuiet(&commonCmdData); err != nil {
-					common.PrintHelp(cmd)
-					return err
-				}
-			} else {
-				logboek.Streams().Mute()
-				logboek.SetAcceptedLevel(level.Error)
+			logboek.Streams().Mute()
+			logboek.SetAcceptedLevel(level.Error)
 
-				if err := common.ProcessLogOptionsDefaultQuiet(&commonCmdData); err != nil {
-					common.PrintHelp(cmd)
-					return err
-				}
+			if err := common.ProcessLogOptionsDefaultQuiet(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
 			}
 
 			common.LogVersion()
