@@ -144,4 +144,4 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200924122332-260bd217b2c3
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201028183928-979129d418f5

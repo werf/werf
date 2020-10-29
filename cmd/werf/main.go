@@ -39,6 +39,7 @@ import (
 
 	config_list "github.com/werf/werf/cmd/werf/config/list"
 	config_render "github.com/werf/werf/cmd/werf/config/render"
+	"github.com/werf/werf/cmd/werf/render"
 
 	"github.com/werf/werf/cmd/werf/completion"
 	"github.com/werf/werf/cmd/werf/docs"
@@ -103,6 +104,7 @@ Find more information at https://werf.io`),
 				build.NewCmd(),
 				run.NewCmd(),
 				slugify.NewCmd(),
+				render.NewCmd(),
 			},
 		},
 		{
