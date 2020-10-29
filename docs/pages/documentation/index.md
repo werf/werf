@@ -70,12 +70,12 @@ sidebar: documentation
 </div>
         </div>
     </div>
-    <div class="overview__title">Extra mile</div>
+    <div class="overview__title">The extra mile</div>
     <div class="overview__step">
         <div class="overview__step-header">
             <div class="overview__step-num">1</div>
         </div>
-        <div class="overview__step-title">Learn more complex tasks that you will face eventually</div>
+        <div class="overview__step-title">Get the deep knowledge, which you will need eventually during werf usage</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ site.baseurl }}/documentation/advanced/configuration/supported_go_templates.html">Advanced</a>
         </div>
