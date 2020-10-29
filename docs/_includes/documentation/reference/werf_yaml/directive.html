@@ -37,23 +37,21 @@
         <span style="color: #008080;">{{ directive.name }}</span>:
 
         {%- if directive.value %} <span style="color: #d14;">{{ directive.value | escape }}</span>{% endif -%}
-        {%- if shouldAddBtn %} <span id="{{ directiveID }}-btn" class="btn">{% if directive.isCollapsedByDefault %}(+){% else %}(-){% endif %}</span>{% endif -%}
-        {%- if directive.required %} <i style="float: right;">required</i>{% endif -%}
+        {%- if shouldAddBtn %} <span id="{{ directiveID }}-btn" class="btn {% if !directive.isCollapsedByDefault %}active{% endif %}" data-toggle="tooltip" title="Expand/Collapse"></span>{% endif -%}
+        {%- if directive.required %} <span class="required" data-toggle="tooltip" title="Required">!</span>{% endif -%}
 
         {% if shouldAddBtn %}
         <script>
         $( "#{{ directiveID }}-btn" ).click(function() {
-            $( this ).text(function(i, oldText) {
-                return oldText === '(+)' ? '(-)' : '(+)';
-            });
-
-            $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}", $( this ).text() === '(+)');
+            $(this).toggleClass('active');
+            $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}");
         });
         </script>
         {% endif %}
     </td>
     <td>
         <span>
+            #
             {% if page.lang == "en" %}
             {% assign defaultText = "default" %}
             {% assign moreDetailsText = "More details" %}

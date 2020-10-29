@@ -1,57 +1,154 @@
 <style>
-table {
-    font-family: monospace;
+
+.werf-yaml-table {
+    border: 2px solid #eef2ff;
 }
 
-table tr td:first-child {
+.werf-yaml-table table {
+    font-family: 'Source Code Pro', monospace;
+    border: none !important;
+}
+
+.werf-yaml-table table tr,
+.werf-yaml-table table tr td {
+    border: none !important;
+}
+
+.werf-yaml-table table tr td {
+    vertical-align: top;
+    line-height: unset !important;
+    font-size: 14px !important;
+}
+
+.werf-yaml-table table tr td:first-child {
+    padding-left: 15px !important;
     width: 50%;
 }
 
-table tr td {
-    border: 2px solid #eef2ff;
-    vertical-align: top;
-    line-height: unset !important;
+.werf-yaml-table table tr td:last-child {
+    padding-right: 15px !important;
 }
 
-table tr td span {
+.werf-yaml-table table tr:first-child td {
+    padding-top: 10px !important;
+}
+
+.werf-yaml-table table tr:last-child td {
+    padding-bottom: 10px !important;
+}
+
+.werf-yaml-table table tr {
+    background: transparent;
+    transition: all 0.1s ease-in-out;
+}
+
+.werf-yaml-table table tr:not(.section) td:last-child {
+    background: transparent;
+    transition: all 0.1s ease-in-out;
+    opacity: 0.5;
+}
+
+.werf-yaml-table table tr td span {
     font-size: 14px;
 }
 
-span.btn {
+.werf-yaml-table span.btn {
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
     cursor: pointer;
+    background: rgba(0,0,0,0.1);
+    transform: rotate(180deg);
 }
 
-table tr[class*="collapsed-"] {
+.werf-yaml-table span.btn::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background-image: url(/images/icons/dropdown.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.werf-yaml-table span.btn.active {
+    transform: rotate(0deg);
+}
+
+.werf-yaml-table table tr[class*="collapsed-"] {
     display: none;
+}
+
+.werf-yaml-table table tr:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+.werf-yaml-table table tr:hover td:last-child {
+    opacity: 1;
+}
+
+.werf-yaml-table .required {
+    font-size: 10px;
+    font-family: 'Open Sans', sans-serif;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #000;
+    color: #fff;
+    font-weight: 900;
+    user-select: none;
+}
+
+.tooltip {
+    font-family: 'Open Sans', sans-serif;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 13px;
+    border-radius: 4px;
 }
 </style>
 
-<table>
-{% for section in site.data.werf_yaml[page.lang].sections %}
-    <tr id="{{ section.id }}" class="{{ section.id }}">
-        <td colspan="2">--- # {{ section.description }} <span id="{{ section.id }}-btn" class="btn">{% if section.isCollapsedByDefault %}(+){% else %}(-){% endif %}</span></td>
-    </tr>
+<div class="werf-yaml-table">
+    <table>
+        {% for section in site.data.werf_yaml[page.lang].sections %}
+            <tr id="{{ section.id }}" class="section {{ section.id }}">
+                <td colspan="2">
+                    --- # {{ section.description }}
+                    <span id="{{ section.id }}-btn"
+                    class="btn {% if !section.isCollapsedByDefault %}active{% endif %}"
+                    data-toggle="tooltip" title="Expand/Collapse"></span>
+                </td>
+            </tr>
 
-    {% assign sectionCollapsedClass = "collapsed" | append: "-" | append: section.id %}
+            {% assign sectionCollapsedClass = "collapsed" | append: "-" | append: section.id %}
 
-    <script>
-    $( "#{{ section.id }}-btn" ).click(function() {
-        $( this ).text(function(i, oldText) {
-            return oldText === '(+)' ? '(-)' : '(+)';
-        });
+            <script>
+            $( "#{{ section.id }}-btn" ).click(function() {
+                $(this).toggleClass('active');
+                $( "tr.{{ section.id }}:not(#{{ section.id }})" ).toggleClass("{{ sectionCollapsedClass }}");
+            });
+            </script>
 
-        $( "tr.{{ section.id }}:not(#{{ section.id }})" ).toggleClass("{{ sectionCollapsedClass }}", $( this ).text() === '(+)');
-    });
-    </script>
-
-    {% for directive in section.directives %}
-    {% assign directiveClasses = '' | split: '' %}
-    {% assign directiveClasses = directiveClasses | push: section.id %}
-    {% assign directiveCollapsedClasses = '' | split: '' %}
-    {% if section.isCollapsedByDefault %}
-    {% assign directiveCollapsedClasses = directiveCollapsedClasses | push: sectionCollapsedClass %}
-    {% endif %}
-    {% include documentation/reference/werf_yaml/directive.html directive=directive directiveClasses=directiveClasses directiveCollapsedClasses=directiveCollapsedClasses %}
-    {% endfor %}
-{% endfor %}
-</table>
+            {% for directive in section.directives %}
+            {% assign directiveClasses = '' | split: '' %}
+            {% assign directiveClasses = directiveClasses | push: section.id %}
+            {% assign directiveCollapsedClasses = '' | split: '' %}
+            {% if section.isCollapsedByDefault %}
+            {% assign directiveCollapsedClasses = directiveCollapsedClasses | push: sectionCollapsedClass %}
+            {% endif %}
+            {% include documentation/reference/werf_yaml/directive.html directive=directive directiveClasses=directiveClasses directiveCollapsedClasses=directiveCollapsedClasses %}
+            {% endfor %}
+        {% endfor %}
+    </table>
+</div>
