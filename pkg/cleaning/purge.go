@@ -56,6 +56,17 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting imports metadata").DoError(func() error {
+		importMetadataIDs, err := m.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, m.ProjectName)
+		if err != nil {
+			return err
+		}
+
+		return m.deleteImportMetadataIDs(ctx, importMetadataIDs)
+	}); err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
 		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
 		if err != nil {
@@ -104,6 +115,32 @@ func (m *purgeManager) deleteStages(ctx context.Context, stages []*image.StageDe
 	}
 
 	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages)
+}
+
+func (m *purgeManager) deleteImportMetadataIDs(ctx context.Context, importMetadataIDs []string) error {
+	if m.DryRun {
+		for _, importMetadataID := range importMetadataIDs {
+			logboek.Context(ctx).Default().LogFDetails("  importMetadataID: %s\n", importMetadataID)
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
+
+	return m.StorageManager.ForEachRmImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, importMetadataID string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Import metadata ID %s deletion failed: %s\n", importMetadataID, err)
+
+			return nil
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  importMetadataID: %s\n", importMetadataID)
+
+		return nil
+	})
 }
 
 func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
