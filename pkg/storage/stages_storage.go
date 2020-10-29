@@ -41,6 +41,11 @@ type StagesStorage interface {
 	IsImageMetadataExist(ctx context.Context, projectName, imageName, commit, stageID string) (bool, error)
 	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error)
 
+	GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error)
+	PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error
+	RmImportMetadata(ctx context.Context, projectName, id string) error
+	GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error)
+
 	GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 

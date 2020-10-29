@@ -697,7 +697,7 @@ func findStageByImageID(stages []*image.StageDescription, imageID string) *image
 
 func excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) []*image.StageDescription {
 	for label, imageID := range stage.Info.Labels {
-		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
+		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
 			stages = excludeStageAndRelativesByImageID(stages, imageID)
 		}
 	}

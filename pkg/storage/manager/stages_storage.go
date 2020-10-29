@@ -403,7 +403,7 @@ func (m *StagesStorageManager) getStageDescription(ctx context.Context, stageID 
 	} else if stageDesc != nil {
 		logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
 		if err := image.CommonManifestCache.StoreImageInfo(ctx, m.StagesStorage.String(), stageDesc.Info); err != nil {
-			return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
+			return nil, fmt.Errorf("unable to store image %s info into manifest cache: %s", stageImageName, err)
 		}
 
 		return stageDesc, nil

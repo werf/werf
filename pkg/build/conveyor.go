@@ -718,6 +718,18 @@ func (c *Conveyor) GetProjectRepoCommit(ctx context.Context) (string, error) {
 	}
 }
 
+func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
+	return c.StorageManager.StagesStorage.GetImportMetadata(ctx, projectName, id)
+}
+
+func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
+	return c.StorageManager.StagesStorage.PutImportMetadata(ctx, projectName, metadata)
+}
+
+func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
+	return c.StorageManager.StagesStorage.RmImportMetadata(ctx, projectName, id)
+}
+
 func prepareImageBasedOnStapelImageConfig(ctx context.Context, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) (*Image, error) {
 	image := &Image{}
 

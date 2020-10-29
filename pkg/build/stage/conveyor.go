@@ -4,9 +4,14 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/build/import_server"
+	"github.com/werf/werf/pkg/storage"
 )
 
 type Conveyor interface {
+	GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
+	PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error
+	RmImportMetadata(ctx context.Context, projectName, id string) error
+
 	GetImageStageContentDigest(imageName, stageName string) string
 	GetImageContentDigest(imageName string) string
 
