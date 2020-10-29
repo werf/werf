@@ -26,7 +26,7 @@ sidebar: documentation
             <div class="overview__step-title">Install and give werf a try on an example project</div>
             <div class="overview__step-actions">
                 <a class="overview__step-action" href="{{ site.baseurl }}/installation.html">Installation</a>
-                <a class="overview__step-action" href="{{ site.baseurl }}/quickstart.html">Quickstart</a>
+                <a class="overview__step-action" href="{{ site.baseurl }}/documentation/quickstart.html">Quickstart</a>
             </div>
         </div>
     </div>
