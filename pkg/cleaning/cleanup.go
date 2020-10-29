@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -72,6 +73,9 @@ type cleanupManager struct {
 	imageNameNonexistentStageIDCommitList map[string]map[string][]string
 	imageNameStageIDNonexistentCommitList map[string]map[string][]string
 	nonexistentImageNameStageIDCommitList map[string]map[string][]string
+
+	checksumSourceImageIDs       map[string][]string
+	nonexistentImportMetadataIDs []string
 
 	ProjectName                             string
 	StorageManager                          *manager.StorageManager
@@ -638,10 +642,16 @@ func deleteImagesMetadata(ctx context.Context, projectName string, storageManage
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
+	if err := logboek.Context(ctx).Info().LogProcess("Fetching imports metadata").DoError(func() error {
+		return m.initImportsMetadata(ctx)
+	}); err != nil {
+		return fmt.Errorf("unable to init imports metadata: %s", err)
+	}
+
 	stagesToDelete := m.stages
 	for _, stageIDCommitList := range m.imageNameStageIDCommitList {
 		for stageID, _ := range stageIDCommitList {
-			stagesToDelete = excludeStageAndRelativesByImageID(stagesToDelete, m.mustGetStage(stageID).Info.ID)
+			stagesToDelete = m.excludeStageAndRelativesByImageID(stagesToDelete, m.mustGetStage(stageID).Info.ID)
 		}
 	}
 
@@ -673,16 +683,91 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		}
 	}
 
+	if len(m.nonexistentImportMetadataIDs) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata").DoError(func() error {
+			return m.deleteImportsMetadata(ctx, m.nonexistentImportMetadataIDs)
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func excludeStageAndRelativesByImageID(stages []*image.StageDescription, imageID string) []*image.StageDescription {
+func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
+	m.checksumSourceImageIDs = map[string][]string{}
+
+	importMetadataIDs, err := m.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, m.ProjectName)
+	if err != nil {
+		return err
+	}
+
+	var mutex sync.Mutex
+	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadata *storage.ImportMetadata, err error) error {
+		if err != nil {
+			return err
+		}
+
+		importSourceID := metadata.ImportSourceID
+		sourceImageID := metadata.SourceImageID
+		checksum := metadata.Checksum
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		stage := findStageByImageID(m.stages, sourceImageID)
+		if stage != nil {
+			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+			if !ok {
+				sourceImageIDs = []string{}
+			}
+
+			m.checksumSourceImageIDs[checksum] = append(sourceImageIDs, sourceImageID)
+		} else {
+			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
+		}
+
+		return nil
+	})
+}
+
+func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetadataIDs []string) error {
+	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun)
+}
+
+func deleteImportsMetadata(ctx context.Context, projectName string, storageManager *manager.StorageManager, importMetadataIDs []string, dryRun bool) error {
+	if dryRun {
+		for _, importMetadataID := range importMetadataIDs {
+			logboek.Context(ctx).Default().LogFDetails("  importMetadataID: %s\n", importMetadataID)
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
+
+	return storageManager.ForEachRmImportMetadata(ctx, projectName, importMetadataIDs, func(ctx context.Context, importMetadataID string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Import metadata ID %s deletion failed: %s\n", importMetadataID, err)
+
+			return nil
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  importMetadataID: %s\n", importMetadataID)
+
+		return nil
+	})
+}
+
+func (m *cleanupManager) excludeStageAndRelativesByImageID(stages []*image.StageDescription, imageID string) []*image.StageDescription {
 	stage := findStageByImageID(stages, imageID)
 	if stage == nil {
 		return stages
 	}
 
-	return excludeStageAndRelativesByStage(stages, stage)
+	return m.excludeStageAndRelativesByStage(stages, stage)
 }
 
 func findStageByImageID(stages []*image.StageDescription, imageID string) *image.StageDescription {
@@ -695,10 +780,15 @@ func findStageByImageID(stages []*image.StageDescription, imageID string) *image
 	return nil
 }
 
-func excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) []*image.StageDescription {
-	for label, imageID := range stage.Info.Labels {
+func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) []*image.StageDescription {
+	for label, checksum := range stage.Info.Labels {
 		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-			stages = excludeStageAndRelativesByImageID(stages, imageID)
+			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+			if ok {
+				for _, sourceImageID := range sourceImageIDs {
+					stages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+				}
+			}
 		}
 	}
 
