@@ -43,6 +43,7 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 		Ω(StagesCount()).Should(BeNumerically(">", 0))
 		Ω(ManagedImagesCount()).Should(BeNumerically(">", 0))
 		Ω(len(ImageMetadata(imageName))).Should(BeNumerically(">", 0))
+		Ω(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
 
 		utils.RunSucceedCommand(
 			testDirPath,
@@ -54,6 +55,7 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 			Ω(StagesCount()).Should(Equal(0))
 			Ω(ManagedImagesCount()).Should(Equal(0))
 			Ω(len(ImageMetadata(imageName))).Should(Equal(0))
+			Ω(len(ImportMetadataIDs())).Should(Equal(0))
 		}
 	})
 

@@ -189,6 +189,14 @@ func ImageMetadata(imageName string) map[string][]string {
 	return utils.ImageMetadata(context.Background(), stagesStorage, imageName)
 }
 
+func RmImportMetadata(importSourceID string) {
+	utils.RmImportMetadata(context.Background(), stagesStorage, importSourceID)
+}
+
+func ImportMetadataIDs() []string {
+	return utils.ImportMetadataIDs(context.Background(), stagesStorage)
+}
+
 func implementationListToCheck() []string {
 	var list []string
 

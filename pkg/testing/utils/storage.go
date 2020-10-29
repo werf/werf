@@ -43,3 +43,14 @@ func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, ima
 	Ω(err).ShouldNot(HaveOccurred())
 	return imageMetadataByImageName[imageName]
 }
+
+func ImportMetadataIDs(ctx context.Context, stagesStorage storage.StagesStorage) []string {
+	ids, err := stagesStorage.GetImportMetadataIDs(ctx, ProjectName())
+	Ω(err).ShouldNot(HaveOccurred())
+	return ids
+}
+
+func RmImportMetadata(ctx context.Context, stagesStorage storage.StagesStorage, importSourceID string) {
+	err := stagesStorage.RmImportMetadata(ctx, ProjectName(), importSourceID)
+	Ω(err).ShouldNot(HaveOccurred())
+}
