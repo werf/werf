@@ -2,6 +2,15 @@ package util
 
 import "fmt"
 
+func MapStringInterfaceToMapStringString(value map[string]interface{}) map[string]string {
+	result := map[string]string{}
+	for key, valueInterf := range value {
+		result[key] = fmt.Sprintf("%v", valueInterf)
+	}
+
+	return result
+}
+
 func InterfaceToStringArray(value interface{}) ([]string, error) {
 	switch value.(type) {
 	case []interface{}:
