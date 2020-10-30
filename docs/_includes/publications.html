@@ -31,9 +31,9 @@
                                 {%- endif %}
                                 <div class="publications__post-btns">
                                     {%- if publication.url %}
-                                    <a href="{{ publication.url }}" class="publications__btn" target="_blank">
-                                        {{ i18n.default_btn_title }}
-                                    </a>
+                                        <a href="{{ publication.url }}" class="publications__btn" target="_blank">
+                                            {{ i18n.default_btn_title }}
+                                        </a>
                                     {%- endif %}
                                     {%- if publication.medium_url %}
                                         <a href="{{ publication.medium_url }}" class="publications__btn" target="_blank">
@@ -45,6 +45,11 @@
                                             {{ i18n.habr_btn_title }}
                                         </a>
                                     {%- endif %}
+                                    {%- for custom in publication.custom_urls %}
+                                        <a href="{{ custom.url }}" class="publications__btn" target="_blank">
+                                            {{ i18n.custom_url_btn_title_prefix }}{{ custom.service_name }}
+                                        </a>
+                                    {%- endfor -%}
                                     {%- if publication.youtube_url %}
                                         <a href="{{ publication.youtube_url }}" class="publications__btn" target="_blank">
                                             {{ i18n.youtube_btn_title }}

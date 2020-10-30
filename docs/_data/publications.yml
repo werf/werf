@@ -3,11 +3,13 @@ i18n:
     default_btn_title: "Read more"
     habr_btn_title: "Read on Habr"
     medium_btn_title: "Read on Medium"
+    custom_url_btn_title_prefix: "Read on "
     youtube_btn_title: "Watch on YouTube"
   ru:
     default_btn_title: "Читать далее"
     habr_btn_title: "Прочитать на Хабре"
     medium_btn_title: "Прочитать на Medium"
+    custom_url_btn_title_prefix: "Прочитать на "
     youtube_btn_title: "Посмотреть на YouTube"
 
 en:
@@ -20,14 +22,39 @@ en:
   #  created: ISO format date, yyyy-mm-dd
   #  comment: COMMENT
 
+  - title: "What GitOps actually is and what it is not"
+    medium_url: "https://medium.com/flant-com/gitops-2a67a5b82884"
+    youtube_url: "https://www.youtube.com/watch?v=FPMuVdW2hYs"
+    img: "/images/publications/en_211020.png"
+    created: 2020-10-21
+    comment: |
+      <p>GitOps is a modern way to make better IaC for delivering apps in Kubernetes. It is all about determinism, idempotence, automation, observability… and many other exciting features! However, are you sure all this happens in the real world using existing approach and tools? Here’s our comprehensive analysis of GitOps and its features, comparison with CIOps as well as insights on how this all should be done to actually get what each DevOps engineer dreams of.</p>
+  - title: "Delivering cloud-native apps to Kubernetes using werf"
+    youtube_url: "https://www.youtube.com/watch?v=oh4N2wBJCc8"
+    custom_urls:
+      - service_name: "CNCF"
+        url: "https://www.cncf.io/webinars/delivering-cloud-native-apps-to-kubernetes-using-werf/"
+      - service_name: "THENEWSTACK"
+        url: "https://thenewstack.io/werf-automates-kubernetes-based-gitops-workflows-from-the-command-line/"
+    img: "/images/publications/en_161020.jpg"
+    created: 2020-10-16
+    comment: |
+      <p>werf is a CLI tool that glues well-established software (Git, Docker, Kubernetes, Helm, a variety of container registries & CI systems) to facilitate applications’ delivery. In this webinar, developers, release engineers & SREs will learn how they can benefit from werf in their infrastructure, release management & CI/CD pipelines. Using Git as a single source of truth, we will build images of a simple Node.js application, push them into registry, deploy to Kubernetes and integrate with GitLab CI. You will also see how actual Kubernetes deployments are kept always in sync with your defined state via GitOps push-based approach.</p>
   - title: "Overcoming the challenges of cleaning up container images"
-    url: "https://medium.com/flant-com/cleaning-up-container-images-with-werf-ec35b5d46569"
+    medium_url: "https://medium.com/flant-com/cleaning-up-container-images-with-werf-ec35b5d46569"
+    custom_urls:
+      - service_name: "CNCF"
+        url: "https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/"
     img: "/images/publications/en_051020.png"
     created: 2020-10-05
     comment: |
       <p>While implementing CI/CD processes for a variety of developer teams, we've realised that container registries (Docker Registry, GitLab Container Registry, etc.) usually don't provide flexible & powerful policies to clean up the images that are not in use. As modern cloud-native applications development requires to deliver a huge amount of builds (images) to Kubernetes, you might end up with either an overfilled registry or lacking an important image in your infrastructure (or registry) when it's needed. Here are our thoughts on this issue and how we have resolved it away from the registries themselves, in our Open Source tool (werf).</p>
   - title: "Werf: Fully customizable GitOps"
-    url: "https://kubesandclouds.com/index.php/2020/09/01/werf-gitops/"
+    custom_urls:
+      - service_name: "Kubes&Clouds"
+        url: "https://kubesandclouds.com/index.php/2020/09/01/werf-gitops/"
+      - service_name: "EuropeClouds"
+        url: "https://www.europeclouds.com/blog/werf-fully-customizable-gitops"
     img: "/images/publications/en_010920.png"
     created: 2020-09-01
     comment: |
