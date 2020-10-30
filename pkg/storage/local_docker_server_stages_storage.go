@@ -28,6 +28,9 @@ const (
 	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
 	LocalImageMetadataByCommitRecord_TagFormat       = "%s_%s_%s"
 
+	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
+	LocalImportMetadata_TagFormat       = "%s"
+
 	LocalClientIDRecord_ImageNameFormat = "werf-client-id/%s"
 	LocalClientIDRecord_ImageFormat     = "werf-client-id/%s:%s-%d"
 )
@@ -308,6 +311,90 @@ func makeLocalImageMetadataNameByImageID(projectName, imageID, commit, stageID s
 		fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName),
 		fmt.Sprintf(LocalImageMetadataByCommitRecord_TagFormat, imageID, commit, stageID),
 	}, ":")
+}
+
+func (storage *LocalDockerServerStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+
+	fullImageName := makeLocalImportMetadataName(projectName, id)
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
+
+	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(ctx, fullImageName); err != nil {
+		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
+	} else if inspect != nil {
+		return newImportMetadataFromLabels(inspect.Config.Labels), nil
+	} else {
+		return nil, nil
+	}
+}
+
+func (storage *LocalDockerServerStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+
+	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
+
+	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+	} else if exists {
+		return nil
+	}
+
+	if err := docker.CreateImage(ctx, fullImageName, metadata.ToLabels()); err != nil {
+		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+
+	fullImageName := makeLocalImportMetadataName(projectName, id)
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
+
+	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
+		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
+	} else if !exists {
+		return nil
+	}
+
+	if err := docker.CliRmi(ctx, "--force", fullImageName); err != nil {
+		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error) {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadataIDs %s\n", projectName)
+
+	filterSet := filters.NewArgs()
+	filterSet.Add("reference", fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName))
+
+	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	}
+
+	var tags []string
+	for _, img := range images {
+		for _, repoTag := range img.RepoTags {
+			_, tag := image.ParseRepositoryAndTag(repoTag)
+			tags = append(tags, tag)
+		}
+	}
+
+	return tags, nil
+}
+
+func makeLocalImportMetadataName(projectName, importSourceID string) string {
+	return strings.Join(
+		[]string{
+			fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName),
+			fmt.Sprintf(LocalImportMetadata_TagFormat, importSourceID),
+		}, ":",
+	)
 }
 
 func (storage *LocalDockerServerStagesStorage) String() string {

@@ -136,6 +136,10 @@ permalink: documentation/reference/cli/%s.html
 	}
 
 	for _, command := range cmd.Commands() {
+		if cmd.Hidden {
+			continue
+		}
+
 		if err := genCliPages(command, pagesDir); err != nil {
 			return err
 		}
@@ -208,6 +212,10 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 		//
 		//		indent += 1
 		for _, command := range cmd.Commands() {
+			if cmd.Hidden {
+				continue
+			}
+
 			if err := genCliSidebar(command, indent, buf); err != nil {
 				return err
 			}
@@ -236,6 +244,10 @@ toc: false
 		indexPage += fmt.Sprintf("%s:\n", group.Message)
 
 		for _, cmd := range group.Commands {
+			if cmd.Hidden {
+				continue
+			}
+
 			fullCommandName := fullCommandFilesystemPath(cmd.CommandPath())
 			indexPage += fmt.Sprintf(" - [werf %s]({{ site.baseurl }}/documentation/reference/cli/%s.html) — {%% include /documentation/reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
 		}
@@ -253,6 +265,10 @@ toc: false
 
 func GenCliPartials(cmd *cobra.Command, dir string) error {
 	for _, c := range cmd.Commands() {
+		if cmd.Hidden {
+			continue
+		}
+
 		if err := GenCliPartials(c, dir); err != nil {
 			return err
 		}

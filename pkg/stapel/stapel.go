@@ -114,6 +114,10 @@ func BashBinPath() string {
 	return embeddedBinPath("bash")
 }
 
+func CutBinPath() string {
+	return embeddedBinPath("cut")
+}
+
 func RsyncBinPath() string {
 	return embeddedBinPath("rsync")
 }
@@ -124,6 +128,18 @@ func HeadBinPath() string {
 
 func SudoBinPath() string {
 	return embeddedBinPath("sudo")
+}
+
+func FindBinPath() string {
+	return embeddedBinPath("find")
+}
+
+func SortBinPath() string {
+	return embeddedBinPath("sort")
+}
+
+func Md5sumBinPath() string {
+	return embeddedBinPath("md5sum")
 }
 
 func AnsiblePlaybookBinPath() string {

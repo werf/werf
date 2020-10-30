@@ -56,6 +56,17 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting imports metadata").DoError(func() error {
+		importMetadataIDs, err := m.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, m.ProjectName)
+		if err != nil {
+			return err
+		}
+
+		return m.deleteImportsMetadata(ctx, importMetadataIDs)
+	}); err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
 		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
 		if err != nil {
@@ -104,6 +115,10 @@ func (m *purgeManager) deleteStages(ctx context.Context, stages []*image.StageDe
 	}
 
 	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages)
+}
+
+func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadataIDs []string) error {
+	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importsMetadataIDs, m.DryRun)
 }
 
 func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {

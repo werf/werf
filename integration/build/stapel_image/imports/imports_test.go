@@ -72,4 +72,64 @@ var _ = Describe("Stapel imports", func() {
 			Expect(werfRunOutput("imports_app1-003", "cat", "/file")).To(ContainSubstring("GOGOGO\n"))
 		})
 	})
+
+	Context("caching by import source checksum", func() {
+		AfterEach(func() {
+			utils.RunSucceedCommand(
+				"import_metadata",
+				werfBinPath,
+				"purge",
+			)
+		})
+
+		It("should cache image when import source checksum was not changed", func() {
+			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "1")
+			stubs.SetEnv("INSTALL_FILE_CONTENT", "1")
+
+			utils.RunSucceedCommand(
+				"import_metadata",
+				werfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
+
+			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "2")
+
+			utils.RunSucceedCommand(
+				"import_metadata",
+				werfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
+
+			Ω(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
+		})
+
+		It("should rebuild image when import source checksum was changed", func() {
+			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "1")
+			stubs.SetEnv("INSTALL_FILE_CONTENT", "1")
+
+			utils.RunSucceedCommand(
+				"import_metadata",
+				werfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
+
+			stubs.SetEnv("INSTALL_FILE_CONTENT", "2")
+
+			utils.RunSucceedCommand(
+				"import_metadata",
+				werfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
+
+			Ω(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
+		})
+	})
 })

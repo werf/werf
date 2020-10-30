@@ -580,6 +580,101 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 						Ω(string(out)).Should(ContainSubstring("used by container"))
 					})
 				})
+
+				Context("imports metadata (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
+					It("should keep used artifact", func() {
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build",
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", "master",
+						)
+
+						countAfterFirstBuild := StagesCount()
+						Ω(countAfterFirstBuild).Should(Equal(4))
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"cleanup",
+						)
+
+						countAfterCleanup := StagesCount()
+						Ω(countAfterCleanup).Should(Equal(4))
+						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
+					})
+
+					It("should keep both artifacts by identical import checksum", func() {
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build",
+						)
+
+						countAfterFirstBuild := StagesCount()
+						Ω(countAfterFirstBuild).Should(Equal(4))
+
+						stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "full rebuild")
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build",
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", "master",
+						)
+
+						countAfterSecondBuild := StagesCount()
+						Ω(countAfterSecondBuild).Should(Equal(6))
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"cleanup",
+						)
+
+						countAfterCleanup := StagesCount()
+						Ω(countAfterCleanup).Should(Equal(countAfterSecondBuild))
+						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(2))
+					})
+
+					It("should remove unused artifact (without related import metadata)", func() {
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"build",
+						)
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							"git",
+							"push", "--set-upstream", "origin", "master",
+						)
+
+						countAfterFirstBuild := StagesCount()
+						Ω(countAfterFirstBuild).Should(Equal(4))
+						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
+
+						RmImportMetadata(ImportMetadataIDs()[0])
+
+						utils.RunSucceedCommand(
+							testDirPath,
+							werfBinPath,
+							"cleanup",
+						)
+
+						countAfterCleanup := StagesCount()
+						Ω(countAfterCleanup).Should(Equal(3))
+					})
+				})
 			}
 
 			var itMsg string

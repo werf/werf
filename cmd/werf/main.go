@@ -45,6 +45,8 @@ import (
 	"github.com/werf/werf/cmd/werf/docs"
 	"github.com/werf/werf/cmd/werf/version"
 
+	stage_image "github.com/werf/werf/cmd/werf/stage/image"
+
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/cmd/werf/common/templates"
 	"github.com/werf/werf/pkg/process_exterminator"
@@ -123,6 +125,7 @@ Find more information at https://werf.io`),
 				completion.NewCmd(rootCmd),
 				version.NewCmd(),
 				docs.NewCmd(groups),
+				stageCmd(),
 			},
 		},
 	}...)
@@ -155,6 +158,18 @@ func managedImagesCmd() *cobra.Command {
 		managed_images_add.NewCmd(),
 		managed_images_ls.NewCmd(),
 		managed_images_rm.NewCmd(),
+	)
+
+	return cmd
+}
+
+func stageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:    "stage",
+		Hidden: true,
+	}
+	cmd.AddCommand(
+		stage_image.NewCmd(),
 	)
 
 	return cmd

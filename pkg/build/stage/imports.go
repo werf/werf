@@ -3,11 +3,20 @@ package stage
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
+	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
 	imagePkg "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -42,31 +51,22 @@ type ImportsStage struct {
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(_ context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 
-	for _, elm := range s.imports {
-		var imgName string
-		if elm.ImageName != "" {
-			imgName = elm.ImageName
-		} else {
-			imgName = elm.ArtifactName
+	for ind, elm := range s.imports {
+		var sourceChecksum string
+		var err error
+		if err := logboek.Context(ctx).Info().LogProcess("Getting import %d source checksum ...", ind).DoError(func() error {
+			sourceChecksum, err = s.getImportSourceChecksum(ctx, c, elm)
+			return err
+		}); err != nil {
+			return "", fmt.Errorf("unable to get import %d source checksum: %s", ind, err)
 		}
 
-		if elm.Stage == "" {
-			args = append(args, c.GetImageContentDigest(imgName))
-		} else {
-			args = append(args, c.GetImageStageContentDigest(imgName, elm.Stage))
-		}
-
-		args = append(args, elm.Add, elm.To)
+		args = append(args, sourceChecksum)
+		args = append(args, elm.To)
 		args = append(args, elm.Group, elm.Owner)
-		args = append(args, elm.IncludePaths...)
-		args = append(args, elm.ExcludePaths...)
-
-		if elm.Stage != "" {
-			args = append(args, elm.Stage)
-		}
 	}
 
 	return util.Sha256Hash(args...), nil
@@ -74,16 +74,10 @@ func (s *ImportsStage) GetDependencies(_ context.Context, c Conveyor, _, _ conta
 
 func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.ImageInterface) error {
 	for _, elm := range s.imports {
-		var importImage string
-		if elm.ImageName != "" {
-			importImage = elm.ImageName
-		} else {
-			importImage = elm.ArtifactName
-		}
-
-		srv, err := c.GetImportServer(ctx, importImage, elm.Stage)
+		sourceImageName := getSourceImageName(elm)
+		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
 		if err != nil {
-			return fmt.Errorf("unable to get import server for image %q: %s", importImage, err)
+			return fmt.Errorf("unable to get import server for image %q: %s", sourceImageName, err)
 		}
 
 		command := srv.GetCopyCommand(ctx, elm)
@@ -91,17 +85,212 @@ func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image co
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
 
-		labelKey := imagePkg.WerfImportLabelPrefix + slug.LimitedSlug(importImage, slug.DefaultSlugMaxSize)
+		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
-		var labelValue string
-		if elm.Stage == "" {
-			labelValue = c.GetImageIDForLastImageStage(importImage)
-		} else {
-			labelValue = c.GetImageIDForImageStage(importImage, elm.Stage)
+		importSourceID := getImportSourceID(c, elm)
+		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+		if err != nil {
+			return fmt.Errorf("unable to get import source checksum: %s", err)
+		} else if importMetadata == nil {
+			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
+		labelValue := importMetadata.Checksum
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
 	}
 
 	return nil
+}
+
+func (s *ImportsStage) getImportSourceChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+	importSourceID := getImportSourceID(c, importElm)
+	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	if err != nil {
+		return "", fmt.Errorf("unable to get import metadata: %s", err)
+	}
+
+	if importMetadata == nil {
+		checksum, err := s.generateImportChecksum(ctx, c, importElm)
+		if err != nil {
+			return "", fmt.Errorf("unable to generate import source checksum: %s", err)
+		}
+
+		sourceImageID := getSourceImageID(c, importElm)
+		importMetadata = &storage.ImportMetadata{
+			ImportSourceID: importSourceID,
+			SourceImageID:  sourceImageID,
+			Checksum:       checksum,
+		}
+
+		if err := c.PutImportMetadata(ctx, s.projectName, importMetadata); err != nil {
+			return "", fmt.Errorf("unable to put import metadata: %s", err)
+		}
+	}
+
+	return importMetadata.Checksum, nil
+}
+
+func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+	sourceImageDockerImageName := getSourceImageDockerImageName(c, importElm)
+	importSourceID := getImportSourceID(c, importElm)
+
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	importHostTmpDir := filepath.Join(s.imageTmpDir, string(s.Name()), "imports", importSourceID)
+	importContainerDir := s.containerWerfDir
+
+	importScriptHostTmpPath := filepath.Join(importHostTmpDir, "script.sh")
+	resultChecksumHostTmpPath := filepath.Join(importHostTmpDir, "checksum")
+	importScriptContainerPath := filepath.Join(importContainerDir, "script.sh")
+	resultChecksumContainerPath := filepath.Join(importContainerDir, "checksum")
+
+	command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
+	if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
+		return "", fmt.Errorf("unable to create script: %s", err)
+	}
+
+	if debugImportSourceChecksum() {
+		fmt.Println(command)
+	}
+
+	runArgs := []string{
+		"--rm",
+		"--user=0:0",
+		"--workdir=/",
+		fmt.Sprintf("--volumes-from=%s", stapelContainerName),
+		fmt.Sprintf("--volume=%s:%s", importHostTmpDir, importContainerDir),
+		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
+		sourceImageDockerImageName,
+		importScriptContainerPath,
+	}
+
+	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+		logboek.Context(ctx).Error().LogF("%s", output)
+		return "", err
+	}
+
+	data, err := ioutil.ReadFile(resultChecksumHostTmpPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to read file with import source checksum: %s", err)
+	}
+
+	checksum := strings.TrimSpace(string(data))
+	return checksum, nil
+}
+
+func generateChecksumCommand(from string, includePaths, excludePaths []string, resultChecksumPath string) string {
+	findCommandParts := append([]string{}, stapel.FindBinPath(), from, "-type", "f")
+
+	var nameArgs []string
+	for _, includePath := range includePaths {
+		nameArgs = append(nameArgs, fmt.Sprintf("-wholename \"%s\"", path.Join(from, includePath)))
+	}
+
+	for _, excludePath := range excludePaths {
+		nameArgs = append(nameArgs, fmt.Sprintf("! -wholename \"%s\"", path.Join(from, excludePath)))
+	}
+
+	if len(nameArgs) != 0 {
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameArgs, " -and ")))
+	}
+
+	findCommand := strings.Join(findCommandParts, " ")
+
+	sortCommandParts := append([]string{}, stapel.SortBinPath(), "-n")
+	sortCommand := strings.Join(sortCommandParts, " ")
+
+	xargsCommandParts := append([]string{}, stapel.XargsBinPath(), stapel.Md5sumBinPath())
+	xargsCommand := strings.Join(xargsCommandParts, " ")
+
+	md5SumCommand := stapel.Md5sumBinPath()
+
+	cutCommandParts := append([]string{}, stapel.CutBinPath(), "-d", "' '", "-f", "1")
+	cutCommand := strings.Join(cutCommandParts, " ")
+
+	commands := append([]string{}, findCommand, sortCommand, xargsCommand, md5SumCommand, cutCommand)
+	command := fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath)
+
+	return command
+}
+
+func getImportID(importElm *config.Import) string {
+	return util.Sha256Hash(
+		"ImageName", importElm.ImageName,
+		"ArtifactName", importElm.ArtifactName,
+		"Stage", importElm.Stage,
+		"After", importElm.After,
+		"Before", importElm.Before,
+		"Add", importElm.Add,
+		"To", importElm.To,
+		"Group", importElm.Group,
+		"Owner", importElm.Owner,
+		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
+		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
+	)
+}
+
+func getImportSourceID(c Conveyor, importElm *config.Import) string {
+	return util.Sha256Hash(
+		"SourceImageContentDigest", getSourceImageContentDigest(c, importElm),
+		"Add", importElm.Add,
+		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
+		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
+	)
+}
+
+func getSourceImageDockerImageName(c Conveyor, importElm *config.Import) string {
+	sourceImageName := getSourceImageName(importElm)
+
+	var sourceImageDockerImageName string
+	if importElm.Stage == "" {
+		sourceImageDockerImageName = c.GetImageNameForLastImageStage(sourceImageName)
+	} else {
+		sourceImageDockerImageName = c.GetImageNameForImageStage(sourceImageName, importElm.Stage)
+	}
+
+	return sourceImageDockerImageName
+}
+
+func getSourceImageID(c Conveyor, importElm *config.Import) string {
+	sourceImageName := getSourceImageName(importElm)
+
+	var sourceImageID string
+	if importElm.Stage == "" {
+		sourceImageID = c.GetImageIDForLastImageStage(sourceImageName)
+	} else {
+		sourceImageID = c.GetImageIDForImageStage(sourceImageName, importElm.Stage)
+	}
+
+	return sourceImageID
+}
+
+func getSourceImageContentDigest(c Conveyor, importElm *config.Import) string {
+	sourceImageName := getSourceImageName(importElm)
+
+	var sourceImageContentDigest string
+	if importElm.Stage == "" {
+		sourceImageContentDigest = c.GetImageContentDigest(sourceImageName)
+	} else {
+		sourceImageContentDigest = c.GetImageStageContentDigest(sourceImageName, importElm.Stage)
+	}
+
+	return sourceImageContentDigest
+}
+
+func getSourceImageName(importElm *config.Import) string {
+	var sourceImageName string
+	if importElm.ImageName != "" {
+		sourceImageName = importElm.ImageName
+	} else {
+		sourceImageName = importElm.ArtifactName
+	}
+
+	return sourceImageName
+}
+
+func debugImportSourceChecksum() bool {
+	return os.Getenv("WERF_DEBUG_IMPORT_SOURCE_CHECKSUM") == "1"
 }

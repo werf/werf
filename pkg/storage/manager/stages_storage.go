@@ -403,7 +403,7 @@ func (m *StagesStorageManager) getStageDescription(ctx context.Context, stageID 
 	} else if stageDesc != nil {
 		logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
 		if err := image.CommonManifestCache.StoreImageInfo(ctx, m.StagesStorage.String(), stageDesc.Info); err != nil {
-			return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
+			return nil, fmt.Errorf("unable to store image %s info into manifest cache: %s", stageImageName, err)
 		}
 
 		return stageDesc, nil
@@ -464,5 +464,25 @@ func (m *StagesStorageManager) ForEachRmManagedImage(ctx context.Context, projec
 		managedImage := managedImages[taskId]
 		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
 		return f(ctx, managedImage, err)
+	})
+}
+
+func (m *StagesStorageManager) ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadata *storage.ImportMetadata, err error) error) error {
+	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		id := ids[taskId]
+		metadata, err := m.StagesStorage.GetImportMetadata(ctx, projectName, id)
+		return f(ctx, metadata, err)
+	})
+}
+
+func (m *StagesStorageManager) ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error {
+	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		id := ids[taskId]
+		err := m.StagesStorage.RmImportMetadata(ctx, projectName, id)
+		return f(ctx, id, err)
 	})
 }

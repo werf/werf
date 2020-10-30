@@ -25,6 +25,9 @@ const (
 	RepoImageMetadataByCommitRecord_ImageTagPrefix = "meta-"
 	RepoImageMetadataByCommitRecord_TagFormat      = "meta-%s_%s_%s"
 
+	RepoImportMetadata_ImageTagPrefix  = "import-metadata-"
+	RepoImportMetadata_ImageNameFormat = "%s:import-metadata-%s"
+
 	RepoClientIDRecrod_ImageTagPrefix  = "client-id-"
 	RepoClientIDRecrod_ImageNameFormat = "%s:client-id-%s-%d"
 
@@ -287,7 +290,7 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
-		return fmt.Errorf("unable to push image %s with metadata: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageName, commit, stageID)
 
@@ -350,6 +353,86 @@ func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx con
 	}
 
 	return groupImageMetadataTagsByImageName(ctx, imageNameList, tags, RepoImageMetadataByCommitRecord_ImageTagPrefix)
+}
+
+func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id string) (*ImportMetadata, error) {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadata %s\n", id)
+
+	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, id)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
+
+	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+	} else if img != nil {
+		return newImportMetadataFromLabels(img.Labels), nil
+	} else {
+		return nil, nil
+	}
+}
+
+func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, _ string, metadata *ImportMetadata) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
+
+	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
+
+	pushImageOptions := &docker_registry.PushImageOptions{
+		Labels: metadata.ToLabels(),
+	}
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, pushImageOptions); err != nil {
+		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id string) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImportMetadata %s\n", id)
+
+	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, id)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
+
+	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+	} else if img == nil {
+		return nil
+	}
+
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
+		return fmt.Errorf("unable to remove repo image %s: %s", img.Tag, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ string) ([]string, error) {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadataIDs\n")
+
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+	}
+
+	var ids []string
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, RepoImportMetadata_ImageTagPrefix) {
+			continue
+		}
+
+		ids = append(ids, getImportMetadataIDFromRepoTag(tag))
+	}
+
+	return ids, nil
+}
+
+func getImportMetadataIDFromRepoTag(tag string) string {
+	return strings.TrimLeft(tag, RepoImportMetadata_ImageTagPrefix)
+}
+
+func makeRepoImportMetadataName(repoAddress, importSourceID string) string {
+	return fmt.Sprintf(RepoImportMetadata_ImageNameFormat, repoAddress, importSourceID)
 }
 
 func groupImageMetadataTagsByImageName(ctx context.Context, imageNameList []string, tags []string, imageTagPrefix string) (map[string]map[string][]string, map[string]map[string][]string, error) {
