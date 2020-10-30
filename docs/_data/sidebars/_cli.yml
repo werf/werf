@@ -30,6 +30,9 @@ cli: &cli
   - title: werf slugify
     url: /documentation/reference/cli/werf_slugify.html
 
+  - title: werf render
+    url: /documentation/reference/cli/werf_render.html
+
   - title: werf config list
     url: /documentation/reference/cli/werf_config_list.html
 

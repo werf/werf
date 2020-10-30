@@ -17,10 +17,10 @@ werf использует Dockerfile как главный способ опис
 
 Как собирается стадия `dockerfile`:
 
- 1. Высчитывается сигнатура стадии, исходя из указанного `Dockerfile` и его содержимого. Эта сигнатура отражает состояние собранного образа.
- 2. Если образ с такой сигнатурой уже существует в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий), то werf не выполняет новую сборку образа.
- 3. Если образ с такой сигнатурой отсутствует в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий), то werf запускает обычную сборку образа с помощью Docker, используя стандартные команды встроенного в Docker клиента (это аналогично выполнению команды `docker build`). Кэш, создаваемый при сборке используется как и при обычной сборке без помощи werf.
- 4. После сборки стадии, werf помещает ее в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий) (при этом тегируя соответствующий Docker-образ сигнатурой стадии), если используется параметр [`--stages-storage :local`]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий).
+ 1. Высчитывается дайджест стадии, исходя из указанного `Dockerfile` и его содержимого. Эта дайджест отражает состояние собранного образа.
+ 2. Если образ с таким дайджестом уже существует в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий), то werf не выполняет новую сборку образа.
+ 3. Если образ с таким дайджестом отсутствует в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий), то werf запускает обычную сборку образа с помощью Docker, используя стандартные команды встроенного в Docker клиента (это аналогично выполнению команды `docker build`). Кэш, создаваемый при сборке используется как и при обычной сборке без помощи werf.
+ 4. После сборки стадии, werf помещает ее в [хранилище стадий]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий) (при этом тегируя соответствующий Docker-образ дайджестом стадии), если используется параметр [`--stages-storage :local`]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#хранилище-стадий).
 
 Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/reference/werf_yaml.html#сборщик-dockerfile).
 

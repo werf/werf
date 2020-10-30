@@ -18,6 +18,7 @@ Helper commands:
  - [werf build]({{ site.baseurl }}/documentation/reference/cli/werf_build.html) — {% include /documentation/reference/cli/werf_build.short.md %}.
  - [werf run]({{ site.baseurl }}/documentation/reference/cli/werf_run.html) — {% include /documentation/reference/cli/werf_run.short.md %}.
  - [werf slugify]({{ site.baseurl }}/documentation/reference/cli/werf_slugify.html) — {% include /documentation/reference/cli/werf_slugify.short.md %}.
+ - [werf render]({{ site.baseurl }}/documentation/reference/cli/werf_render.html) — {% include /documentation/reference/cli/werf_render.short.md %}.
 
 Low-level management commands:
  - [werf config]({{ site.baseurl }}/documentation/reference/cli/werf_config.html) — {% include /documentation/reference/cli/werf_config.short.md %}.

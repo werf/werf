@@ -47,12 +47,12 @@ Each _stage_ is assembled in the ***assembly container*** that is based on the p
 The _stage digest_ is used for [tagging](#stage-naming) a _stage_ (digest is the part of image tag) in the _stages storage_.
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
-The ***stage signature*** is calculated as the checksum of:
+The ***stage digest*** is calculated as the checksum of:
  - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
- - previous _stage signature_;
+ - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
-Signature identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from
+Digest identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from
 being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-selection).
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
@@ -185,7 +185,7 @@ Note that all werf commands that need an access to the stages should specify the
 
 ### Stage naming
 
-Stages in the _local stages storage_ are named using the following schema: `werf-stages-storage/PROJECT_NAME:SIGNATURE-TIMESTAMP_MILLISEC`. For example:
+Stages in the _local stages storage_ are named using the following schema: `werf-stages-storage/PROJECT_NAME:DIGEST-TIMESTAMP_MILLISEC`. For example:
 
 ```
 werf-stages-storage/myproject                   9f3a82975136d66d04ebcb9ce90b14428077099417b6c170e2ef2fef-1589786063772   274bd7e41dd9        16 seconds ago      65.4MB
@@ -195,7 +195,7 @@ werf-stages-storage/myproject                   5e4cb0dcd255ac2963ec0905df3c8c8a
 werf-stages-storage/myproject                   14df0fe44a98f492b7b085055f6bc82ffc7a4fb55cd97d30331f0a93-1589786048987   54d5e60e052e        31 seconds ago      64.2MB
 ```
 
-Stages in the _remote stages storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:SIGNATURE-TIMESTAMP_MILLISEC`. For example:
+Stages in the _remote stages storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:DIGEST-TIMESTAMP_MILLISEC`. For example:
 
 ```
 localhost:5000/myproject-stages                 d4bf3e71015d1e757a8481536eeabda98f51f1891d68b539cc50753a-1589714365467   7c834f0ff026        20 hours ago        66.7MB
@@ -239,9 +239,9 @@ _Stages digest_ of the image is a digest which represents content of the image a
  - _stage digest_ of last non empty image stage;
  - git commit-id related with the last non empty image stage (if this last stage is git-related).
 
-The ***stage signature*** is calculated as the checksum of:
+The ***stage digest*** is calculated as the checksum of:
  - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
- - previous _stage signature_;
+ - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
 This digest used in content based tagging and used to import files from artifacts or images (stages digest of artifact or image will affect imports stage digest of the target image).
@@ -269,7 +269,7 @@ All commands that requires stages storage (`--stages-storage`) and images repo (
 
 There are 3 types of sycnhronization components:
  1. Local. Selected by `--synchronization=:local` param.
-   - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/SIGNATURE` files by default, each file contains a mapping of images existing in stages storage by some digest.
+   - Local _stages storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/DIGEST` files by default, each file contains a mapping of images existing in stages storage by some digest.
    - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.
  2. Kubernetes. Selected by `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` param.
   - Kubernetes _stages storage cache_ is stored in the specified `NAMESPACE` in ConfigMap named by project `cm/PROJECT_NAME`.
