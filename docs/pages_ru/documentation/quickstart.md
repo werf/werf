@@ -20,9 +20,7 @@ sidebar: documentation
 <br>
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">В ином случае выполните следующие действия, чтобы настроить локальный кластер Kubernetes и Docker Registry.</a>
-</div>
 <div class="details__content" markdown="1">
  1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
  2. Запустите minikube:
@@ -138,7 +136,7 @@ minikube service --namespace quickstart-application --url result
 
  3. Шаблоны для компонентов приложения `vote`, `db`, `redis`, `result` и `worker` описаны в каталоге `.helm/templates/`. Схема ниже показывает, как компоненты взаимодействуют между собой:
 
-  ![architecture](https://raw.githubusercontent.com/werf/quickstart-application/master/architecture.png)
+  ![architecture](/images/quickstart-architecture.svg)
 
    - Фронтенд-приложение на Python или ASP.NET Core позволяет пользователю проголосовать за один из двух вариантов;
    - Очередь на базе Redis или NATS получает новые голоса;

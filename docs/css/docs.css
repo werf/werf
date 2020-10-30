@@ -271,7 +271,7 @@
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: -0.3px;
-    margin: 0;
+    /* margin: 0; */
     padding: 0;
     list-style-type: none;
     /* color: #00122c; */
@@ -493,13 +493,12 @@
     border-radius: 0px;
 }
 
-#details_link a:link {color: black;}
-#details_link a:visited {color: black;}
-#details_link a:hover {color: black;}
-#details_link a:active {color: black;}
-
 .docs .details {
     margin-bottom: 10px;
+}
+
+.docs .details .details__summary {
+    margin-left: -15px;
 }
 
 .docs .details .details__summary::before {

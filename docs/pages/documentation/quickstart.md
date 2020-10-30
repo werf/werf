@@ -20,9 +20,7 @@ If your Kubernetes and Docker Registry are running already:
 <br>
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Or follow these steps to set up the local Kubernetes cluster and Docker Registry.</a>
-</div>
 <div class="details__content" markdown="1">
  1. Install [minikube](https://github.com/kubernetes/minikube#installation).
  2. Start minikube:
@@ -137,7 +135,7 @@ To deploy an application using werf, we should define the desired state in the G
 
  3. Kubernetes templates for `vote`, `db`, `redis`, `result` and `worker` components of the application are described in the files of a `.helm/templates/` directory. Components interact with each other as shown in the diagram:
 
-  ![architecture](https://raw.githubusercontent.com/werf/quickstart-application/master/architecture.png)
+  ![architecture](/images/quickstart-architecture.svg)
 
    - A front-end web app in Python or ASP.NET Core lets you vote for one of the two options;
    - A Redis or NATS queue collects new votes;
