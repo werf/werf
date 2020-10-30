@@ -295,7 +295,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -366,7 +366,7 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Digests_ of user stages  (and, therefore, the rebuilding process) depend on:
 

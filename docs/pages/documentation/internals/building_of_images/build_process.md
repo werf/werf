@@ -17,10 +17,10 @@ werf creates a single [stage]({{ site.baseurl }}/documentation/internals/buildin
 
 How the `dockerfile` stage is being built:
 
- 1. Stage signature is calculated based on specified `Dockerfile` and its contents. This signature represents the resulting image state.
- 2. werf does not perform a new docker build if an image with this signature already exists in the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage).
- 3. werf performs a regular docker build if there is no image with the specified signature in the [stage storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
- 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) (while tagging the resulting docker image with the calculated signature) if the [`:local` stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) parameter is set.
+ 1. Stage digest is calculated based on specified `Dockerfile` and its contents. This digest represents the resulting image state.
+ 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage).
+ 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
+ 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stages-storage) parameter is set.
 
 See the [configuration article]({{ site.baseurl }}/documentation/reference/werf_yaml.html#dockerfile-builder) for the werf.yaml configuration details.
 
