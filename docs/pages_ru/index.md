@@ -30,7 +30,54 @@ layout: default
                 </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
-                {% include ru/scheme.md %}
+                {% include scheme.md %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page__container">
+    <div class="presentation-notes">
+        <div class="presentation-notes__item" id="presentation-notes-1">
+            <div class="presentation-notes__item-num">1</div>
+            <div class="presentation-notes__item-title">
+                Желаемое состояние<br>
+                определяется в Git
+            </div>
+            <div class="presentation-notes__item-text"></div>
+        </div>
+        <div class="presentation-notes__item" id="presentation-notes-2">
+            <div class="presentation-notes__item-num">2</div>
+            <div class="presentation-notes__item-title">
+                Приводит registry<br>
+                к желаемому состоянию
+            </div>
+            <div class="presentation-notes__item-text">
+                <ol>
+                    <li>
+                        Собирает образы (при&nbsp;изменениях)
+                    </li>
+                    <li>
+                        Публикует образы (при&nbsp;необходимости)
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="presentation-notes__item" id="presentation-notes-3">
+            <div class="presentation-notes__item-num">3</div>
+            <div class="presentation-notes__item-title">
+                Приводит Kubernetes<br>
+                к желаемому состоянию
+            </div>
+            <div class="presentation-notes__item-text">
+                <ol>
+                    <li>
+                        Выкатывает Helm-чарт (с&nbsp;необходимыми образами)
+                    </li>
+                    <li>
+                        Отслеживает прогресс вплоть до успешного выката (и&nbsp;дает обратную связь)
+                    </li>
+                </ol>
             </div>
         </div>
     </div>
@@ -43,7 +90,7 @@ layout: default
                 Это GitOps,<br/>но реализованный <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>по-другому</b></a>!
             </h1>
             <div class="welcome__subtitle">
-                werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну. 
+                werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
                 Возможно использование вручную, из CI/CD-системы или в качестве оператора (фича в разработке и скоро будет доступна).
             </div>
         </div>

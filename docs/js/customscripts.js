@@ -280,28 +280,33 @@ $(document).ready(function(){
 $(document).ready(function() {
   if($('#presentation').length) {
     var magic = new ScrollMagic.Controller();
-    var magic_width = window.innerHeight > 700 ? 800 : 650;
-    var magic_height = parseInt(magic_width/1.4);
 
     // Pin scheme
-    new ScrollMagic.Scene({duration: 3700, offset: -1})
-    .setPin('#presentation')
+    new ScrollMagic.Scene({duration: 4000, offset: -1})
+    .setPin('#presentation', {pushFollowers: false})
     .addTo(magic);
 
-    // Move away title & move in scheme
+    // Pin notes
+    new ScrollMagic.Scene({duration: 400, triggerElement: '#presentation-notes-1', offset: 100})
+    .setPin('#presentation-notes-1', {pushFollowers: false})
+    .addTo(magic);
+    new ScrollMagic.Scene({duration: 400, triggerElement: '#presentation-notes-2', offset: 100})
+    .setPin('#presentation-notes-2', {pushFollowers: false})
+    .addTo(magic);
+    new ScrollMagic.Scene({duration: 1000, triggerElement: '#presentation-notes-3', offset: 100})
+    .setPin('#presentation-notes-3', {pushFollowers: false})
+    .addTo(magic);
+
+    // Move away title
     new ScrollMagic.Scene({duration: 250, offset: 10}).setTween(
       new TimelineMax()
       .to('#presentation-title', {x: '-2000px', opacity: 0}, 0)
       .to('#presentation-bg', {x: '-1500px'}, 0)
-      .to('#presentation-scheme', {
-        width: magic_width,
-        x: '-' + (1160 - magic_width)/2 + 'px',
-        y: + (45 + ((window.innerHeight - magic_height)/2) - (window.innerHeight > 700 ? ((window.innerHeight - 480)/2) : 130)) + 'px'
-      }, 0))
+    )
     .addTo(magic);
 
     // Hide arrows & smart
-    new ScrollMagic.Scene({duration: 100, offset: 100}).setTween(
+    new ScrollMagic.Scene({duration: 100, offset: 400}).setTween(
       new TimelineMax()
       .to('#scheme_git', {opacity: '0.2'}, 0)
       .to('#scheme_docker_registry', {opacity: '0.2'}, 0)
@@ -314,26 +319,22 @@ $(document).ready(function() {
       .to('#scheme_smart', {opacity: '0'}, 0)
     ).addTo(magic);
 
-    // Git, show step
-    new ScrollMagic.Scene({duration: 200, offset: 300}).setTween(
+    // Git
+    new ScrollMagic.Scene({duration: 200, offset: 600}).setTween(
       new TimelineMax()
       .to('#scheme_git', {opacity: '1'}, 0)
-      .to('#scheme_step_3', {opacity: '1'}, 0)
-      .to('#scheme_step_connector_3', {opacity: '1'}, 0)
     ).addTo(magic);
 
     // Git -> Werf, show
-    new ScrollMagic.Scene({duration: 200, offset: 700}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 1000}).setTween(
       new TimelineMax()
       .to('#scheme_git', {opacity: '1'}, 0)
       .to('#scheme_arrows_gw', {opacity: '1'}, 0)
       .to('#scheme_werf', {opacity: '1'}, 0)
-      .to('#scheme_step_3', {opacity: '0.2'}, 0)
-      .to('#scheme_step_connector_3', {opacity: '0.2'}, 0)
     ).addTo(magic);
 
     // Werf -> Docker Registry, show
-    new ScrollMagic.Scene({duration: 200, offset: 1100}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 1400}).setTween(
       new TimelineMax()
       .to('#scheme_git', {opacity: '0.2'}, 0)
       .to('#scheme_docker_registry', {opacity: '1'}, 0)
@@ -343,7 +344,7 @@ $(document).ready(function() {
     ).addTo(magic);
 
     // Werf -> Docker Registry, sync
-    new ScrollMagic.Scene({duration: 500, offset: 1500}).setTween(
+    new ScrollMagic.Scene({duration: 500, offset: 1800}).setTween(
       TweenMax
       .fromTo('#scheme_smart_icon_update_arrows_2', 1,
       {rotation: '0'}, {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out"})
@@ -351,28 +352,24 @@ $(document).ready(function() {
     ).addTo(magic);
 
     // Werf -> Docker Registry, show info
-    new ScrollMagic.Scene({duration: 200, offset: 1900}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 2200}).setTween(
       new TimelineMax()
       .to('#scheme_smart_icon_update_2', {opacity: '0'})
       .to('#scheme_smart_icon_check_2', {opacity: '1'})
-      .to('#scheme_step_2', {opacity: '1'}, 0)
-      .to('#scheme_step_connector', {opacity: '1'}, 0)
     ).addTo(magic);
 
     // Werf -> Kubernetes, show
-    new ScrollMagic.Scene({duration: 200, offset: 2300}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 2600}).setTween(
       new TimelineMax()
       .to('#scheme_docker_registry', {opacity: '0.2'}, 0)
       .to('#scheme_arrows_wd', {opacity: '0.2'}, 0)
-      .to('#scheme_step_2', {opacity: '0.2'}, 0)
-      .to('#scheme_step_connector', {opacity: '0.2'}, 0)
       .to('#scheme_arrows_wk', {opacity: '1'}, 0)
       .to('#scheme_smart', {opacity: '1'}, 0)
       .to('#scheme_k8s', {opacity: '1'}, 0)
     ).addTo(magic);
 
     // Werf -> Kubernetes, sync
-    new ScrollMagic.Scene({duration: 500, offset: 2700}).setTween(
+    new ScrollMagic.Scene({duration: 500, offset: 3000}).setTween(
       TweenMax
       .fromTo('#scheme_smart_icon_update_arrows', 1,
       {rotation: '0'}, {rotation: '-720', transformOrigin: '50% 50%', repeat: -1, ease: "power1.out"})
@@ -380,29 +377,21 @@ $(document).ready(function() {
     ).addTo(magic);
 
     // Werf -> Docker Registry, show info
-    new ScrollMagic.Scene({duration: 200, offset: 3100}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 3400}).setTween(
       new TimelineMax()
       .to('#scheme_smart_icon_update', {opacity: '0'})
       .to('#scheme_smart_icon_check', {opacity: '1'})
-      .to('#scheme_step', {opacity: '1'}, 0)
-      .to('#scheme_step_connector_2', {opacity: '1'}, 0)
     ).addTo(magic);
 
     // Full
-    new ScrollMagic.Scene({duration: 200, offset: 3500}).setTween(
+    new ScrollMagic.Scene({duration: 200, offset: 3800}).setTween(
       new TimelineMax()
       .to('#scheme_smart_icon_update', {opacity: '0'})
       .to('#scheme_smart_icon_check', {opacity: '1'})
-      .to('#scheme_step_2', {opacity: '1'}, 0)
-      .to('#scheme_step_connector_2', {opacity: '1'}, 0)
       .to('#scheme_docker_registry', {opacity: '1'}, 0)
       .to('#scheme_arrows_wd', {opacity: '1'}, 0)
-      .to('#scheme_step', {opacity: '1'}, 0)
-      .to('#scheme_step_connector', {opacity: '1'}, 0)
       .to('#scheme_git', {opacity: '1'}, 0)
       .to('#scheme_arrows_gw', {opacity: '1'}, 0)
-      .to('#scheme_step_3', {opacity: '1'}, 0)
-      .to('#scheme_step_connector_3', {opacity: '1'}, 0)
     ).addTo(magic);
   }
 });

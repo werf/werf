@@ -29,7 +29,54 @@ layout: default
                 </div>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
-                {% include en/scheme.md %}
+                {% include scheme.md %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page__container">
+    <div class="presentation-notes">
+        <div class="presentation-notes__item" id="presentation-notes-1">
+            <div class="presentation-notes__item-num">1</div>
+            <div class="presentation-notes__item-title">
+                Desired state<br>
+                is defined in Git
+            </div>
+            <div class="presentation-notes__item-text"></div>
+        </div>
+        <div class="presentation-notes__item" id="presentation-notes-2">
+            <div class="presentation-notes__item-num">2</div>
+            <div class="presentation-notes__item-title">
+                Syncs the registry<br>
+                to the defined state
+            </div>
+            <div class="presentation-notes__item-text">
+                <ol>
+                    <li>
+                        Builds images (if anything changed or missing)
+                    </li>
+                    <li>
+                        Pushes images (if needed)
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="presentation-notes__item" id="presentation-notes-3">
+            <div class="presentation-notes__item-num">3</div>
+            <div class="presentation-notes__item-title">
+                Syncs Kubernetes<br>
+                to the defined state
+            </div>
+            <div class="presentation-notes__item-text">
+                <ol>
+                    <li>
+                        Applies the Helm chart (with appropriate images)
+                    </li>
+                    <li>
+                        Tracks deployment progress till success (and provides feedback)
+                    </li>
+                </ol>
             </div>
         </div>
     </div>
