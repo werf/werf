@@ -77,9 +77,7 @@ channels:
       </h1>
       <div class="docs">
 <div class="details">
-<div id="details_link">
 <h2 name="установка-зависимостей"><a href="javascript:void(0)" class="details__summary">Установка зависимостей</a></h2>
-</div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_dependencies.md %}
 </div>
@@ -94,9 +92,7 @@ channels:
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
 <div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
-<div id="details_link">
 <h2 name="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
-</div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
 </div>
@@ -113,9 +109,7 @@ channels:
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
 <div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
 <div class="details">
-<div id="details_link">
 <h2 name="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
-</div>
 <div class="details__content" markdown="1">
 {% include ru/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
 </div>
@@ -138,11 +132,7 @@ channels:
 </div><!-- /os -->
 
 <div class="details">
-<div id="details_link">
-
 <h2><a href="javascript:void(0)" class="details__summary">Как это работает?</a></h2>
-
-</div>
 <div class="details__content" markdown="1">
 {% include ru/installation/how_it_works.md %}
 </div>

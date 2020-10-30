@@ -45,9 +45,7 @@ If you have already installed and set up a `kubectl` tool to work with your Kube
 Otherwise, you should create the kubeconfig file and pass it to the werf by setting the `--kube-config` flag (or `WERF_KUBE_CONFIG` environment variable), `--kube-context` flag (or `WERF_KUBE_CONTEXT` environment variable) or `--kube-config-base64` flag (or `WERF_KUBE_CONFIG_BASE64` environment variable) to pass the base64-encoded kubeconfig data directly into werf.
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Example</a>
-</div>
 <div class="details__content" markdown="1">
 Use a custom kubeconfig file `./my-kube-config`:
 
@@ -71,9 +69,7 @@ You probably need a private Docker Registry if your project involves any custom 
 If you have configured the `docker` tool to access the private Docker Registry from your host, then `werf` would work with this Docker Registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Otherwise, perform the standard docker login procedure into your Docker Registry.</a>
-</div>
 <div class="details__content" markdown="1">
 ```shell
 docker login registry.mydomain.org/application -uUSER -pPASSWORD
@@ -99,9 +95,7 @@ Typically, an application is deployed into different [environments]({{ site.base
 werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]() and the [Helm release name](). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Example</a>
-</div>
 <div class="details__content" markdown="1">
 Specify the `WERF_ENV` environment variable:
 
@@ -154,9 +148,7 @@ There are other optional settings (they are typically configured for werf in CI/
 <br>
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Example</a>
-</div>
 <div class="details__content" markdown="1">
 Let's set up custom annotations, logging options, and the process exterminator mode using environment variables:
 

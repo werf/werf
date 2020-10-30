@@ -45,9 +45,7 @@ werf подключается и работает с кластером Kubernet
 В ином случае необходимо создать файл kubeconfig и передать его в werf с помощью флага `--kube-config` (или переменной среды `WERF_KUBE_CONFIG`), флага `--kube-context` (или переменной `WERF_KUBE_CONTEXT`) или флага `--kube-config-base64` (переменной `WERF_KUBE_CONFIG_BASE64`), чтобы передать закодированные base64 kubeconfig-настройки непосредственно в werf.
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Пример</a>
-</div>
 <div class="details__content" markdown="1">
 Используем кастомный файл kubeconfig `./my-kube-config`:
 
@@ -71,9 +69,7 @@ werf converge
 Если клиент `docker` уже настроен на доступ к закрытому Docker-репозиторию с вашего хоста, дополнительное конфигурирование werf не требуется, поскольку он использует те же настройки, что и docker (каталог с настройками по умолчанию `~/.docker/` или переменную среды `DOCKER_CONFIG`).
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">В противном случае выполните стандартную процедуру входа в реестр Docker.</a>
-</div>
 <div class="details__content" markdown="1">
 ```shell
 docker login registry.mydomain.org/application -uUSER -pPASSWORD
@@ -99,9 +95,7 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 В werf имеется опциональный параметр `--env` (или переменная среды `WERF_ENV`), с помощью которого можно задать имя используемого окружения. Оно влияет на название соответствующего [пространства имен Kubernetes]() и [название Helm-релиза](). Мы рекомендуем проверять имя окружения в процессе выполнения CI/CD-задания (например, с помощью встроенных переменных окружения вашей CI/CD-системы) и соответствующим образом устанавливать параметр `--env`.
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Пример</a>
-</div>
 <div class="details__content" markdown="1">
 
 Задаем переменную среду `WERF_ENV`:
@@ -157,9 +151,7 @@ werf converge
 <br>
 
 <div class="details">
-<div id="details_link">
 <a href="javascript:void(0)" class="details__summary">Пример</a>
-</div>
 <div class="details__content" markdown="1">
 Давайте зададим кастомные аннотации, настроим логгирование и включим режим "уничтожителя процессов" с помощью переменных среды:
 
