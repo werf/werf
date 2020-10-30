@@ -33,7 +33,7 @@ ci.werf.io/commit=$GITHUB_SHA
 Значение для установки переменной окружения `WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL` формируется на основе переменной окружения GitHub Actions [`GITHUB_RUN_ID`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) следующим образом:
 
 ```
-github.ci.werf.io/run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+github.ci.werf.io/workflow-run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 ```
 
 ### Другие переменные
