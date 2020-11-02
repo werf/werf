@@ -126,8 +126,70 @@ func (ds *DockerStages) addDockerMetaArg(key, value string) (string, string, err
 	return resolvedKey, resolvedValue, err
 }
 
+// AddDockerStageArg function sets --build-arg value or resolved dockerfile stage ARG value or resolved meta ARG value (if stage ARG value is empty)
+func (ds *DockerStages) AddDockerStageArg(dockerStageID int, key, value string) (string, string, error) {
+	resolvedKey, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, key)
+	if err != nil {
+		return "", "", err
+	}
+
+	var resolvedValue string
+	if buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]; ok {
+		resolvedValue = buildArgValue
+	} else if value == "" {
+		resolvedValue = ds.dockerMetaArgsHash[resolvedKey]
+	} else {
+		rValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
+		if err != nil {
+			return "", "", err
+		}
+
+		resolvedValue = rValue
+	}
+
+	ds.DockerStageArgsHash(dockerStageID)[resolvedKey] = resolvedValue
+	return resolvedKey, resolvedValue, nil
+}
+
+func (ds *DockerStages) AddDockerStageEnv(dockerStageID int, key, value string) (string, string, error) {
+	resolvedKey, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, key)
+	if err != nil {
+		return "", "", err
+	}
+
+	resolvedValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
+	if err != nil {
+		return "", "", err
+	}
+
+	ds.DockerStageEnvs(dockerStageID)[resolvedKey] = resolvedValue
+	return resolvedKey, resolvedValue, nil
+}
+
 func (ds *DockerStages) ShlexProcessWordWithMetaArgs(value string) (string, error) {
 	return shlexProcessWord(value, toArgsArray(ds.dockerMetaArgsHash))
+}
+
+func (ds *DockerStages) ShlexProcessWordWithStageArgsAndEnvs(dockerStageID int, value string) (string, error) {
+	return shlexProcessWord(value, toArgsArray(ds.DockerStageArgsHash(dockerStageID), ds.DockerStageEnvs(dockerStageID)))
+}
+
+func (ds *DockerStages) DockerStageArgsHash(dockerStageID int) map[string]string {
+	_, ok := ds.dockerStageArgsHash[dockerStageID]
+	if !ok {
+		ds.dockerStageArgsHash[dockerStageID] = map[string]string{}
+	}
+
+	return ds.dockerStageArgsHash[dockerStageID]
+}
+
+func (ds *DockerStages) DockerStageEnvs(dockerStageID int) map[string]string {
+	_, ok := ds.dockerStageEnvs[dockerStageID]
+	if !ok {
+		ds.dockerStageEnvs[dockerStageID] = map[string]string{}
+	}
+
+	return ds.dockerStageEnvs[dockerStageID]
 }
 
 func toArgsArray(argsHashes ...map[string]string) []string {
@@ -269,7 +331,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 	var stagesDependencies [][]string
 	var stagesOnBuildDependencies [][]string
 
-	for _, stage := range s.dockerStages {
+	for ind, stage := range s.dockerStages {
 		var dependencies []string
 		var onBuildDependencies []string
 
@@ -285,7 +347,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
 		if ok {
 			for _, instruction := range onBuildInstructions {
-				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, instruction)
+				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, ind, instruction)
 				if err != nil {
 					return "", err
 				}
@@ -295,7 +357,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 		}
 
 		for _, cmd := range stage.Commands {
-			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, cmd)
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, ind, cmd)
 			if err != nil {
 				return "", err
 			}
@@ -336,15 +398,34 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, cmd interface{}) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, dockerStageID int, cmd interface{}) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
 	switch c := cmd.(type) {
 	case *instructions.ArgCommand:
 		dependencies = append(dependencies, c.String())
-		if argValue, exist := s.dockerBuildArgsHash[c.Key]; exist {
-			dependencies = append(dependencies, argValue)
+
+		resolvedKey, resolvedValue, err := s.AddDockerStageArg(dockerStageID, c.Key, c.ValueString())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if c.Key != resolvedKey || c.ValueString() != resolvedValue {
+			dependencies = append(dependencies, resolvedKey, resolvedValue)
+		}
+	case *instructions.EnvCommand:
+		dependencies = append(dependencies, c.String())
+
+		for _, keyValuePair := range c.Env {
+			resolvedKey, resolvedValue, err := s.AddDockerStageEnv(dockerStageID, keyValuePair.Key, keyValuePair.Value)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			if keyValuePair.Key != resolvedKey || keyValuePair.Value != resolvedValue {
+				dependencies = append(dependencies, resolvedKey, resolvedValue)
+			}
 		}
 	case *instructions.AddCommand:
 		dependencies = append(dependencies, c.String())
@@ -364,7 +445,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			dependencies = append(dependencies, checksum)
 		}
 	case *instructions.OnbuildCommand:
-		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, c.Expression)
+		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, dockerStageID, c.Expression)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -380,7 +461,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, expression string) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, dockerStageID int, expression string) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err
@@ -396,7 +477,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 		return nil, nil, err
 	}
 
-	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, cmd)
+	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, dockerStageID, cmd)
 	if err != nil {
 		return nil, nil, err
 	}
