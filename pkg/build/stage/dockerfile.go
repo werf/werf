@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bmatcuk/doublestar"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
@@ -814,7 +815,7 @@ func (s *DockerfileStage) getProjectFilesByWildcards(ctx context.Context, wildca
 			continue
 		}
 
-		matches, err := filepath.Glob(contextWildcard)
+		matches, err := doublestar.Glob(contextWildcard)
 		if err != nil {
 			return nil, fmt.Errorf("glob %s failed: %s", contextWildcard, err)
 		}
