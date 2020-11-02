@@ -29,7 +29,8 @@
 {% assign shouldAddBtn = false %}
 {% endif %}
 
-<tr id="{{ directiveID }}" class="{{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }}">
+<tr id="{{ directiveID }}" class="directive {{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }}">
+    <td>{% increment counter %}</td>
     <td>
         {% for i in (2..include.indent) %}&nbsp;&nbsp;{% endfor %}
         {%- if include.isElm and include.elmIndex == 1 %}-&nbsp;{% elsif include.isAttr or include.isElm %}&nbsp;&nbsp;{% endif -%}
@@ -37,17 +38,7 @@
         <span style="color: #008080;">{{ directive.name }}</span>:
 
         {%- if directive.value %} <span style="color: #d14;">{{ directive.value | escape }}</span>{% endif -%}
-        {%- if shouldAddBtn %} <span id="{{ directiveID }}-btn" class="btn {% if !directive.isCollapsedByDefault %}active{% endif %}" data-toggle="tooltip" title="Expand/Collapse"></span>{% endif -%}
         {%- if directive.required %} <span class="required" data-toggle="tooltip" title="Required">!</span>{% endif -%}
-
-        {% if shouldAddBtn %}
-        <script>
-        $( "#{{ directiveID }}-btn" ).click(function() {
-            $(this).toggleClass('active');
-            $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}");
-        });
-        </script>
-        {% endif %}
     </td>
     <td>
         <span>
@@ -75,6 +66,21 @@
         </span>
     </td>
 </tr>
+
+{% if shouldAddBtn %}
+<tr class="dots {{ directiveID }} {{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }} {% unless directive.isCollapsedByDefault %}collapsed-dots{% endunless %}">
+    <td>
+        <span id="{{ directiveID }}-btn" class="btn" data-toggle="tooltip" title="Expand"></span>
+    </td>
+    <td colspan="2">...</td>
+</tr>
+<script>
+$( "#{{ directiveID }}-btn" ).click(function() {
+    $(this).toggleClass('active');
+    $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}");
+});
+</script>
+{% endif %}
 
 {% if directive.isCollapsedByDefault %}
 {% assign directiveCollapsedClasses = directiveCollapsedClasses | push: directiveCollapsedClass %}
