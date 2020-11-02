@@ -136,7 +136,7 @@ outerLoop:
 		}
 
 		_, ok := s.imageOnBuildInstructions[resolvedBaseName]
-		if ok {
+		if ok || resolvedBaseName == "scratch" {
 			continue
 		}
 
