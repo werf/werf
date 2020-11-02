@@ -402,6 +402,29 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	var dependencies []string
 	var onBuildDependencies []string
 
+	resolveValueFunc := func(value string) (string, error) {
+		resolvedValue, err := s.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
+		if err != nil {
+			return "", err
+		}
+
+		return resolvedValue, nil
+	}
+
+	resolveSourcesFunc := func(sources []string) ([]string, error) {
+		var resolvedSources []string
+		for _, source := range sources {
+			resolvedSource, err := resolveValueFunc(source)
+			if err != nil {
+				return nil, err
+			}
+
+			resolvedSources = append(resolvedSources, resolvedSource)
+		}
+
+		return resolvedSources, nil
+	}
+
 	switch c := cmd.(type) {
 	case *instructions.ArgCommand:
 		dependencies = append(dependencies, c.String())
@@ -430,7 +453,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	case *instructions.AddCommand:
 		dependencies = append(dependencies, c.String())
 
-		checksum, err := s.calculateFilesChecksum(ctx, c.SourcesAndDest.Sources())
+		resolvedSources, err := resolveSourcesFunc(c.SourcesAndDest.Sources())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		checksum, err := s.calculateFilesChecksum(ctx, resolvedSources)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -438,7 +466,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	case *instructions.CopyCommand:
 		dependencies = append(dependencies, c.String())
 		if c.From == "" {
-			checksum, err := s.calculateFilesChecksum(ctx, c.SourcesAndDest.Sources())
+			resolvedSources, err := resolveSourcesFunc(c.SourcesAndDest.Sources())
+			if err != nil {
+				return nil, nil, err
+			}
+
+			checksum, err := s.calculateFilesChecksum(ctx, resolvedSources)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -454,6 +487,15 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 		onBuildDependencies = append(onBuildDependencies, cOnBuildDependencies...)
 	case dockerfileInstructionInterface:
 		dependencies = append(dependencies, c.String())
+
+		resolvedValue, err := resolveValueFunc(c.String())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if c.String() != resolvedValue {
+			dependencies = append(dependencies, resolvedValue)
+		}
 	default:
 		panic("runtime error")
 	}
