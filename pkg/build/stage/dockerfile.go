@@ -498,28 +498,20 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 
 	switch c := cmd.(type) {
 	case *instructions.ArgCommand:
-		dependencies = append(dependencies, c.String())
-
 		resolvedKey, resolvedValue, err := processArgFunc(c.Key, c.ValueString())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		if c.Key != resolvedKey || c.ValueString() != resolvedValue {
-			dependencies = append(dependencies, resolvedKey, resolvedValue)
-		}
+		dependencies = append(dependencies, fmt.Sprintf("ARG %s=%s", resolvedKey, resolvedValue))
 	case *instructions.EnvCommand:
-		dependencies = append(dependencies, c.String())
-
 		for _, keyValuePair := range c.Env {
 			resolvedKey, resolvedValue, err := processEnvFunc(keyValuePair.Key, keyValuePair.Value)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			if keyValuePair.Key != resolvedKey || keyValuePair.Value != resolvedValue {
-				dependencies = append(dependencies, resolvedKey, resolvedValue)
-			}
+			dependencies = append(dependencies, fmt.Sprintf("ENV %s=%s", resolvedKey, resolvedValue))
 		}
 	case *instructions.AddCommand:
 		dependencies = append(dependencies, c.String())
@@ -557,16 +549,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 		dependencies = append(dependencies, cDependencies...)
 		onBuildDependencies = append(onBuildDependencies, cOnBuildDependencies...)
 	case dockerfileInstructionInterface:
-		dependencies = append(dependencies, c.String())
-
 		resolvedValue, err := resolveValueFunc(c.String())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		if c.String() != resolvedValue {
-			dependencies = append(dependencies, resolvedValue)
-		}
+		dependencies = append(dependencies, resolvedValue)
 	default:
 		panic("runtime error")
 	}
@@ -774,14 +762,7 @@ entryNotFoundInGitRepository:
 		logProcess.End()
 	}
 
-	var resultChecksum string
-	if gitIgnoredFilesChecksum == "" { // TODO: legacy till v1.2
-		resultChecksum = util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum)
-	} else {
-		resultChecksum = util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum, gitIgnoredFilesChecksum)
-	}
-
-	return resultChecksum, nil
+	return util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum, gitIgnoredFilesChecksum), nil
 }
 
 func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
