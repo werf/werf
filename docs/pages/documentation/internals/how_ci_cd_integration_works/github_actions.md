@@ -33,7 +33,7 @@ ci.werf.io/commit=$GITHUB_SHA
 The value of `WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL` is derived from the [`GITHUB_RUN_ID`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions environment variable and composed in the following way:
 
 ```
-github.ci.werf.io/run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+github.ci.werf.io/workflow-run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 ```
 
 ### Other variables
