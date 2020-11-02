@@ -399,7 +399,13 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ 
 		}
 	}
 
-	return util.Sha256Hash(stagesDependencies[s.dockerTargetStageIndex]...), nil
+	dockerfileStageDependencies := stagesDependencies[s.dockerTargetStageIndex]
+
+	if dockerfileStageDependenciesDebug() {
+		logboek.Context(ctx).LogLn(dockerfileStageDependencies)
+	}
+
+	return util.Sha256Hash(dockerfileStageDependencies...), nil
 }
 
 func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
@@ -922,4 +928,8 @@ func uniquePaths(paths []string) []string {
 	}
 
 	return result
+}
+
+func dockerfileStageDependenciesDebug() bool {
+	return os.Getenv("WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES") == "1"
 }
