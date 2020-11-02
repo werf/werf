@@ -53,6 +53,7 @@ These values includes project name, docker images ids and other`),
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
@@ -173,11 +174,12 @@ func runGetServiceValues() error {
 		if err != nil {
 			return err
 		}
-
-		storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-		if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+		if err != nil {
 			return err
 		}
+
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()

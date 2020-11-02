@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/werf/werf/pkg/storage"
+
 	"github.com/google/uuid"
 
 	"github.com/docker/docker/pkg/stringid"
@@ -247,70 +249,156 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
 	}
 
-	if phase.ShouldBeBuiltMode {
-		err := phase.calculateStage(ctx, img, stg, true)
-		if err != nil {
-			return err
+	if stg.Name() != "from" && stg.Name() != "dockerfile" {
+		if phase.StagesIterator.PrevNonEmptyStage == nil {
+			panic(fmt.Sprintf("expected PrevNonEmptyStage to be set for image %q stage %s", img.GetName(), stg.Name()))
+		}
+		if phase.StagesIterator.PrevBuiltStage == nil {
+			panic(fmt.Sprintf("expected PrevBuiltStage to be set for image %q stage %s", img.GetName(), stg.Name()))
+		}
+		if phase.StagesIterator.PrevBuiltStage != phase.StagesIterator.PrevNonEmptyStage {
+			panic(fmt.Sprintf("expected PrevBuiltStage (%q) to equal PrevNonEmptyStage (%q) for image %q stage %s", phase.StagesIterator.PrevBuiltStage.LogDetailedName(), phase.StagesIterator.PrevNonEmptyStage.LogDetailedName(), img.GetName(), stg.Name()))
+		}
+	}
+
+	foundSuitableStage, cleanupFunc, err := phase.calculateStage(ctx, img, stg)
+	if cleanupFunc != nil {
+		defer cleanupFunc()
+	}
+	if err != nil {
+		return err
+	}
+
+	// Stage is cached in the stages storage
+	if foundSuitableStage {
+		logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+
+		logboek.Context(ctx).LogOptionalLn()
+
+		if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
+			if err := introspectStage(ctx, stg); err != nil {
+				return err
+			}
 		}
 
-		defer phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock()
 		return nil
-	} else {
-		if stg.Name() != "from" && stg.Name() != "dockerfile" {
-			if phase.StagesIterator.PrevNonEmptyStage == nil {
-				panic(fmt.Sprintf("expected PrevNonEmptyStage to be set for image %q stage %s", img.GetName(), stg.Name()))
-			}
-			if phase.StagesIterator.PrevBuiltStage == nil {
-				panic(fmt.Sprintf("expected PrevBuiltStage to be set for image %q stage %s", img.GetName(), stg.Name()))
-			}
-			if phase.StagesIterator.PrevBuiltStage != phase.StagesIterator.PrevNonEmptyStage {
-				panic(fmt.Sprintf("expected PrevBuiltStage (%q) to equal PrevNonEmptyStage (%q) for image %q stage %s", phase.StagesIterator.PrevBuiltStage.LogDetailedName(), phase.StagesIterator.PrevNonEmptyStage.LogDetailedName(), img.GetName(), stg.Name()))
-			}
+	}
+
+	foundSuitableSecondaryStage, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, stg)
+	if err != nil {
+		return err
+	}
+
+	if !foundSuitableSecondaryStage {
+		if phase.ShouldBeBuiltMode {
+			phase.printShouldBeBuiltError(ctx, img, stg)
+			return fmt.Errorf("stages required")
 		}
 
-		if err := phase.calculateStage(ctx, img, stg, false); err != nil {
-			return err
-		}
-		defer phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock()
-
-		// Stage is cached in the stages storage
-		if stg.GetImage().GetStageDescription() != nil {
-			logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-
-			logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
-
-			logboek.Context(ctx).LogOptionalLn()
-
-			if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
-				if err := introspectStage(ctx, stg); err != nil {
-					return err
-				}
-			}
-
-			return nil
-		}
+		// Will build a new stage
+		i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), uuid.New().String())
+		stg.SetImage(i)
 
 		if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
 			return err
 		}
-
 		if err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
 		}
-
 		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
+	}
 
-		if stg.GetImage().GetStageDescription() == nil {
-			panic(fmt.Sprintf("expected stage %s image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetImage().Name()))
+	if stg.GetImage().GetStageDescription() == nil {
+		panic(fmt.Sprintf("expected stage %s image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetImage().Name()))
+	}
+
+	// Add managed image record only if there was at least one newly built stage
+	phase.ShouldAddManagedImageRecord = true
+
+	return nil
+}
+
+func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *Image, stg stage.Interface) (bool, error) {
+	foundSuitableStage := false
+
+	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *image.StageDescription, secondaryStagesStorage storage.StagesStorage) error {
+		// Lock the primary stages storage
+		if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
+			return fmt.Errorf("unable to lock project %s digest %s: %s", phase.Conveyor.projectName(), stg.GetDigest(), err)
+		} else {
+			defer phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
 		}
 
-		// Add managed image record only if there was at least one newly built stage
-		phase.ShouldAddManagedImageRecord = true
+		// Query the primary stages storage for suitable stage again.
+		// Suitable stage can be found this time and should be used in this case
+		if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stg.GetDigest()); err != nil {
+			return err
+		} else {
+			if stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
+				return err
+			} else if stageDesc != nil {
+				i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
+				i.SetStageDescription(stageDesc)
+				stg.SetImage(i)
 
-		return nil
+				logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+				logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+
+				return nil
+			}
+
+			return logboek.Context(ctx).Default().LogProcess("Copy suitable stage from %s", secondaryStagesStorage.String()).DoError(func() error {
+				// Copy suitable stage from a secondary stages storage to the primary stages storage
+				// while primary stages storage lock for this digest is held
+				if copiedStageDesc, err := phase.Conveyor.StorageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, phase.Conveyor.StorageManager.StagesStorage, phase.Conveyor.ContainerRuntime); err != nil {
+					return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %s", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+				} else {
+					i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), copiedStageDesc.Info.Name)
+					i.SetStageDescription(copiedStageDesc)
+					stg.SetImage(i)
+
+					var stageIDs []image.StageID
+					for _, stageDesc := range stages {
+						stageIDs = append(stageIDs, *stageDesc.StageID)
+					}
+					stageIDs = append(stageIDs, *copiedStageDesc.StageID)
+
+					if err := phase.Conveyor.StorageManager.AtomicStoreStagesByDigestToCache(ctx, string(stg.Name()), stg.GetDigest(), stageIDs); err != nil {
+						return err
+					}
+
+					logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+					logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+
+					return nil
+				}
+
+				return nil
+			})
+		}
 	}
+
+ScanSecondaryStagesStorageList:
+	for _, secondaryStagesStorage := range phase.Conveyor.StorageManager.SecondaryStagesStorageList {
+		if secondaryStages, err := phase.Conveyor.StorageManager.GetStagesByDigestFromStagesStorage(ctx, stg.LogDetailedName(), stg.GetDigest(), secondaryStagesStorage); err != nil {
+			return false, err
+		} else {
+			if secondaryStageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, secondaryStages); err != nil {
+				return false, err
+			} else if secondaryStageDesc != nil {
+				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
+					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %s", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
+				}
+				foundSuitableStage = true
+				break ScanSecondaryStagesStorageList
+			}
+		}
+	}
+
+	return foundSuitableStage, nil
 }
 
 func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image, stg stage.Interface) error {
@@ -334,17 +422,17 @@ func castToStageImage(img container_runtime.ImageInterface) *container_runtime.S
 	return img.(*container_runtime.StageImage)
 }
 
-func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface, shouldBeBuiltMode bool) error {
+func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
 	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
 	if err != nil {
-		return err
+		return false, nil, err
 	}
 
-	stageSig, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
+	stageDigest, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
-		return err
+		return false, nil, err
 	}
-	stg.SetDigest(stageSig)
+	stg.SetDigest(stageDigest)
 
 	logboek.Context(ctx).Info().LogProcessInline("Locking stage %s handling", stg.LogDetailedName()).
 		Options(func(options types.LogProcessInlineOptionsInterface) {
@@ -354,36 +442,29 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 		}).
 		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
-	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stageSig); err != nil {
-		return err
+	foundSuitableStage := false
+	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stageDigest); err != nil {
+		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	} else {
 		if stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
-			return err
+			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 		} else if stageDesc != nil {
 			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
 			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
-		} else {
-			if shouldBeBuiltMode {
-				phase.printShouldBeBuiltError(ctx, img, stg)
-				return fmt.Errorf("stages required")
-			}
-
-			// Will build a new image
-			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), uuid.New().String())
-			stg.SetImage(i)
+			foundSuitableStage = true
 		}
 	}
 
 	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
-		return fmt.Errorf("unable to calculate stage %s content digest: %s", stg.Name(), err)
+		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %s", stg.Name(), err)
 	}
 	stg.SetContentDigest(stageContentSig)
 
 	logboek.Context(ctx).Info().LogF("Stage %s content digest: %s\n", stg.LogDetailedName(), stageContentSig)
 
-	return nil
+	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
 }
 
 func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Image, stg stage.Interface) error {
@@ -522,16 +603,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
-			var i *container_runtime.StageImage
-			switch fromImage := phase.StagesIterator.GetPrevImage(img, stg).(type) {
-			case *container_runtime.StageImage:
-				i = phase.Conveyor.GetOrCreateStageImage(fromImage, stageDesc.Info.Name)
-			case nil:
-				i = phase.Conveyor.GetOrCreateStageImage(nil, stageDesc.Info.Name)
-			default:
-				panic(fmt.Sprintf("runtime error: unexpected type %T", fromImage))
-			}
-
+			i := phase.Conveyor.GetOrCreateStageImage(castToStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
 			i.SetStageDescription(stageDesc)
 			stg.SetImage(i)
 			return nil
@@ -542,7 +614,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stageImageObj.SetName(newStageImageName)
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			if err := logboek.Context(ctx).Info().LogProcess("Store into stages storage").DoError(func() error {
+			if err := logboek.Context(ctx).Info().LogProcess("Store stage").DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				}

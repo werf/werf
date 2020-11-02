@@ -64,6 +64,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
@@ -176,11 +177,12 @@ func runDiff() error {
 	if err != nil {
 		return err
 	}
-
-	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	if err != nil {
 		return err
 	}
+
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)

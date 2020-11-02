@@ -39,6 +39,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified stages storage")
@@ -125,8 +126,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	_ = stagesStorageCache
 	_ = storageLockManager
+	_ = secondaryStagesStorageList
 
 	if images, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)

@@ -103,6 +103,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
@@ -252,11 +253,12 @@ func runRun() error {
 	if err != nil {
 		return err
 	}
-
-	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	if err != nil {
 		return err
 	}
+
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 

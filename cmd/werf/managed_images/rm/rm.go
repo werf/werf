@@ -43,6 +43,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified stages storage")
@@ -129,8 +130,14 @@ func run(imageNames []string) error {
 	if err != nil {
 		return err
 	}
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	_ = stagesStorageCache
 	_ = storageLockManager
+	_ = secondaryStagesStorageList
 
 	errs := []error{}
 	for _, imageName := range imageNames {

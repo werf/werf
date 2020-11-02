@@ -58,8 +58,9 @@ type CmdData struct {
 	SecretValues    *[]string
 	IgnoreSecretKey *bool
 
-	CommonRepoData *RepoData
-	StagesStorage  *string
+	CommonRepoData         *RepoData
+	StagesStorage          *string
+	SecondaryStagesStorage *[]string
 
 	SkipBuild *bool
 	StubTags  *bool
@@ -269,6 +270,12 @@ func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
 	SetupHarborUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-username", []string{"WERF_REPO_HARBOR_USERNAME"})
 	SetupHarborPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-password", []string{"WERF_REPO_HARBOR_PASSWORD"})
 	SetupQuayTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-quay-token", []string{"WERF_REPO_QUAY_TOKEN"})
+}
+
+func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+	secondaryStagesStorage := predefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO")
+	cmdData.SecondaryStagesStorage = &secondaryStagesStorage
+	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", secondaryStagesStorage, "Specify one or multiple secondary read-only repo with images that will be used as a cache")
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -805,6 +812,27 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 			},
 		},
 	)
+}
+
+func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	var res []storage.StagesStorage
+	if stagesStorage.Address() != storage.LocalStorageAddress {
+		localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+		}
+		res = append(res, localStagesStorage)
+	}
+
+	for _, address := range *cmdData.SecondaryStagesStorage {
+		repoStagesStorage, err := storage.NewStagesStorage(address, containerRuntime, storage.StagesStorageOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %s", address, err)
+		}
+		res = append(res, repoStagesStorage)
+	}
+
+	return res, nil
 }
 
 func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
