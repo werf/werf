@@ -48,9 +48,18 @@
     padding-bottom: 10px !important;
 }
 
+.werf-yaml-table table tr td.comment {
+    user-select: none;
+}
+
 .werf-yaml-table table tr {
     background: transparent;
     transition: all 0.1s ease-in-out;
+}
+
+.werf-yaml-table table tr.section {
+    background: #0066FF;
+    color: #fff;
 }
 
 .werf-yaml-table table tr.directive td:last-child {
@@ -65,6 +74,7 @@
 
 .werf-yaml-table table tr.dots td {
     padding: 5px 8px !important;
+    user-select: none;
 }
 
 .werf-yaml-table span.btn {
@@ -77,9 +87,14 @@
     width: 12px;
     border-radius: 10px;
     cursor: pointer;
-    background: rgba(0,0,0,0.1);
+    background: #eef2ff;
     position: relative;
     right: -4px;
+    transition: all 0.1s ease-in-out;
+}
+
+.werf-yaml-table span.btn:hover {
+    background: rgba(0,0,0,0.1);
 }
 
 .werf-yaml-table span.btn::after {
@@ -96,7 +111,7 @@
     display: none;
 }
 
-.werf-yaml-table table tr:hover {
+.werf-yaml-table table tr:not(.section):hover {
     background: rgba(0,0,0,0.04);
 }
 
@@ -139,8 +154,11 @@
         {% for section in site.data.werf_yaml[page.lang].sections %}
             <tr id="{{ section.id }}" class="section {{ section.id }}">
                 <td>{% increment counter %}</td>
-                <td colspan="2">
-                    --- # {{ section.description }}
+                <td>
+                    ---
+                </td>
+                <td class="comment">
+                    # {{ section.description }}
                 </td>
             </tr>
             <tr class="dots {{ section.id }} {% unless section.isCollapsedByDefault %}collapsed-dots{% endunless %}">
@@ -169,5 +187,18 @@
                 });
             </script>
         {% endfor %}
+
+        <script>
+            var search_triggered = false;
+            $(window).keydown(function(e) {
+                if (!search_triggered && (e.keyCode == 70 && ( e.ctrlKey || e.metaKey ))) {
+                    search_triggered = true;
+                    $('.werf-yaml-table tr').removeClass (function (index, className) {
+                        return (className.match (/(^|\s)collapsed-\S+/g) || []).join(' ');
+                    });
+                    $('.werf-yaml-table tr.dots').hide();
+                }
+            })
+        </script>
     </table>
 </div>
