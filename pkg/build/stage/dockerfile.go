@@ -412,6 +412,19 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	var dependencies []string
 	var onBuildDependencies []string
 
+	resolveValueWithoutArgsAndEnvsFunc := func(value string) (string, error) {
+		if isBaseImageOnbuildInstruction {
+			return value, nil
+		}
+
+		resolvedValue, err := shlexProcessWord(value, []string{})
+		if err != nil {
+			return "", err
+		}
+
+		return resolvedValue, nil
+	}
+
 	resolveValueFunc := func(value string) (string, error) {
 		if isBaseImageOnbuildInstruction {
 			return value, nil
@@ -430,6 +443,20 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 		}
 
 		return resolvedValue, nil
+	}
+
+	resolveKeyAndValueWithoutArgsAndEnvsFunc := func(key, value string) (string, string, error) {
+		resolvedKey, err := resolveValueWithoutArgsAndEnvsFunc(key)
+		if err != nil {
+			return "", "", err
+		}
+
+		resolvedValue, err := resolveValueWithoutArgsAndEnvsFunc(value)
+		if err != nil {
+			return "", "", err
+		}
+
+		return resolvedKey, resolvedValue, nil
 	}
 
 	resolveKeyAndValueFunc := func(key, value string) (string, string, error) {
@@ -505,7 +532,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			return nil, nil, err
 		}
 
-		if c.Key != resolvedKey || c.ValueString() != resolvedValue {
+		resolvedKeyWithoutArgsAndEnvs, resolvedValueWithoutArgsAndEnvs, err := resolveKeyAndValueWithoutArgsAndEnvsFunc(c.Key, c.ValueString())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if resolvedKeyWithoutArgsAndEnvs != resolvedKey || resolvedValueWithoutArgsAndEnvs != resolvedValue {
 			dependencies = append(dependencies, resolvedKey, resolvedValue)
 		}
 	case *instructions.EnvCommand:
@@ -517,7 +549,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 				return nil, nil, err
 			}
 
-			if keyValuePair.Key != resolvedKey || keyValuePair.Value != resolvedValue {
+			resolvedKeyWithoutArgsAndEnvs, resolvedValueWithoutArgsAndEnvs, err := resolveKeyAndValueWithoutArgsAndEnvsFunc(keyValuePair.Key, keyValuePair.Value)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			if resolvedKeyWithoutArgsAndEnvs != resolvedKey || resolvedValueWithoutArgsAndEnvs != resolvedValue {
 				dependencies = append(dependencies, resolvedKey, resolvedValue)
 			}
 		}
@@ -564,7 +601,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			return nil, nil, err
 		}
 
-		if c.String() != resolvedValue {
+		resolvedValueWithoutArgsAndEnvs, err := resolveValueWithoutArgsAndEnvsFunc(c.String())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if resolvedValueWithoutArgsAndEnvs != resolvedValue {
 			dependencies = append(dependencies, resolvedValue)
 		}
 	default:
