@@ -166,6 +166,9 @@ werf render [options]
       --report-path=''
             Report contains image info: full docker repo, tag, ID — for each image                  
             ($WERF_REPORT_PATH by default)
+      --secondary-repo=[]
+            Specify one or multiple secondary read-only repo with images that will be used as a     
+            cache
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
