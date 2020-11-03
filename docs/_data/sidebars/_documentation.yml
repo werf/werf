@@ -114,14 +114,11 @@ entries:
       - title: Internals
         f:
 
-          - title: Building of images
-            f:
+          - title: Stages and storage
+            url: /documentation/internals/stages_and_storage.html
 
-                - title: Build process
-                  url: /documentation/internals/building_of_images/build_process.html
-
-                - title: Images storage
-                  url: /documentation/internals/building_of_images/images_storage.html
+          - title: Build process
+            url: /documentation/internals/build_process.html
 
           - title: How CI/CD integration works
             f:
