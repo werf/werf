@@ -60,7 +60,7 @@ ansible:
 ```
 $ export WERF_DEBUG_ANSIBLE_WERF_PY_PATH=$REPO_ROOT/pkg/build/builder/ansible/werf.py
 $ cd test-project
-$ werf --stages-storage=:local build --introspect-error --tmp-dir `pwd`/tmp
+$ werf build --introspect-error --tmp-dir `pwd`/tmp
 ```
 
 Now you can edit werf.py in repo tree and run playbook for a stage with command like:
