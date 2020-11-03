@@ -7,7 +7,7 @@ cli: &cli
     url: /documentation/reference/cli/overview.html
 
   - title: Delivery commands
-    ssf:
+    f:
 
     - title: werf converge
       url: /documentation/reference/cli/werf_converge.html
@@ -16,7 +16,7 @@ cli: &cli
       url: /documentation/reference/cli/werf_dismiss.html
 
   - title: Cleaning commands
-    ssf:
+    f:
 
     - title: werf cleanup
       url: /documentation/reference/cli/werf_cleanup.html
@@ -25,7 +25,7 @@ cli: &cli
       url: /documentation/reference/cli/werf_purge.html
 
   - title: Helper commands
-    ssf:
+    f:
 
     - title: werf ci-env
       url: /documentation/reference/cli/werf_ci_env.html
@@ -43,10 +43,10 @@ cli: &cli
       url: /documentation/reference/cli/werf_render.html
 
   - title: Low-level management commands
-    ssf:
+    f:
 
     - title: werf config
-      sf:
+      f:
 
       - title: werf config list
         url: /documentation/reference/cli/werf_config_list.html
@@ -55,7 +55,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_config_render.html
 
     - title: werf managed-images
-      sf:
+      f:
 
       - title: werf managed-images add
         url: /documentation/reference/cli/werf_managed_images_add.html
@@ -67,13 +67,13 @@ cli: &cli
         url: /documentation/reference/cli/werf_managed_images_rm.html
 
     - title: werf host
-      sf:
+      f:
 
       - title: werf host cleanup
         url: /documentation/reference/cli/werf_host_cleanup.html
 
       - title: werf host project
-        sf:
+        f:
 
         - title: werf host project list
           url: /documentation/reference/cli/werf_host_project_list.html
@@ -85,10 +85,10 @@ cli: &cli
         url: /documentation/reference/cli/werf_host_purge.html
 
     - title: werf helm
-      sf:
+      f:
 
       - title: werf helm chart
-        sf:
+        f:
 
         - title: werf helm chart export
           url: /documentation/reference/cli/werf_helm_chart_export.html
@@ -112,7 +112,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_create.html
 
       - title: werf helm dependency
-        sf:
+        f:
 
         - title: werf helm dependency build
           url: /documentation/reference/cli/werf_helm_dependency_build.html
@@ -127,7 +127,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_env.html
 
       - title: werf helm get
-        sf:
+        f:
 
         - title: werf helm get all
           url: /documentation/reference/cli/werf_helm_get_all.html
@@ -169,7 +169,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_package.html
 
       - title: werf helm plugin
-        sf:
+        f:
 
         - title: werf helm plugin install
           url: /documentation/reference/cli/werf_helm_plugin_install.html
@@ -187,7 +187,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_pull.html
 
       - title: werf helm repo
-        sf:
+        f:
 
         - title: werf helm repo add
           url: /documentation/reference/cli/werf_helm_repo_add.html
@@ -208,7 +208,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_rollback.html
 
       - title: werf helm search
-        sf:
+        f:
 
         - title: werf helm search hub
           url: /documentation/reference/cli/werf_helm_search_hub.html
@@ -217,7 +217,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_search_repo.html
 
       - title: werf helm secret
-        sf:
+        f:
 
         - title: werf helm secret decrypt
           url: /documentation/reference/cli/werf_helm_secret_decrypt.html
@@ -226,7 +226,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_secret_encrypt.html
 
         - title: werf helm secret file
-          sf:
+          f:
 
           - title: werf helm secret file decrypt
             url: /documentation/reference/cli/werf_helm_secret_file_decrypt.html
@@ -244,7 +244,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_secret_rotate_secret_key.html
 
         - title: werf helm secret values
-          sf:
+          f:
 
           - title: werf helm secret values decrypt
             url: /documentation/reference/cli/werf_helm_secret_values_decrypt.html
@@ -256,7 +256,7 @@ cli: &cli
             url: /documentation/reference/cli/werf_helm_secret_values_encrypt.html
 
       - title: werf helm show
-        sf:
+        f:
 
         - title: werf helm show all
           url: /documentation/reference/cli/werf_helm_show_all.html
@@ -292,7 +292,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_version.html
 
   - title: Other commands
-    ssf:
+    f:
 
     - title: werf synchronization
       url: /documentation/reference/cli/werf_synchronization.html
@@ -307,4 +307,4 @@ cli: &cli
       url: /documentation/reference/cli/werf_docs.html
 
     - title: werf stage
-      sf:
+      f:

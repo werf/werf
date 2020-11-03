@@ -12,7 +12,7 @@ cli: &cli
     url: /documentation/reference/cli/overview.html
 
   - title: Delivery commands
-    ssf:
+    f:
 
     - title: werf converge
       url: /documentation/reference/cli/werf_converge.html
@@ -21,7 +21,7 @@ cli: &cli
       url: /documentation/reference/cli/werf_dismiss.html
 
   - title: Cleaning commands
-    ssf:
+    f:
 
     - title: werf cleanup
       url: /documentation/reference/cli/werf_cleanup.html
@@ -30,7 +30,7 @@ cli: &cli
       url: /documentation/reference/cli/werf_purge.html
 
   - title: Helper commands
-    ssf:
+    f:
 
     - title: werf ci-env
       url: /documentation/reference/cli/werf_ci_env.html
@@ -48,10 +48,10 @@ cli: &cli
       url: /documentation/reference/cli/werf_render.html
 
   - title: Low-level management commands
-    ssf:
+    f:
 
     - title: werf config
-      sf:
+      f:
 
       - title: werf config list
         url: /documentation/reference/cli/werf_config_list.html
@@ -60,7 +60,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_config_render.html
 
     - title: werf managed-images
-      sf:
+      f:
 
       - title: werf managed-images add
         url: /documentation/reference/cli/werf_managed_images_add.html
@@ -72,13 +72,13 @@ cli: &cli
         url: /documentation/reference/cli/werf_managed_images_rm.html
 
     - title: werf host
-      sf:
+      f:
 
       - title: werf host cleanup
         url: /documentation/reference/cli/werf_host_cleanup.html
 
       - title: werf host project
-        sf:
+        f:
 
         - title: werf host project list
           url: /documentation/reference/cli/werf_host_project_list.html
@@ -90,10 +90,10 @@ cli: &cli
         url: /documentation/reference/cli/werf_host_purge.html
 
     - title: werf helm
-      sf:
+      f:
 
       - title: werf helm chart
-        sf:
+        f:
 
         - title: werf helm chart export
           url: /documentation/reference/cli/werf_helm_chart_export.html
@@ -117,7 +117,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_create.html
 
       - title: werf helm dependency
-        sf:
+        f:
 
         - title: werf helm dependency build
           url: /documentation/reference/cli/werf_helm_dependency_build.html
@@ -132,7 +132,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_env.html
 
       - title: werf helm get
-        sf:
+        f:
 
         - title: werf helm get all
           url: /documentation/reference/cli/werf_helm_get_all.html
@@ -174,7 +174,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_package.html
 
       - title: werf helm plugin
-        sf:
+        f:
 
         - title: werf helm plugin install
           url: /documentation/reference/cli/werf_helm_plugin_install.html
@@ -192,7 +192,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_pull.html
 
       - title: werf helm repo
-        sf:
+        f:
 
         - title: werf helm repo add
           url: /documentation/reference/cli/werf_helm_repo_add.html
@@ -213,7 +213,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_rollback.html
 
       - title: werf helm search
-        sf:
+        f:
 
         - title: werf helm search hub
           url: /documentation/reference/cli/werf_helm_search_hub.html
@@ -222,7 +222,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_search_repo.html
 
       - title: werf helm secret
-        sf:
+        f:
 
         - title: werf helm secret decrypt
           url: /documentation/reference/cli/werf_helm_secret_decrypt.html
@@ -231,7 +231,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_secret_encrypt.html
 
         - title: werf helm secret file
-          sf:
+          f:
 
           - title: werf helm secret file decrypt
             url: /documentation/reference/cli/werf_helm_secret_file_decrypt.html
@@ -249,7 +249,7 @@ cli: &cli
           url: /documentation/reference/cli/werf_helm_secret_rotate_secret_key.html
 
         - title: werf helm secret values
-          sf:
+          f:
 
           - title: werf helm secret values decrypt
             url: /documentation/reference/cli/werf_helm_secret_values_decrypt.html
@@ -261,7 +261,7 @@ cli: &cli
             url: /documentation/reference/cli/werf_helm_secret_values_encrypt.html
 
       - title: werf helm show
-        sf:
+        f:
 
         - title: werf helm show all
           url: /documentation/reference/cli/werf_helm_show_all.html
@@ -297,7 +297,7 @@ cli: &cli
         url: /documentation/reference/cli/werf_helm_version.html
 
   - title: Other commands
-    ssf:
+    f:
 
     - title: werf synchronization
       url: /documentation/reference/cli/werf_synchronization.html
@@ -312,7 +312,7 @@ cli: &cli
       url: /documentation/reference/cli/werf_docs.html
 
     - title: werf stage
-      sf:
+      f:
 
 
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
@@ -336,7 +336,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Reference
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -345,13 +345,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Command line interface
-            sfi: *cli
+            f: *cli
 
       - title: Advanced
-        sf:
+        f:
 
           - title: Configuration
-            sfi:
+            f:
 
               - title: Supported Go templates
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -360,7 +360,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Basics
                 url: /documentation/advanced/helm/basics.html
@@ -375,7 +375,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: CI/CD workflow basics
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -390,7 +390,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Building images with stapel
-            sfi:
+            f:
 
               - title: Base image (required)
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -414,7 +414,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Development and debug
-            sfi:
+            f:
 
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -429,10 +429,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Internals
-        sf:
+        f:
 
           - title: Building of images
-            sfi:
+            f:
 
                 - title: Build process
                   url: /documentation/internals/building_of_images/build_process.html
@@ -441,7 +441,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: How CI/CD integration works
-            sfi:
+            f:
 
               - title: General overview
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -459,7 +459,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Development
-            sfi:
+            f:
 
               - title: Stapel image
                 url: /documentation/internals/development/stapel_image.html
@@ -482,7 +482,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Справочник
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -491,13 +491,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Интерфейс командной строки
-            sfi: *cli
+            f: *cli
 
       - title: Документация продвинутого уровня
-        sf:
+        f:
 
           - title: Конфигурация
-            sfi:
+            f:
 
               - title: Поддержка Go шаблонов
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -506,7 +506,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Основы
                 url: /documentation/advanced/helm/basics.html
@@ -521,7 +521,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: Основы организации CI/CD
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -536,7 +536,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Сборка образов с помощью Stapel
-            sfi:
+            f:
 
               - title: Базовый образ
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -560,7 +560,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Разработка и отладка
-            sfi:
+            f:
 
               - title: Интроспекция стадий
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -575,10 +575,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Внутренности
-        sf:
+        f:
 
           - title: Сборка образов
-            sfi:
+            f:
 
                 - title: Процесс сборки
                   url: /documentation/internals/building_of_images/build_process.html
@@ -587,7 +587,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: Как работает интеграция с CI/CD
-            sfi:
+            f:
 
               - title: Общие сведения
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -605,7 +605,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Для разработчиков
-            sfi:
+            f:
 
               - title: Образ Stapel
                 url: /documentation/internals/development/stapel_image.html
