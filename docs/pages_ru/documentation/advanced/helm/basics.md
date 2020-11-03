@@ -571,8 +571,7 @@ werf deploy \
   --add-annotation "gitlab-user-email=vasya@myproject.com" \
   --add-label "gitlab-user-email=vasya@myproject.com" \
   --env dev \
-  --images-repo :minikube \
-  --stages-storage :local
+  --repo REPO
 ```
 
 ### Проверка манифестов ресурсов
@@ -581,7 +580,7 @@ werf deploy \
 
 Например, допустим имеем следующую опечатку в шаблоне чарта (`envs` вместо `env`, и `redinessProbe` вместо `readinessProbe`):
 
-```
+```yaml
 containers:
 - name: main
   command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]

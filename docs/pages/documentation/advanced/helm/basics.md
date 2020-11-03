@@ -479,8 +479,7 @@ werf deploy \
   --add-annotation "gitlab-user-email=vasya@myproject.com" \
   --add-label "gitlab-user-email=vasya@myproject.com" \
   --env dev \
-  --images-repo :minikube \
-  --stages-storage :local
+  --repo REPO
 ```
 
 ### Validating resource manifests
@@ -489,7 +488,7 @@ If the resource manifest in the chart contains logic or syntax errors, then werf
 
 Let us suppose there are the following typos in the chart template (`envs` in place of `env` and `redinessProbe` in lieu of `readinessProbe`):
 
-```
+```yaml
 containers:
 - name: main
   command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
