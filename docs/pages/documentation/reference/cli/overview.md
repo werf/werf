@@ -1,5 +1,5 @@
 ---
-title: Command line interface
+title: Overview of command groups
 sidebar: documentation
 permalink: documentation/reference/cli/overview.html
 toc: false
@@ -30,4 +30,3 @@ Other commands:
  - [werf synchronization]({{ site.baseurl }}/documentation/reference/cli/werf_synchronization.html) — {% include /documentation/reference/cli/werf_synchronization.short.md %}.
  - [werf completion]({{ site.baseurl }}/documentation/reference/cli/werf_completion.html) — {% include /documentation/reference/cli/werf_completion.short.md %}.
  - [werf version]({{ site.baseurl }}/documentation/reference/cli/werf_version.html) — {% include /documentation/reference/cli/werf_version.short.md %}.
- - [werf docs]({{ site.baseurl }}/documentation/reference/cli/werf_docs.html) — {% include /documentation/reference/cli/werf_docs.short.md %}.

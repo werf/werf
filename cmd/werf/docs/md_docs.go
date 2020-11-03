@@ -155,23 +155,23 @@ func GenCliSidebar(cmdGroups templates.CommandGroups, sidebarPath string) error 
 
 cli: &cli
   
-  - title: Overview
+  - title: Overview of command groups
     url: /documentation/reference/cli/overview.html
 `)
 
 	for _, group := range cmdGroups {
 		indent := 1
-		//		groupRecord := fmt.Sprintf(`
-		//%[1]s- title: %[2]s
-		//%[1]s  sf:
-		//`, strings.Repeat("  ", indent), group.Message)
-		//
-		//		_, err := buf.WriteString(groupRecord)
-		//		if err != nil {
-		//			return err
-		//		}
-		//
-		//		indent += 1
+		groupRecord := fmt.Sprintf(`
+%[1]s- title: %[2]s
+%[1]s  ssf:
+`, strings.Repeat("  ", indent), group.Message)
+
+		_, err := buf.WriteString(groupRecord)
+		if err != nil {
+			return err
+		}
+
+		indent += 1
 		for _, cmd := range group.Commands {
 			if err := genCliSidebar(cmd, indent, buf); err != nil {
 				return err
@@ -200,17 +200,17 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 			return err
 		}
 	} else {
-		//		groupRecord := fmt.Sprintf(`
-		//%[1]s- title: %[2]s
-		//%[1]s  sf:
-		//`, strings.Repeat("  ", indent), cmd.CommandPath())
-		//
-		//		_, err := buf.WriteString(groupRecord)
-		//		if err != nil {
-		//			return err
-		//		}
-		//
-		//		indent += 1
+		groupRecord := fmt.Sprintf(`
+%[1]s- title: %[2]s
+%[1]s  sf:
+`, strings.Repeat("  ", indent), cmd.CommandPath())
+
+		_, err := buf.WriteString(groupRecord)
+		if err != nil {
+			return err
+		}
+
+		indent += 1
 		for _, command := range cmd.Commands() {
 			if cmd.Hidden {
 				continue
@@ -227,7 +227,7 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 
 func GenCliOverview(cmdGroups templates.CommandGroups, pagesDir string) error {
 	indexPage := `---
-title: Command line interface
+title: Overview of command groups
 sidebar: documentation
 permalink: documentation/reference/cli/overview.html
 toc: false
@@ -296,9 +296,6 @@ func writeFullCommandMarkdownPartial(cmd *cobra.Command, dir string) error {
 	}
 	defer f.Close()
 
-	//if _, err := io.WriteString(f, filename); err != nil {
-	//	return err
-	//}
 	if err := GenMarkdownCustom(cmd, f); err != nil {
 		return err
 	}
