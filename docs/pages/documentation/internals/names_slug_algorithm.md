@@ -48,11 +48,10 @@ The slug may be applied to an arbitrary string via the [`werf slugify` command](
 
 werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html) for more details. The basic principles are:
  * the slug is auto-applied to parameters that are automatically obtained from the environment of CI/CD systems;
- * the slug isn't auto-applied to parameters that are specified manually via `--tag-*`, `--release` or `--namespace`; in this case, parameters are only validated to comply with the requirements.
+ * the slug isn't auto-applied to parameters that are specified manually via `--release` or `--namespace`; in this case, parameters are only validated to comply with the requirements.
 
-The user should run the [`werf slugify` command]({{ site.baseurl }}/documentation/reference/cli/werf_slugify.html) explicitly to apply slug to parameters specified manually with `--tag-*`, `--release`, or `--namespace` user should call , for example:
+The user should run the [`werf slugify` command]({{ site.baseurl }}/documentation/reference/cli/werf_slugify.html) explicitly to apply slug to parameters specified manually with `--release`, or `--namespace` user should call, for example:
 
 ```shell
-werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...
-werf deploy --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...
+werf converge --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...
 ```
