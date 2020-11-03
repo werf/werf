@@ -436,12 +436,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	resolveKeyAndValueFunc := func(key, value string) (string, string, error) {
 		resolvedKey, err := resolveValueFunc(key)
 		if err != nil {
-			return "", "", nil
+			return "", "", err
 		}
 
 		resolvedValue, err := resolveValueFunc(value)
 		if err != nil {
-			return "", "", nil
+			return "", "", err
 		}
 
 		return resolvedKey, resolvedValue, nil
