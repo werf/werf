@@ -248,7 +248,13 @@ toc: false
 				continue
 			}
 
-			fullCommandName := fullCommandFilesystemPath(cmd.CommandPath())
+			var fullCommandName string
+			if len(cmd.Commands()) == 0 {
+				fullCommandName = fullCommandFilesystemPath(cmd.CommandPath())
+			} else {
+				fullCommandName = fullCommandFilesystemPath(cmd.Commands()[0].CommandPath())
+			}
+
 			indexPage += fmt.Sprintf(" - [werf %s]({{ site.baseurl }}/documentation/reference/cli/%s.html) — {%% include /documentation/reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
 		}
 
