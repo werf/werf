@@ -8,11 +8,11 @@ import (
 )
 
 func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"build", "--stages-storage", ":local"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"build"}, extraArgs...)...)...)
 }
 
 func werfPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge", "--stages-storage", ":local"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge"}, extraArgs...)...)...)
 }
 
 func setGitRepoState(workTreeDir, repoDir string, commitMessage string) error {

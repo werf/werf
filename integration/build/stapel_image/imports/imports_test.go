@@ -12,20 +12,20 @@ import (
 )
 
 func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"build", "-s", ":local"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"build"}, extraArgs...)...)...)
 }
 
 func werfRunOutput(dir string, extraArgs ...string) string {
 	output, _ := utils.RunCommandWithOptions(
 		dir, werfBinPath,
-		append([]string{"run", "-s", ":local", "--"}, extraArgs...),
+		append([]string{"run", "--"}, extraArgs...),
 		utils.RunCommandOptions{ShouldSucceed: true},
 	)
 	return string(output)
 }
 
 func werfPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge", "-s", ":local"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge"}, extraArgs...)...)...)
 }
 
 var _ = Describe("Stapel imports", func() {

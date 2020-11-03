@@ -14,7 +14,7 @@ var _ = Describe("Advanced build/First application", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
+			"stages", "purge", "--force",
 		)
 	})
 
@@ -33,14 +33,14 @@ var _ = Describe("Advanced build/First application", func() {
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"build", "-s", ":local",
+				"build",
 			)
 
 			containerName := fmt.Sprintf("symfony_demo_%s_%s", boundedBuilder, utils.GetRandomString(10))
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :8000 --name %s", containerName), "--", "/app/start.sh",
+				"run", "--docker-options", fmt.Sprintf("-d -p :8000 --name %s", containerName), "--", "/app/start.sh",
 			)
 			defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
@@ -54,7 +54,7 @@ var _ = Describe("Advanced build/First application", func() {
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
-				"publish", "-s", ":local", "-i", registryProjectRepository, "--tag-custom", "test",
+				"publish", "-i", registryProjectRepository, "--tag-custom", "test",
 			)
 		})
 	}
