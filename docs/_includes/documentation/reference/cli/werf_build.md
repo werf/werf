@@ -144,6 +144,9 @@ werf build [IMAGE_NAME...] [options]
       --report-path=''
             Report contains image info: full docker repo, tag, ID — for each image                  
             ($WERF_REPORT_PATH by default)
+      --secondary-repo=[]
+            Specify one or multiple secondary read-only repo with images that will be used as a     
+            cache
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

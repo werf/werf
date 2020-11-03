@@ -108,6 +108,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --secondary-repo=[]
+            Specify one or multiple secondary read-only repo with images that will be used as a     
+            cache
       --shell=false
             Use predefined docker options and command for debug
   -Z, --skip-build=false

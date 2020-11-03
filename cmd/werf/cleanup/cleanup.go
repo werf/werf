@@ -54,6 +54,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
@@ -161,11 +162,12 @@ func runCleanup() error {
 	if err != nil {
 		return err
 	}
-
-	storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-	if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	if err != nil {
 		return err
 	}
+
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
 		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))

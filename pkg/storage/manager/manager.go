@@ -8,9 +8,9 @@ type StorageManager struct {
 	*StagesStorageManager
 }
 
-func NewStorageManager(projectName string, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.StagesStorage, secondaryStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StorageManager {
 	return &StorageManager{
-		StagesStorageManager: newStagesStorageManager(projectName, storageLockManager, stagesStorageCache),
+		StagesStorageManager: newStagesStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache),
 	}
 }
 

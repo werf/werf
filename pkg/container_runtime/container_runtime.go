@@ -145,12 +145,17 @@ func (runtime *LocalDockerServerRuntime) PushBuiltImage(ctx context.Context, img
 }
 
 // TagBuiltImageByName is only available for LocalDockerServerRuntime
-func (runtime *LocalDockerServerRuntime) TagBuiltImageByName(ctx context.Context, img Image) error {
+func (runtime *LocalDockerServerRuntime) TagImageByName(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
-	if err := dockerImage.Image.TagBuiltImage(ctx, dockerImage.Image.Name()); err != nil {
-		return fmt.Errorf("unable to tag image %s: %s", dockerImage.Image.Name(), err)
+	if dockerImage.Image.GetBuiltId() != "" {
+		if err := dockerImage.Image.TagBuiltImage(ctx, dockerImage.Image.Name()); err != nil {
+			return fmt.Errorf("unable to tag image %s: %s", dockerImage.Image.Name(), err)
+		}
+	} else {
+		runtime.RefreshImageObject(ctx, img)
 	}
+
 	return nil
 }
 

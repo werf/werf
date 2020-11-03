@@ -53,6 +53,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
 
@@ -113,11 +114,12 @@ func run(projectNames ...string) error {
 		if err != nil {
 			return err
 		}
-
-		storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-		if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+		if err != nil {
 			return err
 		}
+
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 		if err := logboek.Default().LogProcess("Project " + projectName).
 			Options(func(options types.LogProcessOptionsInterface) {

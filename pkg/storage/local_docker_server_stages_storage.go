@@ -210,7 +210,7 @@ func (storage *LocalDockerServerStagesStorage) FetchImage(_ context.Context, _ c
 }
 
 func (storage *LocalDockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
-	return storage.LocalDockerServerRuntime.TagBuiltImageByName(ctx, img)
+	return storage.LocalDockerServerRuntime.TagImageByName(ctx, img)
 }
 
 func (storage *LocalDockerServerStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error {

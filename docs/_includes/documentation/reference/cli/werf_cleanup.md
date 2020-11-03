@@ -111,6 +111,9 @@ werf cleanup [options]
             in kube-config (or only for the context specified with option --kube-context). When     
             disabled will scan all namespaces in all contexts (or only for the context specified    
             with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
+      --secondary-repo=[]
+            Specify one or multiple secondary read-only repo with images that will be used as a     
+            cache
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

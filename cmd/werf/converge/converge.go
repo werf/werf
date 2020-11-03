@@ -88,6 +88,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
 	common.SetupIntrospectStage(&commonCmdData, cmd)
 
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
@@ -269,11 +270,12 @@ func runConverge() error {
 		if err != nil {
 			return err
 		}
-
-		storageManager := manager.NewStorageManager(projectName, storageLockManager, stagesStorageCache)
-		if err := storageManager.UseStagesStorage(ctx, stagesStorage); err != nil {
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+		if err != nil {
 			return err
 		}
+
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
 		imagesRepository = storageManager.StagesStorage.String()
 
