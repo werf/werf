@@ -19,7 +19,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Reference
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -28,13 +28,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Command line interface
-            sfi: *cli
+            f: *cli
 
       - title: Advanced
-        sf:
+        f:
 
           - title: Configuration
-            sfi:
+            f:
 
               - title: Supported Go templates
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -43,7 +43,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Basics
                 url: /documentation/advanced/helm/basics.html
@@ -58,7 +58,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: CI/CD workflow basics
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -73,7 +73,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Building images with stapel
-            sfi:
+            f:
 
               - title: Base image (required)
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -97,7 +97,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Development and debug
-            sfi:
+            f:
 
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -112,10 +112,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Internals
-        sf:
+        f:
 
           - title: Building of images
-            sfi:
+            f:
 
                 - title: Build process
                   url: /documentation/internals/building_of_images/build_process.html
@@ -124,7 +124,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: How CI/CD integration works
-            sfi:
+            f:
 
               - title: General overview
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -142,7 +142,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Development
-            sfi:
+            f:
 
               - title: Stapel image
                 url: /documentation/internals/development/stapel_image.html
@@ -165,7 +165,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Справочник
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -174,13 +174,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Интерфейс командной строки
-            sfi: *cli
+            f: *cli
 
       - title: Документация продвинутого уровня
-        sf:
+        f:
 
           - title: Конфигурация
-            sfi:
+            f:
 
               - title: Поддержка Go шаблонов
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -189,7 +189,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Основы
                 url: /documentation/advanced/helm/basics.html
@@ -204,7 +204,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: Основы организации CI/CD
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -219,7 +219,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Сборка образов с помощью Stapel
-            sfi:
+            f:
 
               - title: Базовый образ
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -243,7 +243,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Разработка и отладка
-            sfi:
+            f:
 
               - title: Интроспекция стадий
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -258,10 +258,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Внутренности
-        sf:
+        f:
 
           - title: Сборка образов
-            sfi:
+            f:
 
                 - title: Процесс сборки
                   url: /documentation/internals/building_of_images/build_process.html
@@ -270,7 +270,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: Как работает интеграция с CI/CD
-            sfi:
+            f:
 
               - title: Общие сведения
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -288,7 +288,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Для разработчиков
-            sfi:
+            f:
 
               - title: Образ Stapel
                 url: /documentation/internals/development/stapel_image.html

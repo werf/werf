@@ -1,5 +1,5 @@
 ---
-title: Command line interface
+title: Overview of command groups
 sidebar: documentation
 permalink: documentation/reference/cli/overview.html
 toc: false
@@ -21,10 +21,10 @@ Helper commands:
  - [werf render]({{ site.baseurl }}/documentation/reference/cli/werf_render.html) — {% include /documentation/reference/cli/werf_render.short.md %}.
 
 Low-level management commands:
- - [werf config]({{ site.baseurl }}/documentation/reference/cli/werf_config.html) — {% include /documentation/reference/cli/werf_config.short.md %}.
- - [werf managed-images]({{ site.baseurl }}/documentation/reference/cli/werf_managed_images.html) — {% include /documentation/reference/cli/werf_managed_images.short.md %}.
- - [werf host]({{ site.baseurl }}/documentation/reference/cli/werf_host.html) — {% include /documentation/reference/cli/werf_host.short.md %}.
- - [werf helm]({{ site.baseurl }}/documentation/reference/cli/werf_helm.html) — {% include /documentation/reference/cli/werf_helm.short.md %}.
+ - [werf config]({{ site.baseurl }}/documentation/reference/cli/werf_config_list.html) — {% include /documentation/reference/cli/werf_config_list.short.md %}.
+ - [werf managed-images]({{ site.baseurl }}/documentation/reference/cli/werf_managed_images_add.html) — {% include /documentation/reference/cli/werf_managed_images_add.short.md %}.
+ - [werf host]({{ site.baseurl }}/documentation/reference/cli/werf_host_cleanup.html) — {% include /documentation/reference/cli/werf_host_cleanup.short.md %}.
+ - [werf helm]({{ site.baseurl }}/documentation/reference/cli/werf_helm_chart.html) — {% include /documentation/reference/cli/werf_helm_chart.short.md %}.
 
 Other commands:
  - [werf synchronization]({{ site.baseurl }}/documentation/reference/cli/werf_synchronization.html) — {% include /documentation/reference/cli/werf_synchronization.short.md %}.

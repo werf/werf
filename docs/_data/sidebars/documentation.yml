@@ -8,248 +8,311 @@
 
 cli: &cli
   
-  - title: Overview
+  - title: Overview of command groups
     url: /documentation/reference/cli/overview.html
 
-  - title: werf converge
-    url: /documentation/reference/cli/werf_converge.html
+  - title: Delivery commands
+    f:
 
-  - title: werf dismiss
-    url: /documentation/reference/cli/werf_dismiss.html
+    - title: werf converge
+      url: /documentation/reference/cli/werf_converge.html
 
-  - title: werf cleanup
-    url: /documentation/reference/cli/werf_cleanup.html
+    - title: werf dismiss
+      url: /documentation/reference/cli/werf_dismiss.html
 
-  - title: werf purge
-    url: /documentation/reference/cli/werf_purge.html
+  - title: Cleaning commands
+    f:
 
-  - title: werf ci-env
-    url: /documentation/reference/cli/werf_ci_env.html
+    - title: werf cleanup
+      url: /documentation/reference/cli/werf_cleanup.html
 
-  - title: werf build
-    url: /documentation/reference/cli/werf_build.html
+    - title: werf purge
+      url: /documentation/reference/cli/werf_purge.html
 
-  - title: werf run
-    url: /documentation/reference/cli/werf_run.html
+  - title: Helper commands
+    f:
 
-  - title: werf slugify
-    url: /documentation/reference/cli/werf_slugify.html
+    - title: werf ci-env
+      url: /documentation/reference/cli/werf_ci_env.html
 
-  - title: werf render
-    url: /documentation/reference/cli/werf_render.html
+    - title: werf build
+      url: /documentation/reference/cli/werf_build.html
 
-  - title: werf config list
-    url: /documentation/reference/cli/werf_config_list.html
+    - title: werf run
+      url: /documentation/reference/cli/werf_run.html
 
-  - title: werf config render
-    url: /documentation/reference/cli/werf_config_render.html
+    - title: werf slugify
+      url: /documentation/reference/cli/werf_slugify.html
 
-  - title: werf managed-images add
-    url: /documentation/reference/cli/werf_managed_images_add.html
+    - title: werf render
+      url: /documentation/reference/cli/werf_render.html
 
-  - title: werf managed-images ls
-    url: /documentation/reference/cli/werf_managed_images_ls.html
+  - title: Low-level management commands
+    f:
 
-  - title: werf managed-images rm
-    url: /documentation/reference/cli/werf_managed_images_rm.html
+    - title: werf config
+      f:
 
-  - title: werf host cleanup
-    url: /documentation/reference/cli/werf_host_cleanup.html
+      - title: werf config list
+        url: /documentation/reference/cli/werf_config_list.html
 
-  - title: werf host project list
-    url: /documentation/reference/cli/werf_host_project_list.html
+      - title: werf config render
+        url: /documentation/reference/cli/werf_config_render.html
 
-  - title: werf host project purge
-    url: /documentation/reference/cli/werf_host_project_purge.html
+    - title: werf managed-images
+      f:
 
-  - title: werf host purge
-    url: /documentation/reference/cli/werf_host_purge.html
+      - title: werf managed-images add
+        url: /documentation/reference/cli/werf_managed_images_add.html
 
-  - title: werf helm chart export
-    url: /documentation/reference/cli/werf_helm_chart_export.html
+      - title: werf managed-images ls
+        url: /documentation/reference/cli/werf_managed_images_ls.html
 
-  - title: werf helm chart list
-    url: /documentation/reference/cli/werf_helm_chart_list.html
+      - title: werf managed-images rm
+        url: /documentation/reference/cli/werf_managed_images_rm.html
 
-  - title: werf helm chart pull
-    url: /documentation/reference/cli/werf_helm_chart_pull.html
+    - title: werf host
+      f:
 
-  - title: werf helm chart push
-    url: /documentation/reference/cli/werf_helm_chart_push.html
+      - title: werf host cleanup
+        url: /documentation/reference/cli/werf_host_cleanup.html
 
-  - title: werf helm chart remove
-    url: /documentation/reference/cli/werf_helm_chart_remove.html
+      - title: werf host project
+        f:
 
-  - title: werf helm chart save
-    url: /documentation/reference/cli/werf_helm_chart_save.html
+        - title: werf host project list
+          url: /documentation/reference/cli/werf_host_project_list.html
 
-  - title: werf helm create
-    url: /documentation/reference/cli/werf_helm_create.html
+        - title: werf host project purge
+          url: /documentation/reference/cli/werf_host_project_purge.html
 
-  - title: werf helm dependency build
-    url: /documentation/reference/cli/werf_helm_dependency_build.html
+      - title: werf host purge
+        url: /documentation/reference/cli/werf_host_purge.html
 
-  - title: werf helm dependency list
-    url: /documentation/reference/cli/werf_helm_dependency_list.html
+    - title: werf helm
+      f:
 
-  - title: werf helm dependency update
-    url: /documentation/reference/cli/werf_helm_dependency_update.html
+      - title: werf helm chart
+        f:
 
-  - title: werf helm env
-    url: /documentation/reference/cli/werf_helm_env.html
+        - title: werf helm chart export
+          url: /documentation/reference/cli/werf_helm_chart_export.html
 
-  - title: werf helm get all
-    url: /documentation/reference/cli/werf_helm_get_all.html
+        - title: werf helm chart list
+          url: /documentation/reference/cli/werf_helm_chart_list.html
 
-  - title: werf helm get hooks
-    url: /documentation/reference/cli/werf_helm_get_hooks.html
+        - title: werf helm chart pull
+          url: /documentation/reference/cli/werf_helm_chart_pull.html
 
-  - title: werf helm get manifest
-    url: /documentation/reference/cli/werf_helm_get_manifest.html
+        - title: werf helm chart push
+          url: /documentation/reference/cli/werf_helm_chart_push.html
 
-  - title: werf helm get notes
-    url: /documentation/reference/cli/werf_helm_get_notes.html
+        - title: werf helm chart remove
+          url: /documentation/reference/cli/werf_helm_chart_remove.html
 
-  - title: werf helm get values
-    url: /documentation/reference/cli/werf_helm_get_values.html
+        - title: werf helm chart save
+          url: /documentation/reference/cli/werf_helm_chart_save.html
 
-  - title: werf helm get-autogenerated-values
-    url: /documentation/reference/cli/werf_helm_get_autogenerated_values.html
+      - title: werf helm create
+        url: /documentation/reference/cli/werf_helm_create.html
 
-  - title: werf helm get-namespace
-    url: /documentation/reference/cli/werf_helm_get_namespace.html
+      - title: werf helm dependency
+        f:
 
-  - title: werf helm get-release
-    url: /documentation/reference/cli/werf_helm_get_release.html
+        - title: werf helm dependency build
+          url: /documentation/reference/cli/werf_helm_dependency_build.html
 
-  - title: werf helm history
-    url: /documentation/reference/cli/werf_helm_history.html
+        - title: werf helm dependency list
+          url: /documentation/reference/cli/werf_helm_dependency_list.html
 
-  - title: werf helm install
-    url: /documentation/reference/cli/werf_helm_install.html
+        - title: werf helm dependency update
+          url: /documentation/reference/cli/werf_helm_dependency_update.html
 
-  - title: werf helm lint
-    url: /documentation/reference/cli/werf_helm_lint.html
+      - title: werf helm env
+        url: /documentation/reference/cli/werf_helm_env.html
 
-  - title: werf helm list
-    url: /documentation/reference/cli/werf_helm_list.html
+      - title: werf helm get
+        f:
 
-  - title: werf helm package
-    url: /documentation/reference/cli/werf_helm_package.html
+        - title: werf helm get all
+          url: /documentation/reference/cli/werf_helm_get_all.html
 
-  - title: werf helm plugin install
-    url: /documentation/reference/cli/werf_helm_plugin_install.html
+        - title: werf helm get hooks
+          url: /documentation/reference/cli/werf_helm_get_hooks.html
 
-  - title: werf helm plugin list
-    url: /documentation/reference/cli/werf_helm_plugin_list.html
+        - title: werf helm get manifest
+          url: /documentation/reference/cli/werf_helm_get_manifest.html
 
-  - title: werf helm plugin uninstall
-    url: /documentation/reference/cli/werf_helm_plugin_uninstall.html
+        - title: werf helm get notes
+          url: /documentation/reference/cli/werf_helm_get_notes.html
 
-  - title: werf helm plugin update
-    url: /documentation/reference/cli/werf_helm_plugin_update.html
+        - title: werf helm get values
+          url: /documentation/reference/cli/werf_helm_get_values.html
 
-  - title: werf helm pull
-    url: /documentation/reference/cli/werf_helm_pull.html
+      - title: werf helm get-autogenerated-values
+        url: /documentation/reference/cli/werf_helm_get_autogenerated_values.html
 
-  - title: werf helm repo add
-    url: /documentation/reference/cli/werf_helm_repo_add.html
+      - title: werf helm get-namespace
+        url: /documentation/reference/cli/werf_helm_get_namespace.html
 
-  - title: werf helm repo index
-    url: /documentation/reference/cli/werf_helm_repo_index.html
+      - title: werf helm get-release
+        url: /documentation/reference/cli/werf_helm_get_release.html
 
-  - title: werf helm repo list
-    url: /documentation/reference/cli/werf_helm_repo_list.html
+      - title: werf helm history
+        url: /documentation/reference/cli/werf_helm_history.html
 
-  - title: werf helm repo remove
-    url: /documentation/reference/cli/werf_helm_repo_remove.html
+      - title: werf helm install
+        url: /documentation/reference/cli/werf_helm_install.html
 
-  - title: werf helm repo update
-    url: /documentation/reference/cli/werf_helm_repo_update.html
+      - title: werf helm lint
+        url: /documentation/reference/cli/werf_helm_lint.html
 
-  - title: werf helm rollback
-    url: /documentation/reference/cli/werf_helm_rollback.html
+      - title: werf helm list
+        url: /documentation/reference/cli/werf_helm_list.html
 
-  - title: werf helm search hub
-    url: /documentation/reference/cli/werf_helm_search_hub.html
+      - title: werf helm package
+        url: /documentation/reference/cli/werf_helm_package.html
 
-  - title: werf helm search repo
-    url: /documentation/reference/cli/werf_helm_search_repo.html
+      - title: werf helm plugin
+        f:
 
-  - title: werf helm secret decrypt
-    url: /documentation/reference/cli/werf_helm_secret_decrypt.html
+        - title: werf helm plugin install
+          url: /documentation/reference/cli/werf_helm_plugin_install.html
 
-  - title: werf helm secret encrypt
-    url: /documentation/reference/cli/werf_helm_secret_encrypt.html
+        - title: werf helm plugin list
+          url: /documentation/reference/cli/werf_helm_plugin_list.html
 
-  - title: werf helm secret file decrypt
-    url: /documentation/reference/cli/werf_helm_secret_file_decrypt.html
+        - title: werf helm plugin uninstall
+          url: /documentation/reference/cli/werf_helm_plugin_uninstall.html
 
-  - title: werf helm secret file edit
-    url: /documentation/reference/cli/werf_helm_secret_file_edit.html
+        - title: werf helm plugin update
+          url: /documentation/reference/cli/werf_helm_plugin_update.html
 
-  - title: werf helm secret file encrypt
-    url: /documentation/reference/cli/werf_helm_secret_file_encrypt.html
+      - title: werf helm pull
+        url: /documentation/reference/cli/werf_helm_pull.html
 
-  - title: werf helm secret generate-secret-key
-    url: /documentation/reference/cli/werf_helm_secret_generate_secret_key.html
+      - title: werf helm repo
+        f:
 
-  - title: werf helm secret rotate-secret-key
-    url: /documentation/reference/cli/werf_helm_secret_rotate_secret_key.html
+        - title: werf helm repo add
+          url: /documentation/reference/cli/werf_helm_repo_add.html
 
-  - title: werf helm secret values decrypt
-    url: /documentation/reference/cli/werf_helm_secret_values_decrypt.html
+        - title: werf helm repo index
+          url: /documentation/reference/cli/werf_helm_repo_index.html
 
-  - title: werf helm secret values edit
-    url: /documentation/reference/cli/werf_helm_secret_values_edit.html
+        - title: werf helm repo list
+          url: /documentation/reference/cli/werf_helm_repo_list.html
 
-  - title: werf helm secret values encrypt
-    url: /documentation/reference/cli/werf_helm_secret_values_encrypt.html
+        - title: werf helm repo remove
+          url: /documentation/reference/cli/werf_helm_repo_remove.html
 
-  - title: werf helm show all
-    url: /documentation/reference/cli/werf_helm_show_all.html
+        - title: werf helm repo update
+          url: /documentation/reference/cli/werf_helm_repo_update.html
 
-  - title: werf helm show chart
-    url: /documentation/reference/cli/werf_helm_show_chart.html
+      - title: werf helm rollback
+        url: /documentation/reference/cli/werf_helm_rollback.html
 
-  - title: werf helm show readme
-    url: /documentation/reference/cli/werf_helm_show_readme.html
+      - title: werf helm search
+        f:
 
-  - title: werf helm show values
-    url: /documentation/reference/cli/werf_helm_show_values.html
+        - title: werf helm search hub
+          url: /documentation/reference/cli/werf_helm_search_hub.html
 
-  - title: werf helm status
-    url: /documentation/reference/cli/werf_helm_status.html
+        - title: werf helm search repo
+          url: /documentation/reference/cli/werf_helm_search_repo.html
 
-  - title: werf helm template
-    url: /documentation/reference/cli/werf_helm_template.html
+      - title: werf helm secret
+        f:
 
-  - title: werf helm test
-    url: /documentation/reference/cli/werf_helm_test.html
+        - title: werf helm secret decrypt
+          url: /documentation/reference/cli/werf_helm_secret_decrypt.html
 
-  - title: werf helm uninstall
-    url: /documentation/reference/cli/werf_helm_uninstall.html
+        - title: werf helm secret encrypt
+          url: /documentation/reference/cli/werf_helm_secret_encrypt.html
 
-  - title: werf helm upgrade
-    url: /documentation/reference/cli/werf_helm_upgrade.html
+        - title: werf helm secret file
+          f:
 
-  - title: werf helm verify
-    url: /documentation/reference/cli/werf_helm_verify.html
+          - title: werf helm secret file decrypt
+            url: /documentation/reference/cli/werf_helm_secret_file_decrypt.html
 
-  - title: werf helm version
-    url: /documentation/reference/cli/werf_helm_version.html
+          - title: werf helm secret file edit
+            url: /documentation/reference/cli/werf_helm_secret_file_edit.html
 
-  - title: werf synchronization
-    url: /documentation/reference/cli/werf_synchronization.html
+          - title: werf helm secret file encrypt
+            url: /documentation/reference/cli/werf_helm_secret_file_encrypt.html
 
-  - title: werf completion
-    url: /documentation/reference/cli/werf_completion.html
+        - title: werf helm secret generate-secret-key
+          url: /documentation/reference/cli/werf_helm_secret_generate_secret_key.html
 
-  - title: werf version
-    url: /documentation/reference/cli/werf_version.html
+        - title: werf helm secret rotate-secret-key
+          url: /documentation/reference/cli/werf_helm_secret_rotate_secret_key.html
 
-  - title: werf docs
-    url: /documentation/reference/cli/werf_docs.html
+        - title: werf helm secret values
+          f:
+
+          - title: werf helm secret values decrypt
+            url: /documentation/reference/cli/werf_helm_secret_values_decrypt.html
+
+          - title: werf helm secret values edit
+            url: /documentation/reference/cli/werf_helm_secret_values_edit.html
+
+          - title: werf helm secret values encrypt
+            url: /documentation/reference/cli/werf_helm_secret_values_encrypt.html
+
+      - title: werf helm show
+        f:
+
+        - title: werf helm show all
+          url: /documentation/reference/cli/werf_helm_show_all.html
+
+        - title: werf helm show chart
+          url: /documentation/reference/cli/werf_helm_show_chart.html
+
+        - title: werf helm show readme
+          url: /documentation/reference/cli/werf_helm_show_readme.html
+
+        - title: werf helm show values
+          url: /documentation/reference/cli/werf_helm_show_values.html
+
+      - title: werf helm status
+        url: /documentation/reference/cli/werf_helm_status.html
+
+      - title: werf helm template
+        url: /documentation/reference/cli/werf_helm_template.html
+
+      - title: werf helm test
+        url: /documentation/reference/cli/werf_helm_test.html
+
+      - title: werf helm uninstall
+        url: /documentation/reference/cli/werf_helm_uninstall.html
+
+      - title: werf helm upgrade
+        url: /documentation/reference/cli/werf_helm_upgrade.html
+
+      - title: werf helm verify
+        url: /documentation/reference/cli/werf_helm_verify.html
+
+      - title: werf helm version
+        url: /documentation/reference/cli/werf_helm_version.html
+
+  - title: Other commands
+    f:
+
+    - title: werf synchronization
+      url: /documentation/reference/cli/werf_synchronization.html
+
+    - title: werf completion
+      url: /documentation/reference/cli/werf_completion.html
+
+    - title: werf version
+      url: /documentation/reference/cli/werf_version.html
+
+    - title: werf docs
+      url: /documentation/reference/cli/werf_docs.html
+
+    - title: werf stage
+      f:
 
 
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
@@ -273,7 +336,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Reference
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -282,13 +345,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Command line interface
-            sfi: *cli
+            f: *cli
 
       - title: Advanced
-        sf:
+        f:
 
           - title: Configuration
-            sfi:
+            f:
 
               - title: Supported Go templates
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -297,7 +360,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Basics
                 url: /documentation/advanced/helm/basics.html
@@ -312,7 +375,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: CI/CD workflow basics
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -327,7 +390,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Building images with stapel
-            sfi:
+            f:
 
               - title: Base image (required)
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -351,7 +414,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Development and debug
-            sfi:
+            f:
 
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -366,10 +429,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Internals
-        sf:
+        f:
 
           - title: Building of images
-            sfi:
+            f:
 
                 - title: Build process
                   url: /documentation/internals/building_of_images/build_process.html
@@ -378,7 +441,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: How CI/CD integration works
-            sfi:
+            f:
 
               - title: General overview
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -396,7 +459,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Development
-            sfi:
+            f:
 
               - title: Stapel image
                 url: /documentation/internals/development/stapel_image.html
@@ -419,7 +482,7 @@ entries:
         url: /documentation/guides.html
 
       - title: Справочник
-        sf:
+        f:
 
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
@@ -428,13 +491,13 @@ entries:
             url: /documentation/reference/deploy_annotations.html
 
           - title: Интерфейс командной строки
-            sfi: *cli
+            f: *cli
 
       - title: Документация продвинутого уровня
-        sf:
+        f:
 
           - title: Конфигурация
-            sfi:
+            f:
 
               - title: Поддержка Go шаблонов
                 url: /documentation/advanced/configuration/supported_go_templates.html
@@ -443,7 +506,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
-            sfi:
+            f:
 
               - title: Основы
                 url: /documentation/advanced/helm/basics.html
@@ -458,7 +521,7 @@ entries:
             url: /documentation/advanced/cleanup.html
 
           - title: CI/CD
-            sfi:
+            f:
 
               - title: Основы организации CI/CD
                 url: /documentation/advanced/ci_cd/ci_cd_workflow_basics.html
@@ -473,7 +536,7 @@ entries:
                 url: /documentation/advanced/ci_cd/github_actions.html
 
           - title: Сборка образов с помощью Stapel
-            sfi:
+            f:
 
               - title: Базовый образ
                 url: /documentation/advanced/building_images_with_stapel/base_image.html
@@ -497,7 +560,7 @@ entries:
                 url: /documentation/advanced/building_images_with_stapel/artifacts.html
 
           - title: Разработка и отладка
-            sfi:
+            f:
 
               - title: Интроспекция стадий
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
@@ -512,10 +575,10 @@ entries:
             url: /documentation/advanced/supported_registry_implementations.html
 
       - title: Внутренности
-        sf:
+        f:
 
           - title: Сборка образов
-            sfi:
+            f:
 
                 - title: Процесс сборки
                   url: /documentation/internals/building_of_images/build_process.html
@@ -524,7 +587,7 @@ entries:
                   url: /documentation/internals/building_of_images/images_storage.html
 
           - title: Как работает интеграция с CI/CD
-            sfi:
+            f:
 
               - title: Общие сведения
                 url: /documentation/internals/how_ci_cd_integration_works/general_overview.html
@@ -542,7 +605,7 @@ entries:
             url: /documentation/internals/integration_with_ssh_agent.html
 
           - title: Для разработчиков
-            sfi:
+            f:
 
               - title: Образ Stapel
                 url: /documentation/internals/development/stapel_image.html
