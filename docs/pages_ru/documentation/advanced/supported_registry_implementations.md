@@ -74,7 +74,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 Для [удаления версий package приватного репозитория](https://help.github.com/en/packages/publishing-and-managing-packages/deleting-a-package) используется GraphQL. От пользователя требуется token с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
 
-> GitHub не поддерживает удание версий package в публичных репозиториях 
+> GitHub не поддерживает удаление версий package в публичных репозиториях 
 
 Для того, чтобы задать параметры, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
    
@@ -82,7 +82,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 Все команды, требующие авторизации в Docker registry, не выполняют ее сами, а используют подготовленную _конфигурацию Docker_.
 
-_Конфигурация Docker_ — это папка, в которой хранятся данные авторизации используемые для доступа вразличные Docker registry и другие настройки Docker.
+_Конфигурация Docker_ — это папка, в которой хранятся данные авторизации используемые для доступа в различные Docker registry и другие настройки Docker.
 По умолчанию, werf использует стандартную для Docker папку конфигурации: `~/.docker`. Другую используемую папку конфигурации можно указать с помощью параметра `--docker-config`, либо с помощью переменных окружения `$DOCKER_CONFIG` или `$WERF_DOCKER_CONFIG`. Все параметры и опции в файле конфигурации стандартны для Docker, их список можно посмотреть с помощью команды `docker --config`.
 
 Для подготовки конфигурации Docker вы можете использовать команду `docker login`, либо, если вы выполняете werf в рамках CI-системы, вызвать команду [werf ci-env]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html)  (более подробно о подключении werf к CI-системам читай в [соответствующем разделе]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html)).
