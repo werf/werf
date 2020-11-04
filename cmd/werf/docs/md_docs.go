@@ -94,7 +94,16 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 func replaceLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
-		s = strings.Replace(s, link, fmt.Sprintf("[%[1]s](%[1]s)", link), -1)
+		linkText := link
+		for _, prefix := range []string{"werf.io", "https://werf.io"} {
+			if strings.HasPrefix(link, prefix) {
+				link = strings.TrimLeft(link, prefix)
+				link = "{{ site.baseurl }}/" + link
+				break
+			}
+		}
+
+		s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
 	}
 
 	return s

@@ -12,7 +12,7 @@ Environment is a required param for the deploy by default, because it is needed 
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to       
-change it: [https://werf.io/documentation/advanced/helm/basics.html](https://werf.io/documentation/advanced/helm/basics.html)
+change it: [https://werf.io/documentation/advanced/helm/basics.html]({{ site.baseurl }}/documentation/advanced/helm/basics.html)
 
 {{ header }} Syntax
 
