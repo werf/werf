@@ -104,7 +104,7 @@ kind: ConfigMap
   * В этом случае образ для соответствующего Docker-тега можно не обновлять, если он уже находится в локальном хранилище Docker-образов.
   * В этом случае `imagePullPolicy` не устанавливается, т.е. итоговое значение у объекта в кластере будет соответствовать значению по умолчанию — `imagePullPolicy=IfNotPresent`.
 
-Пример использования функции c именованным образом:
+Пример использования функции с именованным образом:
 * `tuple <image-name> . | werf_container_image | indent <N-spaces>`
 
 Пример использования функции с безымянным образом:
@@ -571,8 +571,7 @@ werf deploy \
   --add-annotation "gitlab-user-email=vasya@myproject.com" \
   --add-label "gitlab-user-email=vasya@myproject.com" \
   --env dev \
-  --images-repo :minikube \
-  --stages-storage :local
+  --repo REPO
 ```
 
 ### Проверка манифестов ресурсов
@@ -581,7 +580,7 @@ werf deploy \
 
 Например, допустим имеем следующую опечатку в шаблоне чарта (`envs` вместо `env`, и `redinessProbe` вместо `readinessProbe`):
 
-```
+```yaml
 containers:
 - name: main
   command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]

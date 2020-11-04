@@ -16,7 +16,7 @@ There are 2 tools to do that:
 
 During templates rendering werf will create a single text stream of all manifests defined in the chart expanding Go templates.
 
-Use [`werf helm template` command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_template.html) to get rendered manifests. The same params as in [`werf converge` command]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/advanced/helm/basics.html#values), images repo, environment and other).
+Use [`werf helm template` command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_template.html) to get rendered manifests. The same params as in [`werf converge` command]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/advanced/helm/basics.html#values), repo, environment and other).
 
 Render command aimed to help in debugging of problems related to the wrong usage of Go templates or inspect yaml format of Kubernetes manifests.
 
@@ -29,4 +29,4 @@ Lint checks a [chart]({{ site.baseurl }}/documentation/advanced/helm/basics.html
  * errors in Kubernetes runtime logic [coming soon](https://github.com/werf/werf/issues/1187): missed resources labels, wrong names of related resources specified, check resources api version, etc.;
  * security risk analysis [coming soon](https://github.com/werf/werf/issues/1317).
 
-[`werf helm lint` command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_lint.html) runs all of these checks and can be used either in local development or in the CI/CD pipeline to automate chart checking procedure. The same params as in [`werf converge` command]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/advanced/helm/basics.html#values), images repo, environment and other).
+[`werf helm lint` command]({{ site.baseurl }}/documentation/reference/cli/werf_helm_lint.html) runs all of these checks and can be used either in local development or in the CI/CD pipeline to automate chart checking procedure. The same params as in [`werf converge` command]({{ site.baseurl }}/documentation/reference/cli/werf_converge.html) can be passed (such as additional [values]({{ site.baseurl }}/documentation/advanced/helm/basics.html#values), repo, environment and other).

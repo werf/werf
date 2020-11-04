@@ -1,1 +1,1 @@
-safely cleanup unused project images and stages
+cleanup project images

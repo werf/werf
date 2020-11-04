@@ -10,7 +10,7 @@ sidebar: documentation
 
 Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/generic_ci_cd_integration.html).
 
-werf изначально поддерживает GitLab CI/CD и GitHub Actions, а также предлагает специальную команду `werf ci-env` (она необязательна и позволяет настраивать параметры werf, описываемые в этой статье, автоматически и единобразно). Дополнительные сведения можно найти в следующих документах:
+werf изначально поддерживает GitLab CI/CD и GitHub Actions, а также предлагает специальную команду `werf ci-env` (она необязательна и позволяет настраивать параметры werf, описываемые в этой статье, автоматически и единообразно). Дополнительные сведения можно найти в следующих документах:
 
  - [GitLab CI/CD]({{ site.baseurl }}/documentation/advanced/ci_cd/gitlab_ci_cd.html);
  - [GitHub Actions]({{ site.baseurl }}/documentation/advanced/ci_cd/github_actions.html).
@@ -23,7 +23,7 @@ werf изначально поддерживает GitLab CI/CD и GitHub Action
  - `werf dismiss`;
  - `werf cleanup`.
 
-Также имеются некоторые специальнаые команды:
+Также имеются некоторые специальные команды:
 
   - `werf build` позволяет собирать необходимые образы;
   - `werf run` позволяет проводить модульное тестирование собранных образов.
@@ -153,7 +153,7 @@ werf converge
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Пример</a>
 <div class="details__content" markdown="1">
-Давайте зададим кастомные аннотации, настроим логгирование и включим режим "уничтожителя процессов" с помощью переменных среды:
+Давайте зададим кастомные аннотации, настроим логирование и включим режим "уничтожителя процессов" с помощью переменных среды:
 
 ```shell
 export WERF_ADD_ANNOTATION_APPLICATION_NAME="project.werf.io/name=myapp"

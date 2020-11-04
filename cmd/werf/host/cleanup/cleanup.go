@@ -26,12 +26,12 @@ func NewCmd() *cobra.Command {
 
 The data include:
 * Lost docker containers and images from interrupted builds.
-* Old service tmp dirs, which werf creates during every build, publish, deploy and other commands.
+* Old service tmp dirs, which werf creates during every build, converge and other commands.
 * Local cache:
   * Remote git clones cache.
   * Git worktree cache.
 
-It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, deploy, stages and images cleanup.`),
+It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, converge and cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())

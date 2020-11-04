@@ -27,7 +27,7 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "purge [PROJECT_NAME ...]",
-		Short:                 "Purge project stages from local stages storage",
+		Short:                 "Purge project images from local storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())
@@ -54,8 +54,8 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local stages storage
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage")
+	common.SetupStagesStorageOptions(&commonCmdData, cmd) // TODO: host project purge command should process only :local storage
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 

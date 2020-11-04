@@ -67,7 +67,7 @@ var _ = AfterEach(func() {
 	utils.RunSucceedCommand(
 		testDirPath,
 		werfBinPath,
-		"stages", "purge", "-s", ":local", "--force",
+		"stages", "purge", "--force",
 	)
 
 	stubs.Reset()

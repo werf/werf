@@ -1,1 +1,1 @@
-purge werf images, stages, cache and other data of all projects on host machine
+purge werf images, cache and other data for all projects on host machine

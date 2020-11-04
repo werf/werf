@@ -14,7 +14,7 @@ var _ = Describe("Getting started", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
+			"stages", "purge", "--force",
 		)
 	})
 
@@ -30,7 +30,7 @@ var _ = Describe("Getting started", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"build", "-s", ":local",
+			"build",
 		)
 
 		containerName := fmt.Sprintf("getting_started_%s", utils.GetRandomString(10))
@@ -38,7 +38,7 @@ var _ = Describe("Getting started", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :80 --name %s", containerName),
+			"run", "--docker-options", fmt.Sprintf("-d -p :80 --name %s", containerName),
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(containerName) }()
 
@@ -52,7 +52,7 @@ var _ = Describe("Getting started", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"publish", "-s", ":local", "-i", registryProjectRepository, "--tag-custom", "test",
+			"publish", "-i", registryProjectRepository, "--tag-custom", "test",
 		)
 	})
 })

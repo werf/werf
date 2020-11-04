@@ -30,7 +30,7 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "list",
-		Short:                 "List project names based on local stages storage",
+		Short:                 "List project names based on local storage",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {

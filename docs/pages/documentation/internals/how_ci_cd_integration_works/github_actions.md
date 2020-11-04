@@ -8,11 +8,11 @@ According to the description of [ci-env command]({{ site.baseurl }}/documentatio
 
 werf uses the following values for werf environment variables:
 
-### WERF_REPO
+## WERF_REPO
 
 The value of [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo) is derived from the [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions variable (**converted to lowercase**) and project name from `werf.yaml`: `docker.pkg.github.com/$GITHUB_REPOSITORY/<project-name>-werf`.
 
-### WERF_ADD_ANNOTATION_PROJECT_GIT
+## WERF_ADD_ANNOTATION_PROJECT_GIT
 
 The value of [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_project_git) is based on the [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions environment variable and composed as follows:
 
@@ -20,7 +20,7 @@ The value of [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentatio
 project.werf.io/git=https://github.com/$GITHUB_REPOSITORY
 ```
 
-### WERF_ADD_ANNOTATION_CI_COMMIT
+## WERF_ADD_ANNOTATION_CI_COMMIT
 
 The value of [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_ci_commit) is extracted from the [`GITHUB_SHA`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions environment variable and composed as follows:
 
@@ -28,7 +28,7 @@ The value of [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/
 ci.werf.io/commit=$GITHUB_SHA
 ```
 
-### WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL
+## WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL
 
 The value of `WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL` is derived from the [`GITHUB_RUN_ID`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions environment variable and composed in the following way:
 
@@ -36,7 +36,7 @@ The value of `WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL` is derived from the [`
 github.ci.werf.io/workflow-run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 ```
 
-### Other variables
+## Other variables
 
 Other variables are configured in the regular way described in the [overview article]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html):
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#docker_config);

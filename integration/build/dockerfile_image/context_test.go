@@ -41,12 +41,12 @@ var _ = Describe("context", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
+			"stages", "purge", "--force",
 		)
 	})
 
 	type entry struct {
-		prepareFixturesFunc      func()
+		prepareFixturesFunc   func()
 		expectedDigest        string
 		expectedDarwinDigest  string
 		expectedWindowsDigest string
@@ -58,7 +58,7 @@ var _ = Describe("context", func() {
 		output, err := utils.RunCommand(
 			testDirPath,
 			werfBinPath,
-			"build", "-s", ":local", "--debug",
+			"build", "--debug",
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 

@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build stages and final images using content based tagging and publish into images repo, then deploy 
-application chart.
-
-Command combines 'werf stages build', 'werf images publish' and 'werf deploy'.
+Build and push images, then deploy application into Kubernetes.
 
 The result of converge command is an application deployed into Kubernetes for current git state.    
 Command will create release and wait until all resources of the release will become ready.
@@ -15,7 +12,7 @@ Environment is a required param for the deploy by default, because it is needed 
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to       
-change it: [https://werf.io/documentation/advanced/helm/basics.html](https://werf.io/documentation/advanced/helm/basics.html)
+change it: [https://werf.io/documentation/advanced/helm/basics.html]({{ site.baseurl }}/documentation/advanced/helm/basics.html)
 
 {{ header }} Syntax
 
@@ -27,7 +24,7 @@ werf converge [options]
 
 ```shell
 # Build and deploy current application state into production environment
-werf converge --stages-storage registry.mydomain.com/web/back/stages --images-repo registry.mydomain.com/web/back --env production
+werf converge --repo registry.mydomain.com/web --env production
 ```
 
 {{ header }} Environments
@@ -76,7 +73,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
-            stages storage, to push images into the specified images repo, to pull base images
+            repo, to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
       --git-unshallow=false
@@ -219,11 +216,15 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
   -t, --timeout=0
             Resources tracking timeout in seconds
       --tmp-dir=''

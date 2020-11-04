@@ -21,7 +21,7 @@ import (
 	"github.com/werf/werf/pkg/util/parallel"
 )
 
-var ErrShouldResetStagesStorageCache = errors.New("should reset stages storage cache")
+var ErrShouldResetStagesStorageCache = errors.New("should reset storage cache")
 
 func ShouldResetStagesStorageCache(err error) bool {
 	if err != nil {
@@ -54,7 +54,7 @@ func newStagesStorageManager(projectName string, stagesStorage storage.StagesSto
 }
 
 func (m *StagesStorageManager) ResetStagesStorageCache(ctx context.Context) error {
-	msg := fmt.Sprintf("Reset stages storage cache %s for project %q", m.StagesStorageCache.String(), m.ProjectName)
+	msg := fmt.Sprintf("Reset storage cache %s for project %q", m.StagesStorageCache.String(), m.ProjectName)
 	return logboek.Context(ctx).Default().LogProcess(msg).DoError(func() error {
 		return m.StagesStorageCache.DeleteAllStages(ctx, m.ProjectName)
 	})
@@ -106,7 +106,7 @@ func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options F
 
 	for _, stageDesc := range stagesDescriptions {
 		if err := m.StagesStorageCache.DeleteStagesByDigest(ctx, m.ProjectName, stageDesc.StageID.Digest); err != nil {
-			return fmt.Errorf("unable to delete stages storage cache record (%s): %s", stageDesc.StageID.Digest, err)
+			return fmt.Errorf("unable to delete storage cache record (%s): %s", stageDesc.StageID.Digest, err)
 		}
 	}
 
@@ -130,14 +130,14 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 	}
 
 	if shouldFetch, err := m.StagesStorage.ShouldFetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err == nil && shouldFetch {
-		if err := logboek.Context(ctx).Default().LogProcess("Fetching stage %s from stages storage", stg.LogDetailedName()).
+		if err := logboek.Context(ctx).Default().LogProcess("Fetching stage %s from storage", stg.LogDetailedName()).
 			Options(func(options types.LogProcessOptionsInterface) {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
 				logboek.Context(ctx).Info().LogF("Image name: %s\n", stg.GetImage().Name())
 				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err != nil {
-					return fmt.Errorf("unable to fetch stage %s image %s from stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
+					return fmt.Errorf("unable to fetch stage %s image %s from storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 				}
 				return nil
 			}); err != nil {
@@ -191,10 +191,10 @@ func (m *StagesStorageManager) AtomicStoreStagesByDigestToCache(ctx context.Cont
 		defer m.StorageLockManager.Unlock(ctx, lock)
 	}
 
-	return logboek.Context(ctx).Info().LogProcess("Storing stage %s images by digest %s into stages storage cache", stageName, stageDigest).
+	return logboek.Context(ctx).Info().LogProcess("Storing stage %s images by digest %s into storage cache", stageName, stageDigest).
 		DoError(func() error {
 			if err := m.StagesStorageCache.StoreStagesByDigest(ctx, m.ProjectName, stageDigest, stageIDs); err != nil {
-				return fmt.Errorf("error storing stage %s images by digest %s into stages storage cache: %s", stageName, stageDigest, err)
+				return fmt.Errorf("error storing stage %s images by digest %s into storage cache: %s", stageName, stageDigest, err)
 			}
 			return nil
 		})
@@ -210,7 +210,7 @@ func (m *StagesStorageManager) GetStagesByDigest(ctx context.Context, stageName,
 	}
 
 	logboek.Context(ctx).Info().LogF(
-		"Stage %s cache by digest %s is not exists in the stages storage cache: resetting stages storage cache\n",
+		"Stage %s cache by digest %s is not exists in the storage cache: resetting storage cache\n",
 		stageName, stageDigest,
 	)
 	return m.atomicGetStagesByDigestWithCacheReset(ctx, stageName, stageDigest)
@@ -260,12 +260,12 @@ func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, s
 	var cacheExists bool
 	var cacheStagesIDs []image.StageID
 
-	err := logboek.Context(ctx).Info().LogProcess("Getting stage %s images by digest %s from stages storage cache", stageName, stageDigest).
+	err := logboek.Context(ctx).Info().LogProcess("Getting stage %s images by digest %s from storage cache", stageName, stageDigest).
 		DoError(func() error {
 			var err error
 			cacheExists, cacheStagesIDs, err = m.StagesStorageCache.GetStagesByDigest(ctx, m.ProjectName, stageDigest)
 			if err != nil {
-				return fmt.Errorf("error getting project %s stage %s images from stages storage cache: %s", m.ProjectName, stageDigest, err)
+				return fmt.Errorf("error getting project %s stage %s images from storage cache: %s", m.ProjectName, stageDigest, err)
 			}
 			return nil
 		})
@@ -285,12 +285,12 @@ func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, s
 
 func (m *StagesStorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]image.StageID, error) {
 	var stageIDs []image.StageID
-	if err := logboek.Context(ctx).Info().LogProcess("Get %s stages by digest %s from stages storage", stageName, stageDigest).
+	if err := logboek.Context(ctx).Info().LogProcess("Get %s stages by digest %s from storage", stageName, stageDigest).
 		DoError(func() error {
 			var err error
 			stageIDs, err = stagesStorage.GetStagesIDsByDigest(ctx, m.ProjectName, stageDigest)
 			if err != nil {
-				return fmt.Errorf("error getting project %s stage %s images from stages storage: %s", m.StagesStorage.String(), stageDigest, err)
+				return fmt.Errorf("error getting project %s stage %s images from storage: %s", m.StagesStorage.String(), stageDigest, err)
 			}
 
 			logboek.Context(ctx).Debug().LogF("Stages ids: %#v\n", stageIDs)
@@ -336,10 +336,10 @@ func (m *StagesStorageManager) atomicGetStagesByDigestWithCacheReset(ctx context
 		return nil, fmt.Errorf("unable to get stage descriptions by ids from %s: %s", m.StagesStorage.String(), err)
 	}
 
-	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by digest %s into stages storage cache", stageName, stageDigest).
+	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by digest %s into storage cache", stageName, stageDigest).
 		DoError(func() error {
 			if err := m.StagesStorageCache.StoreStagesByDigest(ctx, m.ProjectName, stageDigest, stageIDs); err != nil {
-				return fmt.Errorf("error storing stage %s images by digest %s into stages storage cache: %s", stageName, stageDigest, err)
+				return fmt.Errorf("error storing stage %s images by digest %s into storage cache: %s", stageName, stageDigest, err)
 			}
 			return nil
 		}); err != nil {
@@ -383,7 +383,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 
 		return stageDesc, nil
 	} else if opts.StageShouldExist {
-		logboek.Context(ctx).Warn().LogF("Invalid stage image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
+		logboek.Context(ctx).Warn().LogF("Invalid stage image %q! Stage is no longer available in the %s. Storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
 		return nil, ErrShouldResetStagesStorageCache
 	} else {
 		return nil, nil

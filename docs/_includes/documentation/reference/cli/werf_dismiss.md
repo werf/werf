@@ -11,7 +11,7 @@ Environment is a required param for the dismiss by default, because it is needed
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it:                  
-[https://werf.io/documentation/advanced/helm/basics.html](https://werf.io/documentation/advanced/helm/basics.html)
+[https://werf.io/documentation/advanced/helm/basics.html]({{ site.baseurl }}/documentation/advanced/helm/basics.html)
 
 {{ header }} Syntax
 
@@ -120,11 +120,15 @@ werf dismiss [options]
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --with-hooks=true

@@ -16,8 +16,8 @@ type SyncStagesOptions struct {
 	WithoutLock       bool
 }
 
-// SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
-// Repeatedly calling SyncStages will copy stages from source stages storage to destination, that already exists in the destination.
+// SyncStages will make sure, that destination storage contains all stages from source storage.
+// Repeatedly calling SyncStages will copy stages from source storage to destination, that already exists in the destination.
 // SyncStages will not delete excess stages from destination storage, that does not exists in the source.
 func SyncStages(ctx context.Context, projectName string, fromStagesStorage storage.StagesStorage, toStagesStorage storage.StagesStorage, storageLockManager storage.LockManager, containerRuntime container_runtime.ContainerRuntime, opts SyncStagesOptions) error {
 	isOk := false
@@ -61,13 +61,13 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 	var existingSourceStages []image.StageID
 	var existingDestinationStages []image.StageID
 
-	if stages, err := getAllStagesFunc("Getting all repo images list from source stages storage %s", fromStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from source storage %s", fromStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from source %s: %s", fromStagesStorage.String(), err)
 	} else {
 		existingSourceStages = stages
 	}
 
-	if stages, err := getAllStagesFunc("Getting all repo images list from destination stages storage %s", toStagesStorage); err != nil {
+	if stages, err := getAllStagesFunc("Getting all repo images list from destination storage %s", toStagesStorage); err != nil {
 		return fmt.Errorf("unable to get repo images from destination %s: %s", toStagesStorage.String(), err)
 	} else {
 		existingDestinationStages = stages
@@ -161,7 +161,7 @@ func syncStage(ctx context.Context, projectName string, stageID image.StageID, f
 	if err != nil {
 		return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), fromStagesStorage.String(), err)
 	} else if stageDesc == nil {
-		// Bad stage id given: stage does not exists in the source stages storage
+		// Bad stage id given: stage does not exists in the source storage
 		return nil
 	}
 

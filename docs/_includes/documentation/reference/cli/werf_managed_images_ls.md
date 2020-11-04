@@ -24,7 +24,7 @@ werf managed-images ls [options]
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read images from the specified stages storage
+            Command needs granted permissions to read images from the specified repo
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
@@ -94,11 +94,15 @@ werf managed-images ls [options]
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

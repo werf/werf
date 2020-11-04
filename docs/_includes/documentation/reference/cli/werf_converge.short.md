@@ -1,1 +1,1 @@
-build stages and publish images, then deploy application into Kubernetes
+build and push images, then deploy application into Kubernetes

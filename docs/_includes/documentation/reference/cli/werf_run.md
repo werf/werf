@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run container for specified project image
+Run container for specified project image from werf.yaml (build if needed)
 
 {{ header }} Syntax
 
@@ -15,16 +15,16 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 
 ```shell
   # Run specified image
-  $ werf run --stages-storage :local application
+  $ werf run application
 
   # Run image with predefined docker run options and command for debug
-  $ werf run --stages-storage :local --shell
+  $ werf run --shell
 
   # Run image with specified docker run options and command
-  $ werf run --stages-storage :local --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+  $ werf run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
-  $ werf run --stages-storage :local --shell --dry-run
+  $ werf run --shell --dry-run
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh
 ```
 
@@ -46,8 +46,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read and pull images from the specified stages     
-            storage
+            Command needs granted permissions to read and pull images from the specified repo
       --docker-options=''
             Define docker run options (default $WERF_DOCKER_OPTIONS)
       --dry-run=false
@@ -126,11 +125,15 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --virtual-merge=false

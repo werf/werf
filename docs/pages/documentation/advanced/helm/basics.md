@@ -308,7 +308,7 @@ There are the following service values:
  * Full docker image name and tag for each image contained in the `werf.yaml` config: `.Values.global.werf.image.IMAGE_NAME.docker_image` and `.Values.global.werf.image.IMAGE_NAME.docker_tag`.
  * `.Values.global.werf.is_nameless_image` indicates whether there is a nameless image defined in the `werf.yaml` config.
  * Project name as specified in `werf.yaml`: `.Values.global.werf.name`.
- * Images repo used during the deployment: `.Values.global.werf.repo`.
+ * Repo used during the deployment: `.Values.global.werf.repo`.
 
 #### Merging the resulting values
 
@@ -479,8 +479,7 @@ werf deploy \
   --add-annotation "gitlab-user-email=vasya@myproject.com" \
   --add-label "gitlab-user-email=vasya@myproject.com" \
   --env dev \
-  --images-repo :minikube \
-  --stages-storage :local
+  --repo REPO
 ```
 
 ### Validating resource manifests
@@ -489,7 +488,7 @@ If the resource manifest in the chart contains logic or syntax errors, then werf
 
 Let us suppose there are the following typos in the chart template (`envs` in place of `env` and `redinessProbe` in lieu of `readinessProbe`):
 
-```
+```yaml
 containers:
 - name: main
   command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]

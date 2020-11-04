@@ -1,1 +1,1 @@
-run container for specified project image
+run container for project image

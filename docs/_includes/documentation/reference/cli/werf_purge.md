@@ -3,14 +3,11 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Purge all project images from images repo and stages from stages storage.
-
-First step is 'werf images purge', which will delete all project images from images repo. Second    
-step is 'werf stages purge', which will delete all stages from stages storage.
+Purge all project images.
 
 WARNING: Do not run this command during any other werf command is working on the host machine. This 
-command is supposed to be run manually. Images from images repo, that are being used in Kubernetes  
-cluster will also be deleted.
+command is supposed to be run manually. Images from repo, that are being used in Kubernetes cluster 
+will also be deleted.
 
 {{ header }} Syntax
 
@@ -31,8 +28,7 @@ werf purge [options]
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to delete images from the specified stages storage    
-            and images repo
+            Command needs granted permissions to delete images from the specified repo
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --force=false
@@ -103,11 +99,15 @@ werf purge [options]
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

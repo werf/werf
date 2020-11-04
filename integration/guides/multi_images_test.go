@@ -14,7 +14,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"stages", "purge", "-s", ":local", "--force",
+			"stages", "purge", "--force",
 		)
 	})
 
@@ -30,14 +30,14 @@ var _ = Describe("Advanced build/Multi images", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"build", "-s", ":local",
+			"build",
 		)
 
 		paymentGWContainerName := fmt.Sprintf("payment_gw_%s", utils.GetRandomString(10))
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d --name %s", paymentGWContainerName), "payment_gw",
+			"run", "--docker-options", fmt.Sprintf("-d --name %s", paymentGWContainerName), "payment_gw",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(paymentGWContainerName) }()
 
@@ -45,7 +45,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :5432 --name %s", databaseContainerName), "database",
+			"run", "--docker-options", fmt.Sprintf("-d -p :5432 --name %s", databaseContainerName), "database",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(databaseContainerName) }()
 
@@ -53,7 +53,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :8080 --link %s:database --name %s", databaseContainerName, appContainerName), "app",
+			"run", "--docker-options", fmt.Sprintf("-d -p :8080 --link %s:database --name %s", databaseContainerName, appContainerName), "app",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(appContainerName) }()
 
@@ -61,7 +61,7 @@ var _ = Describe("Advanced build/Multi images", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			werfBinPath,
-			"run", "-s", ":local", "--docker-options", fmt.Sprintf("-d -p :80 -p :443 --link %s:appserver --name %s", appContainerName, reverseProxyContainerName), "reverse_proxy",
+			"run", "--docker-options", fmt.Sprintf("-d -p :80 -p :443 --link %s:appserver --name %s", appContainerName, reverseProxyContainerName), "reverse_proxy",
 		)
 		defer func() { utilsDocker.ContainerStopAndRemove(reverseProxyContainerName) }()
 

@@ -39,17 +39,17 @@ var _ = Describe("persistent stage digests", func() {
 	})
 
 	type entry struct {
-		imageName                 string
+		imageName              string
 		expectedDigests        []string
 		expectedWindowsDigests []string
-		skipOnWindows             bool
+		skipOnWindows          bool
 	}
 
 	DescribeTable("should not be changed", func(e entry) {
 		output, err := utils.RunCommand(
 			testDirPath,
 			werfBinPath,
-			"build", "-s", ":local", e.imageName,
+			"build", e.imageName,
 		)
 
 		Ω(err).NotTo(HaveOccurred())

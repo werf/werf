@@ -45,10 +45,8 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "converge",
-		Short: "Build stages and publish images, then deploy application into Kubernetes",
-		Long: common.GetLongCommandDescription(`Build stages and final images using content based tagging and publish into images repo, then deploy application chart.
-
-Command combines 'werf stages build', 'werf images publish' and 'werf deploy'.
+		Short: "Build and push images, then deploy application into Kubernetes",
+		Long: common.GetLongCommandDescription(`Build and push images, then deploy application into Kubernetes.
 
 The result of converge command is an application deployed into Kubernetes for current git state. Command will create release and wait until all resources of the release will become ready.
 
@@ -56,7 +54,7 @@ Environment is a required param for the deploy by default, because it is needed 
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/documentation/advanced/helm/basics.html`),
 		Example: `# Build and deploy current application state into production environment
-werf converge --stages-storage registry.mydomain.com/web/back/stages --images-repo registry.mydomain.com/web/back --env production`,
+werf converge --repo registry.mydomain.com/web --env production`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
@@ -91,7 +89,7 @@ werf converge --stages-storage registry.mydomain.com/web/back/stages --images-re
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

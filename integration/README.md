@@ -109,7 +109,7 @@ Furthermore, different `It` blocks (within the same `Describe` or different `Des
 
 When your test uses werf project it is convinient to create a special `Context` block within `Describe` for each project.
 
-In this `Context` single `It` block should be defined for the actual test code and `AfterEach` block to perform cleanup for the project (typically `werf stages purge --force` and `werf dismiss ...`).
+In this `Context` single `It` block should be defined for the actual test code and `AfterEach` block to perform cleanup for the project (typically `werf purge --force` and `werf dismiss ...`).
 
 For each new `It` block define a surrounding `Context` block and `AfterEach` cleanup block.
 
@@ -117,7 +117,7 @@ For each new `It` block define a surrounding `Context` block and `AfterEach` cle
 var _ = Describe("COMPONENT", func() {
     Context("when ...", func() { // Context for the project test 1
         AfterEach(func() {
-            // Run `werf stages purge --force` and/or `werf dismiss ...`
+            // Run `werf purge --force` and/or `werf dismiss ...`
             // Run more cleanup for the project
         })
 
@@ -133,7 +133,7 @@ var _ = Describe("COMPONENT", func() {
 
     Context("when ...", func() { // Context for the project test 2
         AfterEach(func() {
-            // Run `werf stages purge --force` and/or `werf dismiss ...`
+            // Run `werf purge --force` and/or `werf dismiss ...`
             // Run more cleanup for the project
         })
 

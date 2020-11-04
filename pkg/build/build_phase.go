@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/werf/werf/pkg/storage"
-
 	"github.com/google/uuid"
 
 	"github.com/docker/docker/pkg/stringid"
@@ -21,6 +19,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
@@ -582,7 +581,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
 		seconds := 0
 		fmt.Sscanf(v, "%d", &seconds)
-		fmt.Printf("Sleeping %d seconds before saving newly built image %s into stages storage %s by digest %s...\n", seconds, stg.GetImage().GetBuiltId(), phase.Conveyor.StorageManager.StagesStorage.String(), stg.GetDigest())
+		fmt.Printf("Sleeping %d seconds before saving newly built image %s into repo %s by digest %s...\n", seconds, stg.GetImage().GetBuiltId(), phase.Conveyor.StorageManager.StagesStorage.String(), stg.GetDigest())
 		time.Sleep(time.Duration(seconds) * time.Second)
 	}
 
@@ -599,7 +598,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			return err
 		} else if stageDesc != nil {
 			logboek.Context(ctx).Default().LogF(
-				"Discarding newly built image for stage %s by digest %s: detected already existing image %s in the stages storage\n",
+				"Discarding newly built image for stage %s by digest %s: detected already existing image %s in the repo\n",
 				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
@@ -616,10 +615,10 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 			if err := logboek.Context(ctx).Info().LogProcess("Store stage").DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
-					return fmt.Errorf("unable to store stage %s digest %s image %s into stages storage %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+					return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				}
 				if desc, err := phase.Conveyor.StorageManager.StagesStorage.GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
-					return fmt.Errorf("unable to get stage %s digest %s image %s description from stages storage %s after stages has been stored into stages storage: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
+					return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				} else {
 					stageImageObj.SetStageDescription(desc)
 				}
@@ -743,7 +742,7 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image
 			options.Style(style.Highlight())
 		}).
 		Do(func() {
-			logboek.Context(ctx).Warn().LogF("%s with digest %s is not exist in stages storage\n", stg.LogDetailedName(), stg.GetDigest())
+			logboek.Context(ctx).Warn().LogF("%s with digest %s is not exist in repo\n", stg.LogDetailedName(), stg.GetDigest())
 
 			var reasonNumber int
 			reasonNumberFunc := func() string {
@@ -779,7 +778,7 @@ E.g.:
 
 			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
 - automatically with werf cleanup command
-- manually with werf purge, werf stages purge or werf host purge commands`)
+- manually with werf purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
 		})
 }

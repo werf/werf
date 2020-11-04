@@ -94,7 +94,16 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 func replaceLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
-		s = strings.Replace(s, link, fmt.Sprintf("[%[1]s](%[1]s)", link), -1)
+		linkText := link
+		for _, prefix := range []string{"werf.io", "https://werf.io"} {
+			if strings.HasPrefix(link, prefix) {
+				link = strings.TrimLeft(link, prefix)
+				link = "{{ site.baseurl }}/" + link
+				break
+			}
+		}
+
+		s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
 	}
 
 	return s
@@ -163,7 +172,7 @@ cli: &cli
 		indent := 1
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  ssf:
+%[1]s  f:
 `, strings.Repeat("  ", indent), group.Message)
 
 		_, err := buf.WriteString(groupRecord)
@@ -202,7 +211,7 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 	} else {
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  sf:
+%[1]s  f:
 `, strings.Repeat("  ", indent), cmd.CommandPath())
 
 		_, err := buf.WriteString(groupRecord)

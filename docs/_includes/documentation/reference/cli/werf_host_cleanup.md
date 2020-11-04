@@ -7,13 +7,13 @@ Cleanup old unused werf cache and data of all projects on host machine.
 
 The data include:
 * Lost docker containers and images from interrupted builds.
-* Old service tmp dirs, which werf creates during every build, publish, deploy and other commands.
+* Old service tmp dirs, which werf creates during every build, converge and other commands.
 * Local cache:
   * Remote git clones cache.
   * Git worktree cache.
 
 It is safe to run this command periodically by automated cleanup job in parallel with other werf    
-commands such as build, deploy, stages and images cleanup.
+commands such as build, converge and cleanup.
 
 {{ header }} Syntax
 
