@@ -3,10 +3,10 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Purge werf images, stages, cache and other data of all projects on host machine.
+Purge werf images, cache and other data for all projects on host machine.
 
 The data include:
-* Old service tmp dirs, which werf creates during every build, publish, deploy and other commands.
+* Old service tmp dirs, which werf creates during every build, converge and other commands.
 * Local cache:
   * Remote git clones cache.
   * Git worktree cache.

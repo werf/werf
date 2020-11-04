@@ -23,11 +23,11 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "purge",
-		Short: "Purge werf images, stages, cache and other data of all projects on host machine",
-		Long: common.GetLongCommandDescription(`Purge werf images, stages, cache and other data of all projects on host machine.
+		Short: "Purge werf images, cache and other data for all projects on host machine",
+		Long: common.GetLongCommandDescription(`Purge werf images, cache and other data for all projects on host machine.
 
 The data include:
-* Old service tmp dirs, which werf creates during every build, publish, deploy and other commands.
+* Old service tmp dirs, which werf creates during every build, converge and other commands.
 * Local cache:
   * Remote git clones cache.
   * Git worktree cache.

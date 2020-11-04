@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Purge project stages from local stages storage
+Purge project images from local storage
 
 {{ header }} Syntax
 
@@ -20,7 +20,7 @@ werf host project purge [PROJECT_NAME ...] [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and delete images from the specified    
-            stages storage
+            repo
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --force=false
@@ -84,11 +84,15 @@ werf host project purge [PROJECT_NAME ...] [options]
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

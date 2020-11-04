@@ -163,7 +163,7 @@ cli: &cli
 		indent := 1
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  ssf:
+%[1]s  f:
 `, strings.Repeat("  ", indent), group.Message)
 
 		_, err := buf.WriteString(groupRecord)
@@ -202,7 +202,7 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 	} else {
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  sf:
+%[1]s  f:
 `, strings.Repeat("  ", indent), cmd.CommandPath())
 
 		_, err := buf.WriteString(groupRecord)

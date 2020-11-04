@@ -1,1 +1,1 @@
-purge project stages from local stages storage
+purge project images from local storage

@@ -30,7 +30,14 @@ func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
 
 	defaultValue := os.Getenv("WERF_SYNCHRONIZATION")
 
-	cmd.Flags().StringVarP(cmdData.Synchronization, "synchronization", "S", defaultValue, fmt.Sprintf("Address of synchronizer for multiple werf processes to work with a single stages storage (default :local if --stages-storage=:local or %s if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same address should be specified for all werf processes that work with a single stages storage. :local address allows execution of werf processes from a single host only.", storage.DefaultKubernetesStorageAddress))
+	cmd.Flags().StringVarP(cmdData.Synchronization, "synchronization", "S", defaultValue, fmt.Sprintf(`Address of synchronizer for multiple werf processes to work with a single repo.
+
+Default:
+* $WERF_SYNCHRONIZATION or
+* :local if --repo is not specified or 
+* %s if --repo is specified
+
+The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, storage.DefaultKubernetesStorageAddress))
 }
 
 type SynchronizationType string

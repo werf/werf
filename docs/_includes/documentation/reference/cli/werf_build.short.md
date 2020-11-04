@@ -1,1 +1,1 @@
-build stages
+build images

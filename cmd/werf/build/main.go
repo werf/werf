@@ -25,24 +25,23 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
-		Short: "Build stages",
-		Example: `  # Build stages of all images from werf.yaml, built stages will be placed locally
-  $ werf stages build
+		Short: "Build images",
+		Example: `  # Build images, built stages will be placed locally
+  $ werf build
 
-  # Build stages of image 'backend' from werf.yaml
-  $ werf stages build backend
+  # Build image 'backend'
+  $ werf build backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
   $ werf build --introspect-error
 
-  # Set --repo default value using $WERF_REPO param
-  $ export WERF_REPO=harbor.company.io/werf
-  $ werf build`,
-		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
+  # Build images and store/use stages from repo
+  $ werf build --repo harbor.company.io/werf`,
+		Long: common.GetLongCommandDescription(`Build images that are described in werf.yaml.
 
-The result of build command are built stages pushed into the specified stages storage (or locally in the case when --stages-storage=:local).
+The result of build command is built images pushed into the specified repo (or locally if repo is not specified).
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml`),
+If one or more IMAGE_NAME parameters specified, werf will build only these images`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
@@ -73,7 +72,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

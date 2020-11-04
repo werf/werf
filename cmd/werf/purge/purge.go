@@ -28,12 +28,10 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short:                 "Purge all project images from images repo and stages from stages storage",
-		Long: common.GetLongCommandDescription(`Purge all project images from images repo and stages from stages storage.
+		Short:                 "Purge all project images",
+		Long: common.GetLongCommandDescription(`Purge all project images.
 
-First step is 'werf images purge', which will delete all project images from images repo. Second step is 'werf stages purge', which will delete all stages from stages storage.
-
-WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
+WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())
 
@@ -59,7 +57,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

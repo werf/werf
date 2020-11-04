@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List project names based on local stages storage
+List project names based on local storage
 
 {{ header }} Syntax
 

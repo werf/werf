@@ -26,12 +26,12 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Safely cleanup unused project images and stages",
-		Long: common.GetLongCommandDescription(`Safely cleanup unused project images and stages.
+		Short:                 "Cleanup project images",
+		Long: common.GetLongCommandDescription(`Safely cleanup unused project images.
 
-First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage to be in sync with the images repo.
+The command works according to special rules called cleanup policies, which the user defines in werf.yaml (https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies).
 
-It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
+It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, converge and host cleanup.`),
 		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer werf.PrintGlobalWarnings(common.BackgroundContext())
@@ -58,7 +58,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

@@ -38,19 +38,20 @@ var commonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified project image",
+		Short:                 "Run container for project image",
+		Long:                  common.GetLongCommandDescription(`Run container for specified project image from werf.yaml (build if needed)`),
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
-  $ werf run --stages-storage :local application
+  $ werf run application
 
   # Run image with predefined docker run options and command for debug
-  $ werf run --stages-storage :local --shell
+  $ werf run --shell
 
   # Run image with specified docker run options and command
-  $ werf run --stages-storage :local --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+  $ werf run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
-  $ werf run --stages-storage :local --shell --dry-run
+  $ werf run --shell --dry-run
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
@@ -73,7 +74,7 @@ func NewCmd() *cobra.Command {
 			}
 
 			if cmdData.Shell && cmdData.Bash {
-				return fmt.Errorf("cannot use --shell and --bash options at the same time!")
+				return fmt.Errorf("cannot use --shell and --bash options at the same time")
 			}
 
 			if cmdData.Shell || cmdData.Bash {
@@ -108,7 +109,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

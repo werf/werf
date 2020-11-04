@@ -1,1 +1,1 @@
-purge all project images from images repo and stages from stages storage
+purge all project images

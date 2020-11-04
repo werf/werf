@@ -3,13 +3,12 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build stages for images described in the werf.yaml.
+Build images that are described in werf.yaml.
 
-The result of build command are built stages pushed into the specified stages storage (or locally   
-in the case when --stages-storage=:local).
+The result of build command is built images pushed into the specified repo (or locally if repo is   
+not specified).
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images stages from       
-werf.yaml
+If one or more IMAGE_NAME parameters specified, werf will build only these images
 
 {{ header }} Syntax
 
@@ -20,18 +19,17 @@ werf build [IMAGE_NAME...] [options]
 {{ header }} Examples
 
 ```shell
-  # Build stages of all images from werf.yaml, built stages will be placed locally
-  $ werf stages build
+  # Build images, built stages will be placed locally
+  $ werf build
 
-  # Build stages of image 'backend' from werf.yaml
-  $ werf stages build backend
+  # Build image 'backend'
+  $ werf build backend
 
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
   $ werf build --introspect-error
 
-  # Set --repo default value using $WERF_REPO param
-  $ export WERF_REPO=harbor.company.io/werf
-  $ werf build
+  # Build images and store/use stages from repo
+  $ werf build --repo harbor.company.io/werf
 ```
 
 {{ header }} Environments
@@ -57,7 +55,7 @@ werf build [IMAGE_NAME...] [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
-            stages storage, to pull base images
+            repo, to pull base images
       --git-unshallow=false
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --home-dir=''
@@ -157,11 +155,15 @@ werf build [IMAGE_NAME...] [options]
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''
-            Address of synchronizer for multiple werf processes to work with a single stages        
-            storage (default :local if --stages-storage=:local or kubernetes://werf-synchronization 
-            if non-local stages-storage specified or $WERF_SYNCHRONIZATION if set). The same        
-            address should be specified for all werf processes that work with a single stages       
-            storage. :local address allows execution of werf processes from a single host only.
+            Address of synchronizer for multiple werf processes to work with a single repo.
+            
+            Default:
+            * $WERF_SYNCHRONIZATION or
+            * :local if --repo is not specified or 
+            * kubernetes://werf-synchronization if --repo is specified
+            
+            The same address should be specified for all werf processes that work with a single     
+            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --virtual-merge=false
