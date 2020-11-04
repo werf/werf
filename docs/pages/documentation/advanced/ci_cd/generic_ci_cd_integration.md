@@ -22,7 +22,7 @@ According to [Docker registry integration]({{ site.baseurl }}/documentation/inte
  * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#docker_config);
  * [`WERF_REPO`]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo).
 
-Create temporal docker config and define images repo:
+Create temporal docker config and define repo:
 
 ```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)

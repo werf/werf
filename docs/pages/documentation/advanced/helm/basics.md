@@ -308,7 +308,7 @@ There are the following service values:
  * Full docker image name and tag for each image contained in the `werf.yaml` config: `.Values.global.werf.image.IMAGE_NAME.docker_image` and `.Values.global.werf.image.IMAGE_NAME.docker_tag`.
  * `.Values.global.werf.is_nameless_image` indicates whether there is a nameless image defined in the `werf.yaml` config.
  * Project name as specified in `werf.yaml`: `.Values.global.werf.name`.
- * Images repo used during the deployment: `.Values.global.werf.repo`.
+ * Repo used during the deployment: `.Values.global.werf.repo`.
 
 #### Merging the resulting values
 

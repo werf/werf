@@ -39,7 +39,7 @@ from: <image>[:<tag>]
 ```
 
 By default, the assembly process does not depend on actual _base image_ digest in the repository, only on _from_ directive value.
-Thus, changing _base image_ locally or in the repository does not matter if _from_ stage is already exists in _stages storage_.
+Thus, changing _base image_ locally or in the repository does not matter if _from_ stage is already exists in _storage_.
 
 If you want always build the image with actual _base image_ you should use _fromLatest_ directive.
 _fromLatest_ directive allows connecting the assembly process with the _base image_ digest getting from the repository.

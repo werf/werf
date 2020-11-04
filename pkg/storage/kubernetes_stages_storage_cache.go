@@ -50,7 +50,7 @@ func (cache *KubernetesStagesStorageCache) extractCacheData(ctx context.Context,
 		var cacheData *KubernetesStagesStorageCacheData
 
 		if err := json.Unmarshal([]byte(data), &cacheData); err != nil {
-			logboek.Context(ctx).Error().LogF("Error unmarshalling stages storage cache json in cm/%s by key %q: %s: will ignore cache\n", obj.Name, StagesStorageCacheConfigMapKey, err)
+			logboek.Context(ctx).Error().LogF("Error unmarshalling storage cache json in cm/%s by key %q: %s: will ignore cache\n", obj.Name, StagesStorageCacheConfigMapKey, err)
 			return nil, nil
 		}
 
