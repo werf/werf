@@ -308,12 +308,6 @@ cli: &cli
     - title: werf version
       url: /documentation/reference/cli/werf_version.html
 
-    - title: werf docs
-      url: /documentation/reference/cli/werf_docs.html
-
-    - title: werf stage
-      f:
-
 
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
 

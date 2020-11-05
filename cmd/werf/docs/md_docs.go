@@ -98,7 +98,7 @@ func replaceLinks(s string) string {
 		for _, prefix := range []string{"werf.io", "https://werf.io"} {
 			if strings.HasPrefix(link, prefix) {
 				link = strings.TrimLeft(link, prefix)
-				link = "{{ site.baseurl }}/" + link
+				link = fmt.Sprintf("{{ \"%s\" | relative_url }}", link)
 				break
 			}
 		}
@@ -119,6 +119,10 @@ func fullCommandFilesystemPath(cmd string) string {
 func GenCliPages(cmdGroups templates.CommandGroups, pagesDir string) error {
 	for _, group := range cmdGroups {
 		for _, cmd := range group.Commands {
+			if cmd.Hidden {
+				continue
+			}
+
 			if err := genCliPages(cmd, pagesDir); err != nil {
 				return err
 			}
@@ -182,6 +186,10 @@ cli: &cli
 
 		indent += 1
 		for _, cmd := range group.Commands {
+			if cmd.Hidden {
+				continue
+			}
+
 			if err := genCliSidebar(cmd, indent, buf); err != nil {
 				return err
 			}
@@ -264,7 +272,7 @@ toc: false
 				fullCommandName = fullCommandFilesystemPath(cmd.Commands()[0].CommandPath())
 			}
 
-			indexPage += fmt.Sprintf(" - [werf %s]({{ site.baseurl }}/documentation/reference/cli/%s.html) — {%% include /documentation/reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
+			indexPage += fmt.Sprintf(" - [werf %s]({{ \"/documentation/reference/cli/%s.html\" | relative_url }}) — {%% include /documentation/reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
 		}
 
 		doNewline = true

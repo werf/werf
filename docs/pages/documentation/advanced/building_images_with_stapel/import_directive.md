@@ -72,13 +72,13 @@ CMD ["--spring.profiles.active=postgres"]
 
 The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
 
-We suggest the same, but using [_images_]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) and [_artifacts_]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section).
+We suggest the same, but using [_images_]({{ "documentation/reference/werf_yaml.html#image-section" | relative_url }}) and [_artifacts_]({{ "documentation/reference/werf_yaml.html#image-section" | relative_url }}).
 
 > Why is werf not using multi-stage?
 * Historically, _imports_ appeared much earlier than Docker multi-stage, and
 * werf gives more flexibility working with auxiliary images
 
-Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section) or [_artifact_]({{ site.baseurl }}/documentation/reference/werf_yaml.html#image-section)). `import` is an array of records. Each record should contain the following:
+Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ "documentation/reference/werf_yaml.html#image-section" | relative_url }}) or [_artifact_]({{ "documentation/reference/werf_yaml.html#image-section)" | relative_url }}). `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
 - `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.
@@ -99,8 +99,8 @@ import:
 
 As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path.
 You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`.
-Read more about these in the [git directive article]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/git_directive.html).
+Read more about these in the [git directive article]({{ "documentation/advanced/building_images_with_stapel/git_directive.html" | relative_url }}).
 
 > Import paths and _git mappings_ must not overlap with each other
 
-Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html).
+Information about _using artifacts_ available in [separate article]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | relative_url }}).

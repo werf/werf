@@ -302,9 +302,3 @@ cli: &cli
 
     - title: werf version
       url: /documentation/reference/cli/werf_version.html
-
-    - title: werf docs
-      url: /documentation/reference/cli/werf_docs.html
-
-    - title: werf stage
-      f:
