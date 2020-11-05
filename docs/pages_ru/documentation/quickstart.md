@@ -4,9 +4,9 @@ permalink: documentation/quickstart.html
 sidebar: documentation
 ---
 
-В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ site.baseurl }}/introduction.html), если вы этого еще не сделали.
+В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ "introduction.html" | relative_url }}), если вы этого еще не сделали.
 
-Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ site.baseurl }}/installation.html).
+Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ "installation.html" | relative_url }}).
 
 ## Подготовьте свою инсталляцию Kubernetes и реестр Docker
 
@@ -100,7 +100,7 @@ minikube service --namespace quickstart-application --url result
 
 ## Принципы работы
 
-Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ site.baseurl }}/introduction.html)).
+Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ "introduction.html" | relative_url }})).
 
  1. В нашем репозитории имеются следующие Dockerfile'ы:
 
@@ -146,4 +146,4 @@ minikube service --namespace quickstart-application --url result
 
 ## Что дальше?
 
-Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ site.baseurl }}/documentation/using_with_ci_cd_systems.html) или обратиться к соответствующим [руководствам]({{ site.baseurl }}/documentation/guides.html).
+Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ "documentation/using_with_ci_cd_systems.html" | relative_url }}) или обратиться к соответствующим [руководствам]({{ "documentation/guides.html" | relative_url }}).

@@ -109,7 +109,7 @@ git:
 - `group` — имя или id группы-владельца файлов в образе;
 - `excludePaths` — список исключений (маска) при рекурсивном копировании файлов и папок. Указывается относительно пути, указанного в `add`;
 - `includePaths` — список масок файлов и папок для рекурсивного копирования. Указывается относительно пути, указанного в `add`;
-- `stageDependencies` — список масок файлов и папок для указания зависимости пересборки стадии от их изменений. Позволяет указать, при изменении каких файлов и папок необходимо принудительно пересобирать конкретную пользовательскую стадию. Более подробно рассматривается [здесь]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/assembly_instructions.html).
+- `stageDependencies` — список масок файлов и папок для указания зависимости пересборки стадии от их изменений. Позволяет указать, при изменении каких файлов и папок необходимо принудительно пересобирать конкретную пользовательскую стадию. Более подробно рассматривается [здесь]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html" | relative_url }}).
 
 При использовании удаленных репозиториев дополнительно используются следующие параметры:
 - `url` — адрес удаленного репозитория;
@@ -144,10 +144,10 @@ git:
   <a href="javascript:void(0)" class="tabs__btn btn__example1" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-dest')">Структура в конечном образе</a>
 </div>
 <div id="git-mapping-01-source" class="tabs__content tab__example1 active">
-  <img src="{{ site.baseurl }}/images/build/git_mapping_01.png" alt="git repository files tree" />
+  <img src="{{ "images/build/git_mapping_01.png" | relative_url }}" alt="git repository files tree" />
 </div>
 <div id="git-mapping-01-dest" class="tabs__content tab__example1">
-  <img src="{{ site.baseurl }}/images/build/git_mapping_02.png" alt="image files tree" />
+  <img src="{{ "images/build/git_mapping_02.png" | relative_url }}" alt="image files tree" />
 </div>
 
 Также можно указать несколько _git mappings_:
@@ -165,10 +165,10 @@ git:
   <a href="javascript:void(0)" class="tabs__btn btn__example2" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-dest')">Структура в конечном образе</a>
 </div>
 <div id="git-mapping-02-source" class="tabs__content tab__example2 active">
-  <img src="{{ site.baseurl }}/images/build/git_mapping_03.png" alt="git repository files tree" />
+  <img src="{{ "images/build/git_mapping_03.png" | relative_url }}" alt="git repository files tree" />
 </div>
 <div id="git-mapping-02-dest" class="tabs__content tab__example2">
-  <img src="{{ site.baseurl }}/images/build/git_mapping_04.png" alt="image files tree" />
+  <img src="{{ "images/build/git_mapping_04.png" | relative_url }}" alt="image files tree" />
 </div>
 
 Следует отметить, что конфигурация _git mapping_ не похожа, например, на копирование типа `cp -r /src /app`.
@@ -213,7 +213,7 @@ git:
 
 В результате в папку `/app` образа будет добавлен файл `index.php` и ему будут установлены следующие права:
 
-![index.php owned by www-data user and group]({{ site.baseurl }}/images/build/git_mapping_05.png)
+![index.php owned by www-data user and group]({{ "images/build/git_mapping_05.png" | relative_url }})
 
 Если значения параметра `owner` или `group` не числовые id, а текстовые (т.е. названия соответственно пользователя и группы), то соответствующие пользователь и группа должны существовать в системе. Их нужно добавить заранее при необходимости (к примеру, на стадии _beforeInstall_), иначе при сборке возникнет ошибка.
 

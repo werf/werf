@@ -54,4 +54,4 @@ docker:
 Указанные в конфигурации Docker-инструкции применяются на последней стадии конвейера стадий, стадии `docker_instructions`. 
 Поэтому указание Docker-инструкций в `werf.yaml` никак не влияет на сам процесс сборки, а только добавляет данные к уже собранному образу.
 
-Если вам требуются определённые переменные окружения во время сборки (например, `TERM`), то вам необходимо использовать [базовый образ]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html), в котором эти переменные окружения установлен или экспортировать их в [_пользовательской стадии_]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/assembly_instructions.html#пользовательские-стадии).
+Если вам требуются определённые переменные окружения во время сборки (например, `TERM`), то вам необходимо использовать [базовый образ]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}), в котором эти переменные окружения установлен или экспортировать их в [_пользовательской стадии_]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html#пользовательские-стадии" | relative_url }}).

@@ -44,7 +44,7 @@ If you need to keep assembly data from these directories in an image, you should
 
 On `from` stage werf adds mount points definitions to stage image labels.
 Then each stage uses these definitions for adding volumes to an assembly container.
-The implementation allows inheriting mount points from [base image]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html).
+The implementation allows inheriting mount points from [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}).
 
-Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html).
+Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}).
 Therefore, these folders are empty in an image.

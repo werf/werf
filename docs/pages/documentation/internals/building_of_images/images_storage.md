@@ -23,20 +23,20 @@ The werf assembly process involves a sequential build of stages using the _stage
 </div>
 
 <div id="dockerfile-image-tab" class="tabs__content active">
-<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images1.png" data-featherlight="image">
-<img src="{{ site.baseurl }}/images/reference/stages_and_images1_preview.png">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images1.png" | relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images1_preview.png" | relative_url }}>"
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
-<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images2.png" data-featherlight="image">
-<img src="{{ site.baseurl }}/images/reference/stages_and_images2_preview.png" >
+<a class="google-drawings" href="{{ "images/reference/stages_and_images2.png" | relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images2_preview.png" | relative_url }} >"
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images3.png" data-featherlight="image">
-<img src="{{ site.baseurl }}/images/reference/stages_and_images3_preview.png">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images3_preview.png" | relative_url }}>"
 </a>
 </div>
 
@@ -48,17 +48,17 @@ The _stage digest_ is used for [tagging](#stage-naming) a _stage_ (digest is the
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
 The ***stage digest*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ "documentation/internals/building_of_images/images_storage.html#stage-dependencies" | relative_url }});
  - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
 Digest identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from
-being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-selection).
+being reused for totally different branches, [see stage selection algorithm]({{ "documentation/internals/building_of_images/images_storage.html#stage-selection" | relative_url }}).
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
-<a class="google-drawings" href="{{ site.baseurl }}/images/reference/stages_and_images4.png" data-featherlight="image">
-<img src="{{ site.baseurl }}/images/reference/stages_and_images4_preview.png">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images4_preview.png" | relative_url }}>"
 </a>
 
 ## Stage dependencies
@@ -72,7 +72,7 @@ _Stage dependency_ is a piece of data that affects the stage _digest_. Stage dep
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/artifacts.html) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | relative_url }}) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
@@ -175,7 +175,7 @@ Stages will be [named differently](#stage-naming) depending on local or remote s
 
 When docker registry is used as the stages storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html).
+It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }}).
 
 Host requirements to use remote stages storage:
  - Connection to docker registry.
@@ -240,7 +240,7 @@ _Stages digest_ of the image is a digest which represents content of the image a
  - git commit-id related with the last non empty image stage (if this last stage is git-related).
 
 The ***stage digest*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/internals/building_of_images/images_storage.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ "documentation/internals/building_of_images/images_storage.html#stage-dependencies" | relative_url }});
  - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
@@ -288,4 +288,4 @@ User may force arbitrary non-default address of synchronization service componen
 
 ## Further reading
 
-Learn more about the [build process of stapel and Dockerfile builders]({{ site.baseurl }}/documentation/internals/building_of_images/build_process.html).
+Learn more about the [build process of stapel and Dockerfile builders]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}).

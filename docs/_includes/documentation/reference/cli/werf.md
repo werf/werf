@@ -5,5 +5,5 @@
 {% endif %}
 werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at [https://werf.io]({{ site.baseurl }}/)
+Find more information at [https://werf.io]({{ "" | relative_url }})
 

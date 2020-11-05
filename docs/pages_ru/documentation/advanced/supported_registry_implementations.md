@@ -6,9 +6,9 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 Некоторые категории команд работают с Docker registry, и требуют соответствующей авторизации:
-* [Во время процесса сборки]({{ site.baseurl }}/documentation/internals/building_of_images/build_process.html) werf может делать pull образов из Docker registry.
-* [Во время процесса очистки]({{ site.baseurl }}/documentation/advanced/cleanup.html) werf удаляет образы из Docker registry.
-* [Во время процесса деплоя]({{ site.baseurl }}/documentation/advanced/helm/basics.html) werf требует доступа к _образам_ в Docker registry и _стадиям_, которые также могут находиться в Docker registry.
+* [Во время процесса сборки]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}) werf может делать pull образов из Docker registry.
+* [Во время процесса очистки]({{ "documentation/advanced/cleanup.html" | relative_url }}) werf удаляет образы из Docker registry.
+* [Во время процесса деплоя]({{ "documentation/advanced/helm/basics.html" | relative_url }}) werf требует доступа к _образам_ в Docker registry и _стадиям_, которые также могут находиться в Docker registry.
 
 ## Поддерживаемые имплементации
 
@@ -33,13 +33,13 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 * _GitLab Registry_.
 * _Harbor_.
 
-_Azure CR_, _AWS ECR_, _Docker Hub_ и _GitHub Packages_ имплементации поддерживают Docker Registry API, но не полностью. Для перечисленных имплементаций необходимо использовать нативное API для удаления тегов. Поэтому при [очистке]({{ site.baseurl }}/documentation/advanced/cleanup.html) для werf может потребоваться дополнительные пользовательские данные.
+_Azure CR_, _AWS ECR_, _Docker Hub_ и _GitHub Packages_ имплементации поддерживают Docker Registry API, но не полностью. Для перечисленных имплементаций необходимо использовать нативное API для удаления тегов. Поэтому при [очистке]({{ "documentation/advanced/cleanup.html" | relative_url }}) для werf может потребоваться дополнительные пользовательские данные.
 
 ## AWS ECR
 
 Хранение образов в _AWS ECR_  не отличается от остальных имплементаций, но пользователь должен самостоятельно создать репозитории перед использованием werf. 
 
-werf использует _AWS SDK_ для удаления тегов, поэтому перед использованием [команд очистки]({{ site.baseurl }}/documentation/advanced/cleanup.html) пользователь должен:
+werf использует _AWS SDK_ для удаления тегов, поэтому перед использованием [команд очистки]({{ "documentation/advanced/cleanup.html" | relative_url }}) пользователь должен:
 * [Установить _AWS CLI_ и выполнить конфигурацию](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) (`aws configure`) или
 * Определить `AWS_ACCESS_KEY_ID` и `AWS_SECRET_ACCESS_KEY` переменные окружения.
       
@@ -85,6 +85,6 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 _Конфигурация Docker_ — это папка, в которой хранятся данные авторизации используемые для доступа в различные Docker registry и другие настройки Docker.
 По умолчанию, werf использует стандартную для Docker папку конфигурации: `~/.docker`. Другую используемую папку конфигурации можно указать с помощью параметра `--docker-config`, либо с помощью переменных окружения `$DOCKER_CONFIG` или `$WERF_DOCKER_CONFIG`. Все параметры и опции в файле конфигурации стандартны для Docker, их список можно посмотреть с помощью команды `docker --config`.
 
-Для подготовки конфигурации Docker вы можете использовать команду `docker login`, либо, если вы выполняете werf в рамках CI-системы, вызвать команду [werf ci-env]({{ site.baseurl }}/documentation/reference/cli/werf_ci_env.html)  (более подробно о подключении werf к CI-системам читай в [соответствующем разделе]({{ site.baseurl }}/documentation/internals/how_ci_cd_integration_works/general_overview.html)).
+Для подготовки конфигурации Docker вы можете использовать команду `docker login`, либо, если вы выполняете werf в рамках CI-системы, вызвать команду [werf ci-env]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }})  (более подробно о подключении werf к CI-системам читай в [соответствующем разделе]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }})).
 
 > Использование `docker login` при параллельном выполнении заданий в CI-системе может приводить к ошибкам выполнения заданий из-за работы с временными правами и состояния race condition (одно задание влияет на другое, переопределяя конфигурацию Docker). Поэтому, необходимо обеспечивать независимую конфигурацию Docker между заданиями, используя `docker --config` или `werf ci-env`

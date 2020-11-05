@@ -4,9 +4,9 @@ permalink: documentation/quickstart.html
 sidebar: documentation
 ---
 
-In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction]({{ site.baseurl }}/introduction.html) first if you haven't read it yet.
+In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction]({{ "introduction.html" | relative_url }}) first if you haven't read it yet.
 
-You have to [install werf]({{ site.baseurl }}/installation.html) to use this quick-start guide.
+You have to [install werf]({{ "installation.html" | relative_url }}) to use this quick-start guide.
 
 ## Prepare your Kubernetes and Docker Registry
 
@@ -100,7 +100,7 @@ minikube service --namespace quickstart-application --url result
 
 ## How it works
 
-To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction]({{ site.baseurl }}/introduction.html)).
+To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction]({{ "introduction.html" | relative_url }})).
 
  1. We have the following Dockerfiles in our repository:
 
@@ -145,4 +145,4 @@ To deploy an application using werf, we should define the desired state in the G
 
 ## What's next?
 
-Check the ["Using werf with CI/CD systems" article]({{ site.baseurl }}/documentation/using_with_ci_cd_systems.html) or refer to the [guides]({{ site.baseurl }}/documentation/guides.html).
+Check the ["Using werf with CI/CD systems" article]({{ "documentation/using_with_ci_cd_systems.html" | relative_url }}) or refer to the [guides]({{ "documentation/guides.html" | relative_url }}).

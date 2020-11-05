@@ -88,7 +88,7 @@ en:
     img: "/images/publications/en_210220.png"
     created: 2020-02-21
     comment: |
-      <p>You may already know our GitOps tool called <a href="https://github.com/werf/werf" target="_blank" rel="noopener nofollow">werf</a> — we have discussed it in <a href="https://medium.com/tag/werf/archive" target="_blank" rel="noopener">several of our articles</a>. Today, we would like to share our experience in building &amp; deploying the site with our tool’s documentation, <a href="https://werf.io/" target="_blank" rel="noopener nofollow">werf.io</a>. Despite it is a regular static site, the building process is noteworthy as we use a <em class="iq">dynamic</em> number of artifacts.</p>
+      <p>You may already know our GitOps tool called <a href="https://github.com/werf/werf" target="_blank" rel="noopener nofollow">werf</a> — we have discussed it in <a href="https://medium.com/tag/werf/archive" target="_blank" rel="noopener">several of our articles</a>. Today, we would like to share our experience in building &amp; deploying the site with our tool’s documentation, werf.io. Despite it is a regular static site, the building process is noteworthy as we use a <em class="iq">dynamic</em> number of artifacts.</p>
   - title: "Executing commands while deploying your app’s new release in Kubernetes"
     medium_url: "https://medium.com/flant-com/custom-commands-deploying-in-kubernetes-df4ea4487f18"
     img: "/images/publications/en_240120.png"
@@ -164,7 +164,7 @@ ru:
     created: 2020-04-16
     comment: |
       <p>Все популярные реализации реестров для образов контейнеров поддерживают <a href="https://docs.docker.com/registry/spec/api/">Docker Registry HTTP API</a> и позволяют использовать одни и те же инструменты для работы с ними. Тем не менее, часть реализаций имеет свои особенности и ограничения, а значит — если вам нужно их поддерживать в своем инструментарии для CI/CD, — с этой спецификой необходимо считаться. Так у нас и случилось в процессе работы над GitOps-утилитой
-      <a href="https://werf.io/">werf</a>, когда мы захотели улучшить в ней то, как обеспечивается жизненный цикл образов.</p>
+      werf, когда мы захотели улучшить в ней то, как обеспечивается жизненный цикл образов.</p>
   - title: "Content-based tagging в сборщике werf: зачем и как это работает?"
     habr_url: "https://habr.com/ru/company/flant/blog/495112/"
     img: "/images/publications/ru_030420.png"
