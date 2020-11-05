@@ -152,10 +152,6 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 		return "", fmt.Errorf("unable to create script: %s", err)
 	}
 
-	if debugImportSourceChecksum() {
-		fmt.Println(command)
-	}
-
 	runArgs := []string{
 		"--rm",
 		"--user=0:0",
@@ -165,6 +161,10 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
 		sourceImageDockerImageName,
 		importScriptContainerPath,
+	}
+
+	if debugImportSourceChecksum() {
+		fmt.Println(runArgs)
 	}
 
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
