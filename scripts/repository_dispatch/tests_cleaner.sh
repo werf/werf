@@ -11,6 +11,6 @@ curl \
   --header 'Accept: application/vnd.github.everest-preview+json' \
   --header "Authorization: token $GITHUB_TOKEN" \
   --data-raw '{
-    "event_type": "site-deploy",
+    "event_type": "tests_cleaner",
     "client_payload": {}
   }'
