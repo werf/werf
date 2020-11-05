@@ -82,8 +82,8 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 type BaseStage struct {
 	name             StageName
 	imageName        string
-	digest        string
-	contentDigest string
+	digest           string
+	contentDigest    string
 	image            container_runtime.ImageInterface
 	gitMappings      []*GitMapping
 	imageTmpDir      string
@@ -124,7 +124,7 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.image.GetStageDescription() != nil {
+		if s.image != nil && s.image.GetStageDescription() != nil {
 			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.image.GetStageDescription().Info.Labels); err != nil {
 				return "", fmt.Errorf("unable to get built image commit info from image %s: %s", s.image.Name(), err)
 			} else {

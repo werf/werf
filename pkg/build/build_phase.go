@@ -19,12 +19,12 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
