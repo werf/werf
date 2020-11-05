@@ -144,8 +144,8 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 
 	importScriptHostTmpPath := filepath.Join(importHostTmpDir, "script.sh")
 	resultChecksumHostTmpPath := filepath.Join(importHostTmpDir, "checksum")
-	importScriptContainerPath := filepath.Join(importContainerDir, "script.sh")
-	resultChecksumContainerPath := filepath.Join(importContainerDir, "checksum")
+	importScriptContainerPath := path.Join(importContainerDir, "script.sh")
+	resultChecksumContainerPath := path.Join(importContainerDir, "checksum")
 
 	command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
 	if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
