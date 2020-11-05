@@ -1,7 +1,8 @@
-name: Documentation validation
+name: Documentation Validation
 on:
   push:
     paths:
+      - '.github/workflows/docs_tests.yml'
       - 'cmd/**'
       - 'docs/**'
       - 'README.md'
@@ -14,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go 1.13
+      - name: Set up Go 1.14
         uses: actions/setup-go@v1
         with:
-          go-version: 1.13
+          go-version: 1.14
         id: go
 
       - name: Checkout code
@@ -33,6 +34,7 @@ jobs:
     name: Check broken links
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lang: [ru, en]
     steps:
@@ -50,7 +52,6 @@ jobs:
         if: matrix.lang == 'ru'
         run: |
           cd docs
-          cp -rf pages/cli pages_ru
           bundle exec jekyll build --config _config.yml,_config_ru.yml
 
       - name: Build (en)
@@ -63,8 +64,9 @@ jobs:
         run: |
           cd docs
           bundle exec htmlproofer \
-            --allow-hash-href \
-            --empty-alt-ignore \
-            --check_html \
-            --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/" \
-            ./_site/
+          --allow-hash-href \
+          --empty-alt-ignore \
+          --check_html \
+          --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/" \
+          --url_swap  "https\://ru.werf.io:,https\://werf.io:" \
+          ./_site/

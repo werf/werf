@@ -1,42 +1,24 @@
-name: Running tests
+name: Tests
 on:
   pull_request:
     types: [labeled]
-  schedule:
-  - cron:  '0 */6 * * *'
   repository_dispatch:
-    types: [master-tests]
+    types: [tests]
 env:
   GO111MODULE: on
 
 jobs:
 
-  stub:
-    name: Greeting
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Greeting
-      run: echo "This job is used to prevent the workflow to fail when all other jobs are skipped."
-
   unlabel:
-    name: Optional unlabeling
+    name: Label taking off
+    if: github.event_name == 'pull_request' && github.event.label.name == 'run tests'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.label.id == 1745044226 # execute tests label
     steps:
 
-    - uses: actions/github-script@0.3.0
+    - uses: actions/github-script@v1
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const eventLabelName = '${{github.event.label.name}}'
-          const response = await github.issues.listLabelsOnIssue({...context.issue})
-          for (const label of response.data) {
-            if (label.name === eventLabelName) {
-              github.issues.removeLabel({...context.issue, name: eventLabelName})
-              break
-            }
-          }
+        script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
   precompiled_tests_binaries:
     name: Precompiled tests binaries
@@ -45,43 +27,17 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # execute tests label
+    if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # run tests label
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.14
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.14
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
-
-#    - name: Install upx (ubuntu-latest)
-#      run: sudo apt-get install upx
-#      if: matrix.os == 'ubuntu-latest'
-
-    # To compress werf_with_coverage binary for macOS
-    # This fixes related with monkey patching panic (panic: permission denied [recovered])
-    - name: Install upx (macOS-latest)
-      run: brew install upx
-      if: matrix.os == 'macOS-latest'
-
-#    - name: Install upx (windows-latest)
-#      run: |
-#        mkdir bin
-#        echo "::add-path::$GITHUB_WORKSPACE/bin"
-#
-#        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
-#        unzip upx-3.95-win64.zip
-#        mv upx-3.95-win64/upx.exe bin
-#      shell: bash
-#      if: matrix.os == 'windows-latest'
-
-    # FIXME: https://github.community/t5/GitHub-Actions/Windows-tests-worked-yesterday-broken-today/m-p/43614
-    - name: Override bash shell PATH (windows-latest)
-      run: echo "::add-path::C:\Program Files\Git\bin"
-      if: matrix.os == 'windows-latest'
+      uses: actions/checkout@v2
 
     - name: Compile tests binaries
       run: |
@@ -94,10 +50,11 @@ jobs:
 
         # integration_k8s tests binaries
         ./scripts/tests/precompiled_tests_binaries.sh ./integration_k8s ./precompiled_tests_binaries/integration_k8s
-
-        # werf with coverage binary
-        ./scripts/tests/werf_with_coverage.sh
       shell: bash
+
+    - name: Compile tests werf binary (ubuntu-latest)
+      run: GOBIN=$PWD ./go-build.sh
+      if: matrix.os == 'ubuntu-latest'
 
     - name: Upload unit tests binaries
       uses: actions/upload-artifact@master
@@ -117,19 +74,12 @@ jobs:
         name: "${{ matrix.os }}_integration_k8s_tests_binaries"
         path: precompiled_tests_binaries/integration_k8s
 
-    - name: Upload werf with coverage binary (ubuntu-latest, macOS-latest)
+    - name: Upload werf binary (ubuntu-latest)
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_with_coverage"
-        path: bin/tests/werf_with_coverage
-      if: matrix.os != 'windows-latest'
-
-    - name: Upload werf with coverage binary (windows-latest)
-      uses: actions/upload-artifact@master
-      with:
-        name: "${{ matrix.os }}_werf_with_coverage"
-        path: bin/tests/werf_with_coverage.exe
-      if: matrix.os == 'windows-latest'
+        name: "${{ matrix.os }}_werf_binary"
+        path: werf
+      if: matrix.os == 'ubuntu-latest'
 
   unit_tests:
     name: Unit tests
@@ -141,14 +91,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.14
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.14
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -156,34 +106,17 @@ jobs:
         name: "${{ matrix.os }}_unit_tests_binaries"
         path: .
 
-    # FIXME: https://github.community/t5/GitHub-Actions/Windows-tests-worked-yesterday-broken-today/m-p/43614
-    - name: Override bash shell PATH (windows-latest)
-      run: echo "::add-path::C:\Program Files\Git\bin"
-      if: matrix.os == 'windows-latest'
-
     - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/unit_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-
-        find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
+      run: find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
       shell: bash
 
     - name: Test
       run: |
         test_binaries=$(find . -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do
-          coverage_file_name="$(openssl rand -hex 6)-$(date +"%H_%M_%S")_coverage.out"
-          $test_binary -test.v -test.coverprofile="$WERF_TEST_COVERAGE_DIR"/"$coverage_file_name"
+          $test_binary -test.v
         done
       shell: bash
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
 
   integration_tests:
     name: Integration tests
@@ -193,20 +126,27 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         extra-find-args:
-        - "-name 'guides.test'"
         - "-name 'git.test'"
-        - "! -name 'git.test' ! -name 'guides.test'"
+        - "-name 'ansible.test'"
+        - "! -name 'git.test' ! -name 'guides.test' ! -name 'ansible.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.14
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.14
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+
+    - name: Checkout code (git history as fixtures for tests)
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -214,37 +154,27 @@ jobs:
         name: "${{ matrix.os }}_integration_tests_binaries"
         path: .
 
-    - name: Download werf with coverage binary
+    - name: Download werf binary
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_with_coverage"
+        name: "${{ matrix.os }}_werf_binary"
         path: .
 
     - name: Prepare environment
       run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-
         ./scripts/ci/git.sh
 
         go build github.com/onsi/ginkgo/ginkgo
 
-        chmod +x werf_with_coverage
+        chmod +x werf
         find integration -type f -name '*.test' -exec chmod +x {} \;
       shell: bash
 
     - name: Test
       run: |
         test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
       shell: bash
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
 
   integration_k8s_tests:
     name: Integration k8s tests
@@ -258,14 +188,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.14
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.14
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -273,24 +203,21 @@ jobs:
         name: "${{ matrix.os }}_integration_k8s_tests_binaries"
         path: .
 
-    - name: Download werf with coverage binary
+    - name: Download werf binary
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_with_coverage"
+        name: "${{ matrix.os }}_werf_binary"
         path: .
 
     - name: Prepare environment
       run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-
         ./scripts/ci/git.sh
 
         go build github.com/onsi/ginkgo/ginkgo
 
-        chmod +x werf_with_coverage
         find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
+
+        chmod +x werf
 
         echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
       shell: bash
@@ -306,250 +233,9 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration_k8s -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-  integration_tests_on_self_hosted_runners:
-    name: Integration tests
-    needs: precompiled_tests_binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macOS, windows]
-        extra-find-args:
-        - "-name 'guides.test*'"
-        - "-name 'git.test*'"
-        - "! -name 'git.test*' ! -name 'guides.test*'"
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    steps:
-
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v1
-
-    - name: Download integration tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}-latest_integration_tests_binaries"
-        path: .
-
-    - name: Download werf with coverage binary
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}-latest_werf_with_coverage"
-        path: .
-
-    - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-
-        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
-        cd fork/ginkgo
-        go build .
-        mv ginkgo $GITHUB_WORKSPACE
-        cd $GITHUB_WORKSPACE
-
-        chmod +x werf_with_coverage
-        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
-        for test_binary in $test_binaries; do chmod +x $test_binary; done
-
-        export DOCKER_CONFIG=$(mktemp -d)
-        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
-      shell: bash
-
-    - name: Test (macos)
-      run: |
-        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-      if: matrix.os == 'macos'
-
-    - name: Test (windows)
-      run: |
-        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-      if: matrix.os == 'windows'
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-  integration_k8s_tests_on_self_hosted_runners:
-    name: Integration k8s tests
-    needs: precompiled_tests_binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macOS, windows]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    steps:
-
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v1
-
-    - name: Download integration k8s tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}-latest_integration_k8s_tests_binaries"
-        path: .
-
-    - name: Download werf with coverage binary
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}-latest_werf_with_coverage"
-        path: .
-
-    - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
-
-        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/flant/ginkgo.git fork
-        cd fork/ginkgo
-        go build .
-        mv ginkgo $GITHUB_WORKSPACE
-        cd $GITHUB_WORKSPACE
-
-        chmod +x werf_with_coverage
-        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-        for test_binary in $test_binaries; do chmod +x $test_binary; done
-
-        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
-
-        export DOCKER_CONFIG=$(mktemp -d)
-        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
-      shell: bash
-      env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-
-    - name: Test (macos)
-      run: |
-        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-      env:
-        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'macos'
-
-    - name: Test (windows)
-      run: |
-        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-      env:
-        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'windows'
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-  upload_coverage:
-    name: Upload coverage
-    needs:
-    - unit_tests
-    - integration_tests
-    - integration_k8s_tests
-    - integration_tests_on_self_hosted_runners
-    - integration_k8s_tests_on_self_hosted_runners
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v1
-
-    - name: Download coverage artifact
-      uses: actions/download-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-    - name: Prepare environment
-      run: |
-        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        chmod +x ./cc-test-reporter
-
-        go build github.com/wadey/gocovmerge
-        chmod +x ./gocovmerge
-
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::tests_coverage
-
-    - name: Prepare coverage file
-      run: |
-        # FIXME: determine problems with coverage records and remove seds
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/home/runner/work/werf/werf|github.com/flant/werf|g" {} +
-
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/flant/werf|g" {} +
-
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/flant/werf/cmd/werf/main.go|g' {} +
-
-        coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
-        ./gocovmerge ${coverage_files[@]} > coverage.out
-
-    - name: Format and upload
-      run: |
-        export GIT_BRANCH=${GITHUB_REF:11}
-        export GIT_COMMIT_SHA=$GITHUB_SHA
-
-        ./cc-test-reporter format-coverage \
-            -t=gocov \
-            -p=github.com/flant/werf/ \
-            coverage.out
-
-        ./cc-test-reporter upload-coverage
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
