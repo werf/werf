@@ -84,50 +84,20 @@ Also, the user can place `*.tpl` files into the directory. They will not be rend
 
 #### Integration with built images
 
-The user must specify the full docker image name, including the docker repo and the docker tag, in order to use the docker image in the chart resource specifications. But how do you designate an image contained in the `werf.yaml` file given that the full docker image name for such an image depends on the selected tagging strategy and the specified image repository?
+The user must specify the full docker image name, including the docker repo and the docker tag, in order to use the docker image in the chart resource specifications. But how do you designate an image contained in the `werf.yaml` file given that the full docker image name for such an image depends on the specified image repository?
 
-The next set of questions is: “How do I use the [`imagePullPolicy` Kubernetes parameter](https://kubernetes.io/docs/concepts/containers/images/#updating-images) together with images from `werf.yaml`: should I set `imagePullPolicy` to `Always`?” and “How do I pull images only when it is really necessary?”
+werf provides runtime function to address this issue: [`werf_image`](#werf_image). The user just needs to specify image which is described in the `werf.yaml` by a short name, and full image name will be generated as output.
 
-werf provides two runtime functions to address these issues: [`werf_container_image`](#werf_container_image) and [`werf_container_env`](#werf_container_env). The user just needs to specify images described in the `werf.yaml`, and everything will be set based on the options specified.
+##### werf_image
 
-##### werf_container_image
-
-This template function generates `image` and `imagePullPolicy` keys for the container in the pod.
-
-The unique feature of the function is that `imagePullPolicy` is generated based on the selected tagging scheme.  If you are using a custom tag (`--tag-custom`) or tagging by a branch name (` --tag-git-branch`), that is, the tag name is constant while an image may change during the subsequent build, then the function returns `imagePullPolicy: Always`. Otherwise, the `imagePullPolicy` key is not returned.
-
-The function may return multiple strings, which is why it must be used together with the `indent` construction.
-
-The logic behind generating the `imagePullPolicy` key is the following:
-
-* The `.Values.global.werf.is_branch=true` value means that an image is being deployed based on the latest logic for a branch. The same is true for the custom tag `.Values.global.werf.ci.is_custom=true`.
-  * In this case, the image tagged with the appropriate docker tag must be updated through docker pull (even if it already exists) to get the `latest` version of the respective tag.
-  * In this case, imagePullPolicy=Always is set.
-* The `.Values.global.werf.is_branch=false` value means that a tag or a specific image commit is being deployed.
-  * Thus, the image for an appropriate docker tag doesn't need to be updated through docker pull if it already exists.
-  * In this case, `imagePullPolicy` is not set, which is consistent with the default value currently used in Kubernetes: `imagePullPolicy=IfNotPresent`.
-
-> Images tagged by a custom tagging strategy (`--tag-custom`) are processed similarly to images tagged by a git branch tagging strategy (`--tag-git-branch`)
+This template function generates full image name which can be used as a value for `image` key for the container in the pod. Function takes image name argument.
 
 Here is an example of using the function with the **named** image:
-* `tuple <image-name> . | werf_container_image | indent <N-spaces>`
+* `tuple <image-name> . | werf_image`
 
 Here is an example of using the function with the **unnamed** image:
-* `tuple . | werf_container_image | indent <N-spaces>`
-* `werf_container_image . | indent <N-spaces>` (additional simplified entry format)
-
-##### werf_container_env
-
-Streamlines the release process if the image remains unchanged. It generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container. An image id will be set only if the custom user-defined tag (`--tag-custom`) or the git branch tagging strategy (`--tag-git-branch`) is used – this way, the name of the tag does not change while an image may change during the subsequent build. The value of the `DOCKER_IMAGE_ID` variable contains the current ID of the Docker image, which affects the Kubernetes object update as well as pod redeployment.
-
-The function may return multiple strings, which is why it must be used together with the `indent` construct.
-
-An example of using the function in the case of a named **image**:
-* `tuple <image-name> . | werf_container_env | indent <N-spaces>`
-
-An example of using the function in the case of an **unnamed** image:
-* `tuple . | werf_container_env | indent <N-spaces>`
-* `werf_container_env . | indent <N-spaces>` (additional simplified entry format)
+* `tuple . | werf_image`
+* `werf_image .` (additional simplified entry format)
 
 ##### Examples
 
@@ -153,9 +123,7 @@ spec:
       containers:
       - name: main
         command: [ ... ]
-{{ tuple "backend" . | werf_container_image | indent 8 }}
-        env:
-{{ tuple "backend" . | werf_container_env | indent 8 }}
+        image: {{ tuple "backend" . | werf_image }}
 ```
 {% endraw %}
 
@@ -181,9 +149,7 @@ spec:
       containers:
       - name: main
         command: [ ... ]
-{{ werf_container_image . | indent 8 }}
-        env:
-{{ werf_container_env . | indent 8 }}
+        image: {{ werf_image . }}
 ```
 {% endraw %}
 
