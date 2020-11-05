@@ -29,10 +29,9 @@ $(document).ready(function() {
         $(`[data-install-tab="rock-solid"]`).hide();
         $(`[data-install-tab="stable"]`).hide();
         $(`[data-install-tab="ea"]`).hide();
-        $(`[data-install-tab="beta"]`).hide();
 
         doInstallSelect(group, param)
-        doInstallSelect("channel", "alpha")
+        doInstallSelect("channel", "beta")
         return
     } else if (group == "version") {
         $(`[data-install-tab="rock-solid"]`).show();
