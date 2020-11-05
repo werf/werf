@@ -78,7 +78,7 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 		} else {
 			scanDepthLimit = 1
 
-			revHash, err := gitRepository.ResolveRevision(plumbing.Revision(n.Short()))
+			revHash, err := gitRepository.ResolveRevision(plumbing.Revision(reference.Hash().String()))
 			if err != nil {
 				return fmt.Errorf("resolve revision %s failed: %s", n.Short(), err)
 			}
