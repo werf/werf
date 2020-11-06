@@ -18,8 +18,8 @@ regular expressions (Perl compatible) that are applied to the list of releases.
 Only items that match the filter will be returned.
 
     $ helm list --filter 'ara[a-z]+'
-    NAME                UPDATED                     CHART
-    maudlin-arachnid    Mon May  9 16:07:08 2016    alpine-0.1.0
+    NAME                UPDATED                                  CHART
+    maudlin-arachnid    2020-06-18 14:17:46.125134977 +0000 UTC  alpine-0.1.0
 
 If no results are found, 'helm list' will exit 0, but with no output (or in
 the case of no '-q' flag, only headers).
@@ -62,10 +62,15 @@ werf helm list [flags] [options]
             show pending releases
   -r, --reverse=false
             reverse the sort order
+  -l, --selector=''
+            Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l              
+            key1=value1,key2=value2). Works only for secret(default) and configmap storage backends.
   -q, --short=false
             output short (quiet) listing format
       --superseded=false
             show superseded releases
+      --time-format=''
+            format time. Example: --time-format 2009-11-17 20:34:10 +0000 UTC
       --uninstalled=false
             show uninstalled releases (if 'helm uninstall --keep-history' was used)
       --uninstalling=false

@@ -51,6 +51,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Define docker run options (default $WERF_DOCKER_OPTIONS)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --follow=false
+            Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)
       --git-unshallow=false
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --home-dir=''

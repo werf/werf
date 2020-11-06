@@ -28,6 +28,8 @@ werf helm rollback <RELEASE> [REVISION] [flags] [options]
             simulate a rollback
       --force=false
             force resource update through delete/recreate if needed
+      --history-max=10
+            limit the maximum number of revisions saved per release. Use 0 for no limit
       --no-hooks=false
             prevent hooks from running during rollback
       --recreate-pods=false

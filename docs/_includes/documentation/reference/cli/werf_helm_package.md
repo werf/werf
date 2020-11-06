@@ -38,6 +38,9 @@ werf helm package [CHART_PATH] [...] [flags] [options]
             name of the key to use when signing. Used if --sign is true
       --keyring='~/.gnupg/pubring.gpg'
             location of a public keyring
+      --passphrase-file=''
+            location of a file which contains the passphrase for the signing key. Use "-" in order  
+            to read from stdin.
       --sign=false
             use a PGP private key to sign this package
       --version=''

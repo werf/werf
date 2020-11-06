@@ -62,6 +62,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=false
             include CRDs in the templated output
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
       --is-upgrade=false
             set .Release.IsUpgrade instead of .Release.IsInstall
       --key-file=''
@@ -118,10 +120,10 @@ werf helm template [NAME] [CHART] [flags] [options]
   -f, --values=[]
             specify values in a YAML file or a URL (can specify multiple)
       --verify=false
-            verify the package before installing it
+            verify the package before using it
       --version=''
-            specify the exact chart version to install. If this is not specified, the latest        
-            version is installed
+            specify the exact chart version to use. If this is not specified, the latest version is 
+            used
       --wait=false
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  

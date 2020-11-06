@@ -26,6 +26,7 @@ or
     $ helm install --set-string long_int=1234567890 myredis ./redis
 
 or
+
     $ helm install --set-file my_script=[dothings.sh](dothings.sh) myredis ./redis
 
 You can specify the '--values'/'-f' flag multiple times. The priority will be given to the
@@ -116,6 +117,8 @@ werf helm install [NAME] [CHART] [flags] [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
       --key-file=''
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
@@ -163,10 +166,10 @@ werf helm install [NAME] [CHART] [flags] [options]
   -f, --values=[]
             specify values in a YAML file or a URL (can specify multiple)
       --verify=false
-            verify the package before installing it
+            verify the package before using it
       --version=''
-            specify the exact chart version to install. If this is not specified, the latest        
-            version is installed
+            specify the exact chart version to use. If this is not specified, the latest version is 
+            used
       --wait=false
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
