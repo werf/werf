@@ -44,6 +44,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 			}
 
 			logboek.Context(ctx).LogLn("Waiting for new commit ...")
+			logboek.Context(ctx).LogOptionalLn()
 		} else {
 			time.Sleep(1 * time.Second)
 		}
