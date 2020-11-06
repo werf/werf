@@ -237,10 +237,12 @@ func (wc *WerfChart) WrapUninstall(ctx context.Context, uninstallFunc func() err
 }
 
 func (wc *WerfChart) lockReleaseWrapper(ctx context.Context, commandFunc func() error) error {
-	if lock, err := wc.LockManager.LockRelease(ctx, wc.ReleaseName); err != nil {
-		return err
-	} else {
-		defer wc.LockManager.Unlock(lock)
+	if wc.LockManager != nil {
+		if lock, err := wc.LockManager.LockRelease(ctx, wc.ReleaseName); err != nil {
+			return err
+		} else {
+			defer wc.LockManager.Unlock(lock)
+		}
 	}
 	return commandFunc()
 }

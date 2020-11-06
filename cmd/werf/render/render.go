@@ -12,7 +12,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secret"
 
 	"github.com/werf/werf/pkg/deploy/werf_chart"
@@ -24,7 +23,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 
@@ -226,18 +224,6 @@ func runRender() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}}); err != nil {
-		return fmt.Errorf("cannot initialize kube: %s", err)
-	}
-
-	if err := common.InitKubedog(ctx); err != nil {
-		return fmt.Errorf("cannot init kubedog: %s", err)
-	}
-
 	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
 	if err != nil {
 		return err
@@ -319,13 +305,6 @@ func runRender() error {
 		secretsManager = m
 	}
 
-	var lockManager *lock_manager.LockManager
-	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
-	} else {
-		lockManager = m
-	}
-
 	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
@@ -334,7 +313,6 @@ func runRender() error {
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 
-		LockManager:    lockManager,
 		SecretsManager: secretsManager,
 	})
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
