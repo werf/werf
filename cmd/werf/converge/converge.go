@@ -5,13 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/werf/werf/pkg/deploy/helm"
-
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/deploy/secret"
-
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -26,6 +19,11 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -60,7 +58,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+			defer werf.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -70,7 +69,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runConverge()
+				return runMain(ctx)
 			})
 		},
 	}
@@ -132,6 +131,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
+	common.SetupFollow(&commonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
@@ -139,9 +140,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	return cmd
 }
 
-func runConverge() error {
+func runMain(ctx context.Context) error {
 	tmp_manager.AutoGCEnabled = true
-	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -176,23 +176,10 @@ func runConverge() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
-	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
-	}
-
-	projectName := werfConfig.Meta.Project
-
 	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
-
-	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
-	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
-	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
@@ -203,26 +190,6 @@ func runConverge() error {
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
-
-	releaseName, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
@@ -236,16 +203,37 @@ func runConverge() error {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
 
+	if *commonCmdData.Follow {
+		logboek.LogOptionalLn()
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
+			return run(ctx, projectDir, chartDir)
+		})
+	} else {
+		return run(ctx, projectDir, chartDir)
+	}
+}
+
+func run(ctx context.Context, projectDir, chartDir string) error {
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
+	if err != nil {
+		return fmt.Errorf("unable to load werf config: %s", err)
+	}
+
+	projectName := werfConfig.Meta.Project
+
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
+	if err != nil {
+		return fmt.Errorf("getting project tmp dir failed: %s", err)
+	}
+	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
 	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	logboek.LogOptionalLn()
-
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepository string
-
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 		if err != nil {
@@ -256,6 +244,7 @@ func runConverge() error {
 		if err != nil {
 			return err
 		}
+		logboek.LogOptionalLn()
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
@@ -311,6 +300,26 @@ func runConverge() error {
 		return err
 	} else {
 		secretsManager = m
+	}
+
+	releaseName, err := common.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	namespace, err := common.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	if err != nil {
+		return err
 	}
 
 	var lockManager *lock_manager.LockManager
