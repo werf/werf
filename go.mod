@@ -138,8 +138,6 @@ replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.18.6
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.18.6
 
-replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
-
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
@@ -149,3 +147,5 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-containerregistry v0.1.3-0.20200901133051-a73cc6cd741c
 
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b
+
+replace k8s.io/helm => github.com/werf/helm v0.0.0-20201105195415-9aa46615d9d2
