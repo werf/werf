@@ -577,7 +577,7 @@ func fprintStatus(out io.Writer, res *services.GetReleaseStatusResponse) {
 		re := regexp.MustCompile("  +")
 
 		w := tabwriter.NewWriter(out, 0, 0, 2, ' ', tabwriter.TabIndent)
-		fmt.Fprintf(w, "RESOURCES:\n%s", strings.TrimSpace(re.ReplaceAllString(res.Info.Status.Resources, "\t")))
+		fmt.Fprintf(w, "RESOURCES:\n%s\n", strings.TrimSpace(re.ReplaceAllString(res.Info.Status.Resources, "\t")))
 		w.Flush()
 	}
 	if res.Info.Status.LastTestSuiteRun != nil {
