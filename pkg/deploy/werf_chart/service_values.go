@@ -33,6 +33,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo, namespace s
 
 	for _, imageInfoGetter := range imageInfoGetters {
 		if imageInfoGetter.IsNameless() {
+			werfInfo["is_nameless_image"] = true
 			werfInfo["image"] = imageInfoGetter.GetName()
 		} else {
 			if werfInfo["image"] == nil {

@@ -369,6 +369,8 @@ func runRender() error {
 		output = os.Stdout
 	}
 
+	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+
 	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, output, cmd_helm.TemplateCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
