@@ -144,16 +144,12 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 
 	importScriptHostTmpPath := filepath.Join(importHostTmpDir, "script.sh")
 	resultChecksumHostTmpPath := filepath.Join(importHostTmpDir, "checksum")
-	importScriptContainerPath := filepath.Join(importContainerDir, "script.sh")
-	resultChecksumContainerPath := filepath.Join(importContainerDir, "checksum")
+	importScriptContainerPath := path.Join(importContainerDir, "script.sh")
+	resultChecksumContainerPath := path.Join(importContainerDir, "checksum")
 
 	command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
 	if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
 		return "", fmt.Errorf("unable to create script: %s", err)
-	}
-
-	if debugImportSourceChecksum() {
-		fmt.Println(command)
 	}
 
 	runArgs := []string{
@@ -165,6 +161,10 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
 		sourceImageDockerImageName,
 		importScriptContainerPath,
+	}
+
+	if debugImportSourceChecksum() {
+		fmt.Println(runArgs)
 	}
 
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
