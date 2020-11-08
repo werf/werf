@@ -5,30 +5,30 @@ import (
 )
 
 func TestParseKubernetesSynchronization(t *testing.T) {
-	if params, err := ParseKubernetesSynchronization("kubertenes://allo"); err != ErrBadKubernetesSyncrhonizationAddress {
+	if params, err := ParseKubernetesSynchronization("kubertenes://allo"); err != ErrBadKubernetesSynchronizationAddress {
 		t.Errorf("unexpected parse response: params=%v err=%v", params, err)
 	}
 
-	checkKubernetesSyncrhonization(t, DefaultKubernetesStorageAddress, &KubernetesSynchronizationParams{
+	checkKubernetesSynchronization(t, DefaultKubernetesStorageAddress, &KubernetesSynchronizationParams{
 		ConfigContext: "",
 		ConfigPath:    "",
 		Namespace:     "werf-synchronization",
 	})
 
-	checkKubernetesSyncrhonization(t, "kubernetes://mynamespace:mycontext@/tmp/kubeconfig", &KubernetesSynchronizationParams{
+	checkKubernetesSynchronization(t, "kubernetes://mynamespace:mycontext@/tmp/kubeconfig", &KubernetesSynchronizationParams{
 		Namespace:     "mynamespace",
 		ConfigContext: "mycontext",
 		ConfigPath:    "/tmp/kubeconfig",
 	})
 
-	checkKubernetesSyncrhonization(t, "kubernetes://werf-synchronization-2@base64:YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK", &KubernetesSynchronizationParams{
+	checkKubernetesSynchronization(t, "kubernetes://werf-synchronization-2@base64:YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK", &KubernetesSynchronizationParams{
 		Namespace:        "werf-synchronization-2",
 		ConfigDataBase64: "YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK",
 	})
 
 }
 
-func checkKubernetesSyncrhonization(t *testing.T, address string, expected *KubernetesSynchronizationParams) {
+func checkKubernetesSynchronization(t *testing.T, address string, expected *KubernetesSynchronizationParams) {
 	if params, err := ParseKubernetesSynchronization(address); err != nil {
 		t.Error(err)
 	} else if expected == nil {

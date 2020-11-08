@@ -34,7 +34,7 @@ func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
 
 Default:
 * $WERF_SYNCHRONIZATION or
-* :local if --repo is not specified or 
+* :local if --repo is not specified or
 * %s if --repo is specified
 
 The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, storage.DefaultKubernetesStorageAddress))
@@ -136,7 +136,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 		var address string
-		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http syncrhonization server")).
+		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
 				if clientID, err := synchronization_server.GetOrCreateClientID(ctx, projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
 					return fmt.Errorf("unable to get synchronization client id: %s", err)
