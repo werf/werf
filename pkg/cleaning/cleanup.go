@@ -703,9 +703,20 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
 	}
 
 	var mutex sync.Mutex
-	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadata *storage.ImportMetadata, err error) error {
+	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error {
 		if err != nil {
 			return err
+		}
+
+		if metadata == nil {
+			if err := logboek.Context(ctx).Warn().LogProcessInline("Deleting invalid import metadata %s", metadataID).
+				DoError(func() error {
+					return m.deleteImportsMetadata(ctx, []string{metadataID})
+				}); err != nil {
+				return fmt.Errorf("unable to delete import metadata %s: %s", metadataID, err)
+			}
+
+			return nil
 		}
 
 		importSourceID := metadata.ImportSourceID
