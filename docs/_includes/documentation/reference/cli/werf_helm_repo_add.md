@@ -14,16 +14,21 @@ werf helm repo add [NAME] [URL] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --allow-deprecated-repos=false
+            by default, this command will not allow adding official repos that have been            
+            permanently deleted. This disables that behavior
       --ca-file=''
             verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file=''
             identify HTTPS client using this SSL certificate file
+      --force-update=false
+            replace (overwrite) the repo if it already exists
       --insecure-skip-tls-verify=false
             skip tls certificate checks for the repository
       --key-file=''
             identify HTTPS client using this SSL key file
       --no-update=false
-            raise error if repo is already registered
+            Ignored. Formerly, it would disabled forced updates. It is deprecated by force-update.
       --password=''
             chart repository password
       --username=''

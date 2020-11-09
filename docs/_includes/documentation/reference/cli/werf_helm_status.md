@@ -9,6 +9,8 @@ The status consists of:
 - last deployment time
 - k8s namespace in which the release lives
 - state of the release (can be: unknown, deployed, uninstalled, superseded, failed, uninstalling, pending-install, pending-upgrade or pending-rollback)
+- revision of the release
+- description of the release (can be completion message or error message, need to enable --show-desc)
 - list of resources that this release consists of, sorted by kind
 - details on last test suite run, if applicable
 - additional notes provided by the chart
@@ -27,6 +29,8 @@ werf helm status RELEASE_NAME [flags] [options]
             prints the output in the specified format. Allowed values: table, json, yaml
       --revision=0
             if set, display the status of the named release with revision
+      --show-desc=false
+            if set, display the description message of the named release
 ```
 
 {{ header }} Options inherited from parent commands

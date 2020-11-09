@@ -1,10 +1,14 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -57,7 +61,8 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+			defer werf.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -93,7 +98,7 @@ func NewCmd() *cobra.Command {
 				}
 			}
 
-			return runRun()
+			return runMain()
 		},
 	}
 
@@ -108,6 +113,8 @@ func NewCmd() *cobra.Command {
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+
+	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -168,7 +175,31 @@ func processArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runRun() error {
+func checkDetachDockerOption() error {
+	for _, value := range cmdData.DockerOptions {
+		if value == "-d" || value == "--detach" {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("the container must be launched in the background (in follow mode): pass -d/--detach with --docker-options option")
+}
+
+func getContainerName() string {
+	for ind, value := range cmdData.DockerOptions {
+		if value == "--name" {
+			if ind+1 < len(cmdData.DockerOptions) {
+				return cmdData.DockerOptions[ind+1]
+			}
+		} else if strings.HasPrefix(value, "--name=") {
+			return strings.TrimLeft(value, "--name=")
+		}
+	}
+
+	return ""
+}
+
+func runMain() error {
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -204,6 +235,66 @@ func runRun() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
+	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
+
+	if *commonCmdData.Follow {
+		if cmdData.Shell || cmdData.Bash {
+			return fmt.Errorf("follow mode does not work with --shell and --bash options")
+		}
+
+		if err := checkDetachDockerOption(); err != nil {
+			return err
+		}
+
+		containerName := getContainerName()
+		if containerName == "" {
+			return fmt.Errorf("follow mode does not work without specific container name: pass -n/--name=CONTAINER_NAME with --docker-options option")
+		}
+
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
+			if err := safeDockerCliRmFunc(ctx, containerName); err != nil {
+				return err
+			}
+
+			if err := run(ctx, projectDir); err != nil {
+				return err
+			}
+
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				fmt.Printf("Attaching to container %s ...\n", containerName)
+
+				resp, err := docker.ContainerAttach(ctx, containerName, types.ContainerAttachOptions{
+					Stream: true,
+					Stdout: true,
+					Stderr: true,
+					Logs:   true,
+				})
+				if err != nil {
+					_, _ = fmt.Fprintln(os.Stderr, "WARNING:", err)
+				}
+
+				if _, err := stdcopy.StdCopy(os.Stdout, os.Stderr, resp.Reader); err != nil {
+					_, _ = fmt.Fprintln(os.Stderr, "WARNING:", err)
+				}
+			}()
+
+			return nil
+		})
+	} else {
+		return run(ctx, projectDir)
+	}
+}
+
+func run(ctx context.Context, projectDir string) error {
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, false)
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -216,16 +307,6 @@ func runRun() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
-	}
-	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
-		}
-	}()
 
 	imageName := cmdData.ImageName
 	if imageName == "" && len(werfConfig.GetAllImages()) == 1 {
@@ -295,12 +376,24 @@ func runRun() error {
 
 	if *commonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
+		return nil
 	} else {
 		return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 			return common.WithoutTerminationSignalsTrap(func() error {
 				return docker.CliRun_LiveOutput(ctx, dockerRunArgs...)
 			})
 		})
+	}
+}
+
+func safeDockerCliRmFunc(ctx context.Context, containerName string) error {
+	if exist, err := docker.ContainerExist(ctx, containerName); err != nil {
+		return fmt.Errorf("unable to check container %s existance: %s", containerName, err)
+	} else if exist {
+		logboek.Context(ctx).LogF("Removing container %s ...\n", containerName)
+		if err := docker.CliRm(ctx, "-f", containerName); err != nil {
+			return fmt.Errorf("unable to remove container %s: %s", containerName, err)
+		}
 	}
 
 	return nil

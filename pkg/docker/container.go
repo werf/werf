@@ -22,6 +22,10 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 	return true, nil
 }
 
+func ContainerAttach(ctx context.Context, ref string, options types.ContainerAttachOptions) (types.HijackedResponse, error) {
+	return apiCli(ctx).ContainerAttach(ctx, ref, options)
+}
+
 func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
 	return apiCli(ctx).ContainerInspect(ctx, ref)
 }

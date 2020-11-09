@@ -76,6 +76,8 @@ werf converge --repo registry.mydomain.com/web --env production
             repo, to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
+      --follow=false
+            Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)
       --git-unshallow=false
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --helm-chart-dir=''

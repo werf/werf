@@ -24,6 +24,10 @@ werf helm show values [CHART] [flags] [options]
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
+      --jsonpath=''
+            supply a JSONPath expression to filter the output
       --key-file=''
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
@@ -35,10 +39,10 @@ werf helm show values [CHART] [flags] [options]
       --username=''
             chart repository username where to locate the requested chart
       --verify=false
-            verify the package before installing it
+            verify the package before using it
       --version=''
-            specify the exact chart version to install. If this is not specified, the latest        
-            version is installed
+            specify the exact chart version to use. If this is not specified, the latest version is 
+            used
 ```
 
 {{ header }} Options inherited from parent commands
