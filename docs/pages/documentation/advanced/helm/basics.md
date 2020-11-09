@@ -302,13 +302,13 @@ The `.Values` object contains the [merged map of resulting values](#merging-the-
 
 While the chart is a collection of configuration files of your application, the release is a runtime object that represents a running instance of your application deployed via werf.
 
-Each release has a single name and multiple versions. A new release version is created with each invocation of werf deploy.
+Each release has a single name and multiple versions. A new release version is created with each invocation of werf converge.
 
 ### Storing releases
 
 Each release version is stored in the Kubernetes cluster itself. werf supports storing release data in ConfigMap or Secret objects in the arbitrary namespace.
 
-By default, werf stores releases in the ConfigMaps in the `kube-system` namespace, and this is fully compatible with the default [Helm 2](https://helm.sh) configuration. You can set the release storage by werf deploy cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
+By default, werf stores releases in the ConfigMaps in the `kube-system` namespace, and this is fully compatible with the default [Helm 2](https://helm.sh) configuration. You can set the release storage by werf converge cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
 The [werf helm list]({{ "documentation/reference/cli/werf_helm_list.html" | relative_url }}) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ "documentation/reference/cli/werf_helm_history.html" | relative_url }}) command.
 
@@ -372,7 +372,7 @@ This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=f
 
 ## Deploy process
 
-When running the `werf deploy` command, werf starts the deployment process that includes the following steps:
+When running the `werf converge` command, werf starts the deployment process that includes the following steps:
 
  1. Rendering chart templates into a single list of Kubernetes resource manifests and validating them.
  2. Running `pre-install` or `pre-upgrade` [hooks](#helm-hooks) and tracking each hook until successful or failed termination; printing logs and other information in the process.
@@ -421,11 +421,11 @@ Tracking can be configured for each resource using [resource annotations]({{ "do
 
 werf automatically sets the following built-in annotations to all deployed chart resources:
 
- * `"werf.io/version": FULL_WERF_VERSION` — version of werf used when running the `werf deploy` command;
+ * `"werf.io/version": FULL_WERF_VERSION` — version of werf used when running the `werf converge` command;
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
  * `"project.werf.io/env": ENV` — environment name specified via the `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf deploy` command. For example, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | relative_url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | relative_url }}) and [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | relative_url }}).
+werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf converge` command. For example, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | relative_url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | relative_url }}) and [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | relative_url }}).
 
 For more information about the CI/CD integration, please refer to the following pages:
 
@@ -434,12 +434,12 @@ For more information about the CI/CD integration, please refer to the following 
 
 #### Custom annotations and labels
 
-The user can pass arbitrary additional annotations and labels using `--add-annotation annoName=annoValue` (can be used repeatedly) and `--add-label labelName=labelValue` (can be used repeatedly) CLI options when invoking werf deploy.
+The user can pass arbitrary additional annotations and labels using `--add-annotation annoName=annoValue` (can be used repeatedly) and `--add-label labelName=labelValue` (can be used repeatedly) CLI options when invoking werf converge.
 
-For example, you can use the following werf deploy invocation to set `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com`  annotations/labels to all Kubernetes resources in a chart:
+For example, you can use the following werf converge invocation to set `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com`  annotations/labels to all Kubernetes resources in a chart:
 
 ```shell
-werf deploy \
+werf converge \
   --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
   --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
   --add-annotation "gitlab-user-email=vasya@myproject.com" \
