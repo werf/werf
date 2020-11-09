@@ -39,8 +39,8 @@ func InitWerfChartParams(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.
 		wc.ExtraAnnotationsAndLabelsPostRenderer.Add(nil, extraLabels)
 	}
 
-	// NOTE: project-dir is the same as chart-dir for werf helm-v3 install/upgrade commands
-	// NOTE: project-dir is werf-project dir only for werf deploy/dismiss commands
+	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
+	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
 	if m, err := deploy.GetSafeSecretManager(context.Background(), chartDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {

@@ -123,7 +123,7 @@ var _ = Describe("COMPONENT", func() {
 
         It("should ...", func(done Done) {
             // Test code
-            // Run `werf build` and/or `werf deploy`
+            // Run `werf build` and/or `werf converge`
             // Check results
             // ...
 
@@ -139,7 +139,7 @@ var _ = Describe("COMPONENT", func() {
 
         It("should ...", func(done Done) {
             // Test code
-            // Run `werf build` and/or `werf deploy`
+            // Run `werf build` and/or `werf converge`
             // Check results
             // ...
 

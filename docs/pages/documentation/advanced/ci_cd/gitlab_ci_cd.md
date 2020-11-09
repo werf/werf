@@ -11,7 +11,7 @@ In this article, we will explore various options for configuring CI/CD using Git
 
 A typical pipeline includes the following stages:
 
-* `build-and-publish` — stage for building and publishing app images;
+* `build` — stage for building and publishing app images;
 * `deploy` — stage to deploy an application to one of the cluster environments;
 * `dismiss` — stage for deleting an application in the review environment;
 * `cleanup` — stage to clean up the stages-storage and the Docker registry.
@@ -114,11 +114,11 @@ Once the GitLab runner is up and ready, you can start configuring the pipeline.
 {% raw %}
 ```yaml
 Build and Publish:
-  stage: build-and-publish
+  stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf build-and-publish
+    - werf build
   except: [schedules]
   tags: [werf]
 ```
@@ -145,7 +145,7 @@ First of all, you need to define a template – the general part of the deployme
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -350,7 +350,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -573,17 +573,17 @@ The cleanup stage runs on a schedule only. You can define the schedule by openin
 {% raw %}
 ```yaml
 stages:
-  - build-and-publish
+  - build
   - deploy
   - dismiss
   - cleanup
 
 Build and Publish:
-  stage: build-and-publish
+  stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf build-and-publish
+    - werf build
   except: [schedules]
   tags: [werf]
 
@@ -592,7 +592,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   tags: [werf]
@@ -625,7 +625,7 @@ Review:
       fi
 
       if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
-        werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -708,17 +708,17 @@ Cleanup:
 {% raw %}
 ```yaml
 stages:
-  - build-and-publish
+  - build
   - deploy
   - dismiss
   - cleanup
 
 Build and Publish:
-  stage: build-and-publish
+  stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf build-and-publish
+    - werf build
   except: [schedules]
   tags: [werf]
 
@@ -727,7 +727,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -810,17 +810,17 @@ Cleanup:
 {% raw %}
 ```yaml
 stages:
-  - build-and-publish
+  - build
   - deploy
   - dismiss
   - cleanup
 
 Build and Publish:
-  stage: build-and-publish
+  stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf build-and-publish
+    - werf build
   except: [schedules]
   tags: [werf]
 
@@ -829,7 +829,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -911,17 +911,17 @@ Cleanup:
 {% raw %}
 ```yaml
 stages:
-  - build-and-publish
+  - build
   - deploy
   - dismiss
   - cleanup
 
 Build and Publish:
-  stage: build-and-publish
+  stage: build
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf build-and-publish
+    - werf build
   except: [schedules]
   tags: [werf]
 
@@ -930,7 +930,7 @@ Build and Publish:
   script:
     - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
-    - werf deploy --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
