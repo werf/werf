@@ -1,6 +1,78 @@
-/documentation:
-  title: Documentation
-  url: /documentation/index.html
-/documentation/reference/cli:
-  title: Command line interface
-  url: /documentation/reference/cli/overview.html
+en:
+  /documentation: &documentation
+    title: Documentation
+    url: /documentation/index.html
+  /documentation/reference: &documentation-reference
+    title: Reference
+    url: /documentation/reference/werf_yaml.html
+  /documentation/reference/cli: &documentation-reference-cli
+    title: Command line interface
+    url: /documentation/reference/cli/overview.html
+  /documentation/advanced: &documentation-advanced
+    title: Advanced
+    url: /documentation/advanced/configuration/supported_go_templates.html
+  /documentation/advanced/building_images_with_stapel: &documentation-advanced-building-images-with-stapel
+    title: Building images with stapel
+    url: documentation/advanced/building_images_with_stapel/base_image.html
+  /documentation/advanced/development_and_debug: &documentation-advanced-development-and-debug
+    title: Development and debug
+    url: documentation/advanced/development_and_debug/stage_introspection.html
+  /documentation/advanced/configuration: &documentation-advanced-configuration
+    title: Configuration
+    url: documentation/advanced/configuration/supported_go_templates.html
+  /documentation/advanced/ci_cd: &documentation-advanced-ci-cd
+    title: CI/CD
+    url: documentation/advanced/ci_cd/ci_cd_workflow_basics.html
+  /documentation/advanced/helm: &documentation-advanced-helm
+    title: Helm
+    url: documentation/advanced/helm/basics.html
+  /documentation/internals: &documentation-internals
+    title: Internals
+    url: documentation/internals/building_of_images/build_process.html
+  /documentation/internals/building_of_images: &documentation-internals-building-of-images
+    title: Building of images
+    url: documentation/internals/building_of_images/build_process.html
+  /documentation/internals/how_ci_cd_integration_works: &documentation-internals-how-ci-cd-integration-works
+    title: How CI/CD integration works
+    url: documentation/internals/how_ci_cd_integration_works/general_overview.html
+  /documentation/internals/development: &documentation-internals-development
+    title: Development
+    url: documentation/internals/development/stapel_image.html
+ru:
+  /documentation:
+    << : *documentation
+    title: Документация
+  /documentation/reference:
+    << : *documentation-reference
+    title: Справочник
+  /documentation/reference/cli:
+    << : *documentation-reference-cli
+    title: Интерфейс командной строки
+  /documentation/advanced:
+    << : *documentation-advanced
+    title: Документация продвинутого уровня
+  /documentation/advanced/building_images_with_stapel:
+    << : *documentation-advanced-building-images-with-stapel
+    title: Сборка образов с помощью Stapel
+  /documentation/advanced/development_and_debug:
+    << : *documentation-advanced-development-and-debug
+    title: Разработка и отладка
+  /documentation/advanced/configuration:
+    << : *documentation-advanced-configuration
+    title: Конфигурация
+  /documentation/advanced/ci_cd:
+    << : *documentation-advanced-ci-cd
+  /documentation/advanced/helm:
+    << : *documentation-advanced-helm
+  /documentation/internals:
+    << : *documentation-internals
+    title: Внутренности
+  /documentation/internals/building_of_images:
+    << : *documentation-internals-building-of-images
+    title: Сборка образов
+  /documentation/internals/how_ci_cd_integration_works:
+    << : *documentation-internals-how-ci-cd-integration-works
+    title: Как работает интеграция с CI/CD
+  /documentation/internals/development:
+    << : *documentation-internals-development
+    title: Для разработчиков
