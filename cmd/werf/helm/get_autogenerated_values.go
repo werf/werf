@@ -11,9 +11,11 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	helm_common "github.com/werf/werf/cmd/werf/helm/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -47,6 +49,7 @@ These values includes project name, docker images ids and other`),
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -117,7 +120,12 @@ func runGetServiceValues() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, false)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -181,7 +189,7 @@ func runGetServiceValues() error {
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, localGitRepo, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

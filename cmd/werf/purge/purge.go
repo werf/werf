@@ -9,8 +9,10 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -48,6 +50,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -108,7 +111,12 @@ func runPurge() error {
 	}
 	ctx = ctxWithDockerCli
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

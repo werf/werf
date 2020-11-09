@@ -2,10 +2,17 @@ package common
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+
+	"helm.sh/helm/v3/pkg/chart/loader"
+
+	"github.com/werf/werf/pkg/git_repo"
 
 	"github.com/Masterminds/sprig"
 
@@ -196,4 +203,14 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	}
 
 	return list
+}
+
+func MakeGitFilesLoader(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(dir string) ([]*loader.BufferedFile, error) {
+	if disableDeterminism || localGitRepo == nil {
+		return nil
+	}
+
+	return func(dir string) ([]*loader.BufferedFile, error) {
+		return werf_chart.LoadFilesFromGit(ctx, localGitRepo, projectDir, dir)
+	}
 }

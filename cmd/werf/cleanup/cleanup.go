@@ -10,6 +10,7 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
@@ -49,6 +50,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -135,7 +137,12 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
+	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -178,11 +185,6 @@ func runCleanup() error {
 		return err
 	}
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
-
-	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	kubernetesContextClients, err := common.GetKubernetesContextClients(&commonCmdData)
 	if err != nil {

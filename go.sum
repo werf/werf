@@ -1411,6 +1411,10 @@ github.com/werf/helm/v3 v3.0.0-20201109094127-d05d410fc966 h1:S2p3tQ1xkHBkVVsLOc
 github.com/werf/helm/v3 v3.0.0-20201109094127-d05d410fc966/go.mod h1:jbfz/BoYmpJ3njhHBdH7F3kR8CNUGeRueliFtOhQK+M=
 github.com/werf/helm/v3 v3.0.0-20201109095311-7b26e9ac5ba8 h1:kbl48I6OwH2KSd6kR21s2L4Ma+35r1+580Qehrpva/4=
 github.com/werf/helm/v3 v3.0.0-20201109095311-7b26e9ac5ba8/go.mod h1:jbfz/BoYmpJ3njhHBdH7F3kR8CNUGeRueliFtOhQK+M=
+github.com/werf/helm/v3 v3.0.0-20201112082654-c5d8cef19ba3 h1:pCkZkxaHj0itAbjH0HL/vTjJchrdJDiVWHo2XNCJ9Xc=
+github.com/werf/helm/v3 v3.0.0-20201112082654-c5d8cef19ba3/go.mod h1:jbfz/BoYmpJ3njhHBdH7F3kR8CNUGeRueliFtOhQK+M=
+github.com/werf/helm/v3 v3.0.0-20201112095157-718e2f06aa35 h1:b4FW3d+onjlu6EKLiJ5A4zdlYve4K4HXTEdHMoVNoCg=
+github.com/werf/helm/v3 v3.0.0-20201112095157-718e2f06aa35/go.mod h1:jbfz/BoYmpJ3njhHBdH7F3kR8CNUGeRueliFtOhQK+M=
 github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07 h1:pKU78lxdl5Ck4zkWzwH74FOnAC3uf/5u5rbS8SRcXwk=
 github.com/werf/kubedog v0.4.1-0.20200818145659-3aa022a95c07/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/kubedog v0.4.1-0.20200907160731-10aec4300377 h1:bQgmFAC6Q7FEVR0Xa8I875LgTTxlHnWM/qGtHAK3OZQ=

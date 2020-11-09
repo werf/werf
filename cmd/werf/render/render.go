@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/storage"
 
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -75,6 +77,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -176,7 +179,12 @@ func runRender() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -270,7 +278,7 @@ func runRender() error {
 				return err
 			}
 
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, localGitRepo, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
