@@ -102,7 +102,7 @@ sidebar: documentation
         <div class="overview__step-info">
             <p>You do not have to read through this section to make full use of werf. However, those interested in werf's internal mechanics will find some valuable info here.</p>
 <div markdown="1">
- - [Building images]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}) — what image builder and stages are, how stages storage works, what is the syncrhonization server, other info related to the building process.
+ - [Building images]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}) — what image builder and stages are, how stages storage works, what is the synchronization server, other info related to the building process.
  - [How does the CI/CD integration work?]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }}).
  - [The slug algorithm for naming]({{ "documentation/internals/names_slug_algorithm.html" | relative_url }}) describes the algorithm that werf uses under-the-hood to automatically replace invalid characters in input names so that other systems (such as Kubernetes namespaces or release names) can consume them.
  - [Integration with SSH agent]({{ "documentation/internals/integration_with_ssh_agent.html" | relative_url }}) shows how to integrate ssh-keys with the building process in werf.

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrBadKubernetesSyncrhonizationAddress = errors.New("bad kubernetes synchronization address")
+	ErrBadKubernetesSynchronizationAddress = errors.New("bad kubernetes synchronization address")
 )
 
 type KubernetesSynchronizationParams struct {
@@ -18,7 +18,7 @@ type KubernetesSynchronizationParams struct {
 
 func ParseKubernetesSynchronization(address string) (*KubernetesSynchronizationParams, error) {
 	if !strings.HasPrefix(address, "kubernetes://") {
-		return nil, ErrBadKubernetesSyncrhonizationAddress
+		return nil, ErrBadKubernetesSynchronizationAddress
 	}
 	addressWithoutScheme := strings.TrimPrefix(address, "kubernetes://")
 
