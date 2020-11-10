@@ -77,7 +77,7 @@ The [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | 
 
 ```shell
 source $(werf ci-env gitlab --verbose --as-file)
-werf build-and-publish
+werf converge
 ```
 
 Sourcing ci-env command output will also print all exported variables with its values to the screen.

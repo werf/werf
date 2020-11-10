@@ -56,7 +56,7 @@ First of all, you need to define a template — the general part of the deployme
 {% include /documentation/advanced/ci_cd/github_actions/build_and_publish_note.md %}
 
 First of all, you have to perform a `Checkout code` step — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the action `actions/checkout@v2` creates when used with no parameters specified. 
-werf generates stages on the basis of the git history. So, if there is no history, then each build would run without previously built images. Therefore, it is essential to use the `fetch-depth: 0` parameter to access the entire history when building, publishing (`werf build-and-publish`), deploying (`werf deploy`), and running (`werf run`). In other words, for all commands that stages use.
+werf generates stages on the basis of the git history. So, if there is no history, then each build would run without previously built images. Therefore, it is essential to use the `fetch-depth: 0` parameter to access the entire history when building, publishing and deploying (`werf build`, `werf converge`), and running (`werf run`). In other words, for all commands that stages use.
 
 {% raw %}
 ```yaml
