@@ -1,4 +1,6 @@
 ---
+title: Overview
+without_auto_heading: true
 permalink: documentation/index.html
 sidebar: documentation
 ---

@@ -1,27 +1,24 @@
 <ol class="breadcrumbs">
    <li><a href="{{ relative_url }}/">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
 
-   {%- capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
-   {%- assign splitted_url_parts = page_url_without_index_html | split: '/' %}
-   {%- capture forLoopMaxInt %}{{ splitted_url_parts.size | minus: 1 }}{% endcapture %}
-   {%- for i in (1..forLoopMaxInt) %}
-      {%- capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
-      {%- capture next_prepender %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
+   {%- assign page_url_parts = page.url | split: '/' -%}
+   {%- assign max_ind = page_url_parts.size | minus: 1 -%}
 
-      {%- if page.lang == "ru" %}
-        {%- assign breadcrumb = site.data.breadcrumbs_ru[current_breadcrumb_url] %}
-      {%- else %}
-        {%- assign breadcrumb = site.data.breadcrumbs[current_breadcrumb_url] %}
-      {%- endif %}
+   {%- for i in (1..max_ind) %}
+   {%- if forloop.last %}
+   <li>{{ page.title }}</li>
+   {% else %}
+   {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+   {%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
 
-      {%- if breadcrumb %}
-      <li>
-         <a href="{{ breadcrumb.url | relative_url }}">{{ breadcrumb.title }}</a>
-      </li>
-      {%- endif %}
+   {%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
+   {%- unless breadcrumb %}
+   {%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
+   {{ breadcrumb_err | raise_error }}
+   {% endunless -%}
+   <li>
+      <a href="{{ breadcrumb.url | relative_url }}">{{ breadcrumb.title }}</a>
+   </li>
+   {% endif -%}
    {%- endfor %}
-
-   {%- if splitted_url_parts.last contains '.html' %}
-   <li>{{page.title}}</li>
-   {%- endif %}
 </ol>
