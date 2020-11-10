@@ -79,8 +79,6 @@ type BuildPhase struct {
 	ShouldAddManagedImageRecord bool
 
 	ImagesReport *ImagesReport
-	ReportPath   string
-	ReportFormat ReportFormat
 }
 
 const (
