@@ -9,7 +9,7 @@ $(document).ready(function() {
 
   var defaults = {
     version: '1.2',
-    channel: 'alpha',
+    channel: 'beta',
     os: default_os,
     method: 'multiwerf'
   }
