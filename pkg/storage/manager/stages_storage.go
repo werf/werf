@@ -442,13 +442,13 @@ func (m *StagesStorageManager) ForEachRmManagedImage(ctx context.Context, projec
 	})
 }
 
-func (m *StagesStorageManager) ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadata *storage.ImportMetadata, err error) error) error {
+func (m *StagesStorageManager) ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error {
 	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
 		metadata, err := m.StagesStorage.GetImportMetadata(ctx, projectName, id)
-		return f(ctx, metadata, err)
+		return f(ctx, id, metadata, err)
 	})
 }
 
