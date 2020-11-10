@@ -377,6 +377,19 @@ func (c *Conveyor) GetImageInfoGetters() (images []*image.InfoGetter) {
 	return images
 }
 
+func (c *Conveyor) GetImagesEnvArray() []string {
+	var envArray []string
+	for _, img := range c.images {
+		if img.isArtifact {
+			continue
+		}
+
+		envArray = append(envArray, generateImageEnv(img.name, c.GetImageNameForLastImageStage(img.name)))
+	}
+
+	return envArray
+}
+
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err := c.determineStages(ctx); err != nil {
 		return err

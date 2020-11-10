@@ -6,27 +6,22 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/werf/cmd/werf/synchronization"
-
-	"github.com/werf/werf/cmd/werf/slugify"
-
-	"github.com/werf/werf/cmd/werf/build"
-	"github.com/werf/werf/cmd/werf/ci_env"
-	"github.com/werf/werf/cmd/werf/run"
-
-	"github.com/werf/werf/cmd/werf/cleanup"
-	"github.com/werf/werf/cmd/werf/purge"
-
-	"github.com/werf/werf/cmd/werf/dismiss"
-
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
 
-	"github.com/spf13/cobra"
-
+	"github.com/werf/werf/cmd/werf/build"
+	"github.com/werf/werf/cmd/werf/ci_env"
+	"github.com/werf/werf/cmd/werf/cleanup"
+	"github.com/werf/werf/cmd/werf/compose"
 	"github.com/werf/werf/cmd/werf/converge"
+	"github.com/werf/werf/cmd/werf/dismiss"
 	"github.com/werf/werf/cmd/werf/helm"
+	"github.com/werf/werf/cmd/werf/purge"
+	"github.com/werf/werf/cmd/werf/run"
+	"github.com/werf/werf/cmd/werf/slugify"
+	"github.com/werf/werf/cmd/werf/synchronization"
 
 	managed_images_add "github.com/werf/werf/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
@@ -105,6 +100,7 @@ Find more information at https://werf.io`),
 				ci_env.NewCmd(),
 				build.NewCmd(),
 				run.NewCmd(),
+				dockerComposeCmd(),
 				slugify.NewCmd(),
 				render.NewCmd(),
 			},
@@ -134,6 +130,21 @@ Find more information at https://werf.io`),
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
 	return rootCmd
+}
+
+func dockerComposeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "compose",
+		Short: "Work with docker-compose",
+	}
+	cmd.AddCommand(
+		compose.NewConfigCmd(),
+		compose.NewUpCmd(),
+		compose.NewDownCmd(),
+	)
+
+	return cmd
+
 }
 
 func configCmd() *cobra.Command {
