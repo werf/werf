@@ -281,7 +281,7 @@ func (storage *LocalDockerServerStagesStorage) IsImageMetadataExist(ctx context.
 }
 
 func (storage *LocalDockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImageNameStageIDCommitList %s\n", projectName)
 
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName))
