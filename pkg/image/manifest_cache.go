@@ -47,7 +47,7 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 
 	now := time.Now()
 
-	if record, err := cache.readRecord(storageName, imageName); err != nil {
+	if record, err := cache.readRecord(ctx, storageName, imageName); err != nil {
 		return nil, err
 	} else if record != nil {
 		record.AccessTimestamp = now.Unix()
@@ -78,7 +78,7 @@ func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName stri
 	return cache.writeRecord(storageName, record)
 }
 
-func (cache *ManifestCache) readRecord(storageName, imageName string) (*ManifestCacheRecord, error) {
+func (cache *ManifestCache) readRecord(ctx context.Context, storageName, imageName string) (*ManifestCacheRecord, error) {
 	filePath := cache.constructFilePathForImage(storageName, imageName)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -92,7 +92,8 @@ func (cache *ManifestCache) readRecord(storageName, imageName string) (*Manifest
 	} else {
 		record := &ManifestCacheRecord{}
 		if err := json.Unmarshal(dataBytes, record); err != nil {
-			return nil, fmt.Errorf("error unmarshalling json from %s: %s", filePath, err)
+			logboek.Context(ctx).Error().LogF("WARNING: invalid manifests cache json record in file %s: %s: resetting record\n", filePath, err)
+			return nil, nil
 		}
 		return record, nil
 	}
