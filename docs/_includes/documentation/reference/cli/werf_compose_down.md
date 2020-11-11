@@ -3,17 +3,35 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Add image record to the list of managed images which will be preserved during cleanup procedure
+Run docker-compose down command with forwarded image names
+
+Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WERF_IMAGE_NAME for   
+nameless image)
 
 {{ header }} Syntax
 
 ```shell
-werf managed-images add [options]
+werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"]
+```
+
+{{ header }} Examples
+
+```shell
+  # Run docker-compose down with forwarded image names
+  $ werf compose down
+
+  # Print docker-compose command without executing
+  $ werf compose down --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--rmi=all --remove-orphans" --dry-run --quiet
+  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  docker-compose -f docker-compose-test.yml down --rmi=all --remove-orphans
 ```
 
 {{ header }} Options
 
 ```shell
+      --allow-git-shallow-clone=false
+            Sign the intention of using shallow clone despite restrictions (default                 
+            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
@@ -21,10 +39,20 @@ werf managed-images add [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --docker-compose-bin-path=''
+            Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
+      --docker-compose-command-options=''
+            Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)
+      --docker-compose-options=''
+            Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read and write images to the specified repo
+            Command needs granted permissions to read and pull images from the specified repo
+      --dry-run=false
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --git-unshallow=false
+            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
@@ -58,8 +86,6 @@ werf managed-images add [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -N, --project-name=''
-            Use custom project name (default $WERF_PROJECT_NAME)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''
@@ -84,6 +110,9 @@ werf managed-images add [options]
       --secondary-repo=[]
             Specify one or multiple secondary read-only repo with images that will be used as a     
             cache
+  -Z, --skip-build=false
+            Disable building of docker images, cached images in the repo should exist in the repo   
+            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
@@ -105,5 +134,14 @@ werf managed-images add [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --virtual-merge=false
+            Enable virtual/ephemeral merge commit mode when building current application state      
+            ($WERF_VIRTUAL_MERGE by default)
+      --virtual-merge-from-commit=''
+            Commit hash for virtual/ephemeral merge commit with new changes introduced in the pull  
+            request ($WERF_VIRTUAL_MERGE_FROM_COMMIT by default)
+      --virtual-merge-into-commit=''
+            Commit hash for virtual/ephemeral merge commit which is base for changes introduced in  
+            the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)
 ```
 

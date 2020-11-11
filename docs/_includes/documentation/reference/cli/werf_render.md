@@ -162,10 +162,25 @@ werf render [options]
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --report-format='json'
-            Report format (only json available for now, $WERF_REPORT_FORMAT by default)
+            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default)
+            json: 
+            	{
+            	  "Images": {
+            		"<WERF_IMAGE_NAME>": {
+            			"WerfImageName": "<WERF_IMAGE_NAME>", 
+            			"DockerRepo": "<REPO>",
+            			"DockerTag": "<TAG>"
+            			"DockerImageName": "<REPO>:<TAG>",
+            			"DockerImageID": "<SHA256>",
+            		},
+            		...
+            	  }
+            	}
+            envfile: 
+            	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
+            	...
       --report-path=''
-            Report contains image info: full docker repo, tag, ID — for each image                  
-            ($WERF_REPORT_PATH by default)
+            Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repo with images that will be used as a     
             cache
@@ -208,7 +223,7 @@ werf render [options]
             
             Default:
             * $WERF_SYNCHRONIZATION or
-            * :local if --repo is not specified or 
+            * :local if --repo is not specified or
             * kubernetes://werf-synchronization if --repo is specified
             
             The same address should be specified for all werf processes that work with a single     
