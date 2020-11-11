@@ -2,6 +2,7 @@
 title: Overview
 without_auto_heading: true
 permalink: documentation/index.html
+description: Extensive and clear werf documentation
 sidebar: documentation
 ---
 
@@ -57,9 +58,6 @@ sidebar: documentation
     </div>
     <div class="overview__title">Reference</div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">1</div>
-        </div>
         <div class="overview__step-title">Use Reference for structured information about werf configuration and commands</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/reference/werf_yaml.html" | relative_url }}">Reference</a>
@@ -74,9 +72,6 @@ sidebar: documentation
     </div>
     <div class="overview__title">The extra mile</div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">1</div>
-        </div>
         <div class="overview__step-title">Get the deep knowledge, which you will need eventually during werf usage</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/advanced/configuration/supported_go_templates.html" | relative_url }}">Advanced</a>
@@ -94,9 +89,6 @@ sidebar: documentation
         </div>
     </div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">2</div>
-        </div>
         <div class="overview__step-title">Dive into overview of werf's inner workings</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/internals/building_of_images/build_process.html" | relative_url }}">Internals</a>

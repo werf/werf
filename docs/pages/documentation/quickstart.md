@@ -1,6 +1,7 @@
 ---
 title: Quickstart
 permalink: documentation/quickstart.html
+description: Deploy your first application with werf
 sidebar: documentation
 ---
 

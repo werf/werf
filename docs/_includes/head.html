@@ -1,8 +1,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=1260">
-<meta name="description" content="{% if page.summary %}{{ page.summary | strip_html | strip_newlines | truncate: 160 }}{% endif %}">
-<meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+
 {%- if page.multilang %}
 <link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" />
 <link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ page.url | relative_url }}" />
@@ -26,6 +25,29 @@
 
 {%- assign generated_title = title_parts | join: " / " %}
 <title>{{ generated_title }} | {{ site.site_title }}</title>
+{% if page.description %}
+    {%- assign description = page.description | strip_html | strip_newlines | truncate: 160 %}
+{% else %}
+    {%- assign description = site.site_description | strip_html | strip_newlines | truncate: 160 %}
+{% endif %}
+<!-- Primary Meta Tags -->
+<meta name="title" content="{{ generated_title }} | {{ site.site_title }}">
+<meta name="description" content="{{ description }}">
+<meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site.url }}{{ page.url }}">
+<meta property="og:title" content="{{ generated_title }} | {{ site.site_title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:image" content="/images/share.png">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{{ site.url }}{{ page.url }}">
+<meta property="twitter:title" content="{{ generated_title }} | {{ site.site_title }}">
+<meta property="twitter:description" content="{{ description }}">
+<meta property="twitter:image" content="/images/share.png">
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | relative_url }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | relative_url }}">

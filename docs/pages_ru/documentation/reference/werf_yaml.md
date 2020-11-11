@@ -2,6 +2,7 @@
 title: werf.yaml
 permalink: documentation/reference/werf_yaml.html
 sidebar: documentation
+description: Пример конфигурации werf
 toc: false
 ---
 

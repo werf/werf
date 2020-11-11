@@ -1,6 +1,7 @@
 ---
 title: Быстрый старт
 permalink: documentation/quickstart.html
+description: Разверните ваше первое приложение с werf
 sidebar: documentation
 ---
 
