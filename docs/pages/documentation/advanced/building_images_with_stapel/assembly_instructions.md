@@ -58,7 +58,7 @@ summary: |
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ "documentation/internals/building_of_images/images_storage.html" | relative_url }}) containing _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ "documentation/internals/stages_and_storage.html" | relative_url }}) containing _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
@@ -366,7 +366,7 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "documentation/internals/building_of_images/images_storage.html" | relative_url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "documentation/internals/stages_and_storage.html" | relative_url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Digests_ of user stages  (and, therefore, the rebuilding process) depend on:
 

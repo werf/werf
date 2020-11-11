@@ -96,7 +96,7 @@ func (server *SynchronizationServerHandler) handleLanding(w http.ResponseWriter,
 
 <p>Use "werf synchronization" command to run own synchronization http server. You can also configure werf to use local or kubernetes based synchronization backend.</p>
 
-<p>More info about synchronization in werf: <a href="https://werf.io/documentation/internals/building_of_images/images_storage.html#synchronization-locks-and-stages-storage-cache">https://werf.io/documentation/internals/building_of_images/images_storage.html#synchronization-locks-and-stages-storage-cache</a></p>
+<p>More info about synchronization in werf: <a href="https://werf.io/documentation/internals/stages_and_storage.html#synchronization-locks-and-stages-storage-cache">https://werf.io/documentation/internals/stages_and_storage.html#synchronization-locks-and-stages-storage-cache</a></p>
 </body>
 </html>
 `

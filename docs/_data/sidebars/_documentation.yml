@@ -111,6 +111,9 @@ entries:
           - title: Supported registry implementations
             url: /documentation/advanced/supported_registry_implementations.html
 
+          - title: Synchronization in werf
+            url: /documentation/advanced/synchronization.html
+
       - title: Internals
         f:
 
@@ -254,17 +257,17 @@ entries:
           - title: Поддерживаемые Docker Registry
             url: /documentation/advanced/supported_registry_implementations.html
 
+          - title: Синхронизация в werf
+            url: /documentation/advanced/synchronization.html
+
       - title: Внутренности
         f:
 
-          - title: Сборка образов
-            f:
+          - title: Стадии и хранилище
+            url: /documentation/internals/stages_and_storage.html
 
-                - title: Процесс сборки
-                  url: /documentation/internals/building_of_images/build_process.html
-
-                - title: Хранилище образов
-                  url: /documentation/internals/building_of_images/images_storage.html
+          - title: Процесс сборки
+            url: /documentation/internals/build_process.html
 
           - title: Как работает интеграция с CI/CD
             f:

@@ -28,10 +28,10 @@ en:
     url: documentation/advanced/helm/basics.html
   /documentation/internals: &documentation-internals
     title: Internals
-    url: documentation/internals/building_of_images/build_process.html
+    url: documentation/internals/build_process.html
   /documentation/internals/building_of_images: &documentation-internals-building-of-images
     title: Building of images
-    url: documentation/internals/building_of_images/build_process.html
+    url: documentation/internals/build_process.html
   /documentation/internals/how_ci_cd_integration_works: &documentation-internals-how-ci-cd-integration-works
     title: How CI/CD integration works
     url: documentation/internals/how_ci_cd_integration_works/general_overview.html

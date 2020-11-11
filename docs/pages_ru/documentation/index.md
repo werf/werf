@@ -99,12 +99,12 @@ sidebar: documentation
         </div>
         <div class="overview__step-title">Узнай как werf работает внутри</div>
         <div class="overview__step-actions">
-            <a class="overview__step-action" href="{{ "documentation/internals/building_of_images/build_process.html" | relative_url }}">Внутренние механизмы werf</a>
+            <a class="overview__step-action" href="{{ "documentation/internals/build_process.html" | relative_url }}">Внутренние механизмы werf</a>
         </div>
         <div class="overview__step-info">
             <p>Для полноценного применения werf ознакомление с этим разделом не требуется, однако он будет полезен тем, что хочет больше узнать об устройстве и принципах работы инструмента.</p>
 <div markdown="1">
- - [Сборка образов]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}) — рассказзывается о том, что такое сборщик образов и стадии, как работает хранилище стадий, что такое сервер синхронизации, а также приводится другая информация, связанная с процессом сборки.
+ - [Сборка образов]({{ "documentation/internals/build_process.html" | relative_url }}) — рассказзывается о том, что такое сборщик образов и стадии, как работает хранилище стадий, что такое сервер синхронизации, а также приводится другая информация, связанная с процессом сборки.
  - [Как работает интеграция с CI/CD]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }}).
  - [Преобразование имен в werf]({{ "documentation/internals/names_slug_algorithm.html" | relative_url }}) — описывается алгоритм, который werf использует для автоматического преобразования имен и замены недопустимых символов (например, в namespace'ах Kubernetes или именах Helm-релизов).
  - [Интеграция с SSH-агентом]({{ "documentation/internals/integration_with_ssh_agent.html" | relative_url }}) — показано, как интегрировать SSH-агент в процесс сборки в werf.

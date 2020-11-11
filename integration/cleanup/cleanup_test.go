@@ -549,7 +549,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				Context("when there is running container that is based on werf image", func() {
 					BeforeEach(func() {
 						if stagesStorage.Address() != ":local" {
-							Skip(fmt.Sprintf("to test :local stages storage (%s)", stagesStorage.Address()))
+							Skip(fmt.Sprintf("to test :local storage (%s)", stagesStorage.Address()))
 						}
 					})
 
