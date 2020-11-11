@@ -17,7 +17,7 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-const imageName = "image"
+const imageName = ""
 
 func TestIntegration(t *testing.T) {
 	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {

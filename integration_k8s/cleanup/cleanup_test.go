@@ -47,8 +47,7 @@ var _ = Describe("cleaning images and stages", func() {
 			Ω(len(ImageMetadata(imageName))).Should(Equal(1))
 
 			werfDeployArgs := []string{
-				"deploy",
-				"--tag-git-commit", "none",
+				"converge",
 				"--env", "test",
 				"--set", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")),
 				"--set", fmt.Sprintf("imageCredentials.username=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME")),
@@ -61,19 +60,23 @@ var _ = Describe("cleaning images and stages", func() {
 			)
 		})
 
-		It("should not remove stages that are related with deployed image (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
-			stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", "1")
+		When("KeepStageSetsBuiltWithinLastNHours policy is disabled", func() {
+			BeforeEach(func() {
+				stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
+			})
 
-			count := StagesCount()
-			Ω(count).Should(Equal(2))
+			It("should not remove stages that are related with deployed image", func() {
+				count := StagesCount()
+				Ω(count).Should(Equal(2))
 
-			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
-				"cleanup",
-			)
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"cleanup",
+				)
 
-			Ω(StagesCount()).Should(Equal(count))
+				Ω(StagesCount()).Should(Equal(count))
+			})
 		})
 	})
 })

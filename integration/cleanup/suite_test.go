@@ -102,7 +102,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 	for _, name := range implementationListToCheck() {
 		implementationName := name
 
-		Describe(fmt.Sprintf("%s (%s)", description, implementationName), func() {
+		Describe(fmt.Sprintf("[%s] %s", implementationName, description), func() {
 			BeforeEach(func() {
 				testImplementation = implementationName
 
