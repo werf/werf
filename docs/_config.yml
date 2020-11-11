@@ -9,6 +9,7 @@ site_lang: en
 site_urls:
   ru: https://ru.werf.io
   en: https://werf.io
+site_description: Consistent delivery tool. Git as a single source of truth. Build, deploy to Kubernetes, stay in sync.
 
 social_links:
   ru:

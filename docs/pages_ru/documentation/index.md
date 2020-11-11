@@ -2,6 +2,7 @@
 title: Обзор
 without_auto_heading: true
 permalink: documentation/index.html
+description: Обширная и понятная документация по werf
 sidebar: documentation
 ---
 
@@ -57,9 +58,6 @@ sidebar: documentation
     </div>
     <div class="overview__title">Справочник</div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">1</div>
-        </div>
         <div class="overview__step-title">Найди структурированную информацию о конфигурировании werf и его командах</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/reference/werf_yaml.html" | relative_url }}">Справочник</a>
@@ -74,9 +72,6 @@ sidebar: documentation
     </div>
     <div class="overview__title">Дополнительная миля</div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">1</div>
-        </div>
         <div class="overview__step-title">Получи глубокие знания, которые понадобятся по мере использования werf</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/advanced/configuration/supported_go_templates.html" | relative_url }}">Документация продвинутого уровня</a>
@@ -94,9 +89,6 @@ sidebar: documentation
         </div>
     </div>
     <div class="overview__step">
-        <div class="overview__step-header">
-            <div class="overview__step-num">2</div>
-        </div>
         <div class="overview__step-title">Узнай как werf работает внутри</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/internals/build_process.html" | relative_url }}">Внутренние механизмы werf</a>
