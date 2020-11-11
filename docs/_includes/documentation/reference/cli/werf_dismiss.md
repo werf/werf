@@ -124,7 +124,7 @@ werf dismiss [options]
             
             Default:
             * $WERF_SYNCHRONIZATION or
-            * :local if --repo is not specified or 
+            * :local if --repo is not specified or
             * kubernetes://werf-synchronization if --repo is specified
             
             The same address should be specified for all werf processes that work with a single     

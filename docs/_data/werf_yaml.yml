@@ -410,7 +410,7 @@ en:
               detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
               detailsCustomLinks:
                 - text: "How stapel builder processes CMD and ENTRYPOINT"
-                  article: "/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+                  article: "/documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
             - &stapel-section-docker-CMD
               name: CMD
               value: "string"
@@ -418,7 +418,7 @@ en:
               detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
               detailsCustomLinks:
                 - text: "How stapel builder processes CMD and ENTRYPOINT"
-                  article: "/documentation/internals/building_of_images/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+                  article: "/documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
             - &stapel-section-docker-HEALTHCHECK
               name: HEALTHCHECK
               value: string
@@ -712,12 +712,12 @@ ru:
               description: "Команда по умолчанию, которая будет выполнена при запуске контейнера"
               detailsCustomLinks:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
-                  article: "/documentation/internals/building_of_images/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
+                  article: "/documentation/internals/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
             - << : *stapel-section-docker-CMD
               description: "Аргументы по умолчанию для ENTRYPOINT"
               detailsCustomLinks:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
-                  article: "/documentation/internals/building_of_images/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
+                  article: "/documentation/internals/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
             - << : *stapel-section-docker-HEALTHCHECK
               description: "Инструкции, которые Docker может использовать для проверки работоспособности запущенного контейнера"
         - << : *stapel-section-mount

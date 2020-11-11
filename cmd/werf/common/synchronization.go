@@ -100,7 +100,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 		werf.GlobalWarningLn(ctx, `##  `)
 		werf.GlobalWarningLn(ctx, `##  — these same settings required to be used in every werf invocation for your project.`)
 		werf.GlobalWarningLn(ctx, `##  `)
-		werf.GlobalWarningLn(ctx, `##  More info about synchronization: https://werf.io/documentation/internals/building_of_images/images_storage.html#synchronization-locks-and-stages-storage-cache`)
+		werf.GlobalWarningLn(ctx, `##  More info about synchronization: https://werf.io/documentation/advanced/synchronization.html`)
 		werf.GlobalWarningLn(ctx, `###`)
 	}
 }

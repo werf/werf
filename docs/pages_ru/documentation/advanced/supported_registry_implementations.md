@@ -6,7 +6,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 Некоторые категории команд работают с Docker registry, и требуют соответствующей авторизации:
-* [Во время процесса сборки]({{ "documentation/internals/building_of_images/build_process.html" | relative_url }}) werf может делать pull образов из Docker registry.
+* [Во время процесса сборки]({{ "documentation/internals/build_process.html" | relative_url }}) werf может делать pull образов из Docker registry.
 * [Во время процесса очистки]({{ "documentation/advanced/cleanup.html" | relative_url }}) werf удаляет образы из Docker registry.
 * [Во время процесса деплоя]({{ "documentation/advanced/helm/basics.html" | relative_url }}) werf требует доступа к _образам_ в Docker registry и _стадиям_, которые также могут находиться в Docker registry.
 

@@ -422,6 +422,9 @@ entries:
           - title: Supported registry implementations
             url: /documentation/advanced/supported_registry_implementations.html
 
+          - title: Synchronization in werf
+            url: /documentation/advanced/synchronization.html
+
       - title: Internals
         f:
 
@@ -564,6 +567,9 @@ entries:
 
           - title: Поддерживаемые Docker Registry
             url: /documentation/advanced/supported_registry_implementations.html
+
+          - title: Синхронизация в werf
+            url: /documentation/advanced/synchronization.html
 
       - title: Внутренности
         f:

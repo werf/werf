@@ -2,10 +2,11 @@
 title: Build process
 sidebar: documentation
 permalink: documentation/internals/build_process.html
-author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-werf uses the Build process to build images defined in the werf configuration.
+In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#stages) for each image described in the configuration.
+
+Dockerfile-image, Stapel-image and Stapel-artifact each built by a different type of conveyor. But werf handles each stage of such conveyor in a common way: there is the same [stage selection rules](#stage-selection), the same [stage building and saving rules](#stage-building-and-saving) and also the same [synchronization rules]({{ "documentation/advanced/synchronization.html" | relative_url }}) of multiple werf processes running from arbitrary hosts.
 
 ## Dockerfile image
 
@@ -13,14 +14,14 @@ werf uses Dockerfile as the principal way to describe how to build an image. Ima
 
 ### How a dockerfile image is being built
 
-werf creates a single [stage]({{ "documentation/internals/building_of_images/images_storage.html#stages" | relative_url }}) called `dockerfile` to build a dockerfile image.
+werf creates a single [stage]({{ "documentation/internals/stages_and_storage.html#stages" | relative_url }}) called `dockerfile` to build a dockerfile image.
 
 How the `dockerfile` stage is being built:
 
  1. Stage digest is calculated based on specified `Dockerfile` and its contents. This digest represents the resulting image state.
- 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ "documentation/internals/building_of_images/images_storage.html#stages-storage" | relative_url }}).
- 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ "documentation/internals/building_of_images/images_storage.html#stages-storage" | relative_url }}). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
- 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ "documentation/internals/building_of_images/images_storage.html#stages-storage" | relative_url }}) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ "documentation/internals/building_of_images/images_storage.html#stages-storage" | relative_url }}) parameter is set.
+ 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}).
+ 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
+ 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}) parameter is set.
 
 See the [configuration article]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | relative_url }}) for the werf.yaml configuration details.
 
@@ -45,7 +46,7 @@ werf generates a specific **list of instructions** needed to build a stage. Inst
 
 All generated instructions to build the current stage are supposed to be run in a container that is based on the previous stage. This container will be referred to as a **build container**.
 
-werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ "documentation/internals/building_of_images/images_storage.html#stages-storage" | relative_url }}).
+werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}).
 
 werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ "documentation/internals/development/stapel_image.html" | relative_url }}).
 
@@ -60,3 +61,24 @@ To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT
 Also, werf uses the special empty value in place of a base image's `ENTRYPOINT` if a user specifies `CMD` (`docker.CMD`).
 
 Otherwise, werf behavior is similar to [docker's](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
+
+## Stage selection
+
+Werf stage selection algorithm is based on the git commits ancestry detection:
+
+ 1. Calculate a stage digest for some stage.
+ 2. There may be multiple stages in the stages storage by this digest — so select all suitable stages by the digest.
+ 3. If current stage is related to git (git-archive, user stage with git patch, git cache or git latest patch), then select only those stages which are related to the commit that is ancestor of current git commit.
+ 4. Select the _oldest_ by the `TIMESTAMP_MILLISEC` from the remaining stages.
+
+There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from being reused for different branch.
+
+## Stage building and saving
+
+If suitable stage has not been found by target digest during stage selection, werf starts building a new image for stage.
+
+Note that multiple processes (on a single or multiple hosts) may start building the same stage at the same time. Werf uses optimistic locking when saving newly built image into the stages storage: when a new stage has been built werf locks stages storage and saves newly built stage image into storage stages cache only if there are no suitable already existing stages exists. Newly saved image will have a guaranteed unique identifier `TIMESTAMP_MILLISEC`. In the case when already existing stage has been found in the stages storage werf will discard newly built image and use already existing one as a cache.
+
+In other words: the first process which finishes the build (the fastest one) will have a chance to save newly built stage into the stages storage. The slow build process will not block faster processes from saving build results and building next stages.
+
+To select stages and save new ones into the stages storage werf uses [synchronization service components]({{ "documentation/advanced/synchronization.html" | relative_url }}) to coordinate multiple werf processes and store stages cache needed for werf builder.
