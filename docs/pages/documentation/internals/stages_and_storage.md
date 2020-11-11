@@ -1,7 +1,7 @@
 ---
-title: Images storage
+title: Stages and storage
 sidebar: documentation
-permalink: documentation/internals/building_of_images/images_storage.html
+permalink: documentation/internals/stages_and_storage.html
 ---
 
 We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.
