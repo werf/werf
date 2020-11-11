@@ -5,17 +5,17 @@ permalink: documentation/internals/build_process.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Сборочный процесс werf для образов, описанных в [werf.yaml]({{ site.baseurl }}/documentation/reference/werf_yaml.html), подразумевает последовательную сборку стадий для соответствующих [конвейеров стадий]({{ site.baseurl }}/documentation/internals/stages_and_storage.html#конвеер-стадий).
+Сборочный процесс werf для образов, описанных в [werf.yaml]({{ "documentation/reference/werf_yaml.html" | relative_url }}), подразумевает последовательную сборку стадий для соответствующих [конвейеров стадий]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#конвеер-стадий).
 
 Несмотря на то, что _конвейеры стадий_ для Dockerfile-образа, Stapel-образа и Stapel-артефакта отличаются, каждая стадия подчиняется общим правилам [выборки из хранилища](#выборка-стадий), [сохранения](#cохранение-стадий-в-хранилище), а также [работы кеша и блокировок](#синхронизация-блокировки-и-кеш-хранилища) в параллельных запусках. 
 
 ## Сборка стадии Dockerfile-образа
 
-Для сборки Dockerfile-образа werf создает единственную [стадию]({{ site.baseurl }}/documentation/internals/stages_and_storage.html#конвеер-стадий) — `dockerfile`.
+Для сборки Dockerfile-образа werf создает единственную [стадию]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#конвеер-стадий) — `dockerfile`.
 
 В настоящий момент, при сборке стадии werf использует стандартные команды встроенного в Docker клиента (это аналогично выполнению команды `docker build`), а также аргументы, которые пользователь описывает в `werf.yaml`. Кэш, создаваемый при сборке, используется, как и при обычной сборке, без помощи werf.
 
-Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/reference/werf_yaml.html#сборщик-dockerfile).
+Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ "documentation/reference/werf_yaml.html" | relative_url }}#сборщик-dockerfile).
 
 ## Сборка стадии Stapel-образа и Stapel-артефакта
 
@@ -23,9 +23,9 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 Перед запуском _сборочного контейнера_ werf подготавливает набор инструкций, который зависит от типа стадии и содержит как внутренние команды werf, так и пользовательские команды, указанные в конфигурации `werf.yaml`. Например, werf может добавлять в список инструкций команды применения патча, измененных примонтированных файлов (такие патчи werf делает с помощью CLI команд git).
 
-При запуске _сборочного контейнера_ [пробрасывается сокет ssh-агента с хоста]({{ site.baseurl }}/documentation/internals/integration_with_ssh_agent.html), а также могут использоваться [пользовательские маунты]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/mount_directive.html).
+При запуске _сборочного контейнера_ [пробрасывается сокет ssh-агента с хоста]({{ "documentation/internals/integration_with_ssh_agent.html" | relative_url }}), а также могут использоваться [пользовательские маунты]({{ "documentation/advanced/building_images_with_stapel/mount_directive.html" | relative_url }}).
 
-Для сборки Stapel-сборщик использует свой набор инструментов и библиотек, никак не зависит от базового образа. При запуске _сборочного контейнера_ werf монтирует специальный сервисный образ `flant/werf-stapel`. Подробнее об образе можно прочитать в [соответствующей статье]({{ site.baseurl }}/documentation/internals/development/stapel_image.html).
+Для сборки Stapel-сборщик использует свой набор инструментов и библиотек, никак не зависит от базового образа. При запуске _сборочного контейнера_ werf монтирует специальный сервисный образ `flant/werf-stapel`. Подробнее об образе можно прочитать в [соответствующей статье]({{ "documentation/internals/development/stapel_image.html" | relative_url }}).
 
 Также стоит отметить, что werf игнорирует значения манифеста базового образа при сборке:
 - `--user=0:0`;
@@ -47,11 +47,11 @@ docker run \
   -ec eval $(echo c2V0IC14 | /.werf/stapel/embedded/bin/base64 --decode)
 ```
 
-Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ site.baseurl }}/documentation/reference/werf_yaml.html#stapel-сборщик).
+Подробнее о файле конфигурации сборки `werf.yaml` смотри в [соответствующем разделе]({{ "documentation/reference/werf_yaml.html" | relative_url }}#stapel-сборщик).
 
 ### Как сборщик Stapel работает с CMD и ENTRYPOINT
 
-Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT` а затем, заменяет их значениями [базового образа]({{ site.baseurl }}/documentation/advanced/building_images_with_stapel/base_image.html). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
+Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT` а затем, заменяет их значениями [базового образа]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 * `[]` для `CMD`;
 * `[""]` для `ENTRYPOINT`.
 
@@ -63,8 +63,8 @@ docker run \
 
 Алгоритм выборки стадии в werf можно представить следующим образом:
 
- 1. Рассчитывается [дайджест стадии]({{ site.baseurl }}/documentation/internals/stages_and_storage.html#дайджест-стадии).
- 2. Выбираются все стадии, подходящие под дайджест, т.к. c одним дайджестом может быть связанно несколько стадий в [хранилище]({{ site.baseurl }}/documentation/internals/stages_and_storage.html#хранилище).
+ 1. Рассчитывается [дайджест стадии]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#дайджест-стадии).
+ 2. Выбираются все стадии, подходящие под дайджест, т.к. c одним дайджестом может быть связанно несколько стадий в [хранилище]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#хранилище).
  3. Выбирается старейший по времени `TIMESTAMP_MILLISEC` (подробнее про именование стадий [здесь]({ site.baseurl }}/documentation/internals/stages_and_storage.html#именование-стадий)).
 
 ### Дополнение для Stapel-образов и Stapel-артефактов
