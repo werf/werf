@@ -73,7 +73,7 @@ func (m *StagesStorageManager) GetStageDescriptionList(ctx context.Context) ([]*
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
 
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
+		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: m.getWithManifestCacheOption()}); err != nil {
 			return err
 		} else if stageDesc == nil {
 			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
@@ -249,11 +249,18 @@ func (m *StagesStorageManager) CopySuitableByDigestStage(ctx context.Context, st
 		return nil, fmt.Errorf("unable to store %s to %s: %s", stageDesc.Info.Name, destinationStagesStorage.String(), err)
 	}
 
-	if destinationStageDesc, err := getStageDescription(ctx, m.ProjectName, *stageDesc.StageID, destinationStagesStorage, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: true}); err != nil {
+	if destinationStageDesc, err := getStageDescription(ctx, m.ProjectName, *stageDesc.StageID, destinationStagesStorage, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: m.getWithManifestCacheOption()}); err != nil {
 		return nil, fmt.Errorf("unable to get stage %s description from %s: %s", stageDesc.StageID.String(), destinationStagesStorage.String(), err)
 	} else {
 		return destinationStageDesc, nil
 	}
+}
+
+func (m *StagesStorageManager) getWithManifestCacheOption() bool {
+	if m.StagesStorage.Address() == storage.LocalStorageAddress {
+		return false
+	}
+	return true
 }
 
 func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, stageName, stageDigest string) (bool, []*image.StageDescription, error) {
@@ -273,7 +280,7 @@ func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, s
 	var stages []*image.StageDescription
 
 	for _, stageID := range cacheStagesIDs {
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: true}); err != nil {
+		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: m.getWithManifestCacheOption()}); err != nil {
 			return false, nil, err
 		} else {
 			stages = append(stages, stageDesc)
@@ -306,7 +313,7 @@ func (m *StagesStorageManager) getStagesIDsByDigestFromStagesStorage(ctx context
 func (m *StagesStorageManager) getStagesDescriptions(ctx context.Context, stageIDs []image.StageID, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
 	var stages []*image.StageDescription
 	for _, stageID := range stageIDs {
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, stagesStorage, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
+		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, stagesStorage, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: m.getWithManifestCacheOption()}); err != nil {
 			return nil, err
 		} else if stageDesc == nil {
 			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
@@ -376,9 +383,11 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 	if stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID); err != nil {
 		return nil, fmt.Errorf("error getting digest %q uniqueID %d stage info from %s: %s", stageID.Digest, stageID.UniqueID, stagesStorage.String(), err)
 	} else if stageDesc != nil {
-		logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
-		if err := image.CommonManifestCache.StoreImageInfo(ctx, stagesStorage.String(), stageDesc.Info); err != nil {
-			return nil, fmt.Errorf("unable to store image %s info into manifest cache: %s", stageImageName, err)
+		if opts.WithManifestCache {
+			logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
+			if err := image.CommonManifestCache.StoreImageInfo(ctx, stagesStorage.String(), stageDesc.Info); err != nil {
+				return nil, fmt.Errorf("unable to store image %s info into manifest cache: %s", stageImageName, err)
+			}
 		}
 
 		return stageDesc, nil
