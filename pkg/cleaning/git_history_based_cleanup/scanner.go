@@ -153,9 +153,9 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 		} else if len(s.reachedStageIDList()) > *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			logboek.Context(ctx).Info().LogF("Reached more content digests than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
 
-			latestCommitStageID := s.latestCommitStageID()
+			latestCommitStageIDs := s.latestCommitStageIDs()
 			var latestCommitList []*object.Commit
-			for latestCommit := range latestCommitStageID {
+			for latestCommit := range latestCommitStageIDs {
 				latestCommitList = append(latestCommitList, latestCommit)
 			}
 
@@ -164,9 +164,9 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 			})
 
 			if s.referenceScanOptions.imagesCleanupKeepPolicy.In == nil {
-				return s.handleExtraStageIDsByLast(ctx, latestCommitStageID, latestCommitList)
+				return s.handleExtraStageIDsByLast(ctx, latestCommitStageIDs, latestCommitList)
 			} else {
-				return s.handleExtraStageIDsByLastWithIn(ctx, latestCommitStageID, latestCommitList)
+				return s.handleExtraStageIDsByLastWithIn(ctx, latestCommitStageIDs, latestCommitList)
 			}
 		}
 	}
@@ -195,7 +195,7 @@ func (s *commitHistoryScanner) handleStopCommitList(ctx context.Context, ref *Re
 	return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
 }
 
-func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Context, latestCommitStageID map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []string, map[string][]string, error) {
+func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Context, latestCommitStageIDs map[*object.Commit][]string, latestCommitList []*object.Commit) ([]string, []string, map[string][]string, error) {
 	var latestCommitListByLast []*object.Commit
 	var latestCommitListByIn []*object.Commit
 	stageIDHitCommitList := map[string][]string{}
@@ -236,21 +236,33 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Conte
 
 	var reachedStageIDList []string
 	for _, latestCommit := range resultLatestCommitList {
-		stageID := latestCommitStageID[latestCommit]
-		reachedStageIDList = append(reachedStageIDList, stageID)
-		stageIDHitCommitList[stageID] = []string{latestCommit.Hash.String()}
+		stageIDs := latestCommitStageIDs[latestCommit]
+		if len(stageIDs) > 1 {
+			logboek.Context(ctx).Info().LogBlock("Counted content digests as one due to common related commit %s", latestCommit.Hash.String()).Do(func() {
+				for _, stageID := range stageIDs {
+					logboek.Context(ctx).Info().LogLn(stageID)
+				}
+			})
+		}
+
+		for _, stageID := range stageIDs {
+			reachedStageIDList = append(reachedStageIDList, stageID)
+			stageIDHitCommitList[stageID] = []string{latestCommit.Hash.String()}
+		}
 	}
 
 	var skippedStageIDList []string
 latestCommitStageIDLoop:
-	for _, stageID := range latestCommitStageID {
-		for _, reachedStageID := range reachedStageIDList {
-			if stageID == reachedStageID {
-				continue latestCommitStageIDLoop
+	for _, stageIDs := range latestCommitStageIDs {
+		for _, stageID := range stageIDs {
+			for _, reachedStageID := range reachedStageIDList {
+				if stageID == reachedStageID {
+					continue latestCommitStageIDLoop
+				}
 			}
-		}
 
-		skippedStageIDList = append(skippedStageIDList, stageID)
+			skippedStageIDList = append(skippedStageIDList, stageID)
+		}
 	}
 
 	if len(skippedStageIDList) != 0 {
@@ -264,26 +276,38 @@ latestCommitStageIDLoop:
 	return reachedStageIDList, s.stopCommitList, stageIDHitCommitList, nil
 }
 
-func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, latestCommitStageID map[*object.Commit]string, latestCommitList []*object.Commit) ([]string, []string, map[string][]string, error) {
+func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, latestCommitStageIDs map[*object.Commit][]string, latestCommitList []*object.Commit) ([]string, []string, map[string][]string, error) {
 	var reachedStageIDList []string
 	var skippedStageIDList []string
 	stageIDHitCommitList := map[string][]string{}
 
 	for ind, latestCommit := range latestCommitList {
-		stageID := latestCommitStageID[latestCommit]
+		stageIDs := latestCommitStageIDs[latestCommit]
 		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
-			reachedStageIDList = append(reachedStageIDList, stageID)
-			stageIDHitCommitList[stageID] = []string{latestCommit.Hash.String()}
+			if len(stageIDs) > 1 {
+				logboek.Context(ctx).Info().LogBlock("Counted content digests as one due to common related commit %s", latestCommit.Hash.String()).Do(func() {
+					for _, stageID := range stageIDs {
+						logboek.Context(ctx).Info().LogLn(stageID)
+					}
+				})
+			}
+
+			for _, stageID := range stageIDs {
+				reachedStageIDList = append(reachedStageIDList, stageID)
+				stageIDHitCommitList[stageID] = []string{latestCommit.Hash.String()}
+			}
 		} else {
-			skippedStageIDList = append(skippedStageIDList, stageID)
+			skippedStageIDList = append(skippedStageIDList, stageIDs...)
 		}
 	}
 
-	logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
-		for _, stageID := range skippedStageIDList {
-			logboek.Context(ctx).Info().LogLn(stageID)
-		}
-	})
+	if len(skippedStageIDList) != 0 {
+		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
+			for _, stageID := range skippedStageIDList {
+				logboek.Context(ctx).Info().LogLn(stageID)
+			}
+		})
+	}
 
 	return reachedStageIDList, s.stopCommitList, stageIDHitCommitList, nil
 }
@@ -336,16 +360,12 @@ func (s *commitHistoryScanner) scanCommitHistory(ctx context.Context, commit str
 }
 
 func (s *commitHistoryScanner) handleCommit(ctx context.Context, commit string) ([]string, error) {
+	var isReachedCommit bool
+
 outerLoop:
 	for stageID, commitList := range s.expectedStageIDCommitList {
 		for _, c := range commitList {
 			if c == commit {
-				for _, reachedC := range s.reachedCommitList {
-					if reachedC == c {
-						break outerLoop
-					}
-				}
-
 				if s.imagesCleanupKeepPolicy.In != nil {
 					commit, err := s.gitRepository.CommitObject(plumbing.NewHash(commit))
 					if err != nil {
@@ -360,8 +380,7 @@ outerLoop:
 					}
 				}
 
-				s.reachedCommitList = append(s.reachedCommitList, c)
-
+				isReachedCommit = true
 				reachedCommitList, ok := s.reachedStageIDCommitList[stageID]
 				if !ok {
 					reachedCommitList = []string{}
@@ -383,9 +402,13 @@ outerLoop:
 					)
 				}
 
-				break outerLoop
+				break
 			}
 		}
+	}
+
+	if isReachedCommit {
+		s.reachedCommitList = append(s.reachedCommitList, commit)
 	}
 
 	co, err := s.gitRepository.CommitObject(plumbing.NewHash(commit))
@@ -413,32 +436,49 @@ func (s *commitHistoryScanner) isStopCommit(commit string) bool {
 
 func (s *commitHistoryScanner) stageIDHitCommitList() map[string][]string {
 	result := map[string][]string{}
-	for commit, stageID := range s.latestCommitStageID() {
-		result[stageID] = []string{commit.Hash.String()}
+	for commit, stageIDs := range s.latestCommitStageIDs() {
+		for _, stageID := range stageIDs {
+			result[stageID] = []string{commit.Hash.String()}
+		}
 	}
 
 	return result
 }
 
-func (s *commitHistoryScanner) latestCommitStageID() map[*object.Commit]string {
-	stageIDLatestCommit := map[*object.Commit]string{}
+func (s *commitHistoryScanner) latestCommitStageIDs() map[*object.Commit][]string {
+	latestCommitStageIDs := map[*object.Commit][]string{}
+	commitObjectCache := map[string]*object.Commit{}
 	for stageID, commitList := range s.reachedStageIDCommitList {
-		var latestCommit *object.Commit
+		var latestCommitObject *object.Commit
 		for _, commit := range commitList {
-			commit, err := s.gitRepository.CommitObject(plumbing.NewHash(commit))
-			if err != nil {
-				panic("unexpected condition")
+			var commitObject *object.Commit
+
+			var err error
+			var ok bool
+			if commitObject, ok = commitObjectCache[commit]; !ok {
+				commitObject, err = s.gitRepository.CommitObject(plumbing.NewHash(commit))
+				if err != nil {
+					panic("unexpected condition")
+				}
+
+				commitObjectCache[commit] = commitObject
 			}
 
-			if latestCommit == nil || commit.Committer.When.After(latestCommit.Committer.When) {
-				latestCommit = commit
+			if latestCommitObject == nil || commitObject.Committer.When.After(latestCommitObject.Committer.When) {
+				latestCommitObject = commitObject
 			}
 		}
 
-		if latestCommit != nil {
-			stageIDLatestCommit[latestCommit] = stageID
+		if latestCommitObject != nil {
+			stageIDs, ok := latestCommitStageIDs[latestCommitObject]
+			if !ok {
+				stageIDs = []string{}
+			}
+
+			stageIDs = append(stageIDs, stageID)
+			latestCommitStageIDs[latestCommitObject] = stageIDs
 		}
 	}
 
-	return stageIDLatestCommit
+	return latestCommitStageIDs
 }
