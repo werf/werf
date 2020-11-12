@@ -54,6 +54,10 @@ werf render [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -163,11 +167,11 @@ werf render [options]
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --report-format='json'
             Report format: json or envfile (json or $WERF_REPORT_FORMAT by default)
-            json: 
+            json:
             	{
             	  "Images": {
             		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>", 
+            			"WerfImageName": "<WERF_IMAGE_NAME>",
             			"DockerRepo": "<REPO>",
             			"DockerTag": "<TAG>"
             			"DockerImageName": "<REPO>:<TAG>",
@@ -176,7 +180,7 @@ werf render [options]
             		...
             	  }
             	}
-            envfile: 
+            envfile:
             	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
             	...
       --report-path=''

@@ -12,7 +12,7 @@ Environment is a required param for the deploy by default, because it is needed 
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to       
-change it: [https://werf.io/documentation/advanced/helm/basics.html]({{ "documentation/advanced/helm/basics.html" | relative_url }})
+change it: [https://werf.io/documentation/advanced/helm/basics.html]({{ "/documentation/advanced/helm/basics.html" | relative_url }})
 
 {{ header }} Syntax
 
@@ -69,6 +69,10 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -177,11 +181,11 @@ werf converge --repo registry.mydomain.com/web --env production
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --report-format='json'
             Report format: json or envfile (json or $WERF_REPORT_FORMAT by default)
-            json: 
+            json:
             	{
             	  "Images": {
             		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>", 
+            			"WerfImageName": "<WERF_IMAGE_NAME>",
             			"DockerRepo": "<REPO>",
             			"DockerTag": "<TAG>"
             			"DockerImageName": "<REPO>:<TAG>",
@@ -190,7 +194,7 @@ werf converge --repo registry.mydomain.com/web --env production
             		...
             	  }
             	}
-            envfile: 
+            envfile:
             	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
             	...
       --report-path=''

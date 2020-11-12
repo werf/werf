@@ -46,6 +46,10 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-compose-bin-path=''
             Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=''

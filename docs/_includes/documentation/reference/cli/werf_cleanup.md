@@ -6,7 +6,7 @@
 Safely cleanup unused project images.
 
 The command works according to special rules called cleanup policies, which the user defines in     
-werf.yaml ([https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies]({{ "documentation/reference/werf_yaml.html#configuring-cleanup-policies" | relative_url }})).
+werf.yaml ([https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies]({{ "/documentation/reference/werf_yaml.html#configuring-cleanup-policies" | relative_url }})).
 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel  
 with other werf commands such as build, converge and host cleanup.
@@ -36,6 +36,10 @@ werf cleanup [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
