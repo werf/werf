@@ -78,6 +78,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
+	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -198,6 +199,7 @@ func runCleanup() error {
 		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 		WithoutKube:                             *commonCmdData.WithoutKube,
 		GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
+		KeepStagesBuiltWithinLastNHours:         *commonCmdData.KeepStagesBuiltWithinLastNHours,
 		DryRun:                                  *commonCmdData.DryRun,
 	}
 

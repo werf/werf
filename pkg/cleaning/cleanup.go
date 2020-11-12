@@ -3,18 +3,17 @@ package cleaning
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/rodaine/table"
-
 	"github.com/go-git/go-git/v5"
+	"github.com/rodaine/table"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/cleaning/allow_list"
 	"github.com/werf/werf/pkg/cleaning/git_history_based_cleanup"
 	"github.com/werf/werf/pkg/config"
@@ -26,8 +25,6 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
-
 type CleanupOptions struct {
 	ImageNameList                           []string
 	LocalGit                                GitRepo
@@ -35,6 +32,7 @@ type CleanupOptions struct {
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
 	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	KeepStagesBuiltWithinLastNHours         uint64
 	DryRun                                  bool
 }
 
@@ -61,12 +59,12 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             options.WithoutKube,
 		GitHistoryBasedCleanupOptions:           options.GitHistoryBasedCleanupOptions,
+		KeepStagesBuiltWithinLastNHours:         options.KeepStagesBuiltWithinLastNHours,
 	}
 }
 
 type cleanupManager struct {
-	stages                     []*image.StageDescription
-	imageNameLinkListByStageID map[string][]string
+	stages []*image.StageDescription
 
 	imageNameStageIDCommitList            map[string]map[string][]string
 	imageNameStageIDCommitListToCleanup   map[string]map[string][]string
@@ -85,6 +83,7 @@ type cleanupManager struct {
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
 	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	KeepStagesBuiltWithinLastNHours         uint64
 	DryRun                                  bool
 }
 
@@ -144,30 +143,7 @@ func (m *cleanupManager) getStage(stageID string) *image.StageDescription {
 	return nil
 }
 
-func (m *cleanupManager) shouldStageBeDeleted(stageID string) bool {
-	return len(m.imageNameLinkListByStageID[stageID]) == 0
-}
-
-func (m *cleanupManager) deleteStagesFromCache(stagesToDelete []*image.StageDescription) {
-	var result []*image.StageDescription
-
-outerLoop:
-	for _, stage := range m.stages {
-		for _, stageToDelete := range stagesToDelete {
-			if stage == stageToDelete {
-				continue outerLoop
-			}
-		}
-
-		result = append(result, stage)
-	}
-
-	m.stages = result
-}
-
 func (m *cleanupManager) initImagesMetadata(ctx context.Context) error {
-	m.imageNameLinkListByStageID = map[string][]string{}
-
 	m.imageNameStageIDCommitList = map[string]map[string][]string{}
 	m.imageNameStageIDCommitListToCleanup = map[string]map[string][]string{}
 	m.imageNameNonexistentStageIDCommitList = map[string]map[string][]string{}
@@ -192,14 +168,6 @@ func (m *cleanupManager) initImagesMetadata(ctx context.Context) error {
 				m.imageNameNonexistentStageIDCommitList[imageName][stageID] = stageIDCommitList
 				continue
 			}
-
-			stageIDImageList, ok := m.imageNameLinkListByStageID[stageID]
-			if !ok {
-				stageIDImageList = []string{}
-			}
-
-			stageIDImageList = append(stageIDImageList, imageName)
-			m.imageNameLinkListByStageID[stageID] = stageIDImageList
 
 			var commitList, nonexistentCommitList []string
 			for _, commit := range stageIDCommitList {
@@ -229,20 +197,16 @@ func (m *cleanupManager) initImagesMetadata(ctx context.Context) error {
 	return nil
 }
 
-func (m *cleanupManager) unlinkStageIDImageName(stageID, imageNameToUnlink string) {
-	m.imageNameLinkListByStageID[stageID] = util.ExcludeFromStringArray(m.imageNameLinkListByStageID[stageID], imageNameToUnlink)
-}
-
-func (m *cleanupManager) keepStageID(imageName string, stageID string) {
+func (m *cleanupManager) keepImageNameStageID(imageName string, stageID string) {
 	delete(m.imageNameStageIDCommitListToCleanup[imageName], stageID)
 }
 
 func (m *cleanupManager) deleteImageMetadataFromCache(imageName string, stageIDCommitListToDelete map[string][]string) {
-	for stageIDToDelete, commitListToDelete := range stageIDCommitListToDelete {
+	for stageID, commitListToDelete := range stageIDCommitListToDelete {
 		var resultCommitList []string
 
 	outerLoop:
-		for _, commit := range m.imageNameStageIDCommitListToCleanup[imageName][stageIDToDelete] {
+		for _, commit := range m.imageNameStageIDCommitListToCleanup[imageName][stageID] {
 			for _, commitToDelete := range commitListToDelete {
 				if commitToDelete == commit {
 					continue outerLoop
@@ -253,15 +217,13 @@ func (m *cleanupManager) deleteImageMetadataFromCache(imageName string, stageIDC
 		}
 
 		if len(resultCommitList) == 0 {
-			delete(m.imageNameStageIDCommitListToCleanup[imageName], stageIDToDelete)
+			delete(m.imageNameStageIDCommitList[imageName], stageID)
+			delete(m.imageNameStageIDCommitListToCleanup[imageName], stageID)
 		} else {
-			m.imageNameStageIDCommitListToCleanup[imageName][stageIDToDelete] = resultCommitList
+			m.imageNameStageIDCommitList[imageName][stageID] = resultCommitList
+			m.imageNameStageIDCommitListToCleanup[imageName][stageID] = resultCommitList
 		}
 	}
-}
-
-func (m *cleanupManager) deleteStageIDFromCache(imageName string, stageID string) {
-	delete(m.imageNameStageIDCommitList[imageName], stageID)
 }
 
 func (m *cleanupManager) run(ctx context.Context) error {
@@ -312,7 +274,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 			dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.StagesStorage.String(), stageID)
 			for _, deployedDockerImageName := range deployedDockerImagesNames {
 				if deployedDockerImageName == dockerImageName {
-					m.keepStageID(imageName, stageID)
+					m.keepImageNameStageID(imageName, stageID)
 
 					if !skippedDeployedImages[stageID] {
 						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
@@ -384,9 +346,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 				return err
 			}
 
-			var stageIDToDelete []string
-			var stagesToDelete []*image.StageDescription
-
+			var stageIDToUnlink []string
 		outerLoop:
 			for stageID, _ := range stageIDCommitList {
 				for _, reachedStageID := range reachedStageIDs {
@@ -395,25 +355,14 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 					}
 				}
 
-				stageIDToDelete = append(stageIDToDelete, stageID)
-
-				m.unlinkStageIDImageName(stageID, imageName)
-				if m.shouldStageBeDeleted(stageID) {
-					stagesToDelete = append(stagesToDelete, m.mustGetStage(stageID))
-				}
+				stageIDToUnlink = append(stageIDToUnlink, stageID)
 			}
 
 			if len(reachedStageIDs) != 0 {
 				m.handleSavedStageIDs(ctx, reachedStageIDs)
 			}
 
-			if len(stagesToDelete) != 0 {
-				if err := m.handleStagesToDelete(ctx, stagesToDelete); err != nil {
-					return err
-				}
-			}
-
-			if err := m.cleanupImageMetadata(ctx, imageName, hitStageIDCommitList, stageIDToDelete); err != nil {
+			if err := m.cleanupImageMetadata(ctx, imageName, hitStageIDCommitList, stageIDToUnlink); err != nil {
 				return err
 			}
 
@@ -481,12 +430,6 @@ func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs 
 	})
 }
 
-func (m *cleanupManager) handleStagesToDelete(ctx context.Context, stagesToDelete []*image.StageDescription) error {
-	return logboek.Context(ctx).Default().LogProcess("Deleting tags").DoError(func() error {
-		return m.deleteStages(ctx, stagesToDelete)
-	})
-}
-
 func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.StageDescription) error {
 	deleteStageOptions := manager.ForEachDeleteStageOptions{
 		DeleteImageOptions: storage.DeleteImageOptions{
@@ -498,8 +441,6 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.Stage
 			RmContainersThatUseImage: false,
 		},
 	}
-
-	m.deleteStagesFromCache(stages)
 
 	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages)
 }
@@ -530,21 +471,20 @@ func deleteStages(ctx context.Context, storageManager *manager.StorageManager, d
 	})
 }
 
-func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName string, hitStageIDCommitList map[string][]string, stageIDsToDelete []string) error {
+func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName string, hitStageIDCommitList map[string][]string, stageIDsToUnlink []string) error {
 	stageIDCommitList := m.imageNameStageIDCommitListToCleanup[imageName]
 	nonexistentStageIDCommitList := m.imageNameNonexistentStageIDCommitList[imageName]
 	stageIDNonexistentCommitList := m.imageNameStageIDNonexistentCommitList[imageName]
 
 	stageIDCommitListToDelete := map[string][]string{}
-	if len(hitStageIDCommitList) != 0 || len(stageIDsToDelete) != 0 {
+	if len(hitStageIDCommitList) != 0 || len(stageIDsToUnlink) != 0 {
 	stageIDCommitListLoop:
 		for stageID, commitList := range stageIDCommitList {
 			var commitListToCleanup []string
-			for _, stageIDToDelete := range stageIDsToDelete {
-				if stageIDToDelete == stageID {
+			for _, stageIDToUnlink := range stageIDsToUnlink {
+				if stageIDToUnlink == stageID {
 					commitListToCleanup = commitList
 					stageIDCommitListToDelete[stageID] = commitListToCleanup
-					m.deleteStageIDFromCache(imageName, stageID)
 					continue stageIDCommitListLoop
 				}
 			}
@@ -561,7 +501,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 
 		if len(stageIDCommitListToDelete) != 0 {
 			if err := logboek.Context(ctx).Default().LogProcess("Cleaning up metadata").DoError(func() error {
-				return m.deleteImagesMetadata(ctx, imageName, stageIDCommitListToDelete, true)
+				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete, true)
 			}); err != nil {
 				return err
 			}
@@ -570,7 +510,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 
 	if len(nonexistentStageIDCommitList) != 0 {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting metadata for nonexistent stageIDs").DoError(func() error {
-			return m.deleteImagesMetadata(ctx, imageName, nonexistentStageIDCommitList, false)
+			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -578,7 +518,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 
 	if len(stageIDNonexistentCommitList) != 0 {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting metadata for nonexistent commits").DoError(func() error {
-			return m.deleteImagesMetadata(ctx, imageName, stageIDNonexistentCommitList, false)
+			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -594,7 +534,7 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting metadata for nonexistent images").DoError(func() error {
 		for imageName, stageIDCommitList := range m.nonexistentImageNameStageIDCommitList {
-			if err := m.deleteImagesMetadata(ctx, imageName, stageIDCommitList, false); err != nil {
+			if err := m.deleteImageMetadata(ctx, imageName, stageIDCommitList, false); err != nil {
 				return err
 			}
 		}
@@ -603,15 +543,19 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 	})
 }
 
-func (m *cleanupManager) deleteImagesMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string, updateCache bool) error {
+func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string, updateCache bool) error {
+	if err := deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun); err != nil {
+		return err
+	}
+
 	if updateCache {
 		m.deleteImageMetadataFromCache(imageName, stageIDCommitList)
 	}
 
-	return deleteImagesMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun)
+	return nil
 }
 
-func deleteImagesMetadata(ctx context.Context, projectName string, storageManager *manager.StorageManager, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
+func deleteImageMetadata(ctx context.Context, projectName string, storageManager *manager.StorageManager, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
 	if dryRun {
 		for stageID, commitList := range stageIDCommitList {
 			logboek.Context(ctx).Default().LogFDetails("  imageName: %s\n", imageNameOrID)
@@ -651,21 +595,12 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	stagesToDelete := m.stages
 	for _, stageIDCommitList := range m.imageNameStageIDCommitList {
 		for stageID, _ := range stageIDCommitList {
-			stagesToDelete = m.excludeStageAndRelativesByImageID(stagesToDelete, m.mustGetStage(stageID).Info.ID)
-		}
-	}
+			var excludedStagesByStageID []*image.StageDescription
+			stage := m.mustGetStage(stageID)
+			stagesToDelete, excludedStagesByStageID = m.excludeStageAndRelativesByImageID(stagesToDelete, stage.Info.ID)
 
-	var stagesToSkip []*image.StageDescription
-	if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") != "1" {
-		for _, stage := range stagesToDelete {
-			if time.Now().Unix()-stage.Info.GetCreatedAt().Unix() < stagesCleanupDefaultIgnorePeriodPolicy {
-				stagesToSkip = append(stagesToSkip, stage)
-			}
-		}
-
-		if len(stagesToSkip) != 0 {
-			logboek.Context(ctx).Default().LogBlock("Skipping stages that were built within last two hours").Do(func() {
-				for _, stage := range stagesToSkip {
+			logboek.Context(ctx).Debug().LogBlock("Saved stages (%s)", stage.Info.Tag).Do(func() {
+				for _, stage := range excludedStagesByStageID {
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
 					logboek.Context(ctx).LogOptionalLn()
 				}
@@ -673,7 +608,25 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		}
 	}
 
-	stagesToDelete = excludeStages(stagesToDelete, stagesToSkip...)
+	if m.KeepStagesBuiltWithinLastNHours != 0 {
+		var excludedStages []*image.StageDescription
+		for _, stage := range stagesToDelete {
+			if (time.Now().Sub(stage.Info.GetCreatedAt()).Hours()) <= float64(m.KeepStagesBuiltWithinLastNHours) {
+				var excludedStagesByStage []*image.StageDescription
+				stagesToDelete, excludedStagesByStage = m.excludeStageAndRelativesByImageID(stagesToDelete, stage.Info.ID)
+				excludedStages = append(excludedStages, excludedStagesByStage...)
+			}
+		}
+
+		if len(excludedStages) != 0 {
+			logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours", m.KeepStagesBuiltWithinLastNHours).Do(func() {
+				for _, stage := range excludedStages {
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
+					logboek.Context(ctx).LogOptionalLn()
+				}
+			})
+		}
+	}
 
 	if len(stagesToDelete) != 0 {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting stages tags").DoError(func() error {
@@ -772,10 +725,10 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByImageID(stages []*image.StageDescription, imageID string) []*image.StageDescription {
+func (m *cleanupManager) excludeStageAndRelativesByImageID(stages []*image.StageDescription, imageID string) ([]*image.StageDescription, []*image.StageDescription) {
 	stage := findStageByImageID(stages, imageID)
 	if stage == nil {
-		return stages
+		return stages, []*image.StageDescription{}
 	}
 
 	return m.excludeStageAndRelativesByStage(stages, stage)
@@ -791,13 +744,16 @@ func findStageByImageID(stages []*image.StageDescription, imageID string) *image
 	return nil
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) []*image.StageDescription {
+func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) ([]*image.StageDescription, []*image.StageDescription) {
+	var excludedStages []*image.StageDescription
 	for label, checksum := range stage.Info.Labels {
 		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
 			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
 			if ok {
 				for _, sourceImageID := range sourceImageIDs {
-					stages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+					var excludedImportStages []*image.StageDescription
+					stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+					excludedStages = append(excludedStages, excludedImportStages...)
 				}
 			}
 		}
@@ -806,13 +762,15 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 	currentStage := stage
 	for {
 		stages = excludeStages(stages, currentStage)
+		excludedStages = append(excludedStages, currentStage)
+
 		currentStage = findStageByImageID(stages, currentStage.Info.ParentID)
 		if currentStage == nil {
 			break
 		}
 	}
 
-	return stages
+	return stages, excludedStages
 }
 
 func excludeStages(stages []*image.StageDescription, stagesToExclude ...*image.StageDescription) []*image.StageDescription {
