@@ -84,7 +84,7 @@ func getGitCliVersion() (string, error) {
 	}
 
 	strippedOut := strings.TrimSpace(out.String())
-	rightPart := strings.TrimLeft(strippedOut, "git version ")
+	rightPart := strings.TrimPrefix(strippedOut, "git version ")
 	fullVersion := strings.Split(rightPart, " ")[0]
 	fullVersionParts := strings.Split(fullVersion, ".")
 

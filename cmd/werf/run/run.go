@@ -192,7 +192,7 @@ func getContainerName() string {
 				return cmdData.DockerOptions[ind+1]
 			}
 		} else if strings.HasPrefix(value, "--name=") {
-			return strings.TrimLeft(value, "--name=")
+			return strings.TrimPrefix(value, "--name=")
 		}
 	}
 

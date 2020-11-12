@@ -97,7 +97,7 @@ func replaceLinks(s string) string {
 		linkText := link
 		for _, prefix := range []string{"werf.io", "https://werf.io"} {
 			if strings.HasPrefix(link, prefix) {
-				link = strings.TrimLeft(link, prefix)
+				link = strings.TrimPrefix(link, prefix)
 				link = fmt.Sprintf("{{ \"%s\" | relative_url }}", link)
 				break
 			}
