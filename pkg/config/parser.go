@@ -13,6 +13,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/bmatcuk/doublestar"
+
 	"github.com/Masterminds/sprig"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
@@ -209,6 +211,15 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 }
 
 func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, disableDeterminism bool) (string, error) {
+	var commit string
+	if localGitRepo != nil {
+		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
+			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		} else {
+			commit = c
+		}
+	}
+
 	var data []byte
 
 	if disableDeterminism || localGitRepo == nil {
@@ -218,11 +229,6 @@ func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplate
 			data = d
 		}
 	} else {
-		commit, err := localGitRepo.HeadCommit(ctx)
-		if err != nil {
-			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-		}
-
 		if d, err := localGitRepo.ReadFile(commit, werfConfigPath); err != nil {
 			return "", fmt.Errorf("unable to read werf config %s from local git repo: %s", werfConfigPath, err)
 		} else {
@@ -242,11 +248,6 @@ func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplate
 			werfConfigsTemplates = templates
 		}
 	} else {
-		commit, err := localGitRepo.HeadCommit(ctx)
-		if err != nil {
-			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-		}
-
 		if paths, err := localGitRepo.GetFilePathList(commit); err != nil {
 			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
 		} else {
@@ -294,7 +295,7 @@ func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplate
 	}
 
 	templateData := make(map[string]interface{})
-	templateData["Files"] = files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath), DisableDeterminism: disableDeterminism}
+	templateData["Files"] = files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath), DisableDeterminism: disableDeterminism, Commit: commit, LocalGitRepo: localGitRepo}
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 
@@ -375,36 +376,49 @@ type files struct {
 	ctx                context.Context
 	ProjectDir         string
 	DisableDeterminism bool
+	LocalGitRepo       *git_repo.Local
+	Commit             string
+}
+
+func (f files) doGet(path string) (string, error) {
+	if f.DisableDeterminism || f.LocalGitRepo == nil {
+		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
+
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
+		} else if err != nil {
+			return "", fmt.Errorf("error accessing %s: %s", filePath, err)
+		}
+
+		if b, err := ioutil.ReadFile(filePath); err != nil {
+			return "", fmt.Errorf("error reading %s: %s", filePath, err)
+		} else {
+			return string(b), nil
+		}
+	}
+
+	if exists, err := f.LocalGitRepo.IsFileExists(f.Commit, path); err != nil {
+		return "", fmt.Errorf("unable to check existance of %s in the local git repo commit %s: %s", path, f.Commit, err)
+	} else if !exists {
+		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
+	}
+
+	if b, err := f.LocalGitRepo.ReadFile(f.Commit, path); err != nil {
+		return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
+	} else {
+		return string(b), nil
+	}
 }
 
 func (f files) Get(path string) string {
-	if !f.DisableDeterminism {
-		logboek.Context(f.ctx).Error().LogF("WARNING: Cannot use {{ .Files.Get }} function in determinism mode, you can disable determinism by --disable-determinism option (or WERF_DISABLE_DETERMINISM=1)\n")
-		return ""
+	if res, err := f.doGet(path); err != nil {
+		panic(err.Error())
+	} else {
+		return res
 	}
-
-	filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
-
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
-		return ""
-	}
-
-	b, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return ""
-	}
-	return string(b)
 }
 
-// Glob returns the hash of regular files and their contents for the paths that are matched pattern
-// This function follows only symlinks pointed to a regular file (not to a directory)
-func (f files) Glob(pattern string) map[string]interface{} {
-	if !f.DisableDeterminism {
-		logboek.Context(f.ctx).Error().LogF("WARNING: Cannot use {{ .Files.Glob }} function in determinism mode, you can disable determinism by --disable-determinism option (or WERF_DISABLE_DETERMINISM=1)\n")
-		return nil
-	}
-
+func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
 	err := util.WalkByPattern(f.ProjectDir, filepath.FromSlash(pattern), func(path string, s os.FileInfo, err error) error {
@@ -448,18 +462,61 @@ func (f files) Glob(pattern string) map[string]interface{} {
 
 		return nil
 	})
-
 	if err != nil {
-		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: %s!\n", pattern, err)
-		return nil
+		return nil, err
 	}
 
-	if len(result) == 0 {
-		logboek.Context(f.ctx).Warn().LogF("WARNING: Config: {{ .Files.Glob '%s' }}: no matches found!\n", pattern)
-		return nil
+	return result, nil
+}
+
+func (f files) doGlobFromGitRepo(pattern string) (map[string]interface{}, error) {
+	if paths, err := f.LocalGitRepo.GetFilePathList(f.Commit); err != nil {
+		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
+	} else {
+		result := make(map[string]interface{})
+
+		for _, path := range paths {
+			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
+				return nil, fmt.Errorf("path match failed: %s", err)
+			} else if matched {
+				if b, err := f.LocalGitRepo.ReadFile(f.Commit, path); err != nil {
+					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
+				} else {
+					resultPath := filepath.ToSlash(path)
+					result[resultPath] = string(b)
+				}
+			}
+		}
+
+		return result, nil
+	}
+}
+
+func (f files) doGlob(pattern string) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	var err error
+
+	if f.DisableDeterminism {
+		res, err = f.doGlobFromFilesystem(pattern)
+	} else {
+		res, err = f.doGlobFromGitRepo(pattern)
 	}
 
-	return result
+	if len(res) == 0 {
+		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob '%s' }}\n", pattern)
+	}
+
+	return res, err
+}
+
+// Glob returns the hash of regular files and their contents for the paths that are matched pattern
+// This function follows only symlinks pointed to a regular file (not to a directory)
+func (f files) Glob(pattern string) map[string]interface{} {
+	if res, err := f.doGlob(pattern); err != nil {
+		panic(err.Error())
+	} else {
+		return res
+	}
 }
 
 func splitContent(content []byte) (docsContents [][]byte) {
