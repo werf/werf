@@ -26,14 +26,19 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string) error {
-	werfConfig, err := GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, false)
+type WerfConfigOptions struct {
+	LogRenderedFilePath bool
+	DisableDeterminism  bool
+}
+
+func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {
+	werfConfig, err := GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir)
+		werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -62,8 +67,8 @@ func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDi
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, logRenderedFilePath bool) (*WerfConfig, error) {
-	werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir)
+func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
+	werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -73,7 +78,7 @@ func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir s
 		return nil, err
 	}
 
-	if logRenderedFilePath {
+	if opts.LogRenderedFilePath {
 		logboek.Context(ctx).LogF("Using werf config render file: %s\n", werfConfigRenderPath)
 	}
 
@@ -203,35 +208,84 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string) (string, error) {
-	data, err := ioutil.ReadFile(werfConfigPath)
-	if err != nil {
-		return "", err
+func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, disableDeterminism bool) (string, error) {
+	var data []byte
+
+	if disableDeterminism || localGitRepo == nil {
+		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
+			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
+		} else {
+			data = d
+		}
+	} else {
+		commit, err := localGitRepo.HeadCommit(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		}
+
+		if d, err := localGitRepo.ReadFile(commit, werfConfigPath); err != nil {
+			return "", fmt.Errorf("unable to read werf config %s from local git repo: %s", werfConfigPath, err)
+		} else {
+			data = d
+		}
 	}
 
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl))
+	tmpl.Funcs(funcMap(tmpl, disableDeterminism))
 
-	werfConfigsTemplates, err := getWerfConfigTemplates(werfConfigTemplatesDir)
-	if err != nil {
-		return "", err
+	var werfConfigsTemplates []string
+
+	if disableDeterminism || localGitRepo == nil {
+		if templates, err := getWerfConfigTemplatesFromFilesystem(werfConfigTemplatesDir); err != nil {
+			return "", err
+		} else {
+			werfConfigsTemplates = templates
+		}
+	} else {
+		commit, err := localGitRepo.HeadCommit(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		}
+
+		if paths, err := localGitRepo.GetFilePathList(commit); err != nil {
+			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
+		} else {
+			for _, path := range paths {
+				if util.IsSubpathOfBasePath(werfConfigTemplatesDir, path) {
+					werfConfigsTemplates = append(werfConfigsTemplates, path)
+				}
+			}
+		}
 	}
 
-	if len(werfConfigsTemplates) != 0 {
-		for _, templatePath := range werfConfigsTemplates {
-			templateName, err := filepath.Rel(werfConfigTemplatesDir, templatePath)
+	for _, templatePath := range werfConfigsTemplates {
+		var templateData []byte
+		if disableDeterminism || localGitRepo == nil {
+			if d, err := ioutil.ReadFile(templatePath); err != nil {
+				return "", err
+			} else {
+				templateData = d
+			}
+		} else {
+			commit, err := localGitRepo.HeadCommit(ctx)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
 
-			var templateData []byte
-			if templateData, err = ioutil.ReadFile(templatePath); err != nil {
-				return "", err
+			if d, err := localGitRepo.ReadFile(commit, templatePath); err != nil {
+				return "", fmt.Errorf("unable to read file %s from local git repo: %s", templatePath, err)
+			} else {
+				templateData = d
 			}
+		}
 
-			if err := addTemplate(tmpl, templateName, string(templateData)); err != nil {
-				return "", err
-			}
+		templateName, err := filepath.Rel(werfConfigTemplatesDir, templatePath)
+		if err != nil {
+			return "", err
+		}
+
+		if err := addTemplate(tmpl, templateName, string(templateData)); err != nil {
+			return "", err
 		}
 	}
 
@@ -239,8 +293,10 @@ func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplate
 		return "", err
 	}
 
-	files := files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath)}
-	config, err := executeTemplate(tmpl, "werfConfig", map[string]interface{}{"Files": files})
+	templateData := make(map[string]interface{})
+	templateData["Files"] = files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath), DisableDeterminism: disableDeterminism}
+
+	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 
 	return config, err
 }
@@ -251,7 +307,7 @@ func addTemplate(tmpl *template.Template, templateName string, templateContent s
 	return err
 }
 
-func getWerfConfigTemplates(path string) ([]string, error) {
+func getWerfConfigTemplatesFromFilesystem(path string) ([]string, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -285,7 +341,7 @@ func getWerfConfigTemplates(path string) ([]string, error) {
 	return templates, nil
 }
 
-func funcMap(tmpl *template.Template) template.FuncMap {
+func funcMap(tmpl *template.Template, disableDeterminism bool) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
@@ -298,6 +354,12 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 
 		return executeTemplate(tmpl, templateName, data)
 	}
+
+	if !disableDeterminism {
+		delete(funcMap, "env")
+		delete(funcMap, "expandenv")
+	}
+
 	return funcMap
 }
 
@@ -310,11 +372,17 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 }
 
 type files struct {
-	ctx        context.Context
-	ProjectDir string
+	ctx                context.Context
+	ProjectDir         string
+	DisableDeterminism bool
 }
 
 func (f files) Get(path string) string {
+	if !f.DisableDeterminism {
+		logboek.Context(f.ctx).Error().LogF("WARNING: Cannot use {{ .Files.Get }} function in determinism mode, you can disable determinism by --disable-determinism option (or WERF_DISABLE_DETERMINISM=1)\n")
+		return ""
+	}
+
 	filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -332,6 +400,11 @@ func (f files) Get(path string) string {
 // Glob returns the hash of regular files and their contents for the paths that are matched pattern
 // This function follows only symlinks pointed to a regular file (not to a directory)
 func (f files) Glob(pattern string) map[string]interface{} {
+	if !f.DisableDeterminism {
+		logboek.Context(f.ctx).Error().LogF("WARNING: Cannot use {{ .Files.Glob }} function in determinism mode, you can disable determinism by --disable-determinism option (or WERF_DISABLE_DETERMINISM=1)\n")
+		return nil
+	}
+
 	result := map[string]interface{}{}
 
 	err := util.WalkByPattern(f.ProjectDir, filepath.FromSlash(pattern), func(path string, s os.FileInfo, err error) error {

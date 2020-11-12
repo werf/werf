@@ -7,6 +7,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/werf/werf/pkg/config"
+
+	"github.com/werf/werf/pkg/git_repo"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -147,6 +151,7 @@ Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WE
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -294,7 +299,12 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 }
 
 func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, ctx context.Context, projectDir string) error {
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, false)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -334,7 +344,7 @@ func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, localGitRepo, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var envArray []string

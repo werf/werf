@@ -84,8 +84,8 @@ type ConveyorOptions struct {
 	AllowGitShallowClone            bool
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) (*Conveyor, error) {
-	c := &Conveyor{
+func NewConveyor(werfConfig *config.WerfConfig, localGitRepo *git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
 
@@ -94,6 +94,8 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		baseTmpDir:       baseTmpDir,
 
 		sshAuthSock: sshAuthSock,
+
+		localGitRepo: localGitRepo,
 
 		stageImages:            make(map[string]*container_runtime.StageImage),
 		gitReposCaches:         make(map[string]*stage.GitRepoCache),
@@ -114,8 +116,6 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 		serviceRWMutex:   map[string]*sync.RWMutex{},
 		stageDigestMutex: map[string]*sync.Mutex{},
 	}
-
-	return c, c.Init()
 }
 
 func (c *Conveyor) getServiceRWMutex(service string) *sync.RWMutex {
@@ -332,17 +332,6 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	defer c.getServiceRWMutex("RemoteGitRepo").RUnlock()
 
 	return c.remoteGitRepos[key]
-}
-
-func (c *Conveyor) Init() error {
-	localGitRepo, err := git_repo.OpenLocalRepo("own", c.projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", c.projectDir, err)
-	} else if localGitRepo != nil {
-		c.SetLocalGitRepo(localGitRepo)
-	}
-
-	return nil
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context) error {

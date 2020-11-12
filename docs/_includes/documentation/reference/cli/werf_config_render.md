@@ -21,6 +21,10 @@ werf config render [IMAGE_NAME...] [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'

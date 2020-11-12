@@ -18,6 +18,7 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -25,6 +26,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -75,6 +77,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -214,7 +217,12 @@ func runMain(ctx context.Context) error {
 }
 
 func run(ctx context.Context, projectDir, chartDir string) error {
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, true)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -271,7 +279,7 @@ func run(ctx context.Context, projectDir, chartDir string) error {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, localGitRepo, nil, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -364,6 +372,7 @@ func run(ctx context.Context, projectDir, chartDir string) error {
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
 			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+			FilesLoader:                 common.MakeGitFilesLoader(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{

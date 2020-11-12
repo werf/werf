@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/go-git/go-git/v5/plumbing/object"
+
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
@@ -229,4 +231,97 @@ func (repo *Local) getRepoWorkTreeCacheDir() string {
 	repoId := util.Sha256Hash(fullPath)
 
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoId)
+}
+
+func (repo *Local) IsFileExists(commit, path string) (bool, error) {
+	return isFileExists(repo.Path, commit, path)
+}
+
+func (repo *Local) GetFilePathList(commit string) ([]string, error) {
+	return getFilePathList(repo.Path, commit)
+}
+
+func (repo *Local) ReadFile(commit, path string) ([]byte, error) {
+	return readFile(repo.Path, commit, path)
+}
+
+func getFilePathList(repoPath, commit string) ([]string, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	if iter, err := commitObj.Files(); err != nil {
+		return nil, fmt.Errorf("unable to iterate files of commit %q: %s", commit, err)
+	} else {
+		var res []string
+		iter.ForEach(func(f *object.File) error {
+			res = append(res, f.Name)
+			return nil
+		})
+		return res, nil
+	}
+}
+
+func isFileExists(repoPath, commit, path string) (bool, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return false, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return false, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	if _, err := commitObj.File(path); err == object.ErrFileNotFound {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("error getting repo file %q from commit %q: %s", path, commit, err)
+	}
+	return true, nil
+}
+
+func readFile(repoPath, commit, filePath string) ([]byte, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	file, err := commitObj.File(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repo file %q from commit %q: %s", filePath, commit, err)
+	}
+
+	content, err := file.Contents()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(content), nil
 }

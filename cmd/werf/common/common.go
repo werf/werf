@@ -18,7 +18,6 @@ import (
 
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/cleaning"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -76,6 +75,7 @@ type CmdData struct {
 	InsecureRegistry      *bool
 	SkipTlsVerifyRegistry *bool
 	DryRun                *bool
+	DisableDeterminism    *bool
 
 	WithoutKube *bool
 
@@ -140,6 +140,11 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
+func SetupDisableDeterminism(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DisableDeterminism = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultTrue("WERF_DISABLE_DETERMINISM"), "Disable werf deterministic mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
+}
+
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HomeDir = new(string)
 	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)")
@@ -162,11 +167,11 @@ func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
 func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReportFormat = new(string)
 	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", string(build.ReportJSON), fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default)
-%[1]s: 
+%[1]s:
 	{
 	  "Images": {
 		"<WERF_IMAGE_NAME>": {
-			"WerfImageName": "<WERF_IMAGE_NAME>", 
+			"WerfImageName": "<WERF_IMAGE_NAME>",
 			"DockerRepo": "<REPO>",
 			"DockerTag": "<TAG>"
 			"DockerImageName": "<REPO>:<TAG>",
@@ -175,7 +180,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 		...
 	  }
 	}
-%[2]s: 
+%[2]s:
 	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
 	...`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
@@ -858,32 +863,32 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, false)
+func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, false, localGitRepo, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	if werfConfigPath != "" {
 		werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
-		return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+		return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 	}
 
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, logRenderedFilePath bool) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, true)
+func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, true, localGitRepo, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
 
-	return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, logRenderedFilePath)
+	return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 }
 
-func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (string, error) {
+func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (string, error) {
 	var configPathToCheck []string
 
 	customConfigPath := *cmdData.ConfigPath
@@ -896,21 +901,32 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (stri
 	}
 
 	for _, werfConfigPath := range configPathToCheck {
-		exist, err := util.FileExists(werfConfigPath)
-		if err != nil {
-			return "", err
-		}
+		if opts.DisableDeterminism || localGitRepo == nil {
+			if exists, err := util.FileExists(werfConfigPath); err != nil {
+				return "", err
+			} else if exists {
+				return werfConfigPath, nil
+			}
+		} else {
+			commit, err := localGitRepo.HeadCommit(context.Background())
+			if err != nil {
+				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+			}
 
-		if exist {
-			return werfConfigPath, nil
+			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
+			if exists, err := localGitRepo.IsFileExists(commit, relPath); err != nil {
+				return "", fmt.Errorf("unable to check %s existance in the local git repo: %s", relPath, err)
+			} else if exists {
+				return relPath, nil
+			}
 		}
 	}
 
 	if required {
-		if customConfigPath != "" {
-			return "", fmt.Errorf("configration file %s not found", customConfigPath)
+		if opts.DisableDeterminism || localGitRepo == nil {
+			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
 		} else {
-			return "", fmt.Errorf("configration file werf.yaml not found")
+			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo", strings.Join(configPathToCheck, ", "))
 		}
 	}
 
@@ -920,9 +936,9 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool) (stri
 func GetWerfConfigTemplatesDir(projectDir string, cmdData *CmdData) string {
 	customConfigTemplatesDir := *cmdData.ConfigTemplatesDir
 	if customConfigTemplatesDir != "" {
-		return customConfigTemplatesDir
+		return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDir)
 	} else {
-		return filepath.Join(projectDir, ".werf")
+		return util.GetRelativeToBaseFilepath(projectDir, filepath.Join(projectDir, ".werf"))
 	}
 }
 
@@ -1210,7 +1226,7 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }
 
-func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (cleaning.GitRepo, error) {
+func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (*git_repo.Local, error) {
 	gitDir := filepath.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return nil, err

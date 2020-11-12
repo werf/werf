@@ -11,7 +11,7 @@ Environment is a required param for the dismiss by default, because it is needed
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it:                  
-[https://werf.io/documentation/advanced/helm/basics.html]({{ "documentation/advanced/helm/basics.html" | relative_url }})
+[https://werf.io/documentation/advanced/helm/basics.html]({{ "/documentation/advanced/helm/basics.html" | relative_url }})
 
 {{ header }} Syntax
 
@@ -42,6 +42,10 @@ werf dismiss [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=true
+            Disable werf deterministic mode (more info                                              
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

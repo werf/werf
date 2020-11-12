@@ -3,6 +3,8 @@ package ls
 import (
 	"fmt"
 
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/spf13/cobra"
@@ -33,6 +35,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupProjectName(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
@@ -93,7 +96,12 @@ func run() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, false)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
