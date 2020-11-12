@@ -428,7 +428,7 @@ func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ st
 }
 
 func getImportMetadataIDFromRepoTag(tag string) string {
-	return strings.TrimLeft(tag, RepoImportMetadata_ImageTagPrefix)
+	return strings.TrimPrefix(tag, RepoImportMetadata_ImageTagPrefix)
 }
 
 func makeRepoImportMetadataName(repoAddress, importSourceID string) string {
