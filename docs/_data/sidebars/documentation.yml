@@ -41,6 +41,18 @@ cli: &cli
     - title: werf run
       url: /documentation/reference/cli/werf_run.html
 
+    - title: werf compose
+      f:
+
+      - title: werf compose config
+        url: /documentation/reference/cli/werf_compose_config.html
+
+      - title: werf compose down
+        url: /documentation/reference/cli/werf_compose_down.html
+
+      - title: werf compose up
+        url: /documentation/reference/cli/werf_compose_up.html
+
     - title: werf slugify
       url: /documentation/reference/cli/werf_slugify.html
 

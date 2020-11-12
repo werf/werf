@@ -18,6 +18,7 @@ Helper commands:
  - [werf ci-env]({{ "/documentation/reference/cli/werf_ci_env.html" | relative_url }}) — {% include /documentation/reference/cli/werf_ci_env.short.md %}.
  - [werf build]({{ "/documentation/reference/cli/werf_build.html" | relative_url }}) — {% include /documentation/reference/cli/werf_build.short.md %}.
  - [werf run]({{ "/documentation/reference/cli/werf_run.html" | relative_url }}) — {% include /documentation/reference/cli/werf_run.short.md %}.
+ - [werf compose]({{ "/documentation/reference/cli/werf_compose_config.html" | relative_url }}) — {% include /documentation/reference/cli/werf_compose_config.short.md %}.
  - [werf slugify]({{ "/documentation/reference/cli/werf_slugify.html" | relative_url }}) — {% include /documentation/reference/cli/werf_slugify.short.md %}.
  - [werf render]({{ "/documentation/reference/cli/werf_render.html" | relative_url }}) — {% include /documentation/reference/cli/werf_render.short.md %}.
 

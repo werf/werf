@@ -1,0 +1,1 @@
+run docker-compose down command with forwarded image names

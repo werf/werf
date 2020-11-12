@@ -1,6 +1,7 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -79,12 +80,11 @@ type BuildPhase struct {
 	ShouldAddManagedImageRecord bool
 
 	ImagesReport *ImagesReport
-	ReportPath   string
-	ReportFormat ReportFormat
 }
 
 const (
-	ReportJSON ReportFormat = "json"
+	ReportJSON    ReportFormat = "json"
+	ReportEnvFile ReportFormat = "envfile"
 )
 
 type ReportFormat string
@@ -100,17 +100,50 @@ func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageR
 	report.Images[name] = imageRecord
 }
 
-func (report *ImagesReport) ToJson() ([]byte, error) {
+func (report *ImagesReport) ToJsonData() ([]byte, error) {
 	report.mux.Lock()
 	defer report.mux.Unlock()
-	return json.MarshalIndent(report, "", "\t")
+
+	data, err := json.MarshalIndent(report, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+	data = append(data, []byte("\n")...)
+
+	return data, nil
+}
+
+func (report *ImagesReport) ToEnvFileData() []byte {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	buf := bytes.NewBuffer([]byte{})
+	for img, record := range report.Images {
+		buf.WriteString(generateImageEnv(img, record.WerfImageName))
+		buf.WriteString("\n")
+	}
+
+	return buf.Bytes()
+}
+
+func generateImageEnv(werfImageName, imageName string) string {
+	var imageEnvName string
+	if werfImageName == "" {
+		imageEnvName = "WERF_IMAGE_NAME"
+	} else {
+		werfImageName := strings.ToUpper(strings.ReplaceAll(werfImageName, "/", "_"))
+		imageEnvName = fmt.Sprintf("WERF_IMAGE_%s_NAME", werfImageName)
+	}
+
+	return fmt.Sprintf("%s=%s", imageEnvName, imageName)
 }
 
 type ReportImageRecord struct {
-	WerfImageName string
-	DockerRepo    string
-	DockerTag     string
-	DockerImageID string
+	WerfImageName   string
+	DockerRepo      string
+	DockerTag       string
+	DockerImageID   string
+	DockerImageName string
 }
 
 func (phase *BuildPhase) Name() string {
@@ -133,22 +166,29 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 
 		desc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
 		phase.ImagesReport.SetImageRecord(img.GetName(), ReportImageRecord{
-			WerfImageName: desc.Info.Name,
-			DockerRepo:    desc.Info.Repository,
-			DockerTag:     desc.Info.Tag,
-			DockerImageID: desc.Info.ID,
+			WerfImageName:   img.GetName(),
+			DockerRepo:      desc.Info.Repository,
+			DockerTag:       desc.Info.Tag,
+			DockerImageID:   desc.Info.ID,
+			DockerImageName: desc.Info.Name,
 		})
 	}
 
-	if data, err := phase.ImagesReport.ToJson(); err != nil {
-		return fmt.Errorf("unable to prepare report json: %s", err)
-	} else {
-		logboek.Context(ctx).Debug().LogF("ImagesReport:\n%s\n", data)
+	var data []byte
+	var err error
+	switch phase.ReportFormat {
+	case ReportJSON:
+		if data, err = phase.ImagesReport.ToJsonData(); err != nil {
+			return fmt.Errorf("unable to prepare report json: %s", err)
+		}
+	case ReportEnvFile:
+		data = phase.ImagesReport.ToEnvFileData()
+	}
 
-		if phase.ReportPath != "" && phase.ReportFormat == ReportJSON {
-			if err := ioutil.WriteFile(phase.ReportPath, append(data, []byte("\n")...), 0644); err != nil {
-				return fmt.Errorf("unable to write report to %s: %s", phase.ReportPath, err)
-			}
+	logboek.Context(ctx).Debug().LogF("ImagesReport:\n%s", data)
+	if phase.ReportPath != "" {
+		if err := ioutil.WriteFile(phase.ReportPath, data, 0644); err != nil {
+			return fmt.Errorf("unable to write report to %s: %s", phase.ReportPath, err)
 		}
 	}
 

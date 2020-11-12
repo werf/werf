@@ -3,39 +3,30 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build images that are described in werf.yaml.
+Run docker-compose up command with forwarded image names
 
-The result of build command is built images pushed into the specified repo (or locally if repo is   
-not specified).
-
-If one or more IMAGE_NAME parameters specified, werf will build only these images
+Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WERF_IMAGE_NAME for   
+nameless image)
 
 {{ header }} Syntax
 
 ```shell
-werf build [IMAGE_NAME...] [options]
+werf compose up [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"] [--] [SERVICE...]
 ```
 
 {{ header }} Examples
 
 ```shell
-  # Build images, built stages will be placed locally
-  $ werf build
+  # Run docker-compose up with forwarded image names
+  $ werf compose up
 
-  # Build image 'backend'
-  $ werf build backend
+  # Follow git HEAD and run docker-compose up for each new commit
+  $ werf compose up --follow --docker-compose-command-options="-d"
 
-  # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf build --introspect-error
-
-  # Build images and store/use stages from repo
-  $ werf build --repo harbor.company.io/werf
-```
-
-{{ header }} Environments
-
-```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
+  # Print docker-compose command without executing
+  $ werf compose up --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--abort-on-container-exit -t 20" --dry-run --quiet
+  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  docker-compose -f docker-compose-test.yml up --abort-on-container-exit -t 20
 ```
 
 {{ header }} Options
@@ -51,37 +42,26 @@ werf build [IMAGE_NAME...] [options]
             $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --docker-compose-bin-path=''
+            Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
+      --docker-compose-command-options=''
+            Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)
+      --docker-compose-options=''
+            Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read, pull and push images into the specified      
-            repo, to pull base images
+            Command needs granted permissions to read and pull images from the specified repo
+      --dry-run=false
+            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --follow=false
+            Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)
       --git-unshallow=false
             Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --introspect-before-error=false
-            Introspect failed stage in the clean state, before running all assembly instructions of 
-            the stage
-      --introspect-error=false
-            Introspect failed stage in the state, right after running failed assembly instruction
-      --introspect-stage=[]
-            Introspect a specific stage. The option can be used multiple times to introspect        
-            several stages.
-            
-            There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
-            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
-            name STAGE_NAME
-            
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
-            STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
-            gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
-            importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)
@@ -111,11 +91,6 @@ werf build [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -p, --parallel=true
-            Run in parallel (default $WERF_PARALLEL)
-      --parallel-tasks-limit=5
-            Parallel tasks limit, set -1 to remove the limitation (default                          
-            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''
@@ -137,29 +112,12 @@ werf build [IMAGE_NAME...] [options]
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --report-format='json'
-            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default)
-            json: 
-            	{
-            	  "Images": {
-            		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>", 
-            			"DockerRepo": "<REPO>",
-            			"DockerTag": "<TAG>"
-            			"DockerImageName": "<REPO>:<TAG>",
-            			"DockerImageID": "<SHA256>",
-            		},
-            		...
-            	  }
-            	}
-            envfile: 
-            	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
-            	...
-      --report-path=''
-            Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repo with images that will be used as a     
             cache
+  -Z, --skip-build=false
+            Disable building of docker images, cached images in the repo should exist in the repo   
+            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
