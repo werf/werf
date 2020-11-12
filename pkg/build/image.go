@@ -33,7 +33,7 @@ type Image struct {
 
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
-	contentDigest  string
+	contentDigest     string
 	isArtifact        bool
 	isDockerfileImage bool
 
@@ -93,8 +93,8 @@ func (i *Image) GetLastNonEmptyStage() stage.Interface {
 	return i.lastNonEmptyStage
 }
 
-func (i *Image) SetContentDigest(sig string) {
-	i.contentDigest = sig
+func (i *Image) SetContentDigest(dig string) {
+	i.contentDigest = dig
 }
 
 func (i *Image) GetContentDigest() string {
