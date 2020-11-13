@@ -135,11 +135,11 @@ Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WE
 			}
 
 			if len(cmdData.RawComposeOptions) != 0 {
-				cmdData.ComposeOptions = strings.Split(cmdData.RawComposeOptions, " ")
+				cmdData.ComposeOptions = strings.Fields(cmdData.RawComposeOptions)
 			}
 
 			if len(cmdData.RawComposeCommandOptions) != 0 {
-				cmdData.ComposeCommandOptions = strings.Split(cmdData.RawComposeCommandOptions, " ")
+				cmdData.ComposeCommandOptions = strings.Fields(cmdData.RawComposeCommandOptions)
 			}
 
 			if err := checkComposeBin(cmdData); err != nil {
