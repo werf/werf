@@ -69,7 +69,7 @@ func NewCmd() *cobra.Command {
 			}
 
 			if cmdData.RawDockerOptions != "" {
-				cmdData.DockerOptions = strings.Split(cmdData.RawDockerOptions, " ")
+				cmdData.DockerOptions = strings.Fields(cmdData.RawDockerOptions)
 			}
 
 			if cmdData.Shell && cmdData.Bash {
