@@ -58,8 +58,9 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")

@@ -71,8 +71,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
 

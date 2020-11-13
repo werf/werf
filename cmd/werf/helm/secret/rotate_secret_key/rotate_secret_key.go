@@ -2,10 +2,14 @@ package secret
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/git_repo"
 
 	"github.com/spf13/cobra"
 
@@ -50,8 +54,6 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupHelmChartDir(&commonCmdData, cmd)
-
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
@@ -67,7 +69,17 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	if err != nil {
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+	}
+
+	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
+	if err != nil {
+		return fmt.Errorf("unable to load werf config: %s", err)
+	}
+
+	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}

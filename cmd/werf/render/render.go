@@ -78,8 +78,9 @@ func NewCmd() *cobra.Command {
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
@@ -103,7 +104,7 @@ func NewCmd() *cobra.Command {
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupHelmChartDir(&commonCmdData, cmd)
+
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
@@ -191,7 +192,7 @@ func runRender() error {
 
 	projectName := werfConfig.Meta.Project
 
-	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
+	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}

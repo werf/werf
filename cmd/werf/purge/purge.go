@@ -51,8 +51,9 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 

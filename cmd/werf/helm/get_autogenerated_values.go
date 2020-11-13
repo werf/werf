@@ -50,8 +50,9 @@ These values includes project name, docker images ids and other`),
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
