@@ -373,7 +373,8 @@ func run(ctx context.Context, projectDir string) error {
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
 			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
-			FilesLoader:                 common.MakeGitFilesLoader(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			LoadDirFunc:                 common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			LocateChartFunc:             common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{

@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/cmd/werf/helm/secret/encrypt"
 	helm_secret_file_decrypt "github.com/werf/werf/cmd/werf/helm/secret/file/decrypt"
@@ -21,6 +23,8 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"github.com/werf/werf/cmd/werf/common"
 	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
@@ -69,7 +73,12 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewPluginCmd(os.Stdout),
 		cmd_helm.NewPullCmd(os.Stdout),
 		cmd_helm.NewSearchCmd(os.Stdout),
-		cmd_helm.NewShowCmd(os.Stdout),
+		cmd_helm.NewShowCmd(os.Stdout, cmd_helm.ShowCmdOptions{
+			LoadOptions: loader.LoadOptions{
+				ChartExtender:               werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}),
+				SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+			},
+		}),
 		cmd_helm.NewStatusCmd(actionConfig, os.Stdout),
 		cmd_helm.NewTestCmd(actionConfig, os.Stdout),
 		cmd_helm.NewVerifyCmd(os.Stdout),

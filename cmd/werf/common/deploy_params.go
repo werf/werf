@@ -8,6 +8,8 @@ import (
 	"text/template"
 	"time"
 
+	"helm.sh/helm/v3/pkg/cli"
+
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -205,12 +207,33 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	return list
 }
 
-func MakeGitFilesLoader(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(dir string) ([]*loader.BufferedFile, error) {
+func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(dir string) ([]*loader.BufferedFile, error) {
 	if disableDeterminism || localGitRepo == nil {
 		return nil
 	}
 
 	return func(dir string) ([]*loader.BufferedFile, error) {
 		return werf_chart.LoadFilesFromGit(ctx, localGitRepo, projectDir, dir)
+	}
+}
+
+func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(name string, settings *cli.EnvSettings) (string, error) {
+	if disableDeterminism || localGitRepo == nil {
+		return nil
+	}
+
+	return func(name string, settings *cli.EnvSettings) (string, error) {
+		commit, err := localGitRepo.HeadCommit(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		}
+
+		if exist, err := localGitRepo.IsFileExists(commit, name); err != nil {
+			return "", fmt.Errorf("unable to check existance of chart path %q in the local git repo commit %s: %s", name, commit, err)
+		} else if !exist {
+			return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
+		} else {
+			return name, nil
+		}
 	}
 }
