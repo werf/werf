@@ -93,8 +93,8 @@ func (i *Image) GetLastNonEmptyStage() stage.Interface {
 	return i.lastNonEmptyStage
 }
 
-func (i *Image) SetContentDigest(dig string) {
-	i.contentDigest = dig
+func (i *Image) SetContentDigest(digest string) {
+	i.contentDigest = digest
 }
 
 func (i *Image) GetContentDigest() string {
