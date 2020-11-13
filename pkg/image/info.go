@@ -52,7 +52,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
-		ParentID:          inspect.Parent,
+		ParentID:          inspect.Config.Image,
 		Size:              inspect.Size,
 	}
 }
