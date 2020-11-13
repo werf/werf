@@ -89,7 +89,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 		}
 
 		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
-			if err := m.deleteImagesMetadata(ctx, imageNameID, stageIDCommitList); err != nil {
+			if err := m.deleteImageMetadata(ctx, imageNameID, stageIDCommitList); err != nil {
 				return err
 			}
 		}
@@ -147,6 +147,6 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 	})
 }
 
-func (m *purgeManager) deleteImagesMetadata(ctx context.Context, imageNameOrID string, stageIDCommitList map[string][]string) error {
-	return deleteImagesMetadata(ctx, m.ProjectName, m.StorageManager, imageNameOrID, stageIDCommitList, m.DryRun)
+func (m *purgeManager) deleteImageMetadata(ctx context.Context, imageNameOrID string, stageIDCommitList map[string][]string) error {
+	return deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageNameOrID, stageIDCommitList, m.DryRun)
 }

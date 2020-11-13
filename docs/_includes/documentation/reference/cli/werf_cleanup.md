@@ -54,6 +54,9 @@ werf cleanup [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --keep-stages-built-within-last-n-hours=2
+            Keep stages that were built within last hours (default                                  
+            $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
             $KUBECONFIG)

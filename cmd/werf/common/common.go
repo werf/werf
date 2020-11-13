@@ -77,7 +77,8 @@ type CmdData struct {
 	DryRun                *bool
 	DisableDeterminism    *bool
 
-	WithoutKube *bool
+	KeepStagesBuiltWithinLastNHours *uint64
+	WithoutKube                     *bool
 
 	IntrospectBeforeError *bool
 	IntrospectAfterError  *bool
@@ -198,6 +199,24 @@ func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
 	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
+}
+
+func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KeepStagesBuiltWithinLastNHours = new(uint64)
+
+	envValue, err := getUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
+	if err != nil {
+		TerminateWithError(err.Error(), 1)
+	}
+
+	var defaultValue uint64
+	if envValue != nil {
+		defaultValue = *envValue
+	} else {
+		defaultValue = 2
+	}
+
+	cmd.Flags().Uint64VarP(cmdData.KeepStagesBuiltWithinLastNHours, "keep-stages-built-within-last-n-hours", "", defaultValue, "Keep stages that were built within last hours (default $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)")
 }
 
 func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
@@ -773,6 +792,22 @@ func getIntEnvVar(varName string) (*int64, error) {
 
 		res := new(int64)
 		*res = vInt
+
+		return res, nil
+	}
+
+	return nil, nil
+}
+
+func getUint64EnvVar(varName string) (*uint64, error) {
+	if v := os.Getenv(varName); v != "" {
+		vUint, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("bad %s variable value '%s': %s", varName, v, err)
+		}
+
+		res := new(uint64)
+		*res = vUint
 
 		return res, nil
 	}
