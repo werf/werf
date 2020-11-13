@@ -9,7 +9,7 @@
 
 {%- assign page_url_parts = page.url | split: '/' -%}
 {%- assign max_ind = page_url_parts.size | minus: 2 -%}
-{%- assign title_parts = "" | split: "" | push: page.title -%}
+{%- assign title_parts = "" | split: "" -%}
 
 {%- for i in (1..max_ind) %}
 {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
@@ -22,8 +22,9 @@
 {% endunless -%}
 {%- assign title_parts = title_parts | push: breadcrumb.title -%}
 {%- endfor %}
+{%- assign title_parts = title_parts | push: page.title -%}
 
-{%- assign generated_title = title_parts | join: " / " %}
+{%- assign generated_title = title_parts | reverse | join: " / " %}
 <title>{{ generated_title }} | {{ site.site_title }}</title>
 {% if page.description %}
     {%- assign description = page.description | strip_html | strip_newlines | truncate: 160 %}
